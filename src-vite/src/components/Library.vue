@@ -26,15 +26,17 @@
         </div>
       </div>
 
-      <div class="sidebar-panel-header cursor-pointer" @click="toggleRatings">
-        <span class="sidebar-panel-header-title flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
-          {{ localeMsg.rating.title }}
-        </span>
-        <TButton
-          :icon="libConfig.library.ratingsExpanded ? IconArrowDown : IconArrowUp"
-          :buttonSize="'small'"
+      <div class="sidebar-item sidebar-item-hover" @click="toggleRatings">
+        <IconRight
+          :class="[
+            'p-1 w-6 h-6 shrink-0 transition-transform',
+            libConfig.library.ratingsExpanded ? 'rotate-90' : '',
+          ]"
           @click.stop="toggleRatings"
         />
+        <span class="sidebar-item-label">
+          {{ localeMsg.rating.title }}
+        </span>
       </div>
 
       <Transition
@@ -45,23 +47,23 @@
       >
         <div v-if="libConfig.library.ratingsExpanded" class="overflow-hidden">
           <ul class="mb-2">
-            <li>
+            <li class="pl-4">
               <div
                 :class="[
-                  'sidebar-item group border-2 border-transparent',
+                  'sidebar-item sidebar-item-compact ml-2',
                   libConfig.library.item === LIB_ITEM.RATINGS && libConfig.rating.item === RATE.ALL ? 'sidebar-item-selected' : 'sidebar-item-hover',
                 ]"
                 @click="selectRating(RATE.ALL)"
               >
-                <IconStarFilled class="mx-1 w-5 h-5 shrink-0" />
+                <IconStarFilled class="mx-1 w-4 h-4 shrink-0" />
                 <span class="sidebar-item-label">{{ localeMsg.rating.rated }}</span>
-                <span v-if="ratedCount" class="sidebar-item-count ml-auto">{{ ratedCount.toLocaleString() }}</span>
+                <span v-if="ratedCount" class="text-[10px] tabular-nums text-base-content/30 mr-2">{{ ratedCount.toLocaleString() }}</span>
               </div>
             </li>
-            <li v-for="rating in [5, 4, 3, 2, 1]" :key="rating">
+            <li v-for="rating in [5, 4, 3, 2, 1]" :key="rating" class="pl-4">
               <div
                 :class="[
-                  'sidebar-item group border-2 border-transparent',
+                  'sidebar-item sidebar-item-compact ml-2',
                   libConfig.library.item === LIB_ITEM.RATINGS && libConfig.rating.item === rating ? 'sidebar-item-selected' : 'sidebar-item-hover',
                 ]"
                 @click="selectRating(rating)"
@@ -70,38 +72,40 @@
                   <IconStarFilled
                     v-for="index in rating"
                     :key="index"
-                    class="w-5 h-5 shrink-0"
+                    class="w-4 h-4 shrink-0"
                   />
                 </div>
-                <span v-if="ratingCounts[rating]" class="sidebar-item-count ml-auto">{{ ratingCounts[rating].toLocaleString() }}</span>
+                <span v-if="ratingCounts[rating]" class="ml-auto text-[10px] tabular-nums text-base-content/30 mr-2">{{ ratingCounts[rating].toLocaleString() }}</span>
               </div>
             </li>
-            <li>
+            <li class="pl-4">
               <div
                 :class="[
-                  'sidebar-item group border-2 border-transparent',
+                  'sidebar-item sidebar-item-compact ml-2',
                   libConfig.library.item === LIB_ITEM.RATINGS && libConfig.rating.item === RATE.UNRATED ? 'sidebar-item-selected' : 'sidebar-item-hover',
                 ]"
                 @click="selectRating(RATE.UNRATED)"
               >
-                <IconStar class="mx-1 w-5 h-5 shrink-0" />
+                <IconStar class="mx-1 w-4 h-4 shrink-0" />
                 <span class="sidebar-item-label">{{ localeMsg.rating.unrated }}</span>
-                <span v-if="unratedCount" class="sidebar-item-count ml-auto">{{ unratedCount.toLocaleString() }}</span>
+                <span v-if="unratedCount" class="text-[10px] tabular-nums text-base-content/30 mr-2">{{ unratedCount.toLocaleString() }}</span>
               </div>
             </li>
           </ul>
         </div>
       </Transition>
 
-      <div class="sidebar-panel-header cursor-pointer" @click="toggleSubjects">
-        <span class="sidebar-panel-header-title flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
-          {{ localeMsg.subject.title }}
-        </span>
-        <TButton
-          :icon="libConfig.library.subjectsExpanded ? IconArrowDown : IconArrowUp"
-          :buttonSize="'small'"
+      <div class="sidebar-item sidebar-item-hover" @click="toggleSubjects">
+        <IconRight
+          :class="[
+            'p-1 w-6 h-6 shrink-0 transition-transform',
+            libConfig.library.subjectsExpanded ? 'rotate-90' : '',
+          ]"
           @click.stop="toggleSubjects"
         />
+        <span class="sidebar-item-label">
+          {{ localeMsg.subject.title }}
+        </span>
       </div>
 
       <Transition
@@ -112,17 +116,17 @@
       >
         <div v-if="libConfig.library.subjectsExpanded" class="overflow-hidden">
           <ul class="mb-2">
-            <li v-for="item in smartTagItems" :key="item.id">
+            <li v-for="item in smartTagItems" :key="item.id" class="pl-4">
               <div
                 :class="[
-                  'sidebar-item group border-2 border-transparent',
+                  'sidebar-item sidebar-item-compact ml-2',
                   libConfig.library.item === LIB_ITEM.SUBJECTS && libConfig.library.smartId === item.id ? 'sidebar-item-selected' : 'sidebar-item-hover',
                 ]"
                 @click="selectSmartTag(item.id)"
               >
-                <IconBolt class="mx-1 w-5 h-5 shrink-0" />
+                <IconBolt class="mx-1 w-4 h-4 shrink-0" />
                 <span class="sidebar-item-label">{{ item.label }}</span>
-                <span v-if="item.count" class="sidebar-item-count ml-auto">{{ formatSearchResultCount(item.count) }}</span>
+                <span v-if="item.count" class="text-[10px] tabular-nums text-base-content/30 mr-2">{{ formatSearchResultCount(item.count) }}</span>
               </div>
             </li>
           </ul>
@@ -141,10 +145,9 @@ import { listen } from '@tauri-apps/api/event';
 import { config, libConfig } from '@/common/config';
 import { LIB_ITEM, RATE, type LibItem } from '@/common/constants';
 
-import { IconPhotoAll, IconHeartFilled, IconArrowDown, IconArrowUp, IconBolt, IconStar, IconStarFilled, IconHistory } from '@/common/icons';
+import { IconPhotoAll, IconHeartFilled, IconRight, IconBolt, IconStar, IconStarFilled, IconHistory } from '@/common/icons';
 import { getQueryCountAndSum, getTotalCountAndSum } from '@/common/api';
 import { SMART_TAG_CATEGORIES } from '@/common/smartTags';
-import TButton from '@/components/TButton.vue';
 
 const props = defineProps({
   titlebar: {

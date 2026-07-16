@@ -101,7 +101,7 @@
           <!-- panel-->
           <div
             v-if="leftPanelMounted"
-            class="absolute inset-y-0 left-16 pt-10 pr-0.5 flex flex-col overflow-hidden transition-[transform,opacity] duration-200 ease-in-out"
+            class="absolute inset-y-0 left-16 pt-10 px-1 border-l border-base-content/5 flex flex-col overflow-hidden transition-[transform,opacity] duration-200 ease-in-out"
             :class="leftPanelVisualExpanded ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0 pointer-events-none'"
             :style="{ width: `calc(${Number(config.leftPanel.width || 260) / 16}rem - 4rem)` }"
           >
@@ -121,13 +121,13 @@
             </div>
             <div
               v-if="showBottomCollectionTray && config.collectionTray.expanded"
-              class="h-1 shrink-0 cursor-row-resize transition-colors hover:bg-primary"
+              class="h-1 -mx-1 shrink-0 cursor-row-resize transition-colors hover:bg-primary"
               @mousedown="startDraggingCollectionSplitter"
             ></div>
             <CollectionTray
               v-if="showBottomCollectionTray"
               :class="[
-                'overflow-hidden',
+                'overflow-hidden -mx-1',
                 isDraggingCollectionSplitter ? '' : 'transition-[height] duration-200 ease-out',
                 config.collectionTray.expanded ? '' : 'h-10',
               ]"
@@ -653,6 +653,7 @@ const collectionTrayStyle = computed(() => {
 });
 
 const showBottomCollectionTray = computed(() =>
+  showPanel.value &&
   !libraryEmpty.value &&
   config.settings.showCollections
 );

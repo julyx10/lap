@@ -3164,6 +3164,42 @@ impl AFile {
         Ok(changed_candidates.len())
     }
 
+    /// Returns whether a folder has a MOV candidate and any existing Live Photo
+    /// associations. This lets a full album scan avoid loading every file in
+    /// ordinary folders solely to decide whether pairing is needed.
+    pub fn live_photo_folder_state(folder_id: i64) -> Result<(bool, bool), String> {
+        let conn = open_conn()?;
+        conn.query_row(
+            "SELECT
+                EXISTS(
+                    SELECT 1 FROM afiles
+                    WHERE folder_id = ?1
+                      AND name LIKE '%.mov' COLLATE NOCASE
+                ),
+                EXISTS(
+                    SELECT 1 FROM afiles
+                    WHERE folder_id = ?1
+                      AND media_subtype = 'live_photo'
+                )",
+            params![folder_id],
+            |row| Ok((row.get(0)?, row.get(1)?)),
+        )
+        .map_err(|error| error.to_string())
+    }
+
+    /// Removes stale image-to-video associations after a companion MOV has
+    /// disappeared from a folder.
+    pub fn clear_live_photo_pairs_in_folder(folder_id: i64) -> Result<usize, String> {
+        let conn = open_conn()?;
+        conn.execute(
+            "UPDATE afiles
+             SET media_subtype = NULL, live_photo_video_id = NULL
+             WHERE folder_id = ?1 AND media_subtype = 'live_photo'",
+            params![folder_id],
+        )
+        .map_err(|error| error.to_string())
+    }
+
     pub fn live_photo_component_files(file_id: i64) -> Result<Vec<Self>, String> {
         let Some(file) = Self::get_file_info(file_id)? else {
             return Ok(Vec::new());

@@ -23,15 +23,18 @@
       <!-- Preview Section -->
       <div class="group/thumbnail border-t border-base-content/5 px-1 py-3 space-y-3">
         <div
-          class="flex items-center gap-2 cursor-pointer text-base-content/70 hover:text-base-content transition-all duration-200 ease-in-out"
+          class="flex items-center gap-1 cursor-pointer text-base-content/70 hover:text-base-content transition-all duration-200 ease-in-out"
           @click.stop="togglePreview"
         >
-          <component :is="fileInfo?.file_type === 2 ? IconVideo : IconPhoto" class="w-4 h-4" />
-          <span class="font-bold mr-auto uppercase text-xs tracking-wide">{{ $t('file_info.preview') }}</span>
           <TButton
-            :icon="showPreviewPanel ? IconArrowDown : IconArrowUp"
+            :icon="IconRight"
             :buttonSize="'small'"
+            iconClasses="transition-transform duration-200"
+            :iconStyle="{ transform: showPreviewPanel ? 'rotate(90deg)' : 'rotate(0deg)' }"
+            @click.stop="togglePreview"
           />
+          <!-- <component :is="fileInfo?.file_type === 2 ? IconVideo : IconPhoto" class="w-4 h-4" /> -->
+          <span class="font-bold mr-auto uppercase text-xs tracking-wide text-base-content/30">{{ $t('file_info.preview') }}</span>
         </div>
 
         <Transition
@@ -132,15 +135,18 @@
       <!-- File Info Section -->
       <div class="group/general border-t border-base-content/5 px-1 py-4 space-y-3">
 
-        <div class="flex items-center gap-2 cursor-pointer text-base-content/70 hover:text-base-content transition-all duration-200 ease-in-out" 
+        <div class="flex items-center gap-1 cursor-pointer text-base-content/70 hover:text-base-content transition-all duration-200 ease-in-out" 
           @click.stop="toggleBasicInfo"
         >
-          <IconFile class="w-4 h-4" />
-          <span class="font-bold mr-auto uppercase text-xs tracking-wide">{{ $t('file_info.general') }}</span>
           <TButton
-            :icon="showBasicInfoPanel ? IconArrowDown : IconArrowUp"
+            :icon="IconRight"
             :buttonSize="'small'"
+            iconClasses="transition-transform duration-200"
+            :iconStyle="{ transform: showBasicInfoPanel ? 'rotate(90deg)' : 'rotate(0deg)' }"
+            @click.stop="toggleBasicInfo"
           />
+          <!-- <IconFile class="w-4 h-4" /> -->
+          <span class="font-bold mr-auto uppercase text-xs tracking-wide text-base-content/30">{{ $t('file_info.general') }}</span>
         </div>
 
         <Transition
@@ -220,7 +226,7 @@
               <div class="flex items-center text-[12px] text-base-content/75">{{ formatDuration(fileInfo?.duration) }}</div>
             </template>
 
-            <div class="col-span-2 mt-2 border-t border-base-content/5 pt-2">
+            <div class="col-span-2">
               <div class="grid grid-cols-[84px_1fr] gap-y-1.5 gap-x-4">
                 <!-- Created At -->
                 <div class="flex items-center text-[11px] text-base-content/45 h-6">{{ $t('file_info.created_at') }}</div>
@@ -234,7 +240,7 @@
                 <template v-if="fileInfo?.last_scan_time && fileInfo.last_scan_time > 0">
                   <div class="flex items-center text-[11px] text-base-content/45 h-6">{{ $t('file_info.last_scan_time') }}</div>
                   <div class="flex min-h-6 items-center gap-2">
-                    <span class="text-[12px] text-base-content/75">{{ formatTimestamp(fileInfo.last_scan_time / 1000, $t('format.date_time')) }}</span>
+                    <!-- <span class="text-[12px] text-base-content/75">{{ formatTimestamp(fileInfo.last_scan_time / 1000, $t('format.date_time')) }}</span> -->
                     <span class="text-[11px] text-base-content/40">{{ formatRelativeTime(fileInfo.last_scan_time / 1000, $t) }}</span>
                   </div>
                 </template>
@@ -306,13 +312,16 @@
       <!-- Metadata Section -->
       <div class="border-t border-base-content/5 px-1 py-4 space-y-3">
 
-        <div class="flex items-center gap-2 cursor-pointer text-base-content/70 hover:text-base-content" @click.stop="toggleMetadata">
-          <IconCameraAperture class="w-4 h-4 " /> 
-          <span class="font-bold mr-auto uppercase text-xs tracking-wide">{{ $t('file_info.metadata') }}</span>
+        <div class="flex items-center gap-1 cursor-pointer text-base-content/70 hover:text-base-content" @click.stop="toggleMetadata">
           <TButton
-            :icon="showMetadataPanel ? IconArrowDown : IconArrowUp"
+            :icon="IconRight"
             :buttonSize="'small'"
+            iconClasses="transition-transform duration-200"
+            :iconStyle="{ transform: showMetadataPanel ? 'rotate(90deg)' : 'rotate(0deg)' }"
+            @click.stop="toggleMetadata"
           />
+          <!-- <IconCameraAperture class="w-4 h-4 " />  -->
+          <span class="font-bold mr-auto uppercase text-xs tracking-wide text-base-content/30">{{ $t('file_info.metadata') }}</span>
         </div>
 
         <Transition
@@ -365,13 +374,16 @@
       <div v-if="fileInfo?.gps_latitude && fileInfo?.gps_longitude" 
         class="border-t border-base-content/5 px-1 py-4 space-y-3 flex flex-col transition-[flex-grow]" 
         :class="{ 'flex-1 min-h-[300px] shrink-0': showMapPanel }">
-        <div class="flex items-center gap-2 cursor-pointer text-base-content/70 hover:text-base-content shrink-0" @click.stop="toggleMapPanel">
-          <IconLocation class="w-4 h-4 " /> 
-          <span class="font-bold mr-auto uppercase text-xs tracking-wide">{{ $t('file_info.map') }}</span>
+        <div class="flex items-center gap-1 cursor-pointer text-base-content/70 hover:text-base-content shrink-0" @click.stop="toggleMapPanel">
           <TButton
-            :icon="showMapPanel ? IconArrowDown : IconArrowUp"
+            :icon="IconRight"
             :buttonSize="'small'"
+            iconClasses="transition-transform duration-200"
+            :iconStyle="{ transform: showMapPanel ? 'rotate(90deg)' : 'rotate(0deg)' }"
+            @click.stop="toggleMapPanel"
           />
+          <!-- <IconLocation class="w-4 h-4 " />  -->
+          <span class="font-bold mr-auto uppercase text-xs tracking-wide text-base-content/30">{{ $t('file_info.map') }}</span>
         </div>
 
         <Transition
@@ -432,7 +444,7 @@ import {
   isMac
 } from '@/common/utils';
 import { 
-  IconClose, IconLocation, IconArrowDown, IconArrowUp, IconCameraAperture, 
+  IconClose, IconLocation, IconRight, IconCameraAperture, 
   IconFile, IconFolderSearch, IconEdit,
   IconFolder,
   IconPhoto,

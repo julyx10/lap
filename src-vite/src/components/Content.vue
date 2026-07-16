@@ -2875,6 +2875,9 @@ async function handleGroupSelectToggled(groupRow: any, selected: boolean) {
     const ids = await getCachedGroupFileIds(groupId);
     if (!ids || ids.length === 0) return;
 
+    // Group selection enters multi-select directly, so close an active right panel
+    // just as the thumbnail selection path does.
+    config.rightPanel.show = false;
     selectMode.value = true;
     const idSet = new Set(ids.map(id => Number(id)).filter(id => Number.isFinite(id) && id > 0));
     const loadedById = new Map<number, number>();
@@ -7219,6 +7222,15 @@ function removeFromFileList(index: number = 0) {
 
 async function refreshGroupedRowsAfterDelete(fileIds: number[]) {
   if (!groupedModeActive.value || fileIds.length === 0) return;
+
+  // Search builds its filename and visual-match groups client-side. The generic
+  // grouping query deliberately excludes Search, so rebuild the unified result
+  // after a deletion instead of resetting those groups.
+  if (config.main.sidebarIndex === SIDEBAR.SEARCH && libConfig.search.searchText) {
+    await getUnifiedSearchFileList(libConfig.search.searchText, currentContentRequestId);
+    return;
+  }
+
   pendingRestoreScrollTop.value = gridViewRef.value?.getScrollTop() ?? null;
   await initializeGroupedFileList(currentContentRequestId);
 }

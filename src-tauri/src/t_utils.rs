@@ -2093,6 +2093,18 @@ fn pair_live_photos_after_album_index(album_id: i64) -> Result<(), String> {
         let folder_id = folder
             .id
             .ok_or_else(|| format!("Folder has no id: {}", folder.path))?;
+
+        // A Live Photo always has a MOV companion. Avoid loading every file
+        // and constructing pairing candidates for ordinary folders, while
+        // still clearing associations whose companion MOV was removed.
+        let (has_mov, has_live_photo_pairs) = AFile::live_photo_folder_state(folder_id)?;
+        if !has_mov {
+            if has_live_photo_pairs {
+                AFile::clear_live_photo_pairs_in_folder(folder_id)?;
+            }
+            continue;
+        }
+
         let files = AFile::get_files_by_folder_id(folder_id)?;
         let affected_names = files
             .into_iter()

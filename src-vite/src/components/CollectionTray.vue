@@ -2,10 +2,17 @@
   <section
     data-collection-tray-root="true"
     :data-collection-drop-new="collections.length === 0 ? 'true' : undefined"
-    class="collection-tray min-h-0 flex flex-col rounded-box bg-base-300/70 border border-base-content/5 shadow-sm"
+    class="collection-tray min-h-0 flex flex-col  border-t border-base-content/5 shadow-sm"
     :class="libConfig.activePane === 'collection' ? '' : 'sidebar-pane-inactive'"
   >
     <div class="sidebar-panel-header cursor-pointer" @click="$emit('toggle-expanded')">
+      <TButton
+        :icon="IconRight"
+        :buttonSize="'small'"
+        iconClasses="transition-transform duration-200"
+        :iconStyle="{ transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)' }"
+        @click.stop="$emit('toggle-expanded')"
+      />
       <span class="sidebar-panel-header-title flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
         {{ $t('collection.title') }}
       </span>
@@ -19,11 +26,6 @@
         :tooltip="$t('collection.add')"
         :disabled="collections.length >= MAX_COLLECTIONS"
         @click.stop="addCollection"
-      />
-      <TButton
-        :icon="expanded ? IconArrowDown : IconArrowUp"
-        :buttonSize="'small'"
-        @click.stop="$emit('toggle-expanded')"
       />
     </div>
 
@@ -119,7 +121,7 @@ import { emit as tauriEmit, listen } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { libConfig } from '@/common/config';
 import { clearCollection, createCollection, deleteCollection as deleteCollectionApi, listCollections, renameCollection } from '@/common/api';
-import { IconAdd, IconArrowDown, IconArrowUp, IconEdit, IconMore, IconBookmark, IconRemove, IconTrash } from '@/common/icons';
+import { IconAdd, IconRight, IconEdit, IconMore, IconBookmark, IconRemove, IconTrash } from '@/common/icons';
 import ContextMenu from '@/components/ContextMenu.vue';
 import MessageBox from '@/components/MessageBox.vue';
 import TButton from '@/components/TButton.vue';
