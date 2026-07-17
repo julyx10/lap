@@ -38,11 +38,7 @@ brew install --cask lap
 ## Screenshots
 
 <p align="center">
-  <img src="../docs/public/screenshots/lap-home-0.1.10_1.png" alt="Lap lokaler Fotobibliotheksmanager Screenshot" width="900">
-</p>
-
-<p align="center">
-  <img src="../docs/public/screenshots/lap-home-0.1.10_2.png" alt="Lap lokale KI-Fotosuche Screenshot" width="900">
+  <img src="../docs/public/screenshots/Lap_0.3.0_main_1.png" alt="Screenshot des lokalen Fotobibliotheksmanagers Lap" width="900">
 </p>
 
 ## Warum Lap
@@ -55,9 +51,13 @@ brew install --cask lap
 
 ## Funktionen
 
-- **Schnelles Durchsuchen der Bibliothek** mit Timeline-, Ordner-, Standort-, Kamera-, Objektiv-, Schlagwort-, Favoriten-, Bewertungs- und Gesichtsfiltern.
-- **Lokale KI-Suche** für Textanfragen, visuelle Ähnlichkeit, intelligente Schlagworte, Gesichts-Clustering und optionale mehrsprachige Suche in über 50 Sprachen.
+- **Flexibles Durchsuchen der Bibliothek** mit Timeline-, Ordner-, Standort-, Kamera-, Objektiv-, Schlagwort-, Favoriten-, Bewertungs-, Motiv- und Gesichtsfiltern.
+- **Intelligente Alben** speichern regelbasierte Ansichten mit eigener Gruppierung, Sortierung und Reihenfolge.
+- **Sammlungsleiste** für spontane Dateisammlungen, ohne Dateien aus ihren ursprünglichen Ordnern zu verschieben.
+- **Lokale KI-Suche** für Textanfragen, visuelle Ähnlichkeit, Motive, Gesichts-Clustering und optionale mehrsprachige Suche in über 50 Sprachen.
+- **Apple Live Photos** erkennt gekoppelte HEIC/MOV-Live-Photos, spielt sie im Viewer ab und hält verknüpfte MOV- und AAE-Seitendateien beim Umbenennen, Verschieben, Kopieren und Löschen zusammen.
 - **Ordnerorientierter Workflow** mit mehreren Bibliotheken, Drag-and-drop-Import, Kopieren-und-Einfügen-Import, Dateisystem-Synchronisierung und sicheren Verschiebe-/Kopier-/Löschvorgängen.
+- **Prüf- und Vergleichswerkzeuge** einschließlich eines Vierfach-Bildvergleichs im Viewer.
 - **Aufräumwerkzeuge** zum Finden von Duplikaten und zum stapelweisen Verschieben unerwünschter Dateien in den Papierkorb.
 - **Integrierte Bearbeitung** für Zuschneiden, Drehen, Spiegeln, Größenänderung und grundlegende Bildanpassungen.
 - **Breite Formatunterstützung** für über 60 Foto-, RAW- und Videoformate.

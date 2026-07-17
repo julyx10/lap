@@ -38,11 +38,7 @@ brew install --cask lap
 ## Capturas de pantalla
 
 <p align="center">
-  <img src="../docs/public/screenshots/lap-home-0.1.10_1.png" alt="Captura de pantalla del gestor de biblioteca de fotos local Lap" width="900">
-</p>
-
-<p align="center">
-  <img src="../docs/public/screenshots/lap-home-0.1.10_2.png" alt="Captura de pantalla de la búsqueda de fotos con IA local en Lap" width="900">
+  <img src="../docs/public/screenshots/Lap_0.3.0_main_1.png" alt="Captura de pantalla del gestor de biblioteca de fotos local Lap" width="900">
 </p>
 
 ## Por qué elegir Lap
@@ -55,9 +51,13 @@ brew install --cask lap
 
 ## Características
 
-- **Exploración rápida de bibliotecas** con filtros por línea de tiempo, carpeta, ubicación, cámara, lente, etiqueta, favorito, valoración y rostro.
-- **Búsqueda local con IA** para indicaciones de texto, similitud visual, etiquetas inteligentes, agrupación de rostros y búsqueda multilingüe opcional en más de 50 idiomas.
+- **Exploración flexible de bibliotecas** con filtros por línea de tiempo, carpeta, ubicación, cámara, lente, etiqueta, favorito, valoración, tema y rostro.
+- **Álbumes inteligentes** para guardar vistas basadas en reglas con agrupación, ordenación y orden personalizados.
+- **Bandeja de colecciones** para mantener colecciones de archivos puntuales sin moverlos de sus carpetas originales.
+- **Búsqueda local con IA** para indicaciones de texto, similitud visual, temas, agrupación de rostros y búsqueda multilingüe opcional en más de 50 idiomas.
+- **Live Photos de Apple** reconoce pares HEIC/MOV, los reproduce en el visor y conserva juntos los archivos auxiliares MOV y AAE al renombrar, mover, copiar y eliminar.
 - **Flujo de trabajo basado en carpetas** con múltiples bibliotecas, importación por arrastrar y soltar, importación por copiar y pegar, sincronización del sistema de archivos y operaciones seguras de mover/copiar/eliminar.
+- **Herramientas de revisión y comparación**, incluido un visor de comparación de imágenes en cuatro paneles.
 - **Herramientas de limpieza** para encontrar duplicados y mover archivos no deseados a la papelera por lotes.
 - **Edición integrada** para recortar, rotar, voltear, redimensionar y realizar ajustes básicos de imagen.
 - **Amplio soporte de formatos** para más de 60 formatos de foto, RAW y vídeo.

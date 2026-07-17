@@ -39,11 +39,7 @@ brew install --cask lap
 ## Screenshots
 
 <p align="center">
-  <img src="docs/public/screenshots/lap-home-0.1.10_1.png" alt="Lap local photo library manager screenshot" width="900">
-</p>
-
-<p align="center">
-  <img src="docs/public/screenshots/lap-home-0.1.10_2.png" alt="Lap local AI photo search screenshot" width="900">
+  <img src="docs/public/screenshots/Lap_0.3.0_main_1.png" alt="Lap local photo library manager screenshot" width="900">
 </p>
 
 ## Why Lap
@@ -56,9 +52,13 @@ brew install --cask lap
 
 ## Features
 
-- **Fast library browsing** with timeline, folder, location, camera, lens, tag, favorite, rating, and face filters.
-- **Local AI search** for text prompts, visual similarity, smart tags, face clustering, and optional multilingual search in 50+ languages.
+- **Flexible library browsing** with timeline, folder, location, camera, lens, tag, favorite, rating, subject, and face filters.
+- **Smart Albums** save rule-based views with custom grouping, sorting, ordering.
+- **Collection tray** keep ad-hoc collections of files without moving them from their original folders.
+- **Local AI search** for text prompts, visual similarity, subjects, face clustering, and optional multilingual search in 50+ languages.
+- **Apple Live Photos** recognize paired HEIC/MOV Live Photos, play them in the viewer, and keep linked MOV and AAE sidecars together during rename, move, copy, and delete operations.
 - **Folder-first workflow** with multiple libraries, drag-and-drop import, copy-paste import, filesystem sync, and safe move/copy/delete operations.
+- **Review and comparison tools** including a four-pane image comparison viewer.
 - **Cleanup tools** to find duplicates and batch move unwanted files to trash.
 - **Built-in editing** for crop, rotate, flip, resize, and basic image adjustments.
 - **Broad format support** for 60+ photo, RAW, and video formats.

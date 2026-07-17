@@ -38,11 +38,7 @@ brew install --cask lap
 ## Captures d'écran
 
 <p align="center">
-  <img src="../docs/public/screenshots/lap-home-0.1.10_1.png" alt="Capture d'écran du gestionnaire de photos locales Lap" width="900">
-</p>
-
-<p align="center">
-  <img src="../docs/public/screenshots/lap-home-0.1.10_2.png" alt="Capture d'écran de la recherche de photos par IA locale Lap" width="900">
+  <img src="../docs/public/screenshots/Lap_0.3.0_main_1.png" alt="Capture d'écran du gestionnaire de photos locales Lap" width="900">
 </p>
 
 ## Pourquoi Lap
@@ -55,9 +51,13 @@ brew install --cask lap
 
 ## Fonctionnalités
 
-- **Navigation rapide dans la bibliothèque** avec filtres par chronologie, dossier, lieu, appareil photo, objectif, tag, favori, note et visage.
-- **Recherche IA locale** pour les requêtes texte, la similarité visuelle, les tags intelligents, le regroupement de visages et la recherche multilingue optionnelle dans plus de 50 langues.
+- **Navigation flexible dans la bibliothèque** avec filtres par chronologie, dossier, lieu, appareil photo, objectif, tag, favori, note, sujet et visage.
+- **Albums intelligents** pour enregistrer des vues basées sur des règles, avec regroupement, tri et ordre personnalisés.
+- **Plateau de collections** pour conserver des collections ponctuelles de fichiers sans les déplacer de leurs dossiers d'origine.
+- **Recherche IA locale** pour les requêtes texte, la similarité visuelle, les sujets, le regroupement de visages et la recherche multilingue optionnelle dans plus de 50 langues.
+- **Live Photos Apple** reconnaît les paires HEIC/MOV, les lit dans la visionneuse et conserve les fichiers associés MOV et AAE lors du renommage, du déplacement, de la copie et de la suppression.
 - **Flux de travail centré sur les dossiers** avec plusieurs bibliothèques, import par glisser-déposer, import par copier-coller, synchronisation du système de fichiers et opérations sûres de déplacement/copie/suppression.
+- **Outils de révision et de comparaison**, dont une visionneuse de comparaison d'images à quatre volets.
 - **Outils de nettoyage** pour trouver les doublons et déplacer par lots les fichiers indésirables vers la corbeille.
 - **Édition intégrée** pour recadrer, faire pivoter, retourner, redimensionner et appliquer des ajustements d'image de base.
 - **Large prise en charge des formats** pour plus de 60 formats photo, RAW et vidéo.

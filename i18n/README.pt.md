@@ -38,11 +38,7 @@ brew install --cask lap
 ## Capturas de tela
 
 <p align="center">
-  <img src="../docs/public/screenshots/lap-home-0.1.10_1.png" alt="Captura de tela do gerenciador de biblioteca de fotos local Lap" width="900">
-</p>
-
-<p align="center">
-  <img src="../docs/public/screenshots/lap-home-0.1.10_2.png" alt="Captura de tela da busca de fotos por IA local do Lap" width="900">
+  <img src="../docs/public/screenshots/Lap_0.3.0_main_1.png" alt="Captura de tela do gerenciador de biblioteca de fotos local Lap" width="900">
 </p>
 
 ## Por que Lap
@@ -55,9 +51,13 @@ brew install --cask lap
 
 ## Recursos
 
-- **Navegação rápida na biblioteca** com filtros por linha do tempo, pasta, local, câmera, lente, tag, favorito, classificação e rosto.
-- **Busca local com IA** para comandos de texto, similaridade visual, tags inteligentes, agrupamento de rostos e busca multilíngue opcional em mais de 50 idiomas.
+- **Navegação flexível na biblioteca** com filtros por linha do tempo, pasta, local, câmera, lente, tag, favorito, classificação, assunto e rosto.
+- **Álbuns inteligentes** salvam visualizações baseadas em regras com agrupamento, ordenação e ordem personalizados.
+- **Bandeja de coleções** mantém coleções pontuais de arquivos sem movê-los de suas pastas originais.
+- **Busca local com IA** para comandos de texto, similaridade visual, assuntos, agrupamento de rostos e busca multilíngue opcional em mais de 50 idiomas.
+- **Live Photos da Apple** reconhece pares HEIC/MOV, reproduz no visualizador e mantém arquivos auxiliares MOV e AAE juntos ao renomear, mover, copiar e excluir.
 - **Fluxo de trabalho baseado em pastas** com várias bibliotecas, importação por arrastar e soltar, importação por copiar e colar, sincronização do sistema de arquivos e operações seguras de mover/copiar/excluir.
+- **Ferramentas de revisão e comparação**, incluindo um visualizador de comparação de imagens em quatro painéis.
 - **Ferramentas de limpeza** para encontrar duplicados e mover arquivos indesejados para a lixeira em lote.
 - **Edição integrada** para cortar, girar, inverter, redimensionar e aplicar ajustes básicos de imagem.
 - **Amplo suporte a formatos** para mais de 60 formatos de foto, RAW e vídeo.
