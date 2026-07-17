@@ -952,7 +952,7 @@ async function handleSelectionContextMenu({ x, y, index, isSelected }: { x: numb
 
 const groupedModeActive = ref(false);
 const selectedFolderHasChildren = ref(true);
-const gridRows = computed(() => groupedModeActive.value ? groupedRows.value : fileList.value);
+const gridRows = computed(() => groupedModeActive.value && !config.settings.grid.showFilmStrip ? groupedRows.value : fileList.value);
 const groupFileIdsCache = new Map<string, number[]>();
 const groupedTimelineGroups = ref<any[]>([]);
 const folderGroupRoots = ref<Array<{ path: string; name?: string }>>([]);
@@ -4627,7 +4627,7 @@ watch(() => config.settings.grid.style, () => {
 watch(
   () => Boolean(config.settings.grid.showFilmStrip),
   () => {
-    if (!groupedModeActive.value && activeGroupBy.value <= 0) return;
+    resetGroupingState();
     updateContent();
   },
 );
@@ -5803,7 +5803,7 @@ async function getUnifiedSearchFileList(searchText: string, requestId: number) {
     totalFileCount.value = fileList.value.length;
     totalFileSize.value = fileList.value.reduce((total, file) => total + Number(file.size || 0), 0);
 
-    const groups = [
+    const groups = config.settings.grid.showFilmStrip ? [] : [
       filenameMatches.length > 0
         ? {
             id: 'search-filename',
