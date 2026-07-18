@@ -7,7 +7,7 @@
 use arboard::Clipboard;
 use exif::{In, Reader, Tag};
 use fast_image_resize as fir;
-use image::{DynamicImage, GenericImageView, ImageReader, RgbImage};
+use image::{DynamicImage, GenericImageView, ImageFormat, ImageReader, RgbImage};
 use little_exif::exif_tag::ExifTag;
 use little_exif::filetype::FileExtension;
 use little_exif::ifd::ExifTagGroup;
@@ -414,6 +414,46 @@ fn resize_rgb_image_to_jpeg(rgb: image::RgbImage, thumbnail_size: u32) -> Result
     encode_jpeg_rgb8(&resized)
 }
 
+fn resize_rgba_image_to_png(
+    rgba: image::RgbaImage,
+    thumbnail_size: u32,
+) -> Result<Vec<u8>, String> {
+    let (src_w, src_h) = rgba.dimensions();
+    let (dst_w, dst_h) = compute_thumbnail_dimensions(src_w, src_h, thumbnail_size);
+
+    let resized = if src_w == dst_w && src_h == dst_h {
+        rgba
+    } else {
+        let src_image =
+            fir::images::Image::from_vec_u8(src_w, src_h, rgba.into_raw(), fir::PixelType::U8x4)
+                .map_err(|e| format!("Failed to prepare PNG source image for resize: {}", e))?;
+        let mut dst_image = fir::images::Image::new(dst_w, dst_h, fir::PixelType::U8x4);
+        let mut resizer = fir::Resizer::new();
+        let options = fir::ResizeOptions::new()
+            .resize_alg(fir::ResizeAlg::Convolution(fir::FilterType::Bilinear));
+
+        resizer
+            .resize(&src_image, &mut dst_image, &options)
+            .map_err(|e| format!("Failed to resize PNG thumbnail: {}", e))?;
+
+        image::RgbaImage::from_raw(dst_w, dst_h, dst_image.into_vec())
+            .ok_or_else(|| "Failed to build resized PNG thumbnail".to_string())?
+    };
+
+    let mut output = Cursor::new(Vec::new());
+    DynamicImage::ImageRgba8(resized)
+        .write_to(&mut output, ImageFormat::Png)
+        .map_err(|e| format!("Failed to encode PNG thumbnail: {}", e))?;
+    Ok(output.into_inner())
+}
+
+pub(crate) fn should_use_png_thumbnail(file_path: &str) -> bool {
+    Path::new(file_path)
+        .extension()
+        .and_then(|ext| ext.to_str())
+        .is_some_and(|ext| matches!(ext.to_ascii_lowercase().as_str(), "png" | "gif"))
+}
+
 pub fn is_jpeg_path(file_path: &str) -> bool {
     Path::new(file_path)
         .extension()
@@ -609,7 +649,15 @@ pub fn get_image_thumbnail(
                     }
                 }
             };
-        resize_dynamic_image_to_jpeg(img, orientation, thumbnail_size).map(Some)
+        if should_use_png_thumbnail(file_path) {
+            resize_rgba_image_to_png(
+                apply_orientation(img, orientation).to_rgba8(),
+                thumbnail_size,
+            )
+            .map(Some)
+        } else {
+            resize_dynamic_image_to_jpeg(img, orientation, thumbnail_size).map(Some)
+        }
     });
 
     match result {

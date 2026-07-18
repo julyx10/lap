@@ -5272,6 +5272,7 @@ impl AThumb {
         library_id: &str,
         album_id: i64,
         thumb_key: &str,
+        extension: &str,
     ) -> Result<PathBuf, String> {
         if thumb_key.len() < 2 {
             return Err("Invalid thumbnail cache key".to_string());
@@ -5282,20 +5283,34 @@ impl AThumb {
             .join(album_id.to_string());
         Ok(cache_root
             .join(&thumb_key[0..2])
-            .join(format!("{}.jpg", thumb_key)))
+            .join(format!("{}.{}", thumb_key, extension)))
+    }
+
+    fn thumbnail_extension(file_path: &str) -> &'static str {
+        if t_image::should_use_png_thumbnail(file_path) {
+            "png"
+        } else {
+            "jpg"
+        }
     }
 
     fn read_thumb_cache_bytes(
         library_id: &str,
         album_id: i64,
         thumb_key: &str,
+        extension: &str,
     ) -> Result<Option<Vec<u8>>, String> {
-        let path = Self::get_thumb_cache_path_for_key(library_id, album_id, thumb_key)?;
+        let path = Self::get_thumb_cache_path_for_key(library_id, album_id, thumb_key, extension)?;
         if !path.exists() {
             return Ok(None);
         }
         let data = fs::read(path).map_err(|e| e.to_string())?;
-        Ok(Self::is_complete_jpeg(&data).then_some(data))
+        let is_valid = match extension {
+            "png" => Self::is_png_bytes(&data),
+            "jpg" => Self::is_complete_jpeg(&data),
+            _ => false,
+        };
+        Ok(is_valid.then_some(data))
     }
 
     fn write_thumb_cache_bytes(
@@ -5304,14 +5319,17 @@ impl AThumb {
         thumb_key: &str,
         data: &[u8],
     ) -> Result<PathBuf, String> {
-        let path = Self::get_thumb_cache_path_for_key(library_id, album_id, thumb_key)?;
+        let extension = if Self::is_png_bytes(data) {
+            "png"
+        } else if Self::is_complete_jpeg(data) {
+            "jpg"
+        } else {
+            return Err("Invalid thumbnail data".to_string());
+        };
+        let path = Self::get_thumb_cache_path_for_key(library_id, album_id, thumb_key, extension)?;
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent).map_err(|e| e.to_string())?;
         }
-        if !Self::is_complete_jpeg(data) {
-            return Err("Invalid JPEG thumbnail data".to_string());
-        }
-
         let temp_path = path.with_extension(format!(
             "{}.{}.tmp",
             process::id(),
@@ -5334,8 +5352,15 @@ impl AThumb {
         Ok(path)
     }
 
-    fn delete_thumb_cache_for_key(library_id: &str, album_id: i64, thumb_key: &str) {
-        if let Ok(path) = Self::get_thumb_cache_path_for_key(library_id, album_id, thumb_key) {
+    fn delete_thumb_cache_for_key(
+        library_id: &str,
+        album_id: i64,
+        thumb_key: &str,
+        extension: &str,
+    ) {
+        if let Ok(path) =
+            Self::get_thumb_cache_path_for_key(library_id, album_id, thumb_key, extension)
+        {
             let _ = fs::remove_file(path);
         }
     }
@@ -5352,26 +5377,29 @@ impl AThumb {
         let Some(thumb_key) = Self::fetch_thumb_key(file_id)? else {
             return Ok(());
         };
+        let extension = AFile::get_file_info(file_id)?
+            .and_then(|file| file.file_path)
+            .map(|file_path| Self::thumbnail_extension(&file_path))
+            .unwrap_or("jpg");
 
         let library_id = Self::get_current_library_id();
-        let old_path = Self::get_thumb_cache_path_for_key(&library_id, old_album_id, &thumb_key)?;
+        let old_path =
+            Self::get_thumb_cache_path_for_key(&library_id, old_album_id, &thumb_key, extension)?;
         if !old_path.exists() {
             return Ok(());
         }
 
-        let new_path = Self::get_thumb_cache_path_for_key(&library_id, new_album_id, &thumb_key)?;
+        let new_path =
+            Self::get_thumb_cache_path_for_key(&library_id, new_album_id, &thumb_key, extension)?;
         if let Some(parent) = new_path.parent() {
             fs::create_dir_all(parent).map_err(|e| e.to_string())?;
         }
 
-        match fs::rename(&old_path, &new_path) {
-            Ok(_) => Ok(()),
-            Err(_) => {
-                fs::copy(&old_path, &new_path).map_err(|e| e.to_string())?;
-                let _ = fs::remove_file(old_path);
-                Ok(())
-            }
+        if fs::rename(&old_path, &new_path).is_err() {
+            fs::copy(&old_path, &new_path).map_err(|e| e.to_string())?;
+            let _ = fs::remove_file(old_path);
         }
+        Ok(())
     }
 
     /// Create a new thumbnail struct
@@ -5531,8 +5559,17 @@ impl AThumb {
     fn hydrate_output_bytes_for_library(mut thumb: Self, library_id: &str) -> Result<Self, String> {
         if thumb.thumb_data.is_none() {
             if let Some(key) = thumb.thumb_key.as_ref() {
-                if let Some(album_id) = Self::get_file_album_id(thumb.file_id)? {
-                    thumb.thumb_data = Self::read_thumb_cache_bytes(library_id, album_id, key)?;
+                if let Some(file) = AFile::get_file_info(thumb.file_id)? {
+                    if let Some(album_id) = file.album_id {
+                        let extension = file
+                            .file_path
+                            .as_deref()
+                            .is_some_and(t_image::should_use_png_thumbnail)
+                            .then_some("png")
+                            .unwrap_or("jpg");
+                        thumb.thumb_data =
+                            Self::read_thumb_cache_bytes(library_id, album_id, key, extension)?;
+                    }
                 }
             }
         }
@@ -5666,15 +5703,6 @@ impl AThumb {
                 &Self::get_current_library_id(),
             );
         };
-
-        if Self::is_png_bytes(data) {
-            return Ok(Self {
-                thumb_data: None,
-                thumb_key: None,
-                thumb_data_base64: None,
-                ..thumbnail
-            });
-        }
 
         let library_id = Self::get_current_library_id();
         let thumb_mtime = Self::get_source_mtime(file_path);
@@ -6065,8 +6093,15 @@ impl AThumb {
     pub fn delete(file_id: i64) -> Result<usize, String> {
         if let Ok(Some(key)) = Self::fetch_thumb_key(file_id) {
             let library_id = Self::get_current_library_id();
-            if let Ok(Some(album_id)) = Self::get_file_album_id(file_id) {
-                Self::delete_thumb_cache_for_key(&library_id, album_id, &key);
+            if let Ok(Some(file)) = AFile::get_file_info(file_id) {
+                if let (Some(album_id), Some(file_path)) = (file.album_id, file.file_path) {
+                    Self::delete_thumb_cache_for_key(
+                        &library_id,
+                        album_id,
+                        &key,
+                        Self::thumbnail_extension(&file_path),
+                    );
+                }
             }
         }
         let conn = open_conn()?;

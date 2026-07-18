@@ -558,7 +558,8 @@ export function getThumbnailDataUrl(
     return placeholder;
   }
   if (thumb.thumb_data_base64) {
-    const dataUrl = `data:image/jpeg;base64,${thumb.thumb_data_base64}`;
+    const mimeType = thumb.thumb_data_base64.startsWith('iVBORw0KGgo') ? 'image/png' : 'image/jpeg';
+    const dataUrl = `data:${mimeType};base64,${thumb.thumb_data_base64}`;
     setCachedThumbnailDataUrl(thumb.file_id, dataUrl, thumbnailSize);
     return dataUrl;
   }
