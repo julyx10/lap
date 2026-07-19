@@ -22,6 +22,8 @@ import {
   IconExternal,
   IconHeartFilled,
   IconBookmarkOff,
+  IconSplitOn,
+  IconSplitOn4,
 } from '@/common/icons';
 
 // Label lookup table for "open in external app" command based on media type
@@ -75,10 +77,7 @@ export const useFileMenuItems = (
     return menuLabel(variant).replace('{app}', name);
   };
 
-  // Creates a context menu for multi-select mode. Currently only shows the "open in external app" entry.
-  //
-  // If more entries are added in the future, we could refactor this to filter entries based on
-  // selection instead of having two completely separate menus.
+  // Creates a context menu for multi-select mode.
   const buildSelectionMenu = () => {
     const kind = options?.selectionMediaKind?.value ?? 'empty';
     const selectionIsVideo = kind === 'video';
@@ -87,9 +86,16 @@ export const useFileMenuItems = (
     const appPath = String(
       (selectionIsVideo ? config.settings.externalVideoAppPath : config.settings.externalImageAppPath) || '',
     );
+    const selectionCount = options?.selectionCount?.value ?? 0;
     return [
       {
-        label: openInAppLabel(kind, options?.selectionCount?.value ?? 0, true),
+        label: String(localeMsg.value.menu.file.compare_selected_images || 'Compare selected images'),
+        icon: markRaw(selectionCount >= 3 ? IconSplitOn4 : IconSplitOn),
+        disabled: kind !== 'image' || selectionCount < 2,
+        action: createAction('compare-selected-images'),
+      },
+      {
+        label: openInAppLabel(kind, selectionCount, true),
         icon: markRaw(IconExternal),
         disabled: kind === 'empty' || selectionIsMixed || !appPath,
         shortcut: shortcut('file.openExternalApp'),

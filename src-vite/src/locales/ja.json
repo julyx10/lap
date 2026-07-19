@@ -538,6 +538,7 @@
       "open_image_in_app": "{app} で画像を開く...",
       "open_video_in_app": "{app} で動画を開く...",
       "open_selected_images_in_app": "選択した画像を {app} で開く...",
+      "compare_selected_images": "選択した画像を比較",
       "open_selected_videos_in_app": "選択した動画を {app} で開く...",
       "open_in_app": "外部アプリで開く...",
       "find_similar_images": "類似画像を検索",
@@ -983,15 +984,8 @@
       "pin": "バーを固定",
       "unpin": "固定解除",
       "close": "閉じる",
-      "split_on": "分割表示を有効にする",
-      "split_off": "分割表示を無効にする",
-      "split_2_on": "2分割表示を有効にする",
-      "split_2_off": "2分割表示を無効にする",
-      "split_4_on": "4分割表示を有効にする",
-      "split_4_off": "4分割表示を無効にする",
-      "sync_viewport_on": "連動ズームを有効にする",
-      "sync_viewport_off": "連動ズームを無効にする",
-      "sync_viewport_need_split": "先に分割表示を有効にしてください"
+      "sync_viewport_on": "ズームと移動を連動",
+      "sync_viewport_off": "ズームと移動の連動を解除"
     }
   },
   "video": {

@@ -538,6 +538,7 @@
       "open_image_in_app": "Ouvrir l'image dans {app}...",
       "open_video_in_app": "Ouvrir la vidéo dans {app}...",
       "open_selected_images_in_app": "Ouvrir les images sélectionnées dans {app}...",
+      "compare_selected_images": "Comparer les images sélectionnées",
       "open_selected_videos_in_app": "Ouvrir les vidéos sélectionnées dans {app}...",
       "open_in_app": "Ouvrir dans une app externe...",
       "find_similar_images": "Trouver similaires",
@@ -983,15 +984,8 @@
       "pin": "Épingler barre",
       "unpin": "Désépingler barre",
       "close": "Fermer",
-      "split_on": "Activer la vue fractionnée",
-      "split_off": "Désactiver la vue fractionnée",
-      "split_2_on": "Activer la vue à deux volets",
-      "split_2_off": "Désactiver la vue à deux volets",
-      "split_4_on": "Activer la vue à quatre volets",
-      "split_4_off": "Désactiver la vue à quatre volets",
-      "sync_viewport_on": "Activer le zoom lié",
-      "sync_viewport_off": "Désactiver le zoom lié",
-      "sync_viewport_need_split": "Activez d'abord la vue fractionnée"
+      "sync_viewport_on": "Lier le zoom et le déplacement",
+      "sync_viewport_off": "Délier le zoom et le déplacement"
     }
   },
   "video": {

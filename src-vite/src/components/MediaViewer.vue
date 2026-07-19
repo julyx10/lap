@@ -151,42 +151,13 @@
             @click="$emit('item-action', { action: 'info', index: fileIndex })"
           /> -->
         </template>
-        <!-- Split/Sync Viewport Buttons (ImageViewer mode only) -->
-        <template v-if="mode === 2">
+        <!-- Linked viewport control (Compare mode only) -->
+        <template v-if="mode === 2 && showSyncViewportControl">
           <IconSeparator class="t-icon-size-sm text-base-content/30" />
-          <div class="flex h-8 items-center gap-1 rounded-box border border-base-content/10 bg-base-100/30 px-1 shadow-inner">
-            <TButton
-              class="flex items-center"
-              :icon="IconSplitOff"
-              :buttonSize="'small'"
-              :selected="splitCount === 1"
-              :tooltip="$t('image_viewer.toolbar.split_off')"
-              @click="$emit('item-action', { action: 'set-split-count', splitCount: 1 })"
-            />
-            <TButton
-              class="flex items-center"
-              :icon="IconSplitOn"
-              :buttonSize="'small'"
-              :selected="splitCount === 2"
-              :tooltip="$t('image_viewer.toolbar.split_2_on')"
-              @click="$emit('item-action', { action: 'set-split-count', splitCount: 2 })"
-            />
-            <TButton
-              class="flex items-center"
-              :icon="IconSplitOn4"
-              :buttonSize="'small'"
-              :selected="splitCount === 4"
-              :tooltip="$t('image_viewer.toolbar.split_4_on')"
-              @click="$emit('item-action', { action: 'set-split-count', splitCount: 4 })"
-            />
-          </div>
           <TButton
             :icon="IconLink"
-            :selected="splitCount > 1 && isSyncViewport"
-            :disabled="splitCount === 1"
-            :tooltip="splitCount > 1
-              ? (isSyncViewport ? $t('image_viewer.toolbar.sync_viewport_off') : $t('image_viewer.toolbar.sync_viewport_on'))
-              : $t('image_viewer.toolbar.sync_viewport_need_split')"
+            :selected="isSyncViewport"
+            :tooltip="isSyncViewport ? $t('image_viewer.toolbar.sync_viewport_off') : $t('image_viewer.toolbar.sync_viewport_on')"
             @click="$emit('item-action', { action: 'toggle-sync-viewport' })"
           />
         </template>
@@ -445,9 +416,6 @@ import {
   IconWinMaximize,
   IconWinRestore,
   IconLink,
-  IconSplitOff,
-  IconSplitOn,
-  IconSplitOn4,
   IconVideoPlay,
   IconLivePhoto,
 } from '@/common/icons';
@@ -523,9 +491,9 @@ const props = defineProps({
     type: Boolean,
     default: true
   },
-  splitCount: {
-    type: Number,
-    default: 1
+  showSyncViewportControl: {
+    type: Boolean,
+    default: false,
   },
   isPlaybackActive: {
     type: Boolean,

@@ -538,6 +538,7 @@
       "open_image_in_app": "在 {app} 中打开图片...",
       "open_video_in_app": "在 {app} 中打开视频...",
       "open_selected_images_in_app": "在 {app} 中打开所选图片...",
+      "compare_selected_images": "对比所选图片",
       "open_selected_videos_in_app": "在 {app} 中打开所选视频...",
       "open_in_app": "在外部应用中打开...",
       "find_similar_images": "查找相似图片",
@@ -983,15 +984,8 @@
       "pin": "固定工具栏",
       "unpin": "取消固定工具栏",
       "close": "关闭",
-      "split_on": "开启分屏视图",
-      "split_off": "关闭分屏视图",
-      "split_2_on": "开启双分屏",
-      "split_2_off": "关闭双分屏",
-      "split_4_on": "开启四分屏",
-      "split_4_off": "关闭四分屏",
-      "sync_viewport_on": "开启联动缩放",
-      "sync_viewport_off": "关闭联动缩放",
-      "sync_viewport_need_split": "请先开启分屏视图"
+      "sync_viewport_on": "联动缩放与平移",
+      "sync_viewport_off": "取消联动缩放与平移"
     }
   },
   "video": {

@@ -538,6 +538,7 @@
       "open_image_in_app": "{app}에서 이미지 열기...",
       "open_video_in_app": "{app}에서 동영상 열기...",
       "open_selected_images_in_app": "{app}에서 선택한 이미지 열기...",
+      "compare_selected_images": "선택한 이미지 비교",
       "open_selected_videos_in_app": "{app}에서 선택한 동영상 열기...",
       "open_in_app": "외부 앱에서 열기...",
       "find_similar_images": "유사 이미지 찾기",
@@ -983,15 +984,8 @@
       "pin": "도구 모음 고정",
       "unpin": "고정 해제",
       "close": "닫기",
-      "split_on": "분할 보기 켜기",
-      "split_off": "분할 보기 끄기",
-      "split_2_on": "2분할 보기 켜기",
-      "split_2_off": "2분할 보기 끄기",
-      "split_4_on": "4분할 보기 켜기",
-      "split_4_off": "4분할 보기 끄기",
-      "sync_viewport_on": "연동 줌 켜기",
-      "sync_viewport_off": "연동 줌 끄기",
-      "sync_viewport_need_split": "먼저 분할 보기를 켜세요"
+      "sync_viewport_on": "확대/축소 및 이동 연결",
+      "sync_viewport_off": "확대/축소 및 이동 연결 해제"
     }
   },
   "video": {

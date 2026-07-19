@@ -538,6 +538,7 @@
       "open_image_in_app": "Bild in {app} öffnen...",
       "open_video_in_app": "Video in {app} öffnen...",
       "open_selected_images_in_app": "Ausgewählte Bilder in {app} öffnen...",
+      "compare_selected_images": "Ausgewählte Bilder vergleichen",
       "open_selected_videos_in_app": "Ausgewählte Videos in {app} öffnen...",
       "open_in_app": "In externer App öffnen...",
       "find_similar_images": "Ähnliche finden",
@@ -983,15 +984,8 @@
       "pin": "Leiste anheften",
       "unpin": "Leiste lösen",
       "close": "Schließen",
-      "split_on": "Geteilte Ansicht aktivieren",
-      "split_off": "Geteilte Ansicht deaktivieren",
-      "split_2_on": "Zwei-Fenster-Ansicht aktivieren",
-      "split_2_off": "Zwei-Fenster-Ansicht deaktivieren",
-      "split_4_on": "Vier-Fenster-Ansicht aktivieren",
-      "split_4_off": "Vier-Fenster-Ansicht deaktivieren",
-      "sync_viewport_on": "Gekoppelten Zoom aktivieren",
-      "sync_viewport_off": "Gekoppelten Zoom deaktivieren",
-      "sync_viewport_need_split": "Bitte zuerst die geteilte Ansicht aktivieren"
+      "sync_viewport_on": "Zoom und Verschieben koppeln",
+      "sync_viewport_off": "Zoom und Verschieben entkoppeln"
     }
   },
   "video": {

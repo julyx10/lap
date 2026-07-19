@@ -914,6 +914,26 @@ const getMediaKind = (items: any[]): 'image' | 'video' | 'mixed' | 'empty' => {
   return 'empty';
 };
 const selectionMediaKind = computed(() => getMediaKind(selectedFiles.value));
+type ImageViewerSession =
+  | { mode: 'normal' }
+  | { mode: 'compare'; files: any[] };
+
+// A comparison window owns a snapshot of the selected files. Background content
+// refreshes must not replace that source with the live file list.
+const imageViewerSession = ref<ImageViewerSession>({ mode: 'normal' });
+
+function removeDeletedFilesFromImageViewerSession(fileIds: number[]) {
+  const session = imageViewerSession.value;
+  if (session.mode !== 'compare') return undefined;
+  const deletedIds = new Set(fileIds);
+  const files = session.files.filter(file => !deletedIds.has(Number(file.id)));
+  if (files.length === session.files.length) return undefined;
+  imageViewerSession.value = {
+    ...session,
+    files,
+  };
+  return files.length;
+}
 
 const selectionMenuRef = ref<InstanceType<typeof ContextMenu> | null>(null);
 const selectionMenuIndex = ref(-1);
@@ -3029,6 +3049,14 @@ function handleItemAction(payload: { action: string, index: number }) {
     'open-external-app': () => {
       void openInExternalApp();
     },
+    'compare-selected-images': () => {
+      const files = getActionableSelectedItems().filter(item => item.file_type === 1 || item.file_type === 3);
+      if (files.length < 2) return;
+      void openImageViewer(0, true, false, {
+        files,
+        forceSplitCount: files.length === 2 ? 2 : 4,
+      });
+    },
     'copy': () => void clickCopyImages(fileList.value[selectedItemIndex.value].file_path),
     'rename': clickRename,
     'move-within-library': () => showMoveTo.value = true,
@@ -4209,21 +4237,28 @@ onMounted( async() => {
         const pane = ['left', 'right', 'bottomLeft', 'bottomRight'].includes(requestedPane)
           ? requestedPane
           : 'left';
-        if (!isRealFileItem(fileList.value[requestIndex])) {
-          ensureGroupedFileAtIndex(requestIndex);
+        const session = imageViewerSession.value;
+        if (session.mode === 'normal') {
+          if (!isRealFileItem(fileList.value[requestIndex])) {
+            ensureGroupedFileAtIndex(requestIndex);
+          }
+          if (!isRealFileItem(fileList.value[requestIndex])) {
+            await fetchDataRange(requestIndex, requestIndex + 2);
+          }
         }
-        if (!isRealFileItem(fileList.value[requestIndex])) {
-          await fetchDataRange(requestIndex, requestIndex + 2);
-        }
-        const file = fileList.value[requestIndex];
+        const viewerFiles = session.mode === 'compare' ? session.files : fileList.value;
+        const file = viewerFiles[requestIndex];
         if (isRealFileItem(file)) {
            const imageWindow = await WebviewWindow.getByLabel('imageviewer');
            if (imageWindow) {
              imageWindow.emit('update-img', {
                fileId: file.id,
                fileIndex: requestIndex,
-               fileCount: fileList.value.length,
-               nextFilePath: getNextImagePath(requestIndex),
+               fileCount: viewerFiles.length,
+               nextFilePath: (() => {
+                 const next = viewerFiles[requestIndex + 1];
+                 return next && !next.isPlaceholder && next.file_type === 1 ? next.file_path : '';
+               })(),
                pane,
              });
            }
@@ -4380,6 +4415,17 @@ onMounted( async() => {
     const deletedIds = Array.isArray(event?.payload?.fileIds)
       ? event.payload.fileIds.map((id: any) => Number(id)).filter((id: number) => id > 0)
       : [];
+    const compareFileCount = removeDeletedFilesFromImageViewerSession(deletedIds);
+    if (compareFileCount !== undefined) {
+      // Re-broadcast with the comparison count after its session snapshot has
+      // been updated. The ImageViewer must never fall back to the full list.
+      await tauriEmit('files-deleted', {
+        source: 'content',
+        fileIds: deletedIds,
+        fileCount: fileList.value.length,
+        compareFileCount,
+      });
+    }
     if (deletedIds.length === 0 || fileList.value.length === 0) return;
 
     if (tempViewMode.value === 'similar' || tempViewMode.value === 'album') {
@@ -7152,10 +7198,12 @@ const onTrashFile = async () => {
     }
 
     if (deletedFileIds.length > 0) {
+      const compareFileCount = removeDeletedFilesFromImageViewerSession(deletedFileIds);
       tauriEmit('files-deleted', {
         source: 'content',
         fileIds: deletedFileIds,
         fileCount: fileList.value.length,
+        compareFileCount,
         selectedIndex: selectedItemIndex.value,
       });
     }
@@ -8207,16 +8255,31 @@ async function openImageViewer(
   index: number,
   newViewer = false,
   syncFromFileListChange = false,
-  options: { rightIndex?: number; forceSplit?: boolean } = {}
+  options: { rightIndex?: number; forceSplitCount?: 2 | 4; files?: any[] } = {}
 ) {
 
   const webViewLabel = 'imageviewer';
 
-  const fileCount = fileList.value.length;
+  const isCompareRequest = Array.isArray(options.files);
+  // Content refreshes are for the normal viewer only. Preserve an active
+  // comparison session until the user explicitly opens a normal viewer again.
+  if (!isCompareRequest && imageViewerSession.value.mode === 'compare' && !newViewer) return;
+
+  if (isCompareRequest) {
+    imageViewerSession.value = {
+      mode: 'compare',
+      files: options.files!,
+    };
+  } else {
+    imageViewerSession.value = { mode: 'normal' };
+  }
+
+  const viewerFiles = isCompareRequest ? options.files! : fileList.value;
+  const fileCount = viewerFiles.length;
   const isRealFile = (item: any) => !!item && !item.isPlaceholder && typeof item.id === 'number';
   const getRealFileAt = (targetIndex: number) => {
     if (targetIndex < 0 || targetIndex >= fileCount) return null;
-    const file = fileList.value[targetIndex];
+    const file = viewerFiles[targetIndex];
     return isRealFile(file) ? file : null;
   };
   const getNextImageFilePath = (targetIndex: number) => {
@@ -8242,8 +8305,9 @@ async function openImageViewer(
   if (typeof options.rightIndex === 'number') {
     rightIndex = options.rightIndex;
   }
-  const compareMode = options.forceSplit === true;
-  if (options.forceSplit) {
+  const compareSplitCount = options.forceSplitCount;
+  const compareMode = typeof compareSplitCount === 'number';
+  if (compareSplitCount) {
     if (rightIndex < 0 && fileCount > 0) {
       rightIndex = Math.min(leftIndex + 1, fileCount - 1);
     }
@@ -8260,10 +8324,10 @@ async function openImageViewer(
   let imageWindow = await WebviewWindow.getByLabel(webViewLabel);
   if (!imageWindow) {
     if (newViewer) {
-      const forceSplitParam = options.forceSplit ? 1 : 0;
+      const forceSplitParam = compareSplitCount || 0;
       const compareModeParam = compareMode ? 1 : 0;
       imageWindow = new WebviewWindow(webViewLabel, {
-        url: `/image-viewer?fileId=${leftFileId}&fileIndex=${leftIndex}&fileCount=${fileCount}&rightFileId=${rightFileId}&rightFileIndex=${rightIndex}&forceSplit=${forceSplitParam}&compareMode=${compareModeParam}&nextFilePath=${encodeURIComponent(leftNextFilePath)}&rightNextFilePath=${encodeURIComponent(rightNextFilePath)}`,
+        url: `/image-viewer?fileId=${leftFileId}&fileIndex=${leftIndex}&fileCount=${fileCount}&rightFileId=${rightFileId}&rightFileIndex=${rightIndex}&forceSplitCount=${forceSplitParam}&compareFileCount=${compareMode ? fileCount : 0}&compareMode=${compareModeParam}&nextFilePath=${encodeURIComponent(leftNextFilePath)}&rightNextFilePath=${encodeURIComponent(rightNextFilePath)}`,
         title: 'Image Viewer',
         width: 1200,
         height: 800,
@@ -8303,8 +8367,8 @@ async function openImageViewer(
       pane: 'left',
       resetSplit: newViewer,
       compareMode: newViewer ? compareMode : undefined,
-      forceSyncViewport: compareMode ? true : undefined,
-      forceSplit: options.forceSplit === true ? true : undefined,
+      compareFileCount: compareMode ? fileCount : undefined,
+      forceSplitCount: compareSplitCount,
       // filePath: encodedFilePath, 
       // nextFilePath: nextEncodedFilePath,
     });
@@ -8317,6 +8381,22 @@ async function openImageViewer(
         nextFilePath: rightNextFilePath,
         pane: 'right',
       });
+    }
+
+    if (compareMode && compareSplitCount === 4) {
+      const emitComparisonPane = async (pane: 'bottomLeft' | 'bottomRight', paneIndex: number) => {
+        const paneFile = getRealFileAt(paneIndex);
+        await imageWindow.emit('update-img', {
+          fileId: paneFile?.id || 0,
+          fileIndex: paneFile ? paneIndex : -1,
+          fileCount,
+          nextFilePath: paneFile ? getNextImageFilePath(paneIndex) : '',
+          pane,
+        });
+      };
+      await emitComparisonPane('bottomLeft', 2);
+      // A three-image comparison intentionally leaves the fourth pane blank.
+      await emitComparisonPane('bottomRight', 3);
     }
 
     if(newViewer) {

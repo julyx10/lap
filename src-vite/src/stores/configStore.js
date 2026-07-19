@@ -85,7 +85,6 @@ export const useConfigStore = defineStore('configStore', {
     },
 
     imageViewer: {
-      splitCount: 1,            // image viewer pane count (1, 2, or 4)
       isSyncViewport: false,    // sync viewport
       isFullScreen: false,      // native fullscreen in image viewer window
     },

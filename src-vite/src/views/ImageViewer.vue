@@ -35,7 +35,6 @@
           :imageMinScale="imageMinScale"
           :imageMaxScale="imageMaxScale"
           :isZoomFit="isZoomFit"
-          :splitCount="splitCount"
           :isSyncViewport="isSyncViewport"
           :showWindowControls="true"
           @prev="clickPrev()"
@@ -83,8 +82,8 @@
             :imageMinScale="getPaneScale(activePane).min"
             :imageMaxScale="getPaneScale(activePane).max"
             :isZoomFit="getZoomFitByPane(activePane)"
-            :splitCount="splitCount"
             :isSyncViewport="isSyncViewport"
+            :showSyncViewportControl="isCompareModeSession"
             :forceToolbarVisible="isFullScreen && splitToolbarVisible"
             @prev="clickPrev(activePane)"
             @next="clickNext(activePane)"
@@ -106,7 +105,7 @@
               v-for="pane in visiblePanes"
               :key="pane"
               class="relative min-w-0 min-h-0"
-              :class="paneBorderClass(pane)"
+              :class="[paneBorderClass(pane), !isPaneAvailable(pane) ? 'pointer-events-none opacity-40' : '']"
               @mousedown="setActivePane(pane)"
             >
               <MediaViewer
@@ -121,8 +120,8 @@
                 :fileCount="fileCount"
                 :isSlideShow="false"
                 :canSlideShow="false"
-                :canInteract="activePane === pane"
-                :isPlaybackActive="activePane === pane"
+                :canInteract="isPaneAvailable(pane) && activePane === pane"
+                :isPlaybackActive="isPaneAvailable(pane) && activePane === pane"
                 :showToolbar="false"
                 :imageScale="getPaneScale(pane).scale"
                 :imageMinScale="getPaneScale(pane).min"
@@ -141,7 +140,7 @@
                 @slideshow-next="handleSlideshowNext"
               />
               <div
-                v-if="activePane === pane"
+                v-if="isPaneAvailable(pane) && activePane === pane"
                 class="absolute inset-0 z-90 border border-primary/70 pointer-events-none"
               />
             </div>
@@ -255,6 +254,7 @@ const splitCount = ref<1 | 2 | 4>(1);
 const activePane = ref<Pane>('left');
 const isSyncViewport = ref(false);
 const isCompareModeSession = ref(false);
+const compareFileCount = ref(0);
 const syncingPane = ref<Pane | ''>('');
 const animateSyncOnce = ref(false);
 const splitToolbarVisible = ref(false);
@@ -361,15 +361,16 @@ onMounted(async() => {
   const initialRightFileId = Number(urlParams.get('rightFileId') || '0');
   const initialRightFileIndex = Number(urlParams.get('rightFileIndex') || '-1');
   rightNextFilePath.value = decodeURIComponent(urlParams.get('rightNextFilePath') || '');
-  const forceSplit = urlParams.get('forceSplit') === '1';
+  const forceSplitCount = normalizeSplitCount(urlParams.get('forceSplitCount'));
   isCompareModeSession.value = urlParams.get('compareMode') === '1';
+  compareFileCount.value = isCompareModeSession.value ? Number(urlParams.get('compareFileCount') || '0') : 0;
 
-  splitCount.value = forceSplit ? 2 : normalizeSplitCount(config.imageViewer?.splitCount);
+  splitCount.value = 1;
   if (isCompareModeSession.value) {
-    splitCount.value = 2;
-    isSyncViewport.value = true;
-  } else {
+    splitCount.value = forceSplitCount > 1 ? forceSplitCount : 2;
     isSyncViewport.value = !!config.imageViewer?.isSyncViewport;
+  } else {
+    isSyncViewport.value = false;
   }
   rightFileId.value = initialRightFileId > 0 ? initialRightFileId : 0;
   rightFileIndex.value = initialRightFileId > 0 ? initialRightFileIndex : -1;
@@ -389,22 +390,23 @@ onMounted(async() => {
     if (typeof event.payload?.compareMode === 'boolean') {
       isCompareModeSession.value = !!event.payload.compareMode;
     }
-    if (typeof event.payload?.forceSplit === 'boolean') {
-      splitCount.value = event.payload.forceSplit ? 2 : 1;
-      if (splitCount.value > 1 && typeof event.payload?.forceSyncViewport === 'boolean') {
-        isSyncViewport.value = !!event.payload.forceSyncViewport;
-      }
-      if (splitCount.value === 1) {
-        clearSecondaryPanes();
-      }
+    if (typeof event.payload?.compareFileCount === 'number') {
+      compareFileCount.value = Number(event.payload.compareFileCount);
+    } else if (!isCompareModeSession.value) {
+      compareFileCount.value = 0;
+    }
+    const requestedSplitCount = normalizeSplitCount(event.payload?.forceSplitCount);
+    if (requestedSplitCount > 1) {
+      splitCount.value = requestedSplitCount;
     }
     if (event.payload?.resetSplit) {
+      if (isCompareModeSession.value) clearSecondaryPanes();
       if (isCompareModeSession.value) {
-        splitCount.value = 2;
-        isSyncViewport.value = true;
-      } else {
-        splitCount.value = normalizeSplitCount((config.imageViewer as any)?.splitCount);
+        splitCount.value = requestedSplitCount > 1 ? requestedSplitCount : splitCount.value > 1 ? splitCount.value : 2;
         isSyncViewport.value = !!config.imageViewer?.isSyncViewport;
+      } else {
+        splitCount.value = 1;
+        isSyncViewport.value = false;
       }
       if (splitCount.value === 1) {
         clearSecondaryPanes();
@@ -416,10 +418,12 @@ onMounted(async() => {
       rightFileId.value = Number(event.payload.fileId);
       rightFileIndex.value = Number(event.payload.fileIndex);
       rightNextFilePath.value = event.payload.nextFilePath || '';
+      if (rightFileId.value <= 0) rightFileInfo.value = null;
     } else if (pane === 'bottomLeft' || pane === 'bottomRight') {
       extraPaneState[pane].fileId = Number(event.payload.fileId);
       extraPaneState[pane].fileIndex = Number(event.payload.fileIndex);
       extraPaneState[pane].nextFilePath = event.payload.nextFilePath || '';
+      if (extraPaneState[pane].fileId <= 0) extraPaneState[pane].fileInfo = null;
     } else {
       fileId.value = Number(event.payload.fileId);
       fileIndex.value = Number(event.payload.fileIndex);
@@ -461,6 +465,31 @@ onMounted(async() => {
     const deletedIds = Array.isArray(event?.payload?.fileIds)
       ? event.payload.fileIds.map((id: any) => Number(id)).filter((id: number) => id > 0)
       : [];
+    const comparisonNextCount = Number(event?.payload?.compareFileCount);
+    // An external deletion arrives before Content has updated and rebroadcast
+    // the comparison snapshot. Ignore that first event instead of applying the
+    // full file list count to this isolated session.
+    if (isCompareModeSession.value && Number.isNaN(comparisonNextCount)) return;
+    if (isCompareModeSession.value) {
+      compareFileCount.value = comparisonNextCount;
+      fileCount.value = comparisonNextCount;
+      fileId.value = 0;
+      fileIndex.value = -1;
+      fileInfo.value = null;
+      nextFilePath.value = '';
+      clearSecondaryPanes();
+      activePane.value = 'left';
+
+      // Compare always restarts with the first visible items in the updated
+      // selection, rather than preserving stale per-pane positions.
+      if (comparisonNextCount > 0) {
+        requestFileAtIndex(0, 'left');
+        if (comparisonNextCount > 1) requestFileAtIndex(1, 'right');
+        if (splitCount.value === 4 && comparisonNextCount > 2) requestFileAtIndex(2, 'bottomLeft');
+        if (splitCount.value === 4 && comparisonNextCount > 3) requestFileAtIndex(3, 'bottomRight');
+      }
+      return;
+    }
     const nextCount = Number(event?.payload?.fileCount);
     if (!Number.isNaN(nextCount) && nextCount >= 0) {
       fileCount.value = nextCount;
@@ -539,10 +568,12 @@ function handleKeyDown(event: KeyboardEvent) {
 
   if (event.key === 'Tab' && splitCount.value > 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
     event.preventDefault();
-    const panes = visiblePanes.value;
+    const panes = getAvailablePanes();
+    if (panes.length === 0) return;
     const currentIndex = panes.indexOf(activePane.value);
     const direction = event.shiftKey ? -1 : 1;
-    setActivePane(panes[(currentIndex + direction + panes.length) % panes.length]);
+    const startIndex = currentIndex >= 0 ? currentIndex : 0;
+    setActivePane(panes[(startIndex + direction + panes.length) % panes.length]);
     return;
   }
 
@@ -602,8 +633,10 @@ function handleKeyDown(event: KeyboardEvent) {
 
   if (matchesShortcut('view.togglePane', event, shortcutPlatform) && splitCount.value > 1) {
     event.preventDefault();
-    const panes = visiblePanes.value;
-    setActivePane(panes[(panes.indexOf(activePane.value) + 1) % panes.length]);
+    const panes = getAvailablePanes();
+    if (panes.length === 0) return;
+    const currentIndex = panes.indexOf(activePane.value);
+    setActivePane(panes[((currentIndex >= 0 ? currentIndex : -1) + 1) % panes.length]);
     return;
   }
 
@@ -667,7 +700,16 @@ function getActivePane(): Pane {
 }
 
 function setActivePane(pane: Pane) {
+  if (!isPaneAvailable(pane)) return;
   activePane.value = pane;
+}
+
+function isPaneAvailable(pane: Pane) {
+  return getFileIdByPane(pane) > 0;
+}
+
+function getAvailablePanes() {
+  return visiblePanes.value.filter(isPaneAvailable);
 }
 
 function setPaneViewerRef(pane: Pane, viewer: any) {
@@ -789,7 +831,7 @@ watch(() => config.settings.language, (newLanguage) => {
 // watch full screen
 watch(() => isFullScreen.value, async (newFullScreen) => {
   if (!config.imageViewer) {
-    (config as any).imageViewer = { splitCount: 1, isSyncViewport: false, isFullScreen: false };
+    (config as any).imageViewer = { isSyncViewport: false, isFullScreen: false };
   }
   config.imageViewer.isFullScreen = newFullScreen;
 
@@ -803,6 +845,14 @@ watch(() => isFullScreen.value, async (newFullScreen) => {
     }
   }
 }); 
+
+watch(() => isSyncViewport.value, (isSync) => {
+  if (!isCompareModeSession.value) return;
+  if (!config.imageViewer) {
+    (config as any).imageViewer = { isSyncViewport: false, isFullScreen: false };
+  }
+  config.imageViewer.isSyncViewport = isSync;
+});
 
 // watch file changed
 watch(() => fileId.value, async () => {
@@ -899,6 +949,10 @@ watch(() => slideShowIntervalIndex.value, () => {
 
 function ensureRightPaneLoaded() {
   if (splitCount.value === 1) return;
+  if (isCompareModeSession.value && compareFileCount.value < 2) {
+    clearSecondaryPanes();
+    return;
+  }
   if (rightFileIndex.value >= 0 && rightFileId.value > 0) return;
   if (fileCount.value <= 0 || fileIndex.value < 0) return;
 
@@ -910,6 +964,7 @@ function ensureFourPanesLoaded() {
   if (splitCount.value !== 4 || fileCount.value <= 0 || fileIndex.value < 0) return;
   ensureRightPaneLoaded();
   for (const [pane, offset] of [['bottomLeft', 2], ['bottomRight', 3]] as const) {
+    if (isCompareModeSession.value && offset >= compareFileCount.value) continue;
     if (extraPaneState[pane].fileIndex >= 0 && extraPaneState[pane].fileId > 0) continue;
     requestFileAtIndex(Math.min(fileIndex.value + offset, fileCount.value - 1), pane);
   }
@@ -930,28 +985,10 @@ function clearSecondaryPanes() {
 }
 
 watch(() => splitCount.value, (count) => {
-  if (isCompareModeSession.value) {
-    if (count > 1) {
-      ensureRightPaneLoaded();
-    }
-    return;
-  }
-  if (!config.imageViewer) {
-    (config as any).imageViewer = { splitCount: 1, isSyncViewport: false, isFullScreen: false };
-  }
-  (config.imageViewer as any).splitCount = count;
   if (count > 1) {
     ensureRightPaneLoaded();
     ensureFourPanesLoaded();
   }
-});
-
-watch(() => isSyncViewport.value, (val) => {
-  if (isCompareModeSession.value) return;
-  if (!config.imageViewer) {
-    (config as any).imageViewer = { splitCount: 1, isSyncViewport: false, isFullScreen: false };
-  }
-  config.imageViewer.isSyncViewport = val;
 });
 
 watch(() => [fileIndex.value, fileCount.value], () => {
@@ -1128,29 +1165,6 @@ const clickScale = (event: any, pane: Pane = 'left') => {
   imageMaxScale.value = event.maxScale;
 };
 
-const setSplitCount = (count: 1 | 2 | 4) => {
-  if (splitCount.value === count) return;
-  splitCount.value = count;
-  activePane.value = 'left';
-
-  if (count === 1) {
-    clearSecondaryPanes();
-    return;
-  }
-
-  if (isSlideShow.value) stopSlideShow();
-  rightIsZoomFit.value = true;
-  rightImageScale.value = 1;
-  rightImageDisplayScale.value = 1;
-  rightImageMinScale.value = 0;
-  rightImageMaxScale.value = 10;
-  if (count === 2) {
-    ensureRightPaneLoaded();
-  } else {
-    ensureFourPanesLoaded();
-  }
-};
-
 const toggleSyncViewport = () => {
   if (splitCount.value === 1) return;
   isSyncViewport.value = !isSyncViewport.value;
@@ -1246,7 +1260,7 @@ async function updateFileHasTags(fileStates: Array<{ file_id: number; has_tags: 
   showTaggingDialog.value = false;
 }
 
-const handleItemAction = async (payload: { action: string; splitCount?: number }) => {
+const handleItemAction = async (payload: { action: string }) => {
   const pane = getActiveFilePane();
 
   switch (payload.action) {
@@ -1278,11 +1292,6 @@ const handleItemAction = async (payload: { action: string; splitCount?: number }
       break;
     case 'zoom-actual':
       clickZoomActual(pane);
-      break;
-    case 'set-split-count':
-      if (payload.splitCount === 1 || payload.splitCount === 2 || payload.splitCount === 4) {
-        setSplitCount(payload.splitCount);
-      }
       break;
     case 'toggle-sync-viewport':
       toggleSyncViewport();

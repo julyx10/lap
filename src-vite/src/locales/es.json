@@ -538,6 +538,7 @@
       "open_image_in_app": "Abrir imagen en {app}...",
       "open_video_in_app": "Abrir video en {app}...",
       "open_selected_images_in_app": "Abrir imágenes seleccionadas en {app}...",
+      "compare_selected_images": "Comparar imágenes seleccionadas",
       "open_selected_videos_in_app": "Abrir videos seleccionados en {app}...",
       "open_in_app": "Abrir en app externa...",
       "find_similar_images": "Buscar similares",
@@ -983,15 +984,8 @@
       "pin": "Fijar barra",
       "unpin": "Desfijar barra",
       "close": "Cerrar",
-      "split_on": "Activar vista dividida",
-      "split_off": "Desactivar vista dividida",
-      "split_2_on": "Activar vista de dos paneles",
-      "split_2_off": "Desactivar vista de dos paneles",
-      "split_4_on": "Activar vista de cuatro paneles",
-      "split_4_off": "Desactivar vista de cuatro paneles",
-      "sync_viewport_on": "Activar zoom vinculado",
-      "sync_viewport_off": "Desactivar zoom vinculado",
-      "sync_viewport_need_split": "Primero activa la vista dividida"
+      "sync_viewport_on": "Vincular zoom y desplazamiento",
+      "sync_viewport_off": "Desvincular zoom y desplazamiento"
     }
   },
   "video": {

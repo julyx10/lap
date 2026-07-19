@@ -538,6 +538,7 @@
       "open_image_in_app": "Open image in {app}...",
       "open_video_in_app": "Open video in {app}...",
       "open_selected_images_in_app": "Open selected images in {app}...",
+      "compare_selected_images": "Compare selected images",
       "open_selected_videos_in_app": "Open selected videos in {app}...",
       "open_in_app": "Open in external app...",
       "find_similar_images": "Find similar images",
@@ -983,15 +984,8 @@
       "pin": "Pin toolbar",
       "unpin": "Unpin toolbar",
       "close": "Close",
-      "split_on": "Enable split view",
-      "split_off": "Disable split view",
-      "split_2_on": "Enable two-pane view",
-      "split_2_off": "Disable two-pane view",
-      "split_4_on": "Enable four-pane view",
-      "split_4_off": "Disable four-pane view",
-      "sync_viewport_on": "Enable linked zoom",
-      "sync_viewport_off": "Disable linked zoom",
-      "sync_viewport_need_split": "Enable split view first"
+      "sync_viewport_on": "Link zoom and pan",
+      "sync_viewport_off": "Unlink zoom and pan"
     }
   },
   "video": {
