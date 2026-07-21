@@ -67,15 +67,25 @@
           @multi-select="handleFileTypeSelect"
         />
 
-        <!-- sort type options (hidden in AI search mode and similar temp mode) -->
+        <!-- sort type options -->
         <DropDownSelect
-          v-if="!isAiSearchMode && tempViewMode !== 'similar'"
-          :options="sortOptions"
+          :options="toolbarSortOptions"
           :defaultIndex="toolbarSortType"
-          :extendOptions="sortExtendOptions"
+          :extendOptions="toolbarSortExtendOptions"
           :defaultExtendIndex="toolbarSortOrder"
-          :disabled="tempViewMode === 'album' || tempViewMode === 'person' || isScanStreamingMode"
+          :disabled="isSortControlDisabled"
+          :selected="isSmartAlbumSortOverride"
           @select="handleSortTypeSelect"
+        />
+
+        <!-- global grouping options for query-backed grid views -->
+        <DropDownSelect
+          :options="toolbarGroupOptions"
+          :defaultIndex="toolbarGroupIndex"
+          :separatorsAfter="toolbarGroupOptions.length > 1 ? [0] : []"
+          :disabled="isGroupControlDisabled"
+          :selected="isSmartAlbumGroupOverride"
+          @select="handleGroupSelect"
         />
 
         <!-- select and layout section -->
@@ -186,7 +196,7 @@
                 :empty-message="emptyFilesMessage"
                 :empty-hint="emptyFilesHint"
                 :layout-version="layoutVersion"
-                :group-by="activeGroupBy"
+                :group-by="effectiveGroupBy"
                 :group-selected-counts="groupSelectedCounts"
                 :group-selection-loading="groupSelectionLoading"
                 :folder-group-roots="folderGroupRoots"
@@ -645,7 +655,7 @@ import { getAlbum, getAllAlbums, recountAlbum, getQueryCountAndSum, getQueryTime
          updateFileInfo, importFile, importUrl, importFileBytes, getDragPayload, importClipboard, addFileToDb, checkFileExists, cancelIndexing as cancelIndexingApi, selectFolder, getFacesForFile, listenFaceIndexProgress,
          openFilesWithApp, getAppConfig, getIndexRecoveryInfo, clearIndexRecoveryInfo, setLastSelectedItemIndex,
          dedupDeleteSelected, getQueryFilePosition, getFolderSearchExcluded,
-         listCollections, createCollection, addFilesToCollection, removeFilesFromCollection, getCollectionCountAndSum, getCollectionFiles, getCollectionFileIds, fetchFolder } from '@/common/api';
+         listCollections, createCollection, addFilesToCollection, removeFilesFromCollection, getCollectionCountAndSum, getCollectionFiles, getCollectionGroupedQueryRows, getCollectionGroupFileIds, getCollectionQueryFileIds, fetchFolder } from '@/common/api';
 import { config, libConfig } from '@/common/config';
 import { getShortcutLabel, matchesShortcut, ShortcutActionId, ShortcutPlatform, VIEW_BACKGROUND_SHORTCUTS } from '@/common/shortcuts';
 import { getSmartTagById, SMART_TAG_SEARCH_THRESHOLD } from '@/common/smartTags';
@@ -1054,46 +1064,43 @@ function getActiveCustomSmartAlbum() {
   ) || null;
 }
 
-function getAutoGroupByForCurrentView() {
-  if (libConfig.activePane === 'collection') return GROUP.NONE;
-  switch (Number(config.main.sidebarIndex)) {
-    case SIDEBAR.LIBRARY:
-      if (libConfig.library.item === LIB_ITEM.TODAY) return GROUP.YEAR;
-      return libConfig.library.item === LIB_ITEM.RATINGS && libConfig.rating.item === RATE.ALL ? GROUP.RATING : GROUP.NONE;
-    case SIDEBAR.ALBUM:
-      return libConfig.album.selected || !config.settings.showSubfolderFiles || !selectedFolderHasChildren.value
-        ? GROUP.NONE
-        : GROUP.FOLDER;
-    case SIDEBAR.SMART_ALBUM:
-      return Number(getActiveCustomSmartAlbum()?.group?.type ?? GROUP.NONE);
-    case SIDEBAR.CALENDAR:
-      if (config.calendar.isMonthly) {
-        return libConfig.calendar.year !== null && libConfig.calendar.month === -1 ? GROUP.MONTH : GROUP.NONE;
-      }
-      return libConfig.calendar.year !== null && libConfig.calendar.month !== -1 && libConfig.calendar.date === -1 ? GROUP.DAY : GROUP.NONE;
-    case SIDEBAR.TAG:
-      return GROUP.NONE; // Tag and smart tag: disabled
-    case SIDEBAR.LOCATION:
-      return libConfig.location.admin1 && !libConfig.location.name ? GROUP.LOCATION : GROUP.NONE;
-    case SIDEBAR.CAMERA:
-      if (!config.camera.isCamera) {
-        return (libConfig.camera as any).lensMake && !(libConfig.camera as any).lensModel ? GROUP.LENS : GROUP.NONE;
-      }
-      return libConfig.camera.make && !libConfig.camera.model ? GROUP.CAMERA : GROUP.NONE;
-    default:
-      return GROUP.NONE;
-  }
-}
+const isCollectionPane = computed(() => libConfig.activePane === 'collection');
 
-const activeGroupBy = computed(() => getAutoGroupByForCurrentView());
+const effectiveGroupBy = computed(() => {
+  const smartAlbum = getActiveCustomSmartAlbum();
+  return Number(
+    !isCollectionPane.value && config.main.sidebarIndex === SIDEBAR.SMART_ALBUM && smartAlbum
+      ? smartAlbum.group?.type ?? config.search.groupBy ?? GROUP.NONE
+      : config.search.groupBy ?? GROUP.NONE
+  );
+});
+
+const isSearchGroupingView = computed(() =>
+  config.main.sidebarIndex === SIDEBAR.SEARCH
+);
+
+const isSubjectGroupingView = computed(() =>
+  config.main.sidebarIndex === SIDEBAR.LIBRARY &&
+  libConfig.library.item === LIB_ITEM.SUBJECTS
+);
+
+const isGroupingControlAvailable = computed(() =>
+  !config.settings.grid.showFilmStrip &&
+  !isScanStreamingMode.value &&
+  tempViewMode.value === 'none' &&
+  (libConfig.activePane === 'collection' || (
+    !isSearchGroupingView.value &&
+    !isSubjectGroupingView.value
+  ))
+);
 
 function isGroupingSupportedForCurrentView() {
   return (
-    activeGroupBy.value > 0 &&
+    effectiveGroupBy.value > 0 &&
     !config.settings.grid.showFilmStrip &&
     !isScanStreamingMode.value &&
     tempViewMode.value === 'none' &&
-    config.main.sidebarIndex !== SIDEBAR.SEARCH
+    currentQuerySource.value !== 'search'
   );
 }
 
@@ -1157,7 +1164,7 @@ function formatRatingGroupLabel(label: string) {
 }
 
 function formatGroupLabel(label: string) {
-  const groupBy = Number(activeGroupBy.value || 0);
+  const groupBy = Number(effectiveGroupBy.value || 0);
   if (groupBy === GROUP.DAY || groupBy === GROUP.MONTH || groupBy === GROUP.YEAR) return formatDateGroupLabel(groupBy, label);
   if (groupBy === GROUP.FOLDER) return formatFolderGroupLabel(label);
   if (groupBy === GROUP.RATING) return formatRatingGroupLabel(label);
@@ -1173,7 +1180,7 @@ function getGroupingQueryParams() {
     : Number(config.settings.calendarSort || 0);
   return {
     ...baseParams,
-    groupBy: activeGroupBy.value,
+    groupBy: effectiveGroupBy.value,
     folderSort: Number(config.settings.folderSort || 0),
     calendarSort,
     categorySort: Number(config.settings.categorySort || 0),
@@ -1703,11 +1710,15 @@ async function removeFileFromCurrentCollection(index: number) {
   const file = fileList.value[index];
   if (!file || !currentCollectionId.value) return;
   await removeFilesFromCollection(currentCollectionId.value, [file.id]);
-  fileList.value.splice(index, 1);
-  totalFileCount.value = fileList.value.length;
-  totalFileSize.value -= file.size || 0;
-  if (selectedItemIndex.value >= fileList.value.length) {
-    selectedItemIndex.value = fileList.value.length - 1;
+  if (groupedModeActive.value) {
+    await updateContent(true);
+  } else {
+    fileList.value.splice(index, 1);
+    totalFileCount.value = fileList.value.length;
+    totalFileSize.value -= file.size || 0;
+    if (selectedItemIndex.value >= fileList.value.length) {
+      selectedItemIndex.value = fileList.value.length - 1;
+    }
   }
   void tauriEmit('collection-files-dropped', { collectionId: currentCollectionId.value });
   toast.success(t('collection.removed_toast', { count: 1 }));
@@ -1719,13 +1730,17 @@ async function removeSelectedFromCollection() {
   const fileIds = selectedItems.map((item: any) => Number(item.id)).filter((id: number) => id > 0);
   if (fileIds.length === 0) return;
   await removeFilesFromCollection(currentCollectionId.value, fileIds);
-  const removedIdSet = new Set(fileIds);
-  fileList.value = fileList.value.filter(f => !removedIdSet.has(f.id));
-  totalFileCount.value = fileList.value.length;
-  totalFileSize.value = fileList.value.reduce((total, file) => total + file.size, 0);
-  selectedItemIndex.value = fileList.value.length > 0 ? Math.min(selectedItemIndex.value, fileList.value.length - 1) : -1;
-  selectedCount.value = Math.max(0, selectedCount.value - fileIds.length);
-  selectedSize.value = Math.max(0, selectedSize.value - selectedItems.reduce((total, item) => total + Number(item.size || 0), 0));
+  if (groupedModeActive.value) {
+    await updateContent(true);
+  } else {
+    const removedIdSet = new Set(fileIds);
+    fileList.value = fileList.value.filter(f => !removedIdSet.has(f.id));
+    totalFileCount.value = fileList.value.length;
+    totalFileSize.value = fileList.value.reduce((total, file) => total + file.size, 0);
+    selectedItemIndex.value = fileList.value.length > 0 ? Math.min(selectedItemIndex.value, fileList.value.length - 1) : -1;
+    selectedCount.value = Math.max(0, selectedCount.value - fileIds.length);
+    selectedSize.value = Math.max(0, selectedSize.value - selectedItems.reduce((total, item) => total + Number(item.size || 0), 0));
+  }
   void tauriEmit('collection-files-dropped', { collectionId: currentCollectionId.value });
   toast.success(t('collection.removed_toast', { count: fileIds.length }));
 }
@@ -2967,9 +2982,11 @@ async function getCachedGroupFileIds(groupId: string) {
   const cached = groupFileIdsCache.get(groupId);
   if (cached) return cached;
 
-  const result = currentQuerySource.value === 'smart' && currentSmartQueryParams.value
-    ? await getSmartGroupFileIds(getGroupingQueryParams(), groupId)
-    : await getGroupFileIds(getGroupingQueryParams(), groupId);
+  const result = currentQuerySource.value === 'collection' && currentCollectionId.value
+    ? await getCollectionGroupFileIds(currentCollectionId.value, getGroupingQueryParams(), groupId)
+    : currentQuerySource.value === 'smart' && currentSmartQueryParams.value
+      ? await getSmartGroupFileIds(getGroupingQueryParams(), groupId)
+      : await getGroupFileIds(getGroupingQueryParams(), groupId);
   const ids = Array.isArray(result)
     ? result
     : Array.isArray(result?.file_ids)
@@ -3747,7 +3764,7 @@ watch(isScanStreamingMode, (streaming) => {
     config.rightPanel.show = false;
     if (selectMode.value) selectMode.value = false;
   }
-  if (groupedModeActive.value || activeGroupBy.value > 0) {
+  if (groupedModeActive.value || effectiveGroupBy.value > 0) {
     updateContent();
   }
 });
@@ -4625,7 +4642,7 @@ watch(
     libConfig.rating.item, // rating
     config.search.fileType, config.search.sortType, config.search.sortOrder, // search and sort 
     config.settings.showSubfolderFiles,                                            // album folder view
-    config.settings.folderSort, config.settings.calendarSort, config.settings.categorySort, // group sorting
+    config.settings.folderSort, config.settings.calendarSort, config.settings.categorySort, config.search.groupBy, // group sorting
     libConfig.person.id,                                                              // person
     config.calendar.isMonthly, libConfig.calendar.year, libConfig.calendar.month, libConfig.calendar.date, // calendar
     libConfig.tag.id,             // tag
@@ -4769,6 +4786,9 @@ const getCurrentQueryFiles = (offset: number, limit: number) => {
 };
 
 const getCurrentGroupedQueryRows = (offset: number, limit: number) => {
+  if (currentQuerySource.value === 'collection' && currentCollectionId.value) {
+    return getCollectionGroupedQueryRows(currentCollectionId.value, getGroupingQueryParams(), offset, limit);
+  }
   if (currentQuerySource.value === 'smart' && currentSmartQueryParams.value) {
     return getSmartGroupedQueryRows(getGroupingQueryParams(), offset, limit);
   }
@@ -4780,7 +4800,7 @@ const getCurrentQueryFileIds = () => {
     return Promise.resolve([...currentSearchFileIds.value]);
   }
   if (currentQuerySource.value === 'collection' && currentCollectionId.value) {
-    return getCollectionFileIds(currentCollectionId.value);
+    return getCollectionQueryFileIds(currentCollectionId.value, getGroupingQueryParams());
   }
   if (currentQuerySource.value === 'smart' && currentSmartQueryParams.value) {
     return getSmartQueryFileIds(getGroupingQueryParams());
@@ -4793,7 +4813,7 @@ const getCurrentQueryFilePosition = async (fileId: number) => {
     return currentSearchFileIds.value.findIndex(id => Number(id) === Number(fileId));
   }
   if (currentQuerySource.value === 'collection' && currentCollectionId.value) {
-    const ids = await getCollectionFileIds(currentCollectionId.value);
+    const ids = await getCollectionQueryFileIds(currentCollectionId.value, currentQueryParams.value);
     return Array.isArray(ids) ? ids.findIndex((id: number) => Number(id) === Number(fileId)) : null;
   }
   if (currentQuerySource.value === 'smart' && currentSmartQueryParams.value) {
@@ -5087,7 +5107,7 @@ async function initializeGroupedFileList(requestId: number) {
     return false;
   }
 
-  if (activeGroupBy.value === GROUP.FOLDER) {
+  if (effectiveGroupBy.value === GROUP.FOLDER) {
     await ensureFolderGroupRoots();
   }
 
@@ -5506,6 +5526,8 @@ async function getCollectionFileList(collectionId: number, requestId: number) {
   isLoading.value = true;
 
   try {
+    if (await initializeGroupedFileList(requestId)) return;
+
     const result = await getCurrentQueryCountAndSum();
     if (requestId !== currentContentRequestId) return;
 
@@ -5573,7 +5595,7 @@ async function getSmartFileList(smartAlbum: any, requestId: number) {
     folderSort: Number(config.settings.folderSort || 0),
     calendarSort: Number(config.settings.calendarSort || 0),
     categorySort: Number(config.settings.categorySort || 0),
-    groupBy: Number(smartAlbum?.group?.type ?? GROUP.NONE),
+    groupBy: effectiveGroupBy.value,
   };
   void updateSmartAlbumCover(smartAlbum, requestId);
 
@@ -6801,7 +6823,7 @@ const onMoveTo = async () => {
   if (destAlbumId > 0) affectedAlbumIds.add(destAlbumId);
   await refreshAffectedAlbums(Array.from(affectedAlbumIds));
   await refreshLibraryTotalCount();
-  if (successCount > 0 && (groupedModeActive.value || activeGroupBy.value > 0)) {
+  if (successCount > 0 && (groupedModeActive.value || effectiveGroupBy.value > 0)) {
     await updateContent(true);
   }
 
@@ -6970,7 +6992,7 @@ const onMoveToFolder = async () => {
     // Moving a file changes its grouping key (for example, folder grouping).
     // The flat list was updated optimistically above, but grouped rows and
     // group counts must be rebuilt from the current query result.
-    if (groupedModeActive.value || activeGroupBy.value > 0) {
+    if (groupedModeActive.value || effectiveGroupBy.value > 0) {
       await updateContent(true);
     }
   }
@@ -7947,6 +7969,18 @@ const handleSortTypeSelect = (option: any, extendOption: any) => {
   }
 };
 
+const handleGroupSelect = (optionIndex: any) => {
+  if (isScanStreamingMode.value) return;
+  const nextGroupBy = Number(groupOptions.value[Number(optionIndex)]?.value ?? GROUP.NONE);
+  if (isSmartAlbumView.value) {
+    const album = getActiveCustomSmartAlbum();
+    if (album) album.group = { ...(album.group || {}), type: nextGroupBy };
+  } else {
+    config.search.groupBy = nextGroupBy;
+  }
+  selectMode.value = false;
+};
+
 const toggleInfoPanel = () => {
   checkUnsavedChanges(() => {
     if (isInfoPanelOpen.value) {
@@ -8067,27 +8101,78 @@ const sortOptions = computed(() => {
   return getSelectOptions(localeMsg.value.toolbar.filter?.sort_type_options);
 });
 
+const fixedAiSortOptions = computed(() => [{
+  label: localeMsg.value.settings?.image_search?.similarity || 'Similarity',
+  value: 0,
+}]);
+
+const toolbarSortOptions = computed(() =>
+  isFixedAiResultView.value ? fixedAiSortOptions.value : sortOptions.value
+);
+
 // sort extend options
 const sortExtendOptions = computed(() => {
   return getSelectOptions(localeMsg.value.toolbar.filter?.sort_order_options);
 });
 
-const toolbarSortType = computed(() => (
-  config.main.sidebarIndex === SIDEBAR.SMART_ALBUM
+const toolbarSortExtendOptions = computed(() =>
+  isFixedAiResultView.value ? [] : sortExtendOptions.value
+);
+
+const groupTypeLabels = computed(() =>
+  localeMsg.value.toolbar.filter?.group_type_options || []
+);
+
+const groupOptions = computed(() => {
+  const options = [{
+    label: groupTypeLabels.value[GROUP.NONE] || 'None',
+    value: GROUP.NONE,
+  }];
+
+  return [
+    ...options,
+    ...[GROUP.FOLDER, GROUP.DAY, GROUP.MONTH, GROUP.YEAR, GROUP.RATING, GROUP.LOCATION, GROUP.CAMERA, GROUP.LENS]
+      .map(value => ({ label: groupTypeLabels.value[value], value }))
+      .filter(option => option.label),
+  ];
+});
+
+const fixedAiGroupOptions = computed(() => [{
+  label: isSubjectGroupingView.value
+    ? (groupTypeLabels.value[GROUP.NONE] || 'None')
+    : 'Matches',
+  value: GROUP.NONE,
+}]);
+
+const toolbarGroupOptions = computed(() =>
+  isFixedAiResultView.value ? fixedAiGroupOptions.value : groupOptions.value
+);
+
+const toolbarGroupIndex = computed(() => {
+  if (isFixedAiResultView.value) return 0;
+  const value = effectiveGroupBy.value;
+  return Math.max(0, toolbarGroupOptions.value.findIndex(option => Number(option.value) === value));
+});
+
+const toolbarSortType = computed(() => {
+  if (isFixedAiResultView.value) return 0;
+  return isSmartAlbumView.value
     ? Number(getActiveCustomSmartAlbum()?.sort?.type ?? 0)
-    : Number(config.search.sortType || 0)
-));
+    : Number(config.search.sortType || 0);
+});
 
 const toolbarSortOrder = computed(() => (
-  config.main.sidebarIndex === SIDEBAR.SMART_ALBUM
+  isSmartAlbumView.value
     ? Number(getActiveCustomSmartAlbum()?.sort?.order ?? 1)
     : Number(config.search.sortOrder || 0)
 ));
 
 const isSearchLikeView = computed(() => {
-  return config.main.sidebarIndex === SIDEBAR.SMART_ALBUM ||
+  return !isCollectionPane.value && (
+    config.main.sidebarIndex === SIDEBAR.SMART_ALBUM ||
     config.main.sidebarIndex === SIDEBAR.SEARCH ||
-    (config.main.sidebarIndex === SIDEBAR.LIBRARY && libConfig.library.item === LIB_ITEM.SUBJECTS);
+    (config.main.sidebarIndex === SIDEBAR.LIBRARY && libConfig.library.item === LIB_ITEM.SUBJECTS)
+  );
 });
 
 const isAiSearchMode = computed(() =>
@@ -8095,9 +8180,41 @@ const isAiSearchMode = computed(() =>
   (config.main.sidebarIndex === SIDEBAR.LIBRARY && libConfig.library.item === LIB_ITEM.SUBJECTS)
 );
 
-const isSmartAlbumView = computed(() =>
-  config.main.sidebarIndex === SIDEBAR.SMART_ALBUM
+const isFixedAiResultView = computed(() =>
+  libConfig.activePane !== 'collection' && isAiSearchMode.value
 );
+
+const isSortControlDisabled = computed(() =>
+  isFixedAiResultView.value ||
+  tempViewMode.value === 'album' ||
+  tempViewMode.value === 'person' ||
+  isScanStreamingMode.value
+);
+
+const isGroupControlDisabled = computed(() =>
+  isFixedAiResultView.value ||
+  !isGroupingControlAvailable.value ||
+  isScanStreamingMode.value
+);
+
+const isSmartAlbumView = computed(() =>
+  !isCollectionPane.value && config.main.sidebarIndex === SIDEBAR.SMART_ALBUM
+);
+
+const isSmartAlbumSortOverride = computed(() => {
+  if (!isSmartAlbumView.value) return false;
+  const sort = getActiveCustomSmartAlbum()?.sort;
+  return !!sort && (
+    Number(sort.type) !== Number(config.search.sortType || 0) ||
+    Number(sort.order) !== Number(config.search.sortOrder || 0)
+  );
+});
+
+const isSmartAlbumGroupOverride = computed(() => {
+  if (!isSmartAlbumView.value) return false;
+  const group = getActiveCustomSmartAlbum()?.group;
+  return !!group && Number(group.type) !== Number(config.search.groupBy ?? GROUP.NONE);
+});
 
 // update image when the select file is changed
 async function updateSelectedImage(index: number) {

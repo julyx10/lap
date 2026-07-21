@@ -902,6 +902,36 @@ export async function getCollectionFiles(collectionId, params, offset, limit) {
   return null;
 }
 
+/// get grouped rows from a collection query
+export async function getCollectionGroupedQueryRows(collectionId, params, offset, limit) {
+  try {
+    return await invoke('get_collection_grouped_query_rows', { collectionId, params, offset, limit });
+  } catch (error) {
+    console.error('Failed to get grouped collection rows:', error);
+  }
+  return null;
+}
+
+/// get all file ids in a collection query group
+export async function getCollectionGroupFileIds(collectionId, params, groupId) {
+  try {
+    return await invoke('get_collection_group_file_ids', { collectionId, params, groupId });
+  } catch (error) {
+    console.error('Failed to get collection group file ids:', error);
+  }
+  return null;
+}
+
+/// get all file ids in the current filtered and sorted collection query
+export async function getCollectionQueryFileIds(collectionId, params) {
+  try {
+    return await invoke('get_collection_query_file_ids', { collectionId, params });
+  } catch (error) {
+    console.error('Failed to get collection query file ids:', error);
+  }
+  return null;
+}
+
 // get all files from the folder (no pagination)
 export async function getFolderFiles(folderId, folderPath, fromDbOnly) {
   try {

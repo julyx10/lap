@@ -2417,6 +2417,20 @@ impl AFile {
         Ok(files)
     }
 
+    fn query_file_ids(sql: &str, params: &[&dyn rusqlite::ToSql]) -> Result<Vec<i64>, String> {
+        let conn = open_conn()?;
+        let mut stmt = conn.prepare(sql).map_err(|e| e.to_string())?;
+        let rows = stmt
+            .query_map(params, |row| row.get::<_, i64>(0))
+            .map_err(|e| e.to_string())?;
+
+        let mut ids = Vec::new();
+        for id in rows {
+            ids.push(id.map_err(|e| e.to_string())?);
+        }
+        Ok(ids)
+    }
+
     fn append_condition(where_clause: String, condition: &str) -> String {
         if where_clause.trim().is_empty() {
             format!(" WHERE {}", condition)
@@ -2482,6 +2496,164 @@ impl AFile {
         final_params.push(&limit);
         final_params.push(&offset);
         Self::query_files(&query, &final_params)
+    }
+
+    fn query_collection_groups(
+        collection_id: i64,
+        params: &QueryParams,
+    ) -> Result<Vec<QueryGroup>, String> {
+        let Some((group_id_expr, sort_expr)) =
+            Self::group_key_and_sort_expr(params.group_by, params.calendar_sort)
+        else {
+            return Ok(Vec::new());
+        };
+        let (joins, where_clause, sql_params) = Self::build_search_query_parts(params);
+        let where_clause = Self::append_condition(where_clause, "cf.collection_id = ?");
+        let sql = format!(
+            "SELECT group_id, group_id AS label, COUNT(*), COALESCE(SUM(size), 0)
+             FROM (
+                SELECT DISTINCT a.id, a.size, {group_id_expr} AS group_id, {sort_expr} AS group_sort
+                FROM afiles a
+                LEFT JOIN afolders b ON a.folder_id = b.id
+                LEFT JOIN albums c ON b.album_id = c.id
+                INNER JOIN acollections_files cf ON a.id = cf.file_id
+                {joins}{where_clause}
+             )
+             GROUP BY group_id
+             ORDER BY {}",
+            Self::group_order_clause(params)
+        );
+        let mut final_params: Vec<&dyn ToSql> = sql_params.iter().map(|p| p.as_ref()).collect();
+        final_params.push(&collection_id);
+        let conn = open_conn()?;
+        let mut stmt = conn.prepare(&sql).map_err(|e| e.to_string())?;
+        let rows = stmt
+            .query_map(&final_params[..], |row| {
+                Ok(QueryGroup {
+                    id: row.get(0)?,
+                    label: row.get(1)?,
+                    count: row.get(2)?,
+                    size: row.get(3)?,
+                })
+            })
+            .map_err(|e| e.to_string())?;
+
+        let mut groups = Vec::new();
+        for group in rows {
+            groups.push(group.map_err(|e| e.to_string())?);
+        }
+        Ok(groups)
+    }
+
+    fn get_collection_files_in_group(
+        collection_id: i64,
+        params: &QueryParams,
+        group_id: &str,
+        offset: i64,
+        limit: i64,
+    ) -> Result<Vec<Self>, String> {
+        if limit <= 0 {
+            return Ok(Vec::new());
+        }
+        let Some((group_id_expr, _)) =
+            Self::group_key_and_sort_expr(params.group_by, params.calendar_sort)
+        else {
+            return Ok(Vec::new());
+        };
+        let (joins, where_clause, sql_params) = Self::build_search_query_parts(params);
+        let where_clause = Self::append_condition(where_clause, "cf.collection_id = ?");
+
+        let mut query = Self::build_base_query();
+        query.push_str(" INNER JOIN acollections_files cf ON a.id = cf.file_id");
+        query.push_str(&joins);
+        query.push_str(&where_clause);
+        query.push_str(&format!(" AND {} = ?", group_id_expr));
+        query.push_str(" GROUP BY a.id");
+        query.push_str(&format!(" ORDER BY {}", Self::build_order_clause(params)));
+        query.push_str(" LIMIT ? OFFSET ?");
+
+        let group_id = group_id.to_string();
+        let mut final_params: Vec<&dyn ToSql> = sql_params.iter().map(|p| p.as_ref()).collect();
+        final_params.push(&collection_id);
+        final_params.push(&group_id);
+        final_params.push(&limit);
+        final_params.push(&offset);
+        Self::query_files(&query, &final_params)
+    }
+
+    pub fn get_collection_grouped_query_rows(
+        collection_id: i64,
+        params: &QueryParams,
+        offset: i64,
+        limit: i64,
+    ) -> Result<GroupedQueryResult, String> {
+        let groups = Self::query_collection_groups(collection_id, params)?;
+        Self::build_grouped_query_result(
+            groups,
+            offset,
+            limit,
+            |group, group_file_offset, group_file_limit| {
+                Self::get_collection_files_in_group(
+                    collection_id,
+                    params,
+                    &group.id,
+                    group_file_offset,
+                    group_file_limit,
+                )
+            },
+        )
+    }
+
+    pub fn get_collection_group_file_ids(
+        collection_id: i64,
+        params: &QueryParams,
+        group_id: &str,
+    ) -> Result<Vec<i64>, String> {
+        let Some((group_id_expr, _)) =
+            Self::group_key_and_sort_expr(params.group_by, params.calendar_sort)
+        else {
+            return Ok(Vec::new());
+        };
+        let (joins, where_clause, sql_params) = Self::build_search_query_parts(params);
+        let where_clause = Self::append_condition(where_clause, "cf.collection_id = ?");
+        let query = format!(
+            "SELECT a.id
+             FROM afiles a
+             LEFT JOIN afolders b ON a.folder_id = b.id
+             LEFT JOIN albums c ON b.album_id = c.id
+             INNER JOIN acollections_files cf ON a.id = cf.file_id
+             {joins}{where_clause} AND {group_id_expr} = ?
+             GROUP BY a.id
+             ORDER BY {}",
+            Self::build_order_clause(params)
+        );
+        let group_id = group_id.to_string();
+        let mut final_params: Vec<&dyn ToSql> = sql_params.iter().map(|p| p.as_ref()).collect();
+        final_params.push(&collection_id);
+        final_params.push(&group_id);
+        Self::query_file_ids(&query, &final_params)
+    }
+
+    pub fn get_collection_query_file_ids(
+        collection_id: i64,
+        params: &QueryParams,
+    ) -> Result<Vec<i64>, String> {
+        let (joins, where_clause, sql_params) = Self::build_search_query_parts(params);
+        let where_clause = Self::append_condition(where_clause, "cf.collection_id = ?");
+        let query = format!(
+            "SELECT a.id
+             FROM afiles a
+             LEFT JOIN afolders b ON a.folder_id = b.id
+             LEFT JOIN albums c ON b.album_id = c.id
+             INNER JOIN acollections_files cf ON a.id = cf.file_id
+             {joins}{where_clause}
+             GROUP BY a.id
+             ORDER BY {}",
+            Self::build_order_clause(params)
+        );
+        let mut final_params: Vec<&dyn ToSql> = sql_params.iter().map(|p| p.as_ref()).collect();
+        final_params.push(&collection_id);
+        Self::query_file_ids(&query, &final_params)
     }
 
     /// fetch a file info from db by folder_id and file name

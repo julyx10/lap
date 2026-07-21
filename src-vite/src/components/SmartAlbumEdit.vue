@@ -31,12 +31,6 @@
         <section class="col-span-2 rounded-box border border-base-content/10 bg-base-300/20 p-3 shadow-sm">
           <div class="grid grid-cols-3 gap-2">
             <label class="min-w-0 space-y-1">
-              <span class="block text-[10px] uppercase tracking-widest font-bold text-base-content/30">{{ $t('album.smart_edit.group') }}</span>
-              <select v-model.number="groupType" class="select select-sm text-xs w-full">
-                <option v-for="option in groupOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
-              </select>
-            </label>
-            <label class="min-w-0 space-y-1">
               <span class="block text-[10px] uppercase tracking-widest font-bold text-base-content/30">{{ $t('album.smart_edit.sort') }}</span>
               <select v-model.number="sortType" class="select select-sm text-xs w-full">
                 <option v-for="option in sortOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
@@ -46,6 +40,12 @@
               <span class="block text-[10px] uppercase tracking-widest font-bold text-base-content/30">{{ $t('album.smart_edit.order') }}</span>
               <select v-model.number="sortOrder" class="select select-sm text-xs w-full">
                 <option v-for="option in sortOrderOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
+              </select>
+            </label>
+            <label class="min-w-0 space-y-1">
+              <span class="block text-[10px] uppercase tracking-widest font-bold text-base-content/30">{{ $t('album.smart_edit.group') }}</span>
+              <select v-model.number="groupType" class="select select-sm text-xs w-full">
+                <option v-for="option in groupOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
               </select>
             </label>
           </div>
@@ -146,6 +146,7 @@ import { useI18n } from 'vue-i18n';
 import { getAllTags, getCameraInfo, getLensInfo, getLocationInfo, getPersons, getSupportedFormatExtensions } from '@/common/api';
 import { IconAdd, IconEdit, IconRemove } from '@/common/icons';
 import { useUIStore } from '@/stores/uiStore';
+import { config } from '@/common/config';
 import ModalDialog from '@/components/ModalDialog.vue';
 import TButton from '@/components/TButton.vue';
 
@@ -170,9 +171,9 @@ const name = ref(props.smartAlbum?.name || '');
 const description = ref(props.smartAlbum?.description || '');
 const showDescription = ref(description.value.trim().length > 0);
 const matchMode = ref(props.smartAlbum?.query?.match === 'any' ? 'any' : 'all');
-const groupType = ref(Number(props.smartAlbum?.group?.type ?? 0));
-const sortType = ref(Number(props.smartAlbum?.sort?.type ?? 0));
-const sortOrder = ref(Number(props.smartAlbum?.sort?.order ?? 1));
+const sortType = ref(Number(props.smartAlbum?.sort?.type ?? config.search.sortType ?? 0));
+const sortOrder = ref(Number(props.smartAlbum?.sort?.order ?? config.search.sortOrder ?? 1));
+const groupType = ref(Number(props.smartAlbum?.group?.type ?? config.search.groupBy ?? 0));
 
 const tagOptions = ref<any[]>([]);
 const personOptions = ref<any[]>([]);
@@ -196,14 +197,6 @@ function indexedOptions(labels: unknown, fallbacks: string[]) {
   }));
 }
 
-const groupOptions = computed(() => {
-  const labels = indexedOptions(
-    localeMsg.value.toolbar.filter?.group_type_options,
-    ['None', 'Folder', 'Day', 'Month', 'Rating', 'Location', 'Camera', 'Lens', 'Year'],
-  );
-  return [0, 1, 2, 3, 8, 4, 5, 6, 7].map(value => labels[value]);
-});
-
 const sortOptions = computed(() => indexedOptions(
   localeMsg.value.toolbar.filter?.sort_type_options,
   ['Taken Date', 'Created Date', 'Modified Date', 'Name', 'Size', 'Dimension', 'Duration', 'Rating', 'Random'],
@@ -212,6 +205,11 @@ const sortOptions = computed(() => indexedOptions(
 const sortOrderOptions = computed(() => indexedOptions(
   localeMsg.value.toolbar.filter?.sort_order_options,
   ['Ascending', 'Descending'],
+));
+
+const groupOptions = computed(() => indexedOptions(
+  localeMsg.value.toolbar.filter?.group_type_options,
+  ['None', 'Folder', 'Day', 'Month', 'Rating', 'Location', 'Camera', 'Lens', 'Year'],
 ));
 
 const fieldOptions = computed(() => [

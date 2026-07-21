@@ -836,6 +836,36 @@ pub fn get_collection_files(
 }
 
 #[tauri::command]
+pub fn get_collection_grouped_query_rows(
+    collection_id: i64,
+    params: QueryParams,
+    offset: i64,
+    limit: i64,
+) -> Result<GroupedQueryResult, String> {
+    AFile::get_collection_grouped_query_rows(collection_id, &params, offset, limit)
+        .map_err(|e| format!("Error while getting grouped collection rows: {}", e))
+}
+
+#[tauri::command]
+pub fn get_collection_group_file_ids(
+    collection_id: i64,
+    params: QueryParams,
+    group_id: String,
+) -> Result<Vec<i64>, String> {
+    AFile::get_collection_group_file_ids(collection_id, &params, &group_id)
+        .map_err(|e| format!("Error while getting collection group file ids: {}", e))
+}
+
+#[tauri::command]
+pub fn get_collection_query_file_ids(
+    collection_id: i64,
+    params: QueryParams,
+) -> Result<Vec<i64>, String> {
+    AFile::get_collection_query_file_ids(collection_id, &params)
+        .map_err(|e| format!("Error while getting collection query file ids: {}", e))
+}
+
+#[tauri::command]
 pub async fn get_smart_query_count_and_sum(params: SmartQueryParams) -> Result<(i64, i64), String> {
     AFile::get_smart_query_count_and_sum(&params)
         .map_err(|e| format!("Error while getting smart query files count: {}", e))

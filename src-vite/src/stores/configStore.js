@@ -48,6 +48,7 @@ export const useConfigStore = defineStore('configStore', {
       fileType: 0,              // filter file type bitmask (0: all, 1: image, 2: video, 4: raw)
       sortType: 0,              // sort type (default to time)
       sortOrder: 0,             // sort order(0: ascending, 1: descending)
+      groupBy: 0,               // result grouping: 0=none, 1=folder, 2=day, 3=month, 4=rating, 5=location, 6=camera, 7=lens, 8=year
     },
 
     calendar: {
