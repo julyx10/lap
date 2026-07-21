@@ -325,7 +325,11 @@
           :filePath="file?.file_path"
           :fileId="file?.id"
           :fileType="file?.file_type"
+          :imageWidth="file?.width"
+          :imageHeight="file?.height"
           :thumbnailSrc="file?.thumbnail || ''"
+          :showThumbnailPlaceholder="showThumbnailPlaceholder"
+          :showInlineLoading="mode === 2"
           :nextFilePath="nextFilePath"
           :rotate="file?.rotate ?? 0"
           :isZoomFit="isZoomFit"
@@ -458,6 +462,10 @@ const props = defineProps({
   nextFilePath: {
     type: String,
     default: ''
+  },
+  showThumbnailPlaceholder: {
+    type: Boolean,
+    default: false,
   },
   isSlideShow: {
     type: Boolean,
