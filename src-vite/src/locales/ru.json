@@ -1185,7 +1185,7 @@
       "view_background": "Фон",
       "view_background_hint": "{shortcut} - переключение фона",
       "view_background_options": [
-        "По умолчанию",
+        "Следовать теме",
         "Чёрный",
         "Тёмно-серый",
         "Средне-серый",

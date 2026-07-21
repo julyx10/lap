@@ -1185,7 +1185,7 @@
       "view_background": "배경",
       "view_background_hint": "{shortcut} 키를 눌러 배경 전환",
       "view_background_options": [
-        "기본값",
+        "테마 따르기",
         "검정",
         "진한 회색",
         "중간 회색",

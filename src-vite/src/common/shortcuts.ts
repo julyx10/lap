@@ -55,6 +55,12 @@ export type ShortcutActionId =
   | 'view.zoomOutDirectional'
   | 'view.zoomFit'
   | 'view.cycleBackground'
+  | 'view.backgroundTheme'
+  | 'view.backgroundBlack'
+  | 'view.backgroundDarkGray'
+  | 'view.backgroundMediumGray'
+  | 'view.backgroundLightGray'
+  | 'view.backgroundWhite'
   | 'view.togglePane'
   | 'slideshow.toggle';
 
@@ -86,6 +92,15 @@ export interface ShortcutEventLike {
   metaKey?: boolean;
   shiftKey?: boolean;
 }
+
+export const VIEW_BACKGROUND_SHORTCUTS = [
+  { actionId: 'view.backgroundTheme', value: 0 },
+  { actionId: 'view.backgroundBlack', value: 1 },
+  { actionId: 'view.backgroundDarkGray', value: 2 },
+  { actionId: 'view.backgroundMediumGray', value: 3 },
+  { actionId: 'view.backgroundLightGray', value: 4 },
+  { actionId: 'view.backgroundWhite', value: 5 },
+] as const satisfies ReadonlyArray<{ actionId: ShortcutActionId; value: number }>;
 
 export const DEFAULT_PLATFORM: ShortcutPlatform = (() => {
   if (typeof navigator === 'undefined') return 'windows';
@@ -370,6 +385,17 @@ export const SHORTCUTS: readonly ShortcutDefinition[] = [
       { code: 'KeyB', modifiers: ['shift'], label: { mac: '⇧B', windows: 'Shift+B', linux: 'Shift+B' } },
     ],
   },
+  ...VIEW_BACKGROUND_SHORTCUTS.map(({ actionId, value }) => ({
+    id: actionId,
+    contexts: ['content', 'media-viewer', 'image-viewer'] as const,
+    defaultBindings: [
+      {
+        code: `Digit${value + 1}`,
+        modifiers: ['shift'] as const,
+        label: { mac: `⇧${value + 1}`, windows: `Shift+${value + 1}`, linux: `Shift+${value + 1}` },
+      },
+    ],
+  })),
   {
     id: 'view.togglePane',
     contexts: ['image-viewer'],

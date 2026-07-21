@@ -1185,7 +1185,7 @@
       "view_background": "背景",
       "view_background_hint": "按 {shortcut} 循环切换背景",
       "view_background_options": [
-        "默认",
+        "跟随主题",
         "黑色",
         "深灰色",
         "中灰色",

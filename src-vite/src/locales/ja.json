@@ -1185,7 +1185,7 @@
       "view_background": "背景",
       "view_background_hint": "{shortcut} で背景を切り替えます",
       "view_background_options": [
-        "デフォルト",
+        "テーマに従う",
         "黒",
         "ダークグレー",
         "ミディアムグレー",

@@ -45,6 +45,7 @@
           @item-action="handleItemAction"
           @scale="clickScale"
           @update:isZoomFit="(val) => handleZoomFitUpdate(val, 'left')"
+          @view-background-change="setViewerBackground"
           @media-dblclick="toggleZoomFit()"
           @toggle-full-screen="toggleNativeFullScreen"
           @close="closeWindow"
@@ -135,6 +136,7 @@
                 @item-action="handleItemAction"
                 @scale="clickScale($event, pane)"
                 @update:isZoomFit="(val) => handleZoomFitUpdate(val, pane)"
+                @view-background-change="setViewerBackground"
                 @media-dblclick="toggleZoomFit(pane)"
                 @viewport-change="handleViewportChange($event, pane)"
                 @toggle-full-screen="toggleNativeFullScreen"
@@ -205,7 +207,7 @@ import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
 import { config } from '@/common/config';
 import { isWin, isMac, isLinux, setTheme, getSlideShowInterval, SCALE_VALUES } from '@/common/utils';
-import { matchesShortcut, ShortcutActionId, ShortcutPlatform } from '@/common/shortcuts';
+import { matchesShortcut, ShortcutActionId, ShortcutPlatform, VIEW_BACKGROUND_SHORTCUTS } from '@/common/shortcuts';
 import {
   editFileComment,
   getFileInfo,
@@ -584,6 +586,7 @@ function handleKeyDown(event: KeyboardEvent) {
     isSlideShow.value &&
     !matchesShortcut('view.close', event, shortcutPlatform) &&
     !matchesShortcut('view.cycleBackground', event, shortcutPlatform) &&
+    getMatchedViewBackground(event) === null &&
     !matchesShortcut('slideshow.toggle', event, shortcutPlatform)
   ) {
     return;
@@ -606,6 +609,13 @@ function handleKeyDown(event: KeyboardEvent) {
     event.preventDefault();
     config.cycleViewBackground();
     void emit('settings-viewBackground-changed', config.settings.viewBackground);
+    return;
+  }
+
+  const viewBackground = getMatchedViewBackground(event);
+  if (viewBackground !== null) {
+    event.preventDefault();
+    setViewerBackground(viewBackground);
     return;
   }
 
@@ -661,6 +671,11 @@ const ratingActions: Array<{ actionId: ShortcutActionId; rating: number }> = [
 function getMatchedRating(event: KeyboardEvent) {
   const match = ratingActions.find(({ actionId }) => matchesShortcut(actionId, event, shortcutPlatform));
   return match ? match.rating : null;
+}
+
+function getMatchedViewBackground(event: KeyboardEvent): number | null {
+  const match = VIEW_BACKGROUND_SHORTCUTS.find(({ actionId }) => matchesShortcut(actionId, event, shortcutPlatform));
+  return match?.value ?? null;
 }
 
 const viewActions: Partial<Record<ShortcutActionId, () => void>> = {
@@ -792,6 +807,11 @@ function handleZoomFitUpdate(val: boolean, pane: Pane) {
   if (splitCount.value > 1 && isSyncViewport.value) {
     animateSyncOnce.value = true;
   }
+}
+
+function setViewerBackground(value: number) {
+  config.setViewBackground(value);
+  void emit('settings-viewBackground-changed', config.settings.viewBackground);
 }
 
 // Handle resize event

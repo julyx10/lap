@@ -1185,7 +1185,7 @@
       "view_background": "Fondo",
       "view_background_hint": "Pulsa {shortcut} para cambiar de fondo",
       "view_background_options": [
-        "Predeterminado",
+        "Seguir tema",
         "Negro",
         "Gris oscuro",
         "Gris medio",

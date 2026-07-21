@@ -267,6 +267,7 @@
                 @toggle-slide-show="toggleSlideShow"
                 @scale="onScale"
                 @item-action="handleItemAction"
+                @view-background-change="setPreviewViewBackground"
                 @slideshow-next="handleSlideshowNext"
               />
             </div>
@@ -321,6 +322,7 @@
               @toggle-slide-show="toggleSlideShow"
               @scale="onScale"
               @item-action="handleItemAction"
+              @view-background-change="setPreviewViewBackground"
               @close="closeQuickPreview()"
               @slideshow-next="handleSlideshowNext"
             />
@@ -645,7 +647,7 @@ import { getAlbum, getAllAlbums, recountAlbum, getQueryCountAndSum, getQueryTime
          dedupDeleteSelected, getQueryFilePosition, getFolderSearchExcluded,
          listCollections, createCollection, addFilesToCollection, removeFilesFromCollection, getCollectionCountAndSum, getCollectionFiles, getCollectionFileIds, fetchFolder } from '@/common/api';
 import { config, libConfig } from '@/common/config';
-import { getShortcutLabel, matchesShortcut, ShortcutActionId, ShortcutPlatform } from '@/common/shortcuts';
+import { getShortcutLabel, matchesShortcut, ShortcutActionId, ShortcutPlatform, VIEW_BACKGROUND_SHORTCUTS } from '@/common/shortcuts';
 import { getSmartTagById, SMART_TAG_SEARCH_THRESHOLD } from '@/common/smartTags';
 import { getAlbumScanState, getAlbumScanIcon, shouldAnimateAlbumScanIcon } from '@/common/scanStatus';
 import { DATE_SORT, GROUP, LIB_ITEM, RATE, SIDEBAR } from '@/common/constants';
@@ -1489,6 +1491,11 @@ function closeQuickPreview() {
   stopSlideShow();
 }
 
+function setPreviewViewBackground(value: number) {
+  config.setViewBackground(value);
+  void tauriEmit('settings-viewBackground-changed', config.settings.viewBackground);
+}
+
 // toolbar state for MediaViewer
 const imageScale = ref(1);
 const imageDisplayScale = ref(1);
@@ -1882,6 +1889,11 @@ const ratingActions: Array<{ actionId: ShortcutActionId; rating: number }> = [
 function getMatchedRating(event: KeyboardEvent) {
   const match = ratingActions.find(({ actionId }) => matchesShortcut(actionId, event, shortcutPlatform));
   return match ? match.rating : null;
+}
+
+function getMatchedViewBackground(event: KeyboardEvent): number | null {
+  const match = VIEW_BACKGROUND_SHORTCUTS.find(({ actionId }) => matchesShortcut(actionId, event, shortcutPlatform));
+  return match?.value ?? null;
 }
 
 // Drag-drop file import
@@ -3360,6 +3372,7 @@ function handleLocalKeyDown(event: KeyboardEvent) {
     isSlideShow.value &&
     !matchesShortcut('view.close', event, shortcutPlatform) &&
     !matchesShortcut('view.cycleBackground', event, shortcutPlatform) &&
+    getMatchedViewBackground(event) === null &&
     !matchesShortcut('slideshow.toggle', event, shortcutPlatform)
   ) {
     return;
@@ -3398,6 +3411,13 @@ function handleLocalKeyDown(event: KeyboardEvent) {
     event.preventDefault();
     config.cycleViewBackground();
     void tauriEmit('settings-viewBackground-changed', config.settings.viewBackground);
+    return;
+  }
+
+  const viewBackground = getMatchedViewBackground(event);
+  if (getActivePreviewMode() !== 'none' && viewBackground !== null) {
+    event.preventDefault();
+    setPreviewViewBackground(viewBackground);
     return;
   }
 

@@ -972,6 +972,7 @@ type ShortcutDisplayItem = {
   actionId: ShortcutActionId;
   labelKey: string;
   keys?: string[];
+  backgroundValue?: number;
 };
 
 const shortcutDisplaySections: Array<{ key: string; items: ShortcutDisplayItem[] }> = [
@@ -1010,6 +1011,12 @@ const shortcutDisplaySections: Array<{ key: string; items: ShortcutDisplayItem[]
       { actionId: 'view.zoomOut', labelKey: 'zoom_out' },
       { actionId: 'view.zoomFit', labelKey: 'zoom_fit' },
       { actionId: 'view.cycleBackground', labelKey: 'cycle_background' },
+      { actionId: 'view.backgroundTheme', labelKey: 'cycle_background', backgroundValue: 0 },
+      { actionId: 'view.backgroundBlack', labelKey: 'cycle_background', backgroundValue: 1 },
+      { actionId: 'view.backgroundDarkGray', labelKey: 'cycle_background', backgroundValue: 2 },
+      { actionId: 'view.backgroundMediumGray', labelKey: 'cycle_background', backgroundValue: 3 },
+      { actionId: 'view.backgroundLightGray', labelKey: 'cycle_background', backgroundValue: 4 },
+      { actionId: 'view.backgroundWhite', labelKey: 'cycle_background', backgroundValue: 5 },
       { actionId: 'slideshow.toggle', labelKey: 'toggle_slideshow' },
     ],
   },
@@ -1055,7 +1062,9 @@ const shortcutSections = computed(() => {
     items: section.items
       .map((item) => ({
         actionId: item.actionId,
-        label: shortcutMessages.actions[getShortcutActionLabelKey(item)],
+        label: item.backgroundValue === undefined
+          ? shortcutMessages.actions[getShortcutActionLabelKey(item)]
+          : `${localeMsg.value.settings.image_view.view_background}: ${localeMsg.value.settings.image_view.view_background_options[item.backgroundValue]}`,
         keys: item.keys ?? getDisplayShortcutKeys(item.actionId),
       }))
       .filter((item) => item.keys.length > 0),

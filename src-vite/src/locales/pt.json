@@ -1185,7 +1185,7 @@
       "view_background": "Fundo",
       "view_background_hint": "Pressione {shortcut} para alternar o fundo",
       "view_background_options": [
-        "Padrão",
+        "Seguir tema",
         "Preto",
         "Cinza escuro",
         "Cinza médio",

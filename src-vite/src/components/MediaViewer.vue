@@ -222,7 +222,12 @@
       <IconClose class="w-5 h-5" />
     </button>
 
-    <div ref="mediaAreaRef" class="flex-1 w-full min-h-0 relative" @dblclick="$emit('media-dblclick')">
+    <div
+      ref="mediaAreaRef"
+      class="flex-1 w-full min-h-0 relative"
+      @dblclick="$emit('media-dblclick')"
+      @contextmenu.prevent="handleBackgroundContextMenu"
+    >
       <div
         v-if="showStatusBadges && quickViewStatusBadges.length > 0"
         class="pointer-events-none absolute inset-x-0 top-0 z-80 h-16"
@@ -374,6 +379,15 @@
     </div>
 
     </template>
+
+    <ContextMenu
+      ref="backgroundContextMenuRef"
+      class="absolute h-0 w-0 overflow-hidden pointer-events-none"
+      :menuItems="viewBackgroundMenuItems"
+      @open-change="handleMenuOpenChange"
+    >
+      <template #trigger><span /></template>
+    </ContextMenu>
   </div>
 </template>
 
@@ -384,7 +398,7 @@ import { getCurrentWindow } from '@tauri-apps/api/window';
 import { config, libConfig } from '@/common/config';
 import { useToast } from '@/common/toast';
 import { isWin, isMac, isLinux, getSlideShowInterval } from '@/common/utils';
-import { getShortcutLabel, ShortcutActionId, ShortcutPlatform } from '@/common/shortcuts';
+import { getShortcutLabel, ShortcutActionId, ShortcutPlatform, VIEW_BACKGROUND_SHORTCUTS } from '@/common/shortcuts';
 
 import Image from '@/components/Image.vue';
 import TButton from '@/components/TButton.vue';
@@ -565,13 +579,15 @@ const emit = defineEmits([
   'toggle-full-screen', 
   'slideshow-next', 
   'media-dblclick', 
-  'viewport-change'
+  'viewport-change',
+  'view-background-change',
 ]);
 
 const { locale, messages, t } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value] as any);
 
 const contextMenuRef = ref<any>(null);
+const backgroundContextMenuRef = ref<any>(null);
 const containerRef = ref<HTMLElement | null>(null);
 const mediaAreaRef = ref<HTMLElement | null>(null);
 const mediaRef = ref<any>(null);
@@ -629,6 +645,16 @@ const slideShowTransitionMode = computed(() => Number(config.settings.slideShowT
 const viewBackgroundStyle = computed(() => {
   const colors = ['transparent', '#000000', '#333333', '#808080', '#d3d3d3', '#ffffff'];
   return { backgroundColor: colors[Number(config.settings.viewBackground ?? 0)] ?? colors[0] };
+});
+const viewBackgroundMenuItems = computed(() => {
+  const labels = localeMsg.value.settings.image_view.view_background_options || [];
+  const selectedBackground = Number(config.settings.viewBackground ?? 0);
+  return VIEW_BACKGROUND_SHORTCUTS.map(({ actionId, value }) => ({
+    label: labels[value],
+    icon: selectedBackground === value ? IconDot : null,
+    shortcut: shortcut(actionId),
+    action: () => emit('view-background-change', value),
+  }));
 });
 // const ratingButtonTooltip = computed(() => {
 //   const rating = Number(props.file?.rating || 0);
@@ -864,6 +890,12 @@ function handleContextMenu(e: MouseEvent) {
   }
 }
 
+function handleBackgroundContextMenu(e: MouseEvent) {
+  const target = e.target as HTMLElement;
+  if (target.closest('button')) return;
+  backgroundContextMenuRef.value?.open(e.clientX, e.clientY);
+}
+
 const computedToolbarClass = computed(() => {
   const commonClasses = 'absolute z-80 h-10 flex flex-row items-center justify-center select-none';
 
@@ -980,12 +1012,20 @@ const resetOverlayPointer = () => {
 };
 
 const handleOverlayPointerDown = (event: PointerEvent) => {
+  if (event.pointerType === 'mouse' && event.button !== 0) {
+    resetOverlayPointer();
+    return;
+  }
   overlayPointer = event.target === event.currentTarget
     ? { id: event.pointerId, x: event.clientX, y: event.clientY }
     : null;
 };
 
 const handleOverlayPointerUp = (event: PointerEvent) => {
+  if (event.pointerType === 'mouse' && event.button !== 0) {
+    resetOverlayPointer();
+    return;
+  }
   const pointer = overlayPointer;
   resetOverlayPointer();
   if (

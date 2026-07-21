@@ -1185,7 +1185,7 @@
       "view_background": "Arrière-plan",
       "view_background_hint": "Appuyez sur {shortcut} pour changer d’arrière-plan",
       "view_background_options": [
-        "Par défaut",
+        "Suivre le thème",
         "Noir",
         "Gris foncé",
         "Gris moyen",

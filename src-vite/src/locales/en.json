@@ -1185,7 +1185,7 @@
       "view_background": "Background",
       "view_background_hint": "Press {shortcut} to cycle backgrounds",
       "view_background_options": [
-        "Default",
+        "Follow Theme",
         "Black",
         "Dark Gray",
         "Medium Gray",
