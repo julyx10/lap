@@ -43,7 +43,15 @@
               >
                 <div class="w-full flex items-center">
                   <div class="w-5">
-                    <component class="t-icon-size-sm" :is="item.icon" ></component>
+                    <component v-if="item.icon" class="t-icon-size-sm" :is="item.icon" />
+                    <span
+                      v-else-if="item.swatch"
+                      :class="[
+                        'm-1 block size-3 rounded-full border',
+                        item.selected ? 'border-primary/70 ring-2 ring-primary/70' : 'border-base-content/5',
+                      ]"
+                      :style="item.swatch"
+                    />
                   </div>
                   <span class="ml-2 mr-4">{{ item.label }}</span>
                   <span class="ml-auto text-base-content/30">{{ item.shortcut }}</span>

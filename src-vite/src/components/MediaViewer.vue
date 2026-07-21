@@ -642,16 +642,21 @@ const effectiveSlideShowIntervalIndex = computed(() => {
 });
 const currentSlideShowIntervalLabel = computed(() => `${getSlideShowInterval(effectiveSlideShowIntervalIndex.value)}s`);
 const slideShowTransitionMode = computed(() => Number(config.settings.slideShowTransition ?? 0));
+const viewBackgroundColors = ['transparent', '#000000', '#333333', '#808080', '#d3d3d3', '#ffffff'];
+const viewBackgroundSwatches: CSSProperties[] = [
+  { background: 'linear-gradient(135deg, var(--color-base-100) 0 50%, var(--color-base-300) 50% 100%)' },
+  ...viewBackgroundColors.slice(1).map(backgroundColor => ({ backgroundColor })),
+];
 const viewBackgroundStyle = computed(() => {
-  const colors = ['transparent', '#000000', '#333333', '#808080', '#d3d3d3', '#ffffff'];
-  return { backgroundColor: colors[Number(config.settings.viewBackground ?? 0)] ?? colors[0] };
+  return { backgroundColor: viewBackgroundColors[Number(config.settings.viewBackground ?? 0)] ?? viewBackgroundColors[0] };
 });
 const viewBackgroundMenuItems = computed(() => {
   const labels = localeMsg.value.settings.image_view.view_background_options || [];
   const selectedBackground = Number(config.settings.viewBackground ?? 0);
   return VIEW_BACKGROUND_SHORTCUTS.map(({ actionId, value }) => ({
     label: labels[value],
-    icon: selectedBackground === value ? IconDot : null,
+    swatch: viewBackgroundSwatches[value],
+    selected: selectedBackground === value,
     shortcut: shortcut(actionId),
     action: () => emit('view-background-change', value),
   }));
