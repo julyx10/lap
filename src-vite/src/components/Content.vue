@@ -1121,7 +1121,9 @@ function formatDateGroupLabel(groupBy: number, label: string) {
   const rawLabel = String(label || '').trim();
 
   const timestamp = Number(rawLabel);
-  if (!Number.isFinite(timestamp) || timestamp <= 0) return rawLabel;
+  // Local day buckets around the Unix epoch can be negative (for example,
+  // 1970-01-01 in a positive-offset timezone), but are still valid dates.
+  if (!Number.isFinite(timestamp)) return rawLabel;
 
   const value = new Date(timestamp * 1000);
   const year = value.getFullYear();
