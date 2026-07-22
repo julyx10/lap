@@ -577,7 +577,9 @@
     },
     "person": {
       "index_faces": "Gesichter indexieren",
-      "reset_index": "Index zurücksetzen"
+      "reset_index": "Index zurücksetzen",
+      "unnamed": "Unbenannte Person",
+      "show_more": "Mehr anzeigen ({loaded}/{total})"
     },
     "tag": {
       "add": "Tag hinzufügen...",

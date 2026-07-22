@@ -373,6 +373,7 @@ async fn main() {
             t_cmds::is_face_indexing,
             t_cmds::get_face_stats,
             t_cmds::get_persons,
+            t_cmds::get_persons_page,
             t_cmds::rename_person,
             t_cmds::delete_person,
             t_cmds::get_faces_for_file,

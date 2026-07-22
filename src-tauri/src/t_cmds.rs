@@ -16,7 +16,7 @@ use crate::t_apple_sidecar::{
 use crate::t_sqlite::{
     ACamera, ACollection, ACollectionOrder, AFile, AFolder, ALens, ALocation, ATag, ATagFileState,
     ATagSelectionCount, AThumb, ATimeLine, Album, GroupedQueryResult, ImageSearchParams, Person,
-    QueryParams, SmartQueryParams,
+    PersonPage, QueryParams, SmartQueryParams,
 };
 use crate::t_storage;
 use crate::t_utils;
@@ -2438,6 +2438,13 @@ pub fn is_face_indexing(
 #[tauri::command]
 pub fn get_persons(sort: i64) -> Result<Vec<Person>, String> {
     Person::get_all(sort).map_err(|e| format!("Error while getting persons: {}", e))
+}
+
+/// Get a page of persons with face counts.
+#[tauri::command]
+pub fn get_persons_page(sort: i64, offset: usize, limit: usize) -> Result<PersonPage, String> {
+    Person::get_page(sort, offset, limit)
+        .map_err(|e| format!("Error while getting persons page: {}", e))
 }
 
 /// rename a person

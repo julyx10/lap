@@ -577,7 +577,9 @@
     },
     "person": {
       "index_faces": "얼굴 인덱싱",
-      "reset_index": "인덱스 초기화"
+      "reset_index": "인덱스 초기화",
+      "unnamed": "이름 없는 인물",
+      "show_more": "더 보기 ({loaded}/{total})"
     },
     "tag": {
       "add": "태그 추가...",

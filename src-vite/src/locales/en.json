@@ -577,7 +577,9 @@
     },
     "person": {
       "index_faces": "Index faces",
-      "reset_index": "Reset index"
+      "reset_index": "Reset index",
+      "unnamed": "Unnamed person",
+      "show_more": "Show more ({loaded}/{total})"
     },
     "tag": {
       "add": "Add tag...",

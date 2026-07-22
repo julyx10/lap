@@ -577,7 +577,9 @@
     },
     "person": {
       "index_faces": "索引人脸",
-      "reset_index": "重置索引"
+      "reset_index": "重置索引",
+      "unnamed": "未命名人物",
+      "show_more": "显示更多（{loaded}/{total}）"
     },
     "tag": {
       "add": "添加标签...",

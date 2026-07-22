@@ -577,7 +577,9 @@
     },
     "person": {
       "index_faces": "顔をインデックス",
-      "reset_index": "インデックスをリセット"
+      "reset_index": "インデックスをリセット",
+      "unnamed": "名前のない人物",
+      "show_more": "さらに表示（{loaded}/{total}）"
     },
     "tag": {
       "add": "タグを追加...",

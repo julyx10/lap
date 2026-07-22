@@ -822,7 +822,12 @@ impl FolderScanState {
              ON CONFLICT(folder_id, scanner) DO UPDATE SET
                version = excluded.version,
                updated_at = excluded.updated_at",
-            params![folder_id, scanner, version, chrono::Utc::now().timestamp_millis()],
+            params![
+                folder_id,
+                scanner,
+                version,
+                chrono::Utc::now().timestamp_millis()
+            ],
         )
         .map_err(|e| e.to_string())?;
         Ok(())
@@ -3203,9 +3208,10 @@ impl AFile {
             }
         }
 
-        for image in candidates.iter_mut().filter(|candidate| {
-            has_filename_video_candidate(candidate, &video_stems)
-        }) {
+        for image in candidates
+            .iter_mut()
+            .filter(|candidate| has_filename_video_candidate(candidate, &video_stems))
+        {
             let Some(stem) = lower_stem(&image.name) else {
                 continue;
             };
@@ -6635,6 +6641,13 @@ pub struct Person {
     pub thumbnail: Option<String>, // Base64 encoded face thumbnail
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PersonPage {
+    pub persons: Vec<Person>,
+    pub has_more: bool,
+    pub total: usize,
+}
+
 impl Person {
     /// Get all persons with face counts and pre-stored thumbnail
     /// Optimized: single query, no runtime image processing
@@ -6679,6 +6692,58 @@ impl Person {
         }
 
         Ok(persons)
+    }
+
+    pub fn get_page(sort: i64, offset: usize, limit: usize) -> Result<PersonPage, String> {
+        let conn = open_conn()?;
+        let limit = limit.clamp(1, 100);
+        let total: i64 = conn
+            .query_row("SELECT COUNT(*) FROM persons", [], |row| row.get(0))
+            .map_err(|e| e.to_string())?;
+        let name_asc = "rtrim(COALESCE(p.name, ''), '0123456789') COLLATE NOCASE ASC, CAST(substr(COALESCE(p.name, ''), length(rtrim(COALESCE(p.name, ''), '0123456789')) + 1) AS INTEGER) ASC, p.name ASC, p.id ASC";
+        let name_desc = "rtrim(COALESCE(p.name, ''), '0123456789') COLLATE NOCASE DESC, CAST(substr(COALESCE(p.name, ''), length(rtrim(COALESCE(p.name, ''), '0123456789')) + 1) AS INTEGER) DESC, p.name DESC, p.id ASC";
+        let order_clause = match sort {
+            1 => name_desc,
+            2 => "count ASC, p.name ASC, p.id ASC",
+            3 => "count DESC, p.name ASC, p.id ASC",
+            _ => name_asc,
+        };
+        let query = format!(
+            "SELECT p.id, p.name, COUNT(f.id) as count, p.thumbnail
+             FROM persons p
+             LEFT JOIN faces f ON f.person_id = p.id
+             GROUP BY p.id
+             ORDER BY {order_clause}
+             LIMIT ?1 OFFSET ?2"
+        );
+        let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
+        let persons_iter = stmt
+            .query_map(params![(limit + 1) as i64, offset as i64], |row| {
+                let thumb_data: Option<Vec<u8>> = row.get(3)?;
+                Ok(Self {
+                    id: row.get(0)?,
+                    name: row.get(1)?,
+                    count: row.get(2)?,
+                    thumbnail: thumb_data
+                        .as_ref()
+                        .map(|data| general_purpose::STANDARD.encode(data)),
+                })
+            })
+            .map_err(|e| e.to_string())?;
+
+        let mut persons = persons_iter
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| e.to_string())?;
+        let has_more = persons.len() > limit;
+        if has_more {
+            persons.pop();
+        }
+
+        Ok(PersonPage {
+            persons,
+            has_more,
+            total: total as usize,
+        })
     }
 
     /// Generate thumbnail for a person from their cover face or best quality face

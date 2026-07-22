@@ -1909,6 +1909,15 @@ export async function getPersons(sort = 0) {
   return null;
 }
 
+export async function getPersonsPage(sort = 0, offset = 0, limit = 100) {
+  try {
+    return await invoke('get_persons_page', { sort, offset, limit });
+  } catch (error) {
+    console.error('Failed to get persons page:', error);
+  }
+  return null;
+}
+
 // rename a person
 export async function renamePerson(personId, name) {
   try {

@@ -727,6 +727,7 @@ import {
   IconHistory,
   IconBookmark,
   IconFileSearch,
+  IconPerson,
 } from '@/common/icons';
 
 const thumbnailPlaceholder = new URL('@/assets/images/image-file.png', import.meta.url).href;
@@ -2590,7 +2591,7 @@ const currentTitleIcon = computed(() => {
           case SIDEBAR.SEARCH: return IconSearch;
           case SIDEBAR.CALENDAR: return config.calendar.isMonthly ? IconCalendarMonth : IconCalendarDay;
           case SIDEBAR.TAG: return IconTag;
-          case SIDEBAR.PERSON: return IconPersonSearch;
+          case SIDEBAR.PERSON: return IconPerson;
           case SIDEBAR.LOCATION: return IconLocation;
           case SIDEBAR.CAMERA: return config.camera.isCamera ? IconCamera : IconCameraAperture;
           default: return IconFiles;
