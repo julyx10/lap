@@ -45,38 +45,23 @@
     <!-- search history -->
     <div class="overflow-y-auto flex-1" >
         <div v-for="(item, index) in searchHistoryList" :key="index"
-          :class="[ 
-            'sidebar-item sidebar-item-media text-sm group',
-            libConfig.search.searchHistoryIndex === index ? 'sidebar-item-selected' : 'hover:text-base-content hover:bg-base-100/70',
+          :class="[
+            'sidebar-item group',
+            libConfig.search.searchHistoryIndex === index ? 'sidebar-item-selected' : 'sidebar-item-hover',
           ]"
           @click="handleSearchHistoryClick(index)"
         >
-        <div v-if="typeof item !== 'string' && item.fileId" class="relative w-10 h-10 mr-2 shrink-0 overflow-hidden rounded-box">
-           <img 
-             v-if="thumbnails[item.fileId]"
-             class="w-full h-full object-cover" 
-             :src="thumbnails[item.fileId]" 
-           />
-           <div v-else class="w-full h-full bg-base-300 animate-pulse"></div>
-        </div>
-          <div
-            v-else
-            class="w-10 h-10 mr-2 shrink-0 rounded-box border border-base-content/5 flex items-center justify-center"
-          >
-            <IconSearch class="w-5 h-5 text-base-content/30" />
-          </div>
+          <IconSearch class="mx-1 h-5 shrink-0" />
           
           <span class="sidebar-item-label">{{ typeof item === 'string' ? item : item.text }}</span>
-          <div class="ml-auto">
-            <span
-              v-if="hasSearchHistoryCount(item)"
-              class="sidebar-item-count"
-              :class="libConfig.search.searchHistoryIndex === index ? 'hidden' : 'group-hover:hidden'"
-            >{{ formatSearchResultCount(getSearchHistoryCount(item)) }}</span>
-          </div>
+          <span
+            v-if="hasSearchHistoryCount(item)"
+            class="sidebar-item-count"
+            :class="libConfig.search.searchHistoryIndex === index ? 'hidden' : 'group-hover:hidden'"
+          >{{ formatSearchResultCount(getSearchHistoryCount(item)) }}</span>
           <div
             :class="[
-              'flex items-center text-base-content/30',
+              'ml-auto flex flex-row items-center text-base-content/30',
               libConfig.search.searchHistoryIndex === index ? '' : 'hidden group-hover:flex'
             ]"
           >
@@ -111,15 +96,6 @@ import { useI18n } from 'vue-i18n';
 import { config, libConfig } from '@/common/config';
 import { useUIStore } from '@/stores/uiStore';
 import MessageBox from '@/components/MessageBox.vue';
-import { getFileInfo, getFileThumbById } from '@/common/api';
-import {
-  getThumbUrl,
-  getThumbnailDataUrl,
-  getThumbnailDataUrlInflight,
-  isWin,
-  setThumbnailDataUrlInflight,
-} from '@/common/utils';
-
 import { IconMore, IconTrash, IconSearch, IconClose } from '@/common/icons';
 import ContextMenu from '@/components/ContextMenu.vue';
 
@@ -245,7 +221,7 @@ function handleSearch() {
     libConfig.search.searchHistoryIndex = existingIndex;
   } else {
     // Add new item as object
-    history.unshift({ text: query, fileId: null, count: null });
+    history.unshift({ text: query, count: null });
     libConfig.search.searchHistoryIndex = 0;
 
     // Limit the history size
@@ -261,8 +237,6 @@ function handleEscKey() {
   searchInputRef.value?.blur();
 }
 
-const historyItems = ref<Record<number, any>>({});
-const thumbnails = ref<Record<number, string>>({});
 const searchHistoryList = computed(() => libConfig.search.searchHistory as any[]);
 const getSearchHistoryCount = (item: any) => Number(item?.count || 0);
 const hasSearchHistoryCount = (item: any) => typeof item !== 'string' && item?.count !== null && item?.count !== undefined;
@@ -272,50 +246,6 @@ const formatSearchResultCount = (count: number) => {
     ? `${limit.toLocaleString()}+`
     : count.toLocaleString();
 };
-
-// Watcher for Text Search History (to fetch thumbnails)
-watch(
-  () => libConfig.search.searchHistory,
-  (newHistory) => {
-    const idsToFetch = newHistory
-      .filter(item => typeof item !== 'string' && item.fileId)
-      .map(item => (item as any).fileId);
-    fetchThumbnailsForIds(idsToFetch);
-  },
-  { immediate: true, deep: true }
-);
-
-async function fetchThumbnailsForIds(ids: number[]) {
-  for (const fileId of ids) {
-    if (!fileId) continue;
-
-    if (!historyItems.value[fileId]) {
-      try {
-         const info = await getFileInfo(fileId);
-         if (info) {
-           historyItems.value[fileId] = info;
-         }
-      } catch (e) {
-        console.error('Failed to load file info', fileId, e);
-      }
-    }
-
-    if (historyItems.value[fileId] && !thumbnails.value[fileId]) {
-      let thumbSrc = getThumbUrl(fileId, false, config.settings.thumbnailSize);
-      if (isWin && !thumbSrc.startsWith('data:')) {
-        const inflight = getThumbnailDataUrlInflight(fileId, config.settings.thumbnailSize);
-        const dataUrl = await (inflight || setThumbnailDataUrlInflight(
-          fileId,
-          config.settings.thumbnailSize,
-          getFileThumbById(fileId, config.settings.thumbnailSize, false)
-            .then(thumb => getThumbnailDataUrl(thumb, '', false, config.settings.thumbnailSize))
-        ));
-        thumbSrc = dataUrl || thumbSrc;
-      }
-      thumbnails.value[fileId] = thumbSrc;
-    }
-  }
-}
 
 function showClearConfirmation() {
   showClearHistoryMsgbox.value = true;

@@ -86,7 +86,7 @@ export const useLibraryStore = defineStore('libraryStore', {
       name: null,             // selected person name
     },
 
-    /** @type {{ searchText: string, searchHistory: (string | { text: string, fileId: number | null, count: number | null })[], searchHistoryIndex: number }} */
+    /** @type {{ searchText: string, searchHistory: (string | { text: string, count: number | null })[], searchHistoryIndex: number }} */
     search: {
       searchText: '',         // AI search text
       searchHistory: [],      // AI search history

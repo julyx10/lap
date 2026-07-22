@@ -4663,7 +4663,7 @@ watch(
       const params = currentImageSearchParams.value;
       if (params && (params.searchText || params.fileId)) {
         const requestId = ++currentContentRequestId;
-        getImageSearchFileList(params.searchText, params.fileId || 0, requestId, false);
+        getImageSearchFileList(params.searchText, params.fileId || 0, requestId);
       }
       return;
     }
@@ -5710,7 +5710,6 @@ function updateSearchHistoryCount(searchText: string, count: number) {
   if (typeof item !== 'string' && item.count !== null && item.count !== undefined && Number(item.count) === count) return;
   history[historyIndex] = {
     text: typeof item === 'string' ? item : item.text,
-    fileId: typeof item === 'string' ? null : item.fileId ?? null,
     count,
   };
 }
@@ -5719,7 +5718,6 @@ async function getImageSearchFileList(
   searchText: string,
   fileId: number,
   requestId: number,
-  updateHistory = true,
   thresholdOverride?: number,
 ) {
   currentQuerySource.value = 'search';
@@ -5763,27 +5761,6 @@ async function getImageSearchFileList(
       // Reset visible range tracking when changing views
       lastVisibleRange = { start: -1, end: -1 };
       visibleRangeSeqId++;
-
-      // Update search history with the first result's file_id
-      if (updateHistory && searchText && result.length > 0) {
-        const history = libConfig.search.searchHistory as any[];
-        const index = history.findIndex((item: any) => {
-            const text = typeof item === 'string' ? item : item.text;
-            return text === searchText;
-        });
-
-        if (index !== -1) {
-            const item = history[index];
-            const firstId = result[0].id;
-
-            // Always update the history item's fileId to the latest first result
-            if (typeof item === 'string') {
-              history[index] = { text: item, fileId: firstId };
-            } else {
-              item.fileId = firstId;
-            }
-        }
-      }
 
       // Thumbnail loading is driven by visible-range updates. Avoid requesting
       // every semantic-search result before the user scrolls to it.
@@ -5962,22 +5939,6 @@ async function getUnifiedSearchFileList(searchText: string, requestId: number) {
     markDedupSourceUpdated(requestId);
     openImageViewer(0, false, true);
 
-    const firstHistoryFile = visualMatches[0] || filenameMatches[0];
-    if (firstHistoryFile) {
-      const history = libConfig.search.searchHistory as any[];
-      const historyIndex = history.findIndex((item: any) =>
-        (typeof item === 'string' ? item : item.text) === searchText
-      );
-      if (historyIndex >= 0) {
-        const item = history[historyIndex];
-        history[historyIndex] = {
-          text: typeof item === 'string' ? item : item.text,
-          fileId: Number(firstHistoryFile.id),
-          count: typeof item === 'string' ? null : item.count ?? null,
-        };
-      }
-    }
-
     if (fileList.value.length > 0) {
       getFileListThumb(fileList.value);
     }
@@ -6106,7 +6067,7 @@ async function updateContent(force = false) {
         }
         const smartTagLabel = localeMsg.value.subject.items?.[smartTag.id] || smartTag.id;
         contentTitle.value = `${localeMsg.value.subject.title} > ${smartTagLabel}`;
-        getImageSearchFileList(smartTag.prompt, 0, requestId, false, SMART_TAG_SEARCH_THRESHOLD);
+        getImageSearchFileList(smartTag.prompt, 0, requestId, SMART_TAG_SEARCH_THRESHOLD);
         break;
       }
       default:
