@@ -263,6 +263,13 @@ function resetLoadingUi() {
   resetCompatibilityProcessing();
 }
 
+function getTransformContainer(player: ReturnType<typeof videojs> | null): HTMLElement | null {
+  const playerElement = player?.el();
+  // Native fullscreen is applied to the Video.js player, not the outer Vue
+  // container. Its dimensions are the only correct basis for fit-to-screen.
+  return player?.isFullscreen() && playerElement ? playerElement : videoContainer.value;
+}
+
 const updateTransform = (options: boolean | { resetRotation?: boolean, recalcScale?: boolean } = false) => {
   const resetRotation = typeof options === 'boolean' ? options : (options.resetRotation ?? false);
   const recalcScale = typeof options === 'boolean' ? options : (options.recalcScale ?? false);
@@ -277,8 +284,9 @@ const updateTransform = (options: boolean | { resetRotation?: boolean, recalcSca
 
   const videoWidth = player?.videoWidth();
   const videoHeight = player?.videoHeight();
-  const containerWidth = videoContainer.value?.clientWidth;
-  const containerHeight = videoContainer.value?.clientHeight;
+  const transformContainer = getTransformContainer(player);
+  const containerWidth = transformContainer?.clientWidth;
+  const containerHeight = transformContainer?.clientHeight;
   const isRotated = rotate.value % 180 !== 0;
 
   // IMPORTANT: Set dimensions to natural size to prevent clipping inside the tag
@@ -313,6 +321,21 @@ const updateTransform = (options: boolean | { resetRotation?: boolean, recalcSca
   emit('viewport-change', { scale: scale.value, isZoomFit: isFit.value, fileType: 2 });
 };
 
+function refreshFullscreenLayout(index: number) {
+  if (activeVideo.value !== index) return;
+
+  // Video.js promotes its own player element to fullscreen, leaving the outer
+  // Vue container at its original size. Wait for the browser to apply the new
+  // fullscreen bounds before recalculating our custom video transform.
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      if (activeVideo.value === index) {
+        updateTransform({ recalcScale: true });
+      }
+    });
+  });
+}
+
 const setupPlayer = (index: number) => {
   const el = videoElements.value[index];
   if (!el) return;
@@ -321,6 +344,9 @@ const setupPlayer = (index: number) => {
     const player = players.value[index]!;
     player.volume(config.video.volume);
     player.muted(config.video.muted);
+
+    player.on('fullscreenchange', () => refreshFullscreenLayout(index));
+    player.on('playerresize', () => refreshFullscreenLayout(index));
 
     player.on('error', () => {
       if (activeVideo.value === index) {
@@ -985,8 +1011,9 @@ function applyViewportState(
   const player = getActivePlayer();
   const videoWidth = player?.videoWidth();
   const videoHeight = player?.videoHeight();
-  const containerWidth = videoContainer.value?.clientWidth;
-  const containerHeight = videoContainer.value?.clientHeight;
+  const transformContainer = getTransformContainer(player);
+  const containerWidth = transformContainer?.clientWidth;
+  const containerHeight = transformContainer?.clientHeight;
   const sourceWidth = Number(viewport.sourceWidth);
   const sourceHeight = Number(viewport.sourceHeight);
   const sourceScale = sourceWidth > 0 && videoWidth
