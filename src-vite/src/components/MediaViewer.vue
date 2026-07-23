@@ -553,9 +553,14 @@ const livePhotoViewport = ref<Record<string, number | boolean> | null>(null);
 
 function startLivePhotoPreview() {
   const viewport = mediaRef.value?.getViewportState?.();
-  livePhotoViewport.value = viewport
-    ? { ...viewport, isZoomFit: props.isZoomFit }
-    : null;
+  // A still image and its Live Photo video can have different dimensions.
+  // In auto-fit mode, let the video calculate its own fit scale instead of
+  // reusing the still image's absolute scale.
+  livePhotoViewport.value = props.isZoomFit
+    ? { isZoomFit: true }
+    : viewport
+      ? { ...viewport, isZoomFit: false }
+      : null;
   isLivePhotoPlaying.value = true;
 }
 
