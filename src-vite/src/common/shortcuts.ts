@@ -336,7 +336,7 @@ export const SHORTCUTS: readonly ShortcutDefinition[] = [
   },
   {
     id: 'meta.info',
-    contexts: ['content', 'media-viewer'],
+    contexts: ['content', 'media-viewer', 'image-viewer'],
     defaultBindings: [
       { code: 'KeyI', allowShift: true, label: 'I' },
       { code: 'KeyI', modifiers: ['cmdOrCtrl'], allowShift: true, label: { mac: '⌘I', windows: 'Ctrl+I', linux: 'Ctrl+I' } },

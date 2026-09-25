@@ -166,15 +166,16 @@
             :shortcut="shortcut('meta.rotate')"
             @click="$emit('item-action', { action: 'rotate', index: fileIndex })"
           />
-          <!-- <TButton
-            v-if="mode !== 2"
-            :icon="IconFileInfo"
-            :disabled="fileIndex < 0 || isSlideShow || !canInteract"
-            :tooltip="$t('menu.meta.info')"
-            :shortcut="shortcut('meta.info')"
-            @click="$emit('item-action', { action: 'info', index: fileIndex })"
-          /> -->
         </template>
+        <TButton
+          v-if="mode === 2"
+          :icon="IconFileInfo"
+          :disabled="fileIndex < 0 || isSlideShow || !canInteract"
+          :selected="isInfoPanelOpen"
+          :tooltip="$t('menu.meta.info')"
+          :shortcut="shortcut('meta.info')"
+          @click="$emit('item-action', { action: 'info' })"
+        />
         <!-- Linked viewport control (Compare mode only) -->
         <template v-if="mode === 2 && showSyncViewportControl">
           <IconSeparator class="t-icon-size-sm text-base-content/30" />
@@ -218,7 +219,12 @@
     </div>
 
     <!-- Window Control Buttons (top-right) -->
-    <div v-if="showWindowControlsBar && showWindowControls && showDesktopWindowControls" class="absolute top-0 right-0 z-90 flex items-center" @mousedown.stop>
+    <div
+      v-if="showWindowControlsBar && showWindowControls && showDesktopWindowControls"
+      class="top-0 right-0 z-[100] flex items-center"
+      :class="isInfoPanelOpen ? 'fixed' : 'absolute'"
+      @mousedown.stop
+    >
       <IconWinMinus 
         class="p-3 w-12 h-10 text-base-content/70 hover:text-base-content hover:bg-base-100 transition-colors duration-300 cursor-pointer" 
         @click.stop="minimizeWindow" 
@@ -559,6 +565,10 @@ const props = defineProps({
     default: true
   },
   showSyncViewportControl: {
+    type: Boolean,
+    default: false,
+  },
+  isInfoPanelOpen: {
     type: Boolean,
     default: false,
   },
@@ -1028,7 +1038,7 @@ const computedToolbarClass = computed(() => {
     if (props.mode !== 2 && config.mediaViewer.pinnedPosition === 'bottom') {
       return `${commonClasses} relative bottom-0 left-0 w-full order-last`;
     }
-    return `${commonClasses} relative top-0 left-0 w-full`;
+    return `${commonClasses} relative top-0 left-0 w-full ${props.isInfoPanelOpen && showDesktopWindowControls ? 'pl-36' : ''}`;
   } else {
     // Floating Hover Bar
     const floatingClasses = 'left-1/2 -translate-x-1/2 px-2 rounded-box bg-base-100/30 hover:bg-base-100/70 transition-[opacity,transform] duration-300 ease-in-out';
