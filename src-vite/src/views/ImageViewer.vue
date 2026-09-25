@@ -9,13 +9,14 @@
     @mouseleave="handleRootMouseLeave"
   >
 
-    <div
-      ref="viewerContainer"
-      :class="[
-        'relative flex-1 flex justify-center items-center overflow-hidden select-none',
-        showEmbeddedStatusBar ? 'pb-8' : '',
-      ]"
-    >
+    <div class="relative flex min-h-0 flex-1">
+      <div
+        ref="viewerContainer"
+        :class="[
+          'relative min-w-0 flex-1 flex justify-center items-center overflow-hidden select-none',
+          showEmbeddedStatusBar ? 'pb-8' : '',
+        ]"
+      >
       <template v-if="splitCount === 1 && fileIndex >= 0">
         <MediaViewer
           ref="mediaViewerRef"
@@ -37,6 +38,7 @@
           :imageMaxScale="imageMaxScale"
           :isZoomFit="isZoomFit"
           :isSyncViewport="isSyncViewport"
+          :isInfoPanelOpen="isInfoPanelOpen"
           :showWindowControls="true"
           @prev="clickPrev()"
           @next="clickNext()"
@@ -86,6 +88,7 @@
             :isZoomFit="getZoomFitByPane(activePane)"
             :isSyncViewport="isSyncViewport"
             :showSyncViewportControl="isCompareModeSession"
+            :isInfoPanelOpen="isInfoPanelOpen"
             :forceToolbarVisible="isFullScreen && splitToolbarVisible"
             @prev="clickPrev(activePane)"
             @next="clickNext(activePane)"
@@ -158,21 +161,35 @@
         <IconSearch class="w-8 h-8" />
         <span>{{ $t('tooltip.not_found.files') }}</span>
       </div>
-    </div>
 
-    <div
-      v-if="showEmbeddedStatusBar"
-      class="absolute bottom-0 left-0 right-0 z-30 h-8 bg-base-300/80 backdrop-blur-md"
-    >
-      <StatusBar
-        :selected-file="activeFileInfo"
-        :selected-item-index="getFileIndexByPane(statusPane)"
-        :total-file-count="fileCount"
-        :total-file-size="activeFileInfo?.size || 0"
-        :image-scale="getPaneScale(statusPane).display"
-        :show-scale="true"
-        :is-embedded="true"
-      />
+      <div
+        v-if="showEmbeddedStatusBar"
+        class="absolute bottom-0 left-0 right-0 z-30 h-8 bg-base-300/80 backdrop-blur-md"
+      >
+        <StatusBar
+          :selected-file="activeFileInfo"
+          :selected-item-index="getFileIndexByPane(statusPane)"
+          :total-file-count="fileCount"
+          :total-file-size="activeFileInfo?.size || 0"
+          :image-scale="getPaneScale(statusPane).display"
+          :show-scale="true"
+          :is-embedded="true"
+        />
+      </div>
+      </div>
+
+      <div
+        ref="infoPanelRef"
+        v-if="isInfoPanelOpen && activeFileInfo"
+        class="w-[360px] max-w-[40vw] shrink-0 p-1"
+        :class="(isWin || isLinux) && !isFullScreen ? 'pt-10' : ''"
+      >
+        <FileInfo
+          :fileInfo="activeFileInfo"
+          readonly
+          @close="isInfoPanelOpen = false"
+        />
+      </div>
     </div>
 
     <TaggingDialog
@@ -210,7 +227,7 @@
 
 <script setup lang="ts">
 
-import { ref, watch, computed, onMounted, onUnmounted, reactive } from 'vue';
+import { ref, watch, computed, onMounted, onUnmounted, reactive, defineAsyncComponent } from 'vue';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { emit, listen } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
@@ -242,6 +259,8 @@ import {
   IconComment,
  } from '@/common/icons';
 
+const FileInfo = defineAsyncComponent(() => import('@/components/FileInfo.vue'));
+
 /// i18n
 const { locale, messages, t } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value] as any);
@@ -263,6 +282,7 @@ const isTransitionDisabled = ref(true);
 
 const mediaViewerRef = ref<any>(null); // media viewer reference
 const rightMediaViewerRef = ref<any>(null); // right media viewer reference (split mode)
+const infoPanelRef = ref<HTMLElement | null>(null);
 type Pane = 'left' | 'right' | 'bottomLeft' | 'bottomRight';
 const allPanes: Pane[] = ['left', 'right', 'bottomLeft', 'bottomRight'];
 const paneViewerRefs = new Map<Pane, any>();
@@ -319,6 +339,7 @@ const extraPaneState = reactive<Record<'bottomLeft' | 'bottomRight', {
 const visiblePanes = computed<Pane[]>(() =>
   splitCount.value === 4 ? allPanes : ['left', 'right']
 );
+const isInfoPanelOpen = ref(false);
 const showTaggingDialog = ref(false);
 const showAddToCollectionDialog = ref(false);
 const showCommentMsgbox = ref(false);
@@ -422,6 +443,7 @@ onMounted(async() => {
       splitCount.value = requestedSplitCount;
     }
     if (event.payload?.resetSplit) {
+      activePane.value = 'left';
       if (isCompareModeSession.value) clearSecondaryPanes();
       if (isCompareModeSession.value) {
         splitCount.value = requestedSplitCount > 1 ? requestedSplitCount : splitCount.value > 1 ? splitCount.value : 2;
@@ -584,6 +606,8 @@ onUnmounted(() => {
 
 // Handle keyboard shortcuts
 function handleKeyDown(event: KeyboardEvent) {
+  const target = event.target as Node | null;
+  if (event.defaultPrevented || (target && infoPanelRef.value?.contains(target))) return;
   if(uiStore.inputStack.length > 0) {
     return;
   }
@@ -607,6 +631,12 @@ function handleKeyDown(event: KeyboardEvent) {
     getMatchedViewBackground(event) === null &&
     !matchesShortcut('slideshow.toggle', event, shortcutPlatform)
   ) {
+    return;
+  }
+
+  if (matchesShortcut('meta.info', event, shortcutPlatform)) {
+    event.preventDefault();
+    toggleInfoPanel();
     return;
   }
 
@@ -944,26 +974,37 @@ watch(() => isSyncViewport.value, (isSync) => {
 });
 
 // watch file changed
-watch(() => fileId.value, async () => {
-  fileInfo.value = await getFileInfo(fileId.value);
-  iconRotate.value = fileInfo.value.rotate || 0;
+watch(() => fileId.value, async (newFileId) => {
+  fileInfo.value = null;
+  iconRotate.value = 0;
+  if (newFileId <= 0) return;
+  const info = await getFileInfo(newFileId);
+  if (fileId.value !== newFileId) return;
+  fileInfo.value = info;
+  iconRotate.value = info?.rotate || 0;
   console.log('fileInfo:', fileInfo.value);
   if (isSlideShow.value) {
     scheduleNextSlide();
   }
 });
 
-watch(() => rightFileId.value, async () => {
-  if (rightFileId.value > 0) {
-    rightFileInfo.value = await getFileInfo(rightFileId.value);
-  } else {
-    rightFileInfo.value = null;
+watch(() => rightFileId.value, async (newFileId) => {
+  rightFileInfo.value = null;
+  if (newFileId <= 0) return;
+  const info = await getFileInfo(newFileId);
+  if (rightFileId.value === newFileId) {
+    rightFileInfo.value = info;
   }
 });
 
 for (const pane of ['bottomLeft', 'bottomRight'] as const) {
   watch(() => extraPaneState[pane].fileId, async (newFileId) => {
-    extraPaneState[pane].fileInfo = newFileId > 0 ? await getFileInfo(newFileId) : null;
+    extraPaneState[pane].fileInfo = null;
+    if (newFileId <= 0) return;
+    const info = await getFileInfo(newFileId);
+    if (extraPaneState[pane].fileId === newFileId) {
+      extraPaneState[pane].fileInfo = info;
+    }
   });
 }
 
@@ -1137,6 +1178,11 @@ function getActiveFilePane() {
   return splitCount.value > 1 ? activePane.value : 'left';
 }
 
+function toggleInfoPanel() {
+  if (!activeFileInfo.value) return;
+  isInfoPanelOpen.value = !isInfoPanelOpen.value;
+}
+
 function syncFileMetaToContent(targetFileId: number, changes: Record<string, any>) {
   emit('message-from-image-viewer', {
     message: 'update-file-meta',
@@ -1197,6 +1243,7 @@ function clickSlideShow(pane: Pane = 'left') {
   setActivePane(pane);
   isSlideShow.value = !isSlideShow.value;
   if (isSlideShow.value) {
+    isInfoPanelOpen.value = false;
     startSlideShow();
   } else {
     stopSlideShow();
@@ -1421,6 +1468,9 @@ const handleItemAction = async (payload: { action: string }) => {
   const pane = getActiveFilePane();
 
   switch (payload.action) {
+    case 'info':
+      toggleInfoPanel();
+      break;
     case 'favorite':
       await toggleFavorite(pane);
       break;

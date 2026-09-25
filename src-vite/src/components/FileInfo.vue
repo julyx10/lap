@@ -84,7 +84,11 @@
                   @click.stop="increasePreviewScale"
                 />
               </div>
-              <div class="absolute inset-0 cursor-pointer" @click.stop="$emit('openViewer')">
+              <div
+                class="absolute inset-0"
+                :class="readonly ? 'cursor-default' : 'cursor-pointer'"
+                @click.stop="!readonly && $emit('openViewer')"
+              >
                 <img
                   v-if="fileInfo?.thumbnail"
                   :src="fileInfo.thumbnail"
@@ -180,8 +184,8 @@
               </div>
               <span v-else
                 class="text-[12px] font-medium text-base-content/80 break-all flex-1 min-w-0"
-                :class="{ 'cursor-text': isPrimaryGeneralInfo }"
-                @dblclick.stop="isPrimaryGeneralInfo && startRename()"
+                :class="{ 'cursor-text': isPrimaryGeneralInfo && !readonly }"
+                @dblclick.stop="isPrimaryGeneralInfo && !readonly && startRename()"
               >{{ generalFileInfo?.name }}</span>
             </div>
 
@@ -190,6 +194,7 @@
             <Breadcrumb
               :icon="IconFolder"
               :items="generalFolderBreadcrumbs"
+              :disabled="readonly"
               size="small"
               @navigate="(path: string) => emit('navigateFolder', path)"
             />
@@ -245,6 +250,7 @@
               :favorite="Boolean(fileInfo?.is_favorite)"
               :rating="Number(fileInfo?.rating || 0)"
               :culling="Number(fileInfo?.culling_flag ?? fileInfo?.cullingFlag ?? 0)"
+              :disabled="readonly"
               label-class="text-base-content/30"
               inactive-rating-class="text-base-content/70"
               @favorite="emit('toggleFavorite')"
@@ -256,7 +262,11 @@
             <template v-if="displayTags.length">
               <div class="flex items-center text-[11px] text-base-content/45 min-h-6 py-1.5">{{ $t('file_info.tags') }}</div>
               <div class="group/field flex items-center min-h-6 gap-1">
-                <div class="text-[12px] text-base-content/75 flex flex-wrap gap-1 flex-1 min-w-0 cursor-pointer" @click.stop="emit('quickEditTag')">
+                <div
+                  class="text-[12px] text-base-content/75 flex flex-wrap gap-1 flex-1 min-w-0"
+                  :class="{ 'cursor-pointer': !readonly }"
+                  @click.stop="!readonly && emit('quickEditTag')"
+                >
                   <span
                     v-for="tag in displayTags"
                     :key="tag.id"
@@ -276,8 +286,10 @@
                     v-for="collection in fileCollections"
                     :key="collection.id"
                     type="button"
-                    class="inline-flex items-center gap-1 text-[12px] font-medium text-base-content/70 transition-colors hover:text-base-content cursor-pointer"
-                    @click.stop="emit('quickEditCollection')"
+                    class="inline-flex items-center gap-1 text-[12px] font-medium text-base-content/70 transition-colors"
+                    :class="readonly ? 'cursor-default' : 'hover:text-base-content cursor-pointer'"
+                    :disabled="readonly"
+                    @click.stop="!readonly && emit('quickEditCollection')"
                   >
                     <IconBookmark class="h-3.5 w-3.5 shrink-0" />
                     {{ collection.name }}
@@ -290,7 +302,11 @@
             <template v-if="fileInfo?.comments">
               <div class="flex items-start text-[11px] text-base-content/45 py-1.5">{{ $t('file_info.comment') }}</div>
               <div class="group/field flex items-start gap-1">
-                <div class="text-[12px] leading-5 text-base-content/75 wrap-break-words whitespace-pre-wrap flex-1 min-w-0 cursor-pointer" @click.stop="emit('quickEditComment')">{{ fileInfo?.comments }}</div>
+                <div
+                  class="text-[12px] leading-5 text-base-content/75 wrap-break-words whitespace-pre-wrap flex-1 min-w-0"
+                  :class="{ 'cursor-pointer': !readonly }"
+                  @click.stop="!readonly && emit('quickEditComment')"
+                >{{ fileInfo?.comments }}</div>
               </div>
             </template>
 
@@ -303,7 +319,8 @@
                   :icon="IconRotate"
                   :tooltip="$t('menu.meta.rotate')"
                   :buttonSize="'small'"
-                  @click.stop="emit('rotate')"
+                  :disabled="readonly"
+                  @click.stop="!readonly && emit('rotate')"
                 />
               </div>
             </template>
@@ -316,7 +333,9 @@
                   v-for="person in filePersons"
                   :key="person.id"
                   type="button"
-                  class="inline-flex items-center gap-1.5 text-[12px] font-medium text-base-content/70 transition-colors hover:text-primary cursor-pointer"
+                  class="inline-flex items-center gap-1.5 text-[12px] font-medium text-base-content/70 transition-colors"
+                  :class="readonly ? 'cursor-default' : 'hover:text-primary cursor-pointer'"
+                  :disabled="readonly"
                   @click.stop="navigatePerson(person)"
                 >
                   <span class="w-5 h-5 rounded-full overflow-hidden bg-base-300/70 ring-1 ring-base-content/5 shrink-0 flex items-center justify-center">
@@ -360,14 +379,14 @@
             <!-- Camera -->
             <div class="flex items-center text-[11px] text-base-content/45 h-6">{{ $t('file_info.camera') }}</div>
             <div
-              :class="['flex items-center text-[12px] text-base-content/75', hasCamera ? 'cursor-pointer hover:text-primary' : '']"
+              :class="['flex items-center text-[12px] text-base-content/75', hasCamera && !readonly ? 'cursor-pointer hover:text-primary' : '']"
               @click.stop="navigateCamera"
             >{{ formatCameraInfo(fileInfo?.e_make, fileInfo?.e_model) }}</div>
 
             <!-- Lens -->
             <div class="flex items-center text-[11px] text-base-content/45 h-6">{{ $t('file_info.lens') }}</div>
             <div
-              :class="['flex items-center text-[12px] text-base-content/75', hasLens ? 'cursor-pointer hover:text-primary' : '']"
+              :class="['flex items-center text-[12px] text-base-content/75', hasLens && !readonly ? 'cursor-pointer hover:text-primary' : '']"
               @click.stop="navigateLens"
             >{{ fileInfo?.e_lens_model }}</div>
 
@@ -398,7 +417,7 @@
             <!-- Geo Location -->
             <div class="flex items-center text-[11px] text-base-content/45 h-6">{{ $t('file_info.geo_location') }}</div>
             <div
-              :class="['flex items-center text-[12px] text-base-content/75', hasLocation ? 'cursor-pointer hover:text-primary' : '']"
+              :class="['flex items-center text-[12px] text-base-content/75', hasLocation && !readonly ? 'cursor-pointer hover:text-primary' : '']"
               @click.stop="navigateLocation"
             >{{ formatGeoLocation() }}</div>
           </div>
@@ -500,6 +519,10 @@ const props = defineProps({
   fileInfo: {
     type: Object,
     required: false
+  },
+  readonly: {
+    type: Boolean,
+    default: false
   },
 });
 
@@ -873,7 +896,7 @@ watch(
 );
 
 const startRename = () => {
-  if (!props.fileInfo) return;
+  if (!props.fileInfo || props.readonly) return;
   
   const { name, ext } = extractFileName(props.fileInfo.name);
   renamingName.value = name;
@@ -952,17 +975,17 @@ const hasLens = computed(() => !!props.fileInfo?.e_lens_model);
 const hasLocation = computed(() => !!(props.fileInfo?.geo_cc || props.fileInfo?.geo_admin1 || props.fileInfo?.geo_name));
 
 function navigateCamera() {
-  if (!hasCamera.value) return;
+  if (!hasCamera.value || props.readonly) return;
   emit('navigateMetadata', { type: 'camera', make: props.fileInfo?.e_make || null, model: props.fileInfo?.e_model || null });
 }
 
 function navigateLens() {
-  if (!hasLens.value) return;
+  if (!hasLens.value || props.readonly) return;
   emit('navigateMetadata', { type: 'lens', lensMake: props.fileInfo?.e_lens_make || null, lensModel: props.fileInfo?.e_lens_model || null });
 }
 
 function navigateLocation() {
-  if (!hasLocation.value) return;
+  if (!hasLocation.value || props.readonly) return;
   emit('navigateMetadata', { type: 'location', cc: props.fileInfo?.geo_cc || null, admin1: props.fileInfo?.geo_admin1 || null, name: props.fileInfo?.geo_name || null });
 }
 
@@ -1009,7 +1032,7 @@ watch(() => props.fileInfo?.id, (id) => {
 }, { immediate: true });
 
 function navigatePerson(person: { id: number; name: string }) {
-  if (!person?.id) return;
+  if (!person?.id || props.readonly) return;
   emit('navigatePerson', { personId: person.id, personName: person.name });
 }
 
