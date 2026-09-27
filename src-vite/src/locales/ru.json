@@ -412,7 +412,8 @@
       "Октябрь",
       "Ноябрь",
       "Декабрь"
-    ]
+    ],
+    "refresh_cancel": "Отменить обновление"
   },
   "toolbar": {
     "search": {
@@ -709,7 +710,8 @@
       "monthly": "Месяц",
       "daily": "День",
       "time_asc": "Время (возр.)",
-      "time_desc": "Время (убыв.)"
+      "time_desc": "Время (убыв.)",
+      "refresh_metadata": "Обновить метаданные"
     },
     "camera_panel": {
       "camera_title": "Камеры",

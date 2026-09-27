@@ -412,7 +412,8 @@
       "Octobre",
       "Novembre",
       "Décembre"
-    ]
+    ],
+    "refresh_cancel": "Annuler l'actualisation"
   },
   "toolbar": {
     "search": {
@@ -709,7 +710,8 @@
       "monthly": "Mensuel",
       "daily": "Quotidien",
       "time_asc": "Temps crois",
-      "time_desc": "Temps décrois"
+      "time_desc": "Temps décrois",
+      "refresh_metadata": "Actualiser les métadonnées"
     },
     "camera_panel": {
       "camera_title": "Appareils",

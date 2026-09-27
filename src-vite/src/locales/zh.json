@@ -412,7 +412,8 @@
       "10月",
       "11月",
       "12月"
-    ]
+    ],
+    "refresh_cancel": "取消刷新"
   },
   "toolbar": {
     "search": {
@@ -709,7 +710,8 @@
       "monthly": "按月",
       "daily": "按日",
       "time_asc": "时间升序",
-      "time_desc": "时间降序"
+      "time_desc": "时间降序",
+      "refresh_metadata": "刷新元数据"
     },
     "camera_panel": {
       "camera_title": "相机",

@@ -412,7 +412,8 @@
       "październik",
       "listopad",
       "grudzień"
-    ]
+    ],
+    "refresh_cancel": "Anuluj odświeżanie"
   },
   "toolbar": {
     "search": {
@@ -709,7 +710,8 @@
       "monthly": "Miesięcznie",
       "daily": "Dziennie",
       "time_asc": "Czas rosnąco",
-      "time_desc": "Czas malejąco"
+      "time_desc": "Czas malejąco",
+      "refresh_metadata": "Odśwież metadane"
     },
     "camera_panel": {
       "camera_title": "Aparaty",

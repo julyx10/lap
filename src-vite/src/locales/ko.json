@@ -412,7 +412,8 @@
       "10월",
       "11월",
       "12월"
-    ]
+    ],
+    "refresh_cancel": "새로 고침 취소"
   },
   "toolbar": {
     "search": {
@@ -709,7 +710,8 @@
       "monthly": "월별",
       "daily": "일별",
       "time_asc": "오래된 순",
-      "time_desc": "최신 순"
+      "time_desc": "최신 순",
+      "refresh_metadata": "메타데이터 새로 고침"
     },
     "camera_panel": {
       "camera_title": "카메라",

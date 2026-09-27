@@ -412,7 +412,8 @@
       "10月",
       "11月",
       "12月"
-    ]
+    ],
+    "refresh_cancel": "更新をキャンセル"
   },
   "toolbar": {
     "search": {
@@ -709,7 +710,8 @@
       "monthly": "月別",
       "daily": "日別",
       "time_asc": "古い順",
-      "time_desc": "新しい順"
+      "time_desc": "新しい順",
+      "refresh_metadata": "メタデータを更新"
     },
     "camera_panel": {
       "camera_title": "カメラ",

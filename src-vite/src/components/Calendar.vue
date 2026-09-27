@@ -18,6 +18,27 @@
       </div>
     </div>
 
+    <!-- metadata refresh progress -->
+    <div v-if="refreshProgress.active" class="px-2 py-1 flex items-center gap-2 text-[11px] text-base-content/60">
+      <progress
+        class="progress progress-primary h-1 flex-1"
+        :value="refreshProgress.done"
+        :max="refreshProgress.total"
+      ></progress>
+      <span class="shrink-0 tabular-nums">{{ refreshProgress.done }} / {{ refreshProgress.total }}</span>
+      <TButton
+        :icon="IconClose"
+        :tooltip="$t('calendar.refresh_cancel')"
+        :buttonSize="'small'"
+        @click.stop="cancelScopeRefresh"
+      />
+    </div>
+
+    <!-- shared context menu, opened on a year or a month row -->
+    <ContextMenu ref="calendarMenu" :menuItems="getCalendarMenuItems">
+      <template #trigger><span class="hidden"></span></template>
+    </ContextMenu>
+
     <!-- calendar -->
     <div ref="scrollable" v-if="Object.keys(calendar_dates).length > 0"
       class="flex-1 flex flex-col overflow-x-hidden overflow-y-auto"
@@ -31,6 +52,7 @@
                 isYearSelected(item.year) ? 'sidebar-item-selected' : 'sidebar-item-hover',
               ]"
               @click="selectYear(item.year)"
+              @contextmenu.prevent.stop="(e: MouseEvent) => openCalendarMenu(item.year, -1, e)"
             >
               <IconRight
                 :class="['p-1 w-6 h-6 shrink-0 transition-transform', isYearExpanded(item.year) ? 'rotate-90' : '']"
@@ -47,6 +69,7 @@
                     isMonthSelected(item.year, month.month) ? 'sidebar-item-selected' : 'sidebar-item-hover',
                   ]"
                   @click="selectMonth(item.year, month.month)"
+                  @contextmenu.prevent.stop="(e: MouseEvent) => openCalendarMenu(item.year, month.month, e)"
                 >
                   <IconRight
                     :class="['p-1 w-6 h-6 shrink-0 transition-transform', isMonthExpanded(item.year, month.month) ? 'rotate-90' : '']"
@@ -115,14 +138,17 @@
 
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { emit as tauriEmit } from '@tauri-apps/api/event';
 import { config, libConfig } from '@/common/config';
-import { getTakenDates } from '@/common/api';
-import { formatDate } from '@/common/utils';
+import { getTakenDates, getQueryFileIds, getFilesByIds, updateFileInfo } from '@/common/api';
+import { formatDate, getCalendarDateRange } from '@/common/utils';
 import { SIDEBAR } from '@/common/constants';
-import { IconCalendarDay, IconRight } from '@/common/icons';
+import { IconCalendarDay, IconRight, IconClose, IconUpdate } from '@/common/icons';
 
 import CalendarMonthly from '@/components/CalendarMonthly.vue';
 import CalendarDaily from '@/components/CalendarDaily.vue';
+import ContextMenu from '@/components/ContextMenu.vue';
+import TButton from '@/components/TButton.vue';
 
 const props = defineProps({
   titlebar: String,
@@ -151,9 +177,16 @@ const expandedMonths = ref<string[]>([]);
 let isCalendarMounted = true;
 let calendarRequestVersion = 0;
 
+// metadata refresh: one shared menu, the scope it was opened on, and its progress
+const calendarMenu = ref<any>(null);
+const contextScope = ref<{ year: number; month: number } | null>(null);
+const refreshProgress = ref({ active: false, done: 0, total: 0 });
+let isRefreshCancelled = false;
+
 onUnmounted(() => {
   isCalendarMounted = false;
   calendarRequestVersion++;
+  isRefreshCancelled = true;
 });
 
 function buildHeatmapThresholds(values: number[]): number[] | null {
@@ -392,6 +425,92 @@ async function getCalendarDates() {
       isLoading.value = false;
     }
   }
+}
+
+function openCalendarMenu(year: number, month: number, event: MouseEvent) {
+  contextScope.value = { year, month };
+  calendarMenu.value?.open?.(event.clientX, event.clientY);
+}
+
+function getCalendarMenuItems() {
+  const scope = contextScope.value;
+  if (!scope) return [];
+  return [
+    {
+      label: localeMsg.value.menu.calendar?.refresh_metadata || 'Refresh metadata',
+      icon: IconUpdate,
+      disabled: refreshProgress.value.active,
+      action: () => { void refreshScopeMetadata(scope.year, scope.month); },
+    },
+  ];
+}
+
+/// Re-read metadata from disk for every file in a calendar scope (month = -1 for a
+/// whole year). Files whose date changed on disk leave the scope afterwards — that is
+/// the point: this is how externally edited EXIF gets picked up. It does not detect
+/// files added or removed on disk, which needs a folder scan.
+async function refreshScopeMetadata(year: number, month: number) {
+  if (refreshProgress.value.active) return;
+
+  const [startDate, endDate] = getCalendarDateRange(year, month, -1);
+  // calendarSort selects the date column, so the scope matches what the calendar shows
+  const fileIds = await getQueryFileIds({
+    searchFileType: 0,
+    sortType: 0,
+    sortOrder: 0,
+    randomSeed: 0,
+    searchFileName: "",
+    searchAllSubfolders: "",
+    searchFolder: "",
+    startDate,
+    endDate,
+    calendarSort: Number(config.settings.calendarSort || 0),
+    folderSort: 0,
+    categorySort: 0,
+    make: "",
+    model: "",
+    lensMake: "",
+    lensModel: "",
+    locationAdmin1: "",
+    locationName: "",
+    isFavorite: false,
+    rating: -1,
+    cullingFlag: -1,
+    tagId: 0,
+    tagGroupId: 0,
+    personId: 0,
+    smallFileFilter: Number(config.settings.smallFileFilter || 0),
+  });
+  if (!fileIds || fileIds.length === 0) return;
+
+  isRefreshCancelled = false;
+  refreshProgress.value = { active: true, done: 0, total: fileIds.length };
+  const libraryId = libConfig._libraryId;
+
+  try {
+    // chunked: a year can hold thousands of files, and one IPC round trip each is slow
+    const CHUNK_SIZE = 8;
+    for (let index = 0; index < fileIds.length; index += CHUNK_SIZE) {
+      if (isRefreshCancelled || !isCalendarMounted || libraryId !== libConfig._libraryId) break;
+      const files = await getFilesByIds(fileIds.slice(index, index + CHUNK_SIZE));
+      await Promise.all((files || [])
+        .filter((file: any) => file?.id && file?.file_path)
+        .map((file: any) => updateFileInfo(file.id, file.file_path)));
+      refreshProgress.value.done = Math.min(index + CHUNK_SIZE, fileIds.length);
+    }
+  } catch (error) {
+    console.error('refreshScopeMetadata error:', error);
+  } finally {
+    refreshProgress.value = { active: false, done: 0, total: 0 };
+  }
+
+  if (!isCalendarMounted || libraryId !== libConfig._libraryId) return;
+  await getCalendarDates();
+  await tauriEmit('refresh-content');
+}
+
+function cancelScopeRefresh() {
+  isRefreshCancelled = true;
 }
 
 function validateCalendarSelection() {

@@ -412,7 +412,8 @@
       "Octubre",
       "Noviembre",
       "Diciembre"
-    ]
+    ],
+    "refresh_cancel": "Cancelar actualización"
   },
   "toolbar": {
     "search": {
@@ -709,7 +710,8 @@
       "monthly": "Mensual",
       "daily": "Diario",
       "time_asc": "Tiempo asc",
-      "time_desc": "Tiempo desc"
+      "time_desc": "Tiempo desc",
+      "refresh_metadata": "Actualizar metadatos"
     },
     "camera_panel": {
       "camera_title": "Cámaras",
