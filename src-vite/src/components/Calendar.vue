@@ -479,7 +479,6 @@ async function refreshScopeMetadata(year: number, month: number) {
     tagId: 0,
     tagGroupId: 0,
     personId: 0,
-    smallFileFilter: Number(config.settings.smallFileFilter || 0),
   });
   if (!fileIds || fileIds.length === 0) return;
 
