@@ -36,6 +36,7 @@ const HEIF_CHROMA_INTERLEAVED_RGBA: c_int = 11;
 const HEIF_CHANNEL_INTERLEAVED: c_int = 10;
 
 unsafe extern "C" {
+    fn heif_init(params: *const c_void) -> HeifError;
     fn heif_context_alloc() -> *mut HeifContext;
     fn heif_context_free(ctx: *mut HeifContext);
     fn heif_context_read_from_file(
@@ -70,6 +71,18 @@ unsafe extern "C" {
     ) -> *const u8;
 }
 
+// heif_init() loads the codec plugins of a shared libheif (e.g. the HEVC
+// decoder). Call it once before the first context is allocated.
+fn ensure_heif_init() {
+    static INIT: std::sync::Once = std::sync::Once::new();
+    INIT.call_once(|| unsafe {
+        let err = heif_init(ptr::null());
+        if err.code != 0 {
+            eprintln!("heif_init failed: {}", fmt_heif_error(err));
+        }
+    });
+}
+
 fn fmt_heif_error(err: HeifError) -> String {
     if err.code == 0 {
         return "ok".to_string();
@@ -92,6 +105,7 @@ fn fmt_heif_error(err: HeifError) -> String {
 pub fn get_heif_dimensions(file_path: &str) -> Result<(u32, u32), String> {
     let c_path = CString::new(file_path).map_err(|_| "Invalid file path".to_string())?;
     unsafe {
+        ensure_heif_init();
         let ctx = heif_context_alloc();
         if ctx.is_null() {
             return Err("Failed to allocate heif context".to_string());
@@ -134,6 +148,7 @@ pub fn get_heif_dimensions(file_path: &str) -> Result<(u32, u32), String> {
 fn decode_primary_rgb(file_path: &str) -> Result<(Vec<u8>, u32, u32, u32), String> {
     let c_path = CString::new(file_path).map_err(|_| "Invalid file path".to_string())?;
     unsafe {
+        ensure_heif_init();
         let ctx = heif_context_alloc();
         if ctx.is_null() {
             return Err("Failed to allocate heif context".to_string());

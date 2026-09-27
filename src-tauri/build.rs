@@ -20,6 +20,17 @@ fn main() {
 }
 
 fn build_libheif() {
+    // Distribution packages: link against the system libheif. The system
+    // decides which codecs (e.g. HEVC via plugins) are available.
+    println!("cargo:rerun-if-env-changed=LAP_SYSTEM_LIBHEIF");
+    if env::var("LAP_SYSTEM_LIBHEIF").as_deref() == Ok("1") {
+        pkg_config::Config::new()
+            .atleast_version("1.17")
+            .probe("libheif")
+            .expect("LAP_SYSTEM_LIBHEIF=1 but libheif was not found via pkg-config");
+        return;
+    }
+
     println!("cargo:rerun-if-changed=third_party/libheif");
     println!("cargo:rerun-if-changed=third_party/libde265");
 
