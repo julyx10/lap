@@ -1389,6 +1389,7 @@ watch(displayThumbnailSrc, async (newThumbSrc) => {
   if (!newThumbSrc) return;
   const currentFilePath = props.filePath;
   if (!currentFilePath) return;
+  const loadingId = currentLoadingId.value;
 
   const usesBackendPreview = shouldUseBackendPreview(currentFilePath, Number(props.fileType || 0));
   const ffmpegExtensions = await getFfmpegBackedPreviewExtensions();
@@ -1399,18 +1400,21 @@ watch(displayThumbnailSrc, async (newThumbSrc) => {
   
   // We check if it's the full original image by checking the src. 
   // For backend preview, the full image src is from getPreviewUrl.
-  const isCurrentlyShowingFullImage = imageSrc.value[activeIndex] === getPreviewUrl(
+  const fullImageSrc = getPreviewUrl(
     props.fileId,
     currentFilePath,
     false,
     props.fileVersion,
     config.settings.rawThumbnailSource,
   );
+  const isCurrentlyShowingFullImage = imageSrc.value[activeIndex] === fullImageSrc;
   
   if (isCurrentlyShowingFullImage) return;
 
   try {
     const placeholder = await loadPlaceholderResource(newThumbSrc);
+    // Never downgrade a full image that finished loading while the placeholder was decoding.
+    if (loadingId !== currentLoadingId.value || imageSrc.value.includes(fullImageSrc)) return;
     const layout = getCompatibleLayout(
       placeholder.naturalWidth,
       placeholder.naturalHeight,
