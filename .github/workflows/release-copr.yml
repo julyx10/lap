@@ -15,17 +15,23 @@ permissions: {}
 jobs:
   trigger-copr:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     if: ${{ !github.event.release.prerelease }}
     steps:
       - name: Trigger Fedora COPR build
         env:
           COPR_WEBHOOK_URL: ${{ secrets.COPR_WEBHOOK_URL }}
+          COPR_PROJECT_URL: https://copr.fedorainfracloud.org/coprs/beneedict/lap/
           EVENT_NAME: ${{ github.event_name }}
           RELEASE_TAG: ${{ github.event.release.tag_name }}
           INPUT_VERSION: ${{ inputs.version }}
         run: |
           if [[ -z "$COPR_WEBHOOK_URL" ]]; then
-            echo "COPR_WEBHOOK_URL is not set, skipping."
+            echo "::warning::COPR_WEBHOOK_URL is not set, skipping the COPR trigger."
+            {
+              echo "### Fedora COPR"
+              echo "Skipped: the secret \`COPR_WEBHOOK_URL\` is not set."
+            } >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
           if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
@@ -37,6 +43,14 @@ jobs:
             echo "::error::Version '$VERSION' is not valid (expected X.Y.Z)"
             exit 1
           fi
-          curl -fsS -X POST -H "Content-Type: application/json" \
+          curl -fsS --connect-timeout 10 --max-time 60 \
+            -X POST -H "Content-Type: application/json" \
             -d "{\"version\": \"$VERSION\"}" "$COPR_WEBHOOK_URL"
-          echo "COPR build triggered for $VERSION"
+          echo "COPR build request sent for $VERSION"
+          {
+            echo "### Fedora COPR"
+            echo "Build request sent for version \`$VERSION\`."
+            echo ""
+            echo "This only means that COPR accepted the request. The RPM build runs in COPR and"
+            echo "can take several hours. Check the result here: $COPR_PROJECT_URL"
+          } >> "$GITHUB_STEP_SUMMARY"
