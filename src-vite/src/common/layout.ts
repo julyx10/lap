@@ -10,7 +10,7 @@ export interface JustifiedLayoutResult {
     containerHeight: number;
 }
 
-function getAspectRatio(item: any): number {
+export function getAspectRatio(item: any): number {
     const width = Number(item?.width) > 0 ? Number(item.width) : 100;
     const height = Number(item?.height) > 0 ? Number(item.height) : 100;
     const ratio = width / height;

@@ -1369,10 +1369,16 @@ pub(crate) fn rotate_arbitrary(img: DynamicImage, angle_deg: f32) -> DynamicImag
         let sx = dx * cos_a + dy * sin_a + sw / 2.0;
         let sy = -dx * sin_a + dy * cos_a + sh / 2.0;
 
-        if sx < 0.0 || sy < 0.0 || sx > sw - 1.0 || sy > sh - 1.0 {
+        // Anti-aliased edge: up to one pixel outside the source, opacity fades
+        // with the distance to it; pixels inside are unchanged.
+        let outside = (-sx).max(-sy).max(sx - (sw - 1.0)).max(sy - (sh - 1.0));
+        if outside >= 1.0 {
             *px = image::Rgba([0, 0, 0, 0]);
             continue;
         }
+        let coverage = (1.0 - outside).min(1.0);
+        let sx = sx.clamp(0.0, sw - 1.0);
+        let sy = sy.clamp(0.0, sh - 1.0);
 
         let x0 = sx.floor() as u32;
         let y0 = sy.floor() as u32;
@@ -1392,6 +1398,7 @@ pub(crate) fn rotate_arbitrary(img: DynamicImage, angle_deg: f32) -> DynamicImag
             let bottom = p01[i] as f32 * (1.0 - fx) + p11[i] as f32 * fx;
             out[i] = (top * (1.0 - fy) + bottom * fy).round() as u8;
         }
+        out[3] = (out[3] as f32 * coverage).round() as u8;
         *px = image::Rgba(out);
     }
 

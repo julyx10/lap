@@ -277,6 +277,7 @@ import { config } from '@/common/config';
 import { isWin, isLinux, setTheme, getFolderPath, getFullPath, combineFileName, getSelectOptions, getThumbUrl, isValidFileName } from '@/common/utils';
 import { getFileInfo, checkFileExists, renderMontage } from '@/common/api';
 import { computeMontageLayout, shuffled, type MontageItem, type MontageMode } from '@/common/montageLayout';
+import { getAspectRatio } from '@/common/layout';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { LogicalSize } from '@tauri-apps/api/dpi';
 import { emit as tauriEmit, listen } from '@tauri-apps/api/event';
@@ -351,16 +352,8 @@ function toExportPx(percent: number) {
 
 const fileById = computed(() => new Map(files.value.map(file => [Number(file.id), file])));
 
-// upright aspect ratio: stored dimensions already follow the EXIF orientation
-function photoRatio(file: any) {
-  const width = Number(file.width) || 0;
-  const height = Number(file.height) || 0;
-  if (!width || !height) return 1;
-  return Number(file.rotate || 0) % 180 !== 0 ? height / width : width / height;
-}
-
 const baseLayout = computed(() => computeMontageLayout(
-  files.value.map(file => ({ fileId: Number(file.id), ratio: photoRatio(file) })),
+  files.value.map(file => ({ fileId: Number(file.id), ratio: getAspectRatio(file) })),
   pageSize.value[0] / pageSize.value[1],
   mode.value,
   { spacing: spacing.value / 100, border: borderOn.value ? border.value / 100 : 0, rotation: maxRotation.value },
@@ -733,6 +726,12 @@ watch(() => config.settings.language, (newLanguage) => {
 });
 watch(() => config.settings.appearance, (newAppearance) => {
   setTheme(newAppearance, newAppearance === 0 ? config.settings.lightTheme : config.settings.darkTheme);
+});
+watch(() => config.settings.lightTheme, (newLightTheme) => {
+  setTheme(config.settings.appearance, newLightTheme);
+});
+watch(() => config.settings.darkTheme, (newDarkTheme) => {
+  setTheme(config.settings.appearance, newDarkTheme);
 });
 
 let unlistenAddFiles: (() => void) | null = null;

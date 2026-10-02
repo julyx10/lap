@@ -5390,7 +5390,7 @@ onMounted( async() => {
       console.error('Failed to destroy Montage window from parent:', error);
     }
     // ponytail: saved elsewhere, the file is not indexed now; it appears when its folder is scanned
-    if (getFolderPath(filePath) === montageSourceFolder) {
+    if (normalizePathForCompare(getFolderPath(filePath)) === normalizePathForCompare(montageSourceFolder)) {
       await onFileSaved(true, { saveAsNew: true, filePath, saveAsContext: montageSaveAsContext });
     } else {
       toast.success(localeMsg.value.tooltip.save_image.save_as_success || localeMsg.value.tooltip.save_image.success);

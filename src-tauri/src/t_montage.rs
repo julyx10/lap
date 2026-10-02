@@ -58,48 +58,94 @@ fn parse_hex_color(color: &str) -> Result<Rgba<u8>, String> {
     Ok(Rgba([channel(0)?, channel(2)?, channel(4)?, 255]))
 }
 
-/// Center-crop `img` to the aspect ratio of `dst_w`x`dst_h`, then resize it to that size.
-fn cover_resize(img: DynamicImage, dst_w: u32, dst_h: u32) -> Result<RgbaImage, String> {
-    let (src_w, src_h) = (img.width().max(1), img.height().max(1));
+/// Center-crop `img` to the aspect ratio of `dst_w`x`dst_h` and resize it to that size,
+/// producing only the `part` (x, y, w, h) of the result.
+fn cover_resize(img: DynamicImage, dst_w: u32, dst_h: u32, part: (u32, u32, u32, u32)) -> Result<RgbaImage, String> {
+    let src = img.into_rgba8();
+    let (src_w, src_h) = (src.width().max(1), src.height().max(1));
     let dst_ratio = dst_w as f64 / dst_h as f64;
     let (crop_w, crop_h) = if src_w as f64 / src_h as f64 > dst_ratio {
         (((src_h as f64 * dst_ratio).round() as u32).clamp(1, src_w), src_h)
     } else {
         (src_w, ((src_w as f64 / dst_ratio).round() as u32).clamp(1, src_h))
     };
-    let cropped = img
-        .crop_imm((src_w - crop_w) / 2, (src_h - crop_h) / 2, crop_w, crop_h)
-        .into_rgba8();
+    let (scale_x, scale_y) = (crop_w as f64 / dst_w as f64, crop_h as f64 / dst_h as f64);
+    let (x, y, w, h) = part;
+    // the part of the source; min() keeps float rounding from pushing it past the edge
+    let left = ((src_w - crop_w) / 2) as f64 + x as f64 * scale_x;
+    let top = ((src_h - crop_h) / 2) as f64 + y as f64 * scale_y;
+    let width = (w as f64 * scale_x).min(src_w as f64 - left);
+    let height = (h as f64 * scale_y).min(src_h as f64 - top);
 
-    let src_image = fir::images::Image::from_vec_u8(crop_w, crop_h, cropped.into_raw(), fir::PixelType::U8x4)
+    let src_image = fir::images::Image::from_vec_u8(src.width(), src.height(), src.into_raw(), fir::PixelType::U8x4)
         .map_err(|e| format!("Failed to prepare montage image for resize: {}", e))?;
-    let mut dst_image = fir::images::Image::new(dst_w, dst_h, fir::PixelType::U8x4);
+    let mut dst_image = fir::images::Image::new(w, h, fir::PixelType::U8x4);
     let options = fir::ResizeOptions::new()
-        .resize_alg(fir::ResizeAlg::Convolution(fir::FilterType::Lanczos3));
+        .resize_alg(fir::ResizeAlg::Convolution(fir::FilterType::Lanczos3))
+        .crop(left, top, width, height);
     fir::Resizer::new()
         .resize(&src_image, &mut dst_image, &options)
         .map_err(|e| format!("Failed to resize montage image: {}", e))?;
-    RgbaImage::from_raw(dst_w, dst_h, dst_image.into_vec())
+    RgbaImage::from_raw(w, h, dst_image.into_vec())
         .ok_or_else(|| "Failed to build resized montage image".to_string())
 }
 
-/// Blur the tile's silhouette into a dark shadow and blend it below the tile,
-/// offset down-right in page coordinates.
-fn draw_shadow(canvas: &mut RgbaImage, tile: &RgbaImage, left: i64, top: i64) {
-    let page_w = canvas.width() as f32;
+/// Error function (Abramowitz & Stegun 7.1.26, error below 1.5e-7).
+fn erf(x: f32) -> f32 {
+    let t = 1.0 / (1.0 + 0.327_591_1 * x.abs());
+    let poly = ((((1.061_405_4 * t - 1.453_152) * t + 1.421_413_8) * t - 0.284_496_74) * t + 0.254_829_6) * t;
+    (1.0 - poly * (-x * x).exp()).copysign(x)
+}
+
+/// Darken the page with the drop shadow of a `frame_w`x`frame_h` frame centered on
+/// (`center_x`, `center_y`) and rotated by (`sin`, `cos`), offset down-right.
+/// A gaussian blur of a rectangle is the product of two erf differences along its
+/// own axes, so the shadow is computed exactly, page pixel by page pixel, without
+/// building and blurring a silhouette.
+fn draw_shadow(canvas: &mut RgbaImage, center_x: f32, center_y: f32, frame_w: f32, frame_h: f32, sin: f32, cos: f32) {
+    let (page_w, page_h) = (canvas.width() as f32, canvas.height() as f32);
     let sigma = (page_w * SHADOW_BLUR).max(0.5);
-    let pad = (sigma * 3.0).ceil() as u32;
-    let mut shadow = RgbaImage::new(tile.width() + 2 * pad, tile.height() + 2 * pad);
-    for (x, y, px) in tile.enumerate_pixels() {
-        shadow.put_pixel(x + pad, y + pad, Rgba([0, 0, 0, (px[3] as f32 * SHADOW_OPACITY).round() as u8]));
+    let offset = (page_w * SHADOW_OFFSET).round();
+    let (cx, cy) = (center_x + offset, center_y + offset);
+    let (half_w, half_h) = (frame_w / 2.0, frame_h / 2.0);
+    let scale = 1.0 / (sigma * std::f32::consts::SQRT_2);
+    // fraction of the blurred edge interval [-half, half] seen at distance u
+    let coverage = |u: f32, half: f32| 0.5 * (erf((half - u) * scale) + erf((half + u) * scale));
+
+    // bounding box of the rotated frame, widened by 3 sigma, on the page
+    let reach_x = half_w * cos.abs() + half_h * sin.abs() + 3.0 * sigma;
+    let reach_y = half_w * sin.abs() + half_h * cos.abs() + 3.0 * sigma;
+    let x0 = (cx - reach_x).floor().clamp(0.0, page_w) as u32;
+    let x1 = (cx + reach_x).ceil().clamp(0.0, page_w) as u32;
+    let y0 = (cy - reach_y).floor().clamp(0.0, page_h) as u32;
+    let y1 = (cy + reach_y).ceil().clamp(0.0, page_h) as u32;
+    // the shadow's center, in the frame's own axes, relative to the frame's center
+    let (shift_u, shift_v) = (offset * (cos + sin), offset * (cos - sin));
+    for y in y0..y1 {
+        let dy = y as f32 + 0.5 - cy;
+        for x in x0..x1 {
+            let dx = x as f32 + 0.5 - cx;
+            // into the frame's own axes: the clockwise rotation, inverted
+            let (u, v) = (dx * cos + dy * sin, -dx * sin + dy * cos);
+            // hidden under the photo, which is drawn next (1 px kept for its anti-aliased edge)
+            if (u + shift_u).abs() < half_w - 1.0 && (v + shift_v).abs() < half_h - 1.0 {
+                continue;
+            }
+            let alpha = SHADOW_OPACITY * coverage(u, half_w) * coverage(v, half_h);
+            if alpha > 0.001 {
+                let px = canvas.get_pixel_mut(x, y);
+                for c in 0..3 {
+                    px[c] = (px[c] as f32 * (1.0 - alpha)).round() as u8;
+                }
+            }
+        }
     }
-    let shadow = image::imageops::fast_blur(&shadow, sigma);
-    let offset = (page_w * SHADOW_OFFSET).round() as i64;
-    image::imageops::overlay(canvas, &shadow, left - pad as i64 + offset, top - pad as i64 + offset);
 }
 
 /// Draw one photo onto the page: fill its frame (cover), add the border,
 /// rotate it, and alpha-blend it (and its shadow) centered on the frame's center.
+/// Only the part of the frame that can reach the page is built, so a photo
+/// enlarged far beyond the page costs no more than the page itself.
 fn draw_item(
     canvas: &mut RgbaImage,
     img: DynamicImage,
@@ -111,28 +157,56 @@ fn draw_item(
     let frame_w = (item.w * page_w).round().max(1.0) as u32;
     let frame_h = (item.h * page_h).round().max(1.0) as u32;
     let border = ((item.border * page_w).round() as u32).min((frame_w.min(frame_h) - 1) / 2);
+    let center_x = (item.x + item.w / 2.0) * page_w;
+    let center_y = (item.y + item.h / 2.0) * page_h;
+    let (sin, cos) = item.rotation.to_radians().sin_cos();
 
-    let photo = cover_resize(img, frame_w - 2 * border, frame_h - 2 * border)?;
-    let tile = if border > 0 {
-        let mut framed = RgbaImage::from_pixel(frame_w, frame_h, border_color);
-        image::imageops::replace(&mut framed, &photo, border as i64, border as i64);
-        framed
-    } else {
-        photo
-    };
+    if shadow {
+        draw_shadow(canvas, center_x, center_y, frame_w as f32, frame_h as f32, sin, cos);
+    }
+
+    // the page, widened by the anti-aliased edge, mapped into the frame:
+    // the clockwise rotation around the centers, inverted
+    let margin = 2.0;
+    let (mut min_x, mut min_y, mut max_x, mut max_y) = (f32::MAX, f32::MAX, f32::MIN, f32::MIN);
+    for (px, py) in [(-margin, -margin), (page_w + margin, -margin), (-margin, page_h + margin), (page_w + margin, page_h + margin)] {
+        let (dx, dy) = (px - center_x, py - center_y);
+        let fx = dx * cos + dy * sin + frame_w as f32 / 2.0;
+        let fy = -dx * sin + dy * cos + frame_h as f32 / 2.0;
+        (min_x, min_y, max_x, max_y) = (min_x.min(fx), min_y.min(fy), max_x.max(fx), max_y.max(fy));
+    }
+    let left = min_x.floor().clamp(0.0, frame_w as f32) as u32;
+    let top = min_y.floor().clamp(0.0, frame_h as f32) as u32;
+    let right = max_x.ceil().clamp(0.0, frame_w as f32) as u32;
+    let bottom = max_y.ceil().clamp(0.0, frame_h as f32) as u32;
+    if left >= right || top >= bottom {
+        return Ok(()); // entirely off the page
+    }
+
+    // that part of the frame: border color, then the part of the photo inside it
+    let mut tile = RgbaImage::from_pixel(right - left, bottom - top, border_color);
+    let (photo_left, photo_top) = (left.max(border), top.max(border));
+    let (photo_right, photo_bottom) = (right.min(frame_w - border), bottom.min(frame_h - border));
+    if photo_left < photo_right && photo_top < photo_bottom {
+        let photo = cover_resize(
+            img,
+            frame_w - 2 * border,
+            frame_h - 2 * border,
+            (photo_left - border, photo_top - border, photo_right - photo_left, photo_bottom - photo_top),
+        )?;
+        image::imageops::replace(&mut tile, &photo, (photo_left - left) as i64, (photo_top - top) as i64);
+    }
     let tile = if item.rotation != 0.0 {
         t_image::rotate_arbitrary(DynamicImage::ImageRgba8(tile), item.rotation).into_rgba8()
     } else {
         tile
     };
 
-    let center_x = (item.x + item.w / 2.0) * page_w;
-    let center_y = (item.y + item.h / 2.0) * page_h;
-    let left = (center_x - tile.width() as f32 / 2.0).round() as i64;
-    let top = (center_y - tile.height() as f32 / 2.0).round() as i64;
-    if shadow {
-        draw_shadow(canvas, &tile, left, top);
-    }
+    // the part's center, rotated around the frame's center, places it on the page
+    let dx = (left + right) as f32 / 2.0 - frame_w as f32 / 2.0;
+    let dy = (top + bottom) as f32 / 2.0 - frame_h as f32 / 2.0;
+    let left = (center_x + dx * cos - dy * sin - tile.width() as f32 / 2.0).round() as i64;
+    let top = (center_y + dx * sin + dy * cos - tile.height() as f32 / 2.0).round() as i64;
     image::imageops::overlay(canvas, &tile, left, top);
     Ok(())
 }
@@ -279,6 +353,118 @@ mod tests {
             assert_eq!(beside < 255, shadow, "pixel beside the photo: {}", beside);
             assert_eq!(canvas.get_pixel(100, 100), &WHITE); // far from the photo
             assert_eq!(canvas.get_pixel(500, 500), &Rgba([255, 0, 0, 255])); // the photo stays on top
+        }
+    }
+
+    /// smooth gradient, so a misplaced or misscaled part shows as a color difference
+    fn gradient(w: u32, h: u32) -> DynamicImage {
+        DynamicImage::ImageRgba8(RgbaImage::from_fn(w, h, |x, y| Rgba([(x * 2) as u8, (y * 2) as u8, 128, 255])))
+    }
+
+    #[test]
+    fn a_photo_cut_by_the_page_edge_looks_as_if_drawn_whole() {
+        // the same 120 px rotated frame: inside a 200 px page, and across the corner of a
+        // 100 px page that is the top-left quarter of it (coordinates are page-relative)
+        let mut whole = RgbaImage::from_pixel(200, 200, Rgba([0, 0, 0, 255]));
+        draw_item(&mut whole, gradient(120, 90), &item(0.1, 0.1, 0.6, 0.6, 20.0, 0.02), WHITE, false).unwrap();
+        let mut cut = RgbaImage::from_pixel(100, 100, Rgba([0, 0, 0, 255]));
+        draw_item(&mut cut, gradient(120, 90), &item(0.2, 0.2, 1.2, 1.2, 20.0, 0.04), WHITE, false).unwrap();
+
+        // both renders round the photo's position to whole pixels, so edges may differ
+        // by up to half a pixel: compare away from them (where neighbors differ sharply)
+        let diff = |a: &Rgba<u8>, b: &Rgba<u8>| (0..3).map(|i| (a[i] as i32 - b[i] as i32).abs()).max().unwrap();
+        let mut worst = 0;
+        for (x, y, px) in cut.enumerate_pixels() {
+            let other = whole.get_pixel(x, y);
+            let near_edge = [(x.saturating_sub(1), y), (x + 1, y), (x, y.saturating_sub(1)), (x, y + 1)]
+                .iter()
+                .any(|&(nx, ny)| diff(whole.get_pixel(nx, ny), other) > 20);
+            if !near_edge {
+                worst = worst.max(diff(px, other));
+            }
+        }
+        assert!(worst <= 4, "largest channel difference: {}", worst);
+    }
+
+    #[test]
+    fn a_part_reaching_the_photo_edge_stays_inside_the_source() {
+        // floating-point rounding must not push the crop box past the source's edge
+        for (src_w, src_h) in [(400, 300), (300, 400), (123, 98), (37, 23)] {
+            for dst in (50..400).step_by(3) {
+                let (dst_w, dst_h) = (dst, dst * 2 / 3 + 1);
+                let part = (dst_w / 3, dst_h / 3, dst_w - dst_w / 3, dst_h - dst_h / 3);
+                if let Err(e) = cover_resize(solid(src_w, src_h, [0, 0, 0, 255]), dst_w, dst_h, part) {
+                    panic!("{}x{} into {}x{}: {}", src_w, src_h, dst_w, dst_h, e);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn a_photo_off_the_page_draws_nothing() {
+        let mut canvas = RgbaImage::from_pixel(100, 100, Rgba([0, 0, 255, 255]));
+        draw_item(&mut canvas, solid(40, 40, [255, 0, 0, 255]), &item(1.5, 1.5, 0.5, 0.5, 30.0, 0.0), WHITE, true).unwrap();
+        assert!(canvas.pixels().all(|px| px == &Rgba([0, 0, 255, 255])));
+    }
+
+    #[test]
+    fn a_photo_four_times_the_page_fills_it() {
+        let mut canvas = RgbaImage::from_pixel(100, 100, Rgba([0, 0, 255, 255]));
+        draw_item(&mut canvas, solid(40, 40, [255, 0, 0, 255]), &item(-1.5, -1.5, 4.0, 4.0, 30.0, 0.01), WHITE, true).unwrap();
+        assert!(canvas.pixels().all(|px| px == &Rgba([255, 0, 0, 255])));
+    }
+
+    #[test]
+    fn rotated_edges_are_anti_aliased() {
+        let rotated = t_image::rotate_arbitrary(solid(40, 40, [255, 0, 0, 255]), 30.0).into_rgba8();
+        let alphas: Vec<u8> = rotated.pixels().map(|px| px[3]).collect();
+        assert!(alphas.contains(&0) && alphas.contains(&255));
+        assert!(alphas.iter().any(|&a| a > 0 && a < 255), "no partly transparent edge pixel");
+    }
+
+    #[test]
+    fn shadow_matches_a_blurred_silhouette() {
+        // reference: the silhouette of the frame, blurred (the previous implementation), photo on top.
+        // Unrotated, the reference is exact: only its blur's approximation differs. Rotated, its
+        // bounding box and position are rounded to whole pixels: up to one pixel of shift, i.e.
+        // the steepest slope of the shadow's edge (11 levels per pixel on a 1000 px page).
+        for (page, angle, tolerance) in [(400u32, 0.0f32, 3), (1000, 25.0, 12)] {
+            let k = page as f32 / 400.0;
+            let (frame_w, frame_h) = ((120.0 * k) as u32, (80.0 * k) as u32);
+            let (center_x, center_y) = (200.0 * k, 190.0 * k);
+            let sigma = page as f32 * SHADOW_BLUR;
+            let offset = (page as f32 * SHADOW_OFFSET).round() as i64;
+            let tile = if angle != 0.0 {
+                t_image::rotate_arbitrary(solid(frame_w, frame_h, [255, 255, 255, 255]), angle).into_rgba8()
+            } else {
+                RgbaImage::from_pixel(frame_w, frame_h, WHITE)
+            };
+            let pad = (sigma * 3.0).ceil() as u32;
+            let mut silhouette = RgbaImage::new(tile.width() + 2 * pad, tile.height() + 2 * pad);
+            for (x, y, px) in tile.enumerate_pixels() {
+                silhouette.put_pixel(x + pad, y + pad, Rgba([0, 0, 0, (px[3] as f32 * SHADOW_OPACITY).round() as u8]));
+            }
+            let blurred = image::imageops::blur(&silhouette, sigma);
+            let mut expected = RgbaImage::from_pixel(page, page, WHITE);
+            let left = (center_x - tile.width() as f32 / 2.0).round() as i64 - pad as i64 + offset;
+            let top = (center_y - tile.height() as f32 / 2.0).round() as i64 - pad as i64 + offset;
+            image::imageops::overlay(&mut expected, &blurred, left, top);
+
+            let mut canvas = RgbaImage::from_pixel(page, page, WHITE);
+            let (sin, cos) = angle.to_radians().sin_cos();
+            draw_shadow(&mut canvas, center_x, center_y, frame_w as f32, frame_h as f32, sin, cos);
+            // then the photo on top, as in a montage: it hides the part of the shadow under it
+            let photo_left = (center_x - tile.width() as f32 / 2.0).round() as i64;
+            let photo_top = (center_y - tile.height() as f32 / 2.0).round() as i64;
+            let gray = |img: &RgbaImage| RgbaImage::from_fn(img.width(), img.height(), |x, y| {
+                let a = img.get_pixel(x, y)[3];
+                Rgba([128, 128, 128, a])
+            });
+            image::imageops::overlay(&mut canvas, &gray(&tile), photo_left, photo_top);
+            image::imageops::overlay(&mut expected, &gray(&tile), photo_left, photo_top);
+
+            let worst = canvas.pixels().zip(expected.pixels()).map(|(a, b)| (a[0] as i32 - b[0] as i32).abs()).max().unwrap();
+            assert!(worst <= tolerance, "page {page}, angle {angle}: largest difference {worst}");
         }
     }
 
