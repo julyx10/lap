@@ -10336,7 +10336,26 @@ async function getMontageImageIds() {
   return (await getMontageImages()).map((item: any) => Number(item.id));
 }
 
+let montageOpening = false;
+
 async function openMontage() {
+  // one montage at a time: bring the open one to the front
+  if (montageOpening) return;
+  const openWindow = await WebviewWindow.getByLabel('montage');
+  if (openWindow) {
+    await openWindow.unminimize();
+    await openWindow.setFocus();
+    return;
+  }
+  montageOpening = true;
+  try {
+    await createMontageWindow();
+  } finally {
+    montageOpening = false;
+  }
+}
+
+async function createMontageWindow() {
   const images = await getMontageImages();
   const imageIds = images.map((item: any) => Number(item.id));
   if (imageIds.length < 2) {
@@ -10350,9 +10369,6 @@ async function openMontage() {
   // the save dialog proposes the first photo's folder, like the image editor's "save as new"
   montageSaveAsContext = getCurrentSaveAsContext(images[0]);
   montageSourceFolder = getFolderPath(images[0].file_path);
-
-  // a new selection replaces any montage already open
-  await (await WebviewWindow.getByLabel('montage'))?.destroy();
 
   // the montage window grows itself if its settings panel does not fit
   const width = Math.min(1280, window.screen.availWidth);
@@ -10378,8 +10394,13 @@ async function openMontage() {
     }),
   });
 
-  newWindow.once('tauri://created', () => {
-    newWindow?.show();
+  // wait until the window exists, so a second click finds it
+  await new Promise<void>(resolve => {
+    newWindow.once('tauri://created', () => {
+      newWindow?.show();
+      resolve();
+    });
+    newWindow.once('tauri://error', () => resolve());
   });
 }
 

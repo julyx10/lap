@@ -1406,15 +1406,25 @@ pub(crate) async fn load_oriented_image(
     orientation: i32,
 ) -> Result<DynamicImage, String> {
     let file_type = t_utils::get_file_type(file_path).unwrap_or(0);
+    // decoding is CPU-bound: keep it off the async runtime threads
     if should_generate_preview_for_file(file_path, file_type) {
         let preview = get_generated_preview_bytes(file_path)
             .await?
             .ok_or_else(|| "Failed to resolve editable preview image".to_string())?;
-        image::load_from_memory(&preview)
-            .map_err(|e| format!("Failed to decode editable preview image: {}", e))
+        tauri::async_runtime::spawn_blocking(move || {
+            image::load_from_memory(&preview)
+                .map_err(|e| format!("Failed to decode editable preview image: {}", e))
+        })
+        .await
+        .map_err(|e| format!("Failed to join decode task: {}", e))?
     } else {
-        let img = image::open(Path::new(file_path)).map_err(|e| e.to_string())?;
-        Ok(apply_orientation(img, orientation))
+        let path = file_path.to_string();
+        tauri::async_runtime::spawn_blocking(move || {
+            let img = image::open(Path::new(&path)).map_err(|e| e.to_string())?;
+            Ok(apply_orientation(img, orientation))
+        })
+        .await
+        .map_err(|e| format!("Failed to join decode task: {}", e))?
     }
 }
 

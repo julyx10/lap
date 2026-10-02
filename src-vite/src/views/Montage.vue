@@ -391,6 +391,7 @@ const movedLayout = computed(() => baseLayout.value.map(item => {
     y: item.y + a.dy + (item.h - h) / 2,
     w,
     h,
+    border: item.border * a.scale,
     rotation: item.rotation + a.angle,
   };
 }));
