@@ -3736,7 +3736,7 @@ fn index_single_file(
     prefer_embedded_raw_thumbnail: RawDisplayOptions,
     last_scan_time: i64,
     small_image_filter: i64,
-) -> Option<FileIndexOutcome> {
+) -> Result<FileIndexOutcome, String> {
     let result = panic::catch_unwind(AssertUnwindSafe(|| {
         let parent_path = Path::new(path_str)
             .parent()
@@ -3744,86 +3744,79 @@ fn index_single_file(
             .to_string_lossy()
             .to_string();
 
-        if let Ok(folder) = crate::t_sqlite::AFolder::add_to_db(album_id, &parent_path) {
-            if let Some(folder_id) = folder.id {
-                if let Ok((file, _)) =
-                    crate::t_sqlite::AFile::add_to_db(folder_id, path_str, ftype, last_scan_time)
-                {
-                    if dimensions_excluded(ftype, file.width.unwrap_or(0), file.height.unwrap_or(0), small_image_filter) {
-                        return Some(FileIndexOutcome { excluded: true, task: None,
-                            processed_immediately: false, search_ready_immediately: false });
-                    }
-                    if let Some(file_id) = file.id {
-                        let has_thumbnail = file.has_thumbnail.unwrap_or(false);
-                        let needs_thumbnail_regeneration = has_thumbnail
-                            && crate::t_sqlite::AThumb::needs_thumbnail_regeneration(
-                                file_id,
-                                thumbnail_size,
-                                prefer_embedded_raw_thumbnail,
-                            );
-                        let thumbnail_ready = has_thumbnail && !needs_thumbnail_regeneration;
-                        let has_embedding = file.has_embedding.unwrap_or(false);
-                        let processed_immediately = thumbnail_ready;
-                        let search_ready_immediately = match ftype {
-                            1 | 3 => thumbnail_ready && has_embedding,
-                            _ => false,
-                        };
-                        let fully_indexed = match ftype {
-                            1 | 3 => search_ready_immediately,
-                            2 => processed_immediately,
-                            _ => false,
-                        };
+        let folder = crate::t_sqlite::AFolder::add_to_db(album_id, &parent_path)
+            .map_err(|e| e.to_string())?;
+        let folder_id = folder.id.ok_or_else(|| format!("Indexed folder has no id, skipping file: {}", parent_path))?;
 
-                        let task = if fully_indexed {
-                            None
-                        } else {
-                            Some(ThumbnailTask {
-                                file_id,
-                                file_path: path_str.to_string(),
-                                file_type: ftype,
-                                orientation: file.e_orientation.unwrap_or(1) as i32,
-                                thumbnail_size,
-                                prefer_embedded_raw_thumbnail,
-                                file_size: file.size.max(0) as u64,
-                                duration: file.duration.map(|d| d as u64),
-                                is_heavy: should_use_heavy_lane(
-                                    ftype,
-                                    path_str,
-                                    file.size.max(0) as u64,
-                                    file.width.unwrap_or(0),
-                                    file.height.unwrap_or(0),
-                                ),
-                                processed_already_ready: thumbnail_ready,
-                                force_regenerate: needs_thumbnail_regeneration,
-                            })
-                        };
+        let (file, _) = crate::t_sqlite::AFile::add_to_db(folder_id, path_str, ftype, last_scan_time)
+            .map_err(|e| e.to_string())?;
 
-                        return Some(FileIndexOutcome {
-                            excluded: false,
-                            task,
-                            processed_immediately,
-                            search_ready_immediately,
-                        });
-                    } else {
-                        eprintln!(
-                            "Indexed file has no id, skipping follow-up tasks: {}",
-                            path_str
-                        );
-                    }
-                }
-            } else {
-                eprintln!("Indexed folder has no id, skipping file: {}", parent_path);
-            }
+        if dimensions_excluded(ftype, file.width.unwrap_or(0), file.height.unwrap_or(0), small_image_filter) {
+            return Ok(FileIndexOutcome {
+                excluded: true,
+                task: None,
+                processed_immediately: false,
+                search_ready_immediately: false,
+            });
         }
-        None
+
+        let file_id = file.id.ok_or_else(|| format!("Indexed file has no id, skipping follow-up tasks: {}", path_str))?;
+
+        let has_thumbnail = file.has_thumbnail.unwrap_or(false);
+        let needs_thumbnail_regeneration = has_thumbnail
+            && crate::t_sqlite::AThumb::needs_thumbnail_regeneration(
+                file_id,
+                thumbnail_size,
+                prefer_embedded_raw_thumbnail,
+            );
+        let thumbnail_ready = has_thumbnail && !needs_thumbnail_regeneration;
+        let has_embedding = file.has_embedding.unwrap_or(false);
+        let processed_immediately = thumbnail_ready;
+        let search_ready_immediately = match ftype {
+            1 | 3 => thumbnail_ready && has_embedding,
+            _ => false,
+        };
+        let fully_indexed = match ftype {
+            1 | 3 => search_ready_immediately,
+            2 => processed_immediately,
+            _ => false,
+        };
+
+        let task = if fully_indexed {
+            None
+        } else {
+            Some(ThumbnailTask {
+                file_id,
+                file_path: path_str.to_string(),
+                file_type: ftype,
+                orientation: file.e_orientation.unwrap_or(1) as i32,
+                thumbnail_size,
+                prefer_embedded_raw_thumbnail,
+                file_size: file.size.max(0) as u64,
+                duration: file.duration.map(|d| d as u64),
+                is_heavy: should_use_heavy_lane(
+                    ftype,
+                    path_str,
+                    file.size.max(0) as u64,
+                    file.width.unwrap_or(0),
+                    file.height.unwrap_or(0),
+                ),
+                processed_already_ready: thumbnail_ready,
+                force_regenerate: needs_thumbnail_regeneration,
+            })
+        };
+
+        Ok(FileIndexOutcome {
+            excluded: false,
+            task,
+            processed_immediately,
+            search_ready_immediately,
+        })
     }));
 
     match result {
-        Ok(task) => task,
-        Err(_) => {
-            eprintln!("Panic while indexing file, skipping: {}", path_str);
-            None
-        }
+        Ok(outcome) => outcome,
+        Err(_) => Err(format!("Panic while indexing file, skipping: {}", path_str)),
     }
 }
 
@@ -4002,24 +3995,13 @@ pub async fn index_album_worker(
     let total_files = image_count + video_count;
     let search_total = image_count;
 
-    // Resume only when totals match and previous indexed is a valid in-progress value.
-    // This avoids breaking normal re-scan behavior after a completed run.
-    let resume_from = if previous_total == total_files
-        && previous_indexed > 0
-        && previous_indexed < total_files
-    {
-        previous_indexed
-    } else {
-        0
-    };
-
     // 3. Emit start progress
     let tracker = Arc::new(Mutex::new(ProgressTracker::new(
         app_handle,
         album_id,
         total_files,
         search_total,
-        resume_from,
+        0, // start at 0 and let file metadata determine skip
         scan_total,
         scan_total_size,
     )));
@@ -4031,7 +4013,6 @@ pub async fn index_album_worker(
     // 4. Traverse and index
     let mut is_cancelled = false;
     let mut traversal_failed = false;
-    let mut traversed_count = 0u64;
     // WalkDir already visits every directory during indexing.  Record the
     // direct-parent relationship here so the sidebar never needs to rescan an
     // unchanged directory just to decide whether to show its expand arrow.
@@ -4102,11 +4083,7 @@ pub async fn index_album_worker(
             let path_str = entry.path().to_string_lossy().to_string();
             if let Some(ftype) = get_file_type(&path_str) {
                 if !album.allows_file_type(ftype) || skip_excluded_image(&album, &path_str, ftype)? { continue; }
-                // Resume mode: skip already-indexed prefix files.
-                if traversed_count < resume_from {
-                    traversed_count += 1;
-                    continue;
-                }
+                // Count-based skipping removed in favor of full traversal
 
                 // Persist current file pointer for post-crash diagnosis.
                 write_index_trace(album_id, &path_str);
@@ -4126,11 +4103,10 @@ pub async fn index_album_worker(
                         });
                         tracker.maybe_emit();
                     });
-                    traversed_count += 1;
                     continue;
                 }
 
-                if let Some(outcome) = index_single_file(
+                match index_single_file(
                     &album.path,
                     album_id,
                     &path_str,
@@ -4140,71 +4116,72 @@ pub async fn index_album_worker(
                     current_scan_time,
                     album.small_image_filter,
                 ) {
-                    let file_size = outcome
-                        .task
-                        .as_ref()
-                        .map(|task| task.file_size)
-                        .unwrap_or_else(|| {
-                            std::fs::metadata(&path_str).map(|m| m.len()).unwrap_or(0)
-                        });
-                    if outcome.excluded {
-                        // Some formats reveal dimensions only during metadata reading.
-                        // Remove those candidates from all progress totals consistently.
+                    Ok(outcome) => {
+                        let file_size = outcome
+                            .task
+                            .as_ref()
+                            .map(|task| task.file_size)
+                            .unwrap_or_else(|| {
+                                std::fs::metadata(&path_str).map(|m| m.len()).unwrap_or(0)
+                            });
+                        if outcome.excluded {
+                            // Some formats reveal dimensions only during metadata reading.
+                            // Remove those candidates from all progress totals consistently.
+                            with_progress_tracker(&tracker, |tracker| {
+                                tracker.modify(|snapshot| {
+                                    snapshot.total = snapshot.total.saturating_sub(1);
+                                    snapshot.search_total = snapshot.search_total.saturating_sub(1);
+                                    snapshot.scan_total = snapshot.scan_total.saturating_sub(1);
+                                    snapshot.scan_total_size = snapshot.scan_total_size.saturating_sub(file_size);
+                                });
+                                tracker.maybe_emit();
+                            });
+                            continue;
+                        }
+                        if let Some(task) = outcome.task {
+                            thumbnail_join_set.spawn(process_thumbnail_task(
+                                app_handle.clone(),
+                                task,
+                                processing_budget.clone(),
+                                tracker.clone(),
+                            ));
+                        }
                         with_progress_tracker(&tracker, |tracker| {
                             tracker.modify(|snapshot| {
-                                snapshot.total = snapshot.total.saturating_sub(1);
-                                snapshot.search_total = snapshot.search_total.saturating_sub(1);
-                                snapshot.scan_total = snapshot.scan_total.saturating_sub(1);
-                                snapshot.scan_total_size = snapshot.scan_total_size.saturating_sub(file_size);
+                                snapshot.discovered += 1;
+                                snapshot.current_size += file_size;
+                                if outcome.processed_immediately {
+                                    snapshot.processed += 1;
+                                }
+                                if outcome.search_ready_immediately {
+                                    snapshot.search_ready += 1;
+                                }
                             });
                             tracker.maybe_emit();
                         });
-                        traversed_count += 1;
-                        continue;
+                        let processed_now =
+                            with_progress_tracker(&tracker, |tracker| tracker.snapshot.processed);
+                        let discovered_now =
+                            with_progress_tracker(&tracker, |tracker| tracker.snapshot.discovered);
+                        if discovered_now % 50 == 0 || processed_now % 50 == 0 {
+                            let current_total = with_progress_tracker(&tracker, |tracker| tracker.snapshot.total);
+                            let _ = Album::update_progress(album_id, processed_now, current_total);
+                        }
                     }
-                    if let Some(task) = outcome.task {
-                        thumbnail_join_set.spawn(process_thumbnail_task(
-                            app_handle.clone(),
-                            task,
-                            processing_budget.clone(),
-                            tracker.clone(),
-                        ));
-                    }
-                    with_progress_tracker(&tracker, |tracker| {
-                        tracker.modify(|snapshot| {
-                            snapshot.discovered += 1;
-                            snapshot.current_size += file_size;
-                            if outcome.processed_immediately {
-                                snapshot.processed += 1;
-                            }
-                            if outcome.search_ready_immediately {
-                                snapshot.search_ready += 1;
-                            }
+                    Err(e) => {
+                        eprintln!("Failed to index file {}: {}", path_str, e);
+                        let file_size = std::fs::metadata(&path_str).map(|m| m.len()).unwrap_or(0);
+                        with_progress_tracker(&tracker, |tracker| {
+                            tracker.modify(|snapshot| {
+                                snapshot.discovered += 1;
+                                snapshot.failed += 1;
+                                snapshot.failed_size += file_size;
+                                snapshot.current_size += file_size;
+                            });
+                            tracker.maybe_emit();
                         });
-                        tracker.maybe_emit();
-                    });
-                    let processed_now =
-                        with_progress_tracker(&tracker, |tracker| tracker.snapshot.processed);
-                    let discovered_now =
-                        with_progress_tracker(&tracker, |tracker| tracker.snapshot.discovered);
-                    if discovered_now % 50 == 0 || processed_now % 50 == 0 {
-                        let current_total = with_progress_tracker(&tracker, |tracker| tracker.snapshot.total);
-                        let _ = Album::update_progress(album_id, processed_now, current_total);
                     }
-                } else {
-                    let file_size = std::fs::metadata(&path_str).map(|m| m.len()).unwrap_or(0);
-                    with_progress_tracker(&tracker, |tracker| {
-                        tracker.modify(|snapshot| {
-                            snapshot.discovered += 1;
-                            snapshot.failed += 1;
-                            snapshot.failed_size += file_size;
-                            snapshot.current_size += file_size;
-                        });
-                        tracker.maybe_emit();
-                    });
                 }
-
-                traversed_count += 1;
             } else if !is_ignored_scan_sidecar(entry.path()) {
                 let file_size = entry.metadata().map(|metadata| metadata.len()).unwrap_or(0);
                 with_progress_tracker(&tracker, |tracker| {

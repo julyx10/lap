@@ -962,7 +962,7 @@ pub fn open_external_url(url: &str) -> Result<(), String> {
 /// system's default layout. A RAW+JPEG pair supplies its JPEG/HEIC companion.
 #[tauri::command]
 pub async fn set_desktop_wallpaper(
-    app_handle: AppHandle,
+    _app_handle: AppHandle,
     file_path: &str,
     companion_path: Option<String>,
 ) -> Result<(), String> {
