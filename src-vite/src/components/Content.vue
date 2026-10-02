@@ -3452,6 +3452,7 @@ let unlistenKeydown: () => void;
 let unlistenImageViewer: () => void;
 let unlistenImageEditor: (() => void) | null = null;
 let unlistenMontage: (() => void) | null = null;
+let unlistenMontageAdd: (() => void) | null = null;
 let unlistenFaceIndexProgress: (() => void) | null = null;
 let unlistenLibraryTotalRefreshed: (() => void) | null = null;
 let unlistenImportFilesAdded: (() => void) | null = null;
@@ -5396,6 +5397,12 @@ onMounted( async() => {
     }
   });
 
+  // "+ Add" in the montage window: send it the photos selected here
+  unlistenMontageAdd = await listen('montage-add-request', async () => {
+    const fileIds = await getMontageImageIds();
+    await (await WebviewWindow.getByLabel('montage'))?.emit('montage-add-files', { fileIds });
+  });
+
   unlistenImageEditor = await listen('message-from-image-editor', async (event: any) => {
     const { type, saveAsNew, filePath, sourceFileId } = event.payload as any;
     const sourceId = Number(sourceFileId || 0);
@@ -5687,6 +5694,7 @@ onBeforeUnmount(() => {
   unlistenImageViewer();
   if (unlistenImageEditor) unlistenImageEditor();
   if (unlistenMontage) unlistenMontage();
+  if (unlistenMontageAdd) unlistenMontageAdd();
   if (unlistenKeydown) unlistenKeydown();
   if (unlistenTriggerNextAlbum) unlistenTriggerNextAlbum();
   if (unlistenIndexProgress) unlistenIndexProgress();
@@ -10319,9 +10327,18 @@ const MONTAGE_MAX_PHOTOS = 50;
 let montageSaveAsContext: SaveAsContext | null = null;
 let montageSourceFolder = '';
 
+// selected images, including the ones not loaded in the view yet
+async function getMontageImages() {
+  return ((await getActionableSelectedItemsForAction()) || []).filter((item: any) => item.file_type !== 2);
+}
+
+async function getMontageImageIds() {
+  return (await getMontageImages()).map((item: any) => Number(item.id));
+}
+
 async function openMontage() {
-  const images = getActionableSelectedItems().filter(item => item.file_type !== 2);
-  const imageIds = images.map(item => Number(item.id));
+  const images = await getMontageImages();
+  const imageIds = images.map((item: any) => Number(item.id));
   if (imageIds.length < 2) {
     toast.warning(t('msgbox.montage.not_enough_photos'));
     return;
@@ -10337,11 +10354,16 @@ async function openMontage() {
   // a new selection replaces any montage already open
   await (await WebviewWindow.getByLabel('montage'))?.destroy();
 
+  // the montage window grows itself if its settings panel does not fit
+  const width = Math.min(1280, window.screen.availWidth);
+  const height = Math.min(800, window.screen.availHeight);
+
   const newWindow = new WebviewWindow('montage', {
     url: `/montage?fileIds=${imageIds.slice(0, MONTAGE_MAX_PHOTOS).join(',')}`,
     title: 'Montage',
-    width: 1100,
-    height: 700,
+    width,
+    height,
+    center: true,
     minWidth: 800,
     minHeight: 500,
     resizable: true,

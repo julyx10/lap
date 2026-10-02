@@ -21,81 +21,91 @@
 
     <!-- Main Content -->
     <div class="flex-1 flex gap-3 p-3 min-h-0 select-none">
-      <!-- Left: Preview -->
-      <div
-        ref="containerRef"
-        class="relative flex-1 min-w-0 rounded-box overflow-hidden border border-base-content/5 bg-base-300/30 shadow-sm flex items-center justify-center"
-      >
-        <transition name="fade">
-          <div v-if="isProcessing" class="absolute inset-0 z-50 flex items-center justify-center bg-base-100/55 backdrop-blur-sm">
-            <span class="loading loading-dots text-primary"></span>
-          </div>
-        </transition>
+      <!-- Left: Preview and hint -->
+      <div class="flex-1 min-w-0 flex flex-col gap-2">
+        <div
+          ref="containerRef"
+          class="relative flex-1 min-h-0 rounded-box overflow-hidden border border-base-content/5 bg-base-300/30 shadow-sm flex items-center justify-center"
+        >
+          <transition name="fade">
+            <div v-if="isProcessing" class="absolute inset-0 z-50 flex items-center justify-center bg-base-100/55 backdrop-blur-sm">
+              <span class="loading loading-dots text-primary"></span>
+            </div>
+          </transition>
 
-        <div v-if="pageBox.width > 0" class="relative" :style="{ width: `${pageBox.width}px`, height: `${pageBox.height}px` }">
-          <div
-            ref="pageRef"
-            class="absolute inset-0 overflow-hidden shadow-lg"
-            :style="{ backgroundColor: background }"
-            @pointerdown.self="activeId = undefined"
-          >
+          <div v-if="pageBox.width > 0" class="relative" :style="{ width: `${pageBox.width}px`, height: `${pageBox.height}px` }">
             <div
-              v-for="item in movedLayout"
-              :key="item.fileId"
-              class="absolute"
-              :class="{ 'cursor-move': mode === 'pile', 'outline-2 outline-primary': mode === 'pile' && item.fileId === activeId }"
-              :style="frameStyle(item)"
-              @pointerdown="startDrag($event, item, 'move')"
+              ref="pageRef"
+              class="absolute inset-0 overflow-hidden shadow-lg"
+              :style="{ backgroundColor: background }"
+              @pointerdown.self="activeId = undefined"
             >
-              <div class="relative w-full h-full overflow-hidden">
-                <img
-                  :src="fileById.get(item.fileId)?.thumbnail"
-                  class="absolute left-1/2 top-1/2 max-w-none object-cover pointer-events-none"
-                  :style="photoStyle(item)"
+              <div
+                v-for="item in movedLayout"
+                :key="item.fileId"
+                class="absolute"
+                :class="{
+                  'cursor-move': mode === 'pile',
+                  'cursor-grab': mode !== 'pile',
+                  'outline-2 outline-primary': mode === 'pile' && item.fileId === activeId,
+                  'opacity-35': mode !== 'pile' && item.fileId === dragSource,
+                  'outline-3 outline-dashed -outline-offset-3 outline-primary': item.fileId === dropTarget,
+                }"
+                :style="frameStyle(item)"
+                :data-frame-id="item.fileId"
+                @pointerdown="startDrag($event, item.fileId, mode === 'pile' ? 'move' : 'swap')"
+              >
+                <div class="relative w-full h-full overflow-hidden">
+                  <img
+                    :src="fileById.get(item.fileId)?.thumbnail"
+                    class="absolute left-1/2 top-1/2 max-w-none object-cover pointer-events-none"
+                    :style="photoStyle(item)"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- dial of the active photo (Picasa style): drag the handle around to rotate, away from the center to scale -->
+            <div
+              v-if="dial"
+              class="absolute pointer-events-none"
+              :style="{ left: `${dial.x}px`, top: `${dial.y}px`, zIndex: layout.length + 1 }"
+            >
+              <svg class="absolute left-0 top-0 overflow-visible" width="1" height="1">
+                <circle :r="DIAL_RADIUS" fill="none" stroke="rgb(0 0 0 / 0.4)" :stroke-width="DIAL_WIDTH" />
+                <line
+                  v-for="tick in 24"
+                  :key="tick"
+                  :x1="DIAL_RADIUS - DIAL_WIDTH / 2 + 3" :x2="DIAL_RADIUS - DIAL_WIDTH / 2 + (tick % 2 ? 6 : 9)"
+                  stroke="rgb(255 255 255 / 0.7)"
+                  :transform="`rotate(${tick * 15})`"
                 />
+                <line x1="-6" x2="6" stroke="rgb(255 255 255 / 0.7)" />
+                <line y1="-6" y2="6" stroke="rgb(255 255 255 / 0.7)" />
+                <g :transform="`rotate(${dial.angle})`">
+                  <line :x1="DIAL_RADIUS + DIAL_WIDTH / 2" :x2="DIAL_HANDLE" stroke="white" stroke-width="2" />
+                  <circle :cx="DIAL_HANDLE" r="7" fill="white" stroke="var(--color-primary)" stroke-width="4" />
+                </g>
+              </svg>
+              <div
+                class="absolute size-6 -translate-1/2 rounded-full pointer-events-auto cursor-grab"
+                :style="dial.handle"
+                @pointerdown.stop="startDrag($event, dial.item.fileId, 'transform')"
+              ></div>
+              <div class="absolute -translate-1/2 flex flex-col items-center gap-1 text-[11px] font-medium text-white whitespace-nowrap">
+                <span class="px-1.5 rounded bg-black/40">{{ $t('msgbox.montage.angle', { value: dial.angleLabel }) }}</span>
+                <span class="px-1.5 rounded bg-black/40 mt-4">{{ $t('msgbox.montage.scale', { value: dial.scaleLabel }) }}</span>
               </div>
             </div>
           </div>
-
-          <!-- dial of the active photo (Picasa style): drag the handle around to rotate, away from the center to scale -->
-          <div
-            v-if="dial"
-            class="absolute pointer-events-none"
-            :style="{ left: `${dial.x}px`, top: `${dial.y}px`, zIndex: layout.length + 1 }"
-          >
-            <svg class="absolute left-0 top-0 overflow-visible" width="1" height="1">
-              <circle :r="DIAL_RADIUS" fill="none" stroke="rgb(0 0 0 / 0.4)" :stroke-width="DIAL_WIDTH" />
-              <line
-                v-for="tick in 24"
-                :key="tick"
-                :x1="DIAL_RADIUS - DIAL_WIDTH / 2 + 3" :x2="DIAL_RADIUS - DIAL_WIDTH / 2 + (tick % 2 ? 6 : 9)"
-                stroke="rgb(255 255 255 / 0.7)"
-                :transform="`rotate(${tick * 15})`"
-              />
-              <line x1="-6" x2="6" stroke="rgb(255 255 255 / 0.7)" />
-              <line y1="-6" y2="6" stroke="rgb(255 255 255 / 0.7)" />
-              <g :transform="`rotate(${dial.angle})`">
-                <line :x1="DIAL_RADIUS + DIAL_WIDTH / 2" :x2="DIAL_HANDLE" stroke="white" stroke-width="2" />
-                <circle :cx="DIAL_HANDLE" r="7" fill="white" stroke="var(--color-primary)" stroke-width="4" />
-              </g>
-            </svg>
-            <div
-              class="absolute size-6 -translate-1/2 rounded-full pointer-events-auto cursor-grab"
-              :style="dial.handle"
-              @pointerdown.stop="startDrag($event, dial.item, 'transform')"
-            ></div>
-            <div class="absolute -translate-1/2 flex flex-col items-center gap-1 text-[11px] font-medium text-white whitespace-nowrap">
-              <span class="px-1.5 rounded bg-black/40">{{ $t('msgbox.montage.angle', { value: dial.angleLabel }) }}</span>
-              <span class="px-1.5 rounded bg-black/40 mt-4">{{ $t('msgbox.montage.scale', { value: dial.scaleLabel }) }}</span>
-            </div>
-          </div>
         </div>
+        <div class="h-4 shrink-0 text-center text-[11px] text-base-content/50 truncate">{{ $t(`msgbox.montage.hint_${mode}`) }}</div>
       </div>
 
       <!-- Right: Settings -->
-      <div class="w-72 shrink-0 flex flex-col gap-3 overflow-y-auto">
+      <div ref="panelRef" class="w-80 shrink-0 flex flex-col gap-3 overflow-y-auto text-xs">
         <section class="rounded-box p-3 space-y-2 border border-base-content/5 shadow-sm bg-base-300/30">
-          <span class="text-[11px] font-bold uppercase tracking-[0.22em] text-base-content/30">{{ $t('msgbox.montage.layout') }}</span>
+          <div class="font-semibold text-base-content/80">{{ $t('msgbox.montage.layout') }}</div>
           <div class="flex items-center gap-1">
             <TButton
               v-for="option in modeOptions"
@@ -112,40 +122,97 @@
           </button>
         </section>
 
-        <section class="rounded-box p-3 space-y-3 border border-base-content/5 shadow-sm bg-base-300/30">
-          <span class="text-[11px] font-bold uppercase tracking-[0.22em] text-base-content/30">{{ $t('msgbox.montage.page') }}</span>
-          <div class="grid grid-cols-[80px_minmax(0,1fr)] gap-x-4 gap-y-3 items-center text-xs">
-            <div class="font-medium tracking-wide">{{ $t('msgbox.montage.page_size') }}</div>
-            <select v-model="pageKey" class="select select-bordered select-xs">
+        <section class="rounded-box p-3 space-y-2 border border-base-content/5 shadow-sm bg-base-300/30">
+          <div class="font-semibold text-base-content/80">{{ $t('msgbox.montage.page') }}</div>
+          <div class="flex items-center justify-between gap-2">
+            <span>{{ $t('msgbox.montage.page_size') }}</span>
+            <select v-model="pageKey" class="select select-bordered select-xs w-40">
               <option v-for="option in pageOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
             </select>
-
-            <template v-if="pageKey !== 'square'">
-              <div class="font-medium tracking-wide">{{ $t('msgbox.montage.orientation') }}</div>
-              <select v-model="landscape" class="select select-bordered select-xs">
-                <option :value="true">{{ $t('msgbox.montage.landscape') }}</option>
-                <option :value="false">{{ $t('msgbox.montage.portrait') }}</option>
-              </select>
-            </template>
-
-            <div class="font-medium tracking-wide">{{ $t('msgbox.montage.background') }}</div>
-            <input v-model="background" type="color" class="h-6 w-12 cursor-pointer rounded border border-base-content/10 bg-transparent" />
-
-            <div class="col-span-2 flex items-center gap-2 font-medium tracking-wide cursor-pointer">
-              <input id="montage-shadow" v-model="shadow" type="checkbox" class="checkbox checkbox-primary checkbox-xs" />
-              <label for="montage-shadow" class="cursor-pointer">{{ $t('msgbox.montage.shadow') }}</label>
-            </div>
-
-            <template v-if="mode === 'pile'">
-              <div class="font-medium tracking-wide">{{ $t('msgbox.montage.border') }}</div>
-              <SliderInput v-model="border" :min="0" :max="4" :step="0.5" class="w-full" />
-            </template>
-            <template v-else>
-              <div class="font-medium tracking-wide">{{ $t('msgbox.montage.spacing') }}</div>
-              <SliderInput v-model="spacing" :min="0" :max="5" :step="0.5" class="w-full" />
-            </template>
           </div>
-          <div class="text-[10px] font-mono text-base-content/40">{{ pageSize[0] }} × {{ pageSize[1] }} px</div>
+          <div v-if="pageKey !== 'square'" class="flex items-center justify-between gap-2">
+            <span>{{ $t('msgbox.montage.orientation') }}</span>
+            <div class="join">
+              <button class="btn btn-xs join-item" :class="{ 'btn-active': landscape }" @click="landscape = true">{{ $t('msgbox.montage.landscape') }}</button>
+              <button class="btn btn-xs join-item" :class="{ 'btn-active': !landscape }" @click="landscape = false">{{ $t('msgbox.montage.portrait') }}</button>
+            </div>
+          </div>
+          <div class="text-[11px] text-base-content/45">{{ $t('msgbox.montage.export', { size: exportLabel }) }}</div>
+        </section>
+
+        <section class="rounded-box p-3 space-y-3 border border-base-content/5 shadow-sm bg-base-300/30">
+          <div class="font-semibold text-base-content/80">{{ $t('msgbox.montage.style') }}</div>
+          <div class="flex items-center justify-between gap-2">
+            <span>{{ $t('msgbox.montage.background') }}</span>
+            <div class="flex gap-2">
+              <button
+                v-for="color in BACKGROUND_PRESETS"
+                :key="color"
+                class="size-5.5 rounded-md border border-base-content/15 cursor-pointer"
+                :class="{ 'outline-2 outline-offset-2 outline-primary': background === color }"
+                :style="{ backgroundColor: color }"
+                @click="background = color"
+              ></button>
+              <label
+                class="relative size-5.5 rounded-md border border-base-content/15 cursor-pointer overflow-hidden"
+                :class="{ 'outline-2 outline-offset-2 outline-primary': !BACKGROUND_PRESETS.includes(background) }"
+                style="background: conic-gradient(red, yellow, lime, cyan, blue, magenta, red)"
+              >
+                <input v-model="background" type="color" class="absolute inset-0 opacity-0 cursor-pointer" />
+              </label>
+            </div>
+          </div>
+
+          <div v-if="mode === 'pile'" class="flex items-center justify-between gap-2">
+            <span>{{ $t('msgbox.montage.random_rotation') }} <span class="text-base-content/45">± {{ maxRotation }}°</span></span>
+            <SliderInput id="montage-rotation" v-model="maxRotation" :min="0" :max="30" :step="1" :slider_width="140" />
+          </div>
+          <div v-else class="flex items-center justify-between gap-2">
+            <span>{{ $t('msgbox.montage.spacing') }} <span class="text-base-content/45">{{ toExportPx(spacing) }} px</span></span>
+            <SliderInput id="montage-spacing" v-model="spacing" :min="0" :max="5" :step="0.25" :slider_width="140" />
+          </div>
+
+          <label class="flex items-center justify-between gap-2 cursor-pointer">
+            <span>{{ $t('msgbox.montage.border') }}</span>
+            <input v-model="borderOn" type="checkbox" class="toggle toggle-xs toggle-primary" />
+          </label>
+          <div class="flex items-center justify-between gap-2" :class="{ 'opacity-50': !borderOn }">
+            <span>{{ $t('msgbox.montage.border_width') }} <span class="text-base-content/45">{{ toExportPx(border) }} px</span></span>
+            <SliderInput id="montage-border" v-model="border" :min="0.25" :max="4" :step="0.25" :slider_width="140" :disabled="!borderOn" />
+          </div>
+
+          <label class="flex items-center justify-between gap-2 cursor-pointer">
+            <span>{{ $t('msgbox.montage.shadow') }}</span>
+            <input v-model="shadow" type="checkbox" class="toggle toggle-xs toggle-primary" />
+          </label>
+        </section>
+
+        <section class="rounded-box p-3 space-y-2 border border-base-content/5 shadow-sm bg-base-300/30">
+          <div class="flex items-center justify-between">
+            <span class="font-semibold text-base-content/80">{{ $t('msgbox.montage.photos', { count: files.length }) }}</span>
+            <button class="btn btn-ghost btn-xs" :disabled="files.length >= MAX_PHOTOS" @click="requestAdd">+ {{ $t('msgbox.montage.add') }}</button>
+          </div>
+          <div class="grid grid-cols-6 gap-1">
+            <div
+              v-for="file in files"
+              :key="file.id"
+              class="aspect-square rounded overflow-hidden cursor-grab"
+              :class="{
+                'opacity-35': Number(file.id) === dragSource,
+                'outline-2 outline-dashed outline-primary': Number(file.id) === dropTarget,
+              }"
+              :data-thumb-id="file.id"
+              @pointerdown="startDrag($event, Number(file.id), 'reorder')"
+              @contextmenu.prevent="removePhoto(Number(file.id))"
+            >
+              <img
+                :src="file.thumbnail"
+                class="w-full h-full object-cover pointer-events-none"
+                :style="{ transform: `rotate(${Number(file.rotate || 0)}deg)` }"
+              />
+            </div>
+          </div>
+          <div class="text-[11px] text-base-content/45">{{ $t('msgbox.montage.photos_hint') }}</div>
         </section>
       </div>
     </div>
@@ -155,6 +222,7 @@
       <div v-if="errorMessage" class="flex-1 min-w-0 text-xs text-error truncate" :title="errorMessage">{{ errorMessage }}</div>
       <button
         class="px-4 py-1 rounded-box hover:bg-base-100 hover:text-base-content cursor-pointer text-sm mr-4"
+        :disabled="isProcessing"
         @click="closeWindow"
       >{{ $t('msgbox.image_editor.cancel') }}</button>
       <select v-model="combinedFormatKey" class="select select-bordered select-xs">
@@ -208,9 +276,10 @@ import { useI18n } from 'vue-i18n';
 import { config } from '@/common/config';
 import { isWin, isLinux, setTheme, getFolderPath, getFullPath, combineFileName, getSelectOptions, getThumbUrl, isValidFileName } from '@/common/utils';
 import { getFileInfo, checkFileExists, renderMontage } from '@/common/api';
-import { computeMontageLayout, type MontageItem, type MontageMode } from '@/common/montageLayout';
+import { computeMontageLayout, shuffled, type MontageItem, type MontageMode } from '@/common/montageLayout';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
-import { emit as tauriEmit } from '@tauri-apps/api/event';
+import { LogicalSize } from '@tauri-apps/api/dpi';
+import { emit as tauriEmit, listen } from '@tauri-apps/api/event';
 import { open as openDialog } from '@tauri-apps/plugin-dialog';
 
 import TitleBar from '@/components/TitleBar.vue';
@@ -228,6 +297,9 @@ const PAGE_SIZES = {
   square: [3000, 3000],
 } as const;
 type PageKey = keyof typeof PAGE_SIZES;
+const PRINT_PAGES: PageKey[] = ['a4', 'photo'];
+const BACKGROUND_PRESETS = ['#f5f0e6', '#ffffff', '#111827', '#7c2d12'];
+const MAX_PHOTOS = 50; // same limit as the main window
 
 const router = useRouter();
 const { t, locale, messages } = useI18n();
@@ -235,15 +307,17 @@ const localeMsg = computed(() => messages.value[locale.value] as any);
 const appWindow = getCurrentWebviewWindow();
 const showDesktopTitleBar = isWin || isLinux;
 
-const files = ref<any[]>([]);
+const files = ref<any[]>([]); // montage order
 const mode = ref<MontageMode>('grid');
 const pageKey = ref<PageKey>('a4');
 const landscape = ref(true);
 const background = ref('#ffffff');
-const spacing = ref(1);   // % of the page width
-const border = ref(1.5);  // % of the page width
-const seed = ref(0);
-const shadow = ref(false);
+const spacing = ref(1);     // % of the page width
+const borderOn = ref(true);
+const border = ref(1.5);    // % of the page width
+const maxRotation = ref(12); // pile, degrees
+const shadow = ref(true);
+const seed = ref(1);        // pile placement
 const isProcessing = ref(false);
 const errorMessage = ref('');
 
@@ -267,6 +341,14 @@ const pageSize = computed(() => {
   return landscape.value ? [long, short] : [short, long];
 });
 
+const exportLabel = computed(() =>
+  `${pageSize.value[0]} × ${pageSize.value[1]} px${PRINT_PAGES.includes(pageKey.value) ? ' · 300 dpi' : ''}`);
+
+// a % of the page width, in pixels of the exported image
+function toExportPx(percent: number) {
+  return Math.round(percent / 100 * pageSize.value[0]);
+}
+
 const fileById = computed(() => new Map(files.value.map(file => [Number(file.id), file])));
 
 // upright aspect ratio: stored dimensions already follow the EXIF orientation
@@ -281,7 +363,7 @@ const baseLayout = computed(() => computeMontageLayout(
   files.value.map(file => ({ fileId: Number(file.id), ratio: photoRatio(file) })),
   pageSize.value[0] / pageSize.value[1],
   mode.value,
-  { spacing: spacing.value / 100, border: border.value / 100 },
+  { spacing: spacing.value / 100, border: borderOn.value ? border.value / 100 : 0, rotation: maxRotation.value },
   seed.value,
 ));
 
@@ -292,7 +374,7 @@ const NO_ADJUST: Adjust = { dx: 0, dy: 0, scale: 1, angle: 0 };
 const adjusts = ref(new Map<number, Adjust>());
 const raised = ref<number[]>([]);
 const activeId = ref<number>(); // photo showing the dial
-watch([mode, seed, pageKey, landscape, () => files.value.length], () => {
+watch([mode, seed, pageKey, landscape, () => files.value.map(file => file.id).join(',')], () => {
   adjusts.value = new Map();
   raised.value = [];
   activeId.value = undefined;
@@ -340,30 +422,51 @@ const dial = computed(() => {
   };
 });
 
+// Pointer drags: move / transform a pile photo, swap two photos of the grid or mosaic,
+// reorder the photo strip. Swap and reorder find their target under the pointer.
+type DragKind = 'move' | 'transform' | 'swap' | 'reorder';
+const DROP_SELECTORS: Partial<Record<DragKind, string>> = { swap: '[data-frame-id]', reorder: '[data-thumb-id]' };
 const pageRef = ref<HTMLElement | null>(null);
-type DragKind = 'move' | 'transform';
+const dragSource = ref<number>(); // swap / reorder: dragged photo
+const dropTarget = ref<number>(); // swap / reorder: photo under the pointer
 let drag: { kind: DragKind; fileId: number; startX: number; startY: number; centerX: number; centerY: number; start: Adjust } | null = null;
 
-function startDrag(event: PointerEvent, item: MontageItem, kind: DragKind) {
-  if (mode.value !== 'pile' || event.button !== 0 || !pageRef.value) return;
-  const page = pageRef.value.getBoundingClientRect();
+function startDrag(event: PointerEvent, fileId: number, kind: DragKind) {
+  if (event.button !== 0 || isProcessing.value) return;
+  let centerX = 0, centerY = 0;
+  if (kind === 'move' || kind === 'transform') {
+    const item = movedLayout.value.find(other => other.fileId === fileId);
+    if (!item || !pageRef.value) return;
+    const page = pageRef.value.getBoundingClientRect();
+    centerX = page.left + (item.x + item.w / 2) * page.width;
+    centerY = page.top + (item.y + item.h / 2) * page.height;
+    raised.value = [...raised.value.filter(id => id !== fileId), fileId];
+    activeId.value = fileId;
+  } else {
+    dragSource.value = fileId;
+  }
   drag = {
     kind,
-    fileId: item.fileId,
+    fileId,
     startX: event.clientX,
     startY: event.clientY,
-    centerX: page.left + (item.x + item.w / 2) * page.width,
-    centerY: page.top + (item.y + item.h / 2) * page.height,
-    start: { ...(adjusts.value.get(item.fileId) ?? NO_ADJUST) },
+    centerX,
+    centerY,
+    start: { ...(adjusts.value.get(fileId) ?? NO_ADJUST) },
   };
-  raised.value = [...raised.value.filter(id => id !== item.fileId), item.fileId];
-  activeId.value = item.fileId;
   window.addEventListener('pointermove', onDrag);
   window.addEventListener('pointerup', endDrag);
 }
 
 function onDrag(event: PointerEvent) {
   if (!drag) return;
+  const selector = DROP_SELECTORS[drag.kind];
+  if (selector) {
+    const target = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>(selector);
+    const id = Number(target?.dataset.frameId ?? target?.dataset.thumbId);
+    dropTarget.value = id && id !== drag.fileId ? id : undefined;
+    return;
+  }
   const { start, centerX, centerY } = drag;
   const next = { ...start };
   if (drag.kind === 'move') {
@@ -382,13 +485,70 @@ function onDrag(event: PointerEvent) {
 }
 
 function endDrag() {
+  if (drag && dropTarget.value !== undefined) {
+    const ids = files.value.map(file => Number(file.id));
+    const from = ids.indexOf(drag.fileId);
+    const to = ids.indexOf(dropTarget.value);
+    const next = files.value.slice();
+    if (drag.kind === 'swap') {
+      [next[from], next[to]] = [next[to], next[from]];
+    } else {
+      next.splice(to, 0, ...next.splice(from, 1));
+    }
+    files.value = next;
+  }
   drag = null;
+  dragSource.value = undefined;
+  dropTarget.value = undefined;
   window.removeEventListener('pointermove', onDrag);
   window.removeEventListener('pointerup', endDrag);
 }
 
 function shuffle() {
+  files.value = shuffled(files.value);
   seed.value = Math.floor(Math.random() * 0xffffffff) + 1;
+}
+
+function removePhoto(fileId: number) {
+  if (files.value.length > 2) files.value = files.value.filter(file => Number(file.id) !== fileId);
+}
+
+async function loadFiles(ids: number[]) {
+  const infos = await Promise.all(ids.map(id => getFileInfo(id)));
+  return infos
+    .filter((file: any) => file && file.file_type !== 2)
+    .map((file: any) => ({ ...file, thumbnail: getThumbUrl(file.id) }));
+}
+
+// "+ Add": the main window answers with the photos selected in Lap (montage-add-files)
+function requestAdd() {
+  errorMessage.value = '';
+  void tauriEmit('montage-add-request');
+}
+
+async function addFiles(fileIds: number[]) {
+  const ids = fileIds.filter(id => !fileById.value.has(id));
+  if (ids.length === 0) {
+    errorMessage.value = t('msgbox.montage.add_none');
+    return;
+  }
+  const room = MAX_PHOTOS - files.value.length;
+  if (ids.length > room) errorMessage.value = t('msgbox.montage.too_many_photos', { count: MAX_PHOTOS });
+  files.value = [...files.value, ...await loadFiles(ids.slice(0, room))];
+  await fitWindowToPanel();
+}
+
+// grow the window until the settings panel needs no scrollbar, never beyond the screen
+const panelRef = ref<HTMLElement | null>(null);
+async function fitWindowToPanel() {
+  await nextTick();
+  const panel = panelRef.value;
+  const overflow = panel ? panel.scrollHeight - panel.clientHeight : 0;
+  if (overflow <= 0) return;
+  const height = Math.min(window.innerHeight + overflow, window.screen.availHeight);
+  if (height <= window.innerHeight) return;
+  await appWindow.setSize(new LogicalSize(window.innerWidth, height));
+  await appWindow.center();
 }
 
 // fit the page into the preview area
@@ -553,6 +713,7 @@ async function confirmSave() {
 }
 
 async function closeWindow() {
+  if (isProcessing.value) return; // the render reports back through this window
   try {
     await appWindow.close();
   } catch {
@@ -573,6 +734,8 @@ watch(() => config.settings.appearance, (newAppearance) => {
   setTheme(newAppearance, newAppearance === 0 ? config.settings.lightTheme : config.settings.darkTheme);
 });
 
+let unlistenAddFiles: (() => void) | null = null;
+
 onMounted(async () => {
   window.addEventListener('keydown', handleKeyDown);
   resizeObserver = new ResizeObserver(([entry]) => {
@@ -580,17 +743,18 @@ onMounted(async () => {
   });
   if (containerRef.value) resizeObserver.observe(containerRef.value);
 
+  unlistenAddFiles = await listen('montage-add-files', (event: any) => addFiles(event.payload.fileIds || []));
+
   const ids = String(router.currentRoute.value.query.fileIds || '').split(',').map(Number).filter(id => id > 0);
-  const infos = await Promise.all(ids.map(id => getFileInfo(id)));
-  files.value = infos
-    .filter((file: any) => file && file.file_type !== 2)
-    .map((file: any) => ({ ...file, thumbnail: getThumbUrl(file.id) }));
+  files.value = await loadFiles(ids);
+  await fitWindowToPanel();
 });
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
   endDrag();
   resizeObserver?.disconnect();
+  unlistenAddFiles?.();
 });
 
 </script>

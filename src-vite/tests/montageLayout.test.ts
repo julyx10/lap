@@ -1,12 +1,12 @@
 // Run with: node --test tests/montageLayout.test.ts
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { computeMontageLayout, type MontageMode, type MontageItem } from '../src/common/montageLayout.ts';
+import { computeMontageLayout, shuffled, type MontageMode, type MontageItem } from '../src/common/montageLayout.ts';
 
 const EPS = 1e-6;
 const ratios = [1.5, 0.67, 1, 1.78, 0.75, 1.33, 0.56];
 const photosOf = (n: number) => Array.from({ length: n }, (_, i) => ({ fileId: i + 1, ratio: ratios[i % ratios.length] }));
-const style = { spacing: 0.01, border: 0.008 };
+const style = { spacing: 0.01, border: 0.008, rotation: 15 };
 const pageRatios = [297 / 210, 210 / 297, 16 / 9, 1];
 
 function overlaps(a: MontageItem, b: MontageItem) {
@@ -29,15 +29,22 @@ for (const mode of ['grid', 'mosaic', 'pile'] as MontageMode[]) {
     }
   });
 
-  test(`${mode}: same seed gives the same layout`, () => {
+  test(`${mode}: same seed gives the same layout, photos keep the given order`, () => {
     const a = computeMontageLayout(photosOf(7), 1.5, mode, style, 42);
     assert.deepEqual(computeMontageLayout(photosOf(7), 1.5, mode, style, 42), a);
-    assert.notDeepEqual(computeMontageLayout(photosOf(7), 1.5, mode, style, 43).map(i => i.fileId), a.map(i => i.fileId));
+    assert.deepEqual(a.map(i => i.fileId), [1, 2, 3, 4, 5, 6, 7]);
+    assert.ok(a.every(i => i.border === style.border));
   });
 }
 
-test('seed 0 keeps the selection order', () => {
-  assert.deepEqual(computeMontageLayout(photosOf(5), 1, 'grid', style, 0).map(i => i.fileId), [1, 2, 3, 4, 5]);
+test('pile: another seed gives other positions', () => {
+  const a = computeMontageLayout(photosOf(7), 1.5, 'pile', style, 42);
+  assert.notDeepEqual(computeMontageLayout(photosOf(7), 1.5, 'pile', style, 43), a);
+});
+
+test('shuffled keeps every item', () => {
+  const items = Array.from({ length: 20 }, (_, i) => i);
+  assert.deepEqual(shuffled(items).sort((a, b) => a - b), items);
 });
 
 for (const mode of ['grid', 'mosaic'] as MontageMode[]) {
@@ -57,7 +64,7 @@ for (const mode of ['grid', 'mosaic'] as MontageMode[]) {
 test('mosaic covers the page except the gaps', () => {
   for (const n of [2, 3, 7, 50]) {
     for (const pageRatio of pageRatios) {
-      const noGap = { spacing: 0, border: 0 };
+      const noGap = { spacing: 0, border: 0, rotation: 0 };
       const items = computeMontageLayout(photosOf(n), pageRatio, 'mosaic', noGap, 1);
       const area = items.reduce((sum, i) => sum + i.w * i.h, 0);
       assert.ok(Math.abs(area - 1) < 0.01, `n=${n} ratio=${pageRatio}: area ${area}`);
@@ -65,9 +72,9 @@ test('mosaic covers the page except the gaps', () => {
   }
 });
 
-test('pile photos keep their aspect ratio and are rotated within ±15°', () => {
+test('pile photos keep their aspect ratio and are rotated within the maximum', () => {
   const pageRatio = 1.5;
-  const noBorder = { spacing: 0, border: 0 };
+  const noBorder = { spacing: 0, border: 0, rotation: 15 };
   const photos = photosOf(7);
   const items = computeMontageLayout(photos, pageRatio, 'pile', noBorder, 0);
   items.forEach((item, i) => {

@@ -20,8 +20,9 @@ export interface MontageItem {
 }
 
 export interface MontageStyle {
-  spacing: number; // grid / mosaic gap, relative to the page width
-  border: number;  // pile white border, relative to the page width
+  spacing: number;  // grid / mosaic gap, relative to the page width
+  border: number;   // photo border, relative to the page width (0 = none)
+  rotation: number; // pile: maximum random rotation, in degrees
 }
 
 // Deterministic PRNG (mulberry32): the same seed always gives the same montage.
@@ -36,7 +37,7 @@ function createRandom(seed: number) {
   };
 }
 
-function shuffled<T>(items: T[], random: () => number): T[] {
+export function shuffled<T>(items: T[], random: () => number = Math.random): T[] {
   const result = items.slice();
   for (let i = result.length - 1; i > 0; i--) {
     const j = Math.floor(random() * (i + 1));
@@ -125,7 +126,7 @@ function mosaicLayout(photos: MontagePhoto[], pageH: number, gap: number): Box[]
   return boxes;
 }
 
-function pileLayout(photos: MontagePhoto[], pageH: number, border: number, random: () => number): (Box & { rotation: number })[] {
+function pileLayout(photos: MontagePhoto[], pageH: number, border: number, maxRotation: number, random: () => number): (Box & { rotation: number })[] {
   const n = photos.length;
   const shortSide = Math.min(1, pageH);
   const baseSize = shortSide * Math.min(0.5, Math.max(0.2, 1.1 / Math.sqrt(n)));
@@ -149,7 +150,7 @@ function pileLayout(photos: MontagePhoto[], pageH: number, border: number, rando
       y: Math.min(Math.max(cy - h / 2, 0), Math.max(0, pageH - h)),
       w,
       h,
-      rotation: (random() * 2 - 1) * 15,
+      rotation: (random() * 2 - 1) * maxRotation,
     };
   });
 }
@@ -159,16 +160,14 @@ export function computeMontageLayout(
   pageRatio: number, // page width / height
   mode: MontageMode,
   style: MontageStyle,
-  seed: number, // 0 keeps the selection order
+  seed: number, // pile placement; photos keep the given order in every mode
 ): MontageItem[] {
   if (photos.length === 0 || !(pageRatio > 0)) return [];
   const pageH = 1 / pageRatio;
-  const random = createRandom(seed);
-  const ordered = seed === 0 ? photos : shuffled(photos, random);
 
   const boxes = mode === 'pile'
-    ? pileLayout(ordered, pageH, style.border, random)
-    : (mode === 'mosaic' ? mosaicLayout : gridLayout)(ordered, pageH, style.spacing).map(box => ({ ...box, rotation: 0 }));
+    ? pileLayout(photos, pageH, style.border, style.rotation, createRandom(seed))
+    : (mode === 'mosaic' ? mosaicLayout : gridLayout)(photos, pageH, style.spacing).map(box => ({ ...box, rotation: 0 }));
 
   return boxes.map(box => ({
     fileId: box.fileId,
@@ -177,6 +176,6 @@ export function computeMontageLayout(
     w: box.w,
     h: box.h / pageH,
     rotation: box.rotation,
-    border: mode === 'pile' ? style.border : 0,
+    border: style.border,
   }));
 }
