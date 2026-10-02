@@ -703,7 +703,8 @@
       "set_as": "Définir comme",
       "set_desktop_wallpaper": "Définir comme fond d'écran",
       "show_info": "Afficher info",
-      "remove_from_collection": "Retirer de la collection"
+      "remove_from_collection": "Retirer de la collection",
+      "create_montage": "Créer un montage"
     },
     "calendar": {
       "monthly": "Mensuel",
@@ -1057,6 +1058,35 @@
       "overwrite": "Écraser",
       "save_as_new": "Enregistrer sous",
       "overwrite_confirm": "Écraser le fichier original ? Irréversible."
+    },
+    "montage": {
+      "title": "Montage",
+      "layout": "Disposition",
+      "grid": "Grille",
+      "mosaic": "Mosaïque",
+      "pile": "Pile de photos",
+      "shuffle": "Montage aléatoire",
+      "angle": "Angle : {value}°",
+      "scale": "Échelle : {value} %",
+      "shadow": "Dessiner des ombres",
+      "page": "Page",
+      "page_size": "Format",
+      "page_screen": "Écran 16:9",
+      "page_square": "Carré",
+      "orientation": "Orientation",
+      "landscape": "Paysage",
+      "portrait": "Portrait",
+      "background": "Fond",
+      "spacing": "Espacement",
+      "border": "Bordure",
+      "save_failed": "Échec de l'enregistrement du montage :",
+      "not_enough_photos": "Sélectionnez au moins 2 photos pour créer un montage.",
+      "too_many_photos": "Seules les {count} premières photos sont utilisées dans le montage.",
+      "save_title": "Enregistrer le montage",
+      "folder": "Dossier",
+      "file_name": "Nom du fichier",
+      "browse": "Parcourir...",
+      "folder_required": "Choisissez un dossier."
     }
   },
   "file_info": {

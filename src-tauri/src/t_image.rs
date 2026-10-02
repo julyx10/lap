@@ -1348,7 +1348,7 @@ pub async fn copy_edited_image_to_clipboard(params: EditParams) -> bool {
 /// bounding-box output with transparent corners, using bilinear interpolation.
 /// Takes `img` by value and uses `into_rgba8` so an already-RGBA source reuses
 /// its buffer instead of allocating a second full-image copy.
-fn rotate_arbitrary(img: DynamicImage, angle_deg: f32) -> DynamicImage {
+pub(crate) fn rotate_arbitrary(img: DynamicImage, angle_deg: f32) -> DynamicImage {
     let angle = angle_deg.to_radians();
     let src = img.into_rgba8();
     let (sw, sh) = (src.width() as f32, src.height() as f32);
@@ -1398,24 +1398,29 @@ fn rotate_arbitrary(img: DynamicImage, angle_deg: f32) -> DynamicImage {
     DynamicImage::ImageRgba8(dst)
 }
 
-/// get an edited image
-async fn get_edited_image(params: &EditParams) -> Result<DynamicImage, String> {
-    let file_type = t_utils::get_file_type(&params.source_file_path).unwrap_or(0);
-    let mut img = if should_generate_preview_for_file(&params.source_file_path, file_type) {
-        let preview = get_generated_preview_bytes(&params.source_file_path)
+/// Decode a source image upright: formats the `image` crate cannot read
+/// (RAW, HEIC, JXL, ...) go through their generated preview, which is already
+/// oriented; the others are decoded directly and the EXIF orientation applied.
+pub(crate) async fn load_oriented_image(
+    file_path: &str,
+    orientation: i32,
+) -> Result<DynamicImage, String> {
+    let file_type = t_utils::get_file_type(file_path).unwrap_or(0);
+    if should_generate_preview_for_file(file_path, file_type) {
+        let preview = get_generated_preview_bytes(file_path)
             .await?
             .ok_or_else(|| "Failed to resolve editable preview image".to_string())?;
-        let img = image::load_from_memory(&preview)
-            .map_err(|e| format!("Failed to decode editable preview image: {}", e))?;
-
-        img
+        image::load_from_memory(&preview)
+            .map_err(|e| format!("Failed to decode editable preview image: {}", e))
     } else {
-        let path = Path::new(&params.source_file_path);
-        let mut img = image::open(path).map_err(|e| e.to_string())?;
-        // orientation adjustment based on exif orientation value
-        img = apply_orientation(img, params.orientation);
-        img
-    };
+        let img = image::open(Path::new(file_path)).map_err(|e| e.to_string())?;
+        Ok(apply_orientation(img, orientation))
+    }
+}
+
+/// get an edited image
+async fn get_edited_image(params: &EditParams) -> Result<DynamicImage, String> {
+    let mut img = load_oriented_image(&params.source_file_path, params.orientation).await?;
 
     // 1. Flip
     if params.flip_horizontal {

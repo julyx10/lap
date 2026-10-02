@@ -7,6 +7,7 @@
 use crate::t_config::{self, AppConfig, Library, LibraryInfo, LibraryState};
 use crate::t_face;
 use crate::t_image;
+use crate::t_montage;
 use crate::t_apple_sidecar::{
     apple_aae_sidecar_paths, build_apple_sidecar_rename_plan,
     collect_original_rename_db_names, collect_replaced_file_ids_for_targets,
@@ -1512,6 +1513,12 @@ pub fn get_folder_thumb_count(file_type: i64, folder_id: i64) -> i64 {
 #[tauri::command]
 pub async fn edit_image(params: t_image::EditParams) -> Result<bool, String> {
     Ok(t_image::edit_image(params).await)
+}
+
+/// render a photo montage and save it
+#[tauri::command]
+pub async fn render_montage(params: t_montage::MontageParams) -> Result<(), String> {
+    t_montage::render_montage(params).await
 }
 
 /// copy an edited image to clipboard

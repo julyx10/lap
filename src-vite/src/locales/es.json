@@ -703,7 +703,8 @@
       "set_as": "Establecer como",
       "set_desktop_wallpaper": "Establecer como fondo de escritorio",
       "show_info": "Ver info",
-      "remove_from_collection": "Quitar de la colección"
+      "remove_from_collection": "Quitar de la colección",
+      "create_montage": "Crear montaje"
     },
     "calendar": {
       "monthly": "Mensual",
@@ -1057,6 +1058,35 @@
       "overwrite": "Sobrescribir",
       "save_as_new": "Guardar como",
       "overwrite_confirm": "¿Sobrescribir archivo original? No se puede deshacer."
+    },
+    "montage": {
+      "title": "Montaje",
+      "layout": "Diseño",
+      "grid": "Cuadrícula",
+      "mosaic": "Mosaico",
+      "pile": "Pila de fotos",
+      "shuffle": "Montaje aleatorio",
+      "angle": "Ángulo: {value}°",
+      "scale": "Escala: {value} %",
+      "shadow": "Dibujar sombras",
+      "page": "Página",
+      "page_size": "Tamaño",
+      "page_screen": "Pantalla 16:9",
+      "page_square": "Cuadrado",
+      "orientation": "Orientación",
+      "landscape": "Horizontal",
+      "portrait": "Vertical",
+      "background": "Fondo",
+      "spacing": "Espaciado",
+      "border": "Borde",
+      "save_failed": "No se pudo guardar el montaje:",
+      "not_enough_photos": "Selecciona al menos 2 fotos para crear un montaje.",
+      "too_many_photos": "Solo se usan las primeras {count} fotos en el montaje.",
+      "save_title": "Guardar montaje",
+      "folder": "Carpeta",
+      "file_name": "Nombre del archivo",
+      "browse": "Examinar...",
+      "folder_required": "Elija una carpeta."
     }
   },
   "file_info": {

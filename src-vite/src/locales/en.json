@@ -703,7 +703,8 @@
       "set_as": "Set as",
       "set_desktop_wallpaper": "Set as desktop wallpaper",
       "show_info": "Show info",
-      "remove_from_collection": "Remove from Collection"
+      "remove_from_collection": "Remove from Collection",
+      "create_montage": "Create montage"
     },
     "calendar": {
       "monthly": "Monthly",
@@ -1057,6 +1058,35 @@
       "overwrite": "Overwrite",
       "save_as_new": "Save as",
       "overwrite_confirm": "Are you sure you want to overwrite the original file? This action cannot be undone."
+    },
+    "montage": {
+      "title": "Montage",
+      "layout": "Layout",
+      "grid": "Grid",
+      "mosaic": "Mosaic",
+      "pile": "Picture pile",
+      "shuffle": "Random montage",
+      "angle": "Angle: {value}°",
+      "scale": "Scale: {value}%",
+      "shadow": "Draw shadows",
+      "page": "Page",
+      "page_size": "Size",
+      "page_screen": "Screen 16:9",
+      "page_square": "Square",
+      "orientation": "Orientation",
+      "landscape": "Landscape",
+      "portrait": "Portrait",
+      "background": "Background",
+      "spacing": "Spacing",
+      "border": "Border",
+      "save_failed": "Failed to save the montage:",
+      "not_enough_photos": "Select at least 2 photos to create a montage.",
+      "too_many_photos": "Only the first {count} photos are used in the montage.",
+      "save_title": "Save montage",
+      "folder": "Folder",
+      "file_name": "File name",
+      "browse": "Browse...",
+      "folder_required": "Choose a folder."
     }
   },
   "file_info": {

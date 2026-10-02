@@ -6,6 +6,7 @@
     "main",
     "imageviewer",
     "imageeditor",
+    "montage",
     "settings"
   ],
   "permissions": [

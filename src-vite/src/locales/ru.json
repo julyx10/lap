@@ -703,7 +703,8 @@
       "set_as": "Установить как",
       "set_desktop_wallpaper": "Сделать обоями рабочего стола",
       "show_info": "Показать информацию",
-      "remove_from_collection": "Удалить из коллекции"
+      "remove_from_collection": "Удалить из коллекции",
+      "create_montage": "Создать коллаж"
     },
     "calendar": {
       "monthly": "Месяц",
@@ -1057,6 +1058,35 @@
       "overwrite": "Перезаписать",
       "save_as_new": "Сохранить как",
       "overwrite_confirm": "Перезаписать исходный файл? Это действие необратимо."
+    },
+    "montage": {
+      "title": "Коллаж",
+      "layout": "Макет",
+      "grid": "Сетка",
+      "mosaic": "Мозаика",
+      "pile": "Стопка фото",
+      "shuffle": "Случайный монтаж",
+      "angle": "Угол: {value}°",
+      "scale": "Масштаб: {value}%",
+      "shadow": "Рисовать тени",
+      "page": "Страница",
+      "page_size": "Размер",
+      "page_screen": "Экран 16:9",
+      "page_square": "Квадрат",
+      "orientation": "Ориентация",
+      "landscape": "Альбомная",
+      "portrait": "Книжная",
+      "background": "Фон",
+      "spacing": "Отступ",
+      "border": "Рамка",
+      "save_failed": "Не удалось сохранить коллаж:",
+      "not_enough_photos": "Выберите не менее 2 фотографий, чтобы создать коллаж.",
+      "too_many_photos": "В коллаже используются только первые {count} фотографий.",
+      "save_title": "Сохранить коллаж",
+      "folder": "Папка",
+      "file_name": "Имя файла",
+      "browse": "Обзор...",
+      "folder_required": "Выберите папку."
     }
   },
   "file_info": {

@@ -703,7 +703,8 @@
       "set_as": "Festlegen als",
       "set_desktop_wallpaper": "Als Desktop-Hintergrund festlegen",
       "show_info": "Info anzeigen",
-      "remove_from_collection": "Aus Sammlung entfernen"
+      "remove_from_collection": "Aus Sammlung entfernen",
+      "create_montage": "Montage erstellen"
     },
     "calendar": {
       "monthly": "Monatlich",
@@ -1057,6 +1058,35 @@
       "overwrite": "Überschreiben",
       "save_as_new": "Speichern unter",
       "overwrite_confirm": "Originaldatei überschreiben? Kann nicht rückgängig gemacht werden."
+    },
+    "montage": {
+      "title": "Montage",
+      "layout": "Layout",
+      "grid": "Raster",
+      "mosaic": "Mosaik",
+      "pile": "Fotostapel",
+      "shuffle": "Zufallsmontage",
+      "angle": "Winkel: {value}°",
+      "scale": "Maßstab: {value} %",
+      "shadow": "Schatten zeichnen",
+      "page": "Seite",
+      "page_size": "Format",
+      "page_screen": "Bildschirm 16:9",
+      "page_square": "Quadrat",
+      "orientation": "Ausrichtung",
+      "landscape": "Querformat",
+      "portrait": "Hochformat",
+      "background": "Hintergrund",
+      "spacing": "Abstand",
+      "border": "Rahmen",
+      "save_failed": "Montage konnte nicht gespeichert werden:",
+      "not_enough_photos": "Wählen Sie mindestens 2 Fotos aus, um eine Montage zu erstellen.",
+      "too_many_photos": "Nur die ersten {count} Fotos werden für die Montage verwendet.",
+      "save_title": "Montage speichern",
+      "folder": "Ordner",
+      "file_name": "Dateiname",
+      "browse": "Durchsuchen...",
+      "folder_required": "Wählen Sie einen Ordner."
     }
   },
   "file_info": {

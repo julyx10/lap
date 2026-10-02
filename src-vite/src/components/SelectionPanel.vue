@@ -166,6 +166,13 @@
             {{ $t('menu.file.copy_to_folder') }}
           </PanelActionButton>
           <PanelActionButton
+            :icon="IconTile"
+            :disabled="selectedCount < 2"
+            @click="$emit('createMontage')"
+          >
+            {{ $t('menu.file.create_montage') }}
+          </PanelActionButton>
+          <PanelActionButton
             :icon="IconTrash"
             :disabled="selectedCount === 0"
             danger
@@ -218,6 +225,7 @@ import {
   IconFileArrowRight,
   IconRotate,
   IconTag,
+  IconTile,
   IconTrash,
   IconBookmarkOff,
   IconBookmark,
@@ -270,6 +278,7 @@ const emit = defineEmits([
   'addToCollection',
   'commentAll',
   'rotateAll',
+  'createMontage',
   'removeFromCollection',
   'unselectFile',
   'moreAction',

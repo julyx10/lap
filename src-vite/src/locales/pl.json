@@ -703,7 +703,8 @@
       "set_as": "Ustaw jako",
       "set_desktop_wallpaper": "Ustaw jako tapetę pulpitu",
       "show_info": "Pokaż informacje",
-      "remove_from_collection": "Usuń z kolekcji"
+      "remove_from_collection": "Usuń z kolekcji",
+      "create_montage": "Utwórz montaż"
     },
     "calendar": {
       "monthly": "Miesięcznie",
@@ -1057,6 +1058,35 @@
       "overwrite": "Zastąp",
       "save_as_new": "Zapisz jako",
       "overwrite_confirm": "Czy na pewno chcesz zastąpić oryginalny plik? Tej czynności nie można cofnąć."
+    },
+    "montage": {
+      "title": "Montaż",
+      "layout": "Układ",
+      "grid": "Siatka",
+      "mosaic": "Mozaika",
+      "pile": "Stos zdjęć",
+      "shuffle": "Losowy montaż",
+      "angle": "Kąt: {value}°",
+      "scale": "Skala: {value}%",
+      "shadow": "Rysuj cienie",
+      "page": "Strona",
+      "page_size": "Rozmiar",
+      "page_screen": "Ekran 16:9",
+      "page_square": "Kwadrat",
+      "orientation": "Orientacja",
+      "landscape": "Pozioma",
+      "portrait": "Pionowa",
+      "background": "Tło",
+      "spacing": "Odstęp",
+      "border": "Ramka",
+      "save_failed": "Nie udało się zapisać montażu:",
+      "not_enough_photos": "Wybierz co najmniej 2 zdjęcia, aby utworzyć montaż.",
+      "too_many_photos": "W montażu użyto tylko pierwszych {count} zdjęć.",
+      "save_title": "Zapisz montaż",
+      "folder": "Folder",
+      "file_name": "Nazwa pliku",
+      "browse": "Przeglądaj...",
+      "folder_required": "Wybierz folder."
     }
   },
   "file_info": {

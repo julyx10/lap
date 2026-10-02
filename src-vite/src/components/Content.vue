@@ -477,6 +477,7 @@
             @add-to-collection="clickAddToCollection"
             @comment-all="openCommentEditor"
             @rotate-all="clickRotate"
+            @create-montage="openMontage"
             @unselect-file="unselectFileFromSelection"
             @more-action="action => action()"
             @more-action-menu="handleMoreActionMenu"
@@ -3450,6 +3451,7 @@ const backupState = ref<any>(null);
 let unlistenKeydown: () => void;
 let unlistenImageViewer: () => void;
 let unlistenImageEditor: (() => void) | null = null;
+let unlistenMontage: (() => void) | null = null;
 let unlistenFaceIndexProgress: (() => void) | null = null;
 let unlistenLibraryTotalRefreshed: (() => void) | null = null;
 let unlistenImportFilesAdded: (() => void) | null = null;
@@ -5378,6 +5380,22 @@ onMounted( async() => {
     }
   });
 
+  unlistenMontage = await listen('message-from-montage', async (event: any) => {
+    const { type, filePath } = event.payload as any;
+    if (type !== 'success') return;
+    try {
+      await (await WebviewWindow.getByLabel('montage'))?.destroy();
+    } catch (error) {
+      console.error('Failed to destroy Montage window from parent:', error);
+    }
+    // ponytail: saved elsewhere, the file is not indexed now; it appears when its folder is scanned
+    if (getFolderPath(filePath) === montageSourceFolder) {
+      await onFileSaved(true, { saveAsNew: true, filePath, saveAsContext: montageSaveAsContext });
+    } else {
+      toast.success(localeMsg.value.tooltip.save_image.save_as_success || localeMsg.value.tooltip.save_image.success);
+    }
+  });
+
   unlistenImageEditor = await listen('message-from-image-editor', async (event: any) => {
     const { type, saveAsNew, filePath, sourceFileId } = event.payload as any;
     const sourceId = Number(sourceFileId || 0);
@@ -5668,6 +5686,7 @@ onBeforeUnmount(() => {
   // unlisten
   unlistenImageViewer();
   if (unlistenImageEditor) unlistenImageEditor();
+  if (unlistenMontage) unlistenMontage();
   if (unlistenKeydown) unlistenKeydown();
   if (unlistenTriggerNextAlbum) unlistenTriggerNextAlbum();
   if (unlistenIndexProgress) unlistenIndexProgress();
@@ -10293,6 +10312,52 @@ async function syncSelectionToImageViewer(index: number) {
     fileCount: fileList.value.length,
     nextFilePath: next && !next.isPlaceholder && next.file_type === 1 ? next.file_path : '',
     pane: 'left',
+  });
+}
+
+const MONTAGE_MAX_PHOTOS = 50;
+let montageSaveAsContext: SaveAsContext | null = null;
+let montageSourceFolder = '';
+
+async function openMontage() {
+  const images = getActionableSelectedItems().filter(item => item.file_type !== 2);
+  const imageIds = images.map(item => Number(item.id));
+  if (imageIds.length < 2) {
+    toast.warning(t('msgbox.montage.not_enough_photos'));
+    return;
+  }
+  if (imageIds.length > MONTAGE_MAX_PHOTOS) {
+    toast.warning(t('msgbox.montage.too_many_photos', { count: MONTAGE_MAX_PHOTOS }));
+  }
+
+  // the save dialog proposes the first photo's folder, like the image editor's "save as new"
+  montageSaveAsContext = getCurrentSaveAsContext(images[0]);
+  montageSourceFolder = getFolderPath(images[0].file_path);
+
+  // a new selection replaces any montage already open
+  await (await WebviewWindow.getByLabel('montage'))?.destroy();
+
+  const newWindow = new WebviewWindow('montage', {
+    url: `/montage?fileIds=${imageIds.slice(0, MONTAGE_MAX_PHOTOS).join(',')}`,
+    title: 'Montage',
+    width: 1100,
+    height: 700,
+    minWidth: 800,
+    minHeight: 500,
+    resizable: true,
+    maximizable: false,
+    visible: false,
+    transparent: true,
+    decorations: isMac,
+    ...(isMac && {
+      titleBarStyle: 'overlay',
+      hiddenTitle: true,
+      minimizable: false,
+    }),
+  });
+
+  newWindow.once('tauri://created', () => {
+    newWindow?.show();
   });
 }
 

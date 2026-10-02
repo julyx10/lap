@@ -33,6 +33,7 @@ mod t_libraw;
 mod t_raw_display;
 mod t_menu;
 mod t_migration;
+mod t_montage;
 mod t_tag_groups;
 mod t_motion_photo;
 mod t_pasteboard;
@@ -324,6 +325,7 @@ async fn main() {
             t_cmds::get_folder_thumb_count,
             // file operations
             t_cmds::edit_image,
+            t_cmds::render_montage,
             t_cmds::copy_edited_image,
             t_cmds::copy_images,
             t_cmds::rename_file,

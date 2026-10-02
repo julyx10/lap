@@ -18,6 +18,11 @@ const routes = [
     component: () => import('@/views/ImageEditor.vue'),
   },
   {
+    path: '/montage',
+    name: 'Montage',
+    component: () => import('@/views/Montage.vue'),
+  },
+  {
     path: '/settings',
     name: 'Settings',
     component: () => import('@/views/Settings.vue'),

@@ -703,7 +703,8 @@
       "set_as": "设为",
       "set_desktop_wallpaper": "设为桌面壁纸",
       "show_info": "显示信息",
-      "remove_from_collection": "从合集移除"
+      "remove_from_collection": "从合集移除",
+      "create_montage": "创建拼图"
     },
     "calendar": {
       "monthly": "按月",
@@ -1057,6 +1058,35 @@
       "overwrite": "覆盖",
       "save_as_new": "另存为",
       "overwrite_confirm": "确定覆盖现有文件吗？该操作无法撤销。"
+    },
+    "montage": {
+      "title": "拼图",
+      "layout": "布局",
+      "grid": "网格",
+      "mosaic": "马赛克",
+      "pile": "照片堆",
+      "shuffle": "随机拼贴",
+      "angle": "角度：{value}°",
+      "scale": "缩放：{value}%",
+      "shadow": "绘制阴影",
+      "page": "页面",
+      "page_size": "尺寸",
+      "page_screen": "屏幕 16:9",
+      "page_square": "正方形",
+      "orientation": "方向",
+      "landscape": "横向",
+      "portrait": "纵向",
+      "background": "背景",
+      "spacing": "间距",
+      "border": "边框",
+      "save_failed": "保存拼图失败：",
+      "not_enough_photos": "请至少选择 2 张照片来创建拼图。",
+      "too_many_photos": "拼图仅使用前 {count} 张照片。",
+      "save_title": "保存拼图",
+      "folder": "文件夹",
+      "file_name": "文件名",
+      "browse": "浏览...",
+      "folder_required": "请选择文件夹。"
     }
   },
   "file_info": {

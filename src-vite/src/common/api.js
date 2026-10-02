@@ -1088,6 +1088,11 @@ export async function editImage(params) {
   }
 }
 
+// render a photo montage and save it (throws the backend error message)
+export async function renderMontage(params) {
+  return await invoke('render_montage', { params });
+}
+
 // copy an edited image to clipboard
 export async function copyEditedImage(params) {
   try {

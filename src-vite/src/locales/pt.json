@@ -703,7 +703,8 @@
       "set_as": "Definir como",
       "set_desktop_wallpaper": "Definir como papel de parede",
       "show_info": "Mostrar info",
-      "remove_from_collection": "Remover da coleção"
+      "remove_from_collection": "Remover da coleção",
+      "create_montage": "Criar montagem"
     },
     "calendar": {
       "monthly": "Mensal",
@@ -1057,6 +1058,35 @@
       "overwrite": "Sobrescrever",
       "save_as_new": "Salvar como",
       "overwrite_confirm": "Sobrescrever arquivo original? Irreversível."
+    },
+    "montage": {
+      "title": "Montagem",
+      "layout": "Layout",
+      "grid": "Grade",
+      "mosaic": "Mosaico",
+      "pile": "Pilha de fotos",
+      "shuffle": "Montagem aleatória",
+      "angle": "Ângulo: {value}°",
+      "scale": "Escala: {value}%",
+      "shadow": "Desenhar sombras",
+      "page": "Página",
+      "page_size": "Tamanho",
+      "page_screen": "Tela 16:9",
+      "page_square": "Quadrado",
+      "orientation": "Orientação",
+      "landscape": "Paisagem",
+      "portrait": "Retrato",
+      "background": "Fundo",
+      "spacing": "Espaçamento",
+      "border": "Borda",
+      "save_failed": "Falha ao salvar a montagem:",
+      "not_enough_photos": "Selecione pelo menos 2 fotos para criar uma montagem.",
+      "too_many_photos": "Apenas as primeiras {count} fotos são usadas na montagem.",
+      "save_title": "Salvar montagem",
+      "folder": "Pasta",
+      "file_name": "Nome do arquivo",
+      "browse": "Procurar...",
+      "folder_required": "Escolha uma pasta."
     }
   },
   "file_info": {

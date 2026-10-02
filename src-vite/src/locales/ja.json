@@ -703,7 +703,8 @@
       "set_as": "設定",
       "set_desktop_wallpaper": "デスクトップの壁紙に設定",
       "show_info": "情報を表示",
-      "remove_from_collection": "コレクションから削除"
+      "remove_from_collection": "コレクションから削除",
+      "create_montage": "モンタージュを作成"
     },
     "calendar": {
       "monthly": "月別",
@@ -1057,6 +1058,35 @@
       "overwrite": "上書き",
       "save_as_new": "名前を付けて保存",
       "overwrite_confirm": "元のファイルを上書きしますか？この操作は取り消せません。"
+    },
+    "montage": {
+      "title": "モンタージュ",
+      "layout": "レイアウト",
+      "grid": "グリッド",
+      "mosaic": "モザイク",
+      "pile": "写真の山",
+      "shuffle": "ランダム配置",
+      "angle": "角度: {value}°",
+      "scale": "倍率: {value}%",
+      "shadow": "影を描く",
+      "page": "ページ",
+      "page_size": "サイズ",
+      "page_screen": "画面 16:9",
+      "page_square": "正方形",
+      "orientation": "向き",
+      "landscape": "横",
+      "portrait": "縦",
+      "background": "背景",
+      "spacing": "間隔",
+      "border": "枠",
+      "save_failed": "モンタージュを保存できませんでした:",
+      "not_enough_photos": "モンタージュを作成するには2枚以上の写真を選択してください。",
+      "too_many_photos": "モンタージュには最初の{count}枚の写真のみ使用されます。",
+      "save_title": "モンタージュを保存",
+      "folder": "フォルダー",
+      "file_name": "ファイル名",
+      "browse": "参照...",
+      "folder_required": "フォルダーを選択してください。"
     }
   },
   "file_info": {
