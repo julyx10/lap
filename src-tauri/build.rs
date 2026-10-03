@@ -523,6 +523,7 @@ fn build_libde265(
         ),
     ];
 
+    let is_msvc = env::var("CARGO_CFG_TARGET_ENV").as_deref() == Ok("msvc");
     let have_existing = candidates.iter().any(|(_, path)| path.exists());
     if !have_existing {
         let mut configure = Command::new("cmake");
@@ -542,6 +543,14 @@ fn build_libde265(
             .arg("-DWITH_FUZZERS=OFF")
             .arg(source_dir.as_os_str())
             .current_dir(&binary_dir);
+        if is_msvc {
+            // MSVC 19.51 (VS 2026) /O2 miscompiles fill_scan_pos() in scan.cc: the
+            // scanpos table comes out wrong and init_scan_orders() reads out of bounds
+            // before main(). /O1 builds it correctly.
+            configure
+                .arg("-DCMAKE_C_FLAGS_RELEASE=/O1 /Ob2 /DNDEBUG")
+                .arg("-DCMAKE_CXX_FLAGS_RELEASE=/O1 /Ob2 /DNDEBUG");
+        }
 
         run_command(&mut configure, "configure libde265");
 
