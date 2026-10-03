@@ -477,7 +477,6 @@
             @add-to-collection="clickAddToCollection"
             @comment-all="openCommentEditor"
             @rotate-all="clickRotate"
-            @create-montage="openMontage"
             @unselect-file="unselectFileFromSelection"
             @more-action="action => action()"
             @more-action-menu="handleMoreActionMenu"
@@ -4009,6 +4008,7 @@ function handleItemAction(payload: { action: string, index: number }) {
         forceSplitCount: files.length === 2 ? 2 : 4,
       });
     },
+    'create-montage': () => void openMontage(),
     'copy': () => void clickCopyImages(fileList.value[selectedItemIndex.value]),
     'rename': clickRename,
     'move-within-library': () => showMoveTo.value = true,

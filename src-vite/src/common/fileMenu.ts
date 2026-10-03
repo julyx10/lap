@@ -27,6 +27,7 @@ import {
   IconBookmark,
   IconSplitOn,
   IconSplitOn4,
+  IconCollage,
 } from '@/common/icons';
 
 const OPEN_IN_APP_LABELS = {
@@ -86,6 +87,12 @@ export const useFileMenuItems = (
         icon: markRaw(selectionCount >= 3 ? IconSplitOn4 : IconSplitOn),
         disabled: kind !== 'image' || selectionCount < 2,
         action: createAction('compare-selected-images'),
+      },
+      {
+        label: String(localeMsg.value.menu.file.create_montage || 'Create montage'),
+        icon: markRaw(IconCollage),
+        disabled: selectionCount < 2,
+        action: createAction('create-montage'),
       },
       // A mixed image+video selection has no single external-app target, so
       // disable the entry rather than showing an empty app list.

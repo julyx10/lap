@@ -50,6 +50,7 @@ export { default as IconTrash } from '@/assets/icons/trash.svg';
 // VIEW CONTROL ICONS
 // ======================
 export { default as IconCard } from '@/assets/icons/layout-card.svg';
+export { default as IconCollage } from '@/assets/icons/collage.svg';
 export { default as IconFilmstrip } from '@/assets/icons/layout-filmstrip.svg';
 export { default as IconFullScreen } from '@/assets/icons/full-screen-max.svg';
 export { default as IconHide } from '@/assets/icons/eye-off.svg';
