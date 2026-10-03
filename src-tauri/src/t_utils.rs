@@ -3631,8 +3631,8 @@ impl ProgressTracker {
     ) -> Self {
         let snapshot = ProgressSnapshot {
             discovered,
-            processed: 0,
-            search_ready: 0,
+            processed: discovered,
+            search_ready: discovered,
             total,
             search_total,
             current_size: 0,
@@ -4026,12 +4026,13 @@ pub async fn index_album_worker(
     with_progress_tracker(&tracker, |tracker| tracker.emit_now());
 
     // update progress to db
-    let _ = Album::update_progress(album_id, 0, total_files);
+    let _ = Album::update_progress(album_id, resume_from, total_files);
 
     // 4. Traverse and index
     let mut is_cancelled = false;
     let mut traversal_failed = false;
     let mut traversed_count = 0u64;
+    let mut resume_batch: Vec<(String, String)> = Vec::with_capacity(500);
     // WalkDir already visits every directory during indexing.  Record the
     // direct-parent relationship here so the sidebar never needs to rescan an
     // unchanged directory just to decide whether to show its expand arrow.
@@ -4102,8 +4103,24 @@ pub async fn index_album_worker(
             let path_str = entry.path().to_string_lossy().to_string();
             if let Some(ftype) = get_file_type(&path_str) {
                 if !album.allows_file_type(ftype) || skip_excluded_image(&album, &path_str, ftype)? { continue; }
-                // Resume mode: skip already-indexed prefix files.
+                // Resume mode: skip already-indexed prefix files, but mark them seen
+                // so mark-and-sweep does not delete them upon scan completion.
                 if traversed_count < resume_from {
+                    let parent_path = Path::new(&path_str)
+                        .parent()
+                        .unwrap_or(Path::new(&album.path))
+                        .to_string_lossy()
+                        .to_string();
+                    let file_name = get_file_name(&path_str);
+                    resume_batch.push((parent_path, file_name));
+                    if resume_batch.len() >= 500 {
+                        let _ = crate::t_sqlite::AFile::touch_last_scan_times(
+                            album_id,
+                            &resume_batch,
+                            current_scan_time,
+                        );
+                        resume_batch.clear();
+                    }
                     traversed_count += 1;
                     continue;
                 }
@@ -4217,6 +4234,15 @@ pub async fn index_album_worker(
                 });
             }
         }
+    }
+
+    if !resume_batch.is_empty() {
+        let _ = crate::t_sqlite::AFile::touch_last_scan_times(
+            album_id,
+            &resume_batch,
+            current_scan_time,
+        );
+        resume_batch.clear();
     }
 
     while let Some(result) = thumbnail_join_set.join_next().await {

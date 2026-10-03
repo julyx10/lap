@@ -198,7 +198,7 @@
             enter-to-class="max-h-96"
           >
             <div
-              v-if="(isFolderFiltering ? shouldShowFilteredFolderTree(album.id) : album.is_expanded) && getAlbumQueueIndex(album.id, libConfig.index.albumQueue as any[]) === -1"
+              v-if="isFolderFiltering ? shouldShowFilteredFolderTree(album.id) : album.is_expanded"
               class="ml-6 mr-2 my-1 p-1 rounded-box bg-base-300/30 border border-base-content/5 shadow-sm"
             >
               <AlbumFolder
@@ -447,6 +447,62 @@ function getFolderSearchPaths(folders: AlbumFolderRecord[], rootPath: string, qu
   };
 }
 
+const compareFolders = (a: Folder, b: Folder) => {
+  const aTime = a.modified_at || a.created_at || 0;
+  const bTime = b.modified_at || b.created_at || 0;
+  switch (Number(config.settings.folderSort)) {
+    case 1: return folderSearchCollator.compare(b.name, a.name);
+    case 2: return aTime - bTime;
+    case 3: return bTime - aTime;
+    default: return folderSearchCollator.compare(a.name, b.name);
+  }
+};
+
+let lastFolderScanRefresh = 0;
+async function refreshExpandedAlbumFoldersDuringScan(album: Album) {
+  if (!album.is_expanded) return;
+  const now = Date.now();
+  if (now - lastFolderScanRefresh < 3000) return;
+  lastFolderScanRefresh = now;
+
+  if (album.is_accessible === false) {
+    if (!album.children) await loadCachedAlbumTree(album);
+    return;
+  }
+
+  const subFolders = await fetchFolder(album.path, false, config.settings.folderSort);
+  if (!subFolders) return;
+
+  if (!album.children || album.children.length === 0) {
+    album.children = [subFolders];
+  } else {
+    const rootNode = album.children[0];
+    if (rootNode) {
+      rootNode.has_subfolders = subFolders.has_subfolders;
+      if (subFolders.children) {
+        if (!rootNode.children || rootNode.children.length === 0) {
+          rootNode.children = subFolders.children;
+        } else {
+          const existingMap = new Map(rootNode.children.map((c: Folder) => [c.path, c]));
+          let changed = false;
+          for (const newChild of subFolders.children) {
+            const existing = existingMap.get(newChild.path);
+            if (!existing) {
+              rootNode.children.push(newChild);
+              changed = true;
+            } else if (existing.has_subfolders !== newChild.has_subfolders) {
+              existing.has_subfolders = newChild.has_subfolders;
+            }
+          }
+          if (changed) {
+            rootNode.children.sort(compareFolders);
+          }
+        }
+      }
+    }
+  }
+}
+
 function buildFilteredFolderTree(folders: AlbumFolderRecord[], visiblePaths: string[]) {
   const visible = new Set(visiblePaths);
   const nodes = new Map<string, Folder>();
@@ -462,16 +518,6 @@ function buildFilteredFolderTree(folders: AlbumFolderRecord[], visiblePaths: str
     if (parent) parent.children?.push(folder);
     else roots.push(folder);
   }
-  const compareFolders = (a: Folder, b: Folder) => {
-    const aTime = a.modified_at || a.created_at || 0;
-    const bTime = b.modified_at || b.created_at || 0;
-    switch (Number(config.settings.folderSort)) {
-      case 1: return folderSearchCollator.compare(b.name, a.name);
-      case 2: return aTime - bTime;
-      case 3: return bTime - aTime;
-      default: return folderSearchCollator.compare(a.name, b.name);
-    }
-  };
   const sortTree = (children: Folder[]) => {
     children.sort(compareFolders);
     for (const child of children) sortTree(child.children || []);
@@ -824,6 +870,9 @@ onMounted( async () => {
     if (album) {
       album.indexed = current;
       album.total = total;
+      if (album.is_expanded) {
+        await refreshExpandedAlbumFoldersDuringScan(album);
+      }
     }
   });
 

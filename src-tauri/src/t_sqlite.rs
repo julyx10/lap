@@ -4562,6 +4562,81 @@ impl AFile {
         Ok(result)
     }
 
+    /// Update last_scan_time for files identified by folder_path and file name in an album
+    pub fn touch_last_scan_times(
+        album_id: i64,
+        entries: &[(String, String)],
+        current_scan_time: i64,
+    ) -> Result<usize, String> {
+        if entries.is_empty() {
+            return Ok(0);
+        }
+        let mut conn = open_conn()?;
+        let tx = conn.transaction().map_err(|e| e.to_string())?;
+        let touched = Self::touch_last_scan_times_on(&tx, album_id, entries, current_scan_time)?;
+        tx.commit().map_err(|e| e.to_string())?;
+        Ok(touched)
+    }
+
+    /// Update last_scan_time for entries on an existing connection/transaction
+    pub fn touch_last_scan_times_on(
+        conn: &Connection,
+        album_id: i64,
+        entries: &[(String, String)],
+        current_scan_time: i64,
+    ) -> Result<usize, String> {
+        if entries.is_empty() {
+            return Ok(0);
+        }
+        let mut touched = 0;
+        let mut folder_stmt = conn
+            .prepare_cached("SELECT id FROM afolders WHERE album_id = ?1 AND path = ?2")
+            .map_err(|e| e.to_string())?;
+        let mut update_stmt = conn
+            .prepare_cached(
+                "UPDATE afiles SET last_scan_time = ?1 WHERE folder_id = ?2 AND name = ?3",
+            )
+            .map_err(|e| e.to_string())?;
+
+        let mut cached_folder: Option<(String, i64)> = None;
+
+        for (folder_path, file_name) in entries {
+            let folder_id = if let Some((ref path, id)) = cached_folder {
+                if path == folder_path {
+                    id
+                } else {
+                    let id: Option<i64> = folder_stmt
+                        .query_row(params![album_id, folder_path], |row| row.get(0))
+                        .optional()
+                        .map_err(|e| e.to_string())?;
+                    if let Some(id) = id {
+                        cached_folder = Some((folder_path.clone(), id));
+                        id
+                    } else {
+                        continue;
+                    }
+                }
+            } else {
+                let id: Option<i64> = folder_stmt
+                    .query_row(params![album_id, folder_path], |row| row.get(0))
+                    .optional()
+                    .map_err(|e| e.to_string())?;
+                if let Some(id) = id {
+                    cached_folder = Some((folder_path.clone(), id));
+                    id
+                } else {
+                    continue;
+                }
+            };
+
+            let updated = update_stmt
+                .execute(params![current_scan_time, folder_id, file_name])
+                .map_err(|e| e.to_string())?;
+            touched += updated;
+        }
+        Ok(touched)
+    }
+
     /// Get a file's has_tags status
     pub fn get_has_tags(file_id: i64) -> Result<bool, String> {
         let conn = open_conn()?;
@@ -10291,6 +10366,37 @@ mod album_filter_tests {
         for path in ["", ".", "..", "../sibling", "parent/child", "parent\\child", "/absolute"] {
             assert!(Album::edit(1,"name","",7,0,&[path.into()]).is_err());
         }
+    }
+
+    #[test]
+    fn scan_resume_touch_last_scan_times_preserves_skipped_prefix_from_sweep() {
+        let conn = fixture();
+        conn.execute("ALTER TABLE afiles ADD COLUMN name TEXT DEFAULT ''", []).unwrap();
+        conn.execute("UPDATE afiles SET name = 'img_' || id, last_scan_time = 100 WHERE folder_id = 1", []).unwrap();
+
+        // Simulate an interrupted scan where files were left with old timestamp (100).
+        // Next scan runs with current_scan_time = 200.
+        // Resume touches prefix files: img_1 and img_2.
+        let entries = vec![
+            ("/photos".to_string(), "img_1".to_string()),
+            ("/photos".to_string(), "img_2".to_string()),
+        ];
+        let touched = AFile::touch_last_scan_times_on(&conn, 1, &entries, 200).unwrap();
+        assert_eq!(touched, 2);
+
+        // Mark-and-sweep deletes files with last_scan_time < 200 in folder 1
+        conn.execute(
+            "DELETE FROM afiles WHERE last_scan_time < 200 AND folder_id IN (SELECT id FROM afolders WHERE album_id = 1)",
+            [],
+        ).unwrap();
+
+        // img_1 and img_2 were touched with 200, so they MUST be preserved!
+        let remaining: Vec<i64> = conn.prepare("SELECT id FROM afiles WHERE folder_id = 1 ORDER BY id").unwrap()
+            .query_map([], |row| row.get(0)).unwrap().collect::<Result<_,_>>().unwrap();
+        assert!(remaining.contains(&1));
+        assert!(remaining.contains(&2));
+        // Other untouched files in folder 1 with last_scan_time 100 were safely swept
+        assert!(!remaining.contains(&3));
     }
 }
 
