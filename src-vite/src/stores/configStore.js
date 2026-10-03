@@ -45,6 +45,7 @@ export const useConfigStore = defineStore('configStore', {
       histogramChannels: 15,     // histogram channel mask (L=1, R=2, G=4, B=8; 0=none, 15=all)
       showBasicInfo: true,       // show basic info
       showMetadata: true,        // show metadata
+      showFujiRecipe: true,      // show fujifilm film recipe
       showMap: true,             // show map
       mapTheme: 0,               // 0: standard, 2: satellite
     },
@@ -113,6 +114,7 @@ export const useConfigStore = defineStore('configStore', {
       showStatusBar: true,        // show status bar
       autoCheckUpdates: true,      // automatically check for updates
       debugMode: false,           // debug mode
+      exiftoolPath: '',           // custom exiftool binary path
 
       // navigation settings
       folderSort: 0,              // folder_sort_options: 0=name asc, 1=name desc, 2=date asc(oldest first), 3=date desc(newest first)

@@ -106,6 +106,39 @@
             </div>
           </div>
 
+          <!-- ExifTool -->
+          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+            <div class="flex items-center gap-2 text-base-content/30">
+              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.general.section_exiftool') }}</span>
+            </div>
+            <div class="flex flex-col gap-2 p-1">
+              <div class="flex items-center justify-between">
+                <div class="flex flex-col gap-0.5 text-sm leading-5">
+                  <div>{{ $t('settings.general.exiftool_path') }}</div>
+                  <div class="text-xs text-base-content/50">{{ $t('settings.general.exiftool_desc') }}</div>
+                </div>
+                <div class="badge badge-sm" :class="exifToolStatus.available ? 'badge-success text-success-content' : 'badge-ghost text-base-content/40'">
+                  {{ exifToolStatus.available ? `${$t('settings.general.exiftool_detected')} (v${exifToolStatus.version})` : $t('settings.general.exiftool_not_found') }}
+                </div>
+              </div>
+              <div class="flex items-center gap-2 mt-1">
+                <input
+                  type="text"
+                  class="input input-sm input-bordered flex-1 text-xs"
+                  :placeholder="exifToolStatus.binaryPath || $t('settings.general.exiftool_placeholder')"
+                  v-model="config.settings.exiftoolPath"
+                  @change="refreshExifToolStatus"
+                />
+                <button type="button" class="btn btn-sm btn-ghost border border-base-content/10 cursor-pointer" @click="chooseExifToolBinary">
+                  {{ $t('settings.general.exiftool_browse') }}
+                </button>
+                <button v-if="config.settings.exiftoolPath" type="button" class="btn btn-sm btn-ghost text-xs cursor-pointer" @click="resetExifToolPath">
+                  {{ $t('settings.general.exiftool_reset') }}
+                </button>
+              </div>
+            </div>
+          </div>
+
         </div>
 
         <!-- Grid Tab -->
@@ -716,6 +749,7 @@ import {
   downloadMultilingualImageSearchModel,
   cancelMultilingualImageSearchModelDownload,
   listenImageSearchModelDownloadProgress,
+  checkExifToolStatus,
 } from '@/common/api';
 import { formatFileSize, isLinux, isMac, setTheme, SCALE_VALUES } from '@/common/utils';
 import { getShortcutLabels, ShortcutActionId, ShortcutPlatform } from '@/common/shortcuts';
@@ -770,6 +804,35 @@ const isMultilingualModelAvailable = ref(false);
 const tiandituTokenInput = ref(String(config.settings.tiandituToken || ''));
 const tiandituTokenStatus = ref<'idle' | 'saved' | 'empty'>('idle');
 let unlistenImageSearchModelDownloadProgress: (() => void) | null = null;
+
+const exifToolStatus = ref<{ available: boolean; version: string | null; binaryPath: string | null }>({
+  available: false,
+  version: null,
+  binaryPath: null,
+});
+
+async function refreshExifToolStatus() {
+  exifToolStatus.value = await checkExifToolStatus(config.settings.exiftoolPath || null);
+}
+
+async function chooseExifToolBinary() {
+  const result = await openDialog({
+    title: localeMsg.value.settings?.general?.exiftool_select || 'Select ExifTool Executable',
+    multiple: false,
+    directory: false,
+  });
+  if (result && typeof result === 'string') {
+    config.settings.exiftoolPath = result;
+    await refreshExifToolStatus();
+  }
+}
+
+function resetExifToolPath() {
+  config.settings.exiftoolPath = '';
+  void refreshExifToolStatus();
+}
+
+watch(() => config.settings.exiftoolPath, refreshExifToolStatus);
 
 const onRestoreDone = () => {
   showRestoreDialog.value = false;
@@ -1408,6 +1471,7 @@ onMounted(async () => {
   applyWindowScale(Number(config.settings.scale || 1));
   dbStorageDir.value = (await getDbStorageDir()) || '';
   hasCustomDbStorage.value = await isUsingCustomDbStorage();
+  void refreshExifToolStatus();
 
   
   // Show window after mount

@@ -405,6 +405,115 @@
         </Transition>
       </div>
 
+      <!-- Fujifilm Film Recipe Section -->
+      <div v-if="isFujiPhoto" class="border-t border-base-content/5 px-1 py-4 space-y-3">
+        <div class="flex items-center gap-1 cursor-pointer text-base-content/70 hover:text-base-content" @click.stop="toggleFujiRecipe">
+          <IconRight
+            class="w-3 h-3 transition-transform duration-200"
+            :class="{ 'rotate-90': showFujiRecipePanel }"
+          />
+          <span class="font-bold mr-auto uppercase text-xs tracking-wide text-base-content/30">{{ $t('file_info.fuji.section_title') }}</span>
+          <span
+            v-if="fujiRecipe?.filmMode"
+            class="badge badge-xs badge-primary badge-outline font-semibold"
+          >{{ fujiRecipe.filmMode }}</span>
+        </div>
+
+        <Transition
+          @before-enter="onBeforeEnter"
+          @enter="onEnter"
+          @after-enter="onAfterEnter"
+          @leave="onLeave"
+        >
+          <div v-if="showFujiRecipePanel" class="overflow-hidden">
+            <div v-if="loadingFuji" class="pl-4 py-2 flex items-center gap-2 text-xs text-base-content/40">
+              <span class="loading loading-spinner loading-xs"></span>
+              <span>{{ $t('file_info.fuji.loading') }}</span>
+            </div>
+
+            <div v-else-if="!fujiRecipe" class="pl-4 py-2 text-xs text-base-content/40">
+              {{ $t('file_info.fuji.no_recipe_data') }}
+            </div>
+
+            <div v-else class="pl-4 grid grid-cols-[84px_1fr] gap-y-1.5 gap-x-4 text-xs">
+              <!-- Film Simulation -->
+              <div class="flex items-center text-[11px] text-base-content/45 h-6">{{ $t('file_info.fuji.film_mode') }}</div>
+              <div class="flex items-center text-[12px] font-medium text-primary">{{ fujiRecipe.filmMode || '-' }}</div>
+
+              <!-- Dynamic Range -->
+              <div class="flex items-center text-[11px] text-base-content/45 h-6">{{ $t('file_info.fuji.dynamic_range') }}</div>
+              <div class="flex items-center text-[12px] text-base-content/75">
+                {{ fujiRecipe.dynamicRange || (fujiRecipe.developmentDynamicRange ? `DR${fujiRecipe.developmentDynamicRange}` : '-') }}
+                <span v-if="fujiRecipe.dynamicRangeSetting" class="text-base-content/40 ml-1">({{ fujiRecipe.dynamicRangeSetting }})</span>
+              </div>
+
+              <!-- Highlight & Shadow Tone -->
+              <div class="flex items-center text-[11px] text-base-content/45 h-6">{{ $t('file_info.fuji.tone') }}</div>
+              <div class="flex items-center text-[12px] text-base-content/75">
+                H: {{ fujiRecipe.highlightTone || '0' }} / S: {{ fujiRecipe.shadowTone || '0' }}
+              </div>
+
+              <!-- Grain Effect -->
+              <div class="flex items-center text-[11px] text-base-content/45 h-6">{{ $t('file_info.fuji.grain_effect') }}</div>
+              <div class="flex items-center text-[12px] text-base-content/75">
+                {{ fujiRecipe.grainEffectRoughness || 'Off' }}<span v-if="fujiRecipe.grainEffectSize && fujiRecipe.grainEffectSize !== 'Off'" class="text-base-content/50 ml-1">({{ fujiRecipe.grainEffectSize }})</span>
+              </div>
+
+              <!-- Color Chrome Effect -->
+              <div class="flex items-center text-[11px] text-base-content/45 h-6">{{ $t('file_info.fuji.color_chrome') }}</div>
+              <div class="flex items-center text-[12px] text-base-content/75">
+                {{ fujiRecipe.colorChromeEffect || 'Off' }}
+                <span v-if="fujiRecipe.colorChromeFxBlue && fujiRecipe.colorChromeFxBlue !== 'Off'" class="text-base-content/50 ml-1">(Blue: {{ fujiRecipe.colorChromeFxBlue }})</span>
+              </div>
+
+              <!-- White Balance -->
+              <div class="flex items-center text-[11px] text-base-content/45 h-6">{{ $t('file_info.fuji.white_balance') }}</div>
+              <div class="flex items-center text-[12px] text-base-content/75">
+                {{ fujiRecipe.whiteBalance || 'Auto' }}
+                <span v-if="fujiRecipe.colorTemperature" class="text-base-content/50 ml-1">({{ fujiRecipe.colorTemperature }}K)</span>
+              </div>
+
+              <!-- WB Shift -->
+              <template v-if="fujiRecipe.wbShiftRed !== undefined && fujiRecipe.wbShiftRed !== null">
+                <div class="flex items-center text-[11px] text-base-content/45 h-6">{{ $t('file_info.fuji.wb_shift') }}</div>
+                <div class="flex items-center text-[12px] text-base-content/75">
+                  R: {{ fujiRecipe.wbShiftRed > 0 ? `+${fujiRecipe.wbShiftRed}` : fujiRecipe.wbShiftRed }}, B: {{ fujiRecipe.wbShiftBlue > 0 ? `+${fujiRecipe.wbShiftBlue}` : fujiRecipe.wbShiftBlue }}
+                </div>
+              </template>
+
+              <!-- Recipe Adjustments (Color, Sharpness, NR, Clarity) -->
+              <div class="flex items-center text-[11px] text-base-content/45 h-6">{{ $t('file_info.fuji.adjustments') }}</div>
+              <div class="flex items-center text-[12px] text-base-content/75 flex-wrap gap-x-2">
+                <span>Color: {{ fujiRecipe.colorSaturation || '0' }}</span>
+                <span>Sharp: {{ fujiRecipe.sharpness || '0' }}</span>
+                <span>NR: {{ fujiRecipe.noiseReduction || '0' }}</span>
+                <span v-if="fujiRecipe.clarity">Clarity: {{ fujiRecipe.clarity }}</span>
+              </div>
+
+              <!-- Focus & Shutter -->
+              <div class="flex items-center text-[11px] text-base-content/45 h-6">{{ $t('file_info.fuji.shooting') }}</div>
+              <div class="flex items-center text-[12px] text-base-content/75">
+                {{ fujiRecipe.focusMode || '-' }}<span v-if="fujiRecipe.afMode" class="text-base-content/50 ml-1">({{ fujiRecipe.afMode }})</span>
+                <span class="mx-1 text-base-content/20">|</span>
+                {{ fujiRecipe.shutterType || '-' }}
+              </div>
+
+              <!-- Inspect All Raw Tags button -->
+              <div class="col-span-2 pt-1 flex justify-end">
+                <button
+                  type="button"
+                  class="btn btn-xs btn-ghost text-base-content/50 hover:text-base-content gap-1 text-[11px] cursor-pointer"
+                  @click.stop="openRawTagsModal"
+                >
+                  <IconMore class="w-3.5 h-3.5" />
+                  {{ $t('file_info.fuji.view_raw_tags') }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </Transition>
+      </div>
+
       <!-- Map View -->
       <div v-if="fileInfo?.gps_latitude && fileInfo?.gps_longitude" 
         class="border-t border-base-content/5 px-1 py-4 space-y-3 flex flex-col transition-[flex-grow]" 
@@ -446,6 +555,57 @@
         </div>
       </div>
     </div>
+
+    <!-- Raw Tags Modal Dialog -->
+    <ModalDialog
+      v-if="showRawTagsModal"
+      :title="$t('file_info.fuji.raw_tags_title')"
+      :width="540"
+      :height="480"
+      @cancel="showRawTagsModal = false"
+    >
+      <div class="flex-1 min-h-0 flex flex-col gap-2 pt-1">
+        <div v-if="loadingRawTags" class="flex-1 flex flex-col items-center justify-center gap-2">
+          <span class="loading loading-spinner loading-md text-primary"></span>
+          <span class="text-xs text-base-content/50">{{ $t('file_info.fuji.reading_exiftool') }}</span>
+        </div>
+
+        <div v-else-if="rawTagsError" class="flex-1 flex flex-col items-center justify-center p-4 text-center gap-2">
+          <p class="text-xs text-error font-medium">{{ rawTagsError }}</p>
+          <p class="text-[11px] text-base-content/50 max-w-sm">
+            {{ $t('file_info.fuji.exiftool_missing_desc') }}
+          </p>
+        </div>
+
+        <template v-else-if="fujiRawTags">
+          <div class="flex items-center gap-2">
+            <input
+              type="text"
+              v-model="rawTagsSearch"
+              :placeholder="$t('file_info.fuji.search_tags')"
+              class="input input-xs input-bordered flex-1 text-xs"
+            />
+            <span class="text-[11px] text-base-content/40 whitespace-nowrap">
+              {{ Object.keys(filteredRawTags).length }} {{ $t('file_info.fuji.tags_count') }}
+            </span>
+          </div>
+
+          <div class="flex-1 min-h-0 overflow-y-auto rounded-box border border-base-content/10 bg-base-300/30 p-2 text-xs">
+            <div
+              v-for="(val, key) in filteredRawTags"
+              :key="key"
+              class="flex items-baseline justify-between py-1 px-1 border-b border-base-content/5 hover:bg-base-100/30"
+            >
+              <span class="font-mono font-semibold text-primary/80 select-all shrink-0 pr-4">{{ key }}</span>
+              <span class="text-base-content/80 text-right select-all break-all">{{ formatRawTagValue(val) }}</span>
+            </div>
+            <div v-if="Object.keys(filteredRawTags).length === 0" class="py-6 text-center text-xs text-base-content/40">
+              {{ $t('file_info.fuji.no_matching_tags') }}
+            </div>
+          </div>
+        </template>
+      </div>
+    </ModalDialog>
   </div>
 </template>
 
@@ -457,7 +617,7 @@ import { useToast } from '@/common/toast';
 import { useUIStore } from '@/stores/uiStore';
 import { config, libConfig } from '@/common/config';
 import { isWebViewVideoPlaybackDisabled, getGStreamerAvailability } from '@/common/video';
-import { getTagsForFile, renameFile, editImage, getAlbum, getFileCollections, getFileInfo, getMotionPhotoVideoPath, revealPath, getFacesForFile, getPersonThumbnail } from '@/common/api';
+import { getTagsForFile, renameFile, editImage, getAlbum, getFileCollections, getFileInfo, getMotionPhotoVideoPath, revealPath, getFacesForFile, getPersonThumbnail, getFujiMetadata, getFujiRawTags } from '@/common/api';
 import { 
   extractFileName, 
   getFileExtension,
@@ -489,12 +649,14 @@ import {
   IconLivePhoto,
   IconBookmark,
   IconPerson,
+  IconMore,
 } from '@/common/icons';
 import Breadcrumb from '@/components/Breadcrumb.vue';
 import TButton from '@/components/TButton.vue';
 import FavoriteRatingControl from '@/components/FavoriteRatingControl.vue';
 import ImageHistogram from '@/components/ImageHistogram.vue';
 import MapView from '@/components/MapView.vue';
+import ModalDialog from '@/components/ModalDialog.vue';
 
 const props = defineProps({
   fileInfo: {
@@ -576,6 +738,91 @@ const generalFileInfo = computed(() => (
     : props.fileInfo
 ));
 const isPrimaryGeneralInfo = computed(() => generalInfoTab.value === 'raw');
+
+const showFujiRecipePanel = computed(() => config.infoPanel.showFujiRecipe ?? true);
+function toggleFujiRecipe() {
+  config.infoPanel.showFujiRecipe = !config.infoPanel.showFujiRecipe;
+}
+
+const isFujiPhoto = computed(() => {
+  const make = (generalFileInfo.value?.e_make || props.fileInfo?.e_make || '').toLowerCase();
+  const name = (generalFileInfo.value?.name || props.fileInfo?.name || '').toLowerCase();
+  return make.includes('fuji') || name.endsWith('.raf');
+});
+
+const fujiRecipe = ref<any>(null);
+const loadingFuji = ref(false);
+const fujiRawTags = ref<Record<string, any> | null>(null);
+const loadingRawTags = ref(false);
+const rawTagsError = ref<string | null>(null);
+const showRawTagsModal = ref(false);
+const rawTagsSearch = ref('');
+
+async function loadFujiRecipe() {
+  const fileId = generalFileInfo.value?.id || props.fileInfo?.id;
+  if (!fileId || !isFujiPhoto.value) {
+    fujiRecipe.value = null;
+    return;
+  }
+  loadingFuji.value = true;
+  try {
+    fujiRecipe.value = await getFujiMetadata(Number(fileId));
+  } catch (e) {
+    console.error('Failed to load Fuji recipe:', e);
+    fujiRecipe.value = null;
+  } finally {
+    loadingFuji.value = false;
+  }
+}
+
+watch(
+  () => [props.fileInfo?.id, generalFileInfo.value?.id, isFujiPhoto.value],
+  () => {
+    void loadFujiRecipe();
+  },
+  { immediate: true },
+);
+
+async function openRawTagsModal() {
+  showRawTagsModal.value = true;
+  const fileId = generalFileInfo.value?.id || props.fileInfo?.id;
+  if (!fileId) return;
+
+  loadingRawTags.value = true;
+  rawTagsError.value = null;
+  fujiRawTags.value = null;
+  try {
+    const raw = await getFujiRawTags(Number(fileId), config.settings.exiftoolPath || null);
+    if (raw && typeof raw === 'object') {
+      fujiRawTags.value = raw;
+    } else {
+      rawTagsError.value = t('file_info.fuji.no_raw_tags');
+    }
+  } catch (err: any) {
+    rawTagsError.value = err?.message || String(err);
+  } finally {
+    loadingRawTags.value = false;
+  }
+}
+
+const filteredRawTags = computed(() => {
+  if (!fujiRawTags.value) return {};
+  const query = rawTagsSearch.value.trim().toLowerCase();
+  const result: Record<string, any> = {};
+  for (const [key, value] of Object.entries(fujiRawTags.value)) {
+    if (key === 'SourceFile') continue;
+    if (!query || key.toLowerCase().includes(query) || String(value).toLowerCase().includes(query)) {
+      result[key] = value;
+    }
+  }
+  return result;
+});
+
+function formatRawTagValue(value: any): string {
+  if (value === null || value === undefined) return '-';
+  if (typeof value === 'object') return JSON.stringify(value);
+  return String(value);
+}
 const motionPhotoVideoPath = ref<string | null>(null);
 let motionPhotoVideoRequestSeq = 0;
 const previewVideoPath = computed(() => {

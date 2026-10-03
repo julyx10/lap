@@ -22,7 +22,9 @@ mod t_common;
 mod t_config;
 mod t_dedup;
 mod t_embedded_jpeg;
+mod t_exiftool;
 mod t_face;
+mod t_fuji;
 mod t_heif;
 mod t_http;
 mod t_image;
@@ -350,6 +352,9 @@ async fn main() {
             t_cmds::get_file_thumb_by_id,
             t_cmds::get_file_thumbs,
             t_cmds::get_file_info,
+            t_cmds::get_fuji_metadata,
+            t_cmds::get_fuji_raw_tags,
+            t_cmds::check_exiftool_status,
             t_cmds::update_file_info,
             t_cmds::refresh_selected_file_info,
             t_cmds::prepare_motion_photo_video,

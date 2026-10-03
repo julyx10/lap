@@ -1264,6 +1264,43 @@ export async function getFileInfo(fileId) {
   return null;
 }
 
+// get Fujifilm film recipe and MakerNotes metadata (Tier 1 native parser with cache)
+export async function getFujiMetadata(fileId) {
+  try {
+    const result = await invoke('get_fuji_metadata', { fileId });
+    if (result) {
+      return result;
+    }
+  } catch (error) {
+    console.log('Failed to get Fujifilm metadata:', error);
+  }
+  return null;
+}
+
+// get full raw Fujifilm MakerNote tags via ExifTool (Tier 2 extended inspector)
+export async function getFujiRawTags(fileId, customBin = null) {
+  try {
+    const result = await invoke('get_fuji_raw_tags', { fileId, customBin });
+    if (result) {
+      return result;
+    }
+  } catch (error) {
+    console.log('Failed to get Fujifilm raw tags:', error);
+    throw error;
+  }
+  return null;
+}
+
+// check ExifTool installation status and version
+export async function checkExifToolStatus(customBin = null) {
+  try {
+    return await invoke('check_exiftool_status', { customBin });
+  } catch (error) {
+    console.log('Failed to check ExifTool status:', error);
+    return { available: false, version: null, binaryPath: null };
+  }
+}
+
 // extract the embedded MP4 of an Android Motion Photo and return its cache path
 export async function getMotionPhotoVideoPath(fileId) {
   return invoke('prepare_motion_photo_video', { fileId });
