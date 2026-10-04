@@ -1151,7 +1151,29 @@
     "geo_location": "Ort",
     "tags": "Tags",
     "comment": "Kommentar",
-    "capture_settings": "Aufnahmeeinst."
+    "capture_settings": "Aufnahmeeinst.",
+    "fuji": {
+      "section_title": "Film Recipe",
+      "loading": "Reading film recipe...",
+      "no_recipe_data": "No Fujifilm recipe settings found in this photo.",
+      "film_mode": "Film Simulation",
+      "dynamic_range": "Dynamic Range",
+      "tone": "Highlight / Shadow",
+      "grain_effect": "Grain Effect",
+      "color_chrome": "Color Chrome",
+      "white_balance": "White Balance",
+      "wb_shift": "WB Shift",
+      "adjustments": "Adjustments",
+      "shooting": "Focus / Shutter",
+      "view_raw_tags": "All Raw Tags",
+      "raw_tags_title": "Fujifilm MakerNotes Inspector",
+      "reading_exiftool": "Extracting all MakerNotes with ExifTool...",
+      "no_raw_tags": "No MakerNotes tags returned for this file.",
+      "exiftool_missing_desc": "ExifTool is required for deep raw tag inspection. You can configure a custom ExifTool path in Settings > General.",
+      "search_tags": "Search tag name or value...",
+      "tags_count": "tags",
+      "no_matching_tags": "No matching tags found"
+    }
   },
   "map": {
     "show_map": "Karte anzeigen",
@@ -1295,7 +1317,16 @@
       ],
       "show_tool_tip": "Button-Hinweise",
       "show_status_bar": "Statusleiste",
-      "auto_check_updates": "Automatisch nach Updates suchen"
+      "auto_check_updates": "Automatisch nach Updates suchen",
+      "section_exiftool": "ExifTool",
+      "exiftool_path": "ExifTool executable path",
+      "exiftool_desc": "Used for deep metadata extraction and full MakerNotes inspection.",
+      "exiftool_placeholder": "Auto-detected from system PATH",
+      "exiftool_browse": "Browse...",
+      "exiftool_reset": "Reset to Default",
+      "exiftool_detected": "Detected",
+      "exiftool_not_found": "Not Found",
+      "exiftool_select": "Select ExifTool Executable"
     },
     "raw": {
       "title": "RAW",

@@ -1151,7 +1151,29 @@
     "geo_location": "Ubicación",
     "tags": "Etiquetas",
     "comment": "Comentario",
-    "capture_settings": "Ajustes captura"
+    "capture_settings": "Ajustes captura",
+    "fuji": {
+      "section_title": "Receta de película",
+      "loading": "Leyendo receta de película...",
+      "no_recipe_data": "No se encontraron ajustes de receta Fujifilm en esta foto.",
+      "film_mode": "Simulación de película",
+      "dynamic_range": "Rango dinámico",
+      "tone": "Luces / Sombras",
+      "grain_effect": "Efecto grano",
+      "color_chrome": "Color Chrome",
+      "white_balance": "Balance de blancos",
+      "wb_shift": "Ajuste BB",
+      "adjustments": "Ajustes de receta",
+      "shooting": "Enfoque / Obturador",
+      "view_raw_tags": "Todas las etiquetas",
+      "raw_tags_title": "Inspector de MakerNotes Fujifilm",
+      "reading_exiftool": "Extrayendo MakerNotes con ExifTool...",
+      "no_raw_tags": "No se devolvieron etiquetas MakerNotes.",
+      "exiftool_missing_desc": "Se requiere ExifTool para la inspección profunda. Puede configurar su ruta en Configuración > General.",
+      "search_tags": "Buscar etiqueta o valor...",
+      "tags_count": "etiquetas",
+      "no_matching_tags": "No se encontraron etiquetas coincidentes"
+    }
   },
   "map": {
     "show_map": "Ver mapa",
@@ -1295,7 +1317,16 @@
       ],
       "show_tool_tip": "Mostrar sugerencias de botones",
       "show_status_bar": "Mostrar barra estado",
-      "auto_check_updates": "Buscar actualizaciones automáticamente"
+      "auto_check_updates": "Buscar actualizaciones automáticamente",
+      "section_exiftool": "ExifTool",
+      "exiftool_path": "Ruta del ejecutable ExifTool",
+      "exiftool_desc": "Utilizado para la extracción profunda de metadatos e inspección completa de MakerNotes.",
+      "exiftool_placeholder": "Autodetectado desde PATH",
+      "exiftool_browse": "Examinar...",
+      "exiftool_reset": "Restablecer",
+      "exiftool_detected": "Detectado",
+      "exiftool_not_found": "No encontrado",
+      "exiftool_select": "Seleccionar ejecutable ExifTool"
     },
     "raw": {
       "title": "RAW",

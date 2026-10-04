@@ -1151,7 +1151,29 @@
     "geo_location": "地點",
     "tags": "標籤",
     "comment": "備註",
-    "capture_settings": "拍攝設定"
+    "capture_settings": "拍攝設定",
+    "fuji": {
+      "section_title": "胶片配方",
+      "loading": "正在读取胶片配方...",
+      "no_recipe_data": "此照片中未找到富士胶片配方设置。",
+      "film_mode": "胶片模拟",
+      "dynamic_range": "动态范围",
+      "tone": "高光 / 阴影",
+      "grain_effect": "颗粒效果",
+      "color_chrome": "彩色效果",
+      "white_balance": "白平衡",
+      "wb_shift": "白平衡偏移",
+      "adjustments": "配方细节",
+      "shooting": "对焦 / 快门",
+      "view_raw_tags": "所有原始标签",
+      "raw_tags_title": "富士 MakerNotes 检查器",
+      "reading_exiftool": "正在使用 ExifTool 提取所有 MakerNotes...",
+      "no_raw_tags": "未获取到该文件的 MakerNotes 标签。",
+      "exiftool_missing_desc": "深度查看原始标签需要 ExifTool。可在设置 > 通用中指定 ExifTool 路径。",
+      "search_tags": "搜索标签名或数值...",
+      "tags_count": "个标签",
+      "no_matching_tags": "未找到匹配的标签"
+    }
   },
   "map": {
     "show_map": "顯示地圖",
@@ -1295,7 +1317,16 @@
       ],
       "show_tool_tip": "顯示按鈕提示",
       "show_status_bar": "顯示狀態列",
-      "auto_check_updates": "自動檢查更新"
+      "auto_check_updates": "自動檢查更新",
+      "section_exiftool": "ExifTool",
+      "exiftool_path": "ExifTool 执行文件路径",
+      "exiftool_desc": "用于深度元数据提取和完整的 MakerNotes 厂商标签查看。",
+      "exiftool_placeholder": "从系统环境变量 PATH 自动检测",
+      "exiftool_browse": "浏览...",
+      "exiftool_reset": "恢复默认",
+      "exiftool_detected": "已检测到",
+      "exiftool_not_found": "未找到",
+      "exiftool_select": "选择 ExifTool 可执行文件"
     },
     "raw": {
       "title": "RAW",

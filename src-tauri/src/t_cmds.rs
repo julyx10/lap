@@ -2687,6 +2687,65 @@ pub fn get_file_info(file_id: i64) -> Result<Option<AFile>, String> {
     AFile::get_file_info(file_id).map_err(|e| format!("Error while getting file info: {}", e))
 }
 
+/// Extract Fujifilm film recipe and MakerNotes metadata (Tier 1 native parser with LRU cache)
+#[tauri::command]
+pub fn get_fuji_metadata(file_id: i64) -> Result<Option<crate::t_fuji::FujiRecipe>, String> {
+    let file = AFile::get_file_info(file_id)
+        .map_err(|e| format!("Error while getting file info: {}", e))?
+        .ok_or_else(|| "File not found".to_string())?;
+
+    let path_str = match file.file_path {
+        Some(ref p) if !p.is_empty() => p,
+        _ => return Ok(None),
+    };
+
+    let path = Path::new(path_str);
+    let mtime = file.modified_at.unwrap_or(0);
+
+    // 1. Check in-memory LRU cache
+    let cache = crate::t_fuji::get_global_fuji_cache();
+    if let Some(cached) = cache.get(file_id, mtime) {
+        return Ok(Some(cached));
+    }
+
+    // 2. Decode using Tier-1 native Rust parser (< 0.02 ms)
+    if let Some(recipe) = crate::t_fuji::extract_fuji_recipe_from_file(path) {
+        cache.insert(file_id, mtime, recipe.clone());
+        return Ok(Some(recipe));
+    }
+
+    Ok(None)
+}
+
+/// Extract full raw Fujifilm MakerNote tags via ExifTool (Tier 2 extended inspector)
+#[tauri::command]
+pub async fn get_fuji_raw_tags(
+    file_id: i64,
+    custom_bin: Option<String>,
+) -> Result<Option<serde_json::Value>, String> {
+    let file = AFile::get_file_info(file_id)
+        .map_err(|e| format!("Error while getting file info: {}", e))?
+        .ok_or_else(|| "File not found".to_string())?;
+
+    let path_str = match file.file_path {
+        Some(ref p) if !p.is_empty() => p,
+        _ => return Ok(None),
+    };
+
+    let path = Path::new(path_str);
+    let raw_tags = crate::t_exiftool::extract_fuji_raw_tags(path, custom_bin.as_deref()).await?;
+    Ok(Some(raw_tags))
+}
+
+/// Check ExifTool availability and version
+#[tauri::command]
+pub async fn check_exiftool_status(
+    custom_bin: Option<String>,
+) -> Result<crate::t_exiftool::ExifToolStatus, String> {
+    let status = crate::t_exiftool::probe_exiftool_status(custom_bin.as_deref()).await;
+    Ok(status)
+}
+
 /// Extract the embedded MP4 from an Android Motion Photo into the cache and
 /// return its path so the frontend can play it through the normal video
 /// pipeline (`prepare_video`). Cached by file size + mtime so an edited file
