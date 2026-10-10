@@ -1294,6 +1294,16 @@ export async function updateFileInfo(fileId, filePath) {
   return null;
 }
 
+// refresh a file's info from disk; returns { file, size_delta, skipped }
+export async function refreshFileInfo(libraryId, fileId) {
+  try {
+    return await invoke('refresh_selected_file_info', { libraryId, fileId });
+  } catch (error) {
+    console.log('Failed to refresh file info:', error);
+  }
+  return null;
+}
+
 export async function importFile(filePath, folderId, folderPath, throwOnError = false, libraryId = libConfig._libraryId) {
   try {
     const result = await invoke('import_file', { filePath, folderId, folderPath, libraryId });

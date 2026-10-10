@@ -477,6 +477,20 @@ fn has_hidden_attribute(_metadata: &std::fs::Metadata) -> bool {
     false
 }
 
+/// True on Windows for a cloud-only placeholder (OneDrive Files On-Demand):
+/// reading its content downloads it, reading this attribute does not.
+#[cfg(target_os = "windows")]
+pub fn is_cloud_only(metadata: &std::fs::Metadata) -> bool {
+    use std::os::windows::fs::MetadataExt;
+    const FILE_ATTRIBUTE_RECALL_ON_DATA_ACCESS: u32 = 0x40_0000;
+    (metadata.file_attributes() & FILE_ATTRIBUTE_RECALL_ON_DATA_ACCESS) != 0
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn is_cloud_only(_metadata: &std::fs::Metadata) -> bool {
+    false
+}
+
 pub fn is_hidden(entry: &walkdir::DirEntry) -> bool {
     is_dotfile(entry.file_name())
         || entry
@@ -3464,7 +3478,8 @@ struct ThumbnailReadyPayload {
 }
 
 pub fn file_accessible(path: &str) -> bool {
-    std::path::Path::new(path).is_file() && std::fs::File::open(path).is_ok()
+    // Opening a cloud-only file downloads it; its metadata is enough here.
+    std::fs::metadata(path).is_ok_and(|m| m.is_file() && (is_cloud_only(&m) || std::fs::File::open(path).is_ok()))
 }
 
 pub fn album_accessible(album_id: i64) -> bool {
@@ -4504,6 +4519,28 @@ mod album_scan_filter_tests {
         let counts = count_folder_files(root.to_str().unwrap());
         assert_eq!((counts.1,counts.3,counts.5),(4,1,5));
         fs::remove_dir_all(root).unwrap();
+    }
+}
+
+#[cfg(test)]
+mod cloud_only_tests {
+    use super::*;
+
+    #[test]
+    fn local_file_is_not_cloud_only() {
+        let path = std::env::temp_dir().join(format!("lap-cloud-only-{}", uuid::Uuid::new_v4()));
+        fs::write(&path, b"local").unwrap();
+        assert!(!is_cloud_only(&fs::metadata(&path).unwrap()));
+        fs::remove_file(path).unwrap();
+    }
+
+    /// Set LAP_CLOUD_ONLY_FILE to a OneDrive "online-only" file to run this check.
+    #[test]
+    fn cloud_only_sample_is_detected() {
+        let Ok(path) = std::env::var("LAP_CLOUD_ONLY_FILE") else { return };
+        assert!(is_cloud_only(&fs::metadata(&path).unwrap()));
+        assert!(file_accessible(&path));
+        assert!(is_cloud_only(&fs::metadata(&path).unwrap()), "the accessibility check downloaded the file");
     }
 }
 
