@@ -29,7 +29,7 @@ import { libConfig } from '@/common/config';
 import { useUIStore } from '@/stores/uiStore';
 import ModalDialog from '@/components/ModalDialog.vue';
 
-type FileRefreshResult = { file: any; size_delta: number };
+type FileRefreshResult = { file: any; size_delta: number; skipped: boolean };
 const props = defineProps<{ fileIds: number[]; libraryId: string; finishRefresh: (results: FileRefreshResult[]) => Promise<void> }>();
 const emit = defineEmits(['close']);
 const uiStore = useUIStore();

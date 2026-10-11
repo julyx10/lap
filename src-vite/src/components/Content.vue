@@ -1145,8 +1145,10 @@ function startSelectedFileRefresh() {
     groupSizes: new Map(Array.from(groupMetaMap, ([id, meta]) => [id, meta.size])),
   };
 }
-async function finishSelectedFileRefresh(results: Array<{ file: any; size_delta: number }>) {
+async function finishSelectedFileRefresh(results: Array<{ file: any; size_delta: number; skipped: boolean }>) {
   const selection = fileRefreshSelection.value;
+  // Skipped cloud-only files are unchanged; regenerating their thumbnails would download them.
+  results = results.filter(result => !result.skipped);
   if (!selection || selection.libraryId !== libConfig._libraryId || results.length === 0) return;
   for (const { file } of results) clearCachedThumbnailDataUrl(file.id, config.settings.thumbnailSize);
   fileInfoRevision.value++;
