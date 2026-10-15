@@ -1477,7 +1477,9 @@
       ],
       "section_video": "视频",
       "auto_play_video": "自动播放视频",
-      "loop_video": "循环播放视频"
+      "loop_video": "循环播放视频",
+      "button_sound": "按钮提示音",
+      "button_sound_hint": "点击“下一张”或“关闭”按钮时播放提示音"
     },
     "image_search": {
       "title": "搜索",

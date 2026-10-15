@@ -1477,7 +1477,9 @@
       ],
       "section_video": "Video",
       "auto_play_video": "Auto play video",
-      "loop_video": "Loop video"
+      "loop_video": "Loop video",
+      "button_sound": "Button sound",
+      "button_sound_hint": "Play a sound when clicking the Next or Close button"
     },
     "image_search": {
       "title": "Search",

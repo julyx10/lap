@@ -184,6 +184,7 @@ export const useConfigStore = defineStore('configStore', {
       viewBackground: 0,         // 0: default, 1: black, 2: dark gray, 3: medium gray, 4: light gray, 5: white
       autoPlayVideo: true,       // auto play video
       loopVideo: false,          // loop video (only effective when autoPlayVideo is off)
+      viewerButtonSound: false,  // play a sound when clicking the Next / Close buttons
       // showComment: false,        // show comment
       externalApps: {
         image: { defaultId: null, apps: [] },

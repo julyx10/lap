@@ -1477,7 +1477,9 @@
       ],
       "section_video": "Video",
       "auto_play_video": "Video automatisch afspelen",
-      "loop_video": "Video herhalen"
+      "loop_video": "Video herhalen",
+      "button_sound": "Knopgeluid",
+      "button_sound_hint": "Speel een geluid af bij klikken op Volgende of Sluiten"
     },
     "image_search": {
       "title": "Zoeken",

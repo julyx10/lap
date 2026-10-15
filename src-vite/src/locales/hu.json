@@ -1477,7 +1477,9 @@
       ],
       "section_video": "Videó",
       "auto_play_video": "Videó automatikus lejátszása",
-      "loop_video": "Videó ismétlése"
+      "loop_video": "Videó ismétlése",
+      "button_sound": "Gombhang",
+      "button_sound_hint": "Hang lejátszása a Következő vagy a Bezárás gomb megnyomásakor"
     },
     "image_search": {
       "title": "Keresés",

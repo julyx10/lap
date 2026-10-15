@@ -1477,7 +1477,9 @@
       ],
       "section_video": "비디오",
       "auto_play_video": "비디오 자동 재생",
-      "loop_video": "비디오 반복 재생"
+      "loop_video": "비디오 반복 재생",
+      "button_sound": "버튼 소리",
+      "button_sound_hint": "다음 또는 닫기 버튼을 클릭할 때 소리 재생"
     },
     "image_search": {
       "title": "검색",

@@ -34,7 +34,7 @@
           :icon="IconNext"
           :disabled="fileIndex < 0 || fileIndex >= fileCount - 1 || isSlideShow || !canInteract"
           :tooltip="$t('image_viewer.toolbar.next')"
-          @click="triggerNext" 
+          @click="clickNext" 
         />
         <div class="flex items-center gap-0.5">
           <TButton
@@ -213,7 +213,7 @@
           :icon="IconClose"
           :tooltip="$t('image_viewer.toolbar.close')"
           :disabled="!canInteract"
-          @click.stop="$emit('close')"
+          @click.stop="clickClose"
         />
       </div>
     </div>
@@ -230,7 +230,7 @@
       />
       <IconClose 
         class="p-3 w-12 h-10 text-base-content/70 hover:text-base-content hover:bg-red-500 transition-colors duration-300 cursor-pointer" 
-        @click.stop="$emit('close')" 
+        @click.stop="clickClose" 
       />
     </div>
 
@@ -240,7 +240,7 @@
     <button 
       v-if="mode === 0 && !config.mediaViewer.isPinned && !isFullScreen"
       class="absolute right-2 top-2 z-90 p-2 rounded-full text-base-content/70 bg-base-100/30 hover:text-base-content hover:bg-base-100/70 cursor-pointer"
-      @click.stop="$emit('close')"
+      @click.stop="clickClose"
       @dblclick.stop
     >
       <IconClose class="w-5 h-5" />
@@ -313,7 +313,7 @@
           isHoverRight ? (hasNext ? 'opacity-100 pointer-events-auto hover:text-base-content hover:bg-base-100/80 cursor-pointer' : 'opacity-30 cursor-default') : 'opacity-0 pointer-events-none'
         ]"
         :disabled="!hasNext"
-        @click.stop="triggerNext"
+        @click.stop="clickNext"
         @dblclick.stop
       >
         <IconRight class="w-8 h-8" />
@@ -452,6 +452,7 @@ import { isWin, isMac, isLinux, getSlideShowInterval } from '@/common/utils';
 import { getShortcutLabel, ShortcutActionId, ShortcutPlatform, VIEW_BACKGROUND_SHORTCUTS } from '@/common/shortcuts';
 import { isOriginalUnavailable, setFileAccessibility } from '@/common/availability';
 import { getMotionPhotoVideoPath, checkFileAccessibility } from '@/common/api';
+import { playUiSound } from '@/common/sound';
 
 import Image from '@/components/Image.vue';
 import TButton from '@/components/TButton.vue';
@@ -1249,6 +1250,21 @@ const triggerNext = () => {
   } else {
     // showMessage((localeMsg.value as any).tooltip.image_viewer.last_image);
   }
+}
+
+// Next/Close button clicks (not keyboard or wheel) play a sound when enabled in settings
+const clickNext = () => {
+  if (props.hasNext && config.settings.viewerButtonSound) {
+    playUiSound('next');
+  }
+  triggerNext();
+}
+
+const clickClose = () => {
+  if (config.settings.viewerButtonSound) {
+    playUiSound('close');
+  }
+  emit('close');
 }
 
 const handleToggleSlideShow = () => {

@@ -1477,7 +1477,9 @@
       ],
       "section_video": "Video",
       "auto_play_video": "Riproduci video automaticamente",
-      "loop_video": "Ripeti video"
+      "loop_video": "Ripeti video",
+      "button_sound": "Suono dei pulsanti",
+      "button_sound_hint": "Riproduci un suono quando fai clic su Successiva o Chiudi"
     },
     "image_search": {
       "title": "Ricerca",

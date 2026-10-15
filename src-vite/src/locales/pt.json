@@ -1477,7 +1477,9 @@
       ],
       "section_video": "Vídeo",
       "auto_play_video": "Auto reproduzir vídeo",
-      "loop_video": "Repetir vídeo"
+      "loop_video": "Repetir vídeo",
+      "button_sound": "Som dos botões",
+      "button_sound_hint": "Reproduzir um som ao clicar em Próximo ou Fechar"
     },
     "image_search": {
       "title": "Pesquisa",

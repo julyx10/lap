@@ -1477,7 +1477,9 @@
       ],
       "section_video": "Vidéo",
       "auto_play_video": "Lecture auto vidéo",
-      "loop_video": "Vidéo en boucle"
+      "loop_video": "Vidéo en boucle",
+      "button_sound": "Son des boutons",
+      "button_sound_hint": "Jouer un son lors d’un clic sur Suivant ou Fermer"
     },
     "image_search": {
       "title": "Recherche",

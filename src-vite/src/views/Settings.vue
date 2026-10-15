@@ -257,6 +257,13 @@
               </span>
               <input type="checkbox" class="toggle toggle-primary toggle-sm" v-model="config.settings.navigatorSharpnessGrid" />
             </label>
+            <label class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <span class="flex flex-col gap-0.5 text-sm leading-5">
+                <span>{{ $t('settings.image_view.button_sound') }}</span>
+                <span class="text-xs text-base-content/30">{{ $t('settings.image_view.button_sound_hint') }}</span>
+              </span>
+              <input type="checkbox" class="toggle toggle-primary toggle-sm" v-model="config.settings.viewerButtonSound" />
+            </label>
           </div>
 
           <!-- view -->
@@ -1513,6 +1520,9 @@ watch(() => config.settings.autoPlayVideo, (newValue) => {
 });
 watch(() => config.settings.loopVideo, (newValue) => {
   emit('settings-loopVideo-changed', newValue);
+});
+watch(() => config.settings.viewerButtonSound, (newValue) => {
+  emit('settings-viewerButtonSound-changed', newValue);
 });
 
 // image search settings

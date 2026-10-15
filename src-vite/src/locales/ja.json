@@ -1477,7 +1477,9 @@
       ],
       "section_video": "ビデオ",
       "auto_play_video": "動画自動再生",
-      "loop_video": "動画を繰り返す"
+      "loop_video": "動画を繰り返す",
+      "button_sound": "ボタンのサウンド",
+      "button_sound_hint": "「次へ」または「閉じる」ボタンをクリックしたときにサウンドを再生"
     },
     "image_search": {
       "title": "検索",

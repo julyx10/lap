@@ -1477,7 +1477,9 @@
       ],
       "section_video": "Vídeo",
       "auto_play_video": "Autoreproducir vídeo",
-      "loop_video": "Repetir vídeo"
+      "loop_video": "Repetir vídeo",
+      "button_sound": "Sonido de botones",
+      "button_sound_hint": "Reproducir un sonido al hacer clic en Siguiente o Cerrar"
     },
     "image_search": {
       "title": "Buscar",

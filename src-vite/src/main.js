@@ -181,6 +181,9 @@ if (isMainWindow) {
   listen('settings-loopVideo-changed', (event) => {
     config.settings.loopVideo = event.payload
   })
+  listen('settings-viewerButtonSound-changed', (event) => {
+    config.settings.viewerButtonSound = event.payload
+  })
   listen('settings-groupRawJpegPairs-changed', (event) => {
     config.settings.groupRawJpegPairs = event.payload
   })

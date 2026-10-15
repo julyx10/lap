@@ -1477,7 +1477,9 @@
       ],
       "section_video": "Wideo",
       "auto_play_video": "Automatycznie odtwarzaj filmy",
-      "loop_video": "Zapętlaj filmy"
+      "loop_video": "Zapętlaj filmy",
+      "button_sound": "Dźwięk przycisków",
+      "button_sound_hint": "Odtwarzaj dźwięk po kliknięciu przycisku Następne lub Zamknij"
     },
     "image_search": {
       "title": "Wyszukiwanie",

@@ -1477,7 +1477,9 @@
       ],
       "section_video": "Video",
       "auto_play_video": "Video Autoplay",
-      "loop_video": "Video wiederholen"
+      "loop_video": "Video wiederholen",
+      "button_sound": "Schaltflächenton",
+      "button_sound_hint": "Beim Klicken auf „Nächstes“ oder „Schließen“ einen Ton abspielen"
     },
     "image_search": {
       "title": "Suche",
