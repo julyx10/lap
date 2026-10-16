@@ -2999,7 +2999,7 @@ fn schedule_synced_file_processing(app_handle: tauri::AppHandle, task: SyncedFil
                 return;
             }
             let ai_state: tauri::State<crate::t_ai::AiState> = app_handle_for_embedding.state();
-            if let Err(e) = AFile::generate_embedding(&ai_state, task.file_id) {
+            if let Err(e) = AFile::generate_embedding_for_index(&ai_state, task.file_id) {
                 eprintln!("Failed to generate embedding for {}: {}", file_path, e);
             }
         })
@@ -3632,7 +3632,13 @@ impl ProcessingBudget {
         Self {
             normal_thumb: Arc::new(Semaphore::new(normal_budget)),
             heavy_thumb: Arc::new(Semaphore::new(heavy_budget)),
-            embedding: Arc::new(Semaphore::new(1)),
+            // The built-in engine embeds one image at a time; the oMLX
+            // provider batches concurrent files into shared requests.
+            embedding: Arc::new(Semaphore::new(if crate::t_omlx::is_active() {
+                crate::t_omlx::INDEX_CONCURRENT_FILES
+            } else {
+                1
+            })),
         }
     }
 }
@@ -3992,7 +3998,7 @@ async fn process_thumbnail_task(
             return false;
         }
         let ai_state: State<crate::t_ai::AiState> = app_handle_for_embedding.state();
-        match crate::t_sqlite::AFile::generate_embedding(&ai_state, file_id) {
+        match crate::t_sqlite::AFile::generate_embedding_for_index(&ai_state, file_id) {
             Ok(_) => true,
             Err(e) => {
                 eprintln!("Failed to generate embedding for {}: {}", file_path, e);

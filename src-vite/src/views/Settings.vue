@@ -349,12 +349,127 @@
         <!-- Search Tab -->
         <div v-else-if="config.settings.tabIndex === SETTINGS_TAB.IMAGE_SEARCH" class="flex flex-col overflow-hidden space-y-2">
 
+          <!-- embedding provider -->
+          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+            <div class="flex items-center gap-2 text-base-content/30">
+              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.image_search.embedding_provider') }}</span>
+            </div>
+            <div class="flex items-start justify-between gap-4 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="min-w-0 flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.image_search.embedding_provider') }}</div>
+                <div class="text-xs text-base-content/30">{{ $t('settings.image_search.embedding_provider_hint') }}</div>
+              </div>
+              <select
+                class="select select-bordered select-sm min-w-36 shrink-0"
+                :value="config.settings.imageSearch.provider || 'builtin'"
+                @change="onEmbeddingProviderChange"
+              >
+                <option value="builtin">{{ $t('settings.image_search.provider_builtin') }}</option>
+                <option value="omlx">{{ $t('settings.image_search.provider_omlx') }}</option>
+              </select>
+            </div>
+
+            <template v-if="isOmlxProvider">
+              <div class="flex items-center justify-between gap-4 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+                <div class="min-w-0 flex flex-col gap-0.5 text-sm leading-5">
+                  <div>{{ $t('settings.image_search.omlx_server_url') }}</div>
+                </div>
+                <input
+                  class="input input-bordered input-sm w-56 shrink-0"
+                  type="text"
+                  :placeholder="$t('settings.image_search.omlx_server_url')"
+                  v-model="config.settings.imageSearch.omlx.url"
+                  @change="applyEmbeddingProvider"
+                />
+              </div>
+              <div class="flex items-center justify-between gap-4 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+                <div class="min-w-0 flex flex-col gap-0.5 text-sm leading-5">
+                  <div>{{ $t('settings.image_search.omlx_api_key') }}</div>
+                  <div class="text-xs text-base-content/30">{{ $t('settings.image_search.omlx_api_key_hint') }}</div>
+                </div>
+                <input
+                  class="input input-bordered input-sm w-56 shrink-0"
+                  type="password"
+                  autocomplete="off"
+                  :placeholder="$t('settings.image_search.omlx_api_key')"
+                  v-model="config.settings.imageSearch.omlx.apiKey"
+                  @change="applyEmbeddingProvider"
+                />
+              </div>
+              <div class="flex items-center justify-between gap-4 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+                <div class="min-w-0 flex flex-col gap-0.5 text-sm leading-5">
+                  <div>{{ $t('settings.image_search.omlx_model') }}</div>
+                  <div class="text-xs text-base-content/30">{{ $t('settings.image_search.omlx_model_hint') }}</div>
+                </div>
+                <input
+                  class="input input-bordered input-sm w-56 shrink-0"
+                  type="text"
+                  placeholder="mlx-community/embeddinggemma-2-bf16"
+                  v-model="config.settings.imageSearch.omlx.model"
+                  @change="applyEmbeddingProvider"
+                />
+              </div>
+              <div class="flex items-center justify-between gap-4 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+                <div class="min-w-0 flex flex-col gap-0.5 text-sm leading-5">
+                  <div>{{ $t('settings.image_search.omlx_dimensions') }}</div>
+                  <div class="text-xs text-base-content/30">{{ $t('settings.image_search.omlx_dimensions_hint') }}</div>
+                </div>
+                <select
+                  class="select select-bordered select-sm min-w-36 shrink-0"
+                  v-model="config.settings.imageSearch.omlx.dimensionsIndex"
+                  @change="applyEmbeddingProvider"
+                >
+                  <option v-for="(option, index) in omlxDimensionOptions" :key="index" :value="index">{{ option }}</option>
+                </select>
+              </div>
+              <div class="flex items-center justify-between gap-4 px-1">
+                <div class="min-w-0 flex flex-col gap-0.5 text-sm leading-5">
+                  <div class="text-xs text-base-content/30">{{ omlxConnectionMessage }}</div>
+                </div>
+                <button class="btn btn-outline btn-xs h-6 min-h-0" :disabled="isTestingOmlxConnection" @click="onTestOmlxConnection">
+                  <span v-if="isTestingOmlxConnection" class="loading loading-spinner loading-xs"></span>
+                  {{ $t('settings.image_search.test_connection') }}
+                </button>
+              </div>
+              <div class="flex items-center justify-between gap-4 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+                <div class="min-w-0 flex flex-col gap-0.5 text-sm leading-5">
+                  <div>{{ $t('settings.image_search.omlx_coverage') }}</div>
+                </div>
+                <div class="text-sm text-base-content/60 shrink-0">{{ embeddingCoverageText }}</div>
+              </div>
+              <div class="flex items-center justify-between gap-4 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+                <div class="min-w-0 flex flex-col gap-0.5 text-sm leading-5">
+                  <div>{{ $t('settings.image_search.reindex_embeddings') }}</div>
+                  <div class="text-xs text-base-content/30">{{ $t('settings.image_search.reindex_embeddings_hint') }}</div>
+                  <div v-if="reindexRecommended && !reindexRunning" class="text-xs text-warning">
+                    {{ $t('settings.image_search.reindex_recommended') }}
+                  </div>
+                  <div v-if="reindexVisible" class="text-xs text-base-content/50">
+                    {{ reindexProgressText }}
+                  </div>
+                  <progress
+                    v-if="reindexRunning"
+                    class="progress progress-primary h-1.5 w-full max-w-64"
+                    :value="reindexStatus?.done || 0"
+                    :max="reindexStatus?.total || 1"
+                  ></progress>
+                </div>
+                <button v-if="!reindexRunning" class="btn btn-outline btn-xs h-6 min-h-0 shrink-0" @click="onStartEmbeddingReindex">
+                  {{ $t('settings.image_search.reindex_start') }}
+                </button>
+                <button v-else class="btn btn-ghost btn-xs h-6 min-h-0 shrink-0 text-base-content/30 hover:text-base-content" @click="onCancelEmbeddingReindex">
+                  {{ $t('msgbox.cancel') }}
+                </button>
+              </div>
+            </template>
+          </div>
+
           <!-- image search -->
           <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
             <div class="flex items-center gap-2 text-base-content/30">
               <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.image_search.search_image') }}</span>
             </div>
-            <div class="flex items-start justify-between gap-4 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+            <div v-if="!isOmlxProvider" class="flex items-start justify-between gap-4 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
               <div class="min-w-0 flex flex-col gap-0.5 text-sm leading-5">
                 <div>{{ $t('settings.image_search.search_model') }}</div>
                 <div class="text-xs text-base-content/30">
@@ -688,6 +803,13 @@ import {
   downloadMultilingualImageSearchModel,
   cancelMultilingualImageSearchModelDownload,
   listenImageSearchModelDownloadProgress,
+  setImageSearchProvider,
+  testOmlxConnection,
+  startEmbeddingReindex,
+  cancelEmbeddingReindex,
+  getEmbeddingReindexStatus,
+  getEmbeddingCoverage,
+  listenEmbeddingReindexProgress,
 } from '@/common/api';
 import { formatFileSize, isLinux, isMac, setTheme, SCALE_VALUES } from '@/common/utils';
 import { getShortcutLabels, ShortcutActionId, ShortcutPlatform } from '@/common/shortcuts';
@@ -739,7 +861,13 @@ const multilingualModelTotalBytes = ref(0);
 const isMultilingualModelAvailable = ref(false);
 const tiandituTokenInput = ref(String(config.settings.tiandituToken || ''));
 const tiandituTokenStatus = ref<'idle' | 'saved' | 'empty'>('idle');
+const isTestingOmlxConnection = ref(false);
+const omlxConnectionMessage = ref('');
+const reindexStatus = ref<any>(null);
+const embeddingCoverage = ref<any>(null);
+const reindexRecommended = ref(false);
 let unlistenImageSearchModelDownloadProgress: (() => void) | null = null;
+let unlistenEmbeddingReindexProgress: (() => void) | null = null;
 
 const onRestoreDone = () => {
   showRestoreDialog.value = false;
@@ -1251,6 +1379,111 @@ function splitMacShortcutLabel(label: string): string[] {
   return keys;
 }
 
+// oMLX embedding provider
+const isOmlxProvider = computed(() => config.settings.imageSearch?.provider === 'omlx');
+
+const omlxDimensionOptions = computed(() => {
+  return localeMsg.value.settings.image_search.omlx_dimensions_options || ['Full', '512', '256', '128'];
+});
+
+const reindexRunning = computed(() => reindexStatus.value?.state === 'running');
+const reindexVisible = computed(() => reindexStatus.value && reindexStatus.value.state !== 'idle');
+
+const embeddingCoverageText = computed(() => {
+  const coverage = embeddingCoverage.value;
+  if (!coverage) return '';
+  const format = (n: number) => Number(n || 0).toLocaleString();
+  return `${format(coverage.indexed)} / ${format(coverage.total)}`;
+});
+
+// Switching provider, model, or dimensions invalidates the stored vectors;
+// surface that instead of silently searching a partial index.
+watch(() => [
+  config.settings.imageSearch?.provider,
+  config.settings.imageSearch?.omlx?.model,
+  config.settings.imageSearch?.omlx?.dimensionsIndex,
+], () => {
+  reindexRecommended.value = true;
+});
+
+const reindexProgressText = computed(() => {
+  const status = reindexStatus.value;
+  if (!status) return '';
+  const prefix = status.state === 'error'
+    ? `${localeMsg.value.settings.image_search.reindex_failed}: ${status.error || ''}`
+    : status.state === 'cancelled'
+      ? localeMsg.value.settings.image_search.reindex_cancelled
+      : status.state === 'finished'
+        ? localeMsg.value.settings.image_search.reindex_finished
+        : localeMsg.value.settings.image_search.reindex_running;
+  return `${prefix} (${status.done || 0}/${status.total || 0}${status.failed ? `, ${status.failed} ${localeMsg.value.settings.image_search.reindex_failed_count}` : ''})`;
+});
+
+const applyEmbeddingProvider = async () => {
+  if (!isOmlxProvider.value) return;
+  try {
+    await setImageSearchProvider('omlx', config.settings.imageSearch.omlx);
+  } catch (error) {
+    toast.error(error?.message || String(error));
+  }
+};
+
+const onEmbeddingProviderChange = async (event: Event) => {
+  const select = event.target as HTMLSelectElement;
+  const provider = select.value === 'omlx' ? 'omlx' : 'builtin';
+  config.setImageSearchProvider(provider);
+  if (provider === 'builtin') {
+    omlxConnectionMessage.value = '';
+    try {
+      await setImageSearchProvider('builtin');
+    } catch (error) {
+      toast.error(error?.message || String(error));
+    }
+    return;
+  }
+  await applyEmbeddingProvider();
+  await onTestOmlxConnection();
+};
+
+const onTestOmlxConnection = async () => {
+  if (isTestingOmlxConnection.value) return;
+  isTestingOmlxConnection.value = true;
+  try {
+    const result = await testOmlxConnection(config.settings.imageSearch.omlx);
+    if (!result?.ok) {
+      omlxConnectionMessage.value = `${localeMsg.value.settings.image_search.test_failed}: ${result?.error || ''}`;
+    } else if (result.modelAvailable) {
+      omlxConnectionMessage.value = localeMsg.value.settings.image_search.test_model_available;
+    } else {
+      omlxConnectionMessage.value = localeMsg.value.settings.image_search.test_model_missing;
+    }
+  } finally {
+    isTestingOmlxConnection.value = false;
+  }
+};
+
+const onStartEmbeddingReindex = async () => {
+  try {
+    await startEmbeddingReindex();
+  } catch (error) {
+    toast.error(error?.message || String(error));
+  }
+};
+
+const onCancelEmbeddingReindex = async () => {
+  await cancelEmbeddingReindex();
+};
+
+const syncEmbeddingReindexStatus = async () => {
+  const status = await getEmbeddingReindexStatus();
+  if (status) reindexStatus.value = status;
+};
+
+const syncEmbeddingCoverage = async () => {
+  const coverage = await getEmbeddingCoverage();
+  if (coverage) embeddingCoverage.value = coverage;
+};
+
 const onImageSearchModelChange = async (event: Event) => {
   const select = event.target as HTMLSelectElement;
   const nextModel = Number(select.value || 0);
@@ -1357,6 +1590,15 @@ onMounted(async () => {
     multilingualModelDownloadedBytes.value = Math.max(0, Number(event?.payload?.downloadedBytes ?? 0));
     multilingualModelTotalBytes.value = Math.max(0, Number(event?.payload?.totalBytes ?? 0));
   });
+  unlistenEmbeddingReindexProgress = await listenEmbeddingReindexProgress((event: any) => {
+    if (event?.payload) reindexStatus.value = event.payload;
+    if (event?.payload?.state === 'finished') {
+      reindexRecommended.value = false;
+      void syncEmbeddingCoverage();
+    }
+  });
+  await syncEmbeddingReindexStatus();
+  await syncEmbeddingCoverage();
   await syncImageSearchModelStatus();
   applyWindowScale(Number(config.settings.scale || 1));
   dbStorageDir.value = (await getDbStorageDir()) || '';
@@ -1386,6 +1628,10 @@ onUnmounted(() => {
   if (unlistenImageSearchModelDownloadProgress) {
     unlistenImageSearchModelDownloadProgress();
     unlistenImageSearchModelDownloadProgress = null;
+  }
+  if (unlistenEmbeddingReindexProgress) {
+    unlistenEmbeddingReindexProgress();
+    unlistenEmbeddingReindexProgress = null;
   }
   document.documentElement.style.fontSize = '';
   window.removeEventListener('keydown', handleKeyDown);

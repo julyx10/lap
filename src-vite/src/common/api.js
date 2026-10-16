@@ -1882,6 +1882,77 @@ export async function listenImageSearchModelDownloadProgress(callback) {
   return await listen('image_search_model_download_progress', callback);
 }
 
+// oMLX embedding provider
+
+function buildOmlxSettings(omlx) {
+  const dimensions = (config.imageSearchOmlxDimensions ?? [null, 512, 256, 128])[omlx?.dimensionsIndex ?? 0] ?? null;
+  return {
+    url: omlx?.url || 'http://127.0.0.1:8000',
+    apiKey: omlx?.apiKey || '',
+    model: omlx?.model || 'mlx-community/embeddinggemma-2-bf16',
+    dimensions,
+  };
+}
+
+export async function setImageSearchProvider(provider, omlx) {
+  try {
+    return await invoke('set_image_search_provider', {
+      settings: provider === 'omlx' ? buildOmlxSettings(omlx) : null,
+    });
+  } catch (error) {
+    console.error('setImageSearchProvider error:', error);
+    throw error;
+  }
+}
+
+export async function testOmlxConnection(omlx) {
+  try {
+    return await invoke('test_omlx_connection', { settings: buildOmlxSettings(omlx) });
+  } catch (error) {
+    console.error('testOmlxConnection error:', error);
+    return { ok: false, modelAvailable: false, models: [], error: String(error) };
+  }
+}
+
+export async function startEmbeddingReindex() {
+  try {
+    return await invoke('start_embedding_reindex', { libraryId: libConfig._libraryId });
+  } catch (error) {
+    console.error('startEmbeddingReindex error:', error);
+    throw error;
+  }
+}
+
+export async function cancelEmbeddingReindex() {
+  try {
+    await invoke('cancel_embedding_reindex');
+  } catch (error) {
+    console.error('cancelEmbeddingReindex error:', error);
+  }
+}
+
+export async function getEmbeddingReindexStatus() {
+  try {
+    return await invoke('get_embedding_reindex_status');
+  } catch (error) {
+    console.error('getEmbeddingReindexStatus error:', error);
+  }
+  return null;
+}
+
+export function listenEmbeddingReindexProgress(callback) {
+  return listen('embedding_reindex_progress', callback);
+}
+
+export async function getEmbeddingCoverage() {
+  try {
+    return await invoke('get_embedding_coverage');
+  } catch (error) {
+    console.error('getEmbeddingCoverage error:', error);
+  }
+  return null;
+}
+
 // generate embedding
 export async function generateEmbedding(fileId) {
   try {
@@ -1897,8 +1968,13 @@ export async function generateEmbedding(fileId) {
 export async function searchSimilarImages(params) {
   const libraryId = libConfig._libraryId;
   try {
+    const search = config.settings.imageSearch;
     if (params?.searchText) {
-      await setImageSearchModel(config.settings.imageSearch?.model || 0);
+      if (search?.provider === 'omlx') {
+        await setImageSearchProvider('omlx', search.omlx);
+      } else {
+        await setImageSearchModel(search?.model || 0);
+      }
     }
     const results = await invoke('search_similar_images', { params, libraryId });
     return results || [];

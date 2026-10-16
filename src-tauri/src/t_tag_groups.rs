@@ -260,7 +260,7 @@ mod tests {
         let version: i64 = conn
             .query_row("PRAGMA user_version", [], |r| r.get(0))
             .unwrap();
-        assert_eq!(version, 18);
+        assert_eq!(version, 19);
         let a = save_on(&conn, None, "A").unwrap();
         let b = save_on(&conn, None, "B").unwrap();
         let default: i64 = conn

@@ -8,6 +8,7 @@ use crate::t_config::{self, AppConfig, Library, LibraryInfo, LibraryState};
 use crate::t_face;
 use crate::t_image;
 use crate::t_montage;
+use crate::t_omlx;
 use crate::t_apple_sidecar::{
     apple_aae_sidecar_paths, build_apple_sidecar_rename_plan,
     collect_original_rename_db_names, collect_replaced_file_ids_for_targets,
@@ -38,7 +39,7 @@ use tauri::{AppHandle, Emitter, Manager, State};
 // Keep their library stable until all reads and writes have completed.
 static FILE_REFRESH_LIBRARY_LOCK: RwLock<()> = RwLock::new(());
 
-fn with_library_context<T>(
+pub(crate) fn with_library_context<T>(
     lock: &RwLock<()>,
     library_id: &str,
     current_library: impl FnOnce() -> Result<String, String>,
@@ -3273,6 +3274,75 @@ pub async fn cancel_multilingual_image_search_model_download(
     app_handle: AppHandle,
 ) -> Result<(), String> {
     t_ai::cancel_multilingual_text_model_download(app_handle).await
+}
+
+// oMLX embedding provider
+
+/// check whether the configured oMLX server is reachable and serves the model
+#[tauri::command]
+pub async fn test_omlx_connection(
+    settings: t_omlx::OmlxEmbeddingSettings,
+) -> Result<t_omlx::OmlxConnectionStatus, String> {
+    tauri::async_runtime::spawn_blocking(move || t_omlx::test_connection(&settings))
+        .await
+        .map_err(|e| e.to_string())
+}
+
+/// switch the embedding provider between the built-in engine and oMLX
+#[tauri::command]
+pub fn set_image_search_provider(
+    settings: Option<t_omlx::OmlxEmbeddingSettings>,
+) -> Result<serde_json::Value, String> {
+    t_omlx::apply_settings(settings)?;
+    Ok(serde_json::json!({
+        "provider": if t_omlx::is_active() { "omlx" } else { "builtin" },
+        "model": t_omlx::active_model_id(),
+    }))
+}
+
+/// start a background re-index of embeddings for the active provider
+#[tauri::command]
+pub fn start_embedding_reindex(
+    app_handle: AppHandle,
+    state: State<t_omlx::EmbeddingReindexState>,
+    library_id: Option<String>,
+) -> Result<(), String> {
+    let library_id = library_id.unwrap_or(t_config::current_library_id()?);
+    t_omlx::spawn_reindex(app_handle, state, library_id)
+}
+
+/// cancel a running embedding re-index
+#[tauri::command]
+pub fn cancel_embedding_reindex(state: State<t_omlx::EmbeddingReindexState>) {
+    state.cancel();
+}
+
+/// progress of the current or last embedding re-index
+#[tauri::command]
+pub fn get_embedding_reindex_status(
+    state: State<t_omlx::EmbeddingReindexState>,
+) -> t_omlx::EmbeddingReindexStatus {
+    state.status()
+}
+
+/// how many photos have embeddings for the active model
+#[tauri::command]
+pub async fn get_embedding_coverage() -> Result<serde_json::Value, String> {
+    tauri::async_runtime::spawn_blocking(|| {
+        let provider = t_omlx::active_settings();
+        let model = t_omlx::embed_model_id(provider.as_ref());
+        // Count only vectors of the size the model produces, so ones stored
+        // under the wrong label show up as missing; with the server down,
+        // fall back to the label alone.
+        let expected_bytes = provider
+            .as_ref()
+            .and_then(|settings| t_omlx::expected_dimensions(settings).ok())
+            .map(|dimensions| dimensions * 4);
+        let (indexed, total) = AFile::embedding_coverage(&model, expected_bytes)?;
+        Ok(serde_json::json!({ "model": model, "indexed": indexed, "total": total }))
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 
 /// generate embedding for a file

@@ -38,6 +38,7 @@ mod t_migration;
 mod t_montage;
 mod t_tag_groups;
 mod t_motion_photo;
+mod t_omlx;
 mod t_pasteboard;
 mod t_protocol;
 mod t_similar;
@@ -111,6 +112,7 @@ async fn main() {
         )))
         .manage(t_dedup::DedupState::default())
         .manage(t_similar::SimilarState::default())
+        .manage(t_omlx::EmbeddingReindexState::default())
         .setup(|_app| {
             t_startup::mark(&_app.handle(), "setup-started");
             t_video::init_ffmpeg_path(&_app.handle());
@@ -393,6 +395,13 @@ async fn main() {
             t_cmds::set_image_search_model,
             t_cmds::download_multilingual_image_search_model,
             t_cmds::cancel_multilingual_image_search_model_download,
+            // oMLX embedding provider
+            t_cmds::test_omlx_connection,
+            t_cmds::set_image_search_provider,
+            t_cmds::start_embedding_reindex,
+            t_cmds::cancel_embedding_reindex,
+            t_cmds::get_embedding_reindex_status,
+            t_cmds::get_embedding_coverage,
             t_cmds::generate_embedding,
             t_cmds::search_similar_images,
             // person (face recognition)

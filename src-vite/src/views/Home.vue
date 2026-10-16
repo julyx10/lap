@@ -194,7 +194,7 @@ import { useUIStore } from '@/stores/uiStore';
 import { isWin, isMac, isLinux, SCALE_VALUES } from '@/common/utils';
 import { matchesShortcut, ShortcutPlatform } from '@/common/shortcuts';
 import { SIDEBAR, SETTINGS_TAB, SETTINGS_BASE_WIDTH, SETTINGS_BASE_HEIGHT, PANEL_ANIMATION_MS } from '@/common/constants';
-import { getAppConfig, switchLibrary, cancelIndexing, cancelFaceIndex } from '@/common/api';
+import { getAppConfig, switchLibrary, cancelIndexing, cancelFaceIndex, setImageSearchProvider } from '@/common/api';
 
 // vue components
 import Library from '@/components/Library.vue';
@@ -451,6 +451,10 @@ async function finishStartup() {
   uiStore.startupReady = true;
   performance.mark('startup-first-content-ready');
   void invoke('finish_startup', { model: config.settings.imageSearch.model || 0 }).catch(console.error);
+  // Restore the oMLX embedding provider before the first search runs.
+  if (config.settings.imageSearch?.provider === 'omlx') {
+    void setImageSearchProvider('omlx', config.settings.imageSearch.omlx).catch(console.error);
+  }
   if (config.settings.autoCheckUpdates !== false) void checkForUpdates(false);
 }
 watch(databaseCorrupted, corrupted => {

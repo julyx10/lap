@@ -58,7 +58,11 @@ little_exif = "0.6.23"
 fast_image_resize = "5.1.0"
 imagesize = "0.13.0"
 tokio = { version = "1.50.0", features = ["full"] }
-reqwest = { version = "0.12.28", default-features = false, features = ["rustls-tls"] }
+reqwest = { version = "0.12.28", default-features = false, features = [
+    "rustls-tls",
+    "blocking",
+    "json",
+] }
 opener = "0.7.2"
 arboard = "3.6.1"
 pinyin = "0.10.0"
