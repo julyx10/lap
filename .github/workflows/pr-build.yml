@@ -117,7 +117,6 @@ jobs:
           key: ${{ runner.os }}-models-${{ hashFiles('scripts/download_models.sh', 'scripts/download_models.ps1') }}
 
       - name: Download AI Models
-        if: steps.cache-ai-models.outputs.cache-hit != 'true'
         shell: bash
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
@@ -465,7 +464,6 @@ jobs:
           key: ${{ runner.os }}-models-${{ hashFiles('scripts/download_models.sh', 'scripts/download_models.ps1') }}
 
       - name: Download AI Models
-        if: steps.cache-ai-models.outputs.cache-hit != 'true'
         shell: bash
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}

@@ -1,0 +1,11 @@
+The files in this packaging directory (PKGBUILD, .SRCINFO, lap.desktop,
+disable-updater.patch, fix-optional-aptabase-exit.patch, and this
+notice) are distributed under the GNU General Public License, version 3 or any
+later version, the same license as the Lap program they build.
+
+This notice is the recipe-source license. It does not relicense bundled model
+files, FFmpeg sidecars, or third-party native libraries. Those inputs keep
+their own upstream terms. FFmpeg sidecars observed in the pinned assets were
+built with --enable-nonfree --enable-gpl. InsightFace pretrained models are
+not cleared for unrestricted redistribution. Do not publish this package until
+those rights are resolved.
