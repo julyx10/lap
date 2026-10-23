@@ -2815,10 +2815,7 @@ impl AFile {
         let lat_val = exif_data
             .get_field(Tag::GPSLatitude, In::PRIMARY)
             .or_else(|| exif_data.fields().find(|f| f.tag == Tag::GPSLatitude))
-            .and_then(|f| match &f.value {
-                Value::Rational(v) => Some(v.to_vec()),
-                _ => None,
-            });
+            .and_then(|f| Self::gps_rational_values(&f.value));
         let lat_ref = exif_data
             .get_field(Tag::GPSLatitudeRef, In::PRIMARY)
             .or_else(|| exif_data.fields().find(|f| f.tag == Tag::GPSLatitudeRef))
@@ -2826,10 +2823,7 @@ impl AFile {
         let lon_val = exif_data
             .get_field(Tag::GPSLongitude, In::PRIMARY)
             .or_else(|| exif_data.fields().find(|f| f.tag == Tag::GPSLongitude))
-            .and_then(|f| match &f.value {
-                Value::Rational(v) => Some(v.to_vec()),
-                _ => None,
-            });
+            .and_then(|f| Self::gps_rational_values(&f.value));
         let lon_ref = exif_data
             .get_field(Tag::GPSLongitudeRef, In::PRIMARY)
             .or_else(|| exif_data.fields().find(|f| f.tag == Tag::GPSLongitudeRef))
@@ -2848,26 +2842,49 @@ impl AFile {
 
         let altitude = exif_data
             .get_field(Tag::GPSAltitude, In::PRIMARY)
-            .and_then(|field| match &field.value {
-                Value::Rational(v) if !v.is_empty() => Some(v[0].num as f64 / v[0].denom as f64),
-                _ => None,
+            .or_else(|| exif_data.fields().find(|f| f.tag == Tag::GPSAltitude))
+            .and_then(|field| {
+                Self::gps_rational_values(&field.value).and_then(|values| values.first().copied())
             });
 
         (gps_lat, gps_lon, altitude)
     }
 
+    /// Reads a GPS rational field, accepting both RATIONAL (type 5) and SRATIONAL
+    /// (type 10). The EXIF spec mandates RATIONAL for GPS latitude/longitude, but
+    /// some vendor firmware (e.g. vivo's MediaTek camera) writes SRATIONAL, and
+    /// rejecting it silently drops the whole coordinate pair.
+    fn gps_rational_values(value: &Value) -> Option<Vec<f64>> {
+        let values = match value {
+            Value::Rational(v) => v
+                .iter()
+                .map(|r| r.num as f64 / r.denom as f64)
+                .collect::<Vec<_>>(),
+            Value::SRational(v) => v
+                .iter()
+                .map(|r| r.num as f64 / r.denom as f64)
+                .collect::<Vec<_>>(),
+            _ => return None,
+        };
+        Some(values)
+    }
+
     /// Converts DMS (degrees, minutes, seconds) to decimal degrees.
-    fn dms_to_decimal(dms: &[exif::Rational], reference: &str) -> Option<f64> {
+    fn dms_to_decimal(dms: &[f64], reference: &str) -> Option<f64> {
         if dms.len() != 3 {
             return None;
         }
-        let degrees = dms[0].num as f64 / dms[0].denom as f64;
-        let minutes = dms[1].num as f64 / dms[1].denom as f64;
-        let seconds = dms[2].num as f64 / dms[2].denom as f64;
 
-        let mut decimal = degrees + minutes / 60.0 + seconds / 3600.0;
+        let mut decimal = dms[0] + dms[1] / 60.0 + dms[2] / 3600.0;
+        if !decimal.is_finite() {
+            return None;
+        }
 
-        if reference.starts_with("S") || reference.starts_with("W") {
+        // Some writers pad or quote the hemisphere reference; normalize it before
+        // deciding the sign, otherwise a south/west coordinate would stay positive.
+        let reference =
+            reference.trim_matches(|c: char| c == '"' || c == '\'' || c.is_whitespace());
+        if reference.starts_with('S') || reference.starts_with('W') {
             decimal = -decimal;
         }
         Some(decimal)
