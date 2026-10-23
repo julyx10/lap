@@ -1,0 +1,76 @@
+name: Arch package validation
+
+on:
+  pull_request:
+    paths:
+      - 'contrib/aur/**'
+      - '.github/workflows/release-arch.yml'
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    container: archlinux:base-devel
+    steps:
+      - name: Install checkout prerequisites
+        run: pacman -Syu --noconfirm --needed git ca-certificates
+      - uses: actions/checkout@v4
+      - name: Install build and inspection tools
+        shell: bash
+        run: |
+          source contrib/aur/PKGBUILD
+          pacman -Syu --noconfirm --needed "${depends[@]}" "${makedepends[@]}" namcap desktop-file-utils
+          useradd -m -u 1000 builder
+          chown -R builder:builder "$GITHUB_WORKSPACE"
+      - name: Verify source identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd contrib/aur
+          source PKGBUILD
+          printf 'recipe_commit=%s\npackage_version=%s-%s\nworkflow_revision=%s\n' "$_commit" "$pkgver" "$pkgrel" "$GITHUB_SHA" | tee source-identity.txt
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            [[ "$GITHUB_REF_NAME" == "v$pkgver" ]]
+            [[ "$GITHUB_SHA" == "$_commit" ]]
+          fi
+          runuser -u builder -- makepkg --printsrcinfo > generated.SRCINFO
+          diff -u .SRCINFO generated.SRCINFO
+      - name: Build as an unprivileged user
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd contrib/aur
+          runuser -u builder -- makepkg -s --noconfirm --clean
+      - name: Inspect package
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd contrib/aur
+          package=(lap-[0-9]*-x86_64.pkg.tar.zst)
+          [[ ${#package[@]} -eq 1 && -f "${package[0]}" ]]
+          namcap PKGBUILD "${package[0]}" | tee namcap.txt
+          pacman -Qip "${package[0]}" | tee package-info.txt
+          pacman -Qlp "${package[0]}" | tee package-files.txt
+          sha256sum "${package[0]}" | tee package-sha256.txt
+          grep -q '/usr/bin/Lap$' package-files.txt
+          grep -q '/usr/share/applications/Lap.desktop$' package-files.txt
+          grep -q '/usr/lib/Lap/' package-files.txt
+          ! grep -q ' E: ' namcap.txt
+      - name: Upload validation records
+        uses: actions/upload-artifact@v4
+        with:
+          name: lap-arch-validation-${{ github.sha }}
+          path: |
+            contrib/aur/source-identity.txt
+            contrib/aur/generated.SRCINFO
+            contrib/aur/package-sha256.txt
+            contrib/aur/package-info.txt
+            contrib/aur/package-files.txt
+            contrib/aur/namcap.txt
+          if-no-files-found: error

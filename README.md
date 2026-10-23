@@ -35,6 +35,18 @@ brew tap julyx10/lap
 brew install --cask lap
 ```
 
+### Arch Linux (x86_64)
+
+An experimental source-built Arch recipe is in [`contrib/aur`](contrib/aur/README.md). It has not been published to the AUR, so `yay -S lap` is not available yet. To build and install it locally on Arch Linux:
+
+```bash
+cd contrib/aur
+makepkg -s
+sudo pacman -U lap-0.3.2-2-x86_64.pkg.tar.zst
+```
+
+The recipe pins an upstream source commit and checksums the bundled AI models and FFmpeg tools. The Arch build disables in-app self-updates so pacman remains responsible for upgrades; other platform builds keep their existing updater. See the recipe guide for build details and outstanding release checks.
+
 ## Screenshots
 
 <p align="center">
@@ -142,6 +154,8 @@ For DEB installations, uninstall the package:
 ```bash
 sudo apt remove lap
 ```
+
+For a locally installed Arch package, use `sudo pacman -R lap`.
 
 For AppImage installations, quit Lap and delete the downloaded `.AppImage` file.
 
