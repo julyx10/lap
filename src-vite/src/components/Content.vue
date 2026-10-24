@@ -814,7 +814,7 @@ import { clearFolderFileCounts, setFolderFileCount, getCountedFolderPaths } from
 import { createEmptyLibraryCounts } from '@/stores/libraryStore';
 import { getAlbumScanState, getAlbumScanIcon, shouldAnimateAlbumScanIcon } from '@/common/scanStatus';
 import { CULLING, DATE_SORT, GROUP, LIB_ITEM, RATE, SIDEBAR, SELECTED_THUMBNAIL_LIMIT, RIGHT_PANEL_MIN_WIDTH, PANEL_ANIMATION_MS, MONTAGE_MAX_PHOTOS, LARGE_BATCH_CONFIRM_THRESHOLD, EXTERNAL_OPEN_WARNING_THRESHOLD } from '@/common/constants';
-import { isWin, isMac, isLinux, setTheme, separator,
+import { isWin, isMac, isLinux, separator,
          formatFileSize, formatDate, getCalendarDateRange, formatFolderBreadcrumb, getThumbnailDataUrl, getAssetSrc, getPreviewUrl,
          getCachedThumbnailDataUrl,
          clearCachedThumbnailDataUrl,
@@ -6474,20 +6474,6 @@ watch(
     void fetchMissingVisibleThumbnails(start, Math.max(start + 40, lastVisibleRange.end));
   },
 );
-
-watch(() => config.settings.appearance, (newAppearance) => {
-  setTheme(newAppearance, newAppearance === 0 ? config.settings.lightTheme : config.settings.darkTheme);
-});
-
-/// watch light theme
-watch(() => config.settings.lightTheme, (newLightTheme) => {
-  setTheme(config.settings.appearance, newLightTheme);
-});
-
-/// watch dark theme
-watch(() => config.settings.darkTheme, (newDarkTheme) => {
-  setTheme(config.settings.appearance, newDarkTheme);
-});
 
 /// watch language
 watch(() => config.settings.language, (newLanguage) => {

@@ -1320,7 +1320,8 @@
       "appearance": "Erscheinungsbild",
       "appearance_options": [
         "Hell",
-        "Dunkel"
+        "Dunkel",
+        "System folgen"
       ],
       "theme": "Design",
       "theme_options_light": [

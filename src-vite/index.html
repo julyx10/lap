@@ -11,6 +11,8 @@
           var isDark = true;
           if (config && config.settings && config.settings.appearance === 0) {
             isDark = false;
+          } else if (config && config.settings && config.settings.appearance === 2) {
+            isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
           }
           
           var color = isDark ? '#1d232a' : '#ffffff';

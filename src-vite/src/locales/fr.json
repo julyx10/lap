@@ -1320,7 +1320,8 @@
       "appearance": "Apparence",
       "appearance_options": [
         "Clair",
-        "Sombre"
+        "Sombre",
+        "Suivre le système"
       ],
       "theme": "Thème",
       "theme_options_light": [

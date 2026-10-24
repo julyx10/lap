@@ -1320,7 +1320,8 @@
       "appearance": "色彩模式",
       "appearance_options": [
         "淺色",
-        "深色"
+        "深色",
+        "跟隨系統"
       ],
       "theme": "主題",
       "theme_options_light": [

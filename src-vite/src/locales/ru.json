@@ -1320,7 +1320,8 @@
       "appearance": "Цветовой режим",
       "appearance_options": [
         "Светлый",
-        "Тёмный"
+        "Тёмный",
+        "Как в системе"
       ],
       "theme": "Тема",
       "theme_options_light": [

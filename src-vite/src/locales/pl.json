@@ -1320,7 +1320,8 @@
       "appearance": "Tryb kolorów",
       "appearance_options": [
         "Jasny",
-        "Ciemny"
+        "Ciemny",
+        "Zgodnie z systemem"
       ],
       "theme": "Motyw",
       "theme_options_light": [

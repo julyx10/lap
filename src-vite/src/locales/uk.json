@@ -1320,7 +1320,8 @@
       "appearance": "Колірний режим",
       "appearance_options": [
         "Світлий",
-        "Темний"
+        "Темний",
+        "Як у системі"
       ],
       "theme": "Тема",
       "theme_options_light": [
