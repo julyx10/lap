@@ -783,6 +783,9 @@ onBeforeUnmount(() => {
     })();
   }
 });
+watch(() => config.settings.groupRawJpegPairs, () => {
+  if (config.main.sidebarIndex === SIDEBAR.TAG && libConfig.activePane === "main") void load();
+});
 watch(
   () => [config.main.sidebarIndex, libConfig.activePane],
   () => {

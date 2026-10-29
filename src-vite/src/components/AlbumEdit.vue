@@ -540,8 +540,9 @@ onMounted(async () => {
   // Refresh saved scan statistics without overwriting unsaved form fields.
   unlistenIndexFinished = await listenIndexFinished(async (event: any) => {
     if (Number(event.payload.album_id) !== Number(props.albumId)) return;
+    const libraryId = libStore._libraryId;
     const updated = await getAlbum(props.albumId);
-    if (disposed || !updated) return;
+    if (disposed || libraryId !== libStore._libraryId || !updated) return;
     album.value = updated;
     previewCache.clear();
     historyLoaded = false;

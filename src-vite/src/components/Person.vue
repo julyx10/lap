@@ -392,6 +392,7 @@ onMounted(async () => {
 watch(() => config.settings.personSort, () => {
   loadPersons();
 });
+watch(() => config.settings.groupRawJpegPairs, () => { void loadPersons(); });
 
 watch(personSearch, () => {
   if (personSearchTimer) clearTimeout(personSearchTimer);

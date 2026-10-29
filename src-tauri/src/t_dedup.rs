@@ -55,6 +55,8 @@ pub struct DedupDeleteRequest {
     pub file_ids: Option<Vec<i64>>,
     pub delete_all: bool,
     pub permanently: bool,
+    #[serde(default)]
+    pub group_raw_jpeg_pairs: bool,
 }
 
 #[derive(Default)]
@@ -78,10 +80,12 @@ struct KeepCandidate {
 pub fn start_scan(
     app_handle: tauri::AppHandle,
     dedup_state: tauri::State<'_, DedupState>,
-    query_params: Option<QueryParams>,
+    mut query_params: Option<QueryParams>,
     collection_id: Option<i64>,
     file_ids: Option<Vec<i64>>,
+    group_raw_jpeg_pairs: bool,
 ) -> Result<(), String> {
+    if let Some(params) = query_params.as_mut() { params.group_raw_jpeg_pairs = group_raw_jpeg_pairs; }
     if file_ids.is_some() && (collection_id.is_some() || query_params.is_some()) {
         return Err("File ID scope cannot be combined with query or collection scope.".into());
     }
@@ -118,6 +122,7 @@ pub fn start_scan(
             query_params,
             collection_id,
             file_ids,
+            group_raw_jpeg_pairs,
         );
 
         let mut final_status = status_clone.lock().unwrap();
@@ -150,31 +155,24 @@ fn scan_and_hash_files(
     query_params: Option<QueryParams>,
     collection_id: Option<i64>,
     file_ids: Option<Vec<i64>>,
+    group_raw_jpeg_pairs: bool,
 ) -> Result<(), String> {
     let mut conn = get_db_conn()?;
-    let has_scope = collection_id.is_some() || file_ids.is_some() || query_params.is_some();
 
     let files_to_check = if let Some(file_ids) = file_ids {
-        AFile::get_files_by_ids(&file_ids)?
+        filter_scope_companions(AFile::get_files_by_ids(&file_ids)?, group_raw_jpeg_pairs)
     } else if let Some(collection_id) = collection_id {
         get_files_by_collection(collection_id, query_params.as_ref())?
     } else if let Some(params) = query_params.as_ref() {
         get_files_by_query(params)?
     } else {
-        get_files_by_sizes(&conn)?
+        get_files_by_sizes(&conn, group_raw_jpeg_pairs)?
     };
 
+    // Queries already deduplicate within their result scope. Do not reapply a
+    // global exclusion: a companion may be the only matching scope member.
     let files_to_check = filter_suspicious_files(files_to_check);
-    let scoped_file_ids = if has_scope {
-        Some(
-            files_to_check
-                .iter()
-                .filter_map(|file| file.id)
-                .collect::<Vec<i64>>(),
-        )
-    } else {
-        None
-    };
+    let scoped_file_ids = Some(files_to_check.iter().filter_map(|file| file.id).collect::<Vec<i64>>());
     if files_to_check.is_empty() {
         rebuild_duplicate_groups(&mut conn, scoped_file_ids.as_deref())?;
         return Ok(());
@@ -271,7 +269,24 @@ fn get_db_conn() -> Result<crate::t_sqlite::PooledConn, String> {
     crate::t_sqlite::open_conn()
 }
 
-fn get_files_by_sizes(conn: &Connection) -> Result<Vec<AFile>, String> {
+fn filter_scope_companions(files: Vec<AFile>, group_raw_jpeg_pairs: bool) -> Vec<AFile> {
+    let hidden: HashSet<i64> = files.iter()
+        .filter(|file| file.media_subtype.as_deref() != Some("raw_jpeg_pair") || group_raw_jpeg_pairs)
+        .filter_map(|file| file.live_photo_video_id)
+        .collect();
+    files.into_iter().filter(|file| file.id.map_or(true, |id| !hidden.contains(&id))).collect()
+}
+
+#[cfg(test)]
+fn hidden_companion_ids(conn: &Connection, group_raw_jpeg_pairs: bool) -> Result<HashSet<i64>, String> {
+    let mut stmt = conn.prepare("SELECT live_photo_video_id FROM afiles WHERE live_photo_video_id IS NOT NULL AND (?1 OR COALESCE(media_subtype, '') != 'raw_jpeg_pair')")
+        .map_err(|e| e.to_string())?;
+    let ids = stmt.query_map(params![group_raw_jpeg_pairs], |row| row.get(0)).map_err(|e| e.to_string())?
+        .collect::<Result<HashSet<i64>, _>>().map_err(|e| e.to_string())?;
+    Ok(ids)
+}
+
+fn get_files_by_sizes(conn: &Connection, group_raw_jpeg_pairs: bool) -> Result<Vec<AFile>, String> {
     let mut stmt = conn.prepare(
         "SELECT a.id, a.folder_id, a.name, a.name_pinyin, a.size, a.file_type, a.format_label,
                 a.created_at, a.modified_at, a.inode, a.taken_date, a.width, a.height, a.duration,
@@ -287,11 +302,13 @@ fn get_files_by_sizes(conn: &Connection) -> Result<Vec<AFile>, String> {
          JOIN afolders f ON a.folder_id = f.id
          WHERE a.id NOT IN (
              SELECT live_photo_video_id FROM afiles WHERE live_photo_video_id IS NOT NULL
+                 AND (?1 OR COALESCE(media_subtype, '') != 'raw_jpeg_pair')
          )
          AND a.size IN (
              SELECT size FROM afiles
              WHERE id NOT IN (
                  SELECT live_photo_video_id FROM afiles WHERE live_photo_video_id IS NOT NULL
+                 AND (?1 OR COALESCE(media_subtype, '') != 'raw_jpeg_pair')
              )
              GROUP BY size
              HAVING COUNT(size) > 1 AND size > 0
@@ -300,7 +317,7 @@ fn get_files_by_sizes(conn: &Connection) -> Result<Vec<AFile>, String> {
     ).map_err(|e| e.to_string())?;
 
     let iter = stmt
-        .query_map([], |row| {
+        .query_map(params![group_raw_jpeg_pairs], |row| {
             Ok(AFile {
                 id: row.get(0)?,
                 folder_id: row.get(1)?,
@@ -831,7 +848,8 @@ pub fn set_keep(group_id: i64, file_id: i64) -> Result<(), String> {
     Ok(())
 }
 
-pub fn delete(request: DedupDeleteRequest) -> Result<DedupDeleteResult, String> {
+pub fn delete(app_handle: &tauri::AppHandle, request: DedupDeleteRequest) -> Result<DedupDeleteResult, String> {
+    let _library_guard = crate::t_cmds::FILE_REFRESH_LIBRARY_LOCK.read().map_err(|e| e.to_string())?;
     let mut conn = get_db_conn()?;
     let tx = conn.transaction().map_err(|e| e.to_string())?;
 
@@ -927,7 +945,7 @@ pub fn delete(request: DedupDeleteRequest) -> Result<DedupDeleteResult, String> 
                 .map(|(folder, _)| (file.file_id, folder.to_string()))
         })
         .collect();
-    let delete_result = crate::t_cmds::delete_files_grouped(files_to_delete, request.permanently)?;
+    let delete_result = crate::t_cmds::delete_files_grouped_locked(app_handle, files_to_delete, request.permanently, request.group_raw_jpeg_pairs)?;
     let deleted_ids: HashSet<i64> = delete_result.deleted_file_ids.iter().copied().collect();
     let affected_folder_paths = source_folders
         .into_iter()
@@ -972,4 +990,45 @@ pub fn delete(request: DedupDeleteRequest) -> Result<DedupDeleteResult, String> 
         errors: failures,
         trash_failed_file_ids: delete_result.trash_failed_file_ids,
     })
+}
+
+#[cfg(test)]
+mod scan_pair_tests {
+    use super::*;
+
+    #[test]
+    fn scan_snapshot_excludes_live_always_and_raw_only_when_enabled() {
+        let conn = Connection::open_in_memory().unwrap();
+        conn.execute_batch("CREATE TABLE afiles (id INTEGER, media_subtype TEXT, live_photo_video_id INTEGER);
+            INSERT INTO afiles VALUES (1,'raw_jpeg_pair',2),(2,NULL,NULL),(3,'live_photo',4),(4,NULL,NULL);").unwrap();
+        assert_eq!(hidden_companion_ids(&conn, false).unwrap(), HashSet::from([4]));
+        assert_eq!(hidden_companion_ids(&conn, true).unwrap(), HashSet::from([2, 4]));
+    }
+
+    #[test]
+    fn explicit_scope_only_hides_companion_if_primary_is_selected() {
+        let raw = || serde_json::from_value::<AFile>(serde_json::json!({"id": 1, "name": "a.CR3", "folder_id": 1, "size": 10, "media_subtype": "raw_jpeg_pair", "live_photo_video_id": 2})).unwrap();
+        let jpeg = || serde_json::from_value::<AFile>(serde_json::json!({"id": 2, "name": "a.JPG", "folder_id": 1, "size": 10})).unwrap();
+        assert_eq!(filter_scope_companions(vec![jpeg()], true).len(), 1);
+        assert_eq!(filter_scope_companions(vec![raw(), jpeg()], true).len(), 1);
+        assert_eq!(filter_scope_companions(vec![raw(), jpeg()], false).len(), 2);
+    }
+
+    #[test]
+    fn rebuild_excludes_cached_hashes_outside_scan_snapshot() {
+        let mut conn = Connection::open_in_memory().unwrap();
+        conn.execute_batch("CREATE TABLE afiles (id INTEGER PRIMARY KEY, taken_date INTEGER, created_at INTEGER);
+            CREATE TABLE file_hashes (file_id INTEGER, hash TEXT, file_size INTEGER);
+            CREATE TABLE duplicate_groups (id INTEGER PRIMARY KEY, hash TEXT, file_size INTEGER, file_count INTEGER, total_size INTEGER, updated_at INTEGER);
+            CREATE TABLE duplicate_group_items (group_id INTEGER, file_id INTEGER, is_keep INTEGER, is_selected INTEGER, score REAL);
+            INSERT INTO afiles VALUES (1,0,1),(2,0,2),(3,0,3);
+            INSERT INTO file_hashes VALUES (1,'same',100),(2,'same',100),(3,'same',100);").unwrap();
+        rebuild_duplicate_groups(&mut conn, Some(&[1, 2])).unwrap();
+        let ids: Vec<i64> = conn.prepare("SELECT file_id FROM duplicate_group_items ORDER BY file_id").unwrap()
+            .query_map([], |row| row.get(0)).unwrap().collect::<Result<_, _>>().unwrap();
+        assert_eq!(ids, vec![1, 2]);
+        rebuild_duplicate_groups(&mut conn, Some(&[1])).unwrap();
+        let count: i64 = conn.query_row("SELECT COUNT(*) FROM duplicate_groups", [], |row| row.get(0)).unwrap();
+        assert_eq!(count, 0);
+    }
 }

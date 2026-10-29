@@ -25,6 +25,7 @@ mod t_dedup;
 mod t_drag;
 mod t_embedded_jpeg;
 mod t_face;
+mod t_focus;
 mod t_heif;
 mod t_http;
 mod t_image;
@@ -252,6 +253,8 @@ async fn main() {
             t_cmds::reorder_albums,
             t_cmds::set_album_cover,
             t_cmds::index_album,
+            t_cmds::backfill_raw_pair_index,
+            t_cmds::retry_dirty_folder_recovery,
             t_cmds::cancel_indexing,
             t_cmds::get_index_recovery_info,
             t_cmds::clear_index_recovery_info,
@@ -291,6 +294,7 @@ async fn main() {
             t_cmds::get_smart_group_file_ids,
             t_cmds::get_smart_query_file_ids,
             t_cmds::get_smart_query_file_position,
+            t_cmds::resolve_raw_pair_primary_ids,
             // collection
             t_cmds::list_collections,
             t_cmds::get_collection_counts,
@@ -348,6 +352,7 @@ async fn main() {
             t_cmds::get_file_thumbs,
             t_cmds::get_file_info,
             t_cmds::get_file_metadata_details,
+            t_focus::get_focus_info,
             t_cmds::cancel_file_metadata_requests,
             t_cmds::update_file_info,
             t_cmds::check_selected_file_info,

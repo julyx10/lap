@@ -176,8 +176,8 @@ const apiSource = await readFile(new URL('../src/common/api.js', import.meta.url
 const batchApiSource = apiSource.slice(apiSource.indexOf('export async function getFileThumbs('),
   apiSource.indexOf('// get file info', apiSource.indexOf('export async function getFileThumbs(')))
   .replace('export ', '');
-const batchApi = invoke => new Function('invoke', 'getRawDisplayOptions',
-  batchApiSource + '; return getFileThumbs;')(invoke, () => ({}));
+const batchApi = invoke => new Function('invoke', 'getRawDisplayOptions', 'libConfig',
+  batchApiSource + '; return getFileThumbs;')(invoke, () => ({}), { _libraryId: 'library-a' });
 
 test('production batch API propagates IPC errors and rejects malformed responses', async () => {
   const failure = new Error('Error while fetching offline thumbnail');
@@ -189,7 +189,7 @@ test('production batch API propagates IPC errors and rejects malformed responses
   let args;
   await batchApi(async (command, payload) => { args = payload; return [null]; })([{ fileId: 1 }], 512, true);
   assert.deepEqual(args, { files: [{ fileId: 1 }], thumbnailSize: 512,
-    rawDisplayOptions: {}, forceRegenerate: true });
+    rawDisplayOptions: {}, forceRegenerate: true, trustCached: false, libraryId: 'library-a' });
 });
 
 const adapter = ts.transpile(source.slice(source.indexOf('// Track current thumbnail request'),
@@ -204,8 +204,9 @@ function gridFixture(grouped = false, loadThumbs) {
   const range = { start: 0, end: 3 };
   const memory = new Map();
   const errors = [];
+  const libConfig = { _libraryId: 'library-a' };
   let dispose;
-  const library = { _libraryId: 'test' };
+  const library = libConfig;
   const api = new Function('createThumbnailScheduler', 'config', 'getFileThumbs', 'gridRows',
     'visibleItemCount', 'lastVisibleRange', 'isItemRow', 'isRealFileItem', 'onBeforeUnmount',
     'getCachedThumbnailDataUrl', 'getThumbnailDataUrl', 'thumbnailPlaceholder', 'console', 'libConfig',
@@ -472,8 +473,8 @@ test('RAW policy changes cover later albums and libraries once per file, includi
     return io.load(requests);
   });
   grid.invalidateRawThumbnailPolicy();
-  for (const [id, library, expected] of [[1001, 'test', true], [1002, 'test', true],
-    [1001, 'test', false], [1001, 'another-library', true]]) {
+  for (const [id, library, expected] of [[1001, 'library-a', true], [1002, 'library-a', true],
+    [1001, 'library-a', false], [1001, 'another-library', true]]) {
     grid.invalidateThumbnailRequests(); // Album navigation does not lose the policy revision.
     grid.library._libraryId = library;
     grid.files[0] = { id, file_type: 3, file_path: '/another-album/photo.raw', modified_at: 1 };
@@ -490,4 +491,31 @@ test('RAW policy changes cover later albums and libraries once per file, includi
   grid.finish(grid.io.calls.length - 1);
   await pending;
   grid.dispose();
+});
+
+test('thumbnail events reject another library and stop after a queued switch', async () => {
+  const start = source.indexOf('async (event: any) => {', source.indexOf("listen('thumbnail_ready'"));
+  const end = source.indexOf('\n  });', start);
+  assert.ok(start >= 0 && end > start);
+  const code = ts.transpile(`const callback = ${source.slice(start, end + '\n  }'.length)};`);
+  const config = { settings: { thumbnailSize: 512 } };
+  const libConfig = { _libraryId: 'library-b' };
+  const file = { id: 1, file_path: '/fixture.jpg' };
+  const fileList = { value: [file] };
+  let loads = 0;
+  let resolveInfo;
+  const callback = new Function('libConfig', 'fileList', 'config', 'clearCachedThumbnailDataUrl', 'getFileInfo', 'getFileListThumb', 'selectedItemIndex', 'nextTick', `${code}; return callback;`)(
+    libConfig, fileList, config, () => {}, () => new Promise(resolve => { resolveInfo = resolve; }),
+    () => { loads++; }, { value: 0 }, async () => {},
+  );
+  await callback({ payload: { library_id: 'library-a', file_ids: [1] } });
+  assert.equal(loads, 0);
+  assert.equal(resolveInfo, undefined);
+  const queued = callback({ payload: { library_id: 'library-b', file_ids: [1] } });
+  assert.equal(typeof resolveInfo, 'function');
+  libConfig._libraryId = 'library-c';
+  resolveInfo({ modified_at: 42 });
+  await queued;
+  assert.equal(file.modified_at, undefined);
+  assert.equal(loads, 0);
 });

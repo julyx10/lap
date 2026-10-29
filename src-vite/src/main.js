@@ -28,6 +28,11 @@ const isMainWindow = currentWindowLabel === 'main'
 const isSettingsWindow = currentWindowLabel === 'settings'
 let settingsSyncRequest = 0
 
+// AF is shared by preview, comparison and standalone viewer windows.
+listen('settings-showFocus-changed', (event) => {
+  config.settings.showFocus = event.payload === true
+})
+
 listen('montage-config-changed', (event) => {
   // Keep other windows current so their later writes preserve collage preferences.
   if (currentWindowLabel !== 'montage') {
