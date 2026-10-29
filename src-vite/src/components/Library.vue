@@ -223,6 +223,7 @@ async function refreshLibraryCounts() {
   };
 }
 onMounted(() => { void refreshLibraryCounts(); });
+watch(() => config.settings.groupRawJpegPairs, () => { void refreshLibraryCounts(); });
 const isActiveLibraryView = () => libConfig.activePane === 'main' && config.main.sidebarIndex === SIDEBAR.LIBRARY;
 watch(() => [config.main.sidebarIndex, libConfig.activePane], () => {
   if (isActiveLibraryView()) void refreshLibraryCounts();

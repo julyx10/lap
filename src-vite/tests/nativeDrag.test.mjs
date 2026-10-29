@@ -196,11 +196,11 @@ test('return drop prevents default and never reaches the importer', async () => 
   const end = content.indexOf('  domDragEnd =', start);
   const handler = ts.transpile(content.slice(start, end), { target: ts.ScriptTarget.ES2022 });
   const calls = [];
-  const drop = new Function('isReturningNativeFileDrag', 'clearDropOverlay', 'let domDrop; ' + handler + '; return domDrop;')(
-    () => true, () => calls.push('clear'),
+  const drop = new Function('isReturningNativeFileDrag', 'clearDropOverlay', 'finishExternalDrag', 'let domDrop; ' + handler + '; return domDrop;')(
+    () => true, () => calls.push('clear'), () => calls.push('finish-external-drag'),
   );
   await drop({ type: 'drop', preventDefault: () => calls.push('prevent-default') });
-  assert.deepEqual(calls, ['prevent-default', 'clear']);
+  assert.deepEqual(calls, ['finish-external-drag', 'prevent-default', 'clear']);
 });
 
 test('viewer drag is rejected by another WebView even when completion precedes its drop', async () => {

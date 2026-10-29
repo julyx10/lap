@@ -60,6 +60,10 @@ pub struct MontageParams {
     for_print: bool,
 }
 
+impl MontageParams {
+    pub(crate) fn destination_path(&self) -> &str { &self.dest_file_path }
+}
+
 fn parse_hex_color(color: &str) -> Result<Rgba<u8>, String> {
     let hex = color.trim_start_matches('#');
     if hex.len() != 6 {

@@ -10,8 +10,8 @@ pub struct TagGroup {
     pub count: i64,
 }
 
-pub fn get_all() -> Result<Vec<TagGroup>, String> {
-    let counts = ATag::get_group_counts()?;
+pub fn get_all(group_raw_jpeg_pairs: bool) -> Result<Vec<TagGroup>, String> {
+    let counts = ATag::get_group_counts(group_raw_jpeg_pairs)?;
     let conn = open_conn()?;
     let mut stmt = conn.prepare("SELECT id, name, is_default FROM atag_groups ORDER BY is_default DESC, sort_order, name COLLATE NOCASE, id").map_err(|e| e.to_string())?;
     let rows = stmt
@@ -260,7 +260,7 @@ mod tests {
         let version: i64 = conn
             .query_row("PRAGMA user_version", [], |r| r.get(0))
             .unwrap();
-        assert_eq!(version, 20);
+        assert_eq!(version, 22);
         let a = save_on(&conn, None, "A").unwrap();
         let b = save_on(&conn, None, "B").unwrap();
         let default: i64 = conn

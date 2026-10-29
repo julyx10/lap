@@ -140,7 +140,7 @@ export const useFileMenuItems = (
       && isImage
       && albumId > 0;
     const canSetDesktopWallpaper = f.file_type === 1
-      || (f.file_type === 3 && f.media_subtype === 'raw_jpeg_pair' && f.live_photo_video_path);
+      || (config.settings.groupRawJpegPairs && f.file_type === 3 && f.media_subtype === 'raw_jpeg_pair' && f.live_photo_video_path);
     const unavailable = isOriginalUnavailable(f);
     const items: any[] = [
       {

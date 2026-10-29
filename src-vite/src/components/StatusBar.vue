@@ -31,6 +31,8 @@
           <span>{{ (imageScale * 100).toFixed(0) }}%</span>
         </div>
 
+        <span v-if="focusStatus" class="shrink-0" role="status" data-focus-status>{{ $t(`image_viewer.focus_${focusStatus}`) }}</span>
+
         <div v-if="currentFile?.e_model" class="flex items-center gap-1 shink-0">
           <IconCamera class="t-icon-size-xs" />
           <span>{{ currentFile?.e_model }} {{ currentFile?.e_lens_model ? ' (' + currentFile?.e_lens_model + ')' : '' }}</span>
@@ -65,7 +67,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
+import { loadFocusInfo } from '@/common/focusInfo.js';
+import { config, libConfig } from '@/common/config';
+import { orientedFocusRect } from '@/common/focusPoint.js';
 import {
   formatFileSize,
   shortenFilename,
@@ -160,6 +165,25 @@ const currentFile = computed(() => {
   if (props.selectedFile) return props.selectedFile;
   return props.fileList[props.selectedItemIndex];
 });
+const focusStatus = ref('');
+watch(() => [config.settings.showFocus, currentFile.value?.file_path, currentFile.value?.file_type,
+  currentFile.value?.modified_at, props.showFilmStrip || props.showQuickView || props.showScale] as const,
+  async ([enabled, path, type, , viewing], _, onCleanup) => {
+    let stale = false;
+    onCleanup(() => { stale = true; });
+    focusStatus.value = '';
+    if (!enabled || !viewing || !path || ![1, 3].includes(Number(type))) return;
+    try {
+      const info = await loadFocusInfo(path, currentFile.value?.modified_at || 0, libConfig._libraryId);
+      if (stale) return;
+      focusStatus.value = !orientedFocusRect(info) ? 'unavailable'
+        : info?.focus_result === 'focus' ? 'result_focus'
+        : info?.focus_result === 'out_of_focus' ? 'result_out_of_focus' : 'result_unknown';
+    } catch {
+      if (!stale) focusStatus.value = 'unavailable';
+    }
+  }, { immediate: true });
+
 const hasRealSelectedFile = computed(() => {
   const file = currentFile.value;
   return !!file && !file.isPlaceholder;

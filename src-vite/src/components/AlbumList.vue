@@ -384,6 +384,8 @@ async function refreshAlbumVisibleCounts() {
   libConfig.album.counts = counts;
 }
 
+watch(() => config.settings.groupRawJpegPairs, () => { void refreshAlbumVisibleCounts(); });
+
 // Computed to check if we're in main album pane
 const isMainPane = computed(() => props.selectionSource === 'album');
 const showAlbumDrop = ref(false);
@@ -888,7 +890,9 @@ const loadAlbumCover = async (
   albumId: number,
   coverFileId: number | null,
   bustCache = false,
+  libraryId = libConfig._libraryId,
 ) => {
+  if (libraryId !== libConfig._libraryId) return;
   delete albumCoverErrors.value[albumId];
   if (coverFileId) {
     let url = getThumbUrl(coverFileId, bustCache, config.settings.thumbnailSize);
@@ -897,9 +901,10 @@ const loadAlbumCover = async (
       const dataUrl = await (inflight || setThumbnailDataUrlInflight(
         coverFileId,
         config.settings.thumbnailSize,
-        getFileThumbById(coverFileId, config.settings.thumbnailSize, false)
-          .then(thumb => getThumbnailDataUrl(thumb, '', false, config.settings.thumbnailSize))
+        getFileThumbById(coverFileId, config.settings.thumbnailSize, false, libraryId)
+          .then(thumb => libraryId === libConfig._libraryId ? getThumbnailDataUrl(thumb, '', false, config.settings.thumbnailSize) : '')
       ));
+      if (libraryId !== libConfig._libraryId) return;
       url = dataUrl || url;
     }
     if (url) {
@@ -914,8 +919,10 @@ const loadAlbumCover = async (
 };
 
 const loadAlbumCovers = async () => {
+  const libraryId = libConfig._libraryId;
   for (const album of albums.value) {
-    await loadAlbumCover(album.id, album.cover_file_id ?? null);
+    if (libraryId !== libConfig._libraryId) return;
+    await loadAlbumCover(album.id, album.cover_file_id ?? null, false, libraryId);
   }
 };
 
@@ -973,7 +980,8 @@ onMounted( async () => {
   });
 
   unlistenAlbumFolderPathsMigrated = await listen('album-folder-paths-migrated', (event: any) => {
-    for (const migration of event.payload || []) {
+    if (!event.payload?.libraryId || event.payload.libraryId !== libConfig._libraryId) return;
+    for (const migration of event.payload.migrations || []) {
       const albumId = Number(migration?.albumId || 0);
       const oldPath = String(migration?.oldPath || '');
       const newPath = String(migration?.newPath || '');
@@ -1003,10 +1011,12 @@ onMounted( async () => {
 
   // listen for index finished
   unlistenIndexFinished = await listenIndexFinished(async (event: any) => {
+    const libraryId = libConfig._libraryId;
     const { album_id } = event.payload;
     const album = getAlbumById(album_id);
     if (album) {
       const updatedAlbum = await getAlbum(album_id);
+      if (libraryId !== libConfig._libraryId) return;
       if (updatedAlbum) {
         album.indexed = updatedAlbum.indexed;
         album.file_types = updatedAlbum.file_types;
@@ -1026,6 +1036,7 @@ onMounted( async () => {
         
         // Reload the cover thumbnail
         await loadAlbumCover(album_id, album.cover_file_id ?? null);
+        if (libraryId !== libConfig._libraryId) return;
         
         // Refresh folder tree if album is expanded (to show newly indexed folders)
         if (album.is_expanded) {

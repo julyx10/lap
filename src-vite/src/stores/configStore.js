@@ -185,6 +185,7 @@ export const useConfigStore = defineStore('configStore', {
       navigatorViewMode: 0,      // 0: Auto, 1: Always show, 2: Always hide
       navigatorViewSize: 240,    // navigator view size (160, 240, 320, 400)
       navigatorSharpnessGrid: false,
+      showFocus: false,           // globally remembered autofocus overlay
       viewBackground: 0,         // 0: default, 1: black, 2: dark gray, 3: medium gray, 4: light gray, 5: white
       autoPlayVideo: true,       // auto play video
       loopVideo: false,          // loop video (only effective when autoPlayVideo is off)
@@ -453,6 +454,7 @@ export const useConfigStore = defineStore('configStore', {
           if (typeof settings.languageInitialized !== 'boolean' && typeof settings.language === 'string' && settings.language) {
             settings.languageInitialized = true;
           }
+          settings.showFocus = settings.showFocus === true;
           settings.rawPreviewSource = settings.rawPreviewSource === 'rendered' ? 'rendered' : 'embedded';
           settings.rawRenderBrightness = settings.rawRenderBrightness === 'brightened' ? 'brightened' : 'original';
           settings.rawPairDisplaySource = settings.rawPairDisplaySource === 'raw' ? 'raw' : 'jpeg';

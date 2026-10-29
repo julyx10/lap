@@ -36,7 +36,7 @@ use tauri::{AppHandle, Emitter, Manager, State};
 
 // Scoped refreshes and RAW thumbnail requests can open several connections.
 // Keep their library stable until all reads and writes have completed.
-static FILE_REFRESH_LIBRARY_LOCK: RwLock<()> = RwLock::new(());
+pub(crate) static FILE_REFRESH_LIBRARY_LOCK: RwLock<()> = RwLock::new(());
 
 fn with_library_context<T>(
     lock: &RwLock<()>,
@@ -57,6 +57,42 @@ pub(crate) fn with_current_library<T>(
 ) -> Result<T, String> {
     with_library_context(&FILE_REFRESH_LIBRARY_LOCK, library_id,
         t_config::current_library_id, operation)
+}
+
+// Register before any filesystem mutation, and reconcile even after a partial
+// failure or rollback. The caller holds the library read lock throughout.
+fn run_registered_mutation<T, G>(begin: impl FnOnce() -> Result<G, String>, operation: impl FnOnce() -> Result<T, String>, schedule: impl FnOnce()) -> Result<T, String> {
+    let result = match begin() {
+        Ok(guard) => { let result = operation(); drop(guard); result }
+        Err(error) => Err(error),
+    };
+    schedule();
+    result
+}
+
+fn with_registered_raw_mutation<T>(app_handle: &AppHandle, folders: &[&str], operation: impl FnOnce() -> Result<T, String>) -> Result<T, String> {
+    run_registered_mutation(|| t_utils::RawFolderMutation::begin(folders), operation,
+        || t_utils::schedule_dirty_folder_recovery(app_handle.clone()))
+}
+
+fn with_registered_raw_mutation_subtree<T>(app_handle: &AppHandle, folders: &[&str], operation: impl FnOnce() -> Result<T, String>) -> Result<T, String> {
+    run_registered_mutation(|| t_utils::RawFolderMutation::begin_subtree(folders), operation,
+        || t_utils::schedule_dirty_folder_recovery(app_handle.clone()))
+}
+
+fn with_raw_folder_mutation_subtree<T>(app_handle: &AppHandle, folders: &[&str], operation: impl FnOnce() -> Result<T, String>) -> Result<T, String> {
+    let _guard = FILE_REFRESH_LIBRARY_LOCK.read().map_err(|e| e.to_string())?;
+    with_registered_raw_mutation_subtree(app_handle, folders, operation)
+}
+
+fn with_raw_folder_mutation<T>(app_handle: &AppHandle, folders: &[&str], operation: impl FnOnce() -> Result<T, String>) -> Result<T, String> {
+    let _guard = FILE_REFRESH_LIBRARY_LOCK.read().map_err(|e| e.to_string())?;
+    with_registered_raw_mutation(app_handle, folders, operation)
+}
+
+fn mutation_parent(path: &str) -> Result<&str, String> {
+    Path::new(path).parent().and_then(Path::to_str).filter(|p| !p.is_empty())
+        .ok_or_else(|| format!("File has no parent directory: {}", path))
 }
 
 // cancellation token for indexing
@@ -582,8 +618,8 @@ pub fn recount_album(album_id: i64) -> Result<Album, String> {
 }
 
 #[tauri::command]
-pub fn get_album_visible_counts() -> Result<HashMap<i64, i64>, String> {
-    Album::get_visible_counts()
+pub fn get_album_visible_counts(group_raw_jpeg_pairs: Option<bool>) -> Result<HashMap<i64, i64>, String> {
+    Album::get_visible_counts(group_raw_jpeg_pairs.unwrap_or(false))
         .map_err(|e| format!("Error while getting album visible counts: {}", e))
 }
 
@@ -680,6 +716,27 @@ pub fn set_album_cover(id: i64, file_id: i64) -> Result<usize, String> {
         .map_err(|e| format!("Error while setting album cover: {}", e))
 }
 
+/// Retry pending filesystem reconciliation and return folders still failing.
+#[tauri::command]
+pub async fn retry_dirty_folder_recovery(app_handle: AppHandle) -> Result<Vec<String>, String> {
+    tauri::async_runtime::spawn_blocking(move || t_utils::retry_dirty_folder_recovery(&app_handle))
+        .await.map_err(|e| format!("Folder recovery task failed: {}", e))?
+}
+
+/// Backfill old RAW pair indexes. False indicates an album was busy and the
+/// caller should retry when indexing completes.
+#[tauri::command]
+pub async fn backfill_raw_pair_index() -> Result<bool, String> {
+    tauri::async_runtime::spawn_blocking(|| {
+        // Switching/removing a library or relocating its database takes the
+        // corresponding write lock. Keep all DB calls on the same library.
+        let _guard = FILE_REFRESH_LIBRARY_LOCK.read().map_err(|e| e.to_string())?;
+        t_utils::backfill_raw_pair_index()
+    })
+        .await
+        .map_err(|e| format!("RAW pair backfill task failed: {}", e))?
+}
+
 /// index album
 #[tauri::command]
 pub fn index_album(
@@ -691,24 +748,24 @@ pub fn index_album(
     skip_file_path: Option<String>,
     group_raw_jpeg_pairs: bool,
 ) -> Result<(), String> {
-    // Reset cancellation flag
+    let library_id = t_config::current_library_id()?;
+    // Reset before enqueueing, so cancellation requested while the worker waits
+    // for the library lock is not lost.
     state.0.lock().unwrap().insert(album_id, false);
     let cancellation_token = state.0.clone();
 
-    tauri::async_runtime::spawn(async move {
-        if let Err(e) = t_utils::index_album_worker(
-            &app_handle,
-            cancellation_token,
-            album_id,
-            thumbnail_size,
-            raw_display_options,
-            skip_file_path,
-            group_raw_jpeg_pairs,
-        )
-        .await
-        {
-            eprintln!("Error indexing album {}: {}", album_id, e);
+    tauri::async_runtime::spawn_blocking(move || {
+        let result = with_current_library(&library_id, || {
+            tauri::async_runtime::block_on(t_utils::index_album_worker(
+                &app_handle, cancellation_token, album_id, thumbnail_size,
+                raw_display_options, skip_file_path, group_raw_jpeg_pairs,
+            ))
+        });
+        if let Err(error) = result {
+            eprintln!("Error indexing album {}: {}", album_id, error);
         }
+        // with_current_library and the scan guard are released first.
+        t_utils::schedule_dirty_folder_recovery(app_handle.clone());
     });
     Ok(())
 }
@@ -832,14 +889,21 @@ pub async fn count_folder(path: String, file_types: Option<i64>, excluded_folder
 
 /// create a new folder
 #[tauri::command]
-pub fn create_folder(path: &str, folder_name: &str) -> Option<String> {
-    let folder_path = t_utils::get_file_path(path, folder_name);
-    t_utils::create_new_folder(&folder_path)
+pub fn create_folder(app_handle: AppHandle, path: &str, folder_name: &str) -> Result<Option<String>, String> {
+    with_raw_folder_mutation_subtree(&app_handle, &[path], || {
+        let folder_path = t_utils::get_file_path(path, folder_name);
+        Ok(t_utils::create_new_folder(&folder_path))
+    })
 }
 
 /// rename a folder
 #[tauri::command]
-pub fn rename_folder(folder_path: &str, new_folder_name: &str) -> Option<String> {
+pub fn rename_folder(app_handle: AppHandle, folder_path: &str, new_folder_name: &str) -> Result<Option<String>, String> {
+    let parent = mutation_parent(folder_path)?;
+    with_raw_folder_mutation_subtree(&app_handle, &[folder_path, parent], || Ok(rename_folder_inner(folder_path, new_folder_name)))
+}
+
+fn rename_folder_inner(folder_path: &str, new_folder_name: &str) -> Option<String> {
     let new_folder_path = t_utils::rename_folder(folder_path, new_folder_name);
 
     match new_folder_path {
@@ -857,11 +921,17 @@ pub fn rename_folder(folder_path: &str, new_folder_name: &str) -> Option<String>
 /// move a folder
 #[tauri::command]
 pub fn move_folder(
+    app_handle: AppHandle,
     folder_path: &str,
     new_album_id: i64,
     new_folder_path: &str,
     conflict_policy: &str,
 ) -> Result<String, String> {
+    with_raw_folder_mutation_subtree(&app_handle, &[folder_path, mutation_parent(folder_path)?, new_folder_path], ||
+        move_folder_inner(folder_path, new_album_id, new_folder_path, conflict_policy))
+}
+
+fn move_folder_inner(folder_path: &str, new_album_id: i64, new_folder_path: &str, conflict_policy: &str) -> Result<String, String> {
     let old_album_id = AFolder::fetch(folder_path)?.map(|folder| folder.album_id);
     let moved_thumb_keys = if old_album_id.is_some_and(|album_id| album_id != new_album_id) {
         AThumb::get_thumb_keys_in_subtree(folder_path)?
@@ -898,10 +968,16 @@ pub fn move_folder(
 /// move a folder outside the library and remove its database records
 #[tauri::command]
 pub fn move_folder_outside_library(
+    app_handle: AppHandle,
     folder_path: &str,
     new_folder_path: &str,
     conflict_policy: &str,
 ) -> Result<String, String> {
+    with_raw_folder_mutation_subtree(&app_handle, &[folder_path, mutation_parent(folder_path)?, new_folder_path], ||
+        move_folder_outside_library_inner(folder_path, new_folder_path, conflict_policy))
+}
+
+fn move_folder_outside_library_inner(folder_path: &str, new_folder_path: &str, conflict_policy: &str) -> Result<String, String> {
     let transfer = t_utils::move_folder_with_policy(
         folder_path,
         new_folder_path,
@@ -925,11 +1001,17 @@ pub fn move_folder_outside_library(
 /// copy a folder
 #[tauri::command]
 pub fn copy_folder(
+    app_handle: AppHandle,
     folder_path: &str,
     new_folder_path: &str,
     new_album_id: i64,
     conflict_policy: &str,
 ) -> Result<String, String> {
+    with_raw_folder_mutation_subtree(&app_handle, &[new_folder_path], ||
+        copy_folder_inner(folder_path, new_folder_path, new_album_id, conflict_policy))
+}
+
+fn copy_folder_inner(folder_path: &str, new_folder_path: &str, new_album_id: i64, conflict_policy: &str) -> Result<String, String> {
     let transfer = t_utils::copy_folder_with_policy(
         folder_path,
         new_folder_path,
@@ -958,7 +1040,11 @@ pub fn copy_folder(
 
 /// delete a folder (move to trash)
 #[tauri::command]
-pub fn delete_folder(folder_path: &str) -> Result<usize, String> {
+pub fn delete_folder(app_handle: AppHandle, folder_path: &str) -> Result<usize, String> {
+    with_raw_folder_mutation_subtree(&app_handle, &[folder_path, mutation_parent(folder_path)?], || delete_folder_inner(folder_path))
+}
+
+fn delete_folder_inner(folder_path: &str) -> Result<usize, String> {
     // trash the folder
     if t_utils::trash_path(folder_path).is_err() {
         return Ok(0);
@@ -971,11 +1057,12 @@ pub fn delete_folder(folder_path: &str) -> Result<usize, String> {
 
 /// permanently delete a folder (skip trash)
 #[tauri::command]
-pub fn delete_folder_permanently(folder_path: &str) -> Result<usize, String> {
-    t_utils::delete_folder_permanently(folder_path)?;
-
-    AFolder::delete_folder(folder_path)
-        .map_err(|e| format!("Error while deleting folder from DB: {}", e))
+pub fn delete_folder_permanently(app_handle: AppHandle, folder_path: &str) -> Result<usize, String> {
+    with_raw_folder_mutation_subtree(&app_handle, &[folder_path, mutation_parent(folder_path)?], || {
+        t_utils::delete_folder_permanently(folder_path)?;
+        AFolder::delete_folder(folder_path)
+            .map_err(|e| format!("Error while deleting folder from DB: {}", e))
+    })
 }
 
 /// reveal a file or folder in the file explorer (or finder)
@@ -1244,8 +1331,8 @@ pub async fn get_query_file_ids(params: QueryParams) -> Result<Vec<i64>, String>
 }
 
 #[tauri::command]
-pub async fn get_library_visible_counts(id: Option<String>) -> Result<t_sqlite::LibraryVisibleCounts, String> {
-    tauri::async_runtime::spawn_blocking(move || AFile::get_library_visible_counts(id.as_deref()))
+pub async fn get_library_visible_counts(id: Option<String>, group_raw_jpeg_pairs: Option<bool>) -> Result<t_sqlite::LibraryVisibleCounts, String> {
+    tauri::async_runtime::spawn_blocking(move || AFile::get_library_visible_counts(id.as_deref(), group_raw_jpeg_pairs.unwrap_or(false)))
         .await
         .map_err(|e| format!("Failed to join library count task: {}", e))?
         .map_err(|e| format!("Error while getting library visible counts: {}", e))
@@ -1268,14 +1355,14 @@ pub fn list_collections() -> Result<Vec<ACollection>, String> {
 }
 
 #[tauri::command]
-pub fn get_collection_counts() -> Result<HashMap<i64, i64>, String> {
-    ACollection::get_counts()
+pub fn get_collection_counts(group_raw_jpeg_pairs: Option<bool>) -> Result<HashMap<i64, i64>, String> {
+    ACollection::get_counts(group_raw_jpeg_pairs.unwrap_or(false))
         .map_err(|e| format!("Error while getting collection counts: {}", e))
 }
 
 #[tauri::command]
-pub fn create_collection(name: &str) -> Result<ACollection, String> {
-    ACollection::create(name).map_err(|e| format!("Error while creating collection: {}", e))
+pub fn create_collection(name: &str, group_raw_jpeg_pairs: Option<bool>) -> Result<ACollection, String> {
+    ACollection::create(name, group_raw_jpeg_pairs.unwrap_or(false)).map_err(|e| format!("Error while creating collection: {}", e))
 }
 
 #[tauri::command]
@@ -1463,24 +1550,31 @@ pub async fn get_smart_query_file_position(
         .map_err(|e| format!("Error while getting smart query file position: {}", e))
 }
 
+/// Resolve RAW pair companions to primary IDs for selection restoration.
+#[tauri::command]
+pub async fn resolve_raw_pair_primary_ids(file_ids: Vec<i64>) -> Result<HashMap<i64, i64>, String> {
+    let _guard = FILE_REFRESH_LIBRARY_LOCK.read().map_err(|e| e.to_string())?;
+    AFile::resolve_raw_pair_primary_ids(&file_ids)
+}
+
 /// get all files from the folder
 #[tauri::command]
-pub fn get_folder_files(
+pub async fn get_folder_files(
     file_type: i64,
     sort_type: i64,
     sort_order: i64,
     folder_id: i64,
-    folder_path: &str,
+    folder_path: String,
     from_db_only: Option<bool>,
-) -> (Vec<AFile>, u32, u32) {
-    t_utils::get_folder_files(
-        file_type,
-        sort_type,
-        sort_order,
-        folder_id,
-        folder_path,
-        from_db_only.unwrap_or(false),
-    )
+    group_raw_jpeg_pairs: Option<bool>,
+) -> Result<(Vec<AFile>, u32, u32), String> {
+    let library_id = t_config::current_library_id()?;
+    tauri::async_runtime::spawn_blocking(move || with_current_library(&library_id, ||
+        Ok(t_utils::get_folder_files(
+            file_type, sort_type, sort_order, folder_id, &folder_path,
+            from_db_only.unwrap_or(false), group_raw_jpeg_pairs.unwrap_or(false),
+        ))))
+        .await.map_err(|e| format!("Folder file query task failed: {}", e))?
 }
 
 /// sync a single folder's mtime and DB records with the filesystem
@@ -1492,25 +1586,18 @@ pub async fn sync_album_folder_mtimes(
     folder_path: String,
     group_raw_jpeg_pairs: bool,
 ) -> Result<crate::t_utils::FolderMtimeSyncResult, String> {
-    let sync_app_handle = app_handle.clone();
-    let result = tauri::async_runtime::spawn_blocking(move || {
-        crate::t_utils::sync_single_folder(
-            &sync_app_handle,
-            album_id,
-            folder_id,
-            &folder_path,
-            group_raw_jpeg_pairs,
-        )
-    })
+    let library_id = t_config::current_library_id()?;
+    tauri::async_runtime::spawn_blocking(move || with_current_library(&library_id, || {
+        let result = crate::t_utils::sync_single_folder(
+            &app_handle, album_id, folder_id, &folder_path, group_raw_jpeg_pairs,
+        )?;
+        if !result.folder_path_migrations.is_empty() {
+            let _ = app_handle.emit("album-folder-paths-migrated", serde_json::json!({ "libraryId": library_id, "migrations": result.folder_path_migrations }));
+        }
+        Ok(result)
+    }))
     .await
-    .map_err(|e| format!("folder sync task failed: {}", e))??;
-    if !result.folder_path_migrations.is_empty() {
-        let _ = app_handle.emit(
-            "album-folder-paths-migrated",
-            &result.folder_path_migrations,
-        );
-    }
-    Ok(result)
+    .map_err(|e| format!("folder sync task failed: {}", e))?
 }
 
 /// Refresh the subfolder tree below a folder without scanning its files.
@@ -1520,15 +1607,16 @@ pub async fn refresh_album_subfolders(
     album_id: i64,
     folder_path: String,
 ) -> Result<(), String> {
-    let migrations = tauri::async_runtime::spawn_blocking(move || {
-        t_utils::refresh_album_subfolders(album_id, &folder_path)
-    })
+    let library_id = t_config::current_library_id()?;
+    tauri::async_runtime::spawn_blocking(move || with_current_library(&library_id, || {
+        let migrations = t_utils::refresh_album_subfolders(album_id, &folder_path)?;
+        if !migrations.is_empty() {
+            let _ = app_handle.emit("album-folder-paths-migrated", serde_json::json!({ "libraryId": library_id, "migrations": migrations }));
+        }
+        Ok(())
+    }))
     .await
-    .map_err(|error| format!("Subfolder refresh task failed: {error}"))??;
-    if !migrations.is_empty() {
-        let _ = app_handle.emit("album-folder-paths-migrated", &migrations);
-    }
-    Ok(())
+    .map_err(|error| format!("Subfolder refresh task failed: {error}"))?
 }
 
 #[tauri::command]
@@ -1544,14 +1632,24 @@ pub fn get_folder_thumb_count(file_type: i64, folder_id: i64) -> i64 {
 
 /// edit an image
 #[tauri::command]
-pub async fn edit_image(params: t_image::EditParams) -> Result<bool, String> {
-    Ok(t_image::edit_image(params).await)
+pub async fn edit_image(app_handle: AppHandle, params: t_image::EditParams) -> Result<bool, String> {
+    let library_id = t_config::current_library_id()?;
+    let folder = mutation_parent(params.destination_path())?.to_string();
+    tauri::async_runtime::spawn_blocking(move || with_current_library(&library_id, ||
+        with_registered_raw_mutation(&app_handle, &[&folder], ||
+            Ok(tauri::async_runtime::block_on(t_image::edit_image(params))))))
+        .await.map_err(|e| format!("Failed to edit image: {}", e))?
 }
 
 /// render a photo montage and save it
 #[tauri::command]
-pub async fn render_montage(params: t_montage::MontageParams) -> Result<Option<String>, String> {
-    t_montage::render_montage(params).await
+pub async fn render_montage(app_handle: AppHandle, params: t_montage::MontageParams) -> Result<Option<String>, String> {
+    let library_id = t_config::current_library_id()?;
+    let folder = mutation_parent(params.destination_path())?.to_string();
+    tauri::async_runtime::spawn_blocking(move || with_current_library(&library_id, ||
+        with_registered_raw_mutation(&app_handle, &[&folder], ||
+            tauri::async_runtime::block_on(t_montage::render_montage(params)))))
+        .await.map_err(|e| format!("Failed to render montage: {}", e))?
 }
 
 /// copy an edited image to clipboard
@@ -1575,9 +1673,10 @@ pub async fn preview_batch_rename(
     library_id: String,
     file_ids: Vec<i64>,
     options: crate::t_batch_rename::RenameOptions,
+    group_raw_jpeg_pairs: Option<bool>,
 ) -> Result<crate::t_batch_rename::RenamePreview, String> {
     tauri::async_runtime::spawn_blocking(move || {
-        with_current_library(&library_id, || crate::t_batch_rename::preview(&file_ids, &options))
+        with_current_library(&library_id, || crate::t_batch_rename::preview(&file_ids, &options, group_raw_jpeg_pairs.unwrap_or(false)))
     })
     .await
     .map_err(|error| error.to_string())?
@@ -1585,13 +1684,26 @@ pub async fn preview_batch_rename(
 
 #[tauri::command]
 pub async fn batch_rename_files(
+    app_handle: AppHandle,
     library_id: String,
     file_ids: Vec<i64>,
     options: crate::t_batch_rename::RenameOptions,
     expected: Vec<crate::t_batch_rename::RenameItem>,
+    group_raw_jpeg_pairs: Option<bool>,
 ) -> Result<crate::t_batch_rename::RenamePreview, String> {
     tauri::async_runtime::spawn_blocking(move || {
-        with_current_library(&library_id, || crate::t_batch_rename::execute(&file_ids, &options, &expected))
+        with_current_library(&library_id, || {
+            let mut folders = HashSet::new();
+            for chunk in file_ids.chunks(500) {
+                for file in AFile::get_files_by_ids(chunk)? {
+                    let path = file.file_path.as_deref().ok_or("File path is unavailable")?;
+                    folders.insert(mutation_parent(path)?.to_string());
+                }
+            }
+            let folder_refs: Vec<&str> = folders.iter().map(String::as_str).collect();
+            with_registered_raw_mutation(&app_handle, &folder_refs, ||
+                crate::t_batch_rename::execute(&file_ids, &options, &expected, group_raw_jpeg_pairs.unwrap_or(false)))
+        })
     })
     .await
     .map_err(|error| error.to_string())?
@@ -1599,8 +1711,13 @@ pub async fn batch_rename_files(
 
 /// rename a file
 #[tauri::command]
-pub fn rename_file(file_id: i64, file_path: &str, new_name: &str) -> Result<Option<String>, String> {
-    let sidecar_rename_plan = build_apple_sidecar_rename_plan(file_id, file_path, new_name)?;
+pub fn rename_file(app_handle: AppHandle, file_id: i64, file_path: &str, new_name: &str, group_raw_jpeg_pairs: Option<bool>) -> Result<Option<String>, String> {
+    with_raw_folder_mutation(&app_handle, &[mutation_parent(file_path)?], ||
+        rename_file_inner(file_id, file_path, new_name, group_raw_jpeg_pairs))
+}
+
+fn rename_file_inner(file_id: i64, file_path: &str, new_name: &str, group_raw_jpeg_pairs: Option<bool>) -> Result<Option<String>, String> {
+    let sidecar_rename_plan = build_apple_sidecar_rename_plan(file_id, file_path, new_name, group_raw_jpeg_pairs.unwrap_or(false))?;
     if !preflight_rename_plan(file_path, new_name, &sidecar_rename_plan) {
         return Ok(None);
     }
@@ -1666,16 +1783,19 @@ pub fn rename_file(file_id: i64, file_path: &str, new_name: &str) -> Result<Opti
 /// move a file to dest folder
 #[tauri::command]
 pub fn move_file(
+    app_handle: AppHandle,
     file_id: i64,
     file_path: &str,
     new_folder_id: i64,
     new_folder_path: &str,
     conflict_policy: &str,
     batch_id: Option<u64>,
+    group_raw_jpeg_pairs: Option<bool>,
 ) -> Result<String, String> {
-    crate::t_xmp_files::with_transfer_cache(batch_id, |xmp_cache| {
-        move_file_with_cache(file_id, file_path, new_folder_id, new_folder_path, conflict_policy, xmp_cache)
-    })
+    with_raw_folder_mutation(&app_handle, &[mutation_parent(file_path)?, new_folder_path], ||
+        crate::t_xmp_files::with_transfer_cache(batch_id, |xmp_cache| {
+            move_file_with_cache(file_id, file_path, new_folder_id, new_folder_path, conflict_policy, xmp_cache, group_raw_jpeg_pairs.unwrap_or(false))
+        }))
 }
 
 fn move_file_with_cache(
@@ -1685,6 +1805,7 @@ fn move_file_with_cache(
     new_folder_path: &str,
     conflict_policy: &str,
     xmp_cache: &mut crate::t_xmp_files::Cache,
+    group_raw_jpeg_pairs: bool,
 ) -> Result<String, String> {
     let old_file_info = AFile::get_file_info(file_id).ok().flatten();
     let old_album_id = old_file_info.as_ref().and_then(|file| file.album_id);
@@ -1694,7 +1815,7 @@ fn move_file_with_cache(
         .map(|folder| folder.album_id);
     let policy = t_utils::FileConflictPolicy::from_str(conflict_policy);
     let (primary_target, sidecar_plans) =
-        resolve_group_primary_target(Some(file_id), file_path, new_folder_path, policy, xmp_cache)?;
+        resolve_group_primary_target(Some(file_id), file_path, new_folder_path, policy, xmp_cache, group_raw_jpeg_pairs)?;
     let xmp = crate::t_xmp_files::Guard::with_cache(
         std::iter::once((Path::new(file_path), primary_target.as_path()))
             .chain(sidecar_plans.iter().map(|p| (p.old_path.as_path(), p.new_path.as_path()))),
@@ -1797,15 +1918,18 @@ pub fn end_file_transfer_batch(batch_id: u64) {
 /// move a file outside the library and remove its database record
 #[tauri::command]
 pub fn move_file_outside_library(
+    app_handle: AppHandle,
     file_id: i64,
     file_path: &str,
     new_folder_path: &str,
     conflict_policy: &str,
     batch_id: Option<u64>,
+    group_raw_jpeg_pairs: Option<bool>,
 ) -> Result<String, String> {
-    crate::t_xmp_files::with_transfer_cache(batch_id, |xmp_cache| {
-        move_file_outside_library_with_cache(file_id, file_path, new_folder_path, conflict_policy, xmp_cache)
-    })
+    with_raw_folder_mutation(&app_handle, &[mutation_parent(file_path)?, new_folder_path], ||
+        crate::t_xmp_files::with_transfer_cache(batch_id, |xmp_cache| {
+            move_file_outside_library_with_cache(file_id, file_path, new_folder_path, conflict_policy, xmp_cache, group_raw_jpeg_pairs.unwrap_or(false))
+        }))
 }
 
 fn move_file_outside_library_with_cache(
@@ -1814,10 +1938,11 @@ fn move_file_outside_library_with_cache(
     new_folder_path: &str,
     conflict_policy: &str,
     xmp_cache: &mut crate::t_xmp_files::Cache,
+    group_raw_jpeg_pairs: bool,
 ) -> Result<String, String> {
     let policy = t_utils::FileConflictPolicy::from_str(conflict_policy);
     let (primary_target, sidecar_plans) =
-        resolve_group_primary_target(Some(file_id), file_path, new_folder_path, policy, xmp_cache)?;
+        resolve_group_primary_target(Some(file_id), file_path, new_folder_path, policy, xmp_cache, group_raw_jpeg_pairs)?;
     let xmp = crate::t_xmp_files::Guard::with_cache(
         std::iter::once((Path::new(file_path), primary_target.as_path()))
             .chain(sidecar_plans.iter().map(|p| (p.old_path.as_path(), p.new_path.as_path()))),
@@ -1881,14 +2006,17 @@ fn move_file_outside_library_with_cache(
 /// copy a file to dest folder
 #[tauri::command]
 pub fn copy_file(
+    app_handle: AppHandle,
     file_path: &str,
     new_folder_path: &str,
     conflict_policy: &str,
     batch_id: Option<u64>,
+    group_raw_jpeg_pairs: Option<bool>,
 ) -> Result<String, String> {
-    crate::t_xmp_files::with_transfer_cache(batch_id, |xmp_cache| {
-        copy_file_with_cache(file_path, new_folder_path, conflict_policy, xmp_cache)
-    })
+    with_raw_folder_mutation(&app_handle, &[mutation_parent(file_path)?, new_folder_path], ||
+        crate::t_xmp_files::with_transfer_cache(batch_id, |xmp_cache| {
+            copy_file_with_cache(file_path, new_folder_path, conflict_policy, xmp_cache, group_raw_jpeg_pairs.unwrap_or(false))
+        }))
 }
 
 fn copy_file_with_cache(
@@ -1896,10 +2024,11 @@ fn copy_file_with_cache(
     new_folder_path: &str,
     conflict_policy: &str,
     xmp_cache: &mut crate::t_xmp_files::Cache,
+    group_raw_jpeg_pairs: bool,
 ) -> Result<String, String> {
     let policy = t_utils::FileConflictPolicy::from_str(conflict_policy);
     let (primary_target, sidecar_plans) =
-        resolve_group_primary_target(None, file_path, new_folder_path, policy, xmp_cache)?;
+        resolve_group_primary_target(None, file_path, new_folder_path, policy, xmp_cache, group_raw_jpeg_pairs)?;
     let xmp = crate::t_xmp_files::Guard::with_cache(
         std::iter::once((Path::new(file_path), primary_target.as_path()))
             .chain(sidecar_plans.iter().map(|p| (p.old_path.as_path(), p.new_path.as_path()))),
@@ -1943,6 +2072,7 @@ fn copy_file_with_cache(
 /// import a file into a folder preserving the original file name
 #[tauri::command]
 pub async fn import_file(
+    app_handle: AppHandle,
     file_path: String,
     folder_id: i64,
     folder_path: String,
@@ -1950,7 +2080,7 @@ pub async fn import_file(
 ) -> Result<Option<AFile>, String> {
     let library_id = library_id.unwrap_or(t_config::current_library_id()?);
     tauri::async_runtime::spawn_blocking(move || {
-        with_current_library(&library_id, || {
+        with_current_library(&library_id, || with_registered_raw_mutation(&app_handle, &[&folder_path], || {
             // Validate the source is a supported type *before* copying.
             t_utils::get_file_type(&file_path)
                 .ok_or_else(|| format!("Unsupported file type: {}", file_path))?;
@@ -1976,7 +2106,7 @@ pub async fn import_file(
             };
             xmp.commit();
             Ok(Some(file))
-        })
+        }))
     })
     .await
     .map_err(|e| format!("Failed to import file: {}", e))?
@@ -1993,6 +2123,7 @@ pub fn import_and_organize(
     layout: String,
     completed_paths: Vec<String>,
 ) -> Result<(), String> {
+    let library_id = t_config::current_library_id()?;
     {
         let mut import = state.0.lock().map_err(|_| "Import cancellation state is unavailable")?;
         if import.running {
@@ -2003,7 +2134,7 @@ pub fn import_and_organize(
     }
     let cancellation = state.0.clone();
     tauri::async_runtime::spawn_blocking(move || {
-        let result = t_utils::import_and_organize(
+        let result = with_current_library(&library_id, || with_registered_raw_mutation_subtree(&app_handle, &[&destination_path], || t_utils::import_and_organize(
             album_id,
             &source_path,
             &destination_path,
@@ -2011,7 +2142,7 @@ pub fn import_and_organize(
             completed_paths.into_iter().collect(),
             |progress| { let _ = app_handle.emit("import-organize-progress", progress); },
             || cancellation.lock().map(|import| import.cancelled).unwrap_or(true),
-        );
+        )));
         if let Ok(mut import) = cancellation.lock() {
             import.running = false;
         }
@@ -2033,23 +2164,25 @@ pub fn cancel_import_and_organize(state: State<ImportCancellation>) -> Result<()
 /// import an image from a URL into a folder preserving the original file name when possible
 #[tauri::command]
 pub async fn import_url(
+    app_handle: AppHandle,
     url: &str,
     folder_id: i64,
     folder_path: String,
 ) -> Result<Option<AFile>, String> {
-    import_url_inner(url, folder_id, folder_path).await
+    import_url_inner(app_handle, url, folder_id, folder_path, t_config::current_library_id()?).await
 }
 
 /// Import an image from the macOS drag pasteboard (for browser-sourced drags
 /// where Tauri cannot provide file paths).
 #[tauri::command]
 pub async fn import_from_drag(
+    app_handle: AppHandle,
     folder_id: i64,
     folder_path: String,
 ) -> Result<Option<AFile>, String> {
     let url = crate::t_pasteboard::get_drag_image_url()
         .ok_or_else(|| "No image URL found in drag pasteboard".to_string())?;
-    import_url_inner(&url, folder_id, folder_path).await
+    import_url_inner(app_handle, &url, folder_id, folder_path, t_config::current_library_id()?).await
 }
 
 #[derive(Debug, Serialize)]
@@ -2068,9 +2201,11 @@ pub fn get_drag_payload() -> DragPayload {
 }
 
 async fn import_url_inner(
+    app_handle: AppHandle,
     url: &str,
     folder_id: i64,
     folder_path: String,
+    library_id: String,
 ) -> Result<Option<AFile>, String> {
     let response = reqwest::get(url)
         .await
@@ -2112,7 +2247,8 @@ async fn import_url_inner(
         .map_err(|e| format!("Failed to read response: {}", e))?;
 
     let dest_folder = folder_path.clone();
-    tauri::async_runtime::spawn_blocking(move || {
+    tauri::async_runtime::spawn_blocking(move || with_current_library(&library_id, ||
+      with_registered_raw_mutation(&app_handle, &[&dest_folder], || {
         let new_path = original_name
             .and_then(|name| {
                 t_utils::save_downloaded_bytes_with_name(&bytes, &mime, &name, &dest_folder)
@@ -2124,7 +2260,7 @@ async fn import_url_inner(
         let now = chrono::Utc::now().timestamp_millis();
         let (file, _) = AFile::add_to_db(folder_id, &new_path, file_type, now)?;
         Ok(Some(file))
-    })
+    })))
     .await
     .map_err(|e| format!("Failed to save file: {}", e))?
 }
@@ -2198,6 +2334,7 @@ fn percent_decode_utf8(value: &str) -> String {
 /// where Tauri native file paths are unavailable).
 #[tauri::command]
 pub async fn import_file_bytes(
+    app_handle: AppHandle,
     bytes: Vec<u8>,
     name: String,
     folder_id: i64,
@@ -2207,7 +2344,9 @@ pub async fn import_file_bytes(
         return Err("Dropped file is empty".to_string());
     }
     let dest_folder = folder_path.clone();
-    tauri::async_runtime::spawn_blocking(move || {
+    let library_id = t_config::current_library_id()?;
+    tauri::async_runtime::spawn_blocking(move || with_current_library(&library_id, ||
+      with_registered_raw_mutation(&app_handle, &[&dest_folder], || {
         let new_path = t_utils::save_bytes_with_name(&bytes, &name, &dest_folder)
             .ok_or_else(|| "Failed to save dropped file".to_string())?;
         let file_type = t_utils::get_file_type(&new_path).ok_or_else(|| {
@@ -2217,7 +2356,7 @@ pub async fn import_file_bytes(
         let now = chrono::Utc::now().timestamp_millis();
         let (file, _) = AFile::add_to_db(folder_id, &new_path, file_type, now)?;
         Ok(Some(file))
-    })
+    })))
     .await
     .map_err(|e| format!("Failed to save file: {}", e))?
 }
@@ -2293,9 +2432,12 @@ pub async fn import_clipboard(
     folder_id: i64,
     folder_path: &str,
 ) -> Result<Vec<AFile>, String> {
+    let library_id = t_config::current_library_id()?;
+    #[cfg(target_os = "linux")]
+    let clipboard_data = crate::t_pasteboard::get_clipboard_import_data(&_app_handle).await?;
+    with_current_library(&library_id, || with_registered_raw_mutation(&_app_handle, &[folder_path], || {
     #[cfg(target_os = "linux")]
     {
-        let clipboard_data = crate::t_pasteboard::get_clipboard_import_data(&_app_handle).await?;
         if !clipboard_data.file_paths.is_empty() {
             let mut imported = Vec::new();
             for path in clipboard_data
@@ -2398,29 +2540,35 @@ pub async fn import_clipboard(
             Err(error)
         }
     }
+    }))
 }
 
 /// delete a file
 #[tauri::command]
-pub fn delete_file(file_id: i64, file_path: &str) -> Result<BatchDeleteResult, String> {
-    delete_file_group(file_id, file_path, false)
+pub fn delete_file(app_handle: AppHandle, file_id: i64, file_path: &str, group_raw_jpeg_pairs: Option<bool>) -> Result<BatchDeleteResult, String> {
+    with_raw_folder_mutation(&app_handle, &[mutation_parent(file_path)?], ||
+        delete_file_group(file_id, file_path, false, group_raw_jpeg_pairs.unwrap_or(false)))
 }
 
 /// delete a file permanently
 #[tauri::command]
 pub fn delete_file_permanently(
+    app_handle: AppHandle,
     file_id: i64,
     file_path: &str,
+    group_raw_jpeg_pairs: Option<bool>,
 ) -> Result<BatchDeleteResult, String> {
-    delete_file_group(file_id, file_path, true)
+    with_raw_folder_mutation(&app_handle, &[mutation_parent(file_path)?], ||
+        delete_file_group(file_id, file_path, true, group_raw_jpeg_pairs.unwrap_or(false)))
 }
 
 fn delete_file_group(
     file_id: i64,
     file_path: &str,
     permanently: bool,
+    group_raw_jpeg_pairs: bool,
 ) -> Result<BatchDeleteResult, String> {
-    let component_files = AFile::live_photo_component_files(file_id)?;
+    let component_files = AFile::operation_component_files(file_id, group_raw_jpeg_pairs)?;
     let mut deleted_file_ids = Vec::with_capacity(component_files.len() + 1);
     let mut delete_errors = Vec::new();
 
@@ -2509,10 +2657,12 @@ pub struct BatchDeleteResult {
 
 #[tauri::command]
 pub async fn batch_delete_files(
+    app_handle: AppHandle,
     files: Vec<BatchDeleteFile>,
     permanently: bool,
+    group_raw_jpeg_pairs: Option<bool>,
 ) -> Result<BatchDeleteResult, String> {
-    tauri::async_runtime::spawn_blocking(move || delete_files_grouped(files, permanently))
+    tauri::async_runtime::spawn_blocking(move || delete_files_grouped(&app_handle, files, permanently, group_raw_jpeg_pairs.unwrap_or(false)))
         .await
         .map_err(|e| format!("Failed to run batch delete: {}", e))?
 }
@@ -2520,8 +2670,32 @@ pub async fn batch_delete_files(
 /// Delete files together with their Live Photo and Apple sidecar components.
 /// Kept synchronous so other backend workflows can share the same semantics.
 pub(crate) fn delete_files_grouped(
+    app_handle: &AppHandle,
     files: Vec<BatchDeleteFile>,
     permanently: bool,
+    group_raw_jpeg_pairs: bool,
+) -> Result<BatchDeleteResult, String> {
+    let _guard = FILE_REFRESH_LIBRARY_LOCK.read().map_err(|e| e.to_string())?;
+    delete_files_grouped_locked(app_handle, files, permanently, group_raw_jpeg_pairs)
+}
+
+pub(crate) fn delete_files_grouped_locked(
+    app_handle: &AppHandle,
+    files: Vec<BatchDeleteFile>,
+    permanently: bool,
+    group_raw_jpeg_pairs: bool,
+) -> Result<BatchDeleteResult, String> {
+    let folders: HashSet<String> = files.iter().map(|file| mutation_parent(&file.file_path).map(str::to_string))
+        .collect::<Result<_, _>>()?;
+    let folder_refs: Vec<&str> = folders.iter().map(String::as_str).collect();
+    with_registered_raw_mutation(app_handle, &folder_refs, ||
+        delete_files_grouped_inner(files, permanently, group_raw_jpeg_pairs))
+}
+
+fn delete_files_grouped_inner(
+    files: Vec<BatchDeleteFile>,
+    permanently: bool,
+    group_raw_jpeg_pairs: bool,
 ) -> Result<BatchDeleteResult, String> {
     struct DeleteGroup {
         primary_id: i64,
@@ -2535,7 +2709,7 @@ pub(crate) fn delete_files_grouped(
         if !t_utils::file_accessible(&file.file_path) {
             return Err(format!("original_unavailable: {}", file.file_path));
         }
-        for component in AFile::live_photo_component_files(file.file_id)? {
+        for component in AFile::operation_component_files(file.file_id, group_raw_jpeg_pairs)? {
             if let Some(path) = component.file_path {
                 if !t_utils::file_accessible(&path) { return Err(format!("original_unavailable: {}", path)); }
             }
@@ -2549,7 +2723,7 @@ pub(crate) fn delete_files_grouped(
             continue;
         }
         let mut component_targets = Vec::new();
-        if let Ok(components) = AFile::live_photo_component_files(file.file_id) {
+        if let Ok(components) = AFile::operation_component_files(file.file_id, group_raw_jpeg_pairs) {
             for component in components {
                 if let (Some(id), Some(path)) = (component.id, component.file_path) {
                     if seen_ids.insert(id) {
@@ -2658,6 +2832,12 @@ pub async fn clean_unused_thumbnail_cache(library_id: Option<String>) -> Result<
     .map_err(|e| format!("Failed to join clean thumbnail cache task: {}", e))?
 }
 
+fn thumbnail_request_matches(file: &AFile, path: Option<&str>, file_type: Option<i64>, album_id: Option<i64>) -> bool {
+    path.map_or(true, |path| file.file_path.as_deref() == Some(path))
+        && file_type.filter(|value| *value > 0).map_or(true, |value| file.file_type == Some(value))
+        && album_id.filter(|value| *value > 0).map_or(true, |value| file.album_id == Some(value))
+}
+
 /// get a file's thumb image, if not exist, create a new one
 #[tauri::command]
 pub async fn get_file_thumb(
@@ -2671,14 +2851,17 @@ pub async fn get_file_thumb(
     force_regenerate: bool,
     thumbnail_seek_percent: Option<u8>,
     album_id: Option<i64>,
+    library_id: Option<String>,
 ) -> Result<Option<AThumb>, String> {
-    let album_id = match album_id.filter(|id| *id > 0) {
-        Some(id) => id,
-        None => AFile::get_file_info(file_id)
-            .map_err(|e| format!("Error while getting file info for thumbnail: {}", e))?
-            .and_then(|file| file.album_id)
-            .unwrap_or(0),
-    };
+    let library_id = match library_id { Some(id) => id, None => t_config::current_library_id()? };
+    with_current_library(&library_id, || {
+    let Some(file) = AFile::get_file_info(file_id)? else { return Ok(None); };
+    if !thumbnail_request_matches(&file, Some(file_path), Some(file_type), album_id) { return Ok(None); }
+    let Some(file_path) = file.file_path.as_deref() else { return Ok(None); };
+    let file_type = file.file_type.unwrap_or(0);
+    let _ = orientation; // Use the catalog orientation rather than stale request metadata.
+    let orientation = file.e_orientation.unwrap_or(1) as i32;
+    let album_id = file.album_id.unwrap_or(0);
     if let Some(thumb) = AThumb::get_thumb_if_available(
         file_id,
         file_path,
@@ -2692,6 +2875,7 @@ pub async fn get_file_thumb(
 
     AThumb::schedule_background_generation_for_library(
         app_handle,
+        library_id.clone(),
         file_id,
         file_path.to_string(),
         file_type,
@@ -2704,6 +2888,7 @@ pub async fn get_file_thumb(
     );
 
     Ok(None)
+    })
 }
 
 /// get a file's thumb image by id, if not exist, create a new one in background
@@ -2714,7 +2899,10 @@ pub async fn get_file_thumb_by_id(
     thumbnail_size: u32,
     raw_display_options: RawDisplayOptions,
     force_regenerate: bool,
+    library_id: Option<String>,
 ) -> Result<Option<AThumb>, String> {
+    let library_id = match library_id { Some(id) => id, None => t_config::current_library_id()? };
+    with_current_library(&library_id, || {
     let Some(file) = AFile::get_file_info(file_id)
         .map_err(|e| format!("Error while getting file info for thumbnail: {}", e))?
     else {
@@ -2741,6 +2929,7 @@ pub async fn get_file_thumb_by_id(
 
     AThumb::schedule_background_generation_for_library(
         app_handle,
+        library_id.clone(),
         file_id,
         file_path,
         file_type,
@@ -2753,6 +2942,7 @@ pub async fn get_file_thumb_by_id(
     );
 
     Ok(None)
+    })
 }
 
 /// get multiple thumbnails in one IPC call; missing thumbnails are generated in background
@@ -2763,8 +2953,11 @@ pub async fn get_file_thumbs(
     thumbnail_size: u32,
     raw_display_options: RawDisplayOptions,
     force_regenerate: bool,
+    trust_cached: bool,
+    library_id: Option<String>,
 ) -> Result<Vec<Option<AThumb>>, String> {
-    let library = t_config::current_library_id()?;
+    let library = library_id.unwrap_or(t_config::current_library_id()?);
+    let _ = trust_cached;
     tauri::async_runtime::spawn_blocking(move || {
         with_current_library(&library, || {
             let ids: Vec<_> = files
@@ -2779,7 +2972,7 @@ pub async fn get_file_thumbs(
             let mut cached = AThumb::fetch_many(&ids)?;
             let mut thumbs = Vec::with_capacity(files.len());
             for request in files {
-                let Some(file) = catalog.remove(&request.file_id) else {
+                let Some(file) = catalog.get(&request.file_id) else {
                     thumbs.push(None);
                     continue;
                 };
@@ -2812,6 +3005,7 @@ pub async fn get_file_thumbs(
                 if t_utils::content_readable(path) {
                     AThumb::schedule_background_generation_for_library(
                         app_handle.clone(),
+                        library.clone(),
                         request.file_id,
                         path.to_string(),
                         file.file_type.unwrap_or(0),
@@ -3237,8 +3431,8 @@ pub fn get_file_has_tags(file_id: i64) -> Result<bool, String> {
 
 /// get all favorite folders
 #[tauri::command]
-pub fn get_favorite_folders() -> Result<Vec<AFolder>, String> {
-    AFolder::get_favorite_folders()
+pub fn get_favorite_folders(group_raw_jpeg_pairs: Option<bool>) -> Result<Vec<AFolder>, String> {
+    AFolder::get_favorite_folders(group_raw_jpeg_pairs.unwrap_or(false))
         .map_err(|e| format!("Error while getting favorite folders: {}", e))
 }
 
@@ -3383,8 +3577,8 @@ pub fn get_tag_group_name(id: i64) -> Result<String, String> {
 }
 
 #[tauri::command]
-pub fn get_tag_groups() -> Result<Vec<crate::t_tag_groups::TagGroup>, String> {
-    crate::t_tag_groups::get_all()
+pub fn get_tag_groups(group_raw_jpeg_pairs: Option<bool>) -> Result<Vec<crate::t_tag_groups::TagGroup>, String> {
+    crate::t_tag_groups::get_all(group_raw_jpeg_pairs.unwrap_or(false))
 }
 
 #[tauri::command]
@@ -3409,14 +3603,14 @@ pub fn move_tags_to_group(tag_ids: Vec<i64>, group_id: i64) -> Result<(), String
 
 /// get all tags
 #[tauri::command]
-pub fn get_all_tags(sort: i64) -> Result<Vec<ATag>, String> {
-    ATag::get_all(sort)
+pub fn get_all_tags(sort: i64, group_raw_jpeg_pairs: Option<bool>) -> Result<Vec<ATag>, String> {
+    ATag::get_all(sort, group_raw_jpeg_pairs.unwrap_or(false))
         .map_err(|e| format!("Error while getting all tags: {}", e))
 }
 
 #[tauri::command]
-pub fn get_tag_counts() -> Result<HashMap<i64, i64>, String> {
-    ATag::get_counts()
+pub fn get_tag_counts(group_raw_jpeg_pairs: Option<bool>) -> Result<HashMap<i64, i64>, String> {
+    ATag::get_counts(group_raw_jpeg_pairs.unwrap_or(false))
         .map_err(|e| format!("Error while getting tag counts: {}", e))
 }
 
@@ -3485,8 +3679,8 @@ pub fn apply_tags_to_files(
 
 /// get camera's taken dates
 #[tauri::command]
-pub fn get_taken_dates(sort: i64) -> Result<Vec<(String, i64)>, String> {
-    AFile::get_taken_dates(sort)
+pub fn get_taken_dates(sort: i64, group_raw_jpeg_pairs: Option<bool>) -> Result<Vec<(String, i64)>, String> {
+    AFile::get_taken_dates(sort, group_raw_jpeg_pairs.unwrap_or(false))
         .map_err(|e| format!("Error while getting taken dates: {}", e))
 }
 
@@ -3494,22 +3688,22 @@ pub fn get_taken_dates(sort: i64) -> Result<Vec<(String, i64)>, String> {
 
 /// get a file's camera make and model info
 #[tauri::command]
-pub fn get_camera_info(sort: i64) -> Result<Vec<ACamera>, String> {
-    ACamera::get_from_db(sort).map_err(|e| format!("Error while getting camera info: {}", e))
+pub fn get_camera_info(sort: i64, group_raw_jpeg_pairs: Option<bool>) -> Result<Vec<ACamera>, String> {
+    ACamera::get_from_db(sort, group_raw_jpeg_pairs.unwrap_or(false)).map_err(|e| format!("Error while getting camera info: {}", e))
 }
 
 /// get a file's lens make and model info
 #[tauri::command]
-pub fn get_lens_info(sort: i64) -> Result<Vec<ALens>, String> {
-    ALens::get_from_db(sort).map_err(|e| format!("Error while getting lens info: {}", e))
+pub fn get_lens_info(sort: i64, group_raw_jpeg_pairs: Option<bool>) -> Result<Vec<ALens>, String> {
+    ALens::get_from_db(sort, group_raw_jpeg_pairs.unwrap_or(false)).map_err(|e| format!("Error while getting lens info: {}", e))
 }
 
 // location
 
 /// get a file's location info
 #[tauri::command]
-pub fn get_location_info(sort: i64) -> Result<Vec<ALocation>, String> {
-    ALocation::get_from_db(sort).map_err(|e| format!("Error while getting location info: {}", e))
+pub fn get_location_info(sort: i64, group_raw_jpeg_pairs: Option<bool>) -> Result<Vec<ALocation>, String> {
+    ALocation::get_from_db(sort, group_raw_jpeg_pairs.unwrap_or(false)).map_err(|e| format!("Error while getting location info: {}", e))
 }
 
 #[tauri::command]
@@ -3725,8 +3919,8 @@ pub fn index_faces(
 
 /// get face indexing stats
 #[tauri::command]
-pub fn get_face_stats() -> Result<t_face::FaceStats, String> {
-    let (total, processed, unprocessed, faces) = t_sqlite::Face::get_stats_full()
+pub fn get_face_stats(group_raw_jpeg_pairs: Option<bool>) -> Result<t_face::FaceStats, String> {
+    let (total, processed, unprocessed, faces) = t_sqlite::Face::get_stats_full(group_raw_jpeg_pairs.unwrap_or(false))
         .map_err(|e| format!("Error while getting face stats: {}", e))?;
 
     Ok(t_face::FaceStats {
@@ -3768,8 +3962,8 @@ pub fn is_face_indexing(
 
 /// get all persons with face counts
 #[tauri::command]
-pub fn get_persons(sort: i64) -> Result<Vec<Person>, String> {
-    Person::get_all(sort).map_err(|e| format!("Error while getting persons: {}", e))
+pub fn get_persons(sort: i64, group_raw_jpeg_pairs: Option<bool>) -> Result<Vec<Person>, String> {
+    Person::get_all(sort, group_raw_jpeg_pairs.unwrap_or(false)).map_err(|e| format!("Error while getting persons: {}", e))
 }
 
 /// Get a page of persons with face counts.
@@ -3816,8 +4010,9 @@ pub fn dedup_start_scan(
     params: Option<crate::t_sqlite::QueryParams>,
     collection_id: Option<i64>,
     file_ids: Option<Vec<i64>>,
+    group_raw_jpeg_pairs: Option<bool>,
 ) -> Result<(), String> {
-    crate::t_dedup::start_scan(app_handle, state, params, collection_id, file_ids)
+    crate::t_dedup::start_scan(app_handle, state, params, collection_id, file_ids, group_raw_jpeg_pairs.unwrap_or(false))
 }
 
 #[tauri::command]
@@ -3861,9 +4056,10 @@ pub fn dedup_set_keep(group_id: i64, file_id: i64) -> Result<(), String> {
 
 #[tauri::command]
 pub async fn dedup_delete(
+    app_handle: AppHandle,
     request: crate::t_dedup::DedupDeleteRequest,
 ) -> Result<crate::t_dedup::DedupDeleteResult, String> {
-    tauri::async_runtime::spawn_blocking(move || crate::t_dedup::delete(request))
+    tauri::async_runtime::spawn_blocking(move || crate::t_dedup::delete(&app_handle, request))
         .await
         .map_err(|e| format!("Failed to run dedup delete: {}", e))?
 }
@@ -3896,6 +4092,30 @@ pub fn restore_databases(
     selections: Vec<t_storage::RestoreSelection>,
 ) -> Result<t_storage::RestoreResult, String> {
     t_storage::restore_databases(&backup_path, &selections)
+}
+
+#[cfg(test)]
+mod mutation_guard_tests {
+    use super::*;
+    use std::cell::RefCell;
+
+    #[test]
+    fn registration_failure_prevents_writes_and_still_schedules() {
+        let events = RefCell::new(Vec::new());
+        let result = run_registered_mutation::<(), ()>(|| Err("db failure".into()), || { events.borrow_mut().push("write"); Ok(()) }, || events.borrow_mut().push("schedule"));
+        assert!(result.is_err());
+        assert_eq!(*events.borrow(), vec!["schedule"]);
+    }
+
+    #[test]
+    fn partial_failure_drops_guard_before_scheduling() {
+        struct Guard<'a>(&'a RefCell<Vec<&'static str>>);
+        impl Drop for Guard<'_> { fn drop(&mut self) { self.0.borrow_mut().push("drop"); } }
+        let events = RefCell::new(Vec::new());
+        let result = run_registered_mutation::<(), _>(|| Ok(Guard(&events)), || { events.borrow_mut().push("partial write"); Err("failed".into()) }, || events.borrow_mut().push("schedule"));
+        assert!(result.is_err());
+        assert_eq!(*events.borrow(), vec!["partial write", "drop", "schedule"]);
+    }
 }
 
 #[cfg(test)]
@@ -4024,6 +4244,51 @@ mod raw_display_library_tests {
     }
 
     #[test]
+    fn thumbnail_request_rejects_stale_path_type_and_album() {
+        let file: super::AFile = serde_json::from_value(serde_json::json!({"id": 42, "folder_id": 1, "name": "a.jpg", "size": 1, "file_path": "/album/a.jpg", "file_type": 1, "album_id": 7})).unwrap();
+        assert!(super::thumbnail_request_matches(&file, Some("/album/a.jpg"), Some(1), Some(7)));
+        assert!(!super::thumbnail_request_matches(&file, Some("/other/a.jpg"), Some(1), Some(7)));
+        assert!(!super::thumbnail_request_matches(&file, Some("/album/a.jpg"), Some(3), Some(7)));
+        assert!(!super::thumbnail_request_matches(&file, Some("/album/a.jpg"), Some(1), Some(8)));
+        assert!(super::thumbnail_request_matches(&file, None, None, None));
+    }
+
+    #[test]
+    fn folder_sync_emits_before_releasing_library_lock() {
+        let lock = RwLock::new(());
+        let mut emitted = false;
+        with_library_context(&lock, "library-a", || Ok("library-a".into()), || {
+            assert!(matches!(lock.try_write(), Err(TryLockError::WouldBlock)));
+            emitted = true;
+            Ok(())
+        }).unwrap();
+        assert!(emitted);
+        assert!(lock.try_write().is_ok());
+    }
+
+    #[test]
+    fn index_cancellation_releases_library_lock_without_blocking_cancel() {
+        let lock = Arc::new(RwLock::new(()));
+        let cancellation = Arc::new(std::sync::atomic::AtomicBool::new(false));
+        let (started_tx, started_rx) = mpsc::channel();
+        let (cancel_tx, cancel_rx) = mpsc::channel();
+        let worker_lock = lock.clone();
+        let worker_cancel = cancellation.clone();
+        let worker = std::thread::spawn(move || with_library_context(&worker_lock, "library-a", || Ok("library-a".into()), || {
+            started_tx.send(()).unwrap();
+            cancel_rx.recv().unwrap();
+            assert!(worker_cancel.load(std::sync::atomic::Ordering::SeqCst));
+            Ok(())
+        }));
+        started_rx.recv().unwrap();
+        assert!(matches!(lock.try_write(), Err(TryLockError::WouldBlock)));
+        cancellation.store(true, std::sync::atomic::Ordering::SeqCst);
+        cancel_tx.send(()).unwrap();
+        worker.join().unwrap().unwrap();
+        assert!(lock.try_write().is_ok());
+    }
+
+    #[test]
     fn raw_display_keeps_library_locked_through_cache_write() {
         let lock = Arc::new(RwLock::new(()));
         let current = Arc::new(Mutex::new("library-a".to_string()));
@@ -4048,4 +4313,10 @@ mod raw_display_library_tests {
         drop(guard);
         assert!(with_library_context(&lock, "library-a", || Ok(current.lock().unwrap().clone()), || Ok(())).is_err());
     }
+}
+
+#[cfg(test)]
+mod raw_pair_isolation_tests {
+    use super::*;
+    include!("raw_pair_isolation_test.rs");
 }

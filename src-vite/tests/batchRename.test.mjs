@@ -57,14 +57,14 @@ function dialogFixture(context, api = {}) {
   context.mock.timers.enable({apis:['setTimeout']});
   const scope = effectScope();
   const calls = [];
-  const values = {ref, computed, watch, props:{files:[{id:1,name:'old.jpg'},{id:2,name:'other.jpg'}],libraryId:'lib'},
+  const values = {ref, computed, watch, config: { settings: { groupRawJpegPairs: true } }, props:{files:[{id:1,name:'old.jpg'},{id:2,name:'other.jpg'}],libraryId:'lib'},
     t: key => key, emit: (...args) => calls.push(args), uiStore:{isInputActive: () => true},
     previewBatchRename: async () => ({items:[{id:1,oldName:'old.jpg',newName:'old_1.jpg',companions:0}],errors:[]}),
     batchRenameFiles: async () => ({items:[{id:1}]}), ...api};
   const model = scope.run(() => load(dialog, 'const nameInput =', 'onMounted(', values,
     '{ name, start, digits, preview, error, pending, saving, canSubmit, submit, close, refreshPreview }'));
   context.after(() => {scope.stop();context.mock.timers.reset();});
-  return { ...model, calls };
+  return { ...model, calls, config: values.config };
 }
 async function tick(context) {context.mock.timers.tick(201); await Promise.resolve(); await Promise.resolve();}
 
@@ -91,6 +91,25 @@ test('invalid input and name collisions block writes; editing input rechecks the
   f.start.value = 0; await tick(context); await f.submit(); assert.equal(writes, 0);
   f.start.value = 1; await tick(context); await f.submit();
   assert.equal(writes, 1); assert.equal(f.calls[0][0], 'done');
+});
+
+test('preview and commit use the grouping policy captured when the dialog opened', async context => {
+  const previews = [], writes = [];
+  const f = dialogFixture(context, {
+    previewBatchRename: async (...args) => { previews.push(args); return {items:[{id:1,oldName:'old.jpg',newName:'new.jpg'}],errors:[]}; },
+    batchRenameFiles: async (...args) => { writes.push(args); return {items:[{id:1}]}; },
+  });
+  await tick(context);
+  f.config.settings.groupRawJpegPairs = false;
+  f.name.value = 'changed';
+  await tick(context);
+  await f.submit();
+  assert.equal(previews.length, 2);
+  for (const args of previews) { assert.equal(args[0], 'lib'); assert.equal(args[3], true); }
+  assert.equal(writes.length, 1);
+  assert.equal(writes[0][0], 'lib');
+  assert.equal(writes[0][4], true);
+  assert.deepEqual(writes[0][3], f.preview.value.items);
 });
 
 test('saving blocks a second write and closing until completion', async context => {

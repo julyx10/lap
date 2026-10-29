@@ -53,3 +53,11 @@ Downloads FFmpeg and FFprobe sidecar binaries for the current platform into `src
 | Linux x86_64 | `ffmpeg-x86_64-unknown-linux-gnu`, `ffprobe-x86_64-unknown-linux-gnu` |
 | Linux aarch64 | `ffmpeg-aarch64-unknown-linux-gnu`, `ffprobe-aarch64-unknown-linux-gnu` |
 | Windows x86_64 | `ffmpeg-x86_64-pc-windows-msvc.exe`, `ffprobe-x86_64-pc-windows-msvc.exe` |
+
+## 3. Isolated RAW pair integration test
+
+On macOS or Linux, run `python3 scripts/test_raw_pair_isolated.py`. The runner compiles the Rust test binary without running unrelated tests, then runs one explicitly ignored test in a new temporary HOME, XDG data directories, and SQLite library. It checks the resolved app, cache, and database paths before use. The test deletes only synthetic files in that temporary directory, which is removed afterward; it does not use the system Trash.
+
+To additionally exercise production metadata indexing with a real pair, pass `--sample-raw /path/to/photo.NEF --sample-jpeg /path/to/photo.JPG`. The source files are opened read-only and copied into the temporary directory; only those copies are indexed. Both paths must be supplied and their stems must match.
+
+The test invokes real Rust command functions and the shared deletion core, but does **not** exercise the WebView IPC transport, frontend settings broadcasts, an actual album scan, or RAW image rendering. Windows is not supported by this runner.

@@ -1887,16 +1887,7 @@ pub fn reveal_path(path: &str) -> Result<(), String> {
     Ok(())
 }
 
-/// Get all files in a folder(not include sub-folders)
-/// Returns (files, new_count, updated_count)
-pub fn get_folder_files(
-    file_type: i64,
-    sort_type: i64,
-    sort_order: i64,
-    folder_id: i64,
-    folder_path: &str,
-    from_db_only: bool,
-) -> (Vec<AFile>, u32, u32) {
+fn filter_folder_file_types(mut files: Vec<AFile>, file_type: i64, group_raw_jpeg_pairs: bool) -> Vec<AFile> {
     fn matches_file_type_filter(filter: i64, file_type: i64) -> bool {
         if filter <= 0 {
             return true;
@@ -1912,9 +1903,10 @@ pub fn get_folder_files(
         bit > 0 && (filter & bit) == bit
     }
 
-    fn hide_live_photo_companion_videos(files: Vec<AFile>) -> Vec<AFile> {
+    fn hide_live_photo_companion_videos(files: Vec<AFile>, group_raw_jpeg_pairs: bool) -> Vec<AFile> {
         let companion_ids: HashSet<i64> = files
             .iter()
+            .filter(|file| file.media_subtype.as_deref() != Some("raw_jpeg_pair") || group_raw_jpeg_pairs)
             .filter_map(|file| file.live_photo_video_id)
             .collect();
 
@@ -1932,6 +1924,44 @@ pub fn get_folder_files(
             .collect()
     }
 
+    // Live Photo components are hidden before filtering; RAW pairs are only
+    // collapsed if the primary also survives the file type filter.
+    files = hide_live_photo_companion_videos(files, false);
+    files.retain(|file| matches_file_type_filter(file_type, file.file_type.unwrap_or_default()));
+    if group_raw_jpeg_pairs { files = hide_live_photo_companion_videos(files, true); }
+    files
+}
+
+#[cfg(test)]
+mod folder_type_pair_tests {
+    use super::*;
+
+    #[test]
+    fn raw_type_filter_deduplicates_after_filter_but_live_photo_stays_hidden() {
+        let files = || vec![
+            AFile { id: Some(1), file_type: Some(3), media_subtype: Some("raw_jpeg_pair".into()), live_photo_video_id: Some(2), ..Default::default() },
+            AFile { id: Some(2), file_type: Some(1), ..Default::default() },
+            AFile { id: Some(3), file_type: Some(1), media_subtype: Some("live_photo".into()), live_photo_video_id: Some(4), ..Default::default() },
+            AFile { id: Some(4), file_type: Some(2), ..Default::default() },
+        ];
+        let ids = |filter, group| filter_folder_file_types(files(), filter, group).iter().map(|f| f.id.unwrap()).collect::<Vec<_>>();
+        assert_eq!(ids(0, true), vec![1,3]);
+        assert_eq!(ids(1, true), vec![2,3]);
+        assert_eq!(ids(4, true), vec![1]);
+        assert_eq!(ids(2, true), Vec::<i64>::new());
+        assert_eq!(ids(0, false), vec![1,2,3]);
+    }
+}
+
+/// Get all files in a folder (not including subfolders).
+/// Returns (files, new_count, updated_count).
+pub fn get_folder_files(
+    file_type: i64, sort_type: i64, sort_order: i64, folder_id: i64,
+    folder_path: &str, from_db_only: bool, group_raw_jpeg_pairs: bool,
+) -> (Vec<AFile>, u32, u32) {
+    // The caller holds the library lock. Direct filesystem enumeration must
+    // not race file mutations or a full album scan.
+    let _permit = (!from_db_only).then(|| RAW_FOLDER_MUTATION_GATE.acquire(true));
     let mut new_count = 0;
     let mut updated_count = 0;
     let folder = match AFolder::fetch(folder_path) {
@@ -2003,9 +2033,7 @@ pub fn get_folder_files(
                         } else if status == 2 {
                             updated_count += 1;
                         }
-                        if matches_file_type_filter(file_type, ftype) {
-                            file_list.push(file);
-                        }
+                        file_list.push(file);
                     }
                     Err(e) => {
                         eprintln!("Failed to add file to DB: {} ({})", file_path_str, e);
@@ -2024,8 +2052,7 @@ pub fn get_folder_files(
         let height = file.height.unwrap_or(0);
         width == 0 || height == 0 || width >= threshold || height >= threshold
     });
-    files = hide_live_photo_companion_videos(files);
-    files.retain(|file| matches_file_type_filter(file_type, file.file_type.unwrap_or_default()));
+    files = filter_folder_file_types(files, file_type, group_raw_jpeg_pairs);
 
     files.sort_by(|a, b| {
         let ordering = match sort_type {
@@ -2105,6 +2132,103 @@ fn is_path_not_found(err: &str) -> bool {
 /// starts the previous one is cancelled (its generation is invalidated).
 static FOLDER_SYNC_GENERATION: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
 static ACTIVE_ALBUM_SCANS: Lazy<Mutex<HashSet<i64>>> = Lazy::new(|| Mutex::new(HashSet::new()));
+
+// Owned permits allow an async full scan to retain exclusive ownership across
+// awaits without holding a thread-bound std mutex guard. Never acquire the
+// library lock or an album lock while waiting for this gate: lock order is
+// library -> gate -> album. Waiting writers prevent an endless stream of file
+// mutations from starving a scan.
+#[derive(Default)]
+struct FilesystemGateState { readers: usize, writer: bool, waiting_writers: usize }
+#[derive(Default)]
+struct FilesystemGate { state: Mutex<FilesystemGateState>, changed: std::sync::Condvar }
+struct FilesystemPermit { gate: Arc<FilesystemGate>, exclusive: bool }
+impl FilesystemGate {
+    fn try_mutation(self: &Arc<Self>) -> Result<FilesystemPermit, String> {
+        let mut state = self.state.lock().unwrap_or_else(|e| e.into_inner());
+        if state.writer || state.waiting_writers > 0 {
+            return Err("Library scan or folder recovery is in progress; retry the file operation".into());
+        }
+        state.readers += 1;
+        Ok(FilesystemPermit { gate: Arc::clone(self), exclusive: false })
+    }
+
+    fn acquire(self: &Arc<Self>, exclusive: bool) -> FilesystemPermit {
+        let mut state = self.state.lock().unwrap_or_else(|e| e.into_inner());
+        if exclusive { state.waiting_writers += 1; }
+        while state.writer || (exclusive && state.readers > 0) || (!exclusive && state.waiting_writers > 0) {
+            state = self.changed.wait(state).unwrap_or_else(|e| e.into_inner());
+        }
+        if exclusive { state.waiting_writers -= 1; state.writer = true; } else { state.readers += 1; }
+        FilesystemPermit { gate: Arc::clone(self), exclusive }
+    }
+}
+impl Drop for FilesystemPermit {
+    fn drop(&mut self) {
+        let mut state = self.gate.state.lock().unwrap_or_else(|e| e.into_inner());
+        if self.exclusive { state.writer = false; } else { state.readers -= 1; }
+        self.gate.changed.notify_all();
+    }
+}
+static RAW_FOLDER_MUTATION_GATE: Lazy<Arc<FilesystemGate>> = Lazy::new(|| Arc::new(FilesystemGate::default()));
+
+#[cfg(test)]
+pub(crate) fn test_scan_permit() -> impl Send { RAW_FOLDER_MUTATION_GATE.acquire(true) }
+
+pub struct RawFolderMutation {
+    _guard: FilesystemPermit,
+}
+
+fn register_dirty_folders_on(conn: &mut rusqlite::Connection, paths: &[&str], subtree: bool) -> Result<(), String> {
+    let tx = conn.transaction().map_err(|e| e.to_string())?;
+    for path in paths.iter().copied().collect::<HashSet<_>>() {
+        let mut candidate = Some(Path::new(path));
+        let mut recursive = subtree;
+        while let Some(directory) = candidate {
+            let path = directory.to_str().ok_or("Directory path is not UTF-8")?;
+            let changed = tx.execute(
+                "INSERT INTO dirty_operation_folders(folder_id, generation, subtree)
+                 SELECT id, 1, ?2 FROM afolders WHERE path = ?1
+                 ON CONFLICT(folder_id) DO UPDATE SET generation = generation + 1,
+                     subtree = MAX(subtree, excluded.subtree)",
+                rusqlite::params![path, recursive],
+            ).map_err(|e| e.to_string())?;
+            if changed > 0 { break; }
+            candidate = directory.parent();
+            recursive = true;
+        }
+    }
+    tx.commit().map_err(|e| e.to_string())
+}
+
+fn dirty_folder_current_on(conn: &rusqlite::Connection, folder_id: i64) -> Result<Option<(i64, String, i64, bool)>, String> {
+    use rusqlite::OptionalExtension;
+    conn.query_row("SELECT f.album_id, f.path, d.generation, d.subtree FROM dirty_operation_folders d JOIN afolders f ON f.id=d.folder_id WHERE f.id=?1", [folder_id], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)))
+        .optional().map_err(|e| e.to_string())
+}
+
+fn acknowledge_dirty_folder_on(conn: &rusqlite::Connection, folder_id: i64, generation: i64) -> Result<usize, String> {
+    conn.execute(
+        "DELETE FROM dirty_operation_folders WHERE folder_id = ?1 AND generation = ?2",
+        rusqlite::params![folder_id, generation],
+    ).map_err(|e| e.to_string())
+}
+
+impl RawFolderMutation {
+    /// Caller must hold FILE_REFRESH_LIBRARY_LOCK for the complete operation.
+    /// Failure must abort the operation before any filesystem writes.
+    pub fn begin(paths: &[&str]) -> Result<Self, String> { Self::begin_inner(paths, false) }
+
+    /// Use for directory copies/imports whose new descendants are not indexed.
+    pub fn begin_subtree(paths: &[&str]) -> Result<Self, String> { Self::begin_inner(paths, true) }
+
+    fn begin_inner(paths: &[&str], subtree: bool) -> Result<Self, String> {
+        let guard = RAW_FOLDER_MUTATION_GATE.try_mutation()?;
+        let mut conn = crate::t_sqlite::open_conn()?;
+        register_dirty_folders_on(&mut conn, paths, subtree)?;
+        Ok(Self { _guard: guard })
+    }
+}
 #[derive(Default)]
 struct AlbumAccessibilityCache {
     generation: u64,
@@ -2225,11 +2349,23 @@ fn sync_generation_valid(generation: u64) -> bool {
 }
 
 pub fn start_folder_mtime_sync(app_handle: tauri::AppHandle) {
+    schedule_dirty_folder_recovery(app_handle.clone());
+    let library_id = match crate::t_config::current_library_id() {
+        Ok(id) => id,
+        Err(error) => { eprintln!("Cannot start folder sync: {}", error); return; }
+    };
     let generation = FOLDER_SYNC_GENERATION
         .fetch_add(1, std::sync::atomic::Ordering::SeqCst)
         .wrapping_add(1);
 
     tauri::async_runtime::spawn_blocking(move || {
+        let _library = match crate::t_cmds::FILE_REFRESH_LIBRARY_LOCK.read() {
+            Ok(guard) => guard,
+            Err(error) => { eprintln!("Folder sync library lock failed: {}", error); return; }
+        };
+        if crate::t_config::current_library_id().ok().as_deref() != Some(library_id.as_str()) { return; }
+        let _permit = RAW_FOLDER_MUTATION_GATE.acquire(true);
+        if !sync_generation_valid(generation) { return; }
         match sync_dirty_folders_by_mtime(generation) {
             Ok((result, tasks)) => {
                 if !sync_generation_valid(generation) {
@@ -2238,7 +2374,7 @@ pub fn start_folder_mtime_sync(app_handle: tauri::AppHandle) {
                 if !result.folder_path_migrations.is_empty() {
                     let _ = app_handle.emit(
                         "album-folder-paths-migrated",
-                        &result.folder_path_migrations,
+                        serde_json::json!({ "libraryId": library_id, "migrations": result.folder_path_migrations }),
                     );
                 }
                 for task in tasks {
@@ -2357,7 +2493,9 @@ fn sync_dirty_folders_by_mtime(
             &folder.path,
             generation,
             needs_live_photo_reindex,
+            false,
         )?;
+        AFile::pair_raw_jpeg_in_folder(folder_id)?;
         new_file_count += outcome.new_file_count;
         updated_file_count += outcome.updated_file_count;
         deleted_file_count += outcome.deleted_file_count;
@@ -2492,6 +2630,7 @@ fn sync_folder_direct_files(
     folder_path: &str,
     generation: u64,
     full_live_photo_reindex: bool,
+    strict: bool,
 ) -> Result<FolderSyncOutcome, String> {
     let album = Album::get_album_by_id(album_id)?;
     if album.excludes_path(Path::new(folder_path)) { return Ok(FolderSyncOutcome::default()); }
@@ -2513,7 +2652,9 @@ fn sync_folder_direct_files(
     // file has been renamed and the old path no longer exists on disk.
     let db_inodes: HashMap<u64, (i64, String)> = {
         let mut map = HashMap::new();
-        if let Ok(files) = AFile::get_files_by_folder_id(folder_id) {
+        let files_result = AFile::get_files_by_folder_id(folder_id);
+        if strict && files_result.is_err() { return Err(files_result.err().unwrap()); }
+        if let Ok(files) = files_result {
             for file in files {
                 if let (Some(id), Some(inode)) = (file.id, file.inode) {
                     if inode > 0 {
@@ -2576,6 +2717,9 @@ fn sync_folder_direct_files(
                 } else {
                     AFile::update_path(db_id, file_path_str, scan_time)
                 };
+                if strict && !matches!(&renamed_file, Ok(Some(_))) {
+                    return Err(format!("Failed to update renamed file {}: {:?}", file_path_str, renamed_file.err()));
+                }
                 if let Ok(Some(updated_file)) = renamed_file {
                     rename_count += 1;
                     if is_live_photo_candidate_name(&file_name) {
@@ -2626,6 +2770,7 @@ fn sync_folder_direct_files(
                         }
                     }
                     Err(e) => {
+                        if strict { return Err(format!("Failed to index {}: {}", file_path_str, e)); }
                         eprintln!(
                             "sync_folder: failed to add file to DB: {} ({})",
                             file_path_str, e
@@ -2651,7 +2796,9 @@ fn sync_folder_direct_files(
     }
     let deleted_count: u32 = {
         let mut count = 0u32;
-        if let Ok(files) = AFile::get_files_by_folder_id(folder_id) {
+        let files_result = AFile::get_files_by_folder_id(folder_id);
+        if strict && files_result.is_err() { return Err(files_result.err().unwrap()); }
+        if let Ok(files) = files_result {
             for file in files {
                 if !file.album_visible || seen_names.contains(&file.name) {
                     continue;
@@ -2667,7 +2814,9 @@ fn sync_folder_direct_files(
                     if is_cancelled() {
                         return Ok(FolderSyncOutcome::default());
                     }
-                    if AFile::delete(id).is_ok() {
+                    let deleted = AFile::delete(id);
+                    if strict && deleted.is_err() { return Err(deleted.err().unwrap()); }
+                    if deleted.is_ok() {
                         count += 1;
                         if is_live_photo_candidate_name(&file.name) {
                             live_photo_affected_names.insert(file.name.clone());
@@ -2718,6 +2867,7 @@ fn sync_folder_direct_files(
             )
         })?;
     } else if let Err(error) = pairing_result {
+        if strict { return Err(format!("Failed to pair Live Photos in {}: {}", folder_path, error)); }
         eprintln!(
             "Failed to pair Live Photos in folder {}: {}",
             folder_path, error
@@ -2779,14 +2929,7 @@ fn pair_live_photos_after_album_index(album_id: i64) -> Result<(), String> {
 /// Photo pairing.  Doing this after an album scan covers files which already
 /// existed before grouping was enabled and folders not touched by an
 /// incremental mtime sync.
-fn reconcile_raw_jpeg_pairs_after_album_index(
-    album_id: i64,
-    group_raw_jpeg_pairs: bool,
-) -> Result<(), String> {
-    if !group_raw_jpeg_pairs {
-        AFile::clear_raw_jpeg_pairs_in_album(album_id)?;
-        return Ok(());
-    }
+fn reconcile_raw_jpeg_pairs_after_album_index(album_id: i64) -> Result<(), String> {
     for folder in AFolder::get_all()?
         .into_iter()
         .filter(|folder| folder.album_id == album_id)
@@ -2795,6 +2938,142 @@ fn reconcile_raw_jpeg_pairs_after_album_index(
             .id
             .ok_or_else(|| format!("Folder has no id: {}", folder.path))?;
         AFile::pair_raw_jpeg_in_folder(folder_id)?;
+        FolderScanState::mark_completed(folder_id, "raw_pairing", 1)?;
+    }
+    Ok(())
+}
+
+/// Backfill the derived RAW pair index for the current library. A false result
+/// means at least one album was busy; the caller must retry after indexing.
+pub fn backfill_raw_pair_index() -> Result<bool, String> {
+    // Caller holds the library lock; pairing must not see a half-finished
+    // filesystem operation or overlap a scan's database reconciliation.
+    let _permit = RAW_FOLDER_MUTATION_GATE.acquire(true);
+    let db_path = crate::t_storage::get_current_db_path()?;
+    let pending = FolderScanState::folders_needing_version("raw_pairing", 1)?;
+    let folders = AFolder::get_all()?;
+    let mut by_album: HashMap<i64, Vec<i64>> = HashMap::new();
+    for folder in folders {
+        if let Some(id) = folder.id.filter(|id| pending.contains(id)) {
+            by_album.entry(folder.album_id).or_default().push(id);
+        }
+    }
+    let mut complete = true;
+    for (album_id, folder_ids) in by_album {
+        if crate::t_storage::get_current_db_path()? != db_path {
+            return Err("Library changed during RAW pair backfill; retry in the new library".into());
+        }
+        let _scan_guard = match AlbumScanGuard::acquire(album_id) {
+            Ok(guard) => guard,
+            Err(_) => { complete = false; continue; }
+        };
+        let lock = album_sync_lock(album_id);
+        let _sync_guard = lock.lock().map_err(|_| format!("Album sync lock poisoned: {}", album_id))?;
+        if album_removal_pending(album_id) || Album::get_album_by_id(album_id).is_err() {
+            complete = false;
+            continue;
+        }
+        for folder_id in folder_ids {
+            if crate::t_storage::get_current_db_path()? != db_path {
+                return Err("Library changed during RAW pair backfill; retry in the new library".into());
+            }
+            if FolderScanState::needs_version(folder_id, "raw_pairing", 1)? {
+                AFile::pair_raw_jpeg_in_folder(folder_id)?;
+                FolderScanState::mark_completed(folder_id, "raw_pairing", 1)?;
+            }
+        }
+    }
+    Ok(complete)
+}
+
+/// Run a user-requested retry under the same library and mutation locks.
+pub fn retry_dirty_folder_recovery(app_handle: &tauri::AppHandle) -> Result<Vec<String>, String> {
+    let _library = crate::t_cmds::FILE_REFRESH_LIBRARY_LOCK.read().map_err(|e| e.to_string())?;
+    let _gate = RAW_FOLDER_MUTATION_GATE.acquire(true);
+    recover_dirty_folders(app_handle)
+}
+
+/// Retry all durable operation-related folder reconciliations. Busy or offline
+/// albums remain queued and are retried on the next scan completion or startup.
+pub fn schedule_dirty_folder_recovery(app_handle: tauri::AppHandle) {
+    tauri::async_runtime::spawn_blocking(move || {
+        let _library = match crate::t_cmds::FILE_REFRESH_LIBRARY_LOCK.read() {
+            Ok(guard) => guard,
+            Err(error) => { eprintln!("Dirty folder recovery library lock failed: {}", error); return; }
+        };
+        let _gate = RAW_FOLDER_MUTATION_GATE.acquire(true);
+        let library_id = crate::t_config::current_library_id().unwrap_or_default();
+        match recover_dirty_folders(&app_handle) {
+            Ok(failures) if failures.is_empty() => {
+                let _ = app_handle.emit("dirty-folder-recovery-finished", serde_json::json!({ "libraryId": library_id }));
+            }
+            Ok(failures) => {
+                let _ = app_handle.emit("dirty-folder-recovery-failed", serde_json::json!({ "libraryId": library_id, "pending": failures.len(), "error": failures[0] }));
+            }
+            Err(error) => {
+                eprintln!("Dirty folder recovery failed: {}", error);
+                let _ = app_handle.emit("dirty-folder-recovery-failed", serde_json::json!({ "libraryId": library_id, "pending": 1, "error": error }));
+            }
+        }
+    });
+}
+
+pub(crate) fn recover_dirty_folders(app_handle: &tauri::AppHandle) -> Result<Vec<String>, String> {
+    let mut pending: Vec<(i64, i64, String, i64, bool)> = {
+        let conn = crate::t_sqlite::open_conn()?;
+        let mut stmt = conn.prepare("SELECT f.id, f.album_id, f.path, d.generation, d.subtree
+            FROM dirty_operation_folders d JOIN afolders f ON f.id = d.folder_id")
+            .map_err(|e| e.to_string())?;
+        let rows = stmt.query_map([], |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?, row.get(4)?)))
+            .map_err(|e| e.to_string())?;
+        rows.collect::<Result<Vec<_>, _>>().map_err(|e| e.to_string())?
+    };
+    // Reconcile parents first: discovering a renamed child can migrate its
+    // existing database id. Always re-read that id before processing it.
+    pending.sort_by_key(|(_, _, path, _, _)| Path::new(path).components().count());
+    let mut changed = false;
+    let mut failures = Vec::new();
+    for (folder_id, _, _, _, _) in pending {
+        let current = { let conn = crate::t_sqlite::open_conn()?; dirty_folder_current_on(&conn, folder_id)? };
+        let Some((album_id, path, generation, subtree)) = current else { continue; };
+        let outcome = if subtree {
+            recover_dirty_subtree(app_handle, album_id, folder_id, &path)
+        } else {
+            sync_single_folder_impl(app_handle, album_id, folder_id, &path, true).map(|_| ())
+        };
+        match outcome {
+            Ok(_) => {
+                let conn = crate::t_sqlite::open_conn()?;
+                acknowledge_dirty_folder_on(&conn, folder_id, generation)?;
+                changed = true;
+            }
+            Err(error) => {
+                eprintln!("Dirty folder {} remains pending: {}", path, error);
+                failures.push(format!("{}: {}", path, error));
+            }
+        }
+    }
+    if changed { let _ = app_handle.emit("refresh-content", ()); }
+    Ok(failures)
+}
+
+// A file operation can create a whole directory tree before any of the new
+// subfolders exist in SQLite. Reconcile every discovered child, not merely
+// the root's direct files, and only acknowledge the root after all succeed.
+fn recover_dirty_subtree(app_handle: &tauri::AppHandle, album_id: i64, folder_id: i64, path: &str) -> Result<(), String> {
+    let album = Album::get_album_by_id(album_id)?;
+    let mut queue = VecDeque::from([(folder_id, path.to_string())]);
+    while let Some((id, current)) = queue.pop_front() {
+        sync_single_folder_impl(app_handle, album_id, id, &current, true)?;
+        if album.excludes_path(Path::new(&current)) { continue; }
+        for entry in fs::read_dir(&current).map_err(|e| e.to_string())? {
+            let entry = entry.map_err(|e| e.to_string())?;
+            if is_fs_entry_hidden(&entry) || !entry.file_type().map_err(|e| e.to_string())?.is_dir() || album.excludes_path(&entry.path()) { continue; }
+            let child = entry.path().to_string_lossy().into_owned();
+            let folder = AFolder::fetch(&child)?.ok_or_else(|| format!("Folder missing after reconciliation: {}", child))?;
+            if folder.album_id != album_id { return Err(format!("Folder belongs to another album: {}", child)); }
+            queue.push_back((folder.id.ok_or_else(|| format!("Folder has no id: {}", child))?, child));
+        }
     }
     Ok(())
 }
@@ -2805,20 +3084,31 @@ pub fn sync_single_folder(
     album_id: i64,
     folder_id: i64,
     folder_path: &str,
-    group_raw_jpeg_pairs: bool,
+    _group_raw_jpeg_pairs: bool,
+) -> Result<FolderMtimeSyncResult, String> {
+    let _permit = RAW_FOLDER_MUTATION_GATE.acquire(true);
+    sync_single_folder_impl(app_handle, album_id, folder_id, folder_path, false)
+}
+
+fn sync_single_folder_impl(
+    app_handle: &tauri::AppHandle,
+    album_id: i64,
+    folder_id: i64,
+    folder_path: &str,
+    force: bool,
 ) -> Result<FolderMtimeSyncResult, String> {
     // A complete album scan owns folder and file reconciliation for this
     // album. Skip foreground refreshes until it finishes to avoid concurrent
     // writes based on different filesystem snapshots.
     if album_scan_active(album_id) || album_removal_pending(album_id) {
-        return Ok(FolderMtimeSyncResult::default());
+        return if force { Err("Album is busy; folder reconciliation remains pending".into()) } else { Ok(FolderMtimeSyncResult::default()) };
     }
     let album_sync_lock = album_sync_lock(album_id);
     let _album_sync_guard = album_sync_lock
         .lock()
         .map_err(|_| format!("Album sync lock poisoned: {}", album_id))?;
     if album_scan_active(album_id) || album_removal_pending(album_id) {
-        return Ok(FolderMtimeSyncResult::default());
+        return if force { Err("Album is busy; folder reconciliation remains pending".into()) } else { Ok(FolderMtimeSyncResult::default()) };
     }
 
     let album = Album::get_album_by_id(album_id).map_err(|e| e.to_string())?;
@@ -2830,6 +3120,7 @@ pub fn sync_single_folder(
         Ok(info) => info,
         Err(e) => {
             if is_path_not_found(&e) {
+                if force { return Err(format!("Folder is not accessible: {}", folder_path)); }
                 // Keep missing folders until an explicit parent refresh can
                 // reconcile a rename or remove an intentionally deleted path.
                 return Ok(FolderMtimeSyncResult {
@@ -2880,15 +3171,9 @@ pub fn sync_single_folder(
     } else {
         (false, false)
     };
-    if info.modified == folder.modified_at && !needs_live_photo_reindex && !needs_cloud_indexing {
-        // An unchanged mtime-driven sync still reconciles the existing pair state.
-        // This is intentionally the only incremental path that receives the
-        // setting; changing Settings alone does not mutate the database.
-        let raw_pairing_changed = if group_raw_jpeg_pairs {
-            AFile::pair_raw_jpeg_in_folder(resolved_folder_id)? > 0
-        } else {
-            AFile::clear_raw_jpeg_pairs_in_folder(resolved_folder_id)? > 0
-        };
+    if !force && info.modified == folder.modified_at && !needs_live_photo_reindex && !needs_cloud_indexing {
+        // Pair associations are an index, independent of the display setting.
+        let raw_pairing_changed = AFile::pair_raw_jpeg_in_folder(resolved_folder_id)? > 0;
         let folder_layout_changed = new_folder_count > 0 || child_scan.deleted_folder_count > 0;
         let _ = FolderSubfolderState::update_after_scan(album_id, &[FolderSubfolderState {
             path: folder_path.to_string(),
@@ -2918,12 +3203,9 @@ pub fn sync_single_folder(
         folder_path,
         0,
         needs_live_photo_reindex,
+        force,
     )?; // 0 = foreground, never cancel
-    if group_raw_jpeg_pairs {
-        AFile::pair_raw_jpeg_in_folder(resolved_folder_id)?;
-    } else {
-        AFile::clear_raw_jpeg_pairs_in_folder(resolved_folder_id)?;
-    }
+    AFile::pair_raw_jpeg_in_folder(resolved_folder_id)?;
     for task in outcome.tasks {
         schedule_synced_file_processing(app_handle.clone(), task);
     }
@@ -2955,6 +3237,7 @@ pub fn refresh_album_subfolders(
     album_id: i64,
     folder_path: &str,
 ) -> Result<Vec<FolderPathMigration>, String> {
+    let _permit = RAW_FOLDER_MUTATION_GATE.acquire(true);
     if album_scan_active(album_id) {
         return Err("Album scan is already in progress.".to_string());
     }
@@ -3001,6 +3284,12 @@ fn should_process_synced_file(file: &AFile, file_type: i64, threshold: i64) -> b
 }
 
 fn schedule_synced_file_processing(app_handle: tauri::AppHandle, task: SyncedFileTask) {
+    // All callers schedule while holding the current library's read lock.
+    // Capture it before detaching; each later stage reacquires and validates.
+    let library_id = match crate::t_config::current_library_id() {
+        Ok(id) => id,
+        Err(error) => { eprintln!("Cannot schedule file processing: {}", error); return; }
+    };
     tauri::async_runtime::spawn(async move {
         if album_removal_pending(task.album_id) {
             return;
@@ -3010,7 +3299,9 @@ fn schedule_synced_file_processing(app_handle: tauri::AppHandle, task: SyncedFil
         let orientation = task.orientation;
         let file_id = task.file_id;
         let album_id = task.album_id;
+        let thumbnail_library = library_id.clone();
         let thumb_result = tauri::async_runtime::spawn_blocking(move || {
+            crate::t_cmds::with_current_library(&thumbnail_library, || {
             let album_sync_lock = album_sync_lock(album_id);
             let _album_sync_guard = match album_sync_lock.lock() {
                 Ok(guard) => guard,
@@ -3033,6 +3324,7 @@ fn schedule_synced_file_processing(app_handle: tauri::AppHandle, task: SyncedFil
                 None,
                 None,
             )
+            })
         })
         .await;
 
@@ -3045,6 +3337,7 @@ fn schedule_synced_file_processing(app_handle: tauri::AppHandle, task: SyncedFil
             serde_json::json!({
                 "album_id": task.album_id,
                 "file_ids": [task.file_id],
+                "library_id": library_id,
                 "invalidate": task.invalidate_thumbnail,
             }),
         );
@@ -3057,25 +3350,28 @@ fn schedule_synced_file_processing(app_handle: tauri::AppHandle, task: SyncedFil
         let file_path = task.file_path.clone();
         let album_id = task.album_id;
         let _ = tauri::async_runtime::spawn_blocking(move || {
-            let album_sync_lock = album_sync_lock(album_id);
-            let _album_sync_guard = match album_sync_lock.lock() {
-                Ok(guard) => guard,
-                Err(_) => return,
-            };
-            if album_removal_pending(album_id) || Album::get_album_by_id(album_id).is_err() {
-                return;
-            }
-            if !AFile::is_album_visible(task.file_id).unwrap_or(false) {
-                return;
-            }
-            if let Err(error) = crate::t_startup::ensure_ai(&app_handle_for_embedding, None) {
-                eprintln!("Failed to initialize AI for embedding: {}", error);
-                return;
-            }
-            let ai_state: tauri::State<crate::t_ai::AiState> = app_handle_for_embedding.state();
-            if let Err(e) = AFile::generate_embedding(&ai_state, task.file_id) {
-                eprintln!("Failed to generate embedding for {}: {}", file_path, e);
-            }
+            let _ = crate::t_cmds::with_current_library(&library_id, || {
+                let album_sync_lock = album_sync_lock(album_id);
+                let _album_sync_guard = match album_sync_lock.lock() {
+                    Ok(guard) => guard,
+                    Err(_) => return Ok(()),
+                };
+                if album_removal_pending(album_id) || Album::get_album_by_id(album_id).is_err() {
+                    return Ok(());
+                }
+                if !AFile::is_album_visible(task.file_id).unwrap_or(false) {
+                    return Ok(());
+                }
+                if let Err(error) = crate::t_startup::ensure_ai(&app_handle_for_embedding, None) {
+                    eprintln!("Failed to initialize AI for embedding: {}", error);
+                    return Ok(());
+                }
+                let ai_state: tauri::State<crate::t_ai::AiState> = app_handle_for_embedding.state();
+                if let Err(e) = AFile::generate_embedding(&ai_state, task.file_id) {
+                    eprintln!("Failed to generate embedding for {}: {}", file_path, e);
+                }
+                Ok(())
+            });
         })
         .await;
     });
@@ -3523,6 +3819,7 @@ pub fn dms_to_decimal(degrees: f64, minutes: f64, seconds: f64, direction: Optio
 
 #[derive(serde::Serialize, Clone)]
 struct ProgressPayload {
+    library_id: String,
     album_id: i64,
     phase: String,
     current: u64,
@@ -3542,6 +3839,7 @@ struct ProgressPayload {
 
 #[derive(serde::Serialize, Clone)]
 struct FinishedPayload {
+    library_id: String,
     album_id: i64,
     phase: String,
     indexed: u64,
@@ -3751,6 +4049,7 @@ impl ProgressSnapshot {
 
     fn to_payload(&self, album_id: i64) -> ProgressPayload {
         ProgressPayload {
+            library_id: crate::t_config::current_library_id().unwrap_or_default(),
             album_id,
             phase: self.phase().to_string(),
             current: self.processed,
@@ -4097,9 +4396,22 @@ pub async fn index_album_worker(
     thumbnail_size: u32,
     prefer_embedded_raw_thumbnail: RawDisplayOptions,
     skip_file_path: Option<String>,
-    group_raw_jpeg_pairs: bool,
+    _group_raw_jpeg_pairs: bool,
 ) -> Result<(), String> {
+    // Acquire on a blocking worker; the owned permit is Send and no mutex
+    // guard is retained across the async traversal or its thumbnail awaits.
+    let _filesystem_permit = tauri::async_runtime::spawn_blocking(|| RAW_FOLDER_MUTATION_GATE.acquire(true))
+        .await.map_err(|error| format!("Failed to acquire scan permit: {}", error))?;
     let _album_scan_guard = AlbumScanGuard::acquire(album_id)?;
+    // Drain an incremental sync that entered before the scan guard. Future
+    // syncs observe the guard and skip until this scan finishes.
+    {
+        let lock = album_sync_lock(album_id);
+        let _guard = lock.lock().map_err(|_| format!("Album sync lock poisoned: {}", album_id))?;
+        if album_removal_pending(album_id) {
+            return Err(format!("Album {} is being removed", album_id));
+        }
+    }
     let scan_start = std::time::Instant::now();
     // Generate a unique scan time for this session (current timestamp)
     let current_scan_time = Utc::now().timestamp_millis();
@@ -4113,6 +4425,7 @@ pub async fn index_album_worker(
             .emit(
                 "index_finished",
                 FinishedPayload {
+                    library_id: crate::t_config::current_library_id().unwrap_or_default(),
                     album_id,
                     phase: "complete".to_string(),
                     indexed: previous_indexed,
@@ -4137,6 +4450,7 @@ pub async fn index_album_worker(
         || cancellation_token.lock().map(|flags| flags.get(&album_id) == Some(&true)).unwrap_or(true));
     let Some((_folders, image_count, _image_size, video_count, _video_size, scan_total, scan_total_size)) = counts else {
         app_handle.emit("index_finished", FinishedPayload {
+            library_id: crate::t_config::current_library_id().unwrap_or_default(),
             album_id,
             phase: "discovering".to_string(),
             indexed: previous_indexed,
@@ -4427,10 +4741,7 @@ pub async fn index_album_worker(
                 album_id, error
             );
         }
-        if let Err(error) = reconcile_raw_jpeg_pairs_after_album_index(
-            album_id,
-            group_raw_jpeg_pairs,
-        ) {
+        if let Err(error) = reconcile_raw_jpeg_pairs_after_album_index(album_id) {
             eprintln!(
                 "Failed to pair RAW+JPEG files after indexing album {}: {}",
                 album_id, error
@@ -4497,6 +4808,7 @@ pub async fn index_album_worker(
         .emit(
             "index_finished",
             FinishedPayload {
+                library_id: crate::t_config::current_library_id().unwrap_or_default(),
                 album_id,
                 phase: final_snapshot.phase().to_string(),
                 indexed: if scan_failed {
@@ -4527,6 +4839,136 @@ pub async fn index_album_worker(
         .map_err(|e| e.to_string())?;
 
     Ok(())
+}
+
+#[cfg(test)]
+mod dirty_folder_tests {
+    use super::*;
+
+    #[test]
+    fn recovery_cannot_enter_while_an_operation_is_in_flight() {
+        let gate = Arc::new(FilesystemGate::default());
+        let operation = gate.acquire(false);
+        let (started_tx, started_rx) = std::sync::mpsc::channel();
+        let (entered_tx, entered_rx) = std::sync::mpsc::channel();
+        let other_gate = Arc::clone(&gate);
+        let worker = std::thread::spawn(move || {
+            started_tx.send(()).unwrap();
+            let _scan = other_gate.acquire(true);
+            entered_tx.send(()).unwrap();
+        });
+        started_rx.recv().unwrap();
+        assert!(entered_rx.try_recv().is_err());
+        drop(operation);
+        entered_rx.recv_timeout(Duration::from_secs(2)).unwrap();
+        worker.join().unwrap();
+    }
+
+    #[test]
+    fn exclusive_scan_permit_can_be_held_across_await() {
+        fn assert_send<T: Send>(_: T) {}
+        let gate = Arc::new(FilesystemGate::default());
+        assert_send(async move {
+            let permit = gate.acquire(true);
+            std::future::ready(()).await;
+            drop(permit);
+        });
+    }
+
+    #[test]
+    fn mutation_returns_busy_instead_of_blocking_during_scan() {
+        let gate = Arc::new(FilesystemGate::default());
+        let scan = gate.acquire(true);
+        assert!(gate.try_mutation().is_err());
+        drop(scan);
+        assert!(gate.try_mutation().is_ok());
+    }
+
+    #[test]
+    fn pending_folder_survives_database_reopen() {
+        let path = std::env::temp_dir().join(format!("lap-dirty-test-{}.sqlite", uuid::Uuid::new_v4()));
+        {
+            let mut conn = rusqlite::Connection::open(&path).unwrap();
+            conn.execute_batch("CREATE TABLE afolders(id INTEGER PRIMARY KEY, path TEXT);
+                CREATE TABLE dirty_operation_folders(folder_id INTEGER PRIMARY KEY, generation INTEGER NOT NULL, subtree INTEGER NOT NULL DEFAULT 0);
+                INSERT INTO afolders VALUES(1, '/source');").unwrap();
+            register_dirty_folders_on(&mut conn, &["/source"], false).unwrap();
+        }
+        {
+            let conn = rusqlite::Connection::open(&path).unwrap();
+            let generation: i64 = conn.query_row("SELECT generation FROM dirty_operation_folders WHERE folder_id=1", [], |r| r.get(0)).unwrap();
+            assert_eq!(generation, 1);
+            assert_eq!(acknowledge_dirty_folder_on(&conn, 1, generation).unwrap(), 1);
+        }
+        fs::remove_file(path).unwrap();
+    }
+
+    #[test]
+    fn queued_folder_is_reresolved_after_move_or_delete() {
+        let conn = rusqlite::Connection::open_in_memory().unwrap();
+        conn.execute_batch("PRAGMA foreign_keys=ON;
+            CREATE TABLE afolders(id INTEGER PRIMARY KEY, album_id INTEGER, path TEXT);
+            CREATE TABLE dirty_operation_folders(folder_id INTEGER PRIMARY KEY REFERENCES afolders(id) ON DELETE CASCADE, generation INTEGER NOT NULL, subtree INTEGER NOT NULL DEFAULT 0);
+            INSERT INTO afolders VALUES(1, 10, '/old'); INSERT INTO dirty_operation_folders VALUES(1, 2, 1);").unwrap();
+        conn.execute("UPDATE afolders SET path='/new', album_id=11 WHERE id=1", []).unwrap();
+        assert_eq!(dirty_folder_current_on(&conn, 1).unwrap(), Some((11, "/new".to_string(), 2, true)));
+        conn.execute("DELETE FROM afolders WHERE id=1", []).unwrap();
+        assert_eq!(dirty_folder_current_on(&conn, 1).unwrap(), None);
+    }
+
+    #[test]
+    fn subtree_requests_are_never_downgraded_and_missing_children_mark_ancestor() {
+        let mut conn = rusqlite::Connection::open_in_memory().unwrap();
+        conn.execute_batch("CREATE TABLE afolders(id INTEGER PRIMARY KEY, path TEXT);
+            CREATE TABLE dirty_operation_folders(folder_id INTEGER PRIMARY KEY, generation INTEGER NOT NULL, subtree INTEGER NOT NULL DEFAULT 0);
+            INSERT INTO afolders VALUES(1, '/source');").unwrap();
+        register_dirty_folders_on(&mut conn, &["/source"], false).unwrap();
+        let state = |conn: &rusqlite::Connection| -> (i64, bool) {
+            conn.query_row("SELECT generation, subtree FROM dirty_operation_folders WHERE folder_id=1", [], |r| Ok((r.get(0)?, r.get(1)?))).unwrap()
+        };
+        assert_eq!(state(&conn), (1, false));
+        register_dirty_folders_on(&mut conn, &["/source/new/child"], false).unwrap();
+        assert_eq!(state(&conn), (2, true));
+        register_dirty_folders_on(&mut conn, &["/source"], false).unwrap();
+        assert_eq!(state(&conn), (3, true));
+        assert_eq!(acknowledge_dirty_folder_on(&conn, 1, 2).unwrap(), 0);
+    }
+
+    #[test]
+    fn registration_failure_rolls_back_every_folder() {
+        let mut conn = rusqlite::Connection::open_in_memory().unwrap();
+        conn.execute_batch("CREATE TABLE afolders(id INTEGER PRIMARY KEY, path TEXT);
+            CREATE TABLE dirty_operation_folders(folder_id INTEGER PRIMARY KEY, generation INTEGER NOT NULL, subtree INTEGER NOT NULL DEFAULT 0);
+            INSERT INTO afolders VALUES(1, '/source'),(2, '/target');
+            CREATE TRIGGER fail_dirty BEFORE INSERT ON dirty_operation_folders
+            WHEN NEW.folder_id = 2 BEGIN SELECT RAISE(ABORT, 'disk error'); END;").unwrap();
+        assert!(register_dirty_folders_on(&mut conn, &["/source", "/target"], false).is_err());
+        assert_eq!(conn.query_row("SELECT COUNT(*) FROM dirty_operation_folders", [], |r| r.get::<_, i64>(0)).unwrap(), 0);
+    }
+
+    #[test]
+    fn persistent_dirty_generations_deduplicate_and_reject_stale_acknowledgement() {
+        let mut conn = rusqlite::Connection::open_in_memory().unwrap();
+        conn.execute_batch("PRAGMA foreign_keys=ON;
+            CREATE TABLE afolders(id INTEGER PRIMARY KEY, path TEXT);
+            CREATE TABLE dirty_operation_folders(folder_id INTEGER PRIMARY KEY REFERENCES afolders(id) ON DELETE CASCADE, generation INTEGER NOT NULL, subtree INTEGER NOT NULL DEFAULT 0);
+            INSERT INTO afolders VALUES(1, '/source'),(2, '/target');").unwrap();
+        register_dirty_folders_on(&mut conn, &["/source", "/target", "/source", "/external"], false).unwrap();
+        let generation = |conn: &rusqlite::Connection, id| -> i64 {
+            conn.query_row("SELECT generation FROM dirty_operation_folders WHERE folder_id=?1", [id], |r| r.get(0)).unwrap()
+        };
+        assert_eq!(generation(&conn, 1), 1);
+        assert_eq!(generation(&conn, 2), 1);
+        register_dirty_folders_on(&mut conn, &["/source"], false).unwrap();
+        assert_eq!(generation(&conn, 1), 2);
+        assert_eq!(acknowledge_dirty_folder_on(&conn, 1, 1).unwrap(), 0);
+        assert_eq!(generation(&conn, 1), 2);
+        assert_eq!(acknowledge_dirty_folder_on(&conn, 1, 2).unwrap(), 1);
+        // A failed/unfinished operation leaves the other directory queued.
+        assert_eq!(generation(&conn, 2), 1);
+        conn.execute("DELETE FROM afolders WHERE id=2", []).unwrap();
+        assert_eq!(conn.query_row("SELECT COUNT(*) FROM dirty_operation_folders", [], |r| r.get::<_, i64>(0)).unwrap(), 0);
+    }
 }
 
 #[cfg(test)]

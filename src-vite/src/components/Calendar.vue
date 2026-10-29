@@ -268,6 +268,10 @@ watch(fileInfoRevision, async () => {
   if (libConfig.activePane === 'main' && config.main.sidebarIndex === SIDEBAR.CALENDAR) await getCalendarDates(true);
 });
 
+watch(() => config.settings.groupRawJpegPairs, async () => {
+  if (libConfig.activePane === 'main' && config.main.sidebarIndex === SIDEBAR.CALENDAR) await getCalendarDates(true);
+});
+
 // Only refresh the active view. Inactive panel data is refreshed on re-entry.
 watch(() => [config.settings.calendarSort], async () => {
   if (libConfig.activePane === 'main' && config.main.sidebarIndex === SIDEBAR.CALENDAR) await getCalendarDates();

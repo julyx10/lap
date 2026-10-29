@@ -882,6 +882,10 @@ pub struct EditParams {
     saturation: Option<f32>, // multiplier, 1.0 is normal
 }
 
+impl EditParams {
+    pub(crate) fn destination_path(&self) -> &str { &self.dest_file_path }
+}
+
 /// edit an image and save to dest file
 pub async fn edit_image(params: EditParams) -> bool {
     if let Ok(img) = get_edited_image(&params).await {

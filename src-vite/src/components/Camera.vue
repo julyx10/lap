@@ -71,7 +71,7 @@
               @click.stop="clickExpand(item)"
             />
             <span class="sidebar-item-label">{{ item.make }}</span>
-            <span class="sidebar-item-count">{{ item.counts.reduce((a: number, b: number) => a + b, 0).toLocaleString() }}</span>
+            <span class="sidebar-item-count">{{ (item.parent_count ?? item.counts.reduce((a: number, b: number) => a + b, 0)).toLocaleString() }}</span>
           </div>
           <ul v-if="(item.is_expanded || hasSearch) && item.models.length > 0">
             <li v-for="(model, index) in item.models" :key="`${item.make}-${model}`" class="pl-4">
@@ -191,6 +191,10 @@ onMounted(async () => {
 
 // Keep the current filter even if its last file moves out of this category.
 watch(fileInfoRevision, async () => {
+  if (libConfig.activePane === 'main' && config.main.sidebarIndex === SIDEBAR.CAMERA) await loadCameraInfo(true);
+});
+
+watch(() => config.settings.groupRawJpegPairs, async () => {
   if (libConfig.activePane === 'main' && config.main.sidebarIndex === SIDEBAR.CAMERA) await loadCameraInfo(true);
 });
 

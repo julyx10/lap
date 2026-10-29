@@ -56,6 +56,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n';
 import ModalDialog from '@/components/ModalDialog.vue';
 import { batchRenameFiles, previewBatchRename } from '@/common/api';
+import { config } from '@/common/config';
 import { useUIStore } from '@/stores/uiStore';
 
 const props = defineProps<{ files: any[]; libraryId: string }>();
@@ -75,6 +76,7 @@ let generation = 0;
 let disposed = false;
 const options = computed(() => ({ name: name.value, start: start.value, digits: digits.value }));
 const ids = props.files.map(file => Number(file.id));
+const groupRawJpegPairs = Boolean(config.settings.groupRawJpegPairs);
 const visibleItems = computed(() => (preview.value?.items || []).slice(0, 100));
 const canSubmit = computed(() => !pending.value && !saving.value && !error.value && preview.value?.items.length > 0);
 
@@ -89,7 +91,7 @@ function refreshPreview(delay = 0) {
       return;
     }
     try {
-      const result = await previewBatchRename(props.libraryId, ids, options.value);
+      const result = await previewBatchRename(props.libraryId, ids, options.value, groupRawJpegPairs);
       if (disposed || request !== generation) return;
       if (preview.value && preview.value.items.length === result.items.length
         && preview.value.items.every((item: any, index: number) => item.id === result.items[index].id && item.oldName === result.items[index].oldName)) {
@@ -117,7 +119,7 @@ async function submit() {
   if (!canSubmit.value) return;
   saving.value = true;
   try {
-    const result = await batchRenameFiles(props.libraryId, ids, options.value, preview.value.items);
+    const result = await batchRenameFiles(props.libraryId, ids, options.value, preview.value.items, groupRawJpegPairs);
     emit('done', result);
   } catch (reason) {
     error.value = String(reason);

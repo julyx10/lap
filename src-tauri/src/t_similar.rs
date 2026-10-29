@@ -51,6 +51,7 @@ pub struct SimilarState {
 struct VectorFile {
     id: i64,
     taken_date: i64,
+    is_raw: bool,
     vector: Vec<f32>,
 }
 
@@ -77,6 +78,10 @@ fn resolve_scope(
 
 fn load_vectors(conn: &Connection, files: Vec<AFile>) -> Result<Vec<VectorFile>, String> {
     let duplicate_ids = exact_duplicate_file_ids(conn)?;
+    let raw_ids: HashSet<i64> = files.iter()
+        .filter(|file| file.file_type == Some(3))
+        .filter_map(|file| file.id)
+        .collect();
     let dates = eligible_dates(files)
         .into_iter()
         .filter(|(id, _)| !duplicate_ids.contains(id))
@@ -107,6 +112,7 @@ fn load_vectors(conn: &Connection, files: Vec<AFile>) -> Result<Vec<VectorFile>,
                 vectors.push(VectorFile {
                     id,
                     taken_date: *dates.get(&id).unwrap_or(&0),
+                    is_raw: raw_ids.contains(&id),
                     vector,
                 });
             }
@@ -259,6 +265,15 @@ pub fn get_status(state: tauri::State<'_, SimilarState>) -> SimilarScanStatus {
     state.status.lock().unwrap().clone()
 }
 
+// RAW originals and rendered images are different deliverables, not cleanup
+// alternatives. Keep the two classes separate even when their embeddings match.
+fn similar_score(a: &VectorFile, b: &VectorFile) -> Option<f32> {
+    if a.is_raw != b.is_raw {
+        return None;
+    }
+    Some(cosine(&a.vector, &b.vector))
+}
+
 fn cosine(a: &[f32], b: &[f32]) -> f32 {
     let (mut dot, mut an, mut bn) = (0.0f32, 0.0f32, 0.0f32);
     for (x, y) in a.iter().zip(b) {
@@ -314,7 +329,7 @@ fn scan(
                 if j == i || vectors[j].vector.len() != file.vector.len() {
                     continue;
                 }
-                let score = cosine(&file.vector, &vectors[j].vector);
+                let Some(score) = similar_score(file, &vectors[j]) else { continue };
                 if score >= similarity_threshold {
                     pair_scores.insert((i.min(j), i.max(j)), score);
                 }
@@ -563,6 +578,47 @@ pub fn set_keep(group_id: i64, file_id: i64, scope_key: &str) -> Result<(), Stri
     )
     .map_err(|e| e.to_string())?;
     tx.commit().map_err(|e| e.to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn image(id: i64, is_raw: bool) -> VectorFile {
+        VectorFile { id, is_raw, taken_date: 0, vector: vec![1.0, 0.0] }
+    }
+
+    #[test]
+    fn raw_and_rendered_images_are_not_cleanup_alternatives() {
+        let raw = image(1, true);
+        let jpeg = image(2, false);
+        assert_eq!(similar_score(&raw, &jpeg), None);
+        assert_eq!(similar_score(&jpeg, &raw), None);
+        assert_eq!(similar_score(&raw, &image(3, true)), Some(1.0));
+        assert_eq!(similar_score(&jpeg, &image(4, false)), Some(1.0));
+    }
+
+    // Explicit opt-in: inspect real input names without modifying any photos.
+    #[test]
+    fn photo_directory_raw_pairs() {
+        let Ok(dir) = std::env::var("LAP_TEST_PHOTO_DIR") else { return };
+        let mut pairs: HashMap<String, (bool, bool)> = HashMap::new();
+        for entry in std::fs::read_dir(dir).unwrap() {
+            let path = entry.unwrap().path();
+            let kind = crate::t_utils::get_file_type(&path.to_string_lossy());
+            if !matches!(kind, Some(1 | 3)) { continue; }
+            let stem = path.file_stem().unwrap().to_string_lossy().to_ascii_lowercase();
+            let pair = pairs.entry(stem).or_default();
+            if kind == Some(3) { pair.0 = true; } else { pair.1 = true; }
+        }
+        let paired = pairs.values().filter(|&&(raw, jpeg)| raw && jpeg).count();
+        assert!(paired > 0, "No RAW/rendered pairs in test directory");
+        for _ in 0..paired {
+            // Identical visual vectors must still not create a cross-format edge.
+            assert_eq!(similar_score(&image(1, true), &image(2, false)), None);
+        }
+        eprintln!("Verified {paired} RAW/rendered pairs: no cross-format similarity edges");
+    }
 }
 
 pub fn has_scan(scope_key: &str) -> Result<bool, String> {
