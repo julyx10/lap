@@ -34,7 +34,7 @@ jobs:
     steps:
       - id: set-matrix
         run: |
-          ALL_TARGETS='[{"platform":"macos-15","target":"aarch64-apple-darwin","arch":"aarch64"},{"platform":"macos-15-intel","target":"x86_64-apple-darwin","arch":"x86_64"},{"platform":"ubuntu-22.04","target":"x86_64-unknown-linux-gnu","arch":"x86_64"},{"platform":"ubuntu-24.04-arm","target":"aarch64-unknown-linux-gnu","arch":"aarch64"}]'
+          ALL_TARGETS='[{"platform":"macos-15","target":"aarch64-apple-darwin","arch":"aarch64"},{"platform":"macos-15-intel","target":"x86_64-apple-darwin","arch":"x86_64"},{"platform":"ubuntu-24.04","target":"x86_64-unknown-linux-gnu","arch":"x86_64"},{"platform":"ubuntu-24.04-arm","target":"aarch64-unknown-linux-gnu","arch":"aarch64"}]'
           
           if [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ "${{ github.event.inputs.build_target }}" != "all" ]; then
             SELECTED_TARGET=$(echo "$ALL_TARGETS" | jq -c "[.[] | select(.target == \"${{ github.event.inputs.build_target }}\")]")

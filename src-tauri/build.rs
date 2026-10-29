@@ -70,6 +70,8 @@ fn build_libheif() {
         .arg("-DENABLE_EXPERIMENTAL_FEATURES=OFF")
         .arg("-DENABLE_EXPERIMENTAL_MINI_FORMAT=OFF")
         .arg("-DWITH_EXAMPLES=OFF")
+        // heifio still probes TIFF without examples; Lap only links the heif target.
+        .arg("-DCMAKE_DISABLE_FIND_PACKAGE_TIFF=ON")
         .arg("-DWITH_GDK_PIXBUF=OFF")
         .arg("-DWITH_UNCOMPRESSED_CODEC=OFF")
         .arg("-DWITH_WEBCODECS=OFF")
