@@ -626,7 +626,7 @@ impl Album {
 
     /// Count files visible in the current browse filter for every album.
     /// This is read-only; scan completion persists the matching index totals.
-    pub fn get_visible_counts() -> Result<HashMap<i64, i64>, String> {
+    pub fn get_visible_counts(group_raw_jpeg_pairs: bool) -> Result<HashMap<i64, i64>, String> {
         let conn = open_conn()?;
         let query = format!(
             "SELECT b.album_id, COUNT(DISTINCT a.id)
@@ -635,7 +635,7 @@ impl Album {
              WHERE {} AND {}{}
              GROUP BY b.album_id",
             AFile::search_exclusion_condition("b"),
-            AFile::live_photo_companion_exclusion_condition(),
+            AFile::companion_exclusion_condition(group_raw_jpeg_pairs),
             AFile::album_filter_sql("a"),
         );
         let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
@@ -1367,7 +1367,7 @@ impl AFolder {
     }
 
     // get all favorite folders
-    pub fn get_favorite_folders() -> Result<Vec<Self>, String> {
+    pub fn get_favorite_folders(group_raw_jpeg_pairs: bool) -> Result<Vec<Self>, String> {
         let conn = open_conn()?;
         let sep = std::path::MAIN_SEPARATOR.to_string().replace('\'', "''");
 
@@ -1383,13 +1383,11 @@ impl AFolder {
                     )
                 ),
                 (SELECT COUNT(*) FROM afiles f
-                 WHERE f.folder_id = a.id AND f.id NOT IN (
-                    SELECT live_photo_video_id FROM afiles WHERE live_photo_video_id IS NOT NULL
-                 ))
+                 WHERE f.folder_id = a.id AND {} AND {})
             FROM afolders a
             WHERE a.is_favorite = 1
             ORDER BY a.name",
-            sep
+            sep, AFile::album_scan_predicate("f"), AFile::companion_exclusion_in_bucket(group_raw_jpeg_pairs, "1").replace("a.id", "f.id")
         );
 
         let mut stmt = conn.prepare(query.as_str()).map_err(|e| e.to_string())?;
@@ -1688,7 +1686,7 @@ impl ACollection {
     }
 
     /// Count visible files for every collection in one grouped query.
-    pub fn get_counts() -> Result<HashMap<i64, i64>, String> {
+    pub fn get_counts(group_raw_jpeg_pairs: bool) -> Result<HashMap<i64, i64>, String> {
         let conn = open_conn()?;
         let query = format!(
             "SELECT cf.collection_id, COUNT(DISTINCT a.id)
@@ -1697,7 +1695,7 @@ impl ACollection {
              JOIN afolders b ON b.id = a.folder_id
              WHERE {}{} AND {}
              GROUP BY cf.collection_id",
-            AFile::live_photo_companion_exclusion_condition(),
+            AFile::companion_exclusion_in_bucket(group_raw_jpeg_pairs, "EXISTS (SELECT 1 FROM acollections_files pc WHERE pc.file_id=primary_file.id AND pc.collection_id=cf.collection_id)"),
             AFile::album_filter_sql("a"),
             AFile::search_exclusion_condition("b"),
         );
@@ -1707,7 +1705,7 @@ impl ACollection {
         rows.collect::<Result<HashMap<_, _>, _>>().map_err(|e| e.to_string())
     }
 
-    pub fn create(name: &str) -> Result<Self, String> {
+    pub fn create(name: &str, group_raw_jpeg_pairs: bool) -> Result<Self, String> {
         let trimmed = name.trim();
         if trimmed.is_empty() {
             return Err("Collection name cannot be empty".to_string());
@@ -1730,21 +1728,19 @@ impl ACollection {
         .map_err(|e| e.to_string())?;
 
         let id = conn.last_insert_rowid();
-        Self::get(id)
+        Self::get(id, group_raw_jpeg_pairs)
     }
 
-    pub fn get(id: i64) -> Result<Self, String> {
+    pub fn get(id: i64, group_raw_jpeg_pairs: bool) -> Result<Self, String> {
         let conn = open_conn()?;
-        conn.query_row(
-            "SELECT c.id, c.name, c.sort_order, COUNT(a.id) AS count, c.created_at, c.updated_at
+        let query = format!("SELECT c.id, c.name, c.sort_order, COUNT(a.id) AS count, c.created_at, c.updated_at
             FROM acollections c
             LEFT JOIN acollections_files cf ON cf.collection_id = c.id
-            LEFT JOIN afiles a ON a.id = cf.file_id
-                AND a.id NOT IN (
-                    SELECT live_photo_video_id FROM afiles WHERE live_photo_video_id IS NOT NULL
-                )
+            LEFT JOIN afiles a ON a.id = cf.file_id AND {} AND {} AND EXISTS (SELECT 1 FROM afolders b WHERE b.id=a.folder_id AND {})
             WHERE c.id = ?1
-            GROUP BY c.id",
+            GROUP BY c.id", AFile::album_scan_predicate("a"), AFile::companion_exclusion_in_bucket(group_raw_jpeg_pairs, "EXISTS (SELECT 1 FROM acollections_files pc WHERE pc.file_id=primary_file.id AND pc.collection_id=cf.collection_id)"), AFile::search_exclusion_condition("b"));
+        conn.query_row(
+            &query,
             params![id],
             Self::from_row,
         )
@@ -2032,6 +2028,8 @@ pub struct ATimeLine {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct QueryParams {
+    #[serde(default)]
+    pub group_raw_jpeg_pairs: bool,
     pub search_file_name: String, // file name search
     pub search_file_type: i64,
     pub sort_type: i64,
@@ -2053,6 +2051,9 @@ pub struct QueryParams {
     pub lens_model: String,
     pub location_admin1: String,
     pub location_name: String,
+    /// None means no country filter; Some("") selects unknown countries.
+    #[serde(default)]
+    pub location_cc: Option<String>,
     pub is_favorite: bool,
     pub rating: i64,
     #[serde(default = "default_culling_flag")]
@@ -2090,6 +2091,8 @@ pub struct SmartRule {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct SmartQueryParams {
+    #[serde(default)]
+    pub group_raw_jpeg_pairs: bool,
     #[serde(default = "default_smart_query_version")]
     pub version: i32,
     #[serde(default = "default_smart_query_match")]
@@ -2230,7 +2233,7 @@ pub(crate) fn cloud_scan_action(cloud_only: bool, stored: Option<&AFile>, size: 
 }
 
 impl AFile {
-    pub fn get_library_visible_counts(id: Option<&str>) -> Result<LibraryVisibleCounts, String> {
+    pub fn get_library_visible_counts(id: Option<&str>, group_raw_jpeg_pairs: bool) -> Result<LibraryVisibleCounts, String> {
         if let Some(id) = id {
             let _lease = t_storage::DbConnectionLease::acquire()?;
             let db_path = t_storage::get_library_db_path(id)?;
@@ -2238,15 +2241,28 @@ impl AFile {
                 db_path,
                 rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY,
             ).map_err(|e| e.to_string())?;
-            return Self::get_library_visible_counts_on(&conn);
+            return Self::get_library_visible_counts_on(&conn, group_raw_jpeg_pairs);
         }
         let conn = open_conn()?;
-        Self::get_library_visible_counts_on(&conn)
+        Self::get_library_visible_counts_on(&conn, group_raw_jpeg_pairs)
     }
 
-    fn get_library_visible_counts_on(conn: &Connection) -> Result<LibraryVisibleCounts, String> {
+    fn get_library_visible_counts_on(conn: &Connection, group_raw_jpeg_pairs: bool) -> Result<LibraryVisibleCounts, String> {
         let today = chrono::Local::now().format("%m-%d").to_string();
-        let query = format!("SELECT COUNT(*), COALESCE(SUM(a.is_favorite=1),0), COALESCE(SUM(strftime('%m-%d',a.taken_date,'unixepoch','localtime')=?1),0), COALESCE(SUM(a.rating>0),0), COALESCE(SUM(a.rating=0),0), COALESCE(SUM(a.rating=1),0), COALESCE(SUM(a.rating=2),0), COALESCE(SUM(a.rating=3),0), COALESCE(SUM(a.rating=4),0), COALESCE(SUM(a.rating=5),0), COALESCE(SUM(a.culling_flag=1),0), COALESCE(SUM(a.culling_flag=2),0), COALESCE(SUM(a.culling_flag=0),0) FROM afiles a JOIN afolders b ON b.id=a.folder_id WHERE {} AND {}{}", Self::search_exclusion_condition("b"), Self::live_photo_companion_exclusion_condition(), Self::album_filter_sql("a"));
+        let buckets = [
+            ("1", "1"),
+            ("a.is_favorite=1", "primary_file.is_favorite=1"),
+            ("strftime('%m-%d',a.taken_date,'unixepoch','localtime')=?1", "strftime('%m-%d',primary_file.taken_date,'unixepoch','localtime')=?1"),
+            ("a.rating>0", "primary_file.rating>0"),
+            ("COALESCE(a.rating,0)=0", "COALESCE(primary_file.rating,0)=0"),
+            ("a.rating=1", "primary_file.rating=1"), ("a.rating=2", "primary_file.rating=2"),
+            ("a.rating=3", "primary_file.rating=3"), ("a.rating=4", "primary_file.rating=4"),
+            ("a.rating=5", "primary_file.rating=5"),
+            ("a.culling_flag=1", "primary_file.culling_flag=1"), ("a.culling_flag=2", "primary_file.culling_flag=2"),
+            ("COALESCE(a.culling_flag,0)=0", "COALESCE(primary_file.culling_flag,0)=0"),
+        ];
+        let columns = buckets.iter().map(|(test, primary)| format!("COALESCE(SUM(({test}) AND {}),0)", Self::companion_exclusion_in_bucket(group_raw_jpeg_pairs, primary))).collect::<Vec<_>>().join(",");
+        let query = format!("SELECT {columns} FROM afiles a JOIN afolders b ON b.id=a.folder_id WHERE {}{}", Self::search_exclusion_condition("b"), Self::album_filter_sql("a"));
         conn.query_row(&query, params![today], |r| Ok(LibraryVisibleCounts { all:r.get(0)?, favorite:r.get(1)?, today:r.get(2)?, rated:r.get(3)?, unrated:r.get(4)?, rating_1:r.get(5)?, rating_2:r.get(6)?, rating_3:r.get(7)?, rating_4:r.get(8)?, rating_5:r.get(9)?, pick:r.get(10)?, reject:r.get(11)?, unreviewed:r.get(12)? })).map_err(|e| e.to_string())
     }
 
@@ -3326,9 +3342,24 @@ impl AFile {
         base_query.to_string()
     }
 
-    fn live_photo_companion_exclusion_condition() -> String {
+    fn companion_exclusion_condition(group_raw_jpeg_pairs: bool) -> String {
+        let subtype = if group_raw_jpeg_pairs { "1" } else {
+            "COALESCE(primary_file.media_subtype, '') != 'raw_jpeg_pair'"
+        };
         format!("a.id NOT IN (SELECT primary_file.live_photo_video_id FROM afiles primary_file
-            WHERE primary_file.live_photo_video_id IS NOT NULL AND {})", Self::album_scan_predicate("primary_file"))
+            WHERE primary_file.live_photo_video_id IS NOT NULL AND {} AND {})", subtype, Self::album_scan_predicate("primary_file"))
+    }
+
+    // Hide a RAW companion only when its primary belongs to the same sidebar bucket.
+    // `same_bucket` references the outer file `a` and the primary `primary_file`.
+    fn companion_exclusion_in_bucket(group: bool, same_bucket: &str) -> String {
+        let live = Self::companion_exclusion_condition(false);
+        if !group { return live; }
+        format!("({live} AND NOT EXISTS (SELECT 1 FROM afiles primary_file WHERE primary_file.media_subtype='raw_jpeg_pair' AND primary_file.live_photo_video_id=a.id AND {} AND ({})))", Self::album_scan_predicate("primary_file"), same_bucket)
+    }
+
+    fn live_photo_companion_exclusion_condition() -> String {
+        Self::companion_exclusion_condition(true)
     }
 
     // build the base SQL query
@@ -3512,7 +3543,7 @@ impl AFile {
         collection_id: i64,
         params: &QueryParams,
     ) -> Result<(i64, i64), String> {
-        let (joins, where_clause, sql_params) = Self::build_search_query_parts(params);
+        let (joins, where_clause, sql_params) = Self::build_search_query_parts_for_collection(params, Some(collection_id));
         let where_clause = Self::append_condition(where_clause, "cf.collection_id = ?");
         let collection_join = " INNER JOIN acollections_files cf ON a.id = cf.file_id";
 
@@ -3545,7 +3576,7 @@ impl AFile {
         offset: i64,
         limit: i64,
     ) -> Result<Vec<Self>, String> {
-        let (joins, where_clause, sql_params) = Self::build_search_query_parts(params);
+        let (joins, where_clause, sql_params) = Self::build_search_query_parts_for_collection(params, Some(collection_id));
         let where_clause = Self::append_condition(where_clause, "cf.collection_id = ?");
 
         let mut query = Self::build_base_query();
@@ -3576,7 +3607,7 @@ impl AFile {
         else {
             return Ok(Vec::new());
         };
-        let (joins, where_clause, sql_params) = Self::build_search_query_parts(params);
+        let (joins, where_clause, sql_params) = Self::build_search_query_parts_for_collection(params, Some(collection_id));
         let where_clause = Self::append_condition(where_clause, "cf.collection_id = ?");
         let sql = format!(
             "SELECT group_id, group_id AS label, COUNT(*), COALESCE(SUM(size), 0)
@@ -3629,7 +3660,7 @@ impl AFile {
         else {
             return Ok(Vec::new());
         };
-        let (joins, where_clause, sql_params) = Self::build_search_query_parts(params);
+        let (joins, where_clause, sql_params) = Self::build_search_query_parts_for_collection(params, Some(collection_id));
         let where_clause = Self::append_condition(where_clause, "cf.collection_id = ?");
 
         let mut query = Self::build_base_query();
@@ -3683,7 +3714,7 @@ impl AFile {
         else {
             return Ok(Vec::new());
         };
-        let (joins, where_clause, sql_params) = Self::build_search_query_parts(params);
+        let (joins, where_clause, sql_params) = Self::build_search_query_parts_for_collection(params, Some(collection_id));
         let where_clause = Self::append_condition(where_clause, "cf.collection_id = ?");
         let query = format!(
             "SELECT a.id
@@ -3707,7 +3738,7 @@ impl AFile {
         collection_id: i64,
         params: &QueryParams,
     ) -> Result<Vec<i64>, String> {
-        let (joins, where_clause, sql_params) = Self::build_search_query_parts(params);
+        let (joins, where_clause, sql_params) = Self::build_search_query_parts_for_collection(params, Some(collection_id));
         let where_clause = Self::append_condition(where_clause, "cf.collection_id = ?");
         let query = format!(
             "SELECT a.id
@@ -4828,31 +4859,102 @@ impl AFile {
         .map_err(|error| error.to_string())
     }
 
+    /// Map selected RAW companions to their primary IDs for preserving focus
+    /// when a grouped view replaces a companion row with its RAW row.
+    pub fn resolve_raw_pair_primary_ids(file_ids: &[i64]) -> Result<HashMap<i64, i64>, String> {
+        if file_ids.is_empty() { return Ok(HashMap::new()); }
+        let conn = open_conn()?;
+        let mut result = HashMap::new();
+        for chunk in file_ids.chunks(500) {
+            let placeholders = vec!["?"; chunk.len()].join(",");
+            let sql = format!("SELECT a.live_photo_video_id, a.id FROM afiles a WHERE a.media_subtype='raw_jpeg_pair' AND a.live_photo_video_id IN ({}) AND {}", placeholders, Self::album_scan_predicate("a"));
+            let mut stmt = conn.prepare(&sql).map_err(|error| error.to_string())?;
+            let rows = stmt.query_map(params_from_iter(chunk.iter()), |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?))).map_err(|error| error.to_string())?;
+            for row in rows { let (companion, primary) = row.map_err(|error| error.to_string())?; result.insert(companion, primary); }
+        }
+        Ok(result)
+    }
+
     pub fn live_photo_component_files(file_id: i64) -> Result<Vec<Self>, String> {
+        Self::operation_component_files(file_id, true)
+    }
+
+    pub(crate) fn operation_includes_component(media_subtype: Option<&str>, group_raw_jpeg_pairs: bool) -> bool {
+        media_subtype == Some("live_photo") || (group_raw_jpeg_pairs && media_subtype == Some("raw_jpeg_pair"))
+    }
+
+    pub(crate) fn operation_component_matches(primary: &Self, component: &Self, group_raw_jpeg_pairs: bool) -> bool {
+        if !Self::operation_includes_component(primary.media_subtype.as_deref(), group_raw_jpeg_pairs) { return false; }
+        if primary.media_subtype.as_deref() != Some("raw_jpeg_pair") { return primary.folder_id == component.folder_id; }
+        let primary_path = Path::new(&primary.name);
+        let component_path = Path::new(&component.name);
+        let stem_matches = match (primary_path.file_stem().and_then(|s| s.to_str()), component_path.file_stem().and_then(|s| s.to_str())) {
+            (Some(a), Some(b)) => a.eq_ignore_ascii_case(b),
+            _ => false,
+        };
+        let raw_ext = primary_path.extension().and_then(|s| s.to_str()).unwrap_or("");
+        let companion_ext = component_path.extension().and_then(|s| s.to_str()).unwrap_or("");
+        primary.folder_id == component.folder_id && primary.album_visible && component.album_visible
+            && primary.file_type == Some(3) && component.file_type == Some(1) && stem_matches
+            && t_common::RAW_IMGS.iter().any(|ext| ext.eq_ignore_ascii_case(raw_ext))
+            && ["jpg", "jpeg", "heic", "heif", "hif"].iter().any(|ext| ext.eq_ignore_ascii_case(companion_ext))
+            && component.media_subtype.as_deref() != Some("live_photo") && component.live_photo_video_id.is_none()
+    }
+
+    pub(crate) fn operation_component_files(file_id: i64, group_raw_jpeg_pairs: bool) -> Result<Vec<Self>, String> {
         let Some(file) = Self::get_file_info(file_id)? else {
             return Ok(Vec::new());
         };
-        let Some(video_id) = file.live_photo_video_id.filter(|id| *id > 0) else {
+        if !Self::operation_includes_component(file.media_subtype.as_deref(), group_raw_jpeg_pairs) {
             return Ok(Vec::new());
+        }
+        let Some(video_id) = file.live_photo_video_id.filter(|id| *id > 0) else {
+            return if file.media_subtype.as_deref() == Some("raw_jpeg_pair") {
+                Err("RAW pair is stale; refresh the library before retrying".into())
+            } else { Ok(Vec::new()) };
         };
-        Self::get_files_by_ids(&[video_id])
+        let components = Self::get_files_by_ids(&[video_id])?;
+        if file.media_subtype.as_deref() == Some("raw_jpeg_pair") &&
+            (components.len() != 1 || !Self::operation_component_matches(&file, &components[0], group_raw_jpeg_pairs)) {
+            return Err("RAW pair is stale; refresh the library before retrying".into());
+        }
+        if file.media_subtype.as_deref() == Some("live_photo") && components.iter().any(|component| component.folder_id != file.folder_id) {
+            return Err("Live Photo companion is in a different folder; refresh the library before retrying".into());
+        }
+        Ok(components.into_iter()
+            .filter(|component| Self::operation_component_matches(&file, component, group_raw_jpeg_pairs))
+            .collect())
     }
 
     pub fn pair_raw_jpeg_in_folder(folder_id: i64) -> Result<usize, String> {
         if let Some(folder) = AFolder::get_by_id(folder_id)? {
             let album = Album::get_album_by_id(folder.album_id)?;
-            if album.excludes_path(Path::new(&folder.path)) { return Ok(0); }
-            if album.file_types & 5 != 5 { return Self::clear_raw_jpeg_pairs_in_folder(folder_id); }
+            if album.excludes_path(Path::new(&folder.path)) || album.file_types & 5 != 5 { return Self::clear_raw_jpeg_pairs_in_folder(folder_id); }
         }
         fn stem(name: &str) -> Option<String> { Path::new(name).file_stem()?.to_str().map(|value| value.to_ascii_lowercase()) }
         fn ext(name: &str) -> String { Path::new(name).extension().and_then(|value| value.to_str()).unwrap_or("").to_ascii_lowercase() }
-        let files = Self::get_files_by_folder_id(folder_id)?;
-        let mut companions = HashMap::<String, Vec<i64>>::new();
+        // Serialize the read/compute/write cycle against other database writers.
+        // Otherwise a concurrent rename or deletion can invalidate the snapshot
+        // between reading a folder and updating its pair links.
+        let mut conn = open_conn()?;
+        let tx = conn.transaction_with_behavior(rusqlite::TransactionBehavior::Immediate).map_err(|error| error.to_string())?;
+        let files = {
+            let sql = format!("{} WHERE a.folder_id = ?1 ORDER BY a.name ASC", Self::build_base_query());
+            let mut stmt = tx.prepare(&sql).map_err(|error| error.to_string())?;
+            let rows = stmt.query_map(params![folder_id], Self::from_row).map_err(|error| error.to_string())?;
+            rows.collect::<Result<Vec<_>, _>>().map_err(|error| error.to_string())?
+        };
+        let mut companions = HashMap::<String, Vec<(i64, bool)>>::new();
         let mut raws = HashMap::<String, usize>::new();
         for file in &files {
             if !file.album_visible { continue; }
             if matches!(ext(&file.name).as_str(), "jpg" | "jpeg" | "heic" | "heif" | "hif") {
-                if let (Some(id), Some(file_stem)) = (file.id, stem(&file.name)) { companions.entry(file_stem).or_default().push(id); }
+                if let (Some(id), Some(file_stem)) = (file.id, stem(&file.name)) {
+                    // Do not create RAW → Live Photo → video chains: file
+                    // operations currently support only one-level pairs.
+                    let eligible = file.media_subtype.as_deref() != Some("live_photo") && file.live_photo_video_id.is_none();
+                    companions.entry(file_stem).or_default().push((id, eligible));
+                }
             }
             if t_common::RAW_IMGS.iter().any(|raw| raw.eq_ignore_ascii_case(&ext(&file.name))) {
                 if let Some(file_stem) = stem(&file.name) {
@@ -4863,16 +4965,17 @@ impl AFile {
         let mut updates = Vec::new();
         for file in &files {
             if !t_common::RAW_IMGS.iter().any(|raw| raw.eq_ignore_ascii_case(&ext(&file.name))) { continue; }
+            // A RAW record with another media subtype must not lose that association.
+            if file.media_subtype.is_some() && file.media_subtype.as_deref() != Some("raw_jpeg_pair") { continue; }
             let (Some(id), Some(file_stem)) = (file.id, stem(&file.name)) else { continue; };
             let candidates = companions.get(&file_stem).cloned().unwrap_or_default();
             let desired = (file.album_visible && raws.get(&file_stem) == Some(&1) && candidates.len() == 1)
-                .then(|| candidates.first().copied())
+                .then(|| candidates.first().filter(|(_, eligible)| *eligible).map(|(id, _)| *id))
                 .flatten();
             let current = (file.media_subtype.as_deref() == Some("raw_jpeg_pair")).then_some(file.live_photo_video_id).flatten();
             if desired != current { updates.push((id, desired)); }
         }
         if updates.is_empty() { return Ok(0); }
-        let mut conn = open_conn()?; let tx = conn.transaction().map_err(|error| error.to_string())?;
         for (id, companion) in &updates {
             if let Some(companion) = companion { tx.execute("UPDATE afiles SET media_subtype = 'raw_jpeg_pair', live_photo_video_id = ?1 WHERE id = ?2", params![companion, id]).map_err(|error| error.to_string())?; }
             else { tx.execute("UPDATE afiles SET media_subtype = NULL, live_photo_video_id = NULL WHERE id = ?1 AND media_subtype = 'raw_jpeg_pair'", params![id]).map_err(|error| error.to_string())?; }
@@ -4939,7 +5042,7 @@ impl AFile {
     }
 
     /// get all taken dates from db
-    pub fn get_taken_dates(sort: i64) -> Result<Vec<(String, i64)>, String> {
+    pub fn get_taken_dates(sort: i64, group_raw_jpeg_pairs: bool) -> Result<Vec<(String, i64)>, String> {
         let conn = open_conn()?;
 
         // sort encodes both the date column and direction:
@@ -4969,7 +5072,7 @@ impl AFile {
             date_expr,
             date_col,
             date_col,
-            Self::live_photo_companion_exclusion_condition(),
+            Self::companion_exclusion_in_bucket(group_raw_jpeg_pairs, &format!("strftime('%Y-%m-%d', {}, 'unixepoch', 'localtime') = {}", date_col.replace("a.", "primary_file."), date_expr)),
             Self::album_filter_sql("a"),
             Self::search_exclusion_condition("b"),
             date_expr,
@@ -4993,9 +5096,17 @@ impl AFile {
     // helper to build search query conditions and params
     // Returns (joins_clause, where_clause, params)
     fn build_search_query_parts(params: &QueryParams) -> (String, String, Vec<Box<dyn ToSql>>) {
+        Self::build_search_query_parts_for_collection(params, None)
+    }
+
+    fn build_search_query_parts_for_collection(params: &QueryParams, collection_id: Option<i64>) -> (String, String, Vec<Box<dyn ToSql>>) {
+        Self::build_search_query_parts_inner(params, collection_id, true)
+    }
+
+    fn build_search_query_parts_inner(params: &QueryParams, collection_id: Option<i64>, dedup: bool) -> (String, String, Vec<Box<dyn ToSql>>) {
         let mut joins = Vec::new();
         let mut conditions: Vec<String> =
-            vec![Self::live_photo_companion_exclusion_condition().to_string()];
+            vec![Self::companion_exclusion_condition(false)];
         let mut sql_params: Vec<Box<dyn ToSql>> = Vec::new();
 
         if !params.search_file_name.is_empty() {
@@ -5060,6 +5171,10 @@ impl AFile {
             }
         }
 
+        if let Some(cc) = &params.location_cc {
+            conditions.push("COALESCE(a.geo_cc, '') = ?".to_string());
+            sql_params.push(Box::new(cc.clone()));
+        }
         if !params.location_admin1.is_empty() {
             conditions.push("a.geo_admin1 = ?".to_string());
             sql_params.push(Box::new(params.location_admin1.clone()));
@@ -5126,6 +5241,16 @@ impl AFile {
         }
 
         conditions.push(Self::search_exclusion_condition("b"));
+
+        if dedup && params.group_raw_jpeg_pairs {
+            let (inner_joins, inner_where, mut inner_params) = Self::build_search_query_parts_inner(params, None, false);
+            let collection_filter = if let Some(id) = collection_id {
+                inner_params.push(Box::new(id));
+                " AND EXISTS (SELECT 1 FROM acollections_files raw_cf WHERE raw_cf.file_id = a.id AND raw_cf.collection_id = ?)"
+            } else { "" };
+            conditions.push(format!("a.id NOT IN (SELECT a.live_photo_video_id FROM afiles a LEFT JOIN afolders b ON a.folder_id=b.id LEFT JOIN albums c ON b.album_id=c.id {}{} AND a.media_subtype='raw_jpeg_pair' AND a.live_photo_video_id IS NOT NULL{})", inner_joins, inner_where, collection_filter));
+            sql_params.extend(inner_params);
+        }
 
         let joins_clause = if !joins.is_empty() {
             format!(" {}", joins.join(" "))
@@ -6180,6 +6305,12 @@ impl AFile {
     fn build_smart_query_parts(
         params: &SmartQueryParams,
     ) -> Result<(String, String, Vec<Box<dyn ToSql>>, bool), String> {
+        Self::build_smart_query_parts_inner(params, true)
+    }
+
+    fn build_smart_query_parts_inner(
+        params: &SmartQueryParams, dedup: bool,
+    ) -> Result<(String, String, Vec<Box<dyn ToSql>>, bool), String> {
         if params.rules.is_empty() {
             return Err("Smart query requires at least one rule".to_string());
         }
@@ -6201,7 +6332,7 @@ impl AFile {
         Self::append_album_filter(&mut conditions);
 
         conditions.push(Self::search_exclusion_condition("b"));
-        conditions.push(Self::live_photo_companion_exclusion_condition().to_string());
+        conditions.push(Self::companion_exclusion_condition(false));
 
         if let (Some(min_lat), Some(max_lat), Some(min_lon), Some(max_lon)) = (
             params.gps_min_lat,
@@ -6222,6 +6353,12 @@ impl AFile {
                 sql_params.push(Box::new(min_lon));
                 sql_params.push(Box::new(max_lon));
             }
+        }
+
+        if dedup && params.group_raw_jpeg_pairs {
+            let (inner_joins, inner_where, inner_params, _) = Self::build_smart_query_parts_inner(params, false)?;
+            conditions.push(format!("a.id NOT IN (SELECT a.live_photo_video_id FROM afiles a LEFT JOIN afolders b ON a.folder_id=b.id LEFT JOIN albums c ON b.album_id=c.id {}{} AND a.media_subtype='raw_jpeg_pair' AND a.live_photo_video_id IS NOT NULL)", inner_joins, inner_where));
+            sql_params.extend(inner_params);
         }
 
         let joiner = if params.r#match == "any" {
@@ -7132,8 +7269,8 @@ impl AThumb {
         }
     }
 
-    pub(crate) fn try_begin_background_task(file_id: i64, thumbnail_size: u32) -> bool {
-        let key = Self::generation_lock_key(file_id, thumbnail_size);
+    pub(crate) fn try_begin_background_task(library_id: &str, file_id: i64, thumbnail_size: u32) -> bool {
+        let key = format!("{}:{}", library_id, Self::generation_lock_key(file_id, thumbnail_size));
         let Ok(mut tasks) = thumb_background_tasks().lock() else {
             return false;
         };
@@ -7144,8 +7281,8 @@ impl AThumb {
         true
     }
 
-    pub(crate) fn finish_background_task(file_id: i64, thumbnail_size: u32) {
-        let key = Self::generation_lock_key(file_id, thumbnail_size);
+    pub(crate) fn finish_background_task(library_id: &str, file_id: i64, thumbnail_size: u32) {
+        let key = format!("{}:{}", library_id, Self::generation_lock_key(file_id, thumbnail_size));
         if let Ok(mut tasks) = thumb_background_tasks().lock() {
             tasks.remove(&key);
         }
@@ -8157,6 +8294,7 @@ impl AThumb {
 
     pub fn schedule_background_generation_for_library(
         app_handle: tauri::AppHandle,
+        library_id: String,
         file_id: i64,
         file_path: String,
         file_type: i64,
@@ -8168,7 +8306,7 @@ impl AThumb {
         seek_percent: Option<u8>,
     ) {
         if !t_utils::album_accessible(album_id) { return; }
-        if !Self::try_begin_background_task(file_id, thumbnail_size) {
+        if !Self::try_begin_background_task(&library_id, file_id, thumbnail_size) {
             return;
         }
 
@@ -8177,11 +8315,13 @@ impl AThumb {
                 .acquire_owned()
                 .await
             else {
-                Self::finish_background_task(file_id, thumbnail_size);
+                Self::finish_background_task(&library_id, file_id, thumbnail_size);
                 return;
             };
 
+            let task_library_id = library_id.clone();
             let generated = tauri::async_runtime::spawn_blocking(move || {
+                crate::t_cmds::with_current_library(&task_library_id, || {
                 let duration = if file_type == 2 {
                     AFile::get_file_info(file_id)
                         .ok()
@@ -8202,6 +8342,7 @@ impl AThumb {
                     duration,
                     seek_percent,
                 )
+                })
             })
             .await;
 
@@ -8211,12 +8352,13 @@ impl AThumb {
                     serde_json::json!({
                         "album_id": album_id,
                         "file_ids": [file_id],
+                        "library_id": library_id,
                         "invalidate": force_regenerate,
                     }),
                 );
             }
 
-            Self::finish_background_task(file_id, thumbnail_size);
+            Self::finish_background_task(&library_id, file_id, thumbnail_size);
         });
     }
 
@@ -8450,7 +8592,7 @@ impl ATag {
     }
 
     /// Get all tags from the db
-    pub fn get_all(sort: i64) -> Result<Vec<Self>, String> {
+    pub fn get_all(sort: i64, group_raw_jpeg_pairs: bool) -> Result<Vec<Self>, String> {
         let conn = open_conn()?;
         // Count-based ordering must match the sidebar badge count (which comes
         // from getQueryCountAndSum with tagId): tagged files excluding Live Photo
@@ -8461,7 +8603,7 @@ impl ATag {
               JOIN afiles a ON a.id = ft.file_id
               JOIN afolders b ON b.id = a.folder_id
               WHERE ft.tag_id = atags.id AND {}{} AND {})",
-            AFile::live_photo_companion_exclusion_condition(),
+            AFile::companion_exclusion_in_bucket(group_raw_jpeg_pairs, "EXISTS (SELECT 1 FROM afile_tags pt WHERE pt.file_id=primary_file.id AND pt.tag_id=ft.tag_id)"),
             AFile::album_filter_sql("a"),
             AFile::search_exclusion_condition("b"),
         );
@@ -8488,7 +8630,7 @@ impl ATag {
     }
 
     /// Count visible files for every tag in one grouped query.
-    pub fn get_counts() -> Result<HashMap<i64, i64>, String> {
+    pub fn get_counts(group_raw_jpeg_pairs: bool) -> Result<HashMap<i64, i64>, String> {
         let conn = open_conn()?;
         let query = format!(
             "SELECT ft.tag_id, COUNT(DISTINCT a.id)
@@ -8497,7 +8639,7 @@ impl ATag {
              JOIN afolders b ON b.id = a.folder_id
              WHERE {}{} AND {}
              GROUP BY ft.tag_id",
-            AFile::live_photo_companion_exclusion_condition(),
+            AFile::companion_exclusion_in_bucket(group_raw_jpeg_pairs, "EXISTS (SELECT 1 FROM afile_tags pt WHERE pt.file_id=primary_file.id AND pt.tag_id=ft.tag_id)"),
             AFile::album_filter_sql("a"),
             AFile::search_exclusion_condition("b"),
         );
@@ -8508,11 +8650,11 @@ impl ATag {
     }
 
     /// Count distinct visible files for every tag group.
-    pub fn get_group_counts() -> Result<HashMap<i64, i64>, String> {
-        Self::get_group_counts_on(&*open_conn()?)
+    pub fn get_group_counts(group_raw_jpeg_pairs: bool) -> Result<HashMap<i64, i64>, String> {
+        Self::get_group_counts_on(&*open_conn()?, group_raw_jpeg_pairs)
     }
 
-    fn get_group_counts_on(conn: &Connection) -> Result<HashMap<i64, i64>, String> {
+    fn get_group_counts_on(conn: &Connection, group_raw_jpeg_pairs: bool) -> Result<HashMap<i64, i64>, String> {
         let query = format!(
             "SELECT t.group_id, COUNT(DISTINCT a.id)
              FROM afile_tags ft
@@ -8521,7 +8663,7 @@ impl ATag {
              JOIN afolders b ON b.id = a.folder_id
              WHERE {}{} AND {}
              GROUP BY t.group_id",
-            AFile::live_photo_companion_exclusion_condition(),
+            AFile::companion_exclusion_in_bucket(group_raw_jpeg_pairs, "EXISTS (SELECT 1 FROM afile_tags pt JOIN atags pg ON pg.id=pt.tag_id WHERE pt.file_id=primary_file.id AND pg.group_id=t.group_id)"),
             AFile::album_filter_sql("a"),
             AFile::search_exclusion_condition("b"),
         );
@@ -8816,6 +8958,8 @@ pub struct PersonPageRequest {
     pub limit: usize,
     pub search: String,
     pub refresh_summary: Option<PersonPageRefreshSummary>,
+    #[serde(default)]
+    pub group_raw_jpeg_pairs: bool,
 }
 
 /// Aggregate data requested when refreshing the People sidebar.
@@ -8828,17 +8972,16 @@ pub struct PersonPageRefreshSummary {
 impl Person {
     /// Get all persons with face counts and pre-stored thumbnail
     /// Optimized: single query, no runtime image processing
-    pub fn get_all(sort: i64) -> Result<Vec<Self>, String> {
+    pub fn get_all(sort: i64, group_raw_jpeg_pairs: bool) -> Result<Vec<Self>, String> {
         let conn = open_conn()?;
 
-        // Single query with JOIN for count, directly fetch pre-stored thumbnail
-        let query = "
-            SELECT p.id, p.name, COUNT(f.id) as count, p.thumbnail
+        let query = format!("
+            SELECT p.id, p.name, (SELECT COUNT(DISTINCT a.id) FROM faces f
+                JOIN afiles a ON a.id = f.file_id JOIN afolders b ON b.id = a.folder_id
+                WHERE f.person_id = p.id AND {}{} AND {}) as count, p.thumbnail
             FROM persons p
-            LEFT JOIN faces f ON f.person_id = p.id
-            GROUP BY p.id
-            ORDER BY {order_clause}
-        ";
+            ORDER BY {{order_clause}}
+        ", AFile::companion_exclusion_in_bucket(group_raw_jpeg_pairs, "EXISTS (SELECT 1 FROM faces pf WHERE pf.file_id=primary_file.id AND pf.person_id=p.id)"), AFile::album_filter_sql("a"), AFile::search_exclusion_condition("b"));
         let order_clause = match sort {
             1 => "p.name DESC",
             2 => "count ASC, p.name ASC",
@@ -8927,7 +9070,7 @@ impl Person {
             "{} AND {} AND {}",
             AFile::album_filter_sql("a"),
             AFile::search_exclusion_condition("b"),
-            AFile::live_photo_companion_exclusion_condition(),
+            AFile::companion_exclusion_in_bucket(request.group_raw_jpeg_pairs, "EXISTS (SELECT 1 FROM faces pf WHERE pf.file_id=primary_file.id AND pf.person_id=p.id)"),
         );
         let visible_person_condition = format!(
             "EXISTS (SELECT 1 FROM faces f JOIN afiles a ON a.id = f.file_id JOIN afolders b ON b.id = a.folder_id WHERE f.person_id = p.id{})",
@@ -9561,13 +9704,19 @@ impl Face {
 
     /// Get full statistics for face indexing
     /// Returns (total_images, processed_images, unprocessed_images, total_faces)
-    pub fn get_stats_full() -> Result<(usize, usize, usize, usize), String> {
-        let conn = open_conn()?;
+    pub fn get_stats_full(_group_raw_jpeg_pairs: bool) -> Result<(usize, usize, usize, usize), String> {
+        Self::get_stats_full_on(&*open_conn()?)
+    }
+
+    fn get_stats_full_on(conn: &Connection) -> Result<(usize, usize, usize, usize), String> {
+        // Face indexing processes image files (type 1), not RAW (type 3).
+        // A RAW primary therefore cannot suppress its JPEG in these statistics.
+        // Faces are individual detection records, not interchangeable pair items.
         let visible_file_conditions = format!(
             "{} AND {} AND {}",
             AFile::album_filter_sql("a"),
             AFile::search_exclusion_condition("b"),
-            AFile::live_photo_companion_exclusion_condition(),
+            AFile::companion_exclusion_condition(false),
         );
 
         let total: i64 = conn
@@ -9610,6 +9759,8 @@ pub struct ACamera {
     pub make: String,
     pub models: Vec<String>,
     pub counts: Vec<i64>,
+    #[serde(default)]
+    pub parent_count: i64,
 }
 
 fn sort_labeled_counts(labels: &mut Vec<String>, counts: &mut Vec<i64>, sort: i64) {
@@ -9628,19 +9779,25 @@ fn sort_labeled_counts(labels: &mut Vec<String>, counts: &mut Vec<i64>, sort: i6
     }
 }
 
+fn metadata_parent_counts(conn: &Connection, group: bool, key: &str, same_bucket: &str, valid: &str) -> Result<HashMap<String, i64>, String> {
+    let sql = format!("SELECT {key}, COUNT(*) FROM afiles a JOIN afolders b ON b.id=a.folder_id WHERE {valid} AND {}{} AND {} GROUP BY {key}",
+        AFile::companion_exclusion_in_bucket(group, same_bucket), AFile::album_filter_sql("a"), AFile::search_exclusion_condition("b"));
+    let mut stmt = conn.prepare(&sql).map_err(|e| e.to_string())?;
+    let rows = stmt.query_map([], |row| Ok((row.get::<_,String>(0)?, row.get::<_,i64>(1)?))).map_err(|e| e.to_string())?;
+    rows.collect::<Result<HashMap<_,_>,_>>().map_err(|e| e.to_string())
+}
+
 impl ACamera {
     // get all camera makes and models from db
-    pub fn get_from_db(sort: i64) -> Result<Vec<Self>, String> {
+    pub fn get_from_db(sort: i64, group_raw_jpeg_pairs: bool) -> Result<Vec<Self>, String> {
         let conn = open_conn()?;
         let query = format!("SELECT UPPER(a.e_make), a.e_model, count(a.id) as count
             FROM afiles a
             JOIN afolders b ON a.folder_id = b.id
             WHERE a.e_make IS NOT NULL AND a.e_model IS NOT NULL
-                AND a.id NOT IN (
-                    SELECT live_photo_video_id FROM afiles WHERE live_photo_video_id IS NOT NULL
-                ){} AND {}
+                AND {}{} AND {}
             GROUP BY UPPER(a.e_make), a.e_model
-            ORDER BY UPPER(a.e_make), a.e_model", AFile::album_filter_sql("a"), AFile::search_exclusion_condition("b"));
+            ORDER BY UPPER(a.e_make), a.e_model", AFile::companion_exclusion_in_bucket(group_raw_jpeg_pairs, "UPPER(primary_file.e_make)=UPPER(a.e_make) AND primary_file.e_model=a.e_model"), AFile::album_filter_sql("a"), AFile::search_exclusion_condition("b"));
 
         let mut stmt = conn.prepare(query.as_str()).map_err(|e| e.to_string())?;
 
@@ -9664,11 +9821,13 @@ impl ACamera {
             entry.1.push(count); // Push count to Vec<i64>
         }
 
+        let parent_counts = metadata_parent_counts(&conn, group_raw_jpeg_pairs, "UPPER(a.e_make)", "UPPER(primary_file.e_make)=UPPER(a.e_make)", "a.e_make IS NOT NULL")?;
         let mut cameras: Vec<Self> = hash_map
             .into_iter()
             .map(|(make, (mut models, mut counts))| {
                 sort_labeled_counts(&mut models, &mut counts, sort);
                 Self {
+                    parent_count: parent_counts.get(&make).copied().unwrap_or(0),
                     make,
                     models,
                     counts,
@@ -9679,17 +9838,13 @@ impl ACamera {
         match sort {
             1 => cameras.sort_by(|a, b| b.make.cmp(&a.make)),
             2 => cameras.sort_by(|a, b| {
-                a.counts
-                    .iter()
-                    .sum::<i64>()
-                    .cmp(&b.counts.iter().sum::<i64>())
+                a.parent_count
+                    .cmp(&b.parent_count)
                     .then_with(|| a.make.cmp(&b.make))
             }),
             3 => cameras.sort_by(|a, b| {
-                b.counts
-                    .iter()
-                    .sum::<i64>()
-                    .cmp(&a.counts.iter().sum::<i64>())
+                b.parent_count
+                    .cmp(&a.parent_count)
                     .then_with(|| a.make.cmp(&b.make))
             }),
             _ => cameras.sort_by(|a, b| a.make.cmp(&b.make)),
@@ -9704,21 +9859,21 @@ pub struct ALens {
     pub make: String,
     pub models: Vec<String>,
     pub counts: Vec<i64>,
+    #[serde(default)]
+    pub parent_count: i64,
 }
 
 impl ALens {
     // get all lens makes and models from db
-    pub fn get_from_db(sort: i64) -> Result<Vec<Self>, String> {
+    pub fn get_from_db(sort: i64, group_raw_jpeg_pairs: bool) -> Result<Vec<Self>, String> {
         let conn = open_conn()?;
         let query = format!("SELECT UPPER(a.e_lens_make), a.e_lens_model, count(a.id) as count
             FROM afiles a
             JOIN afolders b ON a.folder_id = b.id
             WHERE a.e_lens_make IS NOT NULL AND a.e_lens_model IS NOT NULL
-                AND a.id NOT IN (
-                    SELECT live_photo_video_id FROM afiles WHERE live_photo_video_id IS NOT NULL
-                ){} AND {}
+                AND {}{} AND {}
             GROUP BY UPPER(a.e_lens_make), a.e_lens_model
-            ORDER BY UPPER(a.e_lens_make), a.e_lens_model", AFile::album_filter_sql("a"), AFile::search_exclusion_condition("b"));
+            ORDER BY UPPER(a.e_lens_make), a.e_lens_model", AFile::companion_exclusion_in_bucket(group_raw_jpeg_pairs, "UPPER(primary_file.e_lens_make)=UPPER(a.e_lens_make) AND primary_file.e_lens_model=a.e_lens_model"), AFile::album_filter_sql("a"), AFile::search_exclusion_condition("b"));
 
         let mut stmt = conn.prepare(query.as_str()).map_err(|e| e.to_string())?;
 
@@ -9742,11 +9897,13 @@ impl ALens {
             entry.1.push(count);
         }
 
+        let parent_counts = metadata_parent_counts(&conn, group_raw_jpeg_pairs, "UPPER(a.e_lens_make)", "UPPER(primary_file.e_lens_make)=UPPER(a.e_lens_make)", "a.e_lens_make IS NOT NULL")?;
         let mut lenses: Vec<Self> = hash_map
             .into_iter()
             .map(|(make, (mut models, mut counts))| {
                 sort_labeled_counts(&mut models, &mut counts, sort);
                 Self {
+                    parent_count: parent_counts.get(&make).copied().unwrap_or(0),
                     make,
                     models,
                     counts,
@@ -9757,17 +9914,13 @@ impl ALens {
         match sort {
             1 => lenses.sort_by(|a, b| b.make.cmp(&a.make)),
             2 => lenses.sort_by(|a, b| {
-                a.counts
-                    .iter()
-                    .sum::<i64>()
-                    .cmp(&b.counts.iter().sum::<i64>())
+                a.parent_count
+                    .cmp(&b.parent_count)
                     .then_with(|| a.make.cmp(&b.make))
             }),
             3 => lenses.sort_by(|a, b| {
-                b.counts
-                    .iter()
-                    .sum::<i64>()
-                    .cmp(&a.counts.iter().sum::<i64>())
+                b.parent_count
+                    .cmp(&a.parent_count)
                     .then_with(|| a.make.cmp(&b.make))
             }),
             _ => lenses.sort_by(|a, b| a.make.cmp(&b.make)),
@@ -9783,22 +9936,29 @@ pub struct ALocation {
     pub admin1: String,
     pub names: Vec<String>,
     pub counts: Vec<i64>,
+    #[serde(default)]
+    pub parent_count: i64,
+}
+
+fn location_parent_counts(conn: &Connection, group: bool) -> Result<HashMap<(String,String),i64>, String> {
+    let sql = format!("SELECT COALESCE(a.geo_cc,''), a.geo_admin1, COUNT(*) FROM afiles a JOIN afolders b ON b.id=a.folder_id WHERE COALESCE(a.geo_admin1,'')<>'' AND {}{} AND {} GROUP BY COALESCE(a.geo_cc,''), a.geo_admin1", AFile::companion_exclusion_in_bucket(group, "COALESCE(primary_file.geo_cc,'')=COALESCE(a.geo_cc,'') AND primary_file.geo_admin1=a.geo_admin1"), AFile::album_filter_sql("a"), AFile::search_exclusion_condition("b"));
+    let mut stmt = conn.prepare(&sql).map_err(|e| e.to_string())?;
+    let rows = stmt.query_map([], |r| Ok(((r.get::<_,String>(0)?,r.get::<_,String>(1)?),r.get::<_,i64>(2)?))).map_err(|e| e.to_string())?;
+    rows.collect::<Result<HashMap<_,_>,_>>().map_err(|e| e.to_string())
 }
 
 impl ALocation {
     // get all location admin1 and names from db
-    pub fn get_from_db(sort: i64) -> Result<Vec<Self>, String> {
+    pub fn get_from_db(sort: i64, group_raw_jpeg_pairs: bool) -> Result<Vec<Self>, String> {
         let conn = open_conn()?;
 
         let query = format!("SELECT COALESCE(a.geo_cc, ''), a.geo_admin1, a.geo_name, count(a.id) as count
             FROM afiles a
             JOIN afolders b ON a.folder_id = b.id
             WHERE COALESCE(a.geo_admin1, '') <> '' AND COALESCE(a.geo_name, '') <> ''
-                AND a.id NOT IN (
-                    SELECT live_photo_video_id FROM afiles WHERE live_photo_video_id IS NOT NULL
-                ){} AND {}
-            GROUP BY a.geo_cc, a.geo_admin1, a.geo_name
-            ORDER BY a.geo_cc, a.geo_admin1, a.geo_name", AFile::album_filter_sql("a"), AFile::search_exclusion_condition("b"));
+                AND {}{} AND {}
+            GROUP BY COALESCE(a.geo_cc, ''), a.geo_admin1, a.geo_name
+            ORDER BY COALESCE(a.geo_cc, ''), a.geo_admin1, a.geo_name", AFile::companion_exclusion_in_bucket(group_raw_jpeg_pairs, "COALESCE(primary_file.geo_cc, '')=COALESCE(a.geo_cc, '') AND primary_file.geo_admin1=a.geo_admin1 AND primary_file.geo_name=a.geo_name"), AFile::album_filter_sql("a"), AFile::search_exclusion_condition("b"));
 
         let mut stmt = conn.prepare(query.as_str()).map_err(|e| e.to_string())?;
 
@@ -9823,11 +9983,13 @@ impl ALocation {
             entry.1.push(count); // Push count to Vec<i64>
         }
 
+        let parent_counts = location_parent_counts(&conn, group_raw_jpeg_pairs)?;
         let mut locations: Vec<Self> = hash_map
             .into_iter()
             .map(|((cc, admin1), (mut names, mut counts))| {
                 sort_labeled_counts(&mut names, &mut counts, sort);
                 Self {
+                    parent_count: parent_counts.get(&(cc.clone(), admin1.clone())).copied().unwrap_or(0),
                     cc,
                     admin1,
                     names,
@@ -9840,17 +10002,13 @@ impl ALocation {
         match sort {
             1 => locations.sort_by(|a, b| b.admin1.cmp(&a.admin1)),
             2 => locations.sort_by(|a, b| {
-                a.counts
-                    .iter()
-                    .sum::<i64>()
-                    .cmp(&b.counts.iter().sum::<i64>())
+                a.parent_count
+                    .cmp(&b.parent_count)
                     .then_with(|| a.admin1.cmp(&b.admin1))
             }),
             3 => locations.sort_by(|a, b| {
-                b.counts
-                    .iter()
-                    .sum::<i64>()
-                    .cmp(&a.counts.iter().sum::<i64>())
+                b.parent_count
+                    .cmp(&a.parent_count)
                     .then_with(|| a.admin1.cmp(&b.admin1))
             }),
             _ => locations.sort_by(|a, b| a.admin1.cmp(&b.admin1)),
@@ -10624,6 +10782,7 @@ mod tag_group_query_tests {
             CREATE TABLE afiles(id INTEGER PRIMARY KEY, folder_id INTEGER, live_photo_video_id INTEGER, width INTEGER, height INTEGER);
             INSERT INTO afiles VALUES(1,1,NULL,1000,1000), (2,1,NULL,100,100), (3,1,NULL,1000,1000), (4,2,NULL,1000,1000), (5,1,3,1000,1000), (6,1,NULL,1000,1000);
             ALTER TABLE afiles ADD COLUMN file_type INTEGER DEFAULT 1;
+            ALTER TABLE afiles ADD COLUMN media_subtype TEXT;
             CREATE TABLE atags(id INTEGER PRIMARY KEY, group_id INTEGER);
             INSERT INTO atags VALUES(10,1), (11,1), (12,2);
             CREATE TABLE afile_tags(file_id INTEGER, tag_id INTEGER, PRIMARY KEY(file_id,tag_id));
@@ -10641,7 +10800,7 @@ mod tag_group_query_tests {
             let mut stmt = conn.prepare(&format!("SELECT a.id FROM afiles a JOIN afolders b ON b.id = a.folder_id {joins} {conditions} ORDER BY a.id")).unwrap();
             let ids: Vec<i64> = stmt.query_map(rusqlite::params_from_iter(values.iter()), |r| r.get(0)).unwrap().collect::<Result<_, _>>().unwrap();
             assert_eq!(ids, expected);
-            let counts = ATag::get_group_counts_on(&conn).unwrap();
+            let counts = ATag::get_group_counts_on(&conn, true).unwrap();
             assert_eq!(counts[&1], expected.len() as i64);
             assert_eq!(counts[&2], 1);
         }
@@ -10676,6 +10835,169 @@ mod album_filter_tests {
     }
 
     #[test]
+    fn raw_pair_visibility_depends_on_query_setting_but_live_photo_does_not() {
+        let conn = fixture();
+        conn.execute_batch("INSERT INTO afiles(id,folder_id,file_type,width,height,live_photo_video_id,media_subtype) VALUES (16,1,1,1000,1000,17,'live_photo'), (17,1,2,1000,1000,NULL,NULL);").unwrap();
+        let ids = |group| {
+            let sql = format!("SELECT a.id FROM afiles a WHERE {} ORDER BY a.id", AFile::companion_exclusion_condition(group));
+            let mut stmt = conn.prepare(&sql).unwrap();
+            stmt.query_map([], |row| row.get::<_, i64>(0)).unwrap().collect::<Result<Vec<_>, _>>().unwrap()
+        };
+        assert!(!ids(true).contains(&14));
+        assert!(ids(false).contains(&14));
+        assert!(!ids(true).contains(&17));
+        assert!(!ids(false).contains(&17));
+        conn.execute_batch("ALTER TABLE afolders ADD COLUMN is_excluded_from_search INTEGER DEFAULT 0;
+            ALTER TABLE afiles ADD COLUMN is_favorite INTEGER DEFAULT 1;
+            ALTER TABLE afiles ADD COLUMN taken_date INTEGER DEFAULT 0;
+            ALTER TABLE afiles ADD COLUMN culling_flag INTEGER DEFAULT 0;").unwrap();
+        let grouped = AFile::get_library_visible_counts_on(&conn, true).unwrap().all;
+        let ungrouped = AFile::get_library_visible_counts_on(&conn, false).unwrap().all;
+        assert_eq!(ungrouped, grouped + 1);
+        let raw: (String, i64) = conn.query_row("SELECT media_subtype, live_photo_video_id FROM afiles WHERE id=13", [], |row| Ok((row.get(0)?, row.get(1)?))).unwrap();
+        assert_eq!(raw, ("raw_jpeg_pair".to_string(), 14));
+    }
+
+    #[test]
+    fn metadata_parent_buckets_deduplicate_across_child_values() {
+        let conn = fixture();
+        conn.execute_batch("ALTER TABLE afolders ADD COLUMN is_excluded_from_search INTEGER DEFAULT 0;
+            ALTER TABLE afiles ADD COLUMN e_make TEXT; ALTER TABLE afiles ADD COLUMN e_model TEXT;
+            ALTER TABLE afiles ADD COLUMN geo_cc TEXT; ALTER TABLE afiles ADD COLUMN geo_admin1 TEXT; ALTER TABLE afiles ADD COLUMN geo_name TEXT;
+            UPDATE afiles SET e_make='Canon', geo_cc='US', geo_admin1='Region' WHERE id IN (13,14);
+            UPDATE afiles SET e_model='R5', geo_name='Town1' WHERE id=13;
+            UPDATE afiles SET e_model='R6', geo_name='Town2' WHERE id=14;").unwrap();
+        let cameras = |group| metadata_parent_counts(&conn, group, "UPPER(a.e_make)", "UPPER(primary_file.e_make)=UPPER(a.e_make)", "a.e_make IS NOT NULL").unwrap();
+        let locations = |group| location_parent_counts(&conn, group).unwrap();
+        assert_eq!(cameras(true)["CANON"], 1);
+        assert_eq!(cameras(false)["CANON"], 2);
+        assert_eq!(locations(true)[&(String::from("US"),String::from("Region"))], 1);
+        assert_eq!(locations(false)[&(String::from("US"),String::from("Region"))], 2);
+        conn.execute("UPDATE afiles SET geo_cc='CA' WHERE id=14", []).unwrap();
+        assert_eq!(locations(true)[&(String::from("CA"),String::from("Region"))], 1);
+        assert_eq!(locations(true)[&(String::from("US"),String::from("Region"))], 1);
+        conn.execute("UPDATE afiles SET e_model=NULL WHERE id=14", []).unwrap();
+        assert_eq!(cameras(true)["CANON"], 1);
+    }
+
+    #[test]
+    fn face_index_stats_keep_jpeg_companions_and_individual_faces() {
+        let conn = fixture();
+        conn.execute_batch("ALTER TABLE afolders ADD COLUMN is_excluded_from_search INTEGER DEFAULT 0;
+            ALTER TABLE afiles ADD COLUMN has_faces INTEGER DEFAULT 0;
+            UPDATE afiles SET has_faces=1 WHERE id=14;
+            CREATE TABLE faces(id INTEGER PRIMARY KEY, file_id INTEGER, person_id INTEGER);
+            INSERT INTO faces VALUES(1,14,9),(2,14,10),(3,13,9);").unwrap();
+        let (total, processed, unprocessed, faces) = Face::get_stats_full_on(&conn).unwrap();
+        assert_eq!(processed, 1);
+        assert_eq!(unprocessed + processed, total);
+        assert_eq!(faces, 3, "face detections are records, not pair items");
+        conn.execute("DELETE FROM faces WHERE file_id=14", []).unwrap();
+        conn.execute("UPDATE afiles SET has_faces=0 WHERE id=14", []).unwrap();
+        let (_, new_processed, _, new_faces) = Face::get_stats_full_on(&conn).unwrap();
+        assert_eq!(new_processed, 0);
+        assert_eq!(new_faces, 1);
+    }
+
+    #[test]
+    fn raw_pair_sidebar_counts_preserve_distinct_buckets() {
+        let conn = fixture();
+        conn.execute_batch("ALTER TABLE afolders ADD COLUMN is_excluded_from_search INTEGER DEFAULT 0;
+            ALTER TABLE afiles ADD COLUMN is_favorite INTEGER DEFAULT 0;
+            ALTER TABLE afiles ADD COLUMN taken_date INTEGER DEFAULT 0;
+            ALTER TABLE afiles ADD COLUMN culling_flag INTEGER DEFAULT 0;
+            UPDATE afiles SET is_favorite=1, rating=2, culling_flag=1 WHERE id=14;
+            UPDATE afiles SET rating=1 WHERE id=13;
+            CREATE TABLE acollections_files(collection_id INTEGER, file_id INTEGER);
+            INSERT INTO acollections_files VALUES(1,14),(2,13),(3,13),(3,14);
+            CREATE TABLE afile_tags(file_id INTEGER, tag_id INTEGER);
+            INSERT INTO afile_tags VALUES(14,1),(13,2),(13,3),(14,3);").unwrap();
+        let grouped = AFile::get_library_visible_counts_on(&conn, true).unwrap();
+        let separate = AFile::get_library_visible_counts_on(&conn, false).unwrap();
+        assert_eq!(separate.all, grouped.all + 1);
+        assert_eq!(grouped.favorite, separate.favorite);
+        assert_eq!(grouped.rating_1, separate.rating_1);
+        assert_eq!(grouped.rating_2, separate.rating_2);
+        assert_eq!(grouped.pick, separate.pick);
+        let collections = AFile::companion_exclusion_in_bucket(true, "EXISTS (SELECT 1 FROM acollections_files pc WHERE pc.file_id=primary_file.id AND pc.collection_id=cf.collection_id)");
+        let sql = format!("SELECT cf.collection_id, COUNT(*) FROM acollections_files cf JOIN afiles a ON a.id=cf.file_id WHERE {collections} GROUP BY cf.collection_id ORDER BY cf.collection_id");
+        let counts = conn.prepare(&sql).unwrap().query_map([], |r| Ok((r.get::<_,i64>(0)?,r.get::<_,i64>(1)?))).unwrap().collect::<Result<Vec<_>,_>>().unwrap();
+        assert_eq!(counts, vec![(1,1),(2,1),(3,1)]);
+        let tags = AFile::companion_exclusion_in_bucket(true, "EXISTS (SELECT 1 FROM afile_tags pt WHERE pt.file_id=primary_file.id AND pt.tag_id=ft.tag_id)");
+        let sql = format!("SELECT ft.tag_id, COUNT(*) FROM afile_tags ft JOIN afiles a ON a.id=ft.file_id WHERE {tags} GROUP BY ft.tag_id ORDER BY ft.tag_id");
+        let counts = conn.prepare(&sql).unwrap().query_map([], |r| Ok((r.get::<_,i64>(0)?,r.get::<_,i64>(1)?))).unwrap().collect::<Result<Vec<_>,_>>().unwrap();
+        assert_eq!(counts, vec![(1,1),(2,1),(3,1)]);
+        conn.execute_batch("ALTER TABLE afiles ADD COLUMN geo_cc TEXT; ALTER TABLE afiles ADD COLUMN geo_admin1 TEXT; ALTER TABLE afiles ADD COLUMN geo_name TEXT;
+            UPDATE afiles SET geo_admin1='Region', geo_name='Town' WHERE id IN (13,14);
+            UPDATE afiles SET geo_cc='US' WHERE id=13; UPDATE afiles SET geo_cc='CA' WHERE id=14;").unwrap();
+        let geo = AFile::companion_exclusion_in_bucket(true, "COALESCE(primary_file.geo_cc, '')=COALESCE(a.geo_cc, '') AND primary_file.geo_admin1=a.geo_admin1 AND primary_file.geo_name=a.geo_name");
+        let sql = format!("SELECT COUNT(*) FROM afiles a WHERE a.id IN (13,14) AND {geo}");
+        let count = || conn.query_row(&sql, [], |r| r.get::<_,i64>(0)).unwrap();
+        assert_eq!(count(), 2);
+        conn.execute_batch("UPDATE afiles SET geo_cc=NULL WHERE id IN (13,14)").unwrap();
+        assert_eq!(count(), 1);
+        conn.execute_batch("UPDATE afiles SET geo_cc='' WHERE id=14").unwrap();
+        assert_eq!(count(), 1);
+    }
+
+    #[test]
+    fn raw_pair_deduplicates_only_matching_results_and_collection_members() {
+        let conn = fixture();
+        conn.execute_batch("ALTER TABLE afolders ADD COLUMN is_excluded_from_search INTEGER DEFAULT 0;
+            ALTER TABLE afiles ADD COLUMN name TEXT DEFAULT '';
+            ALTER TABLE afiles ADD COLUMN comments TEXT DEFAULT '';
+            ALTER TABLE afiles ADD COLUMN geo_cc TEXT;
+            ALTER TABLE afiles ADD COLUMN geo_admin1 TEXT;
+            ALTER TABLE afiles ADD COLUMN geo_name TEXT;
+            ALTER TABLE afiles ADD COLUMN culling_flag INTEGER DEFAULT 0;
+            UPDATE afiles SET geo_cc='US', geo_admin1='Region', geo_name='Town' WHERE id=13;
+            UPDATE afiles SET geo_cc='CA', geo_admin1='Region', geo_name='Town' WHERE id=14;
+            UPDATE afiles SET name='photo.CR3' WHERE id=13;
+            UPDATE afiles SET name='photo.JPG' WHERE id=14;
+            CREATE TABLE acollections_files(collection_id INTEGER, file_id INTEGER);
+            INSERT INTO acollections_files VALUES (1,14),(2,13),(3,13),(3,14);
+            CREATE TABLE afile_tags(file_id INTEGER, tag_id INTEGER);
+            INSERT INTO afile_tags VALUES (14,9);").unwrap();
+        let mut params: QueryParams = serde_json::from_value(serde_json::json!({
+            "groupRawJpegPairs":true, "searchFileName":"", "searchFileType":0, "sortType":0, "sortOrder":0,
+            "searchAllSubfolders":"", "searchFolder":"", "startDate":0, "endDate":0,
+            "calendarSort":0, "make":"", "model":"", "lensMake":"", "lensModel":"",
+            "locationAdmin1":"", "locationName":"", "isFavorite":false, "rating":-1,
+            "tagId":0, "personId":0
+        })).unwrap();
+        let query = |params: &QueryParams, collection: Option<i64>| {
+            let (joins, conditions, values) = AFile::build_search_query_parts_for_collection(params, collection);
+            let collection_clause = collection.map(|id| format!(" AND EXISTS (SELECT 1 FROM acollections_files cf WHERE cf.file_id=a.id AND cf.collection_id={id})")).unwrap_or_default();
+            let sql = format!("SELECT a.id FROM afiles a JOIN afolders b ON b.id=a.folder_id {joins}{conditions}{collection_clause} ORDER BY a.id");
+            conn.prepare(&sql).unwrap().query_map(params_from_iter(values.iter()), |r| r.get::<_,i64>(0)).unwrap().collect::<Result<Vec<_>,_>>().unwrap()
+        };
+        assert_eq!(query(&params, Some(1)), vec![14]);
+        assert_eq!(query(&params, Some(2)), vec![13]);
+        assert_eq!(query(&params, Some(3)), vec![13]);
+        params.location_admin1 = "Region".into(); params.location_name = "Town".into();
+        params.location_cc = Some("CA".into());
+        assert_eq!(query(&params, None), vec![14]);
+        params.location_cc = Some("US".into());
+        assert_eq!(query(&params, None), vec![13]);
+        params.location_cc = Some("".into());
+        assert!(query(&params, None).is_empty());
+        conn.execute("UPDATE afiles SET geo_cc=NULL WHERE id=14", []).unwrap();
+        assert_eq!(query(&params, None), vec![14]);
+        params.location_cc = None; params.location_admin1.clear(); params.location_name.clear();
+        params.search_file_name = "JPG".into();
+        assert_eq!(query(&params, None), vec![14]);
+        assert_eq!(query(&params, Some(3)), vec![14]);
+        params.search_file_name.clear();
+        params.tag_id = 9;
+        assert_eq!(query(&params, None), vec![14]);
+        let smart: SmartQueryParams = serde_json::from_value(serde_json::json!({"groupRawJpegPairs":true,"sortType":0,"sortOrder":0,"rules":[{"id":"name","field":"name","operator":"contains","value":"JPG"}]})).unwrap();
+        let (joins, conditions, values, _) = AFile::build_smart_query_parts(&smart).unwrap();
+        let sql = format!("SELECT a.id FROM afiles a JOIN afolders b ON b.id=a.folder_id {joins}{conditions} ORDER BY a.id");
+        let ids = conn.prepare(&sql).unwrap().query_map(params_from_iter(values.iter()), |r| r.get::<_,i64>(0)).unwrap().collect::<Result<Vec<_>,_>>().unwrap();
+        assert_eq!(ids, vec![14]);
+    }
+
+    #[test]
     fn offline_album_remains_in_all_files_folder_search_and_smart_queries() {
         let conn = fixture();
         conn.execute_batch(
@@ -10685,7 +11007,7 @@ mod album_filter_tests {
             ALTER TABLE afiles ADD COLUMN culling_flag INTEGER DEFAULT 0;",
         )
         .unwrap();
-        let before = AFile::get_library_visible_counts_on(&conn).unwrap().all;
+        let before = AFile::get_library_visible_counts_on(&conn, true).unwrap().all;
         let mut album: Album = serde_json::from_value(serde_json::json!({
             "id":1,"name":"Offline","path":"/lap-test-unmounted-volume/photos",
             "file_types":7,"small_image_filter":0,"excluded_folders":[]
@@ -10694,7 +11016,7 @@ mod album_filter_tests {
         t_utils::refresh_album_accessibility(&mut album);
         assert!(!album.is_accessible);
         assert_eq!(
-            AFile::get_library_visible_counts_on(&conn).unwrap().all,
+            AFile::get_library_visible_counts_on(&conn, true).unwrap().all,
             before
         );
         let mut params: QueryParams = serde_json::from_value(serde_json::json!({
@@ -10719,6 +11041,10 @@ mod album_filter_tests {
         };
         let all = query_ids(&params);
         assert!(all.contains(&2));
+        assert!(all.contains(&14), "ungrouped search should return RAW companion");
+        params.group_raw_jpeg_pairs = true;
+        assert!(!query_ids(&params).contains(&14), "grouped search should hide RAW companion");
+        params.group_raw_jpeg_pairs = false;
         params.search_folder = "/photos".into();
         assert!(query_ids(&params).contains(&2));
         params.search_folder.clear();
@@ -10737,11 +11063,20 @@ mod album_filter_tests {
             .collect::<Result<Vec<_>, _>>()
             .unwrap();
         assert!(ids.contains(&2));
+        assert!(ids.contains(&14), "ungrouped smart search should return RAW companion");
+        let mut grouped_smart = smart.clone();
+        grouped_smart.group_raw_jpeg_pairs = true;
+        let (joins, conditions, values, _) = AFile::build_smart_query_parts(&grouped_smart).unwrap();
+        let sql = format!("SELECT a.id FROM afiles a JOIN afolders b ON b.id=a.folder_id {}{} ORDER BY a.id", joins, conditions);
+        let grouped_ids = conn.prepare(&sql).unwrap()
+            .query_map(params_from_iter(values.iter()), |r| r.get::<_, i64>(0)).unwrap()
+            .collect::<Result<Vec<_>, _>>().unwrap();
+        assert!(!grouped_ids.contains(&14), "grouped smart search should hide RAW companion");
         album.path = std::env::temp_dir().to_string_lossy().to_string();
         t_utils::refresh_album_accessibility(&mut album);
         assert!(album.is_accessible);
         assert_eq!(
-            AFile::get_library_visible_counts_on(&conn).unwrap().all,
+            AFile::get_library_visible_counts_on(&conn, true).unwrap().all,
             before
         );
         assert_eq!(all, query_ids(&params));

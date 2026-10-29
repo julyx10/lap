@@ -10,6 +10,17 @@
       </div>
     </transition>
 
+    <div v-if="rawPairBackfillError" role="alert" class="flex items-center justify-center gap-3 p-2 bg-warning text-warning-content">
+      <span>{{ locale.startsWith('zh') ? 'RAW 配对索引更新失败，显示结果可能不完整。' : 'RAW pair index update failed; results may be incomplete.' }}</span>
+      <button class="btn btn-sm" @click="rawPairBackfill.request()">{{ locale.startsWith('zh') ? '重试' : 'Retry' }}</button>
+    </div>
+
+    <div v-if="dirtyFolderRecoveryError" role="alert" :title="dirtyFolderRecoveryError" class="flex items-center justify-center gap-3 p-2 bg-warning text-warning-content">
+      <span>{{ locale.startsWith('zh') ? '部分文件夹同步尚未完成，显示结果可能不完整。' : 'Some folders could not be synchronized; results may be incomplete.' }}</span>
+      <button class="btn btn-sm" :disabled="dirtyFolderRecoveryRunning" @click="retryDirtyFolderRecovery">{{ locale.startsWith('zh') ? '重试' : 'Retry' }}</button>
+      <span class="sr-only">{{ dirtyFolderRecoveryError }}</span>
+    </div>
+
     <!-- Title Bar -->
     <TitleBar v-if="showDesktopTitleBar" titlebar="Lap" viewName="Home" :icon="iconLogo"/>
 
@@ -189,13 +200,14 @@ import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { getName } from '@tauri-apps/api/app';
 import { invoke } from '@tauri-apps/api/core';
 import { applyAlbumAccess, recheckOfflineAlbums } from '@/common/albumRecovery';
+import { createRawPairBackfill } from '@/common/rawPairBackfill';
 import { config, libConfig } from '@/common/config';
 import { useAppUpdater } from '@/common/updater';
 import { useUIStore } from '@/stores/uiStore';
 import { isWin, isMac, isLinux, SCALE_VALUES } from '@/common/utils';
 import { matchesShortcut, ShortcutPlatform } from '@/common/shortcuts';
 import { SIDEBAR, SETTINGS_TAB, SETTINGS_BASE_WIDTH, SETTINGS_BASE_HEIGHT, PANEL_ANIMATION_MS } from '@/common/constants';
-import { getAppConfig, getLibraryVisibleCounts, switchLibrary, cancelIndexing, cancelFaceIndex } from '@/common/api';
+import { getAppConfig, getLibraryVisibleCounts, switchLibrary, cancelIndexing, cancelFaceIndex, listenIndexFinished } from '@/common/api';
 
 // vue components
 import Library from '@/components/Library.vue';
@@ -270,6 +282,40 @@ const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value] as any);
 
 const uiStore = useUIStore();
+const rawPairBackfillError = ref(false);
+const dirtyFolderRecoveryError = ref('');
+const dirtyFolderRecoveryRunning = ref(false);
+let unlistenDirtyFolderFailed: (() => void) | null = null;
+let unlistenDirtyFolderFinished: (() => void) | null = null;
+async function retryDirtyFolderRecovery() {
+  if (dirtyFolderRecoveryRunning.value) return;
+  const libraryId = libConfig._libraryId;
+  dirtyFolderRecoveryRunning.value = true;
+  try {
+    const failures = await invoke<string[]>('retry_dirty_folder_recovery');
+    if (libraryId === libConfig._libraryId) dirtyFolderRecoveryError.value = failures[0] || '';
+  } catch (error) {
+    if (libraryId === libConfig._libraryId) dirtyFolderRecoveryError.value = String(error);
+  } finally {
+    dirtyFolderRecoveryRunning.value = false;
+    if (libraryId !== libConfig._libraryId) void retryDirtyFolderRecovery();
+  }
+}
+let unlistenRawPairIndexFinished: (() => void) | null = null;
+const rawPairBackfill = createRawPairBackfill({
+  run: () => invoke<boolean>('backfill_raw_pair_index'),
+  libraryId: () => libConfig._libraryId,
+  onSuccess: async () => {
+    rawPairBackfillError.value = false;
+    await emit('refresh-content', { source: 'raw-pair-backfill' });
+    await emit('albums-refreshed', { refreshCounts: true });
+    await emit('library-total-refreshed');
+  },
+  onError: (error: unknown) => {
+    console.error('RAW pair index update failed:', error);
+    rawPairBackfillError.value = true;
+  },
+});
 
 // Panel component ref
 const panelRef = ref<any>(null);
@@ -491,6 +537,15 @@ onMounted(async () => {
   });
 
   appConfig.value = await getAppConfig();
+  unlistenDirtyFolderFailed = await listen('dirty-folder-recovery-failed', (event: any) => {
+    if (event.payload?.libraryId === libConfig._libraryId) dirtyFolderRecoveryError.value = String(event.payload?.error || 'Folder synchronization failed');
+  });
+  unlistenDirtyFolderFinished = await listen('dirty-folder-recovery-finished', (event: any) => {
+    if (event.payload?.libraryId === libConfig._libraryId) dirtyFolderRecoveryError.value = '';
+  });
+  void retryDirtyFolderRecovery();
+  unlistenRawPairIndexFinished = await listenIndexFinished(() => { rawPairBackfill.indexFinished(); });
+  void rawPairBackfill.request();
 
   void checkLibraryEmpty();
 
@@ -532,6 +587,11 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('focus', handleAccessRecovery);
+  rawPairBackfill.dispose();
+  unlistenDirtyFolderFailed?.();
+  unlistenDirtyFolderFinished?.();
+  unlistenRawPairIndexFinished?.();
+  unlistenRawPairIndexFinished = null;
   clearLeftPanelAnimationTimer();
   window.removeEventListener('keydown', handleHomeKeyDown);
   document.removeEventListener('mousemove', handleCollectionMouseMove);
@@ -624,6 +684,9 @@ const doSwitchLibrary = async (libraryId: string) => {
     // Settle the corruption/empty state before notifying, so `library-switched` listeners see a
     // resolved databaseCorrupted (matches onManageLibrariesOk's ordering).
     await checkLibraryEmpty();
+    dirtyFolderRecoveryError.value = '';
+    void retryDirtyFolderRecovery();
+    void rawPairBackfill.request();
     await emit('library-switched');
   } catch (error) {
     libConfig._initialized = true;
@@ -648,6 +711,9 @@ const onManageLibrariesOk = async () => {
       await libConfig.reload();
       libraryVersion.value++;
       await checkLibraryEmpty();
+      dirtyFolderRecoveryError.value = '';
+      void retryDirtyFolderRecovery();
+      void rawPairBackfill.request();
       await emit('library-switched');
     } finally {
       isSwitchingLibrary.value = false;

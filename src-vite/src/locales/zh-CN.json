@@ -1278,6 +1278,11 @@
     "loading_original": "加载原始照片...",
     "failed": "加载照片失败。文件不存在或已损坏。",
     "raw_render_unavailable": "无法渲染该 RAW，已显示内嵌预览。",
+    "focus_toggle": "显示 AF 对焦区域",
+    "focus_unavailable": "AF 不可用",
+    "focus_result_focus": "AF 已对焦",
+    "focus_result_out_of_focus": "AF 未对焦",
+    "focus_result_unknown": "AF 未知",
     "toolbar": {
       "prev": "上一张",
       "next": "下一张",

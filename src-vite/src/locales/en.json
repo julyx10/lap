@@ -1278,6 +1278,11 @@
     "loading_original": "Loading original photo...",
     "failed": "Failed to load photo. The file is missing or corrupted.",
     "raw_render_unavailable": "Can't render this RAW; showing embedded preview.",
+    "focus_toggle": "Show AF area",
+    "focus_unavailable": "AF unavailable",
+    "focus_result_focus": "AF in focus",
+    "focus_result_out_of_focus": "AF out of focus",
+    "focus_result_unknown": "AF unknown",
     "toolbar": {
       "prev": "Previous",
       "next": "Next",

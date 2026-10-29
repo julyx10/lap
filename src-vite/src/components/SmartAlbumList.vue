@@ -134,7 +134,7 @@ import { VueDraggable } from 'vue-draggable-plus';
 import { config, libConfig } from '@/common/config';
 import { useUIStore } from '@/stores/uiStore';
 import { getThumbUrl, getThumbnailDataUrl, getThumbnailDataUrlInflight, isWin, setThumbnailDataUrlInflight } from '@/common/utils';
-import { getFileThumbById, getSmartQueryCountAndSum } from '@/common/api';
+import { getFileThumbById, getSmartQueryCountAndSum, listenIndexFinished } from '@/common/api';
 import { IconAdd, IconClose, IconDragHandle, IconEdit, IconMore, IconFolderCog, IconOrder, IconSearch, IconTrash } from '@/common/icons';
 import TButton from '@/components/TButton.vue';
 import ContextMenu from '@/components/ContextMenu.vue';
@@ -233,6 +233,7 @@ const getSmartAlbumCoverSrc = (smartAlbum: any) => {
 const loadWindowsSmartAlbumCovers = async (albums: any[]) => {
   if (!isWin) return;
   const loadToken = ++smartAlbumCoverLoadToken;
+  const libraryId = libConfig._libraryId;
 
   const covers = await Promise.all(albums.map(async (smartAlbum) => {
     const coverFileId = Number(smartAlbum?.coverFileId || 0);
@@ -242,13 +243,13 @@ const loadWindowsSmartAlbumCovers = async (albums: any[]) => {
     const url = await (inflight || setThumbnailDataUrlInflight(
       coverFileId,
       config.settings.thumbnailSize,
-      getFileThumbById(coverFileId, config.settings.thumbnailSize, false)
-        .then(thumb => getThumbnailDataUrl(thumb, '', false, config.settings.thumbnailSize))
+      getFileThumbById(coverFileId, config.settings.thumbnailSize, false, libraryId)
+        .then(thumb => libraryId === libConfig._libraryId ? getThumbnailDataUrl(thumb, '', false, config.settings.thumbnailSize) : '')
     ));
     return [String(smartAlbum.id), url || ''] as const;
   }));
 
-  if (loadToken !== smartAlbumCoverLoadToken) return;
+  if (loadToken !== smartAlbumCoverLoadToken || libraryId !== libConfig._libraryId) return;
   smartAlbumCoverUrls.value = Object.fromEntries(covers.filter(([, url]) => url));
 };
 
@@ -313,14 +314,14 @@ function handleReorderOutsidePointerDown(event: PointerEvent) {
 
 onMounted(async () => {
   document.addEventListener('pointerdown', handleReorderOutsidePointerDown, true);
-  for (const eventName of ['album-updated', 'index_finished']) {
-    const stop = await listen(eventName, (event: any) => {
-      if (eventName === 'album-updated' && !event.payload?.filtersChanged) return;
-      void refreshSmartAlbumCounts();
-    });
-    if (smartCountsDisposed) { stop(); return; }
-    unlistenSmartCounts.push(stop);
-  }
+  const stopAlbum = await listen('album-updated', (event: any) => {
+    if (event.payload?.filtersChanged) void refreshSmartAlbumCounts();
+  });
+  if (smartCountsDisposed) { stopAlbum(); return; }
+  unlistenSmartCounts.push(stopAlbum);
+  const stopIndex = await listenIndexFinished(() => { void refreshSmartAlbumCounts(); });
+  if (smartCountsDisposed) { stopIndex(); return; }
+  unlistenSmartCounts.push(stopIndex);
 });
 
 onBeforeUnmount(() => {

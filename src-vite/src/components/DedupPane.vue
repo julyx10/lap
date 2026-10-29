@@ -121,6 +121,7 @@
                 <div class="absolute left-0.5 top-0.5 thumb-badge">
                   {{ group.file_count }}
                 </div>
+                <div v-if="formatLabel(group.representative)" class="absolute bottom-0.5 left-0.5 thumb-badge text-[9px]">{{ formatLabel(group.representative) }}</div>
               </button>
             </div>
             </div>
@@ -193,6 +194,7 @@
                   <div class="min-w-0 flex-1">
                     <div class="flex items-center gap-1 text-xs font-semibold text-base-content/70">
                       <span class="truncate">{{ item.file?.name }}</span>
+                      <span v-if="formatLabel(item.file)" class="shrink-0 rounded bg-base-content/10 px-1 py-0.5 text-[9px] font-semibold text-base-content/70">{{ formatLabel(item.file) }}</span>
                       <IconExclamation v-if="isOriginalUnavailable(item.file)" class="w-3.5 h-3.5 shrink-0 text-warning" />
                     </div>
                     <div class="text-[11px] text-base-content/30 truncate">
@@ -431,6 +433,7 @@
                 <div class="min-w-0 flex-1">
                   <div class="flex items-center gap-1 text-xs font-semibold text-base-content/70">
                     <span class="truncate">{{ item.file?.name }}</span>
+                      <span v-if="formatLabel(item.file)" class="shrink-0 rounded bg-base-content/10 px-1 py-0.5 text-[9px] font-semibold text-base-content/70">{{ formatLabel(item.file) }}</span>
                     <IconExclamation v-if="isOriginalUnavailable(item.file)" class="w-3.5 h-3.5 shrink-0 text-warning" />
                   </div>
                   <div
@@ -517,6 +520,9 @@ import {
   setFileCullingFlag,
 } from '@/common/api';
 import { config, libConfig } from '@/common/config';
+import { dedupFormatLabel } from '@/common/dedupFormat';
+
+const formatLabel = (file: any) => dedupFormatLabel(file, config.settings.groupRawJpegPairs);
 import { isOriginalUnavailable, setFileAccessibility } from '@/common/availability';
 import { SIMILAR_SCAN, DEDUP_THUMBNAIL_PAGE_SIZE } from '@/common/constants';
 
@@ -856,6 +862,7 @@ async function refreshFileAccess(files: any[]) {
 }
 
 async function hydrateSimilarThumbnails(groups: any[], activeGroupId: number | null) {
+  const libraryId = libConfig._libraryId;
   const visibleIds = new Set(
     visibleSimilarGroups.value.map(group => Number(group.id))
   );
@@ -865,6 +872,7 @@ async function hydrateSimilarThumbnails(groups: any[], activeGroupId: number | n
   }).filter(Boolean);
   await refreshFileAccess(groups.flatMap(group => Number(group.id) === activeGroupId
     ? (group.items || []).map((item: any) => item.file) : []));
+  if (libraryId !== libConfig._libraryId) return;
   await Promise.all(files.map(async (file: any) => {
     if (file.thumbnail || !file.file_path) return;
     const thumb = await getFileThumb(
@@ -876,7 +884,9 @@ async function hydrateSimilarThumbnails(groups: any[], activeGroupId: number | n
       false,
       null,
       file.album_id || 0,
+      libraryId,
     );
+    if (libraryId !== libConfig._libraryId) return;
     file.thumbnail = getThumbnailDataUrl(thumb, thumbnailPlaceholder, false, config.settings.thumbnailSize, file.file_path, Number(file.modified_at || 0), !file.cloud_only);
   }));
 }
@@ -1333,8 +1343,10 @@ async function hydrateAlbumRootPaths(groups: any[]) {
 }
 
 async function hydrateGroupThumbnails(groups: any[], activeGroupId: number | null) {
+  const libraryId = libConfig._libraryId;
   await refreshFileAccess(groups.flatMap(group => Number(group.id) === activeGroupId
     ? (group.items || []).map((item: any) => item.file) : []));
+  if (libraryId !== libConfig._libraryId) return;
   const tasks: Promise<void>[] = [];
   const visibleGroupIds = new Set(
     (groups || []).slice(0, loadedDuplicateGroupCount.value).map((group: any) => Number(group.id))
@@ -1367,7 +1379,9 @@ async function hydrateGroupThumbnails(groups: any[], activeGroupId: number | nul
           false,
           null,
           file.album_id || 0,
+          libraryId,
         );
+        if (libraryId !== libConfig._libraryId) return;
         file.thumbnail = getThumbnailDataUrl(thumb, thumbnailPlaceholder, false, config.settings.thumbnailSize, file.file_path, Number(file.modified_at || 0), !file.cloud_only);
       })());
     }
@@ -1621,6 +1635,11 @@ watch(
   () => props.dedupScanKey,
   (newKey) => {
     selectedGroupId.value = null;
+    // Never expose groups from a previous query/pairing policy while the new scan starts.
+    rawGroups.value = [];
+    totalGroupCount.value = 0;
+    totalDuplicateFileCount.value = 0;
+    totalReclaimableBytes.value = 0;
     if (!newKey) {
       scanGeneration.value++;
       stopDedupStatusPolling();

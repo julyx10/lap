@@ -176,8 +176,8 @@ const apiSource = await readFile(new URL('../src/common/api.js', import.meta.url
 const batchApiSource = apiSource.slice(apiSource.indexOf('export async function getFileThumbs('),
   apiSource.indexOf('// get file info', apiSource.indexOf('export async function getFileThumbs(')))
   .replace('export ', '');
-const batchApi = invoke => new Function('invoke', 'getRawDisplayOptions',
-  batchApiSource + '; return getFileThumbs;')(invoke, () => ({}));
+const batchApi = invoke => new Function('invoke', 'getRawDisplayOptions', 'libConfig',
+  batchApiSource + '; return getFileThumbs;')(invoke, () => ({}), { _libraryId: 'library-a' });
 
 test('production batch API propagates IPC errors and rejects malformed responses', async () => {
   const failure = new Error('Error while fetching offline thumbnail');
@@ -200,12 +200,13 @@ function gridFixture(grouped = false, loadThumbs) {
   const range = { start: 0, end: 3 };
   const memory = new Map();
   const errors = [];
+  const libConfig = { _libraryId: 'library-a' };
   let dispose;
-  const api = new Function('createThumbnailScheduler', 'config', 'getFileThumbs', 'gridRows',
+  const api = new Function('createThumbnailScheduler', 'config', 'libConfig', 'getFileThumbs', 'gridRows',
     'visibleItemCount', 'lastVisibleRange', 'isItemRow', 'isRealFileItem', 'onBeforeUnmount',
     'getCachedThumbnailDataUrl', 'getThumbnailDataUrl', 'thumbnailPlaceholder', 'console',
     adapter + '; return { getFileListThumb, invalidateThumbnailRequests, refreshThumbnailViewport };')(
-    createThumbnailScheduler, { settings: { thumbnailSize: 512 } },
+    createThumbnailScheduler, { settings: { thumbnailSize: 512 } }, libConfig,
     requests => loadThumbs ? loadThumbs(requests, io) : io.load(requests), rows, { value: 4 }, range, row => row?.type === 'item',
     file => file && !file.isPlaceholder && typeof file.id === 'number', callback => { dispose = callback; },
     id => memory.get(id), thumb => { memory.set(thumb.id, thumb.url); return thumb.url; },
@@ -213,7 +214,7 @@ function gridFixture(grouped = false, loadThumbs) {
   const finish = index => io.calls[index].finish(io.calls[index].payloads.map(p => ({
     error_code: 0, id: p.fileId, url: `thumb:${p.fileId}`,
   })));
-  return { ...api, io, files, rows, range, memory, errors, finish, dispose: () => dispose() };
+  return { ...api, io, files, rows, range, memory, errors, libConfig, finish, dispose: () => dispose() };
 }
 
 test('Content reports real API failures, releases slots and retries the same files', async () => {
@@ -331,4 +332,31 @@ test('explicit previews outside the viewport remain available and forced refresh
   grid.finish(2);
   await Promise.all([first, second]);
   grid.dispose();
+});
+
+test('thumbnail events reject another library and stop after a queued switch', async () => {
+  const start = source.indexOf('async (event: any) => {', source.indexOf("listen('thumbnail_ready'"));
+  const end = source.indexOf('\n  });', start);
+  assert.ok(start >= 0 && end > start);
+  const code = ts.transpile(`const callback = ${source.slice(start, end + '\n  }'.length)};`);
+  const config = { settings: { thumbnailSize: 512 } };
+  const libConfig = { _libraryId: 'library-b' };
+  const file = { id: 1, file_path: '/fixture.jpg' };
+  const fileList = { value: [file] };
+  let loads = 0;
+  let resolveInfo;
+  const callback = new Function('libConfig', 'fileList', 'config', 'clearCachedThumbnailDataUrl', 'getFileInfo', 'getFileListThumb', 'selectedItemIndex', 'nextTick', `${code}; return callback;`)(
+    libConfig, fileList, config, () => {}, () => new Promise(resolve => { resolveInfo = resolve; }),
+    () => { loads++; }, { value: 0 }, async () => {},
+  );
+  await callback({ payload: { library_id: 'library-a', file_ids: [1] } });
+  assert.equal(loads, 0);
+  assert.equal(resolveInfo, undefined);
+  const queued = callback({ payload: { library_id: 'library-b', file_ids: [1] } });
+  assert.equal(typeof resolveInfo, 'function');
+  libConfig._libraryId = 'library-c';
+  resolveInfo({ modified_at: 42 });
+  await queued;
+  assert.equal(file.modified_at, undefined);
+  assert.equal(loads, 0);
 });

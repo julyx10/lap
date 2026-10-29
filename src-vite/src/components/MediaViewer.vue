@@ -91,6 +91,14 @@
           :shortcut="shortcut('view.zoomFit')"
           @click="$emit('update:isZoomFit', !isZoomFit)"
         />
+        <TButton
+          text="AF"
+          textClasses="font-semibold"
+          :selected="config.settings.showFocus"
+          :disabled="fileIndex < 0 || isSlideShow || !canInteract || Number(file?.file_type) === 2"
+          :tooltip="$t('image_viewer.focus_toggle')"
+          @click="toggleFocus"
+        />
         <template v-if="showExtraIcons">
           <IconSeparator class="t-icon-size-sm text-base-content/30" />
           <TButton
@@ -360,7 +368,7 @@
           :fileId="file?.id"
           :fileType="file?.file_type"
           :originalUnavailable="originalUnavailable"
-          :rawPairPath="file?.media_subtype === 'raw_jpeg_pair' ? file?.live_photo_video_path : ''"
+          :rawPairPath="config.settings.groupRawJpegPairs && file?.media_subtype === 'raw_jpeg_pair' ? file?.live_photo_video_path : ''"
           :fileVersion="file?.modified_at || 0"
           :imageWidth="file?.width"
           :imageHeight="file?.height"
@@ -446,6 +454,13 @@ import { useI18n } from 'vue-i18n';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { runPreviewWindowOperation, recoverPreviewWindowFocus } from '@/common/previewWindow';
 import { config, libConfig } from '@/common/config';
+import { emit as emitAppEvent } from '@tauri-apps/api/event';
+
+function toggleFocus() {
+  config.settings.showFocus = !config.settings.showFocus;
+  emitAppEvent('settings-showFocus-changed', config.settings.showFocus)
+    .catch(error => console.error('Failed to sync focus overlay setting', error));
+}
 import { useToast } from '@/common/toast';
 import { isWin, isMac, isLinux, getSlideShowInterval } from '@/common/utils';
 import { getShortcutLabel, ShortcutActionId, ShortcutPlatform, VIEW_BACKGROUND_SHORTCUTS } from '@/common/shortcuts';

@@ -5,6 +5,25 @@ import { listen } from '@tauri-apps/api/event';
 import { config, libConfig } from '@/common/config';
 import { separator, localeComp, formatTimestamp } from '@/common/utils';
 import { getRawDisplayOptions } from './rawDisplay';
+import { useToast } from '@/common/toast';
+
+let lastTransferBusyNotice = 0;
+function notifyTransferBusy(error) {
+  const message = String(error);
+  if (!message.includes('Library scan or folder recovery is in progress; retry the file operation')
+      && !message.includes('RAW pair is stale; refresh the library before retrying')
+      && !message.includes('Live Photo companion is in a different folder; refresh the library before retrying')) return;
+  const now = Date.now();
+  if (now - lastTransferBusyNotice < 3000) return;
+  lastTransferBusyNotice = now;
+  useToast().warning(message, { duration: 5000 });
+}
+
+// Apply the current presentation policy to every paged query and its companion
+// count/position requests. Never mutate the caller's reusable filter object.
+function withRawPairQueryParams(params) {
+  return { ...params, groupRawJpegPairs: Boolean(config.settings.groupRawJpegPairs) };
+}
 
 export async function getSystemRegionLocale() {
   // plugin-os reports language preferences, which can differ from date/time region.
@@ -274,7 +293,7 @@ export async function getCurrentLibraryState() {
 
 export async function getSmartQueryCountAndSum(params) {
   try {
-    return await invoke('get_smart_query_count_and_sum', { params });
+    return await invoke('get_smart_query_count_and_sum', { params: withRawPairQueryParams(params) });
   } catch (error) {
     console.error('Failed to get smart query count and sum:', error);
   }
@@ -283,7 +302,7 @@ export async function getSmartQueryCountAndSum(params) {
 
 export async function getSmartQueryTimeLine(params) {
   try {
-    return await invoke('get_smart_query_time_line', { params });
+    return await invoke('get_smart_query_time_line', { params: withRawPairQueryParams(params) });
   } catch (error) {
     console.error('Failed to get smart query timeline:', error);
   }
@@ -292,7 +311,7 @@ export async function getSmartQueryTimeLine(params) {
 
 export async function getSmartQueryFiles(params, offset, limit) {
   try {
-    return await invoke('get_smart_query_files', { params, offset, limit });
+    return await invoke('get_smart_query_files', { params: withRawPairQueryParams(params), offset, limit });
   } catch (error) {
     console.error('Failed to get smart query files:', error);
   }
@@ -301,7 +320,7 @@ export async function getSmartQueryFiles(params, offset, limit) {
 
 export async function getSmartGroupedQueryRows(params, offset, limit) {
   try {
-    return await invoke('get_smart_grouped_query_rows', { params, offset, limit });
+    return await invoke('get_smart_grouped_query_rows', { params: withRawPairQueryParams(params), offset, limit });
   } catch (error) {
     console.error('Failed to get smart grouped query rows:', error);
   }
@@ -310,7 +329,7 @@ export async function getSmartGroupedQueryRows(params, offset, limit) {
 
 export async function getSmartGroupFileIds(params, groupId) {
   try {
-    return await invoke('get_smart_group_file_ids', { params, groupId });
+    return await invoke('get_smart_group_file_ids', { params: withRawPairQueryParams(params), groupId });
   } catch (error) {
     console.error('Failed to get smart group file ids:', error);
   }
@@ -319,7 +338,7 @@ export async function getSmartGroupFileIds(params, groupId) {
 
 export async function getSmartQueryFileIds(params) {
   try {
-    return await invoke('get_smart_query_file_ids', { params });
+    return await invoke('get_smart_query_file_ids', { params: withRawPairQueryParams(params) });
   } catch (error) {
     console.error('Failed to get smart query file ids:', error);
   }
@@ -328,7 +347,7 @@ export async function getSmartQueryFileIds(params) {
 
 export async function getSmartQueryFilePosition(params, fileId) {
   try {
-    return await invoke('get_smart_query_file_position', { params, fileId });
+    return await invoke('get_smart_query_file_position', { params: withRawPairQueryParams(params), fileId });
   } catch (error) {
     console.error('Failed to get smart query file position:', error);
   }
@@ -430,7 +449,7 @@ export async function recountAlbum(albumId) {
 
 export async function getAlbumVisibleCounts() {
   try {
-    return await invoke('get_album_visible_counts');
+    return await invoke('get_album_visible_counts', { groupRawJpegPairs: Boolean(config.settings.groupRawJpegPairs) });
   } catch (error) {
     console.error('getAlbumVisibleCounts:', error);
   }
@@ -678,6 +697,7 @@ export async function createFolder(path, folderName) {
     };
   } catch (error) {
     console.log('Failed to create folder:', error);
+    throw error;
   }
   return null;
 }
@@ -691,6 +711,7 @@ export async function renameFolder(folderPath, newFolderName) {
     };
   } catch (error) {
     console.log('Failed to rename folder:', error);
+    throw error;
   }
   return null;
 }
@@ -704,6 +725,7 @@ export async function moveFolder(folderPath, newAlbumId, newFolderPath, conflict
     };
   } catch (error) {
     console.log('Failed to move folder:', error);
+    notifyTransferBusy(error);
   }
   return null;
 }
@@ -713,6 +735,7 @@ export async function moveFolderOutsideLibrary(folderPath, newFolderPath, confli
     return await invoke('move_folder_outside_library', { folderPath, newFolderPath, conflictPolicy });
   } catch (error) {
     console.log('Failed to move folder outside library:', error);
+    notifyTransferBusy(error);
   }
   return null;
 }
@@ -726,6 +749,7 @@ export async function copyFolder(folderPath, newFolderPath, newAlbumId = 0, conf
     };
   } catch (error) {
     console.log('Failed to copy folder:', error);
+    notifyTransferBusy(error);
   }
   return null;
 }
@@ -769,7 +793,7 @@ export async function revealPath(path) {
 /// get query files count and sum
 export async function getQueryCountAndSum(params) {
   try {
-    const result = await invoke('get_query_count_and_sum', { params });
+    const result = await invoke('get_query_count_and_sum', { params: withRawPairQueryParams(params) });
     if(result) {
       return result;
     };
@@ -780,7 +804,7 @@ export async function getQueryCountAndSum(params) {
 }
 
 export async function getLibraryVisibleCounts(id) {
-  try { return await invoke('get_library_visible_counts', { id }); }
+  try { return await invoke('get_library_visible_counts', { id, groupRawJpegPairs: Boolean(config.settings.groupRawJpegPairs) }); }
   catch (error) { console.error('getLibraryVisibleCounts:', error); }
   return null;
 }
@@ -788,7 +812,7 @@ export async function getLibraryVisibleCounts(id) {
 /// get query timeline markers
 export async function getQueryTimeLine(params) {
   try {
-    const result = await invoke('get_query_time_line', { params });
+    const result = await invoke('get_query_time_line', { params: withRawPairQueryParams(params) });
     if(result) {
       return result;
     };
@@ -802,7 +826,7 @@ export async function getQueryTimeLine(params) {
 export async function getQueryFiles(params, offset, limit) {
   try {
     const files = await invoke('get_query_files', { 
-      params,
+      params: withRawPairQueryParams(params),
       offset, 
       limit,
     });
@@ -813,6 +837,10 @@ export async function getQueryFiles(params, offset, limit) {
     console.error('getQueryFiles error:', error);
   }
   return null;
+}
+
+export async function resolveRawPairPrimaryIds(fileIds) {
+  return await invoke('resolve_raw_pair_primary_ids', { fileIds });
 }
 
 export async function getFilesByIds(fileIds) {
@@ -828,7 +856,7 @@ export async function getFilesByIds(fileIds) {
 export async function getGroupedQueryRows(params, offset, limit) {
   try {
     const result = await invoke('get_grouped_query_rows', {
-      params,
+      params: withRawPairQueryParams(params),
       offset,
       limit,
     });
@@ -843,7 +871,7 @@ export async function getGroupedQueryRows(params, offset, limit) {
 
 export async function getGroupedFilePosition(params, fileId) {
   try {
-    return await invoke('get_grouped_file_position', { params, fileId });
+    return await invoke('get_grouped_file_position', { params: withRawPairQueryParams(params), fileId });
   } catch (error) {
     console.error('getGroupedFilePosition error:', error);
     return undefined;
@@ -854,7 +882,7 @@ export async function getGroupedFilePosition(params, fileId) {
 export async function getGroupFileIds(params, groupId) {
   try {
     const result = await invoke('get_group_file_ids', {
-      params,
+      params: withRawPairQueryParams(params),
       groupId,
     });
     if (result) {
@@ -869,7 +897,7 @@ export async function getGroupFileIds(params, groupId) {
 /// get all file ids in current query
 export async function getQueryFileIds(params) {
   try {
-    const result = await invoke('get_query_file_ids', { params });
+    const result = await invoke('get_query_file_ids', { params: withRawPairQueryParams(params) });
     if (result) {
       return result;
     }
@@ -883,7 +911,7 @@ export async function getQueryFileIds(params) {
 export async function getQueryFilePosition(params, fileId) {
   try {
     const pos = await invoke('get_query_file_position', {
-      params,
+      params: withRawPairQueryParams(params),
       fileId,
     });
     if (pos === 0 || pos) {
@@ -908,7 +936,7 @@ export async function listCollections() {
 
 export async function getCollectionCounts() {
   try {
-    return await invoke('get_collection_counts');
+    return await invoke('get_collection_counts', { groupRawJpegPairs: Boolean(config.settings.groupRawJpegPairs) });
   } catch (error) {
     console.error('Failed to get collection counts:', error);
   }
@@ -917,7 +945,7 @@ export async function getCollectionCounts() {
 
 export async function createCollection(name) {
   try {
-    return await invoke('create_collection', { name });
+    return await invoke('create_collection', { name, groupRawJpegPairs: Boolean(config.settings.groupRawJpegPairs) });
   } catch (error) {
     console.error('Failed to create collection:', error);
     throw error;
@@ -1007,7 +1035,7 @@ export async function getFileCollections(fileId) {
 
 export async function getCollectionCountAndSum(collectionId, params) {
   try {
-    return await invoke('get_collection_count_and_sum', { collectionId, params });
+    return await invoke('get_collection_count_and_sum', { collectionId, params: withRawPairQueryParams(params) });
   } catch (error) {
     console.error('Failed to get collection count and sum:', error);
   }
@@ -1016,7 +1044,7 @@ export async function getCollectionCountAndSum(collectionId, params) {
 
 export async function getCollectionFiles(collectionId, params, offset, limit) {
   try {
-    return await invoke('get_collection_files', { collectionId, params, offset, limit });
+    return await invoke('get_collection_files', { collectionId, params: withRawPairQueryParams(params), offset, limit });
   } catch (error) {
     console.error('Failed to get collection files:', error);
   }
@@ -1026,7 +1054,7 @@ export async function getCollectionFiles(collectionId, params, offset, limit) {
 /// get grouped rows from a collection query
 export async function getCollectionGroupedQueryRows(collectionId, params, offset, limit) {
   try {
-    return await invoke('get_collection_grouped_query_rows', { collectionId, params, offset, limit });
+    return await invoke('get_collection_grouped_query_rows', { collectionId, params: withRawPairQueryParams(params), offset, limit });
   } catch (error) {
     console.error('Failed to get grouped collection rows:', error);
   }
@@ -1036,7 +1064,7 @@ export async function getCollectionGroupedQueryRows(collectionId, params, offset
 /// get all file ids in a collection query group
 export async function getCollectionGroupFileIds(collectionId, params, groupId) {
   try {
-    return await invoke('get_collection_group_file_ids', { collectionId, params, groupId });
+    return await invoke('get_collection_group_file_ids', { collectionId, params: withRawPairQueryParams(params), groupId });
   } catch (error) {
     console.error('Failed to get collection group file ids:', error);
   }
@@ -1046,7 +1074,7 @@ export async function getCollectionGroupFileIds(collectionId, params, groupId) {
 /// get all file ids in the current filtered and sorted collection query
 export async function getCollectionQueryFileIds(collectionId, params) {
   try {
-    return await invoke('get_collection_query_file_ids', { collectionId, params });
+    return await invoke('get_collection_query_file_ids', { collectionId, params: withRawPairQueryParams(params) });
   } catch (error) {
     console.error('Failed to get collection query file ids:', error);
   }
@@ -1062,6 +1090,7 @@ export async function getFolderFiles(folderId, folderPath, fromDbOnly) {
       sortOrder: config.search.sortOrder,
       folderId, 
       folderPath,
+      groupRawJpegPairs: Boolean(config.settings.groupRawJpegPairs),
       fromDbOnly: fromDbOnly || false,
     });
     if(result) {
@@ -1151,17 +1180,17 @@ export async function copyImages(filePaths) {
 }
 
 // Preview and apply a batch rename in the captured library.
-export function previewBatchRename(libraryId, fileIds, options) {
-  return invoke('preview_batch_rename', { libraryId, fileIds, options });
+export function previewBatchRename(libraryId, fileIds, options, groupRawJpegPairs = Boolean(config.settings.groupRawJpegPairs)) {
+  return invoke('preview_batch_rename', { libraryId, fileIds, options, groupRawJpegPairs });
 }
 
-export function batchRenameFiles(libraryId, fileIds, options, expected) {
-  return invoke('batch_rename_files', { libraryId, fileIds, options, expected });
+export function batchRenameFiles(libraryId, fileIds, options, expected, groupRawJpegPairs = Boolean(config.settings.groupRawJpegPairs)) {
+  return invoke('batch_rename_files', { libraryId, fileIds, options, expected, groupRawJpegPairs });
 }
 
 // Rename a single file.
-export function renameFile(fileId, filePath, newName) {
-  return invoke('rename_file', { fileId, filePath, newName });
+export function renameFile(fileId, filePath, newName, groupRawJpegPairs = Boolean(config.settings.groupRawJpegPairs)) {
+  return invoke('rename_file', { fileId, filePath, newName, groupRawJpegPairs });
 }
 
 // One explicit action owns the backend directory index, including early failures.
@@ -1186,44 +1215,47 @@ export async function withFileTransferBatch(action) {
 }
 
 // move a file
-export async function moveFile(fileId, filePath, newFolderId, newFolderPath, conflictPolicy = 'keep_both', batchId = null) {
+export async function moveFile(fileId, filePath, newFolderId, newFolderPath, conflictPolicy = 'keep_both', batchId = null, groupRawJpegPairs = Boolean(config.settings.groupRawJpegPairs)) {
   try {
-    const result = await invoke('move_file', { fileId, filePath, newFolderId, newFolderPath, conflictPolicy, batchId });
+    const result = await invoke('move_file', { fileId, filePath, newFolderId, newFolderPath, conflictPolicy, batchId, groupRawJpegPairs });
     if(result) {
       return result;
     };
   } catch (error) {
     console.log('Failed to move file:', error);
+    notifyTransferBusy(error);
   }
   return null;
 }
 
-export async function moveFileOutsideLibrary(fileId, filePath, newFolderPath, conflictPolicy = 'keep_both', batchId = null) {
+export async function moveFileOutsideLibrary(fileId, filePath, newFolderPath, conflictPolicy = 'keep_both', batchId = null, groupRawJpegPairs = Boolean(config.settings.groupRawJpegPairs)) {
   try {
-    return await invoke('move_file_outside_library', { fileId, filePath, newFolderPath, conflictPolicy, batchId });
+    return await invoke('move_file_outside_library', { fileId, filePath, newFolderPath, conflictPolicy, batchId, groupRawJpegPairs });
   } catch (error) {
     console.log('Failed to move file outside library:', error);
+    notifyTransferBusy(error);
   }
   return null;
 }
 
 // copy a file
-export async function copyFile(filePath, newFolderPath, conflictPolicy = 'keep_both', batchId = null) {
+export async function copyFile(filePath, newFolderPath, conflictPolicy = 'keep_both', batchId = null, groupRawJpegPairs = Boolean(config.settings.groupRawJpegPairs)) {
   try {
-    const result = await invoke('copy_file', { filePath, newFolderPath, conflictPolicy, batchId });
+    const result = await invoke('copy_file', { filePath, newFolderPath, conflictPolicy, batchId, groupRawJpegPairs });
     if(result) {
       return result;
     };
   } catch (error) {
     console.log('Failed to copy file:', error);
+    notifyTransferBusy(error);
   }
   return null;
 }
 
 // delete a file
-export async function deleteFile(fileId, filePath) {
+export async function deleteFile(fileId, filePath, groupRawJpegPairs = Boolean(config.settings.groupRawJpegPairs)) {
   try {
-    return await invoke('delete_file', { fileId, filePath });
+    return await invoke('delete_file', { fileId, filePath, groupRawJpegPairs });
   } catch (error) {
     console.error('deleteFile error:', error);
     throw error;
@@ -1231,9 +1263,9 @@ export async function deleteFile(fileId, filePath) {
 }
 
 // delete a file permanently
-export async function deleteFilePermanently(fileId, filePath) {
+export async function deleteFilePermanently(fileId, filePath, groupRawJpegPairs = Boolean(config.settings.groupRawJpegPairs)) {
   try {
-    return await invoke('delete_file_permanently', { fileId, filePath });
+    return await invoke('delete_file_permanently', { fileId, filePath, groupRawJpegPairs });
   } catch (error) {
     console.error('deleteFilePermanently error:', error);
     throw error;
@@ -1249,9 +1281,9 @@ export async function deleteDbFile(fileId) {
   }
 }
 
-export async function batchDeleteFiles(files, permanently = false) {
+export async function batchDeleteFiles(files, permanently = false, groupRawJpegPairs = Boolean(config.settings.groupRawJpegPairs)) {
   try {
-    return await invoke('batch_delete_files', { files, permanently });
+    return await invoke('batch_delete_files', { files, permanently, groupRawJpegPairs });
   } catch (error) {
     console.error('batchDeleteFiles error:', error);
     throw error;
@@ -1272,9 +1304,11 @@ export async function editFileComment(fileId, comment) {
 }
 
 // get file thumb
-export async function getFileThumb(fileId, filePath, fileType, orientation, thumbnailSize, forceRegenerate, thumbnailSeekPercent = null, albumId = 0) {
+export async function getFileThumb(fileId, filePath, fileType, orientation, thumbnailSize, forceRegenerate, thumbnailSeekPercent = null, albumId = 0, libraryId = libConfig._libraryId || null) {
   try {
-    const result = await invoke('get_file_thumb', { fileId, filePath, fileType, orientation, thumbnailSize, rawDisplayOptions: getRawDisplayOptions(), forceRegenerate, thumbnailSeekPercent, albumId });
+    if (libraryId && libraryId !== libConfig._libraryId) return null;
+    const result = await invoke('get_file_thumb', { fileId, filePath, fileType, orientation, thumbnailSize, rawDisplayOptions: getRawDisplayOptions(), forceRegenerate, thumbnailSeekPercent, albumId, libraryId });
+    if (libraryId && libraryId !== libConfig._libraryId) return null;
     if(result) {
       return result;
     };
@@ -1294,9 +1328,11 @@ export async function cleanUnusedThumbnailCache(libraryId = null) {
 }
 
 
-export async function getFileThumbById(fileId, thumbnailSize, forceRegenerate = false) {
+export async function getFileThumbById(fileId, thumbnailSize, forceRegenerate = false, libraryId = libConfig._libraryId || null) {
   try {
-    const result = await invoke('get_file_thumb_by_id', { fileId, thumbnailSize, rawDisplayOptions: getRawDisplayOptions(), forceRegenerate });
+    if (libraryId && libraryId !== libConfig._libraryId) return null;
+    const result = await invoke('get_file_thumb_by_id', { fileId, thumbnailSize, rawDisplayOptions: getRawDisplayOptions(), forceRegenerate, libraryId });
+    if (libraryId && libraryId !== libConfig._libraryId) return null;
     if (result) {
       return result;
     }
@@ -1306,8 +1342,10 @@ export async function getFileThumbById(fileId, thumbnailSize, forceRegenerate = 
   return null;
 }
 
-export async function getFileThumbs(files, thumbnailSize, forceRegenerate = false, trustCached = false) {
-  const thumbs = await invoke('get_file_thumbs', { files, thumbnailSize, rawDisplayOptions: getRawDisplayOptions(), forceRegenerate, trustCached });
+export async function getFileThumbs(files, thumbnailSize, forceRegenerate = false, trustCached = false, libraryId = libConfig._libraryId || null) {
+  if (libraryId && libraryId !== libConfig._libraryId) return files.map(() => null);
+  const thumbs = await invoke('get_file_thumbs', { files, thumbnailSize, rawDisplayOptions: getRawDisplayOptions(), forceRegenerate, trustCached, libraryId });
+  if (libraryId && libraryId !== libConfig._libraryId) return files.map(() => null);
   if (!Array.isArray(thumbs) || thumbs.length !== files.length) {
     throw new Error(`Invalid thumbnail batch response: expected ${files.length} results, received ${Array.isArray(thumbs) ? thumbs.length : 'a non-array response'}`);
   }
@@ -1496,7 +1534,7 @@ export async function getFileHasTags(fileId) {
 // get favorite folders
 export async function getFavoriteFolders() {
   try {
-    const favoriteFolders = await invoke('get_favorite_folders');
+    const favoriteFolders = await invoke('get_favorite_folders', { groupRawJpegPairs: Boolean(config.settings.groupRawJpegPairs) });
     if (favoriteFolders) {
       // sort favorite folders by name in locale order 
       favoriteFolders.sort((a, b) => localeComp(config.settings.language, a.name, b.name));
@@ -1615,7 +1653,7 @@ export async function getTagGroupName(id) {
 }
 
 export async function getTagGroups() {
-  return invoke('get_tag_groups');
+  return invoke('get_tag_groups', { groupRawJpegPairs: Boolean(config.settings.groupRawJpegPairs) });
 }
 
 export async function saveTagGroup(id, name) {
@@ -1637,7 +1675,7 @@ export async function moveTagsToGroup(tagIds, groupId) {
 // get all tags
 export async function getAllTags(sort = 0) {
   try {
-    const tags = await invoke('get_all_tags', { sort });
+    const tags = await invoke('get_all_tags', { sort, groupRawJpegPairs: Boolean(config.settings.groupRawJpegPairs) });
     console.log('getAllTags:', tags);
     if (tags) {
       return tags;
@@ -1650,7 +1688,7 @@ export async function getAllTags(sort = 0) {
 
 export async function getTagCounts() {
   try {
-    return await invoke('get_tag_counts');
+    return await invoke('get_tag_counts', { groupRawJpegPairs: Boolean(config.settings.groupRawJpegPairs) });
   } catch (error) {
     console.error('Failed to get tag counts:', error);
   }
@@ -1761,7 +1799,7 @@ export async function applyTagsToFiles(fileIds, addTagIds, removeTagIds) {
 // get taken dates
 export async function getTakenDates(sort = 0) {
   try {
-    const taken_dates = await invoke('get_taken_dates', { sort });
+    const taken_dates = await invoke('get_taken_dates', { sort, groupRawJpegPairs: Boolean(config.settings.groupRawJpegPairs) });
     if (taken_dates) {
       return taken_dates;
     }
@@ -1776,7 +1814,7 @@ export async function getTakenDates(sort = 0) {
 // get camera info
 export async function getCameraInfo(sort = 0) {
   try {
-    const cameraInfo = await invoke('get_camera_info', { sort });
+    const cameraInfo = await invoke('get_camera_info', { sort, groupRawJpegPairs: Boolean(config.settings.groupRawJpegPairs) });
     if (cameraInfo) {
       return cameraInfo;
     }
@@ -1789,7 +1827,7 @@ export async function getCameraInfo(sort = 0) {
 // get lens info
 export async function getLensInfo(sort = 0) {
   try {
-    const lensInfo = await invoke('get_lens_info', { sort });
+    const lensInfo = await invoke('get_lens_info', { sort, groupRawJpegPairs: Boolean(config.settings.groupRawJpegPairs) });
     if (lensInfo) {
       return lensInfo;
     }
@@ -1804,7 +1842,7 @@ export async function getLensInfo(sort = 0) {
 // get location info
 export async function getLocationInfo(sort = 0) {
   try {
-    const locationInfo = await invoke('get_location_info', { sort });
+    const locationInfo = await invoke('get_location_info', { sort, groupRawJpegPairs: Boolean(config.settings.groupRawJpegPairs) });
     if (locationInfo) {
       return locationInfo;
     }
@@ -1817,7 +1855,7 @@ export async function getLocationInfo(sort = 0) {
 // get GPS coordinates and representative thumbnails for the current media query
 export async function getGpsMapPoints(params) {
   try {
-    return await invoke('get_gps_map_points', { params });
+    return await invoke('get_gps_map_points', { params: withRawPairQueryParams(params) });
   } catch (error) {
     console.error('Failed to get GPS map points:', error);
   }
@@ -1988,16 +2026,28 @@ export async function clearIndexRecoveryInfo() {
   return false;
 }
 
+// Old index events had no library ID. Accept those for compatibility, but
+// compare tagged events with the *current* library at delivery time so a
+// listener surviving a library switch cannot apply another library's result.
+function listenCurrentLibraryIndexEvent(name, callback) {
+  return listen(name, event => {
+    const payload = event?.payload;
+    const id = payload?.library_id ?? payload?.libraryId;
+    if (id !== undefined && id !== null && id !== '' && id !== libConfig._libraryId) return;
+    return callback(event);
+  });
+}
+
 // listen index progress
 export async function listenIndexProgress(callback) {
-  return await listen('index_progress', callback);
+  return await listenCurrentLibraryIndexEvent('index_progress', callback);
 }
 
 // deduplication
 
 // start deduplication scan
 export async function dedupStartScan(params = null, collectionId = null, fileIds = null) {
-  return await invoke('dedup_start_scan', { params, collectionId, fileIds });
+  return await invoke('dedup_start_scan', { params: params ? withRawPairQueryParams(params) : null, collectionId, fileIds, groupRawJpegPairs: Boolean(config.settings.groupRawJpegPairs) });
 }
 
 // get deduplication scan status
@@ -2051,10 +2101,11 @@ export async function dedupDelete({
   fileIds = null,
   deleteAll = false,
   permanently = false,
+  groupRawJpegPairs = Boolean(config.settings.groupRawJpegPairs),
 } = {}) {
   try {
     return await invoke('dedup_delete', {
-      request: { groupIds, fileIds, deleteAll, permanently },
+      request: { groupIds, fileIds, deleteAll, permanently, groupRawJpegPairs },
     });
   } catch (error) {
     console.error('dedupDelete error:', error);
@@ -2097,7 +2148,7 @@ export async function listenSimilarScanProgress(callback) {
 
 // listen index finished
 export async function listenIndexFinished(callback) {
-  return await listen('index_finished', callback);
+  return await listenCurrentLibraryIndexEvent('index_finished', callback);
 }
 
 // index faces for all images in library
@@ -2144,7 +2195,7 @@ export async function isFaceIndexing() {
 // get face indexing stats
 export async function getFaceStats() {
   try {
-    return await invoke('get_face_stats');
+    return await invoke('get_face_stats', { groupRawJpegPairs: Boolean(config.settings.groupRawJpegPairs) });
   } catch (error) {
     console.error('Failed to get face stats:', error);
     return null;
@@ -2171,7 +2222,7 @@ export async function listenClusterProgress(callback) {
 // get all persons
 export async function getPersons(sort = 0) {
   try {
-    const persons = await invoke('get_persons', { sort });
+    const persons = await invoke('get_persons', { sort, groupRawJpegPairs: Boolean(config.settings.groupRawJpegPairs) });
     if (persons) {
       return persons;
     }
@@ -2183,7 +2234,7 @@ export async function getPersons(sort = 0) {
 
 export async function getPersonsPage(request) {
   try {
-    return await invoke('get_persons_page', { request });
+    return await invoke('get_persons_page', { request: withRawPairQueryParams(request) });
   } catch (error) {
     console.error('Failed to get persons page:', error);
   }

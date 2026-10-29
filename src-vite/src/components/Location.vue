@@ -49,7 +49,7 @@
           <div
             :class="[
               'sidebar-item',
-              libConfig.location.admin1 === location.admin1 && !libConfig.location.name ? 'sidebar-item-selected' : 'sidebar-item-hover',
+              libConfig.location.admin1 === location.admin1 && (libConfig.location.cc || '') === location.cc && !libConfig.location.name ? 'sidebar-item-selected' : 'sidebar-item-hover',
             ]"
             @click="clickLocationAdmin1(location)"
           >
@@ -61,14 +61,14 @@
               @click.stop="clickExpandLocation(location)"
             />
             <span class="sidebar-item-label">{{ location.admin1 + (location.cc ? ', ' + getCountryName(location.cc, locale) : '') }}</span>
-            <span class="sidebar-item-count">{{ location.counts.reduce((a: number, b: number) => a + b, 0).toLocaleString() }}</span>
+            <span class="sidebar-item-count">{{ (location.parent_count ?? location.counts.reduce((a: number, b: number) => a + b, 0)).toLocaleString() }}</span>
           </div>
           <ul v-if="(location.is_expanded || hasSearch) && location.names.length > 0">
             <li v-for="(name, index) in location.names" class="pl-4">
               <div
                 :class="[
                   'sidebar-item sidebar-item-compact ml-2',
-                  libConfig.location.name === name ? 'sidebar-item-selected' : 'sidebar-item-hover',
+                  libConfig.location.name === name && libConfig.location.admin1 === location.admin1 && (libConfig.location.cc || '') === location.cc ? 'sidebar-item-selected' : 'sidebar-item-hover',
                 ]"
                 @click="clickLocationName(location, name)"
               >
@@ -166,21 +166,16 @@ onMounted(async () => {
       (libConfig.location as any).name = null;
     }
     
-    if(libConfig.location.cc && libConfig.location.admin1 && libConfig.location.name) {
-      let location = locations.value.find((location: any) => location.admin1 === libConfig.location.admin1)
-      if(location) {
-        location.is_expanded = true;     // expand selected location
-      } else {
-        (libConfig.location as any).cc = null;
-        (libConfig.location as any).admin1 = null;
-        (libConfig.location as any).name = null;
-      }
-    }
+    restoreLocationSelection();
   }
 });
 
 // Keep the current filter even if its last file moves out of this category.
 watch(fileInfoRevision, async () => {
+  if (libConfig.activePane === 'main' && config.main.sidebarIndex === SIDEBAR.LOCATION) await getLocations(true);
+});
+
+watch(() => config.settings.groupRawJpegPairs, async () => {
   if (libConfig.activePane === 'main' && config.main.sidebarIndex === SIDEBAR.LOCATION) await getLocations(true);
 });
 

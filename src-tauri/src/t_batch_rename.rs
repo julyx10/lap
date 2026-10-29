@@ -112,6 +112,7 @@ fn path_key(path: &Path) -> String {
 fn build_plan(
     ids: &[i64],
     options: &RenameOptions,
+    group_raw_jpeg_pairs: bool,
 ) -> Result<(RenamePreview, Vec<RenameMove>), String> {
     if ids.is_empty() {
         return Err("Select at least one file.".into());
@@ -133,6 +134,7 @@ fn build_plan(
     }
     let companion_ids: Vec<_> = files
         .values()
+        .filter(|file| AFile::operation_includes_component(file.media_subtype.as_deref(), group_raw_jpeg_pairs))
         .filter_map(|file| file.live_photo_video_id)
         .filter(|id| *id > 0 && !files.contains_key(id))
         .collect::<HashSet<_>>()
@@ -144,8 +146,10 @@ fn build_plan(
         }
     }
     let mut sidecar_cache = ImportAaeCache::default();
-    plan_files(ids, options, &files, |id, path, name| {
-        let component = files[&id].live_photo_video_id.and_then(|id| files.get(&id));
+    plan_files(ids, options, &files, group_raw_jpeg_pairs, |id, path, name| {
+        let file = &files[&id];
+        let component = file.live_photo_video_id.and_then(|id| files.get(&id))
+            .filter(|component| AFile::operation_component_matches(file, component, group_raw_jpeg_pairs));
         build_apple_sidecar_rename_plan_cached(path, name, component, &mut sidecar_cache)
     })
 }
@@ -154,17 +158,37 @@ fn plan_files(
     ids: &[i64],
     options: &RenameOptions,
     files: &HashMap<i64, AFile>,
+    group_raw_jpeg_pairs: bool,
     mut sidecar_plan: impl FnMut(
         i64,
         &str,
         &str,
     ) -> Result<Vec<crate::t_apple_sidecar::SidecarRenamePlan>, String>,
 ) -> Result<(RenamePreview, Vec<RenameMove>), String> {
+    // A stale cross-directory Live Photo link cannot be safely registered by
+    // this folder operation; fail before changing either file.
+    for id in ids {
+        let file = &files[id];
+        if group_raw_jpeg_pairs && file.media_subtype.as_deref() == Some("raw_jpeg_pair") {
+            let valid = file.live_photo_video_id.and_then(|id| files.get(&id))
+                .is_some_and(|component| AFile::operation_component_matches(file, component, true));
+            if !valid { return Err("RAW pair is stale; refresh the library before retrying".into()); }
+        }
+        if file.media_subtype.as_deref() == Some("live_photo") {
+            if let Some(component) = file.live_photo_video_id.and_then(|id| files.get(&id)) {
+                if component.folder_id != file.folder_id {
+                    return Err("Live Photo companion is in a different folder; refresh the library before retrying".into());
+                }
+            }
+        }
+    }
     // A selected RAW/JPEG or Live Photo companion follows its primary, rather
     // than receiving a different sequence number and breaking the pair.
     let companions: HashSet<i64> = files
         .values()
-        .filter_map(|file| file.live_photo_video_id)
+        .filter_map(|file| file.live_photo_video_id.and_then(|id| files.get(&id)
+            .filter(|component| AFile::operation_component_matches(file, component, group_raw_jpeg_pairs))
+            .map(|_| id)))
         .collect();
     let roots: Vec<_> = ids.iter().filter(|id| !companions.contains(id)).collect();
     if roots.is_empty() {
@@ -252,9 +276,9 @@ fn check_plan(moves: &[RenameMove]) -> Vec<String> {
     errors
 }
 
-pub fn preview(ids: &[i64], options: &RenameOptions) -> Result<RenamePreview, String> {
+pub fn preview(ids: &[i64], options: &RenameOptions, group_raw_jpeg_pairs: bool) -> Result<RenamePreview, String> {
     let _guard = RENAME_LOCK.lock().map_err(|error| error.to_string())?;
-    build_plan(ids, options).map(|(preview, _)| preview)
+    build_plan(ids, options, group_raw_jpeg_pairs).map(|(preview, _)| preview)
 }
 
 /// Use platform rename-without-replacement, including for rollback. Files never
@@ -373,9 +397,10 @@ pub fn execute(
     ids: &[i64],
     options: &RenameOptions,
     expected: &[RenameItem],
+    group_raw_jpeg_pairs: bool,
 ) -> Result<RenamePreview, String> {
     let _guard = RENAME_LOCK.lock().map_err(|error| error.to_string())?;
-    let (preview, moves) = build_plan(ids, options)?;
+    let (preview, moves) = build_plan(ids, options, group_raw_jpeg_pairs)?;
     if preview.items.len() != expected.len()
         || preview.items.iter().zip(expected).any(|(a, b)| {
             a.id != b.id
@@ -438,6 +463,61 @@ mod tests {
         fn drop(&mut self) {
             let _ = fs::remove_dir_all(&self.0);
         }
+    }
+
+    #[test]
+    fn operation_pair_policy_keeps_live_photos_and_gates_raw() {
+        for enabled in [false, true] {
+            assert!(AFile::operation_includes_component(Some("live_photo"), enabled));
+            assert_eq!(AFile::operation_includes_component(Some("raw_jpeg_pair"), enabled), enabled);
+            assert!(!AFile::operation_includes_component(None, enabled));
+        }
+    }
+
+    #[test]
+    fn raw_selected_companions_are_independent_when_grouping_is_off() {
+        let f = Fixture::new();
+        let mut files = HashMap::new();
+        for (id, name, subtype, companion) in [(1, "a.CR3", Some("raw_jpeg_pair"), Some(2)), (2, "a.JPG", None, None)] {
+            fs::write(f.0.join(name), b"test").unwrap();
+            let file: AFile = serde_json::from_value(serde_json::json!({
+                "id": id, "name": name, "folder_id": 1, "size": 1, "file_type": if id == 1 { 3 } else { 1 },
+                "file_path": f.0.join(name).to_str().unwrap(),
+                "media_subtype": subtype, "live_photo_video_id": companion
+            })).unwrap();
+            files.insert(id, file);
+        }
+        let options = RenameOptions { name: "Trip".into(), start: 1, digits: 3 };
+        let (ungrouped, _) = plan_files(&[1, 2], &options, &files, false, |_, _, _| Ok(vec![])).unwrap();
+        let (grouped, _) = plan_files(&[1, 2], &options, &files, true, |_, _, _| Ok(vec![])).unwrap();
+        assert_eq!(ungrouped.items.len(), 2);
+        assert_eq!(grouped.items.len(), 1);
+        files.get_mut(&2).unwrap().name = "other.JPG".into();
+        assert!(!AFile::operation_component_matches(&files[&1], &files[&2], true));
+        files.get_mut(&2).unwrap().name = "a.png".into();
+        assert!(!AFile::operation_component_matches(&files[&1], &files[&2], true));
+        files.get_mut(&2).unwrap().name = "A.jpg".into();
+        assert!(AFile::operation_component_matches(&files[&1], &files[&2], true));
+        files.get_mut(&2).unwrap().live_photo_video_id = Some(9);
+        assert!(!AFile::operation_component_matches(&files[&1], &files[&2], true));
+        files.get_mut(&2).unwrap().live_photo_video_id = None;
+        files.get_mut(&2).unwrap().album_visible = false;
+        assert!(!AFile::operation_component_matches(&files[&1], &files[&2], true));
+        files.get_mut(&2).unwrap().album_visible = true;
+        files.get_mut(&2).unwrap().media_subtype = Some("live_photo".into());
+        assert!(!AFile::operation_component_matches(&files[&1], &files[&2], true));
+        files.get_mut(&2).unwrap().media_subtype = None;
+        files.get_mut(&2).unwrap().folder_id = 2;
+        assert!(!AFile::operation_component_matches(&files[&1], &files[&2], true));
+        assert!(plan_files(&[1, 2], &options, &files, true, |_, _, _| Ok(vec![])).is_err());
+        assert!(plan_files(&[1], &options, &HashMap::from([(1, files.remove(&1).unwrap())]), true, |_, _, _| Ok(vec![])).is_err());
+        let raw: AFile = serde_json::from_value(serde_json::json!({"id": 1, "name": "a.CR3", "folder_id": 1, "size": 1, "file_type": 3, "file_path": f.0.join("a.CR3").to_str().unwrap(), "media_subtype": "raw_jpeg_pair", "live_photo_video_id": 2})).unwrap();
+        files.insert(1, raw);
+        files.get_mut(&1).unwrap().media_subtype = Some("live_photo".into());
+        assert!(!AFile::operation_component_matches(&files[&1], &files[&2], true));
+        assert!(plan_files(&[1, 2], &options, &files, true, |_, _, _| Ok(vec![])).is_err());
+        files.get_mut(&2).unwrap().folder_id = 1;
+        assert!(AFile::operation_component_matches(&files[&1], &files[&2], true));
     }
 
     #[test]
@@ -540,8 +620,9 @@ mod tests {
             (4, "second.MOV", None),
         ] {
             let file: AFile = serde_json::from_value(serde_json::json!({
-                "id": id, "name": name, "folder_id": 1, "size": 1,
-                "file_path": f.0.join(name).to_str().unwrap(), "live_photo_video_id": companion
+                "id": id, "name": name, "folder_id": 1, "size": 1, "file_type": if id == 1 { 3 } else if id == 4 { 2 } else { 1 },
+                "file_path": f.0.join(name).to_str().unwrap(), "live_photo_video_id": companion,
+                "media_subtype": if id == 1 { Some("raw_jpeg_pair") } else if id == 3 { Some("live_photo") } else { None }
             }))
             .unwrap();
             files.insert(id, file);
@@ -552,7 +633,7 @@ mod tests {
             digits: 3,
         };
         let mut sidecar_cache = ImportAaeCache::default();
-        let (preview, moves) = plan_files(&[3, 4, 1, 2], &options, &files, |id, path, name| {
+        let (preview, moves) = plan_files(&[3, 4, 1, 2], &options, &files, true, |id, path, name| {
             let component = files[&id].live_photo_video_id.and_then(|id| files.get(&id));
             build_apple_sidecar_rename_plan_cached(path, name, component, &mut sidecar_cache)
         })

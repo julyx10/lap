@@ -46,8 +46,9 @@ pub(crate) fn build_apple_sidecar_rename_plan(
     file_id: i64,
     file_path: &str,
     new_name: &str,
+    group_raw_jpeg_pairs: bool,
 ) -> Result<Vec<SidecarRenamePlan>, String> {
-    let components = AFile::live_photo_component_files(file_id)?;
+    let components = AFile::operation_component_files(file_id, group_raw_jpeg_pairs)?;
     build_rename_plan(file_path, new_name, &components, apple_aae_sidecar_paths(file_path))
 }
 
@@ -380,26 +381,27 @@ fn file_record_for_path(file_path: &str) -> Result<Option<AFile>, String> {
     AFile::fetch(folder_id, file_path)
 }
 
-fn live_photo_component_files_for_path(file_path: &str) -> Result<Vec<AFile>, String> {
+fn live_photo_component_files_for_path(file_path: &str, group_raw_jpeg_pairs: bool) -> Result<Vec<AFile>, String> {
     let Some(file) = file_record_for_path(file_path)? else {
         return Ok(Vec::new());
     };
     let Some(file_id) = file.id else {
         return Ok(Vec::new());
     };
-    AFile::live_photo_component_files(file_id)
+    AFile::operation_component_files(file_id, group_raw_jpeg_pairs)
 }
 
 fn resolve_apple_sidecar_transfer_sources(
     file_id: Option<i64>,
     file_path: &str,
+    group_raw_jpeg_pairs: bool,
 ) -> Result<Vec<SidecarTransferSource>, String> {
     let mut seen_paths = HashSet::new();
 
     let component_files = if let Some(file_id) = file_id {
-        AFile::live_photo_component_files(file_id)?
+        AFile::operation_component_files(file_id, group_raw_jpeg_pairs)?
     } else {
-        live_photo_component_files_for_path(file_path)?
+        live_photo_component_files_for_path(file_path, group_raw_jpeg_pairs)?
     };
 
     let mut sources = Vec::new();
@@ -527,10 +529,11 @@ pub(crate) fn resolve_group_primary_target(
     new_folder_path: &str,
     policy: t_utils::FileConflictPolicy,
     xmp_cache: &mut crate::t_xmp_files::Cache,
+    group_raw_jpeg_pairs: bool,
 ) -> Result<(PathBuf, Vec<SidecarTransferPlan>), String> {
     let base_target =
         t_utils::resolve_file_transfer_destination(file_path, new_folder_path, policy)?;
-    let sidecar_sources = resolve_apple_sidecar_transfer_sources(file_id, file_path)?;
+    let sidecar_sources = resolve_apple_sidecar_transfer_sources(file_id, file_path, group_raw_jpeg_pairs)?;
     if policy == t_utils::FileConflictPolicy::Replace {
         let sidecar_plans = build_apple_sidecar_transfer_plan_from_sources(
             file_path,
@@ -583,24 +586,22 @@ pub(crate) fn collect_replaced_file_ids_for_targets<'a, I>(
 ) where
     I: IntoIterator<Item = &'a PathBuf>,
 {
-    for target in targets {
-        let Some(target_path) = target.to_str() else {
-            continue;
-        };
-        let Some(replaced_file) = AFile::fetch(folder_id, target_path).ok().flatten() else {
-            continue;
-        };
-        let Some(replaced_file_id) = replaced_file.id else {
-            continue;
-        };
+    collect_replaced_targets(targets, source_file_ids, replaced_file_ids, |path| {
+        AFile::fetch(folder_id, path.to_str()?).ok().flatten()?.id
+    });
+}
 
-        push_replaced_file_id(replaced_file_id, source_file_ids, replaced_file_ids);
-        if let Ok(components) = AFile::live_photo_component_files(replaced_file_id) {
-            for component in components {
-                if let Some(component_id) = component.id {
-                    push_replaced_file_id(component_id, source_file_ids, replaced_file_ids);
-                }
-            }
+fn collect_replaced_targets<'a, I>(
+    targets: I,
+    source_file_ids: &HashSet<i64>,
+    replaced_file_ids: &mut Vec<i64>,
+    mut lookup: impl FnMut(&Path) -> Option<i64>,
+) where I: IntoIterator<Item = &'a PathBuf> {
+    // Only actual destination paths are replaced on disk. Associated files
+    // which are not transfer targets must remain in the catalog as well.
+    for target in targets {
+        if let Some(id) = lookup(target) {
+            push_replaced_file_id(id, source_file_ids, replaced_file_ids);
         }
     }
 }
@@ -765,6 +766,25 @@ pub(crate) fn looks_like_content_identifier(value: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn replacement_collects_only_actual_targets_and_skips_sources() {
+        let raw = PathBuf::from("/dest/a.CR3");
+        let jpeg = PathBuf::from("/dest/a.JPG");
+        let source = PathBuf::from("/dest/source.JPG");
+        let lookup = |path: &Path| match path.to_str().unwrap() {
+            "/dest/a.CR3" => Some(1),
+            "/dest/a.JPG" => Some(2),
+            "/dest/source.JPG" => Some(3),
+            _ => None,
+        };
+        let mut replaced = vec![];
+        collect_replaced_targets([&raw], &HashSet::new(), &mut replaced, lookup);
+        assert_eq!(replaced, vec![1]); // The unoverwritten JPEG remains indexed.
+        replaced.clear();
+        collect_replaced_targets([&raw, &jpeg, &jpeg, &source], &HashSet::from([3]), &mut replaced, lookup);
+        assert_eq!(replaced, vec![1, 2]);
+    }
 
     #[test]
     fn indexed_aae_lookup_matches_both_conventions_and_records_new_imports() {

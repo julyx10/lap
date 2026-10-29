@@ -321,7 +321,7 @@ const originalUnavailable = computed(() => isOriginalUnavailable(props.file));
 const isVideoFile = computed(() => props.file?.file_type === 2);
 const isLivePhoto = computed(() => props.file?.media_subtype === 'live_photo' && !!props.file?.live_photo_video_path);
 const isMotionPhoto = computed(() => props.file?.media_subtype === 'motion_photo');
-const isRawJpegPair = computed(() => props.file?.media_subtype === 'raw_jpeg_pair');
+const isRawJpegPair = computed(() => config.settings.groupRawJpegPairs && props.file?.media_subtype === 'raw_jpeg_pair');
 const rawJpegPairBadge = computed(() => {
   const extension = getFileExtension(props.file?.live_photo_video_path || '').toLowerCase();
   return ['heic', 'heif', 'hif'].includes(extension) ? 'RAW+HEIC' : 'RAW+JPEG';

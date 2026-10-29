@@ -75,6 +75,14 @@
       </div>
     </TransitionGroup>
 
+    <!-- The focus coordinates describe the original, not a possibly cropped RAW preview. -->
+    <div v-if="showFocusOverlay"
+      class="absolute inset-0 pointer-events-none overflow-hidden" data-focus-overlay aria-hidden="true">
+      <div class="absolute" :style="focusImageStyle">
+        <div class="absolute border-solid" :class="focusResultClass" :style="focusRectStyle"></div>
+      </div>
+    </div>
+
     <!-- Faces Overlay -->
     <div 
       v-if="showFaceOverlay && faces.length > 0 && !isDraggingImage && !isSlideShow"
@@ -183,6 +191,8 @@
 <script setup lang="ts">
 import { ref, shallowRef, triggerRef, watch, onMounted, onBeforeUnmount, computed, nextTick } from 'vue';
 import { useUIStore } from '@/stores/uiStore';
+import { loadFocusInfo } from '@/common/focusInfo.js';
+import { orientedFocusRect } from '@/common/focusPoint.js';
 import { config, libConfig } from '@/common/config';
 import { SIDEBAR, GESTURE_LOCK_THRESHOLD, HORIZONTAL_NAV_THRESHOLD, MOUSE_DRAG_NAV_THRESHOLD } from '@/common/constants';
 import {
@@ -397,6 +407,51 @@ const getImageStyle = (index: number) => ({
   pointerEvents: 'auto',
   filter: adjustmentStyle.value(index === activeImage.value ? imageSrc.value[activeImage.value] : imageSrc.value[index]),
 });
+// Requests are invalidated on every source change, including switching the toggle off.
+const showFocus = computed(() => config.settings.showFocus === true);
+// Thumbnail placeholders can be cropped differently; only mark the full image ready.
+const focusImageReady = ref(false);
+const focusState = ref<'idle' | 'loading' | 'ready' | 'unavailable'>('idle');
+const focusRect = ref<ReturnType<typeof orientedFocusRect>>(null);
+const focusResult = ref<'focus' | 'out_of_focus' | 'unknown'>('unknown');
+const focusResultClass = computed(() => ({ focus: 'border-green-500', out_of_focus: 'border-red-500', unknown: 'border-gray-400' })[focusResult.value]);
+const showFocusOverlay = computed(() => showFocus.value && !!focusRect.value && focusImageReady.value && !props.isSlideShow
+  && !loadError.value && !offlinePreview.value && imageFilePath.value[activeImage.value] === props.filePath);
+let focusRequest = 0;
+watch(() => [showFocus.value, props.filePath, props.fileVersion, props.fileType, props.originalUnavailable] as const,
+  async ([enabled, path, , , unavailable]) => {
+    const request = ++focusRequest;
+    focusRect.value = null;
+    focusResult.value = 'unknown';
+    focusState.value = 'idle';
+    if (!enabled) return;
+    // RAW primaries remain the metadata source even when a paired JPEG is displayed.
+    if (!path || unavailable) { focusState.value = 'unavailable'; return; }
+    focusState.value = 'loading';
+    try {
+      const info = await loadFocusInfo(path, props.fileVersion, libConfig._libraryId);
+      if (request !== focusRequest) return;
+      focusResult.value = info?.focus_result === 'focus' || info?.focus_result === 'out_of_focus' ? info.focus_result : 'unknown';
+      focusRect.value = orientedFocusRect(info);
+      focusState.value = focusRect.value ? 'ready' : 'unavailable';
+    } catch {
+      if (request === focusRequest) focusState.value = 'unavailable';
+    }
+  }, { immediate: true, flush: 'sync' });
+onBeforeUnmount(() => { focusRequest++; });
+const focusImageStyle = computed(() => {
+  const style = getImageStyle(activeImage.value);
+  return { width: style.width, height: style.height, transform: style.transform, transition: style.transition };
+});
+const focusRectStyle = computed(() => {
+  const rect = focusRect.value;
+  if (!rect) return {};
+  return { left: `${(rect.x - rect.width / 2) * 100}%`, top: `${(rect.y - rect.height / 2) * 100}%`,
+    width: `${rect.width * 100}%`, height: `${rect.height * 100}%`,
+    borderWidth: `${2 / Math.max(scale.value[activeImage.value], 0.001)}px`,
+    boxShadow: `0 0 ${2 / Math.max(scale.value[activeImage.value], 0.001)}px black` };
+});
+
 // loading and error overlays
 const isLoading = ref(false);
 const loadError = ref(false);
@@ -604,6 +659,10 @@ let warmImageTimeout: NodeJS.Timeout | null = null;
 let warmImageIdleId: number | null = null;
 const resolvedThumbnailSrc = ref('');
 const resolvedThumbnailFileId = ref(0);
+watch(() => libConfig._libraryId, () => {
+  resolvedThumbnailSrc.value = '';
+  resolvedThumbnailFileId.value = 0;
+}, { flush: 'sync' });
 const displayThumbnailSrc = computed(() => props.thumbnailSrc || resolvedThumbnailSrc.value);
 
 // Keep this list in Rust, alongside the preview implementation, so adding a
@@ -632,6 +691,7 @@ const showInlineLoading = computed(() =>
 async function getEffectiveThumbnailSrc() {
   if (props.thumbnailSrc) return props.thumbnailSrc;
   const fileId = props.fileId;
+  const libraryId = libConfig._libraryId;
   if (!fileId) return '';
   const thumbUrl = getThumbUrl(fileId, false, config.settings.thumbnailSize, props.fileVersion);
   if (!isWin) return thumbUrl;
@@ -646,9 +706,10 @@ async function getEffectiveThumbnailSrc() {
   const dataUrl = await (inflight || setThumbnailDataUrlInflight(
     fileId,
     config.settings.thumbnailSize,
-    getFileThumbById(fileId, config.settings.thumbnailSize, false)
-      .then(thumb => getThumbnailDataUrl(thumb, '', false, config.settings.thumbnailSize, props.filePath, props.fileVersion))
+    getFileThumbById(fileId, config.settings.thumbnailSize, false, libraryId)
+      .then(thumb => libraryId === libConfig._libraryId ? getThumbnailDataUrl(thumb, '', false, config.settings.thumbnailSize, props.filePath, props.fileVersion) : '')
   ));
+  if (libraryId !== libConfig._libraryId) return '';
   if (props.fileId === fileId && !props.thumbnailSrc && dataUrl) {
     resolvedThumbnailSrc.value = dataUrl;
     resolvedThumbnailFileId.value = fileId;
@@ -1209,6 +1270,8 @@ watch([
   () => Number(props.fileType || 0) === 3 ? `${rawDisplayKey()}:${rawSelectionVersion.value}:${JSON.stringify(rawOverride.value)}` : '',
   () => props.originalUnavailable,
 ], async ([newFilePath, newFileVersion, newRawThumbnailSource], [oldFilePath, oldFileVersion, oldRawThumbnailSource, oldUnavailable]) => {
+  // Never draw original-image coordinates on a temporary or stale preview.
+  focusImageReady.value = false;
   // Cancel previous loading
   if (rawUpgradeTimer) { clearTimeout(rawUpgradeTimer); rawUpgradeTimer = null; }
   rawAbortController?.abort();
@@ -1380,6 +1443,7 @@ watch([
         );
         onImageReady(nextImageIndex);
       }
+      focusImageReady.value = true;
       for (const url of rawObjectUrls) {
         if (!imageSrc.value.includes(url)) { URL.revokeObjectURL(url); rawObjectUrls.delete(url); }
       }

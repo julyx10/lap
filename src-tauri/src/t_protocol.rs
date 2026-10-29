@@ -79,6 +79,38 @@ fn image_response(data: Vec<u8>) -> http::Response<Vec<u8>> {
         .unwrap()
 }
 
+// Validate companion pixels once per content revision, including corrupt results.
+// Content keys also detect external edits when the RAW's version is unchanged.
+// Store only hashes/results, never another copy of the preview bytes.
+#[derive(Default)]
+struct PairValidationCache(std::collections::VecDeque<(blake3::Hash, bool)>);
+
+impl PairValidationCache {
+    fn validate(&mut self, data: &[u8], decode: impl FnOnce(&[u8]) -> bool) -> bool {
+        let key = blake3::hash(data);
+        if let Some(index) = self.0.iter().position(|entry| entry.0 == key) {
+            let entry = self.0.remove(index).unwrap();
+            let valid = entry.1;
+            self.0.push_back(entry);
+            return valid;
+        }
+        let valid = decode(data);
+        self.0.push_back((key, valid));
+        while self.0.len() > 32 { self.0.pop_front(); }
+        valid
+    }
+}
+
+fn valid_pair_preview(data: &[u8]) -> bool {
+    static CACHE: once_cell::sync::Lazy<std::sync::Mutex<PairValidationCache>> =
+        once_cell::sync::Lazy::new(|| std::sync::Mutex::new(PairValidationCache::default()));
+    let decode = |bytes: &[u8]| image::load_from_memory(bytes).is_ok();
+    match CACHE.lock() {
+        Ok(mut cache) => cache.validate(data, decode),
+        Err(_) => decode(data),
+    }
+}
+
 fn raw_display_options(query: Option<&str>) -> RawDisplayOptions {
     let mut options = RawDisplayOptions::default();
     for pair in query.unwrap_or_default().split('&') {
@@ -135,7 +167,8 @@ pub fn register_protocols(builder: Builder<Wry>) -> Builder<Wry> {
                 .unwrap_or(512).clamp(64, 2048);
             let app_handle = _ctx.app_handle().clone();
             tauri::async_runtime::spawn(async move {
-                if let Ok(Some(file)) = t_sqlite::AFile::get_file_info(file_id) {
+                let request_file = crate::t_cmds::with_current_library(&library_id, || t_sqlite::AFile::get_file_info(file_id));
+                if let Ok(Some(file)) = request_file {
                     if file.file_type == Some(3) {
                         let permit = match t_sqlite::thumb_background_generation_permits().acquire_owned().await {
                             Ok(permit) => permit,
@@ -167,7 +200,8 @@ pub fn register_protocols(builder: Builder<Wry>) -> Builder<Wry> {
                 let response = match t_sqlite::AThumb::fetch_raw_for_library(file_id, &library_id) {
                     Ok(Some(data)) => image_response(data),
                     _ => {
-                        if let Ok(Some(file)) = t_sqlite::AFile::get_file_info(file_id) {
+                        let _ = crate::t_cmds::with_current_library(&library_id, || {
+                        if let Some(file) = t_sqlite::AFile::get_file_info(file_id)? {
                             if let Some(file_path) = file.file_path.clone() {
                                 let file_type = file.file_type.unwrap_or(0);
                                 let orientation = file.e_orientation.unwrap_or(1) as i32;
@@ -175,6 +209,7 @@ pub fn register_protocols(builder: Builder<Wry>) -> Builder<Wry> {
                                 let thumbnail_size = 200;
                                 t_sqlite::AThumb::schedule_background_generation_for_library(
                                     app_handle,
+                                    library_id.clone(),
                                     file_id,
                                     file_path,
                                     file_type,
@@ -187,6 +222,8 @@ pub fn register_protocols(builder: Builder<Wry>) -> Builder<Wry> {
                                 );
                             }
                         }
+                        Ok(())
+                        });
                         text_response(http::StatusCode::NOT_FOUND, "thumbnail not found")
                     }
                 };
@@ -280,7 +317,7 @@ pub fn register_protocols(builder: Builder<Wry>) -> Builder<Wry> {
                 if options.prefer_pair {
                     if let Some(path) = companion.and_then(|file| file.file_path) {
                         if let Ok(data) = t_image::get_file_image_bytes_cached(&path, options).await {
-                            if image::load_from_memory(&data).is_ok() {
+                            if valid_pair_preview(&data) {
                                 responder.respond(raw_preview_response(data, "pair", false, pair_label));
                                 return;
                             }
@@ -308,6 +345,30 @@ pub fn register_protocols(builder: Builder<Wry>) -> Builder<Wry> {
 #[cfg(test)]
 mod raw_display_tests {
     use super::*;
+
+    #[test]
+    fn pair_validation_reuses_results_and_invalidates_changed_bytes() {
+        let mut cache = PairValidationCache::default();
+        assert!(cache.validate(b"valid", |_| true));
+        assert!(cache.validate(b"valid", |_| panic!("must not decode twice")));
+        assert!(!cache.validate(b"corrupt", |_| false));
+        assert!(!cache.validate(b"corrupt", |_| panic!("cache corrupt results too")));
+        assert!(cache.validate(b"repaired", |_| true));
+        for index in 0u8..40 { cache.validate(&[index], |_| true); }
+        assert_eq!(cache.0.len(), 32);
+        let mut decoded = false;
+        cache.validate(b"valid", |_| { decoded = true; true });
+        assert!(decoded, "evicted content must be validated again");
+    }
+
+    #[test]
+    fn pair_validation_preserves_corrupt_image_rejection() {
+        assert!(!valid_pair_preview(b"not an image"));
+        let mut jpeg = std::io::Cursor::new(Vec::new());
+        image::DynamicImage::new_rgb8(2, 2).write_to(&mut jpeg, image::ImageFormat::Jpeg).unwrap();
+        assert!(valid_pair_preview(jpeg.get_ref()));
+        assert!(valid_pair_preview(jpeg.get_ref()));
+    }
 
     #[test]
     fn raw_display_protocol_parses_modes_and_pair_policy() {

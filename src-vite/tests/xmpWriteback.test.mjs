@@ -79,10 +79,12 @@ function transferFixture(options = {}) {
     if (options.commandError) throw options.commandError;
     return '/target/photo.jpg';
   };
-  const api = new Function('invoke', 'console', transferCode +
+  const config = { settings: { groupRawJpegPairs: options.groupRawJpegPairs ?? false } };
+  const busyNotices = [];
+  const api = new Function('invoke', 'console', 'config', 'notifyTransferBusy', transferCode +
     '; return { withFileTransferBatch, moveFile, copyFile, moveFileOutsideLibrary, renameFile };')(
-      invoke, { error: (...args) => errors.push(args), log() {} });
-  return { ...api, calls, errors };
+      invoke, { error: (...args) => errors.push(args), log() {} }, config, error => busyNotices.push(error));
+  return { ...api, calls, errors, config, busyNotices };
 }
 
 test('transfer batch begin failure falls back to commands with a null batch id', async () => {
@@ -94,6 +96,7 @@ test('transfer batch begin failure falls back to commands with a null batch id',
   });
   assert.equal(result, '/target/photo.jpg');
   assert.equal(f.calls.at(-1).args.batchId, null);
+  assert.equal(f.calls.at(-1).args.groupRawJpegPairs, false);
   assert.ok(!f.calls.some(call => call.command === 'end_file_transfer_batch'));
   assert.equal(f.errors[0][1], error);
 });
@@ -105,8 +108,8 @@ test('transfer batch forwards its id to move, copy and move outside the library'
     await f.copyFile('/source/photo.jpg', '/target', 'keep_both', batchId);
     await f.moveFileOutsideLibrary(1, '/source/photo.jpg', '/target', 'keep_both', batchId);
   });
-  assert.deepEqual(f.calls.slice(1, -1).map(call => [call.command, call.args.batchId]), [
-    ['move_file', 42], ['copy_file', 42], ['move_file_outside_library', 42],
+  assert.deepEqual(f.calls.slice(1, -1).map(call => [call.command, call.args.batchId, call.args.groupRawJpegPairs]), [
+    ['move_file', 42, false], ['copy_file', 42, false], ['move_file_outside_library', 42, false],
   ]);
 });
 
@@ -145,7 +148,12 @@ test('content rename displays the backend reason and keeps the dialog open', asy
   assert.ok(start >= 0 && end > start);
   const error = 'XMP sidecar is not a regular file: /source/photo.xmp';
   const f = transferFixture({ commandError: error });
+  const view = { requestId: 1, libraryId: 'library-a', focusedId: 1 };
+  const guardCalls = [];
   const values = {
+    captureOperationView: () => view,
+    operationViewIsCurrent: snapshot => { guardCalls.push(snapshot); return snapshot === view; },
+    refreshAfterStaleOperation: () => { throw new Error('A failed rename must not refresh optimistically'); },
     requireCurrentOriginals: async () => true, selectedItemIndex: ref(0),
     fileList: ref([{ id: 1, name: 'photo.jpg', file_path: '/source/photo.jpg' }]),
     renamingFileName: ref({ ext: 'jpg' }), combineFileName: (name, ext) => `${name}.${ext}`,
@@ -157,6 +165,7 @@ test('content rename displays the backend reason and keeps the dialog open', asy
   await rename('renamed');
   assert.match(values.errorMessage.value, /Rename failed/);
   assert.ok(values.errorMessage.value.includes(error));
+  assert.deepEqual(guardCalls, [view, view]);
   assert.equal(values.showRenameMsgbox.value, true);
   assert.equal(values.fileList.value[0].name, 'photo.jpg');
 });
@@ -180,6 +189,8 @@ test('file info rename reports the backend reason without changing catalog field
     '; return finishRename;')(...Object.values(values));
   await rename();
   assert.ok(messages[0].includes(error));
+  assert.equal(f.calls[0].command, 'rename_file');
+  assert.equal(f.calls[0].args.groupRawJpegPairs, false);
   assert.equal(isRenaming.value, false);
   assert.equal(values.props.fileInfo.name, 'photo.jpg');
 });

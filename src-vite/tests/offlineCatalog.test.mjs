@@ -153,7 +153,7 @@ function dragFixture(collection = false) {
     isRealFileItem: () => true, isContentInternalDrag: ref(false),
     getActionableSelectedItems: () => deps.fileList.value,
     getActionableSelectedItemsForAction: async () => { calls.hydrated++; return files; },
-    isOriginalUnavailable,
+    isOriginalUnavailable, config,
     draggedFileIds: ref(new Set()), createDragGhost: () => { calls.started++; },
     tauriEmit: async () => {}, updateContentDragPosition: () => {},
     updateDragGhostModifier: () => {}, isCopyDragModifier: () => false,
@@ -292,6 +292,7 @@ test('opening dedup checks only the active group rather than all duplicate files
     id: index + 1, items: [1, 2].map(id => ({ file: { id: index * 2 + id, file_path: '/file.jpg', thumbnail: 'cached' } })),
   }));
   const deps = {
+    libConfig,
     refreshFileAccess: async files => checked.push(files.map(file => file.id)),
     loadedDuplicateGroupCount: ref(20), thumbnailPlaceholder: '', getFileThumb: () => { throw new Error('Cached thumbnail should be reused'); },
   };

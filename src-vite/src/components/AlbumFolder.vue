@@ -748,7 +748,16 @@ const confirmNewFolder = async () => {
   if (!parent || !name || !isValidFileName(name)) return;
 
   isCreatingFolderRequest.value = true;
-  const newFolderPath = await createFolder(parent.path, name);
+  let newFolderPath: string | null;
+  try {
+    newFolderPath = await createFolder(parent.path, name);
+  } catch (error) {
+    if (disposed) return;
+    isCreatingFolderRequest.value = false;
+    toast.error(`${localeMsg.value.msgbox.new_folder.error}: ${String(error)}`);
+    await focusNewFolderInput();
+    return;
+  }
   if (disposed) return;
   if (!newFolderPath) {
     isCreatingFolderRequest.value = false;
@@ -786,7 +795,13 @@ const clickRenameFolder = async (newFolderName: string) => {
     uiStore.removeInputHandler('AlbumFolder-rename');
   } else {
     const oldFolderPath = selection.folderPath.value;
-    const newFolderPath_ = await renameFolder(oldFolderPath, newFolderName);
+    let newFolderPath_: string | null;
+    try {
+      newFolderPath_ = await renameFolder(oldFolderPath, newFolderName);
+    } catch (error) {
+      toast.error(String(error));
+      return;
+    }
     if(newFolderPath_) {    // rename success
       let folder = selectedFolder.value;
       if (folder) {

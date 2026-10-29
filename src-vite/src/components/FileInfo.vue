@@ -816,7 +816,7 @@ const isLivePhoto = computed(() => (
 ));
 const isMotionPhoto = computed(() => props.fileInfo?.media_subtype === 'motion_photo');
 const isRawJpegPair = computed(() => (
-  props.fileInfo?.media_subtype === 'raw_jpeg_pair' && !!props.fileInfo?.live_photo_video_id
+  config.settings.groupRawJpegPairs && props.fileInfo?.media_subtype === 'raw_jpeg_pair' && !!props.fileInfo?.live_photo_video_id
 ));
 const rawJpegCompanion = ref<any>(null);
 const generalInfoTab = ref<'raw' | 'companion'>('raw');
@@ -1155,12 +1155,12 @@ watch(
 );
 
 watch(
-  () => [props.fileInfo?.id, props.fileInfo?.media_subtype, props.fileInfo?.live_photo_video_id] as const,
-  async ([fileId, mediaSubtype, companionId]) => {
+  () => [props.fileInfo?.id, props.fileInfo?.media_subtype, props.fileInfo?.live_photo_video_id, config.settings.groupRawJpegPairs] as const,
+  async ([fileId, mediaSubtype, companionId, groupPairs]) => {
     const requestSeq = ++rawJpegCompanionRequestSeq;
     generalInfoTab.value = 'raw';
     rawJpegCompanion.value = null;
-    if (!fileId || mediaSubtype !== 'raw_jpeg_pair' || !companionId) return;
+    if (!groupPairs || !fileId || mediaSubtype !== 'raw_jpeg_pair' || !companionId) return;
     const companion = await getFileInfo(Number(companionId));
     if (requestSeq !== rawJpegCompanionRequestSeq || Number(props.fileInfo?.id) !== Number(fileId)) return;
     rawJpegCompanion.value = companion || null;

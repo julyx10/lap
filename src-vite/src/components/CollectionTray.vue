@@ -210,6 +210,7 @@ watch(() => collections.value.length, (count) => {
 watch(() => libConfig.activePane, () => {
   if (libConfig.activePane === 'collection') void loadCollections();
 });
+watch(() => config.settings.groupRawJpegPairs, () => { void loadCollections(); });
 const selectedId = ref<number | null>(Number(libConfig.collection.selectedId || 0) || null);
 const getCollectionDisplayCount = (collection: Collection) => Number(libConfig.collection.counts?.[String(collection.id)] || 0);
 const reorderingCollectionId = ref<number | null>(null);
