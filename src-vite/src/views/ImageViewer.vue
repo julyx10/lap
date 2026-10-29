@@ -126,6 +126,7 @@
                 :canInteract="isPaneAvailable(pane) && activePane === pane"
                 :isPlaybackActive="isPaneAvailable(pane) && activePane === pane"
                 :showToolbar="false"
+                :forceToolbarVisible="isFullScreen && splitToolbarVisible"
                 :imageScale="getPaneScale(pane).scale"
                 :imageMinScale="getPaneScale(pane).min"
                 :imageMaxScale="getPaneScale(pane).max"

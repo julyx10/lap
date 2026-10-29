@@ -251,14 +251,16 @@
       @dblclick="$emit('media-dblclick')"
       @contextmenu.prevent="handleBackgroundContextMenu"
     >
+      <Transition name="fade">
       <div
-        v-if="showStatusBadges && quickViewStatusBadges.length > 0"
-        class="pointer-events-none absolute inset-x-0 top-0 z-80 h-16"
-      ></div>
-      <div
-        v-if="showStatusBadges && quickViewStatusBadges.length > 0"
+        v-if="showStatusBadges && (quickViewStatusBadges.length > 0 || statusFeedbackVisible)"
         class="pointer-events-none absolute left-4 top-4 z-30 flex max-w-[calc(100%-2.5rem)] flex-wrap gap-1"
       >
+        <div v-if="unfavoriteFeedback && !file?.is_favorite" class="thumb-badge"
+          role="status" :aria-label="$t('menu.meta.unfavorite')">
+          <IconHeart class="h-3.5 w-3.5" />
+        </div>
+        <div v-else-if="statusFeedbackVisible && quickViewStatusBadges.length === 0" class="thumb-badge">—</div>
         <div
           v-for="badge in quickViewStatusBadges"
           :key="badge.key"
@@ -289,6 +291,7 @@
           />
         </div>
       </div>
+      </Transition>
 
       <!-- Previous Button (Overlay, media-area anchored) -->
       <button
@@ -1050,9 +1053,48 @@ const quickViewStatusBadges = computed<StatusBadge[]>(() => {
   return badges;
 });
 
-const showStatusBadges = computed(() => {
-  return !isFullScreen.value && (props.mode === 0 || props.mode === 2);
-});
+const statusFeedbackVisible = ref(false);
+const unfavoriteFeedback = ref(false);
+let statusFeedbackTimer: ReturnType<typeof setTimeout> | undefined;
+function sameStatusBadges(badges: StatusBadge[], previous: StatusBadge[]) {
+  return badges.length === previous.length && badges.every((badge, index) => {
+    const other = previous[index];
+    return badge.key === other.key && badge.icon === other.icon && badge.label === other.label
+      && badge.iconClass === other.iconClass && badge.trailingIcon === other.trailingIcon
+      && badge.trailingIconClass === other.trailingIconClass
+      && badge.icons?.length === other.icons?.length
+      && (badge.icons || []).every((entry, i) => entry.icon === other.icons![i].icon
+        && JSON.stringify(entry.style) === JSON.stringify(other.icons![i].style));
+  });
+}
+function clearStatusFeedback() {
+  clearTimeout(statusFeedbackTimer);
+  statusFeedbackVisible.value = false;
+  unfavoriteFeedback.value = false;
+}
+watch(
+  [quickViewStatusBadges, () => props.file?.id, () => libConfig._libraryId, isFullScreen],
+  ([badges, fileId, libraryId, fullscreen], [previousBadges, previousId, previousLibrary, wasFullscreen]) => {
+    if (!fullscreen || !wasFullscreen || fileId !== previousId || libraryId !== previousLibrary) {
+      clearStatusFeedback();
+      return;
+    }
+    if (sameStatusBadges(badges, previousBadges)) return;
+    clearStatusFeedback();
+    statusFeedbackVisible.value = true;
+    unfavoriteFeedback.value = previousBadges.some(badge => badge.key === 'favorite')
+      && !badges.some(badge => badge.key === 'favorite');
+    statusFeedbackTimer = setTimeout(clearStatusFeedback, 1200);
+  },
+);
+
+const fullScreenToolbarVisible = computed(() =>
+  props.forceToolbarVisible || (props.showToolbar && (isHoverTop.value || hasOpenMenu.value)),
+);
+const showStatusBadges = computed(() => isFullScreen.value
+  ? fullScreenToolbarVisible.value || statusFeedbackVisible.value
+  : props.mode === 0 || props.mode === 2,
+);
 
 const showWindowControlsBar = computed(() => {
   return props.showToolbar && !(showDesktopWindowControls && props.mode === 2 && props.isFullScreen);
@@ -1085,6 +1127,7 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
+  clearStatusFeedback();
   previewDisposed = true;
   stopPreviewResizeListener();
   void exitPreviewFullScreen();
@@ -1170,7 +1213,7 @@ const computedToolbarClass = computed(() => {
 
   if (isFullScreen.value) {
     const floatingClasses = 'left-1/2 top-4 -translate-x-1/2 px-2 rounded-box bg-base-100/30 hover:bg-base-100/70 transition-[opacity,transform] duration-300 ease-in-out';
-    return `${commonClasses} ${floatingClasses} ${(props.forceToolbarVisible || isHoverTop.value || hasOpenMenu.value) ? 'opacity-100' : 'opacity-0'}`;
+    return `${commonClasses} ${floatingClasses} ${fullScreenToolbarVisible.value ? 'opacity-100' : 'opacity-0'}`;
   }
 
   const isPinned = props.mode === 2 ? true : config.mediaViewer.isPinned;
