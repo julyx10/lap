@@ -16,11 +16,12 @@ pkg-config = "0.3"
 tauri-build = { version = "2", features = [] }
 
 [profile.release]
-codegen-units = 1
-lto = true
-opt-level = "z"
-panic = "abort"
-strip = true
+# codegen-units = 1
+debug = true
+# lto = true
+# opt-level = "z"
+# panic = "abort"
+# strip = true
 
 [profile.dev.package."*"]
 opt-level = 3

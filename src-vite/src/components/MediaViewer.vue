@@ -91,6 +91,13 @@
           :shortcut="shortcut('view.zoomFit')"
           @click="$emit('update:isZoomFit', !isZoomFit)"
         />
+        <TButton
+          :icon="IconFocus"
+          :selected="showAfAreas"
+          :disabled="fileIndex < 0 || !canInteract || ![1, 3].includes(Number(file?.file_type))"
+          :tooltip="$t('image_viewer.toolbar.af_area')"
+          @click="showAfAreas = !showAfAreas"
+        />
         <template v-if="showExtraIcons">
           <IconSeparator class="t-icon-size-sm text-base-content/30" />
           <TButton
@@ -359,6 +366,7 @@
       >
         <Image
           ref="mediaRef"
+          :showAfAreas="showAfAreas"
           :filePath="file?.file_path"
           :fileId="file?.id"
           :fileType="file?.file_type"
@@ -456,6 +464,9 @@ import { isOriginalUnavailable, setFileAccessibility } from '@/common/availabili
 import { getMotionPhotoVideoPath, checkFileAccessibility } from '@/common/api';
 
 import Image from '@/components/Image.vue';
+import IconFocus from '@/assets/icons/focus.svg';
+import { storeToRefs } from 'pinia';
+import { useUIStore } from '@/stores/uiStore';
 import TButton from '@/components/TButton.vue';
 import { 
   IconLeft, 
@@ -686,6 +697,7 @@ const containerRef = ref<HTMLElement | null>(null);
 const mediaAreaRef = ref<HTMLElement | null>(null);
 const mediaRef = ref<any>(null);
 const toast = useToast();
+const { showAfAreas } = storeToRefs(useUIStore());
 const isHoverLeft = ref(false);
 const isHoverRight = ref(false);
 const isHoverTop = ref(false);

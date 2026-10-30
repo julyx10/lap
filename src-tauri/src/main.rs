@@ -29,6 +29,7 @@ mod t_heif;
 mod t_http;
 mod t_image;
 mod t_metadata;
+mod t_af_area;
 mod t_jpeg;
 mod t_jxl;
 mod t_lens;
@@ -428,6 +429,7 @@ async fn main() {
             t_cmds::rename_person,
             t_cmds::delete_person,
             t_cmds::get_faces_for_file,
+            t_af_area::get_af_areas,
             t_cmds::get_person_thumbnail,
             // dedup
             t_cmds::dedup_start_scan,
