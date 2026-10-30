@@ -361,7 +361,14 @@
     "not_found": "Tags não encontradas",
     "name_exists": "Já existe uma tag com este nome",
     "name_save_failed": "Não foi possível salvar o nome da tag",
-    "load_failed": "Não foi possível carregar o estado das tags. Feche esta caixa de diálogo e tente novamente."
+    "move_failed": "Não foi possível mover a etiqueta",
+    "delete_failed": "Não foi possível eliminar a etiqueta",
+    "load_failed": "Não foi possível carregar o estado das tags. Feche esta caixa de diálogo e tente novamente.",
+    "root": "Nível raiz",
+    "add_child": "Nova etiqueta filha",
+    "invalid_name": "Os nomes das etiquetas não podem conter , ; ou {'|'}.",
+    "invalid_move": "Uma etiqueta não pode ser movida para a própria subárvore.",
+    "delete_tree": "Esta etiqueta e as suas subetiquetas serão eliminadas. As fotos serão mantidas."
   },
   "subject": {
     "title": "Temas",
@@ -772,20 +779,8 @@
     "tag": {
       "rename": "Renomear",
       "delete": "Excluir",
-      "new_group": "Novo grupo",
-      "edit_group": "Editar grupo",
-      "delete_group": "Excluir grupo",
-      "search": "Pesquisar tags ou grupos",
-      "clear_search": "Limpar pesquisa",
-      "active_tag": "Tag selecionada neste grupo",
-      "name": "Nome",
-      "locate": "Localizar tag",
-      "empty": "Nenhuma tag",
-      "move_to": "Mover para grupo",
-      "delete_message": "Excluir “{name}”? As tags serão movidas para Default. As tags dos arquivos serão mantidas.",
-      "exists_in": "Esta tag já existe em “{group}”.",
-      "name_exists": "Já existe um grupo com este nome.",
-      "new_tag_group": "Grupo da nova tag"
+      "search": "Pesquisar etiquetas",
+      "clear_search": "Limpar pesquisa"
     },
     "meta": {
       "favorite": "Favoritar",
@@ -993,7 +988,7 @@
       "error": "Falha ao criar a tag."
     },
     "delete_tag": {
-      "title": "Excluir tag",
+      "title": "Eliminar “{tag}”?",
       "content": "A tag '{tag}' será excluída.",
       "ok": "Excluir",
       "success": "'{tag}' excluída.",

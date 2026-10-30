@@ -54,7 +54,7 @@ windows = { version = "0.61.3", default-features = false, features = ["Win32_Fou
     type_reader = "pub fn get_file_type(" + type_reader
     modules = '\n'.join(
         f'#[path={json.dumps(str(root / "src-tauri/src" / (name + ".rs")))}] mod {name};'
-        for name in ("t_xmp", "t_metadata", "t_xmp_files", "t_common")
+        for name in ("t_xmp", "t_xmp_compat", "t_metadata", "t_xmp_files", "t_common", "t_tags")
     )
     (work / "src/lib.rs").write_text('''#![allow(dead_code)]
 mod t_batch_rename;

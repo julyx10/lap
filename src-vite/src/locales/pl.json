@@ -361,7 +361,14 @@
     "not_found": "Nie znaleziono tagów",
     "name_exists": "Tag o tej nazwie już istnieje",
     "name_save_failed": "Nie udało się zapisać nazwy taga",
-    "load_failed": "Nie udało się wczytać stanu tagów. Zamknij to okno i spróbuj ponownie."
+    "move_failed": "Nie udało się przenieść tagu",
+    "delete_failed": "Nie udało się usunąć tagu",
+    "load_failed": "Nie udało się wczytać stanu tagów. Zamknij to okno i spróbuj ponownie.",
+    "root": "Poziom główny",
+    "add_child": "Nowy tag podrzędny",
+    "invalid_name": "Nazwy tagów nie mogą zawierać , ; ani {'|'}.",
+    "invalid_move": "Nie można przenieść tagu do jego własnego poddrzewa.",
+    "delete_tree": "Ten tag i jego tagi podrzędne zostaną usunięte. Zdjęcia zostaną zachowane."
   },
   "subject": {
     "title": "Tematy",
@@ -772,20 +779,8 @@
     "tag": {
       "rename": "Zmień nazwę",
       "delete": "Usuń",
-      "new_group": "Nowa grupa",
-      "edit_group": "Edytuj grupę",
-      "delete_group": "Usuń grupę",
-      "search": "Szukaj tagów lub grup",
-      "clear_search": "Wyczyść wyszukiwanie",
-      "active_tag": "Wybrany tag w tej grupie",
-      "name": "Nazwa",
-      "locate": "Zlokalizuj tag",
-      "empty": "Brak tagów",
-      "move_to": "Przenieś do grupy",
-      "delete_message": "Usunąć „{name}”? Jej tagi zostaną przeniesione do grupy Domyślna. Tagi na plikach zostaną zachowane.",
-      "exists_in": "Ten tag już istnieje w „{group}”.",
-      "name_exists": "Grupa o tej nazwie już istnieje.",
-      "new_tag_group": "Grupa dla nowego taga"
+      "search": "Szukaj tagów",
+      "clear_search": "Wyczyść wyszukiwanie"
     },
     "meta": {
       "favorite": "Dodaj do ulubionych",
@@ -993,7 +988,7 @@
       "error": "Nie udało się utworzyć taga."
     },
     "delete_tag": {
-      "title": "Usuń tag",
+      "title": "Usunąć „{tag}”?",
       "content": "Tag „{tag}” zostanie usunięty.",
       "ok": "Usuń",
       "success": "Tag „{tag}” został usunięty.",

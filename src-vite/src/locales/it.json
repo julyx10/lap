@@ -361,7 +361,14 @@
     "not_found": "Nessun tag trovato",
     "name_exists": "Esiste già un tag con questo nome",
     "name_save_failed": "Impossibile salvare il nome del tag",
-    "load_failed": "Impossibile caricare gli stati dei tag. Chiudi questa finestra e riprova."
+    "move_failed": "Impossibile spostare il tag",
+    "delete_failed": "Impossibile eliminare il tag",
+    "load_failed": "Impossibile caricare gli stati dei tag. Chiudi questa finestra e riprova.",
+    "root": "Livello principale",
+    "add_child": "Nuovo tag figlio",
+    "invalid_name": "I nomi dei tag non possono contenere , ; o {'|'}.",
+    "invalid_move": "Un tag non può essere spostato nel proprio sottoalbero.",
+    "delete_tree": "Questo tag e i suoi tag secondari verranno eliminati. Le foto verranno conservate."
   },
   "subject": {
     "title": "Soggetti",
@@ -772,20 +779,8 @@
     "tag": {
       "rename": "Rinomina",
       "delete": "Elimina",
-      "new_group": "Nuovo gruppo",
-      "edit_group": "Modifica gruppo",
-      "delete_group": "Elimina gruppo",
-      "search": "Cerca tag o gruppi",
-      "clear_search": "Cancella ricerca",
-      "active_tag": "Tag selezionato in questo gruppo",
-      "name": "Nome",
-      "locate": "Individua tag",
-      "empty": "Ancora nessun tag",
-      "move_to": "Sposta nel gruppo",
-      "delete_message": "Eliminare “{name}”? I suoi tag verranno spostati in Predefinito. I tag sui file verranno mantenuti.",
-      "exists_in": "Questo tag esiste già in “{group}”.",
-      "name_exists": "Esiste già un gruppo con questo nome.",
-      "new_tag_group": "Gruppo per il nuovo tag"
+      "search": "Cerca tag",
+      "clear_search": "Cancella ricerca"
     },
     "meta": {
       "favorite": "Preferito",
@@ -993,7 +988,7 @@
       "error": "Impossibile creare il tag."
     },
     "delete_tag": {
-      "title": "Elimina tag",
+      "title": "Eliminare “{tag}”?",
       "content": "Il tag '{tag}' verrà eliminato.",
       "ok": "Elimina",
       "success": "Il tag '{tag}' è stato eliminato.",

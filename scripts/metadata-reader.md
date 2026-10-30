@@ -28,8 +28,8 @@ This is an internal implementation and validation note, not website content.
 - A per-thread, single-file mapped-value cache avoids the duplicate extraction
   between file-info construction and organization import. Cloud-only files are
   not hydrated by this backend. Unsupported formats fall back to existing readers.
-- Unknown fields are not persisted. Hierarchical keyword strings use the existing
-  flat tag model. No new hierarchy or full metadata inspector is promised here.
+- Unknown fields are not persisted. Flat keywords and explicit hierarchical
+  keyword paths are distinguished; only the latter create parent/child tags.
 
 ## Known limits and upstream cooperation
 
@@ -76,11 +76,49 @@ the pinned dependency and its notices in addition to Lap's build sources.
 
 ## Export compatibility
 
-The catalog has flat tag strings. Existing `lr:hierarchicalSubject` and
-`digiKam:TagsList` stores are synchronized to those exact strings, including
-literal `A|B|C` paths, so removed tags cannot reappear on import. No hierarchy is
-inferred. Only an existing `darktable:rejected` field is synchronized; it is not
-introduced into other applications’ sidecars.
+The catalog stores a tag tree. `dc:subject` contains the explicitly assigned tag
+names, deduplicated for interoperability; `lr:hierarchicalSubject` contains their
+full paths using `|`. Existing `digiKam:TagsList` fields use `/` for the same
+paths. Both representations normalize to one tree on import; flat subjects keep
+literal separators. Older pipe-separated digiKam paths are also accepted.
+`lr:hierarchicalSubject` is created when valid catalog paths are nonempty;
+an existing field is also rewritten when empty to clear stale assignments.
+An absent field is not created for an empty path set.
+ACDSee `categories` is imported from its escaped XML tree (embedded or sidecar).
+Only nodes with `Assigned="1"` are linked; unassigned ancestors supply the path.
+Matching paths across ACDSee, Lightroom and digiKam share the same nodes.
+Malformed ACDSee XML is ignored without discarding other metadata. Existing
+ACDSee fields are rewritten with the current assignments, including explicit
+clears, so stale categories cannot restore removed tags. No ACDSee field is
+created when it was absent. Paths with a literal `/` in a node name are omitted
+from digiKam's ambiguous slash encoding; Lightroom and dc retain those tags.
+
+Keyword format compatibility lives in `src-tauri/src/t_xmp_compat.rs`. Its registry
+defines namespace URI/property, backend fallback name, encoding and write policy.
+Embedded packets and sidecars use the same URI-aware importer; the generic writer
+uses the registry to identify and replace writable fields. New keyword schemas
+and encodings belong in this module, not in scanner or database branches. The
+backend mapping is only a fallback when container packets cannot be extracted.
+An additional test-only schema verifies that registering a format here enables
+embedded import, sidecar parsing and writing without editing the callers.
+Parent nodes organize tags and expand searches, but are not implicitly assigned
+to images. Only an existing `darktable:rejected` field is synchronized.
+
+Migration v21 removes tag groups, retaining every tag ID, name and file link as a
+root tag. It neither reads images nor writes XMP. Legacy names containing literal
+`|` stay intact and export only as flat keywords; they are never guessed into a
+hierarchy. Root and sibling names have separate case-insensitive unique indexes.
+An upgrade encountering historical case collisions rolls back rather than merging
+or renaming user tags silently.
+
+XMP source-path aliases follow local tag renames and subtree moves; deletion
+leaves a tombstone so later import cannot recreate the removed source path.
+Local subtree edits protect all affected file tag sets. File-info and XMP export
+resolve only the ancestors of assigned tags. Parent queries and counters include
+descendants, counting each file once. Tree edits reject cycles and name collisions.
+Import fingerprint v4 schedules one metadata re-read on the next scan, even when
+the media and sidecar are unchanged, to apply hierarchy and vendor-schema parsing
+to existing files. Local-edit protection remains in effect; thumbnails are not rebuilt.
 
 The catalog snapshot transaction ends before sidecar I/O begins. Embedded
 metadata parsing shares a read-only file mapping with URI-aware XMP parsing;
@@ -182,7 +220,7 @@ Favorite standard; ratings, pick flags and keyword/label text never imply it.
 Automatic imports preserve existing favorites and locally edited/cleared states.
 Local favorite edits use dirty bit 16, independent of rating and culling. Manual
 sidecar export writes the current Boolean value, including false, without clearing
-local-edit protection. The embedded import fingerprint is v3 so unchanged libraries
+local-edit protection. The embedded import fingerprint is versioned so unchanged libraries
 backfill this field once after upgrading. Both flags share one XML parsing pass.
 
 

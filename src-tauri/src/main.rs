@@ -37,7 +37,7 @@ mod t_raw_display;
 mod t_menu;
 mod t_migration;
 mod t_montage;
-mod t_tag_groups;
+mod t_tags;
 mod t_motion_photo;
 mod t_pasteboard;
 mod t_protocol;
@@ -49,6 +49,7 @@ mod t_startup;
 mod t_utils;
 mod t_video;
 mod t_xmp;
+mod t_xmp_compat;
 mod t_xmp_files;
 
 /// The main function is the entry point for the Tauri application.
@@ -380,16 +381,12 @@ async fn main() {
             t_cmds::set_xmp_import_settings,
             t_cmds::save_xmp_metadata,
             // tag
-            t_cmds::get_tag_group_name,
-            t_cmds::get_tag_groups,
-            t_cmds::save_tag_group,
-            t_cmds::reorder_tag_groups,
-            t_cmds::delete_tag_group,
-            t_cmds::move_tags_to_group,
             t_cmds::get_all_tags,
             t_cmds::get_tag_counts,
             t_cmds::get_tag_name,
             t_cmds::create_tag,
+            t_cmds::move_tag,
+            t_cmds::get_tag_subtree_info,
             t_cmds::rename_tag,
             t_cmds::delete_tag,
             t_cmds::get_tags_for_file,

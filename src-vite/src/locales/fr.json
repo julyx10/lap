@@ -361,7 +361,14 @@
     "not_found": "Aucun tag trouvé",
     "name_exists": "Un tag portant ce nom existe déjà",
     "name_save_failed": "Impossible d’enregistrer le nom du tag",
-    "load_failed": "Impossible de charger l’état des tags. Fermez cette boîte de dialogue et réessayez."
+    "move_failed": "Impossible de déplacer l’étiquette",
+    "delete_failed": "Impossible de supprimer l’étiquette",
+    "load_failed": "Impossible de charger l’état des tags. Fermez cette boîte de dialogue et réessayez.",
+    "root": "Niveau racine",
+    "add_child": "Nouvelle sous-étiquette",
+    "invalid_name": "Les noms des étiquettes ne peuvent pas contenir , ; ou {'|'}.",
+    "invalid_move": "Une étiquette ne peut pas être déplacée dans sa propre arborescence.",
+    "delete_tree": "Cette étiquette et ses sous-étiquettes seront supprimées. Les photos seront conservées."
   },
   "subject": {
     "title": "Sujets",
@@ -772,20 +779,8 @@
     "tag": {
       "rename": "Renommer",
       "delete": "Supprimer",
-      "new_group": "Nouveau groupe",
-      "edit_group": "Modifier le groupe",
-      "delete_group": "Supprimer le groupe",
-      "search": "Rechercher des tags ou groupes",
-      "clear_search": "Effacer la recherche",
-      "active_tag": "Tag sélectionné dans ce groupe",
-      "name": "Nom",
-      "locate": "Afficher le tag",
-      "empty": "Aucun tag",
-      "move_to": "Déplacer vers un groupe",
-      "delete_message": "Supprimer « {name} » ? Ses tags seront déplacés vers Default. Les tags des fichiers seront conservés.",
-      "exists_in": "Ce tag existe déjà dans « {group} ».",
-      "name_exists": "Un groupe portant ce nom existe déjà.",
-      "new_tag_group": "Groupe du nouveau tag"
+      "search": "Rechercher des étiquettes",
+      "clear_search": "Effacer la recherche"
     },
     "meta": {
       "favorite": "Favori",
@@ -993,7 +988,7 @@
       "error": "Impossible de créer le tag."
     },
     "delete_tag": {
-      "title": "Supprimer tag",
+      "title": "Supprimer « {tag} » ?",
       "content": "'{tag}' sera supprimé.",
       "ok": "Supprimer",
       "success": "'{tag}' supprimé.",

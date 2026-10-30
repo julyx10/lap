@@ -1615,28 +1615,12 @@ export async function batchUpdateFileMetadata(params) {
 
 // tags
 
-export async function getTagGroupName(id) {
-  return invoke('get_tag_group_name', { id });
+export async function getTagSubtreeInfo(tagId) {
+  return invoke('get_tag_subtree_info', { tagId });
 }
 
-export async function getTagGroups() {
-  return invoke('get_tag_groups');
-}
-
-export async function saveTagGroup(id, name) {
-  return invoke('save_tag_group', { id, name });
-}
-
-export async function reorderTagGroups(ids) {
-  return invoke('reorder_tag_groups', { ids });
-}
-
-export async function deleteTagGroup(id) {
-  return invoke('delete_tag_group', { id });
-}
-
-export async function moveTagsToGroup(tagIds, groupId) {
-  return invoke('move_tags_to_group', { tagIds, groupId });
+export async function moveTag(tagId, parentId = null) {
+  return invoke('move_tag', { tagId, parentId });
 }
 
 // get all tags
@@ -1663,9 +1647,9 @@ export async function getTagCounts() {
 }
 
 // get tag name by id
-export async function getTagName(tagId, includeGroup = false) {
+export async function getTagName(tagId) {
   try {
-    const tagName = await invoke('get_tag_name', { tagId, includeGroup });
+    const tagName = await invoke('get_tag_name', { tagId });
     if (tagName) {
       return tagName;
     }
@@ -1676,9 +1660,9 @@ export async function getTagName(tagId, includeGroup = false) {
 }
 
 // create a new tag
-export async function createTag(name, groupId = null) {
+export async function createTag(name, parentId = null) {
   try {
-    const result = await invoke('create_tag', { name, groupId });
+    const result = await invoke('create_tag', { name, parentId });
     return result;
   } catch (error) {
     console.error('Failed to create tag:', error);

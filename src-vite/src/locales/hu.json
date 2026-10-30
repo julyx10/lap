@@ -361,7 +361,14 @@
     "not_found": "Nincs címke",
     "name_exists": "Már van ilyen nevű címke",
     "name_save_failed": "A címkenév nem menthető",
-    "load_failed": "A címkeállapotok nem tölthetők be. Zárja be az ablakot, majd próbálja újra."
+    "move_failed": "A címkét nem sikerült áthelyezni",
+    "delete_failed": "A címkét nem sikerült törölni",
+    "load_failed": "A címkeállapotok nem tölthetők be. Zárja be az ablakot, majd próbálja újra.",
+    "root": "Gyökérszint",
+    "add_child": "Új gyermekcímke",
+    "invalid_name": "A címkenév nem tartalmazhat , ; vagy {'|'} karaktert.",
+    "invalid_move": "A címke nem helyezhető át a saját részfájába.",
+    "delete_tree": "A címke és az alcímkéi törlésre kerülnek. A fényképek megmaradnak."
   },
   "subject": {
     "title": "Témák",
@@ -772,20 +779,8 @@
     "tag": {
       "rename": "Átnevezés",
       "delete": "Törlés",
-      "new_group": "Új csoport",
-      "edit_group": "Csoport szerkesztése",
-      "delete_group": "Csoport törlése",
-      "search": "Címkék vagy csoportok keresése",
-      "clear_search": "Keresés törlése",
-      "active_tag": "A csoport kijelölt címkéje",
-      "name": "Név",
-      "locate": "Címke megkeresése",
-      "empty": "Még nincs címke",
-      "move_to": "Áthelyezés csoportba",
-      "delete_message": "Törli ezt: „{name}”? Címkéi az Alapértelmezett csoportba kerülnek. A fájlok címkéi megmaradnak.",
-      "exists_in": "Ez a címke már létezik a(z) „{group}” csoportban.",
-      "name_exists": "Már létezik ilyen nevű csoport.",
-      "new_tag_group": "Az új címke csoportja"
+      "search": "Címkék keresése",
+      "clear_search": "Keresés törlése"
     },
     "meta": {
       "favorite": "Kedvenc",
@@ -993,7 +988,7 @@
       "error": "Nem sikerült létrehozni a címkét."
     },
     "delete_tag": {
-      "title": "Címke törlése",
+      "title": "Törli a(z) „{tag}” címkét?",
       "content": "A „{tag}” címke törlésre kerül.",
       "ok": "Törlés",
       "success": "A „{tag}” címke törölve.",

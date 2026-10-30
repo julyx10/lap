@@ -3378,33 +3378,13 @@ pub async fn save_xmp_metadata(
 // tag
 
 #[tauri::command]
-pub fn get_tag_group_name(id: i64) -> Result<String, String> {
-    crate::t_tag_groups::get_name(id)
+pub fn get_tag_subtree_info(tag_id: i64) -> Result<crate::t_tags::SubtreeInfo,String> {
+    crate::t_tags::subtree_info(&*crate::t_sqlite::open_conn()?,tag_id)
 }
 
 #[tauri::command]
-pub fn get_tag_groups() -> Result<Vec<crate::t_tag_groups::TagGroup>, String> {
-    crate::t_tag_groups::get_all()
-}
-
-#[tauri::command]
-pub fn save_tag_group(id: Option<i64>, name: &str) -> Result<i64, String> {
-    crate::t_tag_groups::save(id, name)
-}
-
-#[tauri::command]
-pub fn reorder_tag_groups(ids: Vec<i64>) -> Result<(), String> {
-    crate::t_tag_groups::reorder(&ids)
-}
-
-#[tauri::command]
-pub fn delete_tag_group(id: i64) -> Result<(), String> {
-    crate::t_tag_groups::delete(id)
-}
-
-#[tauri::command]
-pub fn move_tags_to_group(tag_ids: Vec<i64>, group_id: i64) -> Result<(), String> {
-    crate::t_tag_groups::move_tags(&tag_ids, group_id)
+pub fn move_tag(tag_id: i64, parent_id: Option<i64>) -> Result<(), String> {
+    ATag::move_tag(tag_id, parent_id)
 }
 
 /// get all tags
@@ -3422,14 +3402,14 @@ pub fn get_tag_counts() -> Result<HashMap<i64, i64>, String> {
 
 /// get tag name by id
 #[tauri::command]
-pub fn get_tag_name(tag_id: i64, include_group: Option<bool>) -> Result<String, String> {
-    ATag::get_name(tag_id, include_group.unwrap_or(false)).map_err(|e| format!("Error while getting tag name: {}", e))
+pub fn get_tag_name(tag_id: i64) -> Result<String, String> {
+    ATag::get_name(tag_id).map_err(|e| format!("Error while getting tag name: {}", e))
 }
 
 /// create a new tag
 #[tauri::command]
-pub fn create_tag(name: &str, group_id: Option<i64>) -> Result<ATag, String> {
-    ATag::add(name, group_id).map_err(|e| format!("Error while creating tag: {}", e))
+pub fn create_tag(name: &str, parent_id: Option<i64>) -> Result<ATag, String> {
+    ATag::add(name, parent_id).map_err(|e| format!("Error while creating tag: {}", e))
 }
 
 /// rename a tag

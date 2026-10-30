@@ -361,7 +361,14 @@
     "not_found": "태그를 찾을 수 없음",
     "name_exists": "같은 이름의 태그가 이미 있습니다",
     "name_save_failed": "태그 이름을 저장할 수 없습니다",
-    "load_failed": "태그 상태를 불러오지 못했습니다. 대화 상자를 닫고 다시 시도하세요."
+    "move_failed": "태그를 이동할 수 없습니다",
+    "delete_failed": "태그를 삭제할 수 없습니다",
+    "load_failed": "태그 상태를 불러오지 못했습니다. 대화 상자를 닫고 다시 시도하세요.",
+    "root": "최상위",
+    "add_child": "하위 태그 만들기",
+    "invalid_name": "태그 이름에 , ; {'|'} 문자를 사용할 수 없습니다.",
+    "invalid_move": "태그를 자신이나 하위 태그로 이동할 수 없습니다.",
+    "delete_tree": "이 태그와 하위 태그가 삭제됩니다. 사진은 유지됩니다."
   },
   "subject": {
     "title": "주제",
@@ -772,20 +779,8 @@
     "tag": {
       "rename": "이름 변경",
       "delete": "삭제",
-      "new_group": "그룹 만들기",
-      "edit_group": "그룹 편집",
-      "delete_group": "그룹 삭제",
-      "search": "태그 또는 그룹 검색",
-      "clear_search": "검색 지우기",
-      "active_tag": "이 그룹에 선택한 태그가 있습니다",
-      "name": "이름",
-      "locate": "태그 찾기",
-      "empty": "태그 없음",
-      "move_to": "그룹으로 이동",
-      "delete_message": "“{name}”을 삭제하시겠습니까? 태그는 Default로 이동하며 파일의 태그는 유지됩니다.",
-      "exists_in": "이 태그는 “{group}”에 이미 있습니다.",
-      "name_exists": "같은 이름의 그룹이 이미 있습니다.",
-      "new_tag_group": "새 태그의 그룹"
+      "search": "태그 검색",
+      "clear_search": "검색 지우기"
     },
     "meta": {
       "favorite": "즐겨찾기",
@@ -993,7 +988,7 @@
       "error": "태그를 만들지 못했습니다."
     },
     "delete_tag": {
-      "title": "태그 삭제",
+      "title": "“{tag}”을(를) 삭제할까요?",
       "content": "'{tag}' 태그가 삭제됩니다.",
       "ok": "삭제",
       "success": "'{tag}' 삭제됨.",

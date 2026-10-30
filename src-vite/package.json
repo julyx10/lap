@@ -12,7 +12,8 @@
     "test:startup": "node --experimental-vm-modules --test tests/startup.test.mjs",
     "test:thumbnails": "node --test tests/thumbnail-scheduler.test.mjs",
     "preview": "vite preview",
-    "test:file-info": "node --test tests/fileInfoMetadata.test.mjs"
+    "test:file-info": "node --test tests/fileInfoMetadata.test.mjs",
+    "test:tags": "node --test tests/tagTree.test.mjs"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.2.2",

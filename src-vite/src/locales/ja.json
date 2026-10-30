@@ -361,7 +361,14 @@
     "not_found": "タグが見つかりません",
     "name_exists": "同じ名前のタグが既にあります",
     "name_save_failed": "タグ名を保存できませんでした",
-    "load_failed": "タグの状態を読み込めませんでした。ダイアログを閉じて再試行してください。"
+    "move_failed": "タグを移動できませんでした",
+    "delete_failed": "タグを削除できませんでした",
+    "load_failed": "タグの状態を読み込めませんでした。ダイアログを閉じて再試行してください。",
+    "root": "最上位",
+    "add_child": "子タグを作成",
+    "invalid_name": "タグ名に , ; {'|'} は使えません。",
+    "invalid_move": "タグを自身やその子タグの下へ移動できません。",
+    "delete_tree": "このタグと子タグを削除します。写真は保持されます。"
   },
   "subject": {
     "title": "被写体",
@@ -772,20 +779,8 @@
     "tag": {
       "rename": "名前を変更",
       "delete": "削除",
-      "new_group": "グループを作成",
-      "edit_group": "グループを編集",
-      "delete_group": "グループを削除",
-      "search": "タグまたはグループを検索",
-      "clear_search": "検索をクリア",
-      "active_tag": "このグループ内に選択中のタグがあります",
-      "name": "名前",
-      "locate": "タグを表示",
-      "empty": "タグはありません",
-      "move_to": "グループに移動",
-      "delete_message": "「{name}」を削除しますか？タグは Default に移動され、ファイルのタグは保持されます。",
-      "exists_in": "このタグは「{group}」に既に存在します。",
-      "name_exists": "同じ名前のグループが既に存在します。",
-      "new_tag_group": "新しいタグのグループ"
+      "search": "タグを検索",
+      "clear_search": "検索をクリア"
     },
     "meta": {
       "favorite": "お気に入り",
@@ -993,7 +988,7 @@
       "error": "タグを作成できませんでした。"
     },
     "delete_tag": {
-      "title": "タグを削除",
+      "title": "「{tag}」を削除しますか？",
       "content": "'{tag}' を削除します。",
       "ok": "削除",
       "success": "'{tag}' を削除しました。",

@@ -2134,7 +2134,6 @@ pub struct QueryParams {
     pub culling_flag: i64,
     pub tag_id: i64,
     #[serde(default)]
-    pub tag_group_id: i64,
     pub person_id: i64,
     // GPS bounding box filter (e.g. for "photos in this map area")
     #[serde(default)]
@@ -5317,15 +5316,11 @@ impl AFile {
             sql_params.push(Box::new(params.culling_flag));
         }
 
-        if params.tag_group_id > 0 {
-            conditions.push("EXISTS (SELECT 1 FROM afile_tags ft JOIN atags t ON t.id = ft.tag_id WHERE ft.file_id = a.id AND t.group_id = ?)".to_string());
-            sql_params.push(Box::new(params.tag_group_id));
-        }
         if params.tag_id > 0 {
-            joins.push("INNER JOIN afile_tags at ON a.id = at.file_id");
-            conditions.push("at.tag_id = ?".to_string());
+            conditions.push("EXISTS (WITH RECURSIVE descendants(id) AS (SELECT id FROM atags WHERE id=? UNION ALL SELECT t.id FROM atags t JOIN descendants d ON t.parent_id=d.id) SELECT 1 FROM afile_tags ft JOIN descendants d ON d.id=ft.tag_id WHERE ft.file_id=a.id)".to_string());
             sql_params.push(Box::new(params.tag_id));
         }
+
 
         if params.person_id > 0 {
             joins.push("INNER JOIN faces f ON a.id = f.file_id");
@@ -6277,10 +6272,10 @@ impl AFile {
                     Self::smart_rule_i64(value).ok_or_else(|| "Tag id required".to_string())?;
                 if matches!(operator, "has" | "is" | "eq") {
                     sql_params.push(Box::new(id));
-                    Ok("EXISTS (SELECT 1 FROM afile_tags at2 WHERE at2.file_id = a.id AND at2.tag_id = ?)".to_string())
+                    Ok("EXISTS (WITH RECURSIVE descendants(id) AS (SELECT id FROM atags WHERE id=? UNION ALL SELECT t.id FROM atags t JOIN descendants d ON t.parent_id=d.id) SELECT 1 FROM afile_tags ft JOIN descendants d ON d.id=ft.tag_id WHERE ft.file_id=a.id)".to_string())
                 } else if matches!(operator, "not_has" | "is_not" | "neq") {
                     sql_params.push(Box::new(id));
-                    Ok("NOT EXISTS (SELECT 1 FROM afile_tags at2 WHERE at2.file_id = a.id AND at2.tag_id = ?)".to_string())
+                    Ok("NOT EXISTS (WITH RECURSIVE descendants(id) AS (SELECT id FROM atags WHERE id=? UNION ALL SELECT t.id FROM atags t JOIN descendants d ON t.parent_id=d.id) SELECT 1 FROM afile_tags ft JOIN descendants d ON d.id=ft.tag_id WHERE ft.file_id=a.id)".to_string())
                 } else {
                     Err(format!("Unsupported tag operator: {}", operator))
                 }
@@ -8640,8 +8635,8 @@ pub struct ATag {
     pub id: i64,
     pub name: String,
     pub count: Option<i64>,
-    pub group_id: i64,
-    pub group_name: String,
+    pub parent_id: Option<i64>,
+    pub path: String,
 }
 
 #[derive(Debug, Serialize)]
@@ -8663,55 +8658,48 @@ impl ATag {
             id: row.get(0)?,
             name: row.get(1)?,
             count: row.get(2)?,
-            group_id: row.get(3)?,
-            group_name: row.get(4)?,
+            parent_id: row.get(3)?,
+            path: row.get(4)?,
         })
     }
 
-    pub fn add(name: &str, group_id: Option<i64>) -> Result<Self, String> {
-        let trimmed = name.trim();
-        if trimmed.is_empty() || trimmed.chars().count() > 255 {
-            return Err("Tag name must contain 1–255 characters".to_string());
-        }
+    pub fn add(name: &str, parent_id: Option<i64>) -> Result<Self, String> {
+        let name = crate::t_tags::validate_name(name)?;
         let mut conn = open_conn()?;
         let tx = conn.transaction().map_err(|e| e.to_string())?;
-        let group_id: i64 = match group_id {
-            Some(id) => id,
-            None => tx.query_row("SELECT id FROM atag_groups WHERE is_default = 1", [], |r| r.get(0)).map_err(|e| e.to_string())?,
-        };
-        let exists: bool = tx.query_row("SELECT EXISTS(SELECT 1 FROM atags WHERE name = ? COLLATE NOCASE)", [trimmed], |r| r.get(0)).map_err(|e| e.to_string())?;
-        if exists { return Err("A tag with this name already exists".to_string()); }
-        tx.execute("INSERT INTO atags(name, group_id) VALUES (?1, ?2)", params![trimmed, group_id]).map_err(|e| e.to_string())?;
-        let tag = tx.query_row("SELECT t.id, t.name, 0, t.group_id, g.name FROM atags t JOIN atag_groups g ON g.id = t.group_id WHERE t.id = ?", [tx.last_insert_rowid()], Self::from_row).map_err(|e| e.to_string())?;
+        crate::t_tags::ensure_parent(&tx, parent_id)?;
+        if crate::t_tags::find(&tx, name, parent_id)?.is_some() {
+            return Err("A tag with this name already exists at this level".into());
+        }
+        tx.execute(
+            "INSERT INTO atags(name,parent_id) VALUES(?1,?2)",
+            params![name, parent_id],
+        )
+        .map_err(|e| e.to_string())?;
+        let id = tx.last_insert_rowid();
+        let path = crate::t_tags::path(&tx, id)?;
         tx.commit().map_err(|e| e.to_string())?;
-        Ok(tag)
+        Ok(Self {
+            id,
+            name: name.into(),
+            parent_id,
+            path,
+            count: Some(0),
+        })
+    }
+
+    pub fn move_tag(id: i64, parent: Option<i64>) -> Result<(), String> {
+        crate::t_tags::move_on(&*open_conn()?, id, parent)
     }
 
     /// Get all tags from the db
     pub fn get_all(sort: i64) -> Result<Vec<Self>, String> {
         let conn = open_conn()?;
-        // Count-based ordering must match the sidebar badge count (which comes
-        // from getQueryCountAndSum with tagId): tagged files excluding Live Photo
-        // videos and honoring album exclusions. The displayed count itself is
-        // populated lazily, so this expression is only used for ordering.
-        let count_expr = format!(
-            "(SELECT COUNT(*) FROM afile_tags ft
-              JOIN afiles a ON a.id = ft.file_id
-              JOIN afolders b ON b.id = a.folder_id
-              WHERE ft.tag_id = atags.id AND {}{} AND {})",
-            AFile::live_photo_companion_exclusion_condition(),
-            AFile::album_filter_sql("a"),
-            AFile::search_exclusion_condition("b"),
-        );
         let order_clause = match sort {
-            1 => "atags.name DESC".to_string(),
-            2 => format!("{count_expr} ASC, atags.name ASC"),
-            3 => format!("{count_expr} DESC, atags.name ASC"),
-            _ => "atags.name ASC".to_string(),
+            1 => "atags.name COLLATE NOCASE DESC",
+            _ => "atags.name COLLATE NOCASE ASC",
         };
-        let query = format!(
-            "SELECT atags.id, atags.name, 0 AS count, atags.group_id, g.name FROM atags JOIN atag_groups g ON g.id = atags.group_id ORDER BY {order_clause}",
-        );
+        let query = format!("{} SELECT atags.id,atags.name,0,atags.parent_id,paths.path FROM atags JOIN paths ON paths.id=atags.id ORDER BY {order_clause},atags.id", crate::t_tags::PATHS);
         let mut stmt = conn.prepare(query.as_str()).map_err(|e| e.to_string())?;
 
         let tags_iter = stmt
@@ -8727,75 +8715,41 @@ impl ATag {
 
     /// Count visible files for every tag in one grouped query.
     pub fn get_counts() -> Result<HashMap<i64, i64>, String> {
-        let conn = open_conn()?;
+        Self::get_counts_on(&*open_conn()?)
+    }
+
+    fn get_counts_on(conn: &Connection) -> Result<HashMap<i64, i64>, String> {
         let query = format!(
-            "SELECT ft.tag_id, COUNT(DISTINCT a.id)
-             FROM afile_tags ft
+            "WITH RECURSIVE tree(root,id) AS (
+                SELECT id,id FROM atags UNION ALL SELECT tree.root,t.id FROM atags t JOIN tree ON t.parent_id=tree.id)
+             SELECT tree.root, COUNT(DISTINCT a.id)
+             FROM tree JOIN afile_tags ft ON ft.tag_id=tree.id
              JOIN afiles a ON a.id = ft.file_id
              JOIN afolders b ON b.id = a.folder_id
              WHERE {}{} AND {}
-             GROUP BY ft.tag_id",
+             GROUP BY tree.root",
             AFile::live_photo_companion_exclusion_condition(),
             AFile::album_filter_sql("a"),
             AFile::search_exclusion_condition("b"),
         );
         let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
-        let rows = stmt.query_map([], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?)))
+        let rows = stmt
+            .query_map([], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?)))
             .map_err(|e| e.to_string())?;
-        rows.collect::<Result<HashMap<_, _>, _>>().map_err(|e| e.to_string())
+        rows.collect::<Result<HashMap<_, _>, _>>()
+            .map_err(|e| e.to_string())
     }
 
-    /// Count distinct visible files for every tag group.
-    pub fn get_group_counts() -> Result<HashMap<i64, i64>, String> {
-        Self::get_group_counts_on(&*open_conn()?)
-    }
-
-    fn get_group_counts_on(conn: &Connection) -> Result<HashMap<i64, i64>, String> {
-        let query = format!(
-            "SELECT t.group_id, COUNT(DISTINCT a.id)
-             FROM afile_tags ft
-             JOIN atags t ON t.id = ft.tag_id
-             JOIN afiles a ON a.id = ft.file_id
-             JOIN afolders b ON b.id = a.folder_id
-             WHERE {}{} AND {}
-             GROUP BY t.group_id",
-            AFile::live_photo_companion_exclusion_condition(),
-            AFile::album_filter_sql("a"),
-            AFile::search_exclusion_condition("b"),
-        );
-        let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
-        let rows = stmt.query_map([], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?)))
-            .map_err(|e| e.to_string())?;
-        rows.collect::<Result<HashMap<_, _>, _>>().map_err(|e| e.to_string())
-    }
-
-    /// Get tag name by id
-    pub fn get_name(tag_id: i64, include_group: bool) -> Result<String, String> {
-        let conn = open_conn()?;
-        let result = conn
-            .query_row(
-                "SELECT CASE WHEN ?2 THEN g.name || ' > ' || t.name ELSE t.name END
-                 FROM atags t LEFT JOIN atag_groups g ON g.id = t.group_id WHERE t.id = ?1",
-                params![tag_id, include_group],
-                |row| row.get(0),
-            )
-            .map_err(|e| e.to_string())?;
-        Ok(result)
+    /// Full paths disambiguate equal names in different branches.
+    pub fn get_name(tag_id: i64) -> Result<String, String> {
+        crate::t_tags::path(&*open_conn()?, tag_id)
     }
 
     /// Get all tags for a specific file
     pub fn get_tags_for_file(file_id: i64) -> Result<Vec<Self>, String> {
         let conn = open_conn()?;
-        let mut stmt = conn
-            .prepare(
-                "SELECT t.id, t.name, 0 as count, t.group_id, g.name
-                FROM atags t
-                JOIN atag_groups g ON g.id = t.group_id
-                INNER JOIN afile_tags ft ON t.id = ft.tag_id
-                WHERE ft.file_id = ?1
-                ORDER BY t.name ASC",
-            )
-            .map_err(|e| e.to_string())?;
+        let query = format!("{} SELECT id,name,0,parent_id,path FROM paths WHERE ancestor_id IS NULL ORDER BY path COLLATE NOCASE,id", crate::t_tags::FILE_PATHS);
+        let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
 
         let tags_iter = stmt
             .query_map(params![file_id], Self::from_row)
@@ -8971,12 +8925,13 @@ impl ATag {
         let tx = conn.transaction().map_err(|e| e.to_string())?;
         let file_ids = {
             let mut stmt = tx
-                .prepare("SELECT file_id FROM afile_tags WHERE tag_id = ?1")
+                .prepare(&format!("{} SELECT DISTINCT ft.file_id FROM afile_tags ft JOIN descendants d ON d.id=ft.tag_id", crate::t_tags::DESCENDANTS))
                 .map_err(|e| e.to_string())?;
             let rows = stmt
                 .query_map(params![tag_id], |row| row.get::<_, i64>(0))
                 .map_err(|e| e.to_string())?;
-            rows.collect::<Result<Vec<_>, _>>().map_err(|e| e.to_string())?
+            rows.collect::<Result<Vec<_>, _>>()
+                .map_err(|e| e.to_string())?
         };
         let result = tx
             .execute("DELETE FROM atags WHERE id = ?1", params![tag_id])
@@ -8999,30 +8954,27 @@ impl ATag {
         Ok(result)
     }
 
-    /// Rename a tag
+    /// Rename the node and protect all descendant paths from automatic import.
     pub fn rename(tag_id: i64, new_name: &str) -> Result<usize, String> {
-        let trimmed = new_name.trim();
-        if trimmed.is_empty() {
-            return Err("Tag name cannot be empty".to_string());
-        }
-        let conn = open_conn()?;
-        let existing: Option<i64> = conn
-            .query_row(
-                "SELECT id FROM atags WHERE name = ?1 COLLATE NOCASE AND id != ?2",
-                params![trimmed, tag_id],
-                |row| row.get(0),
-            )
-            .optional()
+        let name = crate::t_tags::validate_name(new_name)?;
+        let mut conn = open_conn()?;
+        let tx = conn.transaction().map_err(|e| e.to_string())?;
+        let parent: Option<i64> = tx
+            .query_row("SELECT parent_id FROM atags WHERE id=?1", [tag_id], |r| {
+                r.get(0)
+            })
             .map_err(|e| e.to_string())?;
-        if existing.is_some() {
-            return Err("A tag with this name already exists".to_string());
+        if crate::t_tags::find(&tx, name, parent)?.is_some_and(|id| id != tag_id) {
+            return Err("A tag with this name already exists at this level".into());
         }
-        let result = conn
+        crate::t_tags::protect_subtree(&tx, tag_id)?;
+        let result = tx
             .execute(
-                "UPDATE atags SET name = ?1 WHERE id = ?2",
-                params![trimmed, tag_id],
+                "UPDATE atags SET name=?1 WHERE id=?2",
+                params![name, tag_id],
             )
             .map_err(|e| e.to_string())?;
+        tx.commit().map_err(|e| e.to_string())?;
         Ok(result)
     }
 }
@@ -10622,12 +10574,6 @@ fn create_db_internal() -> Result<(), String> {
         [],
     )
     .map_err(|e| e.to_string())?;
-    conn.execute(
-        "CREATE INDEX IF NOT EXISTS idx_atags_name ON atags(name)",
-        [],
-    )
-    .map_err(|e| e.to_string())?;
-
     // file_tags table
     conn.execute(
         "CREATE TABLE IF NOT EXISTS afile_tags (
@@ -10828,7 +10774,7 @@ fn create_db_internal() -> Result<(), String> {
 }
 
 #[cfg(test)]
-mod tag_group_query_tests {
+mod tag_tree_query_tests {
     use super::*;
 
     #[test]
@@ -10853,7 +10799,7 @@ mod tag_group_query_tests {
     }
 
     #[test]
-    fn group_filter_and_counts_deduplicate_and_honor_visibility() {
+    fn subtree_filter_deduplicates_and_honors_visibility() {
         let conn = Connection::open_in_memory().unwrap();
         conn.execute_batch("CREATE TABLE albums(id INTEGER PRIMARY KEY, path TEXT, file_types INTEGER, small_image_filter INTEGER, excluded_folders TEXT);
             INSERT INTO albums VALUES(1, '/', 7, NULL, '[]');
@@ -10862,8 +10808,8 @@ mod tag_group_query_tests {
             CREATE TABLE afiles(id INTEGER PRIMARY KEY, folder_id INTEGER, live_photo_video_id INTEGER, width INTEGER, height INTEGER);
             INSERT INTO afiles VALUES(1,1,NULL,1000,1000), (2,1,NULL,100,100), (3,1,NULL,1000,1000), (4,2,NULL,1000,1000), (5,1,3,1000,1000), (6,1,NULL,1000,1000);
             ALTER TABLE afiles ADD COLUMN file_type INTEGER DEFAULT 1;
-            CREATE TABLE atags(id INTEGER PRIMARY KEY, group_id INTEGER);
-            INSERT INTO atags VALUES(10,1), (11,1), (12,2);
+            CREATE TABLE atags(id INTEGER PRIMARY KEY, parent_id INTEGER);
+            INSERT INTO atags VALUES(10,NULL), (11,10), (12,NULL);
             CREATE TABLE afile_tags(file_id INTEGER, tag_id INTEGER, PRIMARY KEY(file_id,tag_id));
             INSERT INTO afile_tags VALUES(1,10), (1,11), (2,10), (3,10), (4,10), (5,10), (6,12);").unwrap();
         let params: QueryParams = serde_json::from_value(serde_json::json!({
@@ -10871,7 +10817,7 @@ mod tag_group_query_tests {
             "searchAllSubfolders":"", "searchFolder":"", "startDate":0, "endDate":0,
             "calendarSort":0, "make":"", "model":"", "lensMake":"", "lensModel":"",
             "locationAdmin1":"", "locationName":"", "isFavorite":false, "rating":-1,
-            "tagId":0, "personId":0, "tagGroupId":1
+            "tagId":10, "personId":0
         })).unwrap();
         for (filter, expected) in [(160, vec![1_i64, 5]), (0, vec![1_i64, 2, 5])] {
             conn.execute("UPDATE albums SET small_image_filter=?1", params![filter]).unwrap();
@@ -10879,9 +10825,10 @@ mod tag_group_query_tests {
             let mut stmt = conn.prepare(&format!("SELECT a.id FROM afiles a JOIN afolders b ON b.id = a.folder_id {joins} {conditions} ORDER BY a.id")).unwrap();
             let ids: Vec<i64> = stmt.query_map(rusqlite::params_from_iter(values.iter()), |r| r.get(0)).unwrap().collect::<Result<_, _>>().unwrap();
             assert_eq!(ids, expected);
-            let counts = ATag::get_group_counts_on(&conn).unwrap();
-            assert_eq!(counts[&1], expected.len() as i64);
-            assert_eq!(counts[&2], 1);
+            let counts=ATag::get_counts_on(&conn).unwrap();
+            assert_eq!(counts[&10],expected.len() as i64);
+            assert_eq!(counts[&11],1);
+            assert_eq!(counts[&12],1);
         }
     }
 }

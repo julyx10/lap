@@ -361,7 +361,14 @@
     "not_found": "未找到标签",
     "name_exists": "已存在同名标签",
     "name_save_failed": "无法保存标签名称",
-    "load_failed": "无法加载标签状态，请关闭对话框后重试。"
+    "move_failed": "无法移动标签",
+    "delete_failed": "无法删除标签",
+    "load_failed": "无法加载标签状态，请关闭对话框后重试。",
+    "root": "根级标签",
+    "add_child": "新建子标签",
+    "invalid_name": "标签名称不能包含 , ; {'|'}。",
+    "invalid_move": "不能将标签移动到自身或其子标签下。",
+    "delete_tree": "将删除此标签及其子标签，照片不受影响。"
   },
   "subject": {
     "title": "主题",
@@ -772,20 +779,8 @@
     "tag": {
       "rename": "重命名",
       "delete": "删除",
-      "new_group": "新建分组",
-      "edit_group": "编辑分组",
-      "delete_group": "删除分组",
-      "search": "搜索标签或分组",
-      "clear_search": "清空搜索",
-      "active_tag": "该分组内有选中的标签",
-      "name": "名称",
-      "locate": "定位标签",
-      "empty": "暂无标签",
-      "move_to": "移动到分组",
-      "delete_message": "删除“{name}”？组内标签将移至 Default，文件上的标签将保留。",
-      "exists_in": "该标签已存在于“{group}”。",
-      "name_exists": "已存在同名分组。",
-      "new_tag_group": "新标签所属分组"
+      "search": "搜索标签",
+      "clear_search": "清空搜索"
     },
     "meta": {
       "favorite": "收藏",
@@ -993,7 +988,7 @@
       "error": "创建标签失败。"
     },
     "delete_tag": {
-      "title": "删除标签",
+      "title": "删除“{tag}”？",
       "content": "标签 '{tag}' 将被删除。",
       "ok": "删除",
       "success": "标签 '{tag}' 已删除。",

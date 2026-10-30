@@ -361,7 +361,14 @@
     "not_found": "No se encontraron etiquetas",
     "name_exists": "Ya existe una etiqueta con este nombre",
     "name_save_failed": "No se pudo guardar el nombre de la etiqueta",
-    "load_failed": "No se pudo cargar el estado de las etiquetas. Cierra este diálogo e inténtalo de nuevo."
+    "move_failed": "No se pudo mover la etiqueta",
+    "delete_failed": "No se pudo eliminar la etiqueta",
+    "load_failed": "No se pudo cargar el estado de las etiquetas. Cierra este diálogo e inténtalo de nuevo.",
+    "root": "Nivel raíz",
+    "add_child": "Nueva etiqueta secundaria",
+    "invalid_name": "Los nombres de las etiquetas no pueden contener , ; ni {'|'}.",
+    "invalid_move": "Una etiqueta no se puede mover dentro de su propio árbol.",
+    "delete_tree": "Se eliminarán esta etiqueta y sus subetiquetas. Las fotos se conservarán."
   },
   "subject": {
     "title": "Temas",
@@ -772,20 +779,8 @@
     "tag": {
       "rename": "Renombrar",
       "delete": "Eliminar",
-      "new_group": "Nuevo grupo",
-      "edit_group": "Editar grupo",
-      "delete_group": "Eliminar grupo",
-      "search": "Buscar etiquetas o grupos",
-      "clear_search": "Borrar búsqueda",
-      "active_tag": "Etiqueta seleccionada en este grupo",
-      "name": "Nombre",
-      "locate": "Localizar etiqueta",
-      "empty": "Sin etiquetas",
-      "move_to": "Mover al grupo",
-      "delete_message": "¿Eliminar «{name}»? Sus etiquetas se moverán a Default. Se conservarán las etiquetas de los archivos.",
-      "exists_in": "Esta etiqueta ya existe en «{group}».",
-      "name_exists": "Ya existe un grupo con este nombre.",
-      "new_tag_group": "Grupo de la nueva etiqueta"
+      "search": "Buscar etiquetas",
+      "clear_search": "Borrar búsqueda"
     },
     "meta": {
       "favorite": "Favorito",
@@ -993,7 +988,7 @@
       "error": "No se pudo crear la etiqueta."
     },
     "delete_tag": {
-      "title": "Eliminar etiqueta",
+      "title": "¿Eliminar «{tag}»?",
       "content": "'{tag}' será eliminada.",
       "ok": "Eliminar",
       "success": "'{tag}' eliminada.",

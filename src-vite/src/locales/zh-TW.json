@@ -361,7 +361,14 @@
     "not_found": "找不到標籤",
     "name_exists": "已存在同名標籤",
     "name_save_failed": "無法儲存標籤名稱",
-    "load_failed": "無法載入標籤狀態。請關閉此對話框再試一次。"
+    "move_failed": "無法移動標籤",
+    "delete_failed": "無法刪除標籤",
+    "load_failed": "無法載入標籤狀態。請關閉此對話框再試一次。",
+    "root": "根層級標籤",
+    "add_child": "新增子標籤",
+    "invalid_name": "標籤名稱不能包含 , ; {'|'}。",
+    "invalid_move": "無法將標籤移至自身或其子標籤下。",
+    "delete_tree": "將刪除此標籤及其子標籤，相片不受影響。"
   },
   "subject": {
     "title": "主題",
@@ -772,20 +779,8 @@
     "tag": {
       "rename": "重新命名",
       "delete": "刪除",
-      "new_group": "新增群組",
-      "edit_group": "編輯群組",
-      "delete_group": "刪除群組",
-      "search": "搜尋標籤或群組",
-      "clear_search": "清除搜尋",
-      "active_tag": "此群組中已選取的標籤",
-      "name": "名稱",
-      "locate": "定位標籤",
-      "empty": "尚無標籤",
-      "move_to": "移到群組",
-      "delete_message": "刪除「{name}」？其標籤將移到預設。檔案上的標籤會保留。",
-      "exists_in": "此標籤已存在於「{group}」。",
-      "name_exists": "已存在同名群組。",
-      "new_tag_group": "新標籤的群組"
+      "search": "搜尋標籤",
+      "clear_search": "清除搜尋"
     },
     "meta": {
       "favorite": "我的最愛",
@@ -993,7 +988,7 @@
       "error": "無法建立標籤。"
     },
     "delete_tag": {
-      "title": "刪除標籤",
+      "title": "刪除「{tag}」？",
       "content": "標籤「{tag}」將被刪除。",
       "ok": "刪除",
       "success": "已刪除標籤「{tag}」。",
