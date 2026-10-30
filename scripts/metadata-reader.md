@@ -30,6 +30,8 @@ This is an internal implementation and validation note, not website content.
   between file-info construction and organization import. Cloud-only files are
   not hydrated by this backend. Unsupported formats fall back to existing readers.
 - The 1.0 path API reads metadata without the bytes API's full-file copy.
+  Scans and on-demand details reuse one ExifTool interpreter per worker thread;
+  the instance is initialized lazily and dropped when that thread exits.
   Namespace-aware XMP parsing still uses a read-only mapping. PSD/HEIF packets
   come from an explicitly requested raw `XMP` tag, restricted to the main document;
   preview-document packets do not supply organization data. Other container

@@ -28,6 +28,8 @@ pub struct Metadata {
 // Cache only mapped values, not the potentially large full tag collection.
 thread_local! {
     static LAST: std::cell::RefCell<Option<(String, Metadata)>> = const { std::cell::RefCell::new(None) };
+    // Each worker initializes the interpreter once and releases it on exit.
+    static READER: ExifTool = ExifTool::with_options(read_options());
 }
 
 pub fn read(path: &Path) -> Metadata {
@@ -64,8 +66,7 @@ fn read_uncached(path: &Path) -> std::io::Result<Metadata> {
     if file.metadata()?.len() == 0 {
         return Ok(Metadata::default());
     }
-    let tags = ExifTool::with_options(read_options())
-        .extract_info(path)
+    let tags = READER.with(|reader| reader.extract_info(path))
         .map_err(std::io::Error::other)?;
     // SAFETY: this is a read-only mapping, used synchronously and dropped before
     // returning. The source must not be truncated by another process while parsing.
@@ -1116,8 +1117,7 @@ fn extract_detail_values(path: &Path, info: &std::fs::Metadata) -> Result<Detail
         }
     };
     // Extract once and keep only our small mapped values in the detail cache.
-    let tags = ExifTool::with_options(read_options())
-        .extract_info(path)
+    let tags = READER.with(|reader| reader.extract_info(path))
         .map_err(|e| e.to_string())?;
     let mut details = detail_values(&tags);
     for packet in embedded_packets(bytes, &tags) {
