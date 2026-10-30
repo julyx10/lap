@@ -1,0 +1,6 @@
+--- a/src-tauri/src/main.rs
++++ b/src-tauri/src/main.rs
+@@ -456,0 +457 @@
++                        app_handle.flush_events_blocking();
+@@ -458 +458,0 @@
+-                    app_handle.flush_events_blocking();
