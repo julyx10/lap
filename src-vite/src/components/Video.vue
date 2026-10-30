@@ -31,14 +31,17 @@
       </div>
     </TransitionGroup>
 
-    <div v-if="showPlayOverlay && !hasError && !isPlaying && !isLoading" class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-      <div
-        class="w-16 h-16 rounded-full bg-base-100/70 flex items-center justify-center hover:scale-110 transition-all duration-300 ease-out group pointer-events-auto cursor-pointer"
-        @click.stop="clickPlayVideo"
-      >
-        <component :is="isReplaying ? IconVideoReplay : IconVideoPlay" class="w-8 h-8" />
+    <Transition name="playback-overlay" :css="!isPlaying">
+      <div v-if="showPlayOverlay && !hasError && !isLoading && !isSeeking && (playbackFeedback || isReplaying || !hasPlaybackInteraction)" class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+        <div
+          class="w-16 h-16 rounded-full bg-base-100/70 flex items-center justify-center transition-transform duration-200 ease-out"
+          :class="{ 'pointer-events-auto cursor-pointer hover:scale-110': !playbackFeedback }"
+          @click.stop="clickPlayVideo"
+        >
+          <component :is="playbackFeedback === 'pause' ? IconPause : (isReplaying ? IconVideoReplay : IconVideoPlay)" class="w-8 h-8" />
+        </div>
       </div>
-    </div>
+    </Transition>
 
     <Transition name="loading-overlay">
       <div v-if="showSpinner" class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-20 bg-base-200/20 px-6 text-center">
@@ -77,7 +80,7 @@ import { GESTURE_LOCK_THRESHOLD, HORIZONTAL_NAV_THRESHOLD, PLAYBACK_DEADLINE_MS,
 import { ref, watch, onMounted, onBeforeUnmount, computed, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/config';
-import { IconVideoSlash, IconVideoPlay, IconVideoReplay } from '@/common/icons';
+import { IconVideoSlash, IconVideoPlay, IconVideoReplay, IconPause } from '@/common/icons';
 import videojs from 'video.js/core';
 import 'video.js/dist/video-js.min.css';
 import { getThumbUrl, getAssetSrc, isLinux, isMac, isWin } from '@/common/utils';
@@ -128,6 +131,24 @@ const showSpinner = ref(false);
 const isCompatibilityProcessing = ref(false);
 const isPlaying = ref(false);
 const isReplaying = ref(false);
+const hasPlaybackInteraction = ref(false);
+const isSeeking = ref(false);
+const playbackFeedback = ref<'pause' | null>(null);
+let playbackFeedbackTimer: ReturnType<typeof setTimeout> | null = null;
+
+function clearPlaybackFeedback() {
+  if (playbackFeedbackTimer) clearTimeout(playbackFeedbackTimer);
+  playbackFeedbackTimer = null;
+  playbackFeedback.value = null;
+}
+
+function showPlaybackFeedback() {
+  clearPlaybackFeedback();
+  if (isLoading.value || !props.isActive || isSeeking.value || getActivePlayer()?.scrubbing()) return;
+  playbackFeedback.value = 'pause';
+  playbackFeedbackTimer = setTimeout(clearPlaybackFeedback, 1000);
+}
+
 const isFit = ref(false);
 const scale = ref(1);
 const viewportOffset = ref({ x: 0, y: 0 });
@@ -391,18 +412,32 @@ const setupPlayer = (index: number) => {
         }
         isPlaying.value = true;
         isReplaying.value = false;
+        hasPlaybackInteraction.value = true;
+        clearPlaybackFeedback();
       }
     });
 
     player.on('pause', () => {
       if (activeVideo.value === index) {
         isPlaying.value = false;
-        isReplaying.value = false;
+        if (!player.ended()) showPlaybackFeedback();
       }
+    });
+
+    player.on('seeking', () => {
+      if (activeVideo.value !== index) return;
+      isSeeking.value = true;
+      hasPlaybackInteraction.value = true;
+      isReplaying.value = false;
+      clearPlaybackFeedback();
+    });
+    player.on('seeked', () => {
+      if (activeVideo.value === index) isSeeking.value = false;
     });
 
     player.on('ended', () => {
       if (activeVideo.value === index) {
+        clearPlaybackFeedback();
         if (!props.isSlideShow && config.settings.loopVideo) {
           player.play().catch(() => {});
           return;
@@ -455,6 +490,9 @@ const loadVideo = async (filePath: string) => {
   clearLoadingOverlayTimer();
   clearPlaybackDeadlineTimer();
   const currentLoadId = ++currentLoadingId;
+  clearPlaybackFeedback();
+  hasPlaybackInteraction.value = false;
+  isSeeking.value = false;
   
   // IMMEDIATELY set loading state to block volumechange feedbacks from old players
   hasError.value = false;
@@ -915,6 +953,7 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   currentLoadingId++;
+  clearPlaybackFeedback();
   resetLoadingUi();
   resizeObserver?.disconnect();
   if (videoContainer.value) {
@@ -977,6 +1016,7 @@ watch(() => props.isActive, (isActive) => {
   const player = getActivePlayer();
   if (!player) return;
   if (!isActive) {
+    clearPlaybackFeedback();
     player.pause();
     player.muted(true);
     return;
@@ -1227,5 +1267,22 @@ function handleWheel(event: WheelEvent) {
 .loading-overlay-leave-to {
   opacity: 0;
   transform: translateY(4px);
+}
+.playback-overlay-enter-active,
+.playback-overlay-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.playback-overlay-enter-from,
+.playback-overlay-leave-to {
+  opacity: 0;
+}
+.playback-overlay-leave-active {
+  pointer-events: none;
+}
+.playback-overlay-leave-active > div {
+  pointer-events: none;
+}
+.playback-overlay-leave-to {
+  transform: scale(0.8);
 }
 </style>
