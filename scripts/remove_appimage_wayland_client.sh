@@ -219,6 +219,9 @@ for appimage in "${APPIMAGES[@]}"; do
   fi
 
   echo "==> Repacking ${image_name}"
+  # Extracted modes may be owner-only; the final AppDir must work for all users.
+  chmod -R a+rX "$image_work_dir/squashfs-root"
+  chmod a+rx "$image_work_dir/squashfs-root/AppRun"
   replacement="$image_work_dir/${image_name}.new"
   "$APPIMAGETOOL" "${repack_args[@]}" \
     "$image_work_dir/squashfs-root" "$replacement" >/dev/null
