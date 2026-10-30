@@ -1289,6 +1289,7 @@
       "zoom_out": "缩小",
       "zoom_fit": "适应窗口",
       "zoom_actual": "实际大小",
+      "af_area": "显示 AF Area（绿框：对焦成功，红框：对焦失败）",
       "fullscreen": "全屏",
       "exit_fullscreen": "退出全屏",
       "pin": "固定工具栏",
