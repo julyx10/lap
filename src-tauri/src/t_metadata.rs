@@ -49,42 +49,56 @@ pub fn read(path: &Path) -> Metadata {
                 return values.clone();
             }
         }
-        // Reuse the bytes for URI-aware XMP flags: the backend's Tag drops
-        // namespace URIs for unregistered schemas and retains arbitrary prefixes.
+        // Resolve URI-aware XMP flags separately: backend tags do not expose
+        // namespace URIs for unregistered schemas.
         let values = read_uncached(path).unwrap_or_default();
         *cache.borrow_mut() = Some((key, values.clone()));
         values
     })
 }
 
-// Keep the mapping scoped to one parse: large video payloads are never copied
-// into an owned buffer. Mapping failures retain the backend's read fallback.
+// The path API avoids the full-file copy performed by the backend's bytes API.
+// Map separately for bounded, namespace-aware XMP extraction.
 fn read_uncached(path: &Path) -> std::io::Result<Metadata> {
     let file = std::fs::File::open(path)?;
     if file.metadata()?.len() == 0 {
         return Ok(Metadata::default());
     }
+    let tags = ExifTool::with_options(read_options())
+        .extract_info(path)
+        .map_err(std::io::Error::other)?;
     // SAFETY: this is a read-only mapping, used synchronously and dropped before
-    // returning. As with the backend's existing mmap reader, the source must not
-    // be truncated by another process while parsing.
+    // returning. The source must not be truncated by another process while parsing.
     match unsafe { memmap2::Mmap::map(&file) } {
-        Ok(bytes) => Ok(from_bytes(&bytes, path)),
-        Err(_) => std::fs::read(path).map(|bytes| from_bytes(&bytes, path)),
+        Ok(bytes) => Ok(from_embedded(&bytes, &tags)),
+        Err(_) => std::fs::read(path).map(|bytes| from_embedded(&bytes, &tags)),
     }
 }
 
+#[cfg(test)]
 fn from_bytes(bytes: &[u8], path: &Path) -> Metadata {
-    let options = Options {
-        duplicates: true,
-        ..Default::default()
-    };
-    let Ok(tags) = ExifTool::with_options(options).extract_info_from_bytes(bytes, path) else {
+    let Ok(tags) = ExifTool::with_options(read_options()).extract_info_from_bytes(bytes, path)
+    else {
         return Metadata::default();
     };
+    from_embedded(bytes, &tags)
+}
+
+fn read_options() -> Options {
+    Options {
+        duplicates: true,
+        // Request the raw packet as well as parsed fields. In 1.0 the old PSD
+        // resource / HEIF item reader helpers are no longer public.
+        requested_tags: vec!["*".into(), "XMP".into()],
+        ..Default::default()
+    }
+}
+
+fn from_embedded(bytes: &[u8], tags: &[Tag]) -> Metadata {
     // Empty/unknown XMP properties may produce no backend tags at all.
     // The bounded container walker reads metadata blocks, never pixel payloads.
-    let packets = embedded_packets(bytes);
-    let mut metadata = map_tags(&tags, packets.is_empty());
+    let packets = embedded_packets(bytes, tags);
+    let mut metadata = map_tags(tags, packets.is_empty());
     if !packets.is_empty() {
         // One bounded packet extraction and URI-aware parse for every schema.
         let xmp = crate::t_xmp::metadata_from_packets(&packets);
@@ -120,7 +134,7 @@ pub(crate) fn decode_xmp_text(bytes: &[u8]) -> Option<String> {
 /// Resolve flags from their XML namespace URI, never from a user-chosen prefix.
 /// Only inspect container-designated metadata. PNG iTXt may compress its packet;
 /// other supported containers are handled by the bounded packet extractor.
-fn embedded_packets(bytes: &[u8]) -> Vec<String> {
+fn embedded_packets(bytes: &[u8], tags: &[Tag]) -> Vec<String> {
     const LIMIT: usize = 16 * 1024 * 1024;
     let packets = if bytes.starts_with(b"\x89PNG\r\n\x1a\n") {
         let mut packets = Vec::new();
@@ -148,16 +162,35 @@ fn embedded_packets(bytes: &[u8]) -> Vec<String> {
     } else {
         xmp_packets::extract(bytes)
     };
-    let packets: Vec<_> = packets
+    let mut packets: Vec<_> = packets
         .into_iter()
         .filter_map(|p| xmp_packets::decode(&p))
         .collect();
+    // These containers formerly used the backend's resource/item helpers.
+    // Keep its raw XMP packet (including unknown namespace URIs), not a
+    // reconstruction from flattened tags. Never search arbitrary file bytes.
+    if bytes.starts_with(b"8BPS") || bytes.get(4..8) == Some(b"ftyp") {
+        for tag in tags.iter().filter(|tag| {
+            tag.name == "XMP" && tag.group.family1 == "XMP" && tag.group.family3 == "Main"
+        }) {
+            let raw = match &tag.raw_value {
+                Value::Binary(value) | Value::Undefined(value) => value.as_slice(),
+                Value::String(value) => value.as_bytes(),
+                _ => continue,
+            };
+            if let Some(packet) = xmp_packets::decode(raw) {
+                if !packets.contains(&packet) && packets.len() < 32 {
+                    packets.insert(0, packet);
+                }
+            }
+        }
+    }
     packets
 }
 
 #[cfg(test)]
 fn embedded_flags(bytes: &[u8]) -> (Option<i32>, Option<bool>) {
-    crate::t_xmp::flags_from_packets(&embedded_packets(bytes))
+    crate::t_xmp::flags_from_packets(&embedded_packets(bytes, &[]))
 }
 
 #[cfg(test)]
@@ -793,15 +826,8 @@ mod final_review_encoding {
             packet.extend(unit.to_le_bytes());
         }
         let jpeg = tests::jpeg_with_xmp_packet(&packet);
-        let tags = ExifTool::with_options(Options {
-            duplicates: true,
-            ..Default::default()
-        })
-        .extract_info_from_bytes(&jpeg, Path::new("utf16.jpg"))
-        .unwrap();
-        assert!(tags.iter().any(|t| t.name == "Pick"
-            && t.group.family1 == "XMP-xmpDM"
-            && t.raw_value.to_display_string() == "1"));
+        // Unknown XMP fields need not be exposed by the backend; Lap resolves
+        // their namespace URIs from the original packet.
         assert_eq!(
             from_bytes(&jpeg, Path::new("utf16.jpg"))
                 .organization
@@ -837,17 +863,6 @@ mod staged_review {
         jpeg.extend(((data.len() + 2) as u16).to_be_bytes());
         jpeg.extend(data);
         jpeg.extend([0xff, 0xd9]);
-        let tags = ExifTool::with_options(Options {
-            duplicates: true,
-            ..Default::default()
-        })
-        .extract_info_from_bytes(&jpeg, Path::new("extended.jpg"))
-        .unwrap();
-        assert!(
-            tags.iter()
-                .any(|t| t.name == "Pick" && t.raw_value.to_display_string() == "1"),
-            "{tags:?}"
-        );
         assert_eq!(
             from_bytes(&jpeg, Path::new("extended.jpg"))
                 .organization
@@ -1100,16 +1115,12 @@ fn extract_detail_values(path: &Path, info: &std::fs::Metadata) -> Result<Detail
             &fallback
         }
     };
-    // requested_tags is a post-extraction filter in the backend. Extract once and
-    // keep only our small mapped values, never the complete tag collection.
-    let tags = ExifTool::with_options(Options {
-        duplicates: true,
-        ..Default::default()
-    })
-    .extract_info_from_bytes(bytes, path)
-    .map_err(|e| e.to_string())?;
+    // Extract once and keep only our small mapped values in the detail cache.
+    let tags = ExifTool::with_options(read_options())
+        .extract_info(path)
+        .map_err(|e| e.to_string())?;
     let mut details = detail_values(&tags);
-    for packet in embedded_packets(bytes) {
+    for packet in embedded_packets(bytes, &tags) {
         if let Ok(mut source) = crate::t_xmp::source_details(&packet) {
             for value in source.values_mut() {
                 value.source = value.source.replace("Sidecar XMP", "Embedded XMP");

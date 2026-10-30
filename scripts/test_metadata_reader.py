@@ -30,7 +30,7 @@ edition = "2024"
 quick-xml = "0.37.5"
 rusqlite = { version = "0.32.1", features = ["bundled"] }
 serde = { version = "1", features = ["derive"] }
-exiftool-rs = { version = "=0.14.0", default-features = false }
+exiftool-rs = { version = "=1.0.0", default-features = false }
 flate2 = "1"
 memmap2 = "0.9"
 libc = "0.2"

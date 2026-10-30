@@ -181,19 +181,10 @@ pub(super) fn extract(bytes: &[u8]) -> Vec<Vec<u8>> {
                 pos = next + (len & 1);
             }
         }
-    } else if bytes.starts_with(b"8BPS") {
-        if let Ok(Some(packet)) = exiftool_rs::writer::psd_writer::resource(bytes, 1060) {
-            push(&mut out, packet);
-        }
     } else if matches!(
         bytes.get(4..8),
         Some(b"ftyp" | b"moov" | b"mdat" | b"wide" | b"free" | b"skip" | b"jP  ")
     ) {
-        if let Ok(items) = exiftool_rs::writer::heif_writer::read_metadata(bytes) {
-            if let Some(packet) = items.xmp {
-                push(&mut out, &packet);
-            }
-        }
         boxes(bytes, 0, &mut out);
     }
     out

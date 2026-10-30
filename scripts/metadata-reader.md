@@ -1,7 +1,8 @@
 # Embedded metadata reader
 
 Lap supplements its existing EXIF, LibRaw and video readers with the pinned
-`exiftool-rs 0.14.0` Rust library. No Perl or external ExifTool process is bundled.
+`exiftool-rs 1.0.0` Rust library. No external Perl or ExifTool process is bundled;
+the library runs the ExifTool 13.60 code through its own Rust interpreter.
 The extraction backend is read-only; it never writes media or sidecars.
 Manual **Save Metadata to XMP** writes favorites, ratings, culling flags, comments and tags
 using Lap’s independent XML writer. It preserves unrelated properties and never
@@ -28,12 +29,20 @@ This is an internal implementation and validation note, not website content.
 - A per-thread, single-file mapped-value cache avoids the duplicate extraction
   between file-info construction and organization import. Cloud-only files are
   not hydrated by this backend. Unsupported formats fall back to existing readers.
+- The 1.0 path API reads metadata without the bytes API's full-file copy.
+  Namespace-aware XMP parsing still uses a read-only mapping. PSD/HEIF packets
+  come from an explicitly requested raw `XMP` tag, restricted to the main document;
+  preview-document packets do not supply organization data. Other container
+  packet walkers and their size limits are unchanged.
+- Cargo defaults PCRE2 to a bundled static build so portable app packages do not
+  depend on a build-machine Homebrew/system PCRE2 library. Distribution builders
+  may explicitly override `PCRE2_SYS_STATIC` when supplying a system dependency.
 - Unknown fields are not persisted. Flat keywords and explicit hierarchical
   keyword paths are distinguished; only the latter create parent/child tags.
 
 ## Known limits and upstream cooperation
 
-ORF IIRO header support is fixed in the pinned 0.14.0 version and covered by a
+ORF IIRO header support was fixed in 0.14.0 and is covered by a
 26-byte synthetic camera-make regression. All 45 formerly failing local ORF
 samples read successfully in the 0.14.0 comparison. Original upstream report:
 https://github.com/Le-Syl21/exiftool-rs/issues/24
