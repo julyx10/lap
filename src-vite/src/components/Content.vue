@@ -11179,6 +11179,7 @@ watch([contentReady, showWelcomeContent], ([ready, welcome]) => {
 defineExpose({
   focusContent: activateContentPane,
   refreshCenteredGridLayout: refreshGridLayoutPreservingScroll,
+  selectAll: selectAllInCurrentList,
 });
 </script>
 

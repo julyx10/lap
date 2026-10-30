@@ -13,6 +13,7 @@
     "test:thumbnails": "node --test tests/thumbnail-scheduler.test.mjs",
     "preview": "vite preview",
     "test:file-info": "node --test tests/fileInfoMetadata.test.mjs",
+    "test:shortcuts": "node --test tests/shortcutsLayout.test.mjs",
     "test:tags": "node --test tests/tagTree.test.mjs"
   },
   "dependencies": {

@@ -573,7 +573,7 @@ function matchesBinding(
 ): boolean {
   if (!isBindingAvailableOnPlatform(binding, platform)) return false;
   if (binding.key && event.key !== binding.key) return false;
-  if (binding.code && event.code !== binding.code) return false;
+  if (binding.code && !matchesKeyCode(binding.code, event)) return false;
 
   const modifiers = new Set(binding.modifiers ?? []);
   const expectsCtrl = modifiers.has('ctrl') || (modifiers.has('cmdOrCtrl') && platform !== 'mac');
@@ -589,4 +589,36 @@ function matchesBinding(
 
 function isBindingAvailableOnPlatform(binding: ShortcutBinding, platform: ShortcutPlatform): boolean {
   return !binding.platforms || binding.platforms.includes(platform);
+}
+
+// Bindings match the character the active layout produces, not the physical
+// QWERTY slot of event.code. On AZERTY the key labelled "Q" sits on the
+// physical KeyA position, so matching by code made Cmd-Q trigger Select All
+// (and swallowed the system quit accelerator); the comma lives on the
+// physical Semicolon slot, breaking Cmd-, too. Latin layouts (including
+// Dvorak and Colemak) therefore match by character; non-Latin layouts
+// (Cyrillic, Greek, ...) fall back to the physical key so shortcuts stay
+// reachable when event.key is not an ASCII character. Digits keep physical
+// matching because shifted digit slots produce symbols, not digits.
+const CODE_CHAR: Record<string, string> = {
+  Comma: ',',
+  Period: '.',
+  Slash: '/',
+  Semicolon: ';',
+  Quote: "'",
+  Backquote: '`',
+  Backslash: '\\',
+  BracketLeft: '[',
+  BracketRight: ']',
+  Minus: '-',
+  Equal: '=',
+};
+
+function matchesKeyCode(code: string, event: ShortcutEventLike): boolean {
+  const expected = /^Key([A-Z])$/.exec(code)?.[1]?.toLowerCase() ?? CODE_CHAR[code];
+  const key = event.key ?? '';
+  if (expected && key.length === 1 && /[\x20-\x7E]/.test(key)) {
+    return key.toLowerCase() === expected;
+  }
+  return event.code === code;
 }
