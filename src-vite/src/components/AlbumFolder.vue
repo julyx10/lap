@@ -141,6 +141,7 @@
     :OkText="trashFolderDialogOkText"
     :cancelText="$t('msgbox.cancel')"
     :warningOk="true"
+    :isLoading="isDeletingFolder"
     :checkboxText="$t('msgbox.permanent_delete.checkbox')"
     :checkboxChecked="deletePermanently"
     @ok="clickTrashFolder"
@@ -151,11 +152,12 @@
   <MessageBox
     v-if="showTrashFailedFolderMsgbox"
     :title="$t('msgbox.trash_failed.title')"
-    :message="$t('msgbox.trash_failed.folder_content', { folder: selectedFolder?.name || '' })"
-    :OkText="$t('msgbox.trash_failed.ok')"
-    :cancelText="$t('msgbox.cancel')"
-    :warningOk="true"
-    @ok="confirmTrashFailedFolderDelete"
+    :message="folderTrashFailureMessage"
+    :OkText="folderTrashFailure?.canDeletePermanently ? $t('msgbox.trash_failed.ok') : $t('msgbox.ok')"
+    :isLoading="isDeletingFolder"
+    :cancelText="folderTrashFailure?.canDeletePermanently ? $t('msgbox.cancel') : ''"
+    :warningOk="!!folderTrashFailure?.canDeletePermanently"
+    @ok="folderTrashFailure?.canDeletePermanently ? confirmTrashFailedFolderDelete() : showTrashFailedFolderMsgbox = false"
     @cancel="showTrashFailedFolderMsgbox = false"
   />
 
@@ -188,7 +190,7 @@ import { config, libConfig } from '@/common/config';
 import { isMac, shortenFilename, isValidFileName, getFolderPath, getFullPath, normalizePathForCompare, isWithinRootPath } from '@/common/utils';
 import {
   createFolder, renameFolder, fetchFolder, getAllAlbums, moveFolder, moveFolderOutsideLibrary,
-  copyFolder, checkFileExists, revealPath, deleteFolder, deleteFolderPermanently, recountAlbum, selectFolder as selectFolderInDb,
+  copyFolder, checkFileExists, revealPath, prepareFolderDelete, deleteFolder, deleteFolderPermanently, recountAlbum, selectFolder as selectFolderInDb,
   isDirectoryAccessible, setFolderFavorite, setFolderSearchExcluded, hasImportableClipboard, refreshAlbumSubfolders,
 } from '@/common/api';
 import { DEFAULT_PLATFORM, getShortcutLabel } from '@/common/shortcuts';
@@ -308,8 +310,8 @@ const trashFolderDialogOkText = computed(() =>
 );
 const trashFolderDialogMessage = computed(() =>
   deletePermanently.value
-    ? t('msgbox.permanent_delete.folder_content', { folder: selectedFolder.value?.name || '' })
-    : t('msgbox.move_to_trash.folder_content', { folder: selectedFolder.value?.name || '' })
+    ? t('msgbox.permanent_delete.folder_content', { folder: pendingFolderDelete.value?.path || '' })
+    : t('msgbox.move_to_trash.folder_content', { folder: pendingFolderDelete.value?.path || '' })
 );
 
 // rename folder
@@ -339,6 +341,18 @@ const showTrashFailedFolderMsgbox = ref(false);
 const showMoveTo = ref(false);
 const permanentDeleteChecked = ref(false);
 const deletePermanently = ref(false);
+const pendingFolderDelete = ref<{ path: string; name: string; libraryId: string; identity: string } | null>(null);
+const isDeletingFolder = ref(false);
+const folderTrashFailure = ref<{ canDeletePermanently: boolean; error: string; mayHavePartiallyCompleted?: boolean } | null>(null);
+const folderTrashFailureMessage = computed(() => {
+  const path = pendingFolderDelete.value?.path || '';
+  const message = folderTrashFailure.value?.canDeletePermanently
+    ? t('msgbox.trash_failed.folder_content', { folder: path })
+    : `${t('msgbox.move_to_trash.folder_error')}\n\n${path}`;
+  const partialWarning = folderTrashFailure.value?.mayHavePartiallyCompleted
+    ? `\n\n${t('msgbox.trash_failed.folder_partial_warning')}` : '';
+  return `${message}${partialWarning}\n\n${folderTrashFailure.value?.error || ''}`;
+});
 const folderContextMenus = ref<Record<string, any>>({});
 
 function handleFolderContextMenu(folder: Folder, event: MouseEvent) {
@@ -374,11 +388,21 @@ async function startRenameFolder(folder: Folder) {
 }
 
 async function startDeleteFolder(folder: Folder) {
-  if (isRenamingFolder.value || isCreatingFolder.value || props.unavailable || folder.path === props.rootPath) return;
+  if (isDeletingFolder.value || isRenamingFolder.value || isCreatingFolder.value || props.unavailable || folder.path === props.rootPath) return;
   if (!await isDirectoryAccessible(folder.path)) return;
   if (disposed) return;
   await clickFolder(props.albumId, folder);
   if (disposed || selection.folderPath.value !== folder.path) return;
+  const target = { path: folder.path, name: folder.name, libraryId: libConfig._libraryId, identity: '' };
+  try {
+    target.identity = await prepareFolderDelete(target.path, target.libraryId);
+  } catch (error) {
+    toast.error(String(error));
+    return;
+  }
+  if (disposed || target.libraryId !== libConfig._libraryId || selection.folderPath.value !== target.path) return;
+  pendingFolderDelete.value = target;
+  folderTrashFailure.value = null;
   deletePermanently.value = permanentDeleteChecked.value;
   showTrashFolderMsgbox.value = true;
 }
@@ -1031,77 +1055,100 @@ const clickCopyToFolder = async () => {
 
 /// trash or permanently delete selected folder
 const clickTrashFolder = async () => {
-  const folderName = selectedFolder.value?.name || '';
-  permanentDeleteChecked.value = deletePermanently.value;
-  const deleteFn = deletePermanently.value ? deleteFolderPermanently : deleteFolder;
-  let deleteResult = 0;
-  let deleteErrored = false;
+  const target = pendingFolderDelete.value;
+  if (!target || isDeletingFolder.value || target.libraryId !== libConfig._libraryId) return;
+  isDeletingFolder.value = true;
   try {
-    deleteResult = await deleteFn(selection.folderPath.value);
-  } catch (error) {
-    deleteErrored = true;
-    console.error('Failed to delete folder:', error);
-  }
-  if (deleteErrored) {
-    toast.error(
-      deletePermanently.value
-        ? t('msgbox.permanent_delete.folder_error')
-        : t('msgbox.move_to_trash.folder_error')
-    );
-    return;
-  }
-  if (!deletePermanently.value && !deleteResult) {
-    showTrashFolderMsgbox.value = false;
-    showTrashFailedFolderMsgbox.value = true;
-    return;
-  }
-  const isDeleted = !!deleteResult;
-  if (isDeleted) {
-    const deletedFolderPath = selection.folderPath.value;
-
-    // The deleted folder is a direct child of props.children in this component's context
-    // (since the ContextMenu is rendered for each child in the v-for loop)
-    // So we can directly remove it from props.children using splice
-    if (props.children) {
-      const index = (props.children as Folder[]).findIndex((child: Folder) => child.path === deletedFolderPath);
-      if (index !== -1) {
-        (props.children as Folder[]).splice(index, 1);
+    const folderName = target.name;
+    folderTrashFailure.value = null;
+    permanentDeleteChecked.value = deletePermanently.value;
+    let deleteResult = 0;
+    let deleteErrored = false;
+    try {
+      if (deletePermanently.value) {
+        deleteResult = await deleteFolderPermanently(target.path, target.libraryId, target.identity);
+      } else {
+        const result = await deleteFolder(target.path, target.libraryId, target.identity);
+        deleteResult = result.deletedCount;
+        if (result.error) {
+          folderTrashFailure.value = {
+            canDeletePermanently: result.canDeletePermanently === true, error: result.error,
+            mayHavePartiallyCompleted: result.mayHavePartiallyCompleted === true,
+          };
+        }
       }
+    } catch (error) {
+      deleteErrored = true;
+      if (!deletePermanently.value) {
+        folderTrashFailure.value = { canDeletePermanently: false, error: String(error) };
+      }
+      console.error('Failed to delete folder:', error);
     }
-
-    // Navigate to parent folder (derive parent path from deleted folder's path)
-    const lastSlashIndex = deletedFolderPath.lastIndexOf('/');
-    const parentPath = lastSlashIndex > 0 ? deletedFolderPath.substring(0, lastSlashIndex) : props.rootPath;
-    selection.folderPath.value = parentPath;
-
-    // Try to find parent folder to get its id
-    const parentFolder = getFolderByPath(props.children, parentPath);
-    if (parentFolder) {
-      selection.folderId.value = parentFolder.id;
+    if (disposed || target.libraryId !== libConfig._libraryId) return;
+    if (deleteErrored && deletePermanently.value) {
+      toast.error(
+        deletePermanently.value
+          ? t('msgbox.permanent_delete.folder_error')
+          : t('msgbox.move_to_trash.folder_error')
+      );
+      return;
     }
-
-    showTrashFolderMsgbox.value = false;
-    toast.success(
-      deletePermanently.value
-        ? t('msgbox.permanent_delete.folder_success', { folder: folderName })
-        : t('msgbox.move_to_trash.folder_success', { folder: folderName })
-    );
-    if (props.showFolderActions) {
-      await selection.expandAndSelectFolder(props.albumId, parentPath);
-      await tauriEmit('albums-refreshed', { albums: await getAllAlbums() });
-      await tauriEmit('library-total-refreshed', { source: 'album-folder' });
-      await tauriEmit('refresh-content');
+    if (!deletePermanently.value && folderTrashFailure.value) {
+      showTrashFolderMsgbox.value = false;
+      showTrashFailedFolderMsgbox.value = true;
+      return;
     }
-  } else {
-    toast.error(
-      deletePermanently.value
-        ? t('msgbox.permanent_delete.folder_error')
-        : t('msgbox.move_to_trash.folder_error')
-    );
+    const isDeleted = !!deleteResult;
+    if (isDeleted) {
+      const deletedFolderPath = target.path;
+
+      // The deleted folder is a direct child of props.children in this component's context
+      // (since the ContextMenu is rendered for each child in the v-for loop)
+      // So we can directly remove it from props.children using splice
+      if (props.children) {
+        const index = (props.children as Folder[]).findIndex((child: Folder) => child.path === deletedFolderPath);
+        if (index !== -1) {
+          (props.children as Folder[]).splice(index, 1);
+        }
+      }
+
+      // Navigate to parent folder (derive parent path from deleted folder's path)
+      const lastSlashIndex = deletedFolderPath.lastIndexOf('/');
+      const parentPath = lastSlashIndex > 0 ? deletedFolderPath.substring(0, lastSlashIndex) : props.rootPath;
+      selection.folderPath.value = parentPath;
+
+      // Try to find parent folder to get its id
+      const parentFolder = getFolderByPath(props.children, parentPath);
+      if (parentFolder) {
+        selection.folderId.value = parentFolder.id;
+      }
+
+      showTrashFolderMsgbox.value = false;
+      toast.success(
+        deletePermanently.value
+          ? t('msgbox.permanent_delete.folder_success', { folder: folderName })
+          : t('msgbox.move_to_trash.folder_success', { folder: folderName })
+      );
+      if (props.showFolderActions) {
+        await selection.expandAndSelectFolder(props.albumId, parentPath);
+        await tauriEmit('albums-refreshed', { albums: await getAllAlbums() });
+        await tauriEmit('library-total-refreshed', { source: 'album-folder' });
+        await tauriEmit('refresh-content');
+      }
+    } else {
+      toast.error(
+        deletePermanently.value
+          ? t('msgbox.permanent_delete.folder_error')
+          : t('msgbox.move_to_trash.folder_error')
+      );
+    }
+  } finally {
+    isDeletingFolder.value = false;
   }
 };
 
 const confirmTrashFailedFolderDelete = async () => {
+  if (!folderTrashFailure.value?.canDeletePermanently || isDeletingFolder.value) return;
   const previousDeletePermanently = deletePermanently.value;
   const previousPermanentDeleteChecked = permanentDeleteChecked.value;
   showTrashFailedFolderMsgbox.value = false;

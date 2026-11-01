@@ -54,7 +54,7 @@ pub fn trash_path(path: &str) -> Result<(), String> {
         return Err(format!("Path does not exist: {}", path));
     }
 
-    move_to_trash(path)?;
+    move_to_trash(path).map_err(|error| error.to_string())?;
 
     if path_exists(path) {
         return Err(format!(
@@ -67,7 +67,7 @@ pub fn trash_path(path: &str) -> Result<(), String> {
 }
 
 #[cfg(target_os = "macos")]
-fn move_to_trash(path: &str) -> Result<(), String> {
+pub(crate) fn move_to_trash(path: &str) -> Result<(), trash::Error> {
     use trash::macos::{DeleteMethod, TrashContextExtMacos};
 
     // NsFileManager is fast but requires Automation permission that users may deny.
@@ -78,15 +78,15 @@ fn move_to_trash(path: &str) -> Result<(), String> {
     if let Err(_error) = context.delete(path) {
         let mut fallback = trash::TrashContext::default();
         fallback.set_delete_method(DeleteMethod::Finder);
-        fallback.delete(path).map_err(|fallback_error| fallback_error.to_string())
+        fallback.delete(path)
     } else {
         Ok(())
     }
 }
 
 #[cfg(all(not(target_os = "macos")))]
-fn move_to_trash(path: &str) -> Result<(), String> {
-    trash::delete(path).map_err(|error| error.to_string())
+pub(crate) fn move_to_trash(path: &str) -> Result<(), trash::Error> {
+    trash::delete(path)
 }
 
 pub fn delete_file_permanently(path: &str) -> Result<(), String> {
@@ -630,6 +630,17 @@ fn file_id(path: &Path) -> Option<u64> {
 
 #[cfg(windows)]
 fn file_id(path: &Path) -> Option<u64> {
+    file_identity(path).map(|(_, id)| id)
+}
+
+#[cfg(unix)]
+pub(crate) fn file_identity(path: &Path) -> Option<(u64, u64)> {
+    use std::os::unix::fs::MetadataExt;
+    fs::symlink_metadata(path).ok().map(|m| (m.dev(), m.ino()))
+}
+
+#[cfg(windows)]
+pub(crate) fn file_identity(path: &Path) -> Option<(u64, u64)> {
     use std::ffi::OsStr;
     use std::os::windows::ffi::OsStrExt;
     use win32_imports::*;
@@ -647,7 +658,7 @@ fn file_id(path: &Path) -> Option<u64> {
             core::ptr::null_mut(),
             3,           // OPEN_EXISTING
             0x0200_0000, // FILE_FLAG_BACKUP_SEMANTICS (required for directories)
-            core::ptr::null_mut(),
+            core::ptr::null_mut(), // null template HANDLE
         );
         if handle == INVALID_HANDLE_VALUE {
             return None;
@@ -658,7 +669,8 @@ fn file_id(path: &Path) -> Option<u64> {
         if ok == 0 {
             return None;
         }
-        Some(((info.nFileIndexHigh as u64) << 32) | (info.nFileIndexLow as u64))
+        Some((info.dwVolumeSerialNumber as u64,
+            ((info.nFileIndexHigh as u64) << 32) | (info.nFileIndexLow as u64)))
     }
 }
 

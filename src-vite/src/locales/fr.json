@@ -974,7 +974,8 @@
       "title": "Échec du déplacement vers la Corbeille",
       "file_content": "Le fichier '{file}' n’a pas pu être déplacé vers la Corbeille.\n\nVoulez-vous le supprimer définitivement à la place ?",
       "files_content": "{count} fichiers sélectionnés n’ont pas pu être déplacés vers la Corbeille.\n\nVoulez-vous les supprimer définitivement à la place ?",
-      "folder_content": "Le dossier '{folder}' n’a pas pu être déplacé vers la Corbeille.\n\nVoulez-vous le supprimer définitivement à la place ?",
+      "folder_content": "Le dossier '{folder}' n’a pas pu être déplacé vers la Corbeille.\n\nVoulez-vous le supprimer définitivement à la place ?\n\nCette action ne peut pas être annulée via la corbeille du système.",
+      "folder_partial_warning": "La tentative précédente a peut-être déplacé une partie du contenu vers la corbeille. La suppression définitive effacera ce dossier et son contenu restant.",
       "ok": "Supprimer définitivement"
     },
     "open_external_many": {

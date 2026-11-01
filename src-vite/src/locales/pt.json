@@ -974,7 +974,8 @@
       "title": "Falha ao mover para a lixeira",
       "file_content": "O arquivo '{file}' não pôde ser movido para a lixeira.\n\nDeseja excluí-lo permanentemente em vez disso?",
       "files_content": "{count} arquivos selecionados não puderam ser movidos para a lixeira.\n\nDeseja excluí-los permanentemente em vez disso?",
-      "folder_content": "A pasta '{folder}' não pôde ser movida para a lixeira.\n\nDeseja excluí-la permanentemente em vez disso?",
+      "folder_content": "A pasta '{folder}' não pôde ser movida para a lixeira.\n\nDeseja excluí-la permanentemente em vez disso?\n\nEsta ação não pode ser desfeita através da lixeira do sistema.",
+      "folder_partial_warning": "A tentativa anterior pode ter movido parte do conteúdo para a lixeira. A exclusão permanente removerá esta pasta e seu conteúdo restante.",
       "ok": "Excluir permanentemente"
     },
     "open_external_many": {

@@ -974,7 +974,8 @@
       "title": "Przeniesienie do kosza nie powiodło się",
       "file_content": "Nie udało się przenieść pliku „{file}” do kosza.\n\nCzy chcesz zamiast tego trwale go usunąć?",
       "files_content": "Nie udało się przenieść {count} zaznaczonych plików do kosza.\n\nCzy chcesz zamiast tego trwale je usunąć?",
-      "folder_content": "Nie udało się przenieść folderu „{folder}” do kosza.\n\nCzy chcesz zamiast tego trwale go usunąć?",
+      "folder_content": "Nie udało się przenieść folderu „{folder}” do kosza.\n\nCzy chcesz zamiast tego trwale go usunąć?\n\nTej operacji nie można cofnąć za pomocą kosza systemowego.",
+      "folder_partial_warning": "Poprzednia próba mogła przenieść część zawartości do kosza. Trwałe usunięcie skasuje ten folder i jego pozostałą zawartość.",
       "ok": "Usuń trwale"
     },
     "open_external_many": {

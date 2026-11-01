@@ -267,6 +267,7 @@ async fn main() {
             t_cmds::move_folder_outside_library,
             t_cmds::copy_folder,
             t_cmds::delete_folder,
+            t_cmds::prepare_folder_delete,
             t_cmds::delete_folder_permanently,
             t_cmds::reveal_path,
             t_cmds::open_external_url,

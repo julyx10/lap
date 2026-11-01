@@ -974,7 +974,8 @@
       "title": "移到废纸篓失败",
       "file_content": "文件 '{file}' 无法移到废纸篓。\n\n是否改为永久删除？",
       "files_content": "所选 {count} 个文件无法移到废纸篓。\n\n是否改为永久删除？",
-      "folder_content": "文件夹 '{folder}' 无法移到废纸篓。\n\n是否改为永久删除？",
+      "folder_content": "文件夹 '{folder}' 无法移到废纸篓。\n\n是否改为永久删除？\n\n此操作无法通过系统回收站撤销。",
+      "folder_partial_warning": "上一次操作可能已将部分内容移入回收站。永久删除将删除此文件夹及其剩余内容。",
       "ok": "永久删除"
     },
     "open_external_many": {

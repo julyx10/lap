@@ -974,7 +974,8 @@
       "title": "Verschieben in den Papierkorb fehlgeschlagen",
       "file_content": "Die Datei '{file}' konnte nicht in den Papierkorb verschoben werden.\n\nMöchtest du sie stattdessen endgültig löschen?",
       "files_content": "{count} ausgewählte Dateien konnten nicht in den Papierkorb verschoben werden.\n\nMöchtest du sie stattdessen endgültig löschen?",
-      "folder_content": "Der Ordner '{folder}' konnte nicht in den Papierkorb verschoben werden.\n\nMöchtest du ihn stattdessen endgültig löschen?",
+      "folder_content": "Der Ordner '{folder}' konnte nicht in den Papierkorb verschoben werden.\n\nMöchtest du ihn stattdessen endgültig löschen?\n\nDieser Vorgang kann nicht über den Papierkorb rückgängig gemacht werden.",
+      "folder_partial_warning": "Beim vorherigen Versuch wurden möglicherweise einige Inhalte in den Papierkorb verschoben. Das endgültige Löschen entfernt diesen Ordner und seine verbleibenden Inhalte.",
       "ok": "Endgültig löschen"
     },
     "open_external_many": {

@@ -974,7 +974,8 @@
       "title": "Spostamento nel cestino non riuscito",
       "file_content": "Impossibile spostare nel cestino il file '{file}'.\n\nVuoi eliminarlo definitivamente?",
       "files_content": "Impossibile spostare nel cestino {count} file selezionati.\n\nVuoi eliminarli definitivamente?",
-      "folder_content": "Impossibile spostare nel cestino la cartella '{folder}'.\n\nVuoi eliminarla definitivamente?",
+      "folder_content": "Impossibile spostare nel cestino la cartella '{folder}'.\n\nVuoi eliminarla definitivamente?\n\nQuesta operazione non può essere annullata tramite il cestino di sistema.",
+      "folder_partial_warning": "Il tentativo precedente potrebbe aver spostato parte del contenuto nel cestino. L’eliminazione permanente rimuoverà questa cartella e il contenuto rimanente.",
       "ok": "Elimina definitivamente"
     },
     "open_external_many": {

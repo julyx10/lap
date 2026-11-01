@@ -974,7 +974,8 @@
       "title": "Naar prullenbak mislukt",
       "file_content": "Het bestand '{file}' kon niet naar de prullenbak worden verplaatst.\n\nWil je het in plaats daarvan definitief verwijderen?",
       "files_content": "{count} geselecteerde bestanden konden niet naar de prullenbak worden verplaatst.\n\nWil je ze in plaats daarvan definitief verwijderen?",
-      "folder_content": "De map '{folder}' kon niet naar de prullenbak worden verplaatst.\n\nWil je deze in plaats daarvan definitief verwijderen?",
+      "folder_content": "De map '{folder}' kon niet naar de prullenbak worden verplaatst.\n\nWil je deze in plaats daarvan definitief verwijderen?\n\nDeze actie kan niet via de prullenbak van het systeem ongedaan worden gemaakt.",
+      "folder_partial_warning": "Bij de vorige poging is mogelijk een deel van de inhoud naar de prullenbak verplaatst. Permanent verwijderen wist deze map en de resterende inhoud.",
       "ok": "Definitief verwijderen"
     },
     "open_external_many": {

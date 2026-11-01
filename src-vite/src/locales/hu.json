@@ -974,7 +974,8 @@
       "title": "Sikertelen kukába helyezés",
       "file_content": "A(z) \"{file}\" fájl nem helyezhető át a kukába.\n\nEhelyett véglegesen törölni szeretné?",
       "files_content": "{count} kiválasztott fájlt nem sikerült a kukába helyezni.\n\nEhelyett véglegesen törölni szeretné őket?",
-      "folder_content": "A(z) \"{folder}\" mappa nem helyezhető át a kukába.\n\nEhelyett véglegesen törölni szeretné?",
+      "folder_content": "A(z) \"{folder}\" mappa nem helyezhető át a kukába.\n\nEhelyett véglegesen törölni szeretné?\n\nEz a művelet nem vonható vissza a rendszer Lomtárából.",
+      "folder_partial_warning": "Az előző kísérlet során a tartalom egy része a Lomtárba kerülhetett. A végleges törlés ezt a mappát és a megmaradt tartalmát törli.",
       "ok": "Végleges törlés"
     },
     "open_external_many": {

@@ -974,7 +974,8 @@
       "title": "移到垃圾桶失敗",
       "file_content": "無法將檔案「{file}」移到垃圾桶。\n\n要改為永久刪除嗎？",
       "files_content": "無法將已選的 {count} 個檔案移到垃圾桶。\n\n要改為永久刪除嗎？",
-      "folder_content": "無法將資料夾「{folder}」移到垃圾桶。\n\n要改為永久刪除嗎？",
+      "folder_content": "無法將資料夾「{folder}」移到垃圾桶。\n\n要改為永久刪除嗎？\n\n此操作無法透過系統垃圾桶復原。",
+      "folder_partial_warning": "上一次操作可能已將部分內容移至垃圾桶。永久刪除將刪除此資料夾及其剩餘內容。",
       "ok": "永久刪除"
     },
     "open_external_many": {

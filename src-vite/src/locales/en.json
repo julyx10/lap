@@ -974,7 +974,8 @@
       "title": "Trash failed",
       "file_content": "The file '{file}' could not be moved to trash.\n\nDo you want to permanently delete it instead?",
       "files_content": "{count} selected files could not be moved to trash.\n\nDo you want to permanently delete them instead?",
-      "folder_content": "The folder '{folder}' could not be moved to trash.\n\nDo you want to permanently delete it instead?",
+      "folder_content": "The folder '{folder}' could not be moved to trash.\n\nDo you want to permanently delete it instead?\n\nThis cannot be undone through the system Trash.",
+      "folder_partial_warning": "The previous attempt may have moved some contents to Trash. Permanent deletion will remove this folder and its remaining contents.",
       "ok": "Delete permanently"
     },
     "open_external_many": {

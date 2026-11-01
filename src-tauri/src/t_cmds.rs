@@ -956,26 +956,246 @@ pub fn copy_folder(
     transfer.finalize()
 }
 
-/// delete a folder (move to trash)
-#[tauri::command]
-pub fn delete_folder(folder_path: &str) -> Result<usize, String> {
-    // trash the folder
-    if t_utils::trash_path(folder_path).is_err() {
-        return Ok(0);
+// Resolve the recorded folder's owning album before any filesystem mutation.
+// Never allow deleting an album root (or a directory containing another root).
+fn validate_folder_delete(folder_path: &str, library_id: &str) -> Result<(), String> {
+    let path = Path::new(folder_path);
+    if !path.is_absolute() || path.components().any(|part| matches!(part, std::path::Component::ParentDir)) {
+        return Err("Invalid folder deletion path".into());
+    }
+    let metadata = fs::symlink_metadata(path).map_err(|e| e.to_string())?;
+    if !metadata.is_dir() || metadata.file_type().is_symlink() {
+        return Err("Folder deletion requires a regular directory".into());
+    }
+    let target = fs::canonicalize(path).map_err(|e| e.to_string())?;
+    let folder = AFolder::fetch(folder_path)?.ok_or("Folder is not in the current library")?;
+    let albums = Album::get_all_albums()?;
+    let album = albums.iter().find(|album| album.id == Some(folder.album_id))
+        .ok_or("Folder has no owning album")?;
+    let root = fs::canonicalize(&album.path).map_err(|e| e.to_string())?;
+    if target == root || !target.starts_with(&root) {
+        return Err("Cannot delete an album root or a folder outside its album".into());
+    }
+    // Check recorded roots without probing unrelated disks or offline NAS mounts.
+    for album in &albums {
+        if folder_delete_contains(path, Path::new(&album.path))
+            || folder_delete_contains(&target, Path::new(&album.path)) {
+            return Err("Cannot delete a directory containing an album root".into());
+        }
+    }
+    let db_path = t_storage::get_library_db_path(library_id)?;
+    let db_path = fs::canonicalize(db_path).map_err(|e| e.to_string())?;
+    if db_path.starts_with(&target) {
+        return Err("Cannot delete a directory containing the library database".into());
+    }
+    Ok(())
+}
+
+fn folder_delete_contains(parent: &Path, child: &Path) -> bool {
+    #[cfg(windows)]
+    {
+        let normalize = |path: &Path| {
+            let path = path.to_string_lossy().replace('/', "\\").to_lowercase();
+            PathBuf::from(path.strip_prefix("\\\\?\\unc\\").map(|rest| format!("\\\\{rest}"))
+                .unwrap_or_else(|| path.strip_prefix("\\\\?\\").unwrap_or(&path).to_string()))
+        };
+        normalize(child).starts_with(normalize(parent))
+    }
+    #[cfg(not(windows))]
+    child.starts_with(parent)
+}
+
+#[cfg(test)]
+mod folder_delete_path_tests {
+    use super::folder_delete_contains;
+    use std::path::Path;
+
+    #[test]
+    fn protects_roots_and_nested_roots_without_matching_sibling_prefixes() {
+        assert!(folder_delete_contains(Path::new("/album/folder"), Path::new("/album/folder")));
+        assert!(folder_delete_contains(Path::new("/album/folder"), Path::new("/album/folder/nested")));
+        assert!(!folder_delete_contains(Path::new("/album/folder"), Path::new("/album/folder-other")));
+        assert!(!folder_delete_contains(Path::new("/album/folder"), Path::new("/offline-nas/album")));
     }
 
-    // delete the folder and all children from db
-    AFolder::delete_folder(folder_path)
-        .map_err(|e| format!("Error while deleting folder from DB: {}", e))
+    #[cfg(windows)]
+    #[test]
+    fn matches_windows_case_separators_and_extended_paths() {
+        assert!(folder_delete_contains(Path::new(r"C:\Photos\Child"), Path::new("c:/photos/child/Album")));
+        assert!(folder_delete_contains(Path::new(r"\\?\C:\Photos\Child"), Path::new(r"C:\Photos\Child\Album")));
+        assert!(folder_delete_contains(Path::new(r"\\?\UNC\NAS\Photos"), Path::new(r"\\nas\photos\Album")));
+    }
+}
+
+/// delete a folder (move to trash)
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FolderTrashResult {
+    deleted_count: usize,
+    can_delete_permanently: bool,
+    may_have_partially_completed: bool,
+    error: Option<String>,
+}
+
+#[cfg(windows)]
+fn folder_is_on_network_drive(path: &str) -> Result<bool, String> {
+    use std::os::windows::ffi::OsStrExt;
+    use windows::{core::PCWSTR, Win32::Storage::FileSystem::{GetDriveTypeW, GetVolumePathNameW}};
+    let path: Vec<u16> = std::ffi::OsStr::new(path).encode_wide().chain(Some(0)).collect();
+    let mut root = vec![0u16; 32768];
+    unsafe {
+        GetVolumePathNameW(PCWSTR(path.as_ptr()), &mut root).map_err(|e| e.to_string())?;
+        // DRIVE_REMOTE (4): a network volume, including mapped drive letters.
+        Ok(GetDriveTypeW(PCWSTR(root.as_ptr())) == 4)
+    }
+}
+
+fn folder_trash_allows_permanent_delete(error: &trash::Error) -> bool {
+    // Unknown errors may offer a separate, explicit confirmation, provided
+    // the caller can revalidate the unchanged, accessible original target.
+    if matches!(error, trash::Error::Unknown { .. }) {
+        return true;
+    }
+    #[cfg(windows)]
+    if let trash::Error::Os { code, .. } = error {
+        use windows::Win32::UI::Shell::{COPYENGINE_E_RECYCLE_BIN_NOT_FOUND,
+            COPYENGINE_E_RECYCLE_FORCE_NUKE, COPYENGINE_E_RECYCLE_PATH_TOO_LONG,
+            COPYENGINE_E_RECYCLE_SIZE_TOO_BIG};
+        return [COPYENGINE_E_RECYCLE_BIN_NOT_FOUND.0, COPYENGINE_E_RECYCLE_FORCE_NUKE.0,
+            COPYENGINE_E_RECYCLE_PATH_TOO_LONG.0, COPYENGINE_E_RECYCLE_SIZE_TOO_BIG.0].contains(code);
+    }
+    let _ = error;
+    false
+}
+
+fn folder_delete_identity(path: &str) -> Result<String, String> {
+    let path = Path::new(path);
+    let canonical = fs::canonicalize(path).map_err(|e| e.to_string())?;
+    let metadata = fs::symlink_metadata(path).map_err(|e| e.to_string())?;
+    if !metadata.is_dir() || metadata.file_type().is_symlink() {
+        return Err("Folder deletion requires a regular directory".into());
+    }
+    let (volume, id) = t_utils::file_identity(path).ok_or("Cannot identify deletion target")?;
+    Ok(format!("{canonical:?}:{volume}:{id}:{:?}", metadata.created().ok()))
+}
+
+fn verify_folder_delete_identity(path: &str, expected_identity: &str) -> Result<(), String> {
+    if folder_delete_identity(path)? != expected_identity {
+        return Err("Deletion target changed; cancel and select the folder again".into());
+    }
+    Ok(())
+}
+
+#[tauri::command]
+pub fn prepare_folder_delete(folder_path: &str, library_id: &str) -> Result<String, String> {
+    with_current_library(library_id, || {
+        validate_folder_delete(folder_path, library_id)?;
+        folder_delete_identity(folder_path)
+    })
+}
+
+#[cfg(test)]
+mod folder_trash_failure_tests {
+    use super::{folder_trash_allows_permanent_delete, folder_delete_identity, verify_folder_delete_identity};
+
+    #[test]
+    fn access_connection_and_uncertain_os_errors_never_offer_permanent_deletion() {
+        for error in [
+            trash::Error::CouldNotAccess { target: "unavailable".into() },
+            trash::Error::Os { code: 5, description: "Access denied".into() },
+            trash::Error::Os { code: 32, description: "Sharing violation".into() },
+            trash::Error::Os { code: 53, description: "Network path not found".into() },
+            trash::Error::Os { code: 0x80270035u32 as i32, description: "Recycle unknown error".into() },
+        ] {
+            assert!(!folder_trash_allows_permanent_delete(&error));
+        }
+    }
+
+    #[test]
+    fn unknown_error_can_offer_confirmation_after_target_revalidation() {
+        assert!(folder_trash_allows_permanent_delete(&trash::Error::Unknown {
+            description: "Unspecified failure".into(),
+        }));
+    }
+
+    #[test]
+    fn contents_may_change_but_replaced_target_cannot_be_confirmed() {
+        let root = std::env::temp_dir().join(format!("lap-trash-retry-{}-{}",
+            std::process::id(), std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
+        std::fs::create_dir(&root).unwrap();
+        let path = root.to_str().unwrap();
+        let expected = folder_delete_identity(path).unwrap();
+        std::fs::write(root.join("child"), "content").unwrap();
+        assert_eq!(folder_delete_identity(path).unwrap(), expected);
+        assert!(verify_folder_delete_identity(path, &expected).is_ok());
+        let moved = root.with_extension("moved");
+        std::fs::rename(&root, &moved).unwrap();
+        std::fs::create_dir(&root).unwrap();
+        assert!(verify_folder_delete_identity(path, &expected).is_err());
+        std::fs::remove_file(moved.join("child")).unwrap();
+        std::fs::remove_dir(&root).unwrap();
+        std::fs::remove_dir(&moved).unwrap();
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn only_explicit_recycle_limits_enable_confirmation() {
+        for code in [0x8027003Au32, 0x80270036, 0x80270038, 0x80270037] {
+            assert!(folder_trash_allows_permanent_delete(&trash::Error::Os {
+                code: code as i32, description: "Recycle restriction".into(),
+            }));
+        }
+    }
+}
+
+#[tauri::command]
+pub fn delete_folder(folder_path: &str, library_id: &str, expected_identity: &str) -> Result<FolderTrashResult, String> {
+    with_current_library(library_id, || {
+        validate_folder_delete(folder_path, library_id)?;
+        verify_folder_delete_identity(folder_path, expected_identity)?;
+        #[cfg(windows)]
+        if folder_is_on_network_drive(folder_path)? {
+            return Ok(FolderTrashResult {
+                deleted_count: 0, can_delete_permanently: true, may_have_partially_completed: false,
+                error: Some("This network location does not support the Windows Recycle Bin".into()),
+            });
+        }
+        if let Err(error) = t_utils::move_to_trash(folder_path) {
+            eprintln!("Failed to move folder to trash: {folder_path}: {error}");
+            let can_delete_permanently = folder_trash_allows_permanent_delete(&error)
+                && validate_folder_delete(folder_path, library_id).is_ok()
+                && t_utils::directory_accessible(folder_path)
+                && verify_folder_delete_identity(folder_path, expected_identity).is_ok();
+            return Ok(FolderTrashResult { deleted_count: 0, can_delete_permanently, may_have_partially_completed: true, error: Some(error.to_string()) });
+        }
+        match fs::symlink_metadata(folder_path) {
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+            result => {
+                let error = match result {
+                    Ok(_) => "The folder still exists after the trash operation".to_string(),
+                    Err(error) => error.to_string(),
+                };
+                eprintln!("Uncertain folder trash result: {folder_path}: {error}");
+                return Ok(FolderTrashResult { deleted_count: 0, can_delete_permanently: false, may_have_partially_completed: true, error: Some(error) });
+            }
+        }
+        let deleted_count = AFolder::delete_folder(folder_path)
+            .map_err(|e| format!("Error while deleting folder from DB: {}", e))?;
+        Ok(FolderTrashResult { deleted_count, can_delete_permanently: false, may_have_partially_completed: false, error: None })
+    })
 }
 
 /// permanently delete a folder (skip trash)
 #[tauri::command]
-pub fn delete_folder_permanently(folder_path: &str) -> Result<usize, String> {
-    t_utils::delete_folder_permanently(folder_path)?;
+pub fn delete_folder_permanently(folder_path: &str, library_id: &str, expected_identity: &str) -> Result<usize, String> {
+    with_current_library(library_id, || {
+        validate_folder_delete(folder_path, library_id)?;
+        verify_folder_delete_identity(folder_path, expected_identity)?;
+        t_utils::delete_folder_permanently(folder_path)?;
 
-    AFolder::delete_folder(folder_path)
-        .map_err(|e| format!("Error while deleting folder from DB: {}", e))
+        AFolder::delete_folder(folder_path)
+            .map_err(|e| format!("Error while deleting folder from DB: {}", e))
+    })
 }
 
 /// reveal a file or folder in the file explorer (or finder)

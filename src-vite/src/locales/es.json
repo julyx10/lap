@@ -974,7 +974,8 @@
       "title": "No se pudo mover a la papelera",
       "file_content": "El archivo '{file}' no se pudo mover a la papelera.\n\n¿Quieres eliminarlo permanentemente en su lugar?",
       "files_content": "{count} archivos seleccionados no se pudieron mover a la papelera.\n\n¿Quieres eliminarlos permanentemente en su lugar?",
-      "folder_content": "La carpeta '{folder}' no se pudo mover a la papelera.\n\n¿Quieres eliminarla permanentemente en su lugar?",
+      "folder_content": "La carpeta '{folder}' no se pudo mover a la papelera.\n\n¿Quieres eliminarla permanentemente en su lugar?\n\nEsta acción no se puede deshacer desde la papelera del sistema.",
+      "folder_partial_warning": "Es posible que el intento anterior haya movido parte del contenido a la papelera. La eliminación permanente borrará esta carpeta y su contenido restante.",
       "ok": "Eliminar permanentemente"
     },
     "open_external_many": {

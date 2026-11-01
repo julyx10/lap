@@ -731,9 +731,13 @@ export async function copyFolder(folderPath, newFolderPath, newAlbumId = 0, conf
 }
 
 // delete a folder (move to trash)
-export async function deleteFolder(folderPath) {
+export function prepareFolderDelete(folderPath, libraryId) {
+  return invoke('prepare_folder_delete', { folderPath, libraryId });
+}
+
+export async function deleteFolder(folderPath, libraryId, expectedIdentity) {
   try {
-    const result = await invoke('delete_folder', { folderPath });
+    const result = await invoke('delete_folder', { folderPath, libraryId, expectedIdentity });
     return result;
   } catch (error) {
     console.log('Failed to delete folder:', error);
@@ -742,9 +746,9 @@ export async function deleteFolder(folderPath) {
 };
 
 // permanently delete a folder (skip trash)
-export async function deleteFolderPermanently(folderPath) {
+export async function deleteFolderPermanently(folderPath, libraryId, expectedIdentity) {
   try {
-    return await invoke('delete_folder_permanently', { folderPath });
+    return await invoke('delete_folder_permanently', { folderPath, libraryId, expectedIdentity });
   } catch (error) {
     console.error('Failed to permanently delete folder:', error);
     throw error;
