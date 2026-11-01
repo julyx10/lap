@@ -56,7 +56,7 @@
     </div>
     <div
       v-if="showUpdateIcon"
-      class="absolute right-1 shrink-0 px-1 py-1 flex items-center gap-1 rounded-full bg-base-300 text-primary/70 text-[11px] font-mono"
+      class="absolute right-1 shrink-0 px-1 py-1 flex items-center gap-1 rounded-full bg-base-300 text-primary text-[11px] font-mono"
     >
       <component :is="updateIconComponent" class="t-icon-size-xs shrink-0" :class="{ 'animate-spin': isUpdateAnimating }" />
       <span v-if="scanText" class="truncate text-right">{{ scanText }}</span>

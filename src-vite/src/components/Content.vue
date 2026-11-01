@@ -213,7 +213,7 @@
             :class="{ 'pointer-events-none': uiStore.inputStack.length > 0 }"
             @pointerdown.stop @click.stop
           >
-            <button class="flex items-center gap-2 rounded-box px-1 py-1 text-primary/70 hover:text-primary cursor-pointer"
+            <button class="flex items-center gap-2 rounded-box px-1 py-1 text-primary cursor-pointer"
               :aria-label="$t('toolbar.filter.show_selection_panel')"
               :title="$t('toolbar.filter.show_selection_panel')" @click="openSelectionPanel"
             >
