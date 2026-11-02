@@ -2345,7 +2345,9 @@ impl AFile {
                 ELSE NOT EXISTS (
                     SELECT 1 FROM afolders xf
                     WHERE xf.is_excluded_from_search = 1
-                    AND xf.album_id = {folder_alias}.album_id
+                    -- unary + keeps the planner on the small is_excluded_from_search
+                    -- index instead of scanning every folder of the album per file
+                    AND +xf.album_id = {folder_alias}.album_id
                     AND (
                         {folder_alias}.path = xf.path
                         OR instr({folder_alias}.path, xf.path || '{}') = 1
