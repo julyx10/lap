@@ -450,6 +450,7 @@
       "placeholder": "Keresés fájlnévre"
     },
     "filter": {
+      "favorites_only": "Csak kedvencek",
       "select_mode": "Többszörös kijelölés",
       "select_files": "Fájlok kijelölése",
       "show_selection_panel": "Többszörös kijelölési panel megnyitása",

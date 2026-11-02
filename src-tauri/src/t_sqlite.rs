@@ -2170,6 +2170,8 @@ pub struct SmartQueryParams {
     pub r#match: String,
     #[serde(default)]
     pub rules: Vec<SmartRule>,
+    #[serde(default)]
+    pub favorites_only: bool,
     pub sort_type: i64,
     pub sort_order: i64,
     #[serde(default)]
@@ -6401,6 +6403,9 @@ impl AFile {
             )?);
         }
 
+        if params.favorites_only {
+            conditions.push("a.is_favorite = 1".to_string());
+        }
         Self::append_album_filter(&mut conditions);
 
         conditions.push(Self::search_exclusion_condition("b"));
@@ -10771,6 +10776,40 @@ fn create_db_internal() -> Result<(), String> {
     .map_err(|e| e.to_string())?;
 
     Ok(())
+}
+
+#[cfg(test)]
+mod favorites_filter_tests {
+    use super::*;
+
+    #[test]
+    fn favorite_filter_intersects_any_smart_rules_without_changing_them() {
+        let conn = Connection::open_in_memory().unwrap();
+        conn.execute_batch("CREATE TABLE albums(id INTEGER PRIMARY KEY, path TEXT, file_types INTEGER, small_image_filter INTEGER, excluded_folders TEXT);
+            INSERT INTO albums VALUES(1, '/', 7, NULL, '[]');
+            CREATE TABLE afolders(id INTEGER PRIMARY KEY, album_id INTEGER, path TEXT, is_excluded_from_search INTEGER);
+            INSERT INTO afolders VALUES(1, 1, '/photos', 0);
+            CREATE TABLE afiles(id INTEGER PRIMARY KEY, folder_id INTEGER, live_photo_video_id INTEGER, width INTEGER, height INTEGER, file_type INTEGER, rating INTEGER, is_favorite INTEGER);
+            INSERT INTO afiles VALUES(1,1,NULL,1000,1000,1,5,1), (2,1,NULL,1000,1000,1,4,0), (3,1,NULL,1000,1000,1,0,1);").unwrap();
+        let mut params: SmartQueryParams = serde_json::from_value(serde_json::json!({
+            "sortType":0,"sortOrder":0,"match":"any",
+            "rules":[{"id":"five","field":"rating","operator":"eq","value":5},
+                     {"id":"four","field":"rating","operator":"eq","value":4}]
+        })).unwrap();
+        let ids = |params: &SmartQueryParams| {
+            let (joins, conditions, values, _) = AFile::build_smart_query_parts(params).unwrap();
+            let sql = format!("SELECT a.id FROM afiles a JOIN afolders b ON b.id=a.folder_id {joins}{conditions} ORDER BY a.id");
+            let mut stmt = conn.prepare(&sql).unwrap();
+            stmt.query_map(params_from_iter(values.iter()), |row| row.get::<_, i64>(0))
+                .unwrap().collect::<Result<Vec<_>, _>>().unwrap()
+        };
+        assert_eq!(ids(&params), vec![1, 2]);
+        params.favorites_only = true;
+        assert_eq!(ids(&params), vec![1]);
+        assert_eq!(params.rules.len(), 2);
+        params.favorites_only = false;
+        assert_eq!(ids(&params), vec![1, 2]);
+    }
 }
 
 #[cfg(test)]

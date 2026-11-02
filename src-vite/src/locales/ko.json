@@ -450,6 +450,7 @@
       "placeholder": "파일 이름"
     },
     "filter": {
+      "favorites_only": "즐겨찾기만",
       "select_mode": "다중 선택",
       "select_files": "파일 선택",
       "show_selection_panel": "다중 선택 패널 열기",

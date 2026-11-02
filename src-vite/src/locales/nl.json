@@ -450,6 +450,7 @@
       "placeholder": "Zoek op bestandsnaam"
     },
     "filter": {
+      "favorites_only": "Alleen favorieten",
       "select_mode": "Meervoudige selectie",
       "select_files": "Bestanden selecteren",
       "show_selection_panel": "Paneel voor meervoudige selectie openen",

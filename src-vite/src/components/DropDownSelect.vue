@@ -21,6 +21,7 @@
     >
       <component v-if="icon" :is="icon" class="w-4 h-4 shrink-0" />
       <span v-if="!iconOnly">{{ triggerLabel }}</span>
+      <slot name="trigger-suffix" />
       <IconArrowDown v-if="!iconOnly" class="w-3 h-3 shrink-0 opacity-50" />
     </button>
 
@@ -35,7 +36,9 @@
           <!-- menu group 1 -->
           <template v-for="(option, index) in options" :key="index">
             <button
-              class="p-1 flex flex-row hover:bg-base-100/30 hover:text-base-content hover:rounded-box cursor-pointer text-sm whitespace-nowrap "
+              class="p-1 flex flex-row text-sm whitespace-nowrap"
+              :disabled="optionsDisabled"
+              :class="optionsDisabled ? 'opacity-40 cursor-default' : 'hover:bg-base-100/30 hover:text-base-content hover:rounded-box cursor-pointer'"
               @click="selectOption(index)"
             >
               <div class="w-5">
@@ -46,6 +49,8 @@
             </button>
             <div v-if="separatorsAfter.includes(index)" class="mx-2 my-1 border-t border-base-content/10"></div>
           </template>
+
+          <slot name="menu-after" />
 
           <!-- seperator -->
           <div v-if="extendOptions.length > 0 " class="mx-2 my-1 border-t border-base-content/10"></div>
@@ -98,6 +103,10 @@ const props = defineProps({
     default: 0,
   },
   disabled: {
+    type: Boolean,
+    default: false,
+  },
+  optionsDisabled: {
     type: Boolean,
     default: false,
   },
@@ -244,6 +253,7 @@ const handleClickOutside = (event) => {
 };
 
 const selectOption = (index) => {
+  if (props.disabled || props.optionsDisabled) return;
   if (props.multiSelect) {
     const optionValue = Number(props.options[index]?.value);
     if (Number.isNaN(optionValue)) return;

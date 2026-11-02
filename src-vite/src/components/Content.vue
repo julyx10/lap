@@ -63,10 +63,24 @@
           :selectedValues="fileTypeSelectedValues"
           :summaryLabel="fileTypeSummaryLabel"
           :separatorsAfter="[0]"
-          :disabled="isFixedAiResultView || tempViewMode === 'album' || isScanStreamingMode"
-          :selected="activeFileTypeMask !== 0"
+          :disabled="isFavoritesFilterDisabled"
+          :optionsDisabled="isFixedAiResultView"
+          :selected="activeFileTypeMask !== 0 || activeFavoritesOnly"
+          :title="activeFavoritesOnly ? $t('toolbar.filter.favorites_only') : ''"
           @multi-select="handleFileTypeSelect"
-        />
+        >
+          <template #trigger-suffix>
+            <IconHeartFilled v-if="activeFavoritesOnly" class="w-4 h-4 shrink-0" />
+          </template>
+          <template #menu-after>
+            <div class="mx-2 my-1 border-t border-base-content/10"></div>
+            <button class="p-1 flex items-center text-sm whitespace-nowrap rounded-box hover:bg-base-100/30 hover:text-base-content cursor-pointer"
+              role="menuitemcheckbox" :aria-checked="activeFavoritesOnly" @click="toggleFavoritesFilter">
+              <span class="w-5"><IconOk v-if="activeFavoritesOnly" class="w-4 h-4" /></span>
+              <span class="mr-4">{{ $t('toolbar.filter.favorites_only') }}</span>
+            </button>
+          </template>
+        </DropDownSelect>
 
         <!-- sort type options -->
         <DropDownSelect
@@ -881,6 +895,7 @@ import {
   IconSimilar,
   IconCamera,
   IconHeartFilled,
+  IconOk,
   IconHistory,
   IconStack,
   IconFileSearch,
@@ -3717,6 +3732,7 @@ watch(
     if (countedFolderRequestId.value !== currentContentRequestId || currentQuerySource.value !== 'query' || !path
       || !contentReady.value || isLoading.value || contentQueryRefreshPending
       || !contentCountIsAuthoritative.value || tempViewMode.value !== 'none'
+      || config.search.favoritesOnly
       || !matchesRequestedSidebarCount({ source: 'album-folder', path })) return;
     setFolderFileCount(path, Math.max(0, Number(totalFileCount.value || 0)));
   },
@@ -3759,6 +3775,10 @@ function matchesRequestedSidebarCount(request: any) {
 
 function commitRequestedSidebarCount(count: number, request = uiStore.countUpdateRequest) {
   if (!request || uiStore.countUpdateRequest !== request) return;
+  if (config.search.favoritesOnly) {
+    uiStore.clearCountUpdateRequest();
+    return;
+  }
   if (!matchesRequestedSidebarCount(request)) {
     uiStore.clearCountUpdateRequest();
     return;
@@ -6547,7 +6567,7 @@ watch(
     libConfig.search.searchText,
     libConfig.rating.item, // rating
     libConfig.culling.item, // culling
-    config.search.fileType, config.search.sortType, config.search.sortOrder, // search and sort 
+    config.search.fileType, config.search.favoritesOnly, config.search.sortType, config.search.sortOrder, // search and sort
     config.settings.showSubfolderFiles,                                            // album folder view
     config.settings.folderSort, config.settings.calendarSort, config.settings.locationSort, config.settings.cameraSort, config.search.groupBy, // group sorting and filtering (tag/person sorts only affect their sidebars, not content grouping)
     libConfig.person.id,                                                              // person
@@ -7492,7 +7512,7 @@ async function getFileList(
     lensModel = '',
     locationAdmin1 = '', 
     locationName = '', 
-    isFavorite = false, 
+    isFavorite = activeFavoritesOnly.value,
     rating = -1,
     cullingFlag = -1,
     tagId = 0,
@@ -7692,7 +7712,7 @@ async function getCollectionFileList(collectionId: number, requestId: number) {
     lensModel: '',
     locationAdmin1: '',
     locationName: '',
-    isFavorite: false,
+    isFavorite: Boolean(config.search.favoritesOnly),
     rating: -1,
     tagId: 0,
     personId: 0,
@@ -7763,6 +7783,7 @@ async function getSmartFileList(smartAlbum: any, requestId: number) {
     version: Number(query.version || 1),
     match: query.match === 'any' ? 'any' : 'all',
     rules,
+    favoritesOnly: Boolean(config.search.favoritesOnly),
     sortType: Number(smartAlbum?.sort?.type ?? 0),
     sortOrder: Number(smartAlbum?.sort?.order ?? 1),
     randomSeed: createRandomSeed(),
@@ -7828,7 +7849,7 @@ async function getSmartFileList(smartAlbum: any, requestId: number) {
 }
 
 async function updateSmartAlbumCover(smartAlbum: any, requestId: number) {
-  const result = await getSmartQueryFiles(currentSmartQueryParams.value, 0, 1);
+  const result = await getSmartQueryFiles({ ...currentSmartQueryParams.value, favoritesOnly: false }, 0, 1);
   if (
     requestId !== currentContentRequestId ||
     libConfig.smartAlbum.type !== 'custom' ||
@@ -7888,7 +7909,8 @@ async function getImageSearchFileList(
     if (result) {
       clearSelectionForFileListUpdate();
       resetGroupingState();
-      fileList.value = preserveLoadedThumbnails(result.filter(passesAlbumFilters));
+      fileList.value = preserveLoadedThumbnails(result.filter(passesAlbumFilters)
+        .filter((file: any) => !activeFavoritesOnly.value || file.is_favorite));
       contentCountIsAuthoritative.value = true;
       currentSearchFileIds.value = fileList.value
         .map(file => Number(file.id))
@@ -7951,7 +7973,7 @@ async function getUnifiedSearchFileList(searchText: string, requestId: number) {
     lensModel: '',
     locationAdmin1: '',
     locationName: '',
-    isFavorite: false,
+    isFavorite: Boolean(config.search.favoritesOnly),
     rating: -1,
     tagId: 0,
     personId: 0,
@@ -7999,7 +8021,8 @@ async function getUnifiedSearchFileList(searchText: string, requestId: number) {
     const textIds = new Set(textMatches.map((file: any) => Number(file.id)));
     const visualMatches = (Array.isArray(visualResult) ? visualResult : [])
       .filter((file: any) => !textIds.has(Number(file.id)))
-      .filter(passesAlbumFilters);
+      .filter(passesAlbumFilters)
+      .filter((file: any) => !config.search.favoritesOnly || file.is_favorite);
     const files = preserveLoadedThumbnails([...textMatches, ...visualMatches]);
     contentCountIsAuthoritative.value = true;
 
@@ -10478,6 +10501,16 @@ const activeFileTypeMask = computed(() =>
     ? smartAlbumFileTypeMask.value
     : Number(config.search.fileType || 0)
 );
+
+const isFavoritesFilterDisabled = computed(() => tempViewMode.value === 'person'
+  || tempViewMode.value === 'similar' || tempViewMode.value === 'album' || isScanStreamingMode.value);
+const activeFavoritesOnly = computed(() => Boolean(config.search.favoritesOnly) && !isFavoritesFilterDisabled.value);
+
+function toggleFavoritesFilter() {
+  if (isFavoritesFilterDisabled.value) return;
+  rememberFocusedFileForPresentationRefresh();
+  config.search.favoritesOnly = !config.search.favoritesOnly;
+}
 
 const fileTypeSelectedValues = computed(() => {
   const mask = normalizeFileTypeMask(activeFileTypeMask.value);

@@ -450,6 +450,7 @@
       "placeholder": "Имя файла"
     },
     "filter": {
+      "favorites_only": "Только избранное",
       "select_mode": "Множественный выбор",
       "select_files": "Выбрать файлы",
       "show_selection_panel": "Открыть панель множественного выбора",

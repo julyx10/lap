@@ -450,6 +450,7 @@
       "placeholder": "Search file name"
     },
     "filter": {
+      "favorites_only": "Favorites only",
       "select_mode": "Multi-select",
       "select_files": "Select files",
       "show_selection_panel": "Open multi-select panel",

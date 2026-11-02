@@ -450,6 +450,7 @@
       "placeholder": "Шукати за назвою файлу"
     },
     "filter": {
+      "favorites_only": "Лише обране",
       "select_mode": "Множинний вибір",
       "select_files": "Вибрати файли",
       "show_selection_panel": "Відкрити панель множинного вибору",

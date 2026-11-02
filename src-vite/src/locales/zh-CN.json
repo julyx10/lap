@@ -450,6 +450,7 @@
       "placeholder": "搜索文件名"
     },
     "filter": {
+      "favorites_only": "仅收藏",
       "select_mode": "多选",
       "select_files": "选择文件",
       "show_selection_panel": "打开多选面板",
