@@ -253,6 +253,18 @@ fn source_rank(tag: &Tag) -> u8 {
     }
 }
 
+fn resolved_lens_id(tags: &[Tag]) -> Option<String> {
+    tags.iter().filter(|tag| tag.name == "LensID" && tag.group.family0 == "Composite")
+        .find_map(|tag| {
+            // Nikon's raw LensID is a byte signature; only use a resolved name.
+            let name = tag.print_value.trim();
+            let lower = name.to_ascii_lowercase();
+            (!name.is_empty() && !name.contains('\0') && !lower.starts_with("unknown")
+                && !matches!(lower.as_str(), "n/a" | "none")
+                && name != tag.raw_value.to_display_string().trim()).then(|| name.to_owned())
+        })
+}
+
 #[cfg(test)]
 fn from_tags(tags: &[Tag]) -> Metadata {
     map_tags(tags, true)
@@ -344,7 +356,7 @@ fn map_tags(tags: &[Tag], fallback_xmp_keywords: bool) -> Metadata {
         make: string("Make"),
         model: string("Model"),
         lens_make: string("LensMake"),
-        lens_model: string("LensModel"),
+        lens_model: string("LensModel").or_else(|| resolved_lens_id(tags)),
         date: string("DateTimeOriginal"),
         latitude: gps.map(|(a, _)| a),
         longitude: gps.map(|(_, b)| b),
@@ -431,6 +443,32 @@ fn coordinate(value: &Value, reference: Option<&str>, limit: f64) -> Option<f64>
 #[cfg(test)]
 pub(crate) mod tests {
     use super::*;
+
+    #[test]
+    fn resolved_lens_id_fills_missing_model_without_overriding_existing_model() {
+        let tag = |name: &str, group: &str, raw_value, print: &str| Tag {
+            id: exiftool_rs::TagId::Numeric(0), name: name.into(), description: String::new(),
+            group: exiftool_rs::TagGroup { family0: group.into(), family1: group.into(),
+                family2: "Camera".into(), family3: "Main".into() },
+            raw_value, print_value: print.into(), priority: 1,
+        };
+        for (id, name) in [("01 58 50 50 14 14 02 00", "AF Nikkor 50mm f/1.8"),
+            ("91 54 44 44 0C 0C 4B 06", "Sigma 35mm F1.4 DG HSM")] {
+            let lens_id = tag("LensID", "Composite", Value::String(id.into()), name);
+            assert_eq!(from_tags(&[lens_id.clone()]).lens_model.as_deref(), Some(name));
+            let model = tag("LensModel", "EXIF", Value::String("Existing lens".into()), "Existing lens");
+            assert_eq!(from_tags(&[lens_id, model]).lens_model.as_deref(), Some("Existing lens"));
+        }
+        for printed in ["", "01 58 50 50 14 14 02 00", "Unknown (01 58)", "n/a", "None", "bad\0name"] {
+            let lens_id = tag("LensID", "Composite", Value::String("01 58 50 50 14 14 02 00".into()), printed);
+            assert!(from_tags(&[lens_id]).lens_model.is_none());
+        }
+        let numeric = tag("LensID", "Composite", Value::U16(145), "145");
+        assert!(from_tags(&[numeric]).lens_model.is_none());
+        let untrusted = tag("LensID", "MakerNotes", Value::U16(145), "Sigma 35mm F1.4 DG HSM");
+        assert!(from_tags(&[untrusted]).lens_model.is_none());
+    }
+
     #[test]
     fn keywords_preserve_commas_and_ignore_numeric_garbage() {
         let mut words = Vec::new();

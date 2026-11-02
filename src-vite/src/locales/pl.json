@@ -1008,11 +1008,6 @@
     },
     "file_refresh": {
       "skipped": "Pominięto: {count}",
-      "checking": "Sprawdzanie…",
-      "pending": "Pliki wymagające aktualizacji: {count}",
-      "up_to_date": "Informacje o plikach są aktualne.",
-      "check_failed": "Nie udało się sprawdzić niektórych plików.",
-      "update": "Aktualizuj",
       "status": "Stan odświeżania",
       "running": "Odświeżanie…",
       "cancelling": "Anulowanie…",

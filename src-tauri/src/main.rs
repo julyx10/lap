@@ -352,7 +352,6 @@ async fn main() {
             t_cmds::get_file_metadata_details,
             t_cmds::cancel_file_metadata_requests,
             t_cmds::update_file_info,
-            t_cmds::check_selected_file_info,
             t_cmds::begin_file_transfer_batch,
             t_cmds::end_file_transfer_batch,
             t_cmds::begin_file_refresh_batch,

@@ -1008,11 +1008,6 @@
     },
     "file_refresh": {
       "skipped": "スキップ: {count}",
-      "checking": "確認中…",
-      "pending": "更新が必要なファイル: {count}",
-      "up_to_date": "ファイル情報は最新です。",
-      "check_failed": "一部のファイルを確認できませんでした。",
-      "update": "更新",
       "status": "更新状況",
       "running": "更新中…",
       "cancelling": "キャンセル中…",

@@ -1008,11 +1008,6 @@
     },
     "file_refresh": {
       "skipped": "已跳过：{count}",
-      "checking": "正在检查…",
-      "pending": "需要更新 {count} 个文件",
-      "up_to_date": "文件信息已是最新。",
-      "check_failed": "部分文件无法检查。",
-      "update": "更新",
       "status": "刷新状态",
       "running": "正在刷新…",
       "cancelling": "正在取消…",

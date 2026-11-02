@@ -1008,11 +1008,6 @@
     },
     "file_refresh": {
       "skipped": "건너뜀: {count}",
-      "checking": "확인 중…",
-      "pending": "업데이트가 필요한 파일: {count}개",
-      "up_to_date": "파일 정보가 최신 상태입니다.",
-      "check_failed": "일부 파일을 확인하지 못했습니다.",
-      "update": "업데이트",
       "status": "새로 고침 상태",
       "running": "새로 고침 중…",
       "cancelling": "취소 중…",

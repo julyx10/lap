@@ -3276,26 +3276,6 @@ pub fn end_file_refresh_batch(batch_id: u64) {
     crate::t_xmp::end_refresh_batch(batch_id);
 }
 
-#[tauri::command]
-pub async fn check_selected_file_info(
-    library_id: String,
-    file_id: i64,
-    batch_id: u64,
-    thumbnail_size: u32,
-    raw_display_options: RawDisplayOptions,
-) -> Result<bool, String> {
-    tauri::async_runtime::spawn_blocking(move || {
-        with_current_library(&library_id, || {
-            let _index = crate::t_xmp::refresh_index_scope(Some(batch_id), &library_id)?;
-            let file = AFile::get_file_info(file_id)?.ok_or("File not found")?;
-            Ok(file.metadata_needs_refresh()?
-                || AThumb::needs_refresh(&file, thumbnail_size, raw_display_options)?)
-        })
-    })
-    .await
-    .map_err(|e| format!("File check task failed: {e}"))?
-}
-
 /// Explicitly replace a video thumbnail without refreshing metadata.
 #[tauri::command]
 pub async fn change_video_thumbnail(
@@ -3319,7 +3299,7 @@ pub async fn change_video_thumbnail(
     }).await.map_err(|e| format!("Thumbnail task failed: {e}"))?
 }
 
-/// Repair only stale or missing metadata/cache entries in the selected file.
+/// Re-extract local metadata; repair thumbnails only when stale or missing.
 #[tauri::command]
 pub async fn refresh_selected_file_info(
     library_id: String,

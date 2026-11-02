@@ -1008,11 +1008,6 @@
     },
     "file_refresh": {
       "skipped": "Übersprungen: {count}",
-      "checking": "Wird geprüft…",
-      "pending": "{count} Dateien müssen aktualisiert werden",
-      "up_to_date": "Die Dateiinformationen sind aktuell.",
-      "check_failed": "Einige Dateien konnten nicht geprüft werden.",
-      "update": "Aktualisieren",
       "status": "Aktualisierungsstatus",
       "running": "Wird aktualisiert…",
       "cancelling": "Wird abgebrochen…",

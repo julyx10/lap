@@ -4198,7 +4198,7 @@ impl AFile {
     pub(crate) fn refresh_metadata(
         file_id: i64,
         force_download: bool,
-        retry_failed: bool,
+        force_metadata: bool,
     ) -> Result<MetadataRefresh, String> {
         let old = Self::get_file_info(file_id)?.ok_or("File not found")?;
         let path = old.file_path.as_deref().ok_or("File path missing")?;
@@ -4216,7 +4216,7 @@ impl AFile {
         let _scan = crate::t_xmp::sidecar_scan(checked);
         let version = metadata_failure_version(path);
         let failure_key = refresh_failure_key("metadata", file_id);
-        if !retry_failed && old.metadata_pending {
+        if !force_metadata && old.metadata_pending {
             if let Some((message, warning)) = recent_refresh_failure(&failure_key, &version) {
                 if warning {
                     return Ok(MetadataRefresh {
@@ -4229,7 +4229,7 @@ impl AFile {
                 return Err(message);
             }
         }
-        if !skipped && (force_download || old.needs_extraction(&info)) {
+        if !skipped && (force_download || force_metadata || old.needs_extraction(&info)) {
             let (updated, warning) =
                 match Self::update_file_info_with_xmp_error(file_id, path, checked) {
                     Ok(result) => result,
@@ -8405,10 +8405,10 @@ impl AThumb {
         file_id: i64,
         size: u32,
         options: RawDisplayOptions,
-        retry_metadata: bool,
+        force_metadata: bool,
     ) -> Result<(MetadataRefresh, Option<String>), String> {
         Self::with_generation_guard(file_id, size, || {
-            let mut refresh = AFile::refresh_metadata(file_id, false, retry_metadata)?;
+            let mut refresh = AFile::refresh_metadata(file_id, false, force_metadata)?;
             if refresh.skipped {
                 return Ok((refresh, None));
             }
@@ -11351,6 +11351,47 @@ mod file_refresh_policy_tests {
             INSERT INTO athumbs VALUES(1,10,0,zeroblob(1048576),'cached-key',123,512,123);").unwrap();
         conn
     }
+    #[test]
+    #[ignore = "requires LAP_NIKON_LENS_SAMPLES and an isolated test process"]
+    fn explicit_refresh_backfills_lens_on_unchanged_files() {
+        let fixture = Fixture::new();
+        let profile = fixture.0.join("profile");
+        t_config::set_app_identifier(profile.to_str().unwrap());
+        assert!(t_config::get_app_data_dir().unwrap().starts_with(&fixture.0));
+        create_db().unwrap();
+        for path in std::env::var("LAP_NIKON_LENS_SAMPLES").unwrap().split(';') {
+            let parent = Path::new(path).parent().unwrap().to_str().unwrap();
+            let folder = {
+                let conn = open_conn().unwrap();
+                conn.execute("INSERT INTO albums(name,path) VALUES('fixture',?1)", [parent]).unwrap();
+                let album = conn.last_insert_rowid();
+                conn.execute("INSERT INTO afolders(album_id,name,path) VALUES(?1,'fixture',?2)", params![album,parent]).unwrap();
+                conn.last_insert_rowid()
+            };
+            let mut file = AFile::new(folder, path, 3).unwrap();
+            let expected_lens = file.e_lens_model.take().expect("sample must have a known lens");
+            let expected_make = file.e_lens_make.take();
+            file.last_scan_time = Some(i64::MAX);
+            file.rating = Some(4);
+            file.is_favorite = Some(true);
+            file.comments = Some("Keep this comment".into());
+            file.insert().unwrap();
+            let id = AFile::fetch(folder, path).unwrap().unwrap().id.unwrap();
+            let background = AFile::refresh_metadata(id, false, false).unwrap();
+            assert!(background.file.e_lens_model.is_none());
+            let refreshed = AFile::refresh_metadata(id, false, true).unwrap();
+            assert!(!refreshed.skipped);
+            assert_eq!(refreshed.size_delta, 0);
+            assert_eq!(refreshed.file.e_lens_model.as_deref(), Some(expected_lens.as_str()));
+            assert_eq!(refreshed.file.e_lens_make, expected_make);
+            assert_eq!(refreshed.file.rating, Some(4));
+            assert_eq!(refreshed.file.is_favorite, Some(true));
+            assert_eq!(refreshed.file.comments.as_deref(), Some("Keep this comment"));
+            println!("Refreshed unchanged {path}: {expected_lens}");
+        }
+        clear_conn_pool();
+    }
+
     #[test]
     fn metadata_uses_source_version_and_pending_without_backfilling_unknown_fields() {
         let f = Fixture::new();

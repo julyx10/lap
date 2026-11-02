@@ -1008,11 +1008,6 @@
     },
     "file_refresh": {
       "skipped": "已跳過：{count}",
-      "checking": "正在檢查…",
-      "pending": "需要更新 {count} 個檔案",
-      "up_to_date": "檔案資訊已是最新。",
-      "check_failed": "部分檔案無法檢查。",
-      "update": "更新",
       "status": "重新整理狀態",
       "running": "重新整理中…",
       "cancelling": "取消中…",

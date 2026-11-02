@@ -1008,11 +1008,6 @@
     },
     "file_refresh": {
       "skipped": "Kihagyva: {count}",
-      "checking": "Ellenőrzés…",
-      "pending": "{count} fájl frissítést igényel",
-      "up_to_date": "A fájlinformációk naprakészek.",
-      "check_failed": "Néhány fájl nem ellenőrizhető.",
-      "update": "Frissítés",
       "status": "Frissítés állapota",
       "running": "Frissítés…",
       "cancelling": "Megszakítás…",

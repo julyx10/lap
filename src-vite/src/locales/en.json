@@ -1008,11 +1008,6 @@
     },
     "file_refresh": {
       "skipped": "Skipped: {count}",
-      "checking": "Checking…",
-      "pending": "{count} files need updating",
-      "up_to_date": "File info is up to date.",
-      "check_failed": "Some files could not be checked.",
-      "update": "Update",
       "status": "Refresh status",
       "running": "Refreshing…",
       "cancelling": "Cancelling…",
