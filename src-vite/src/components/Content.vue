@@ -1406,11 +1406,19 @@ async function restoreSelectionAfterFileListRefresh() {
     if (targetIndex >= 0) {
       selectedItemIndex.value = targetIndex;
       await nextTick();
+      if (requestId !== currentContentRequestId || pendingSelectionRestore !== restoreState) {
+        retryForNewerRefresh = true;
+        return;
+      }
       if (groupedModeActive.value) {
         await scrollToGroupedFile(targetIndex);
       } else {
         gridViewRef.value?.scrollToItem(targetIndex);
       }
+    }
+    if (requestId !== currentContentRequestId || pendingSelectionRestore !== restoreState) {
+      retryForNewerRefresh = true;
+      return;
     }
     pendingFocusedFileId = null;
 
@@ -1471,6 +1479,7 @@ async function restoreFocusedFileAfterListRefresh() {
     }
     selectedItemIndex.value = fileIndex;
     await nextTick();
+    if (requestId !== currentContentRequestId || pendingScopeSelectionChange) return;
     if (groupedModeActive.value) {
       await scrollToGroupedFile(fileIndex);
     } else {
@@ -1494,10 +1503,12 @@ async function waitForGroupedGridLayout() {
 }
 
 async function scrollToGroupedFile(fileIndex: number) {
+  const requestId = currentContentRequestId;
   const rowIndex = getGroupedRowIndexForFileIndex(fileIndex);
   if (rowIndex < 0) return;
 
   await waitForGroupedGridLayout();
+  if (requestId !== currentContentRequestId || pendingScopeSelectionChange) return;
   gridViewRef.value?.scrollToRowIndex(rowIndex);
 
   if (isGeometryGridStyle.value) {
@@ -1506,12 +1517,17 @@ async function scrollToGroupedFile(fileIndex: number) {
       rowIndex + selectionChunkSize.value,
     );
     await waitForGroupedGridLayout();
+    if (requestId !== currentContentRequestId || pendingScopeSelectionChange) return;
     gridViewRef.value?.scrollToRowIndex(rowIndex);
   }
 }
 
 watch([fileList, contentReady], () => {
   if (!contentReady.value) return;
+  selectedItemIndex.value = fileList.value.length > 0
+    ? Math.min(Math.max(selectedItemIndex.value, 0), fileList.value.length - 1)
+    : -1;
+  if (fileList.value.length === 0) pendingFocusedFileId = null;
   if (pendingSelectionRestore) {
     void restoreSelectionAfterFileListRefresh();
   } else if (pendingFocusedFileId && fileList.value.length > 0) {
@@ -3793,6 +3809,7 @@ let unlistenPasteClipboard: (() => void) | null = null;
 let resizeObserver: ResizeObserver | null = null;
 let contentUpdateTimer: ReturnType<typeof setTimeout> | null = null;
 let contentQueryRefreshPending = false;
+let pendingScopeSelectionChange = false;
 let sidebarCountRequestId = 0;
 
 function scheduleContentRefresh(task: () => void) {
@@ -3812,19 +3829,14 @@ function waitForContentLoadingPaint() {
 }
 
 function refreshContentFromSelectionChange() {
-  // In single-select mode, retain the active file before the config watcher
-  // resets the viewport. This covers grouping changes as well as sorting and
-  // filters that are not initiated by a toolbar handler.
-  if (!selectMode.value && selectedItemIndex.value >= 0) {
+  // Filters/sorting/grouping retain the file by ID; a new scope starts at zero.
+  if (!pendingScopeSelectionChange && !selectMode.value && selectedItemIndex.value >= 0) {
     rememberFocusedFileForPresentationRefresh();
   }
 
   if (!selectMode.value || selectedCount.value === 0) {
     scrollPosition.value = 0;
     gridViewRef.value?.scrollToPosition(0);
-    // Keep the file index intact until its new position is resolved. A view
-    // change clears pendingFocusedFileId and therefore retains the old reset.
-    if (!pendingFocusedFileId) selectedItemIndex.value = 0;
   }
   updateContent();
   // Reset ImageViewer context if open (without focusing/showing it)
@@ -5625,8 +5637,9 @@ async function cancelIndexing() {
 
 onMounted( async() => {
   const appConfig = await getAppConfig();
-  pendingInitialSelectedIndex = Number(appConfig?.last_selected_item_index ?? -1);
-  hasRestoredInitialSelection = false;
+  if (!hasRestoredInitialSelection) {
+    pendingInitialSelectedIndex = Number(appConfig?.last_selected_item_index ?? -1);
+  }
 
   window.addEventListener('keydown', handleLocalKeyDown);
   window.addEventListener('keydown', handleVideoSpaceKeyDown, true);
@@ -6296,11 +6309,15 @@ watch(() => libConfig._libraryId, () => {
 /// watch for file list changes
 watch(
   () => JSON.stringify({
+    libraryId: libConfig._libraryId,
     sidebar: config.main.sidebarIndex,
     pane: libConfig.activePane,
     collectionId: libConfig.collection.selectedId,
     libraryItem: libConfig.library.item,
     smartId: libConfig.library.smartId,
+    searchText: libConfig.search.searchText,
+    rating: libConfig.rating.item,
+    culling: libConfig.culling.item,
     album: [libConfig.album.id, libConfig.album.folderId, libConfig.album.folderPath, libConfig.album.selected],
     smartAlbum: [libConfig.smartAlbum.type, libConfig.smartAlbum.id],
     personId: libConfig.person.id,
@@ -6311,8 +6328,13 @@ watch(
   }),
   (nextView, previousView) => {
     if (previousView !== undefined && nextView !== previousView) {
+      pendingScopeSelectionChange = true;
       pendingFocusedFileId = null;
-      if (selectMode.value) selectNoneInCurrentList();
+      pendingSelectionRestore = null;
+      pendingInitialSelectedIndex = -1;
+      hasRestoredInitialSelection = true;
+      clearSelectionForFileListUpdate();
+      selectedItemIndex.value = 0;
     }
   },
 );
@@ -7861,6 +7883,7 @@ async function getUnifiedSearchFileList(searchText: string, requestId: number) {
 let contentUpdateSeq = 0;
 
 async function updateContent(force = false, preserveMultiSelection = selectMode.value) {
+  pendingScopeSelectionChange = false;
   const updateSeq = ++contentUpdateSeq;
   const newIndex = config.main.sidebarIndex;
   const nextAlbumId = newIndex === SIDEBAR.ALBUM ? Number(libConfig.album.id || 0) : 0;
