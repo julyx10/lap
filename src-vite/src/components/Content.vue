@@ -4976,10 +4976,20 @@ function handleLocalKeyDown(event: KeyboardEvent) {
   }
 }
 
-function handleVideoSpaceKeyDown(event: KeyboardEvent) {
-  if (getActivePreviewMode() === 'none' || fileList.value[selectedItemIndex.value]?.file_type !== 2
+function handlePreviewSpaceKeyDown(event: KeyboardEvent) {
+  const mode = getActivePreviewMode();
+  const togglesSelection = selectMode.value && mode === 'filmstrip' && !isSlideShow.value;
+  if (mode === 'none' || (!togglesSelection && fileList.value[selectedItemIndex.value]?.file_type !== 2)
     || uiStore.inputStack.length > 0 || uiStore.activePane === 'left-sidebar') return;
-  handleVideoPlaybackShortcut(event, shortcutPlatform, () => getActivePreviewMediaRef()?.togglePlay?.());
+  // Consume Space before video.js controls. macOS performs selection through
+  // the App capture/global channel; other platforms dispatch it here once.
+  handleVideoPlaybackShortcut(event, shortcutPlatform, () => {
+    if (togglesSelection) {
+      if (!isMac) handleQuickPreviewShortcut(event);
+    } else {
+      getActivePreviewMediaRef()?.togglePlay?.();
+    }
+  });
 }
 
 function handleQuickPreviewShortcut(event: { key: string; code?: string; repeat?: boolean }): boolean {
@@ -5000,7 +5010,7 @@ function handleQuickPreviewShortcut(event: { key: string; code?: string; repeat?
     return false;
   }
 
-  if (selectMode.value && getActivePreviewMode() === 'none') {
+  if (selectMode.value && getActivePreviewMode() !== 'quick-view') {
     checkUnsavedChanges(() => { void handleItemSelectToggled(selectedItemIndex.value); });
     return true;
   }
@@ -5642,7 +5652,7 @@ onMounted( async() => {
   }
 
   window.addEventListener('keydown', handleLocalKeyDown);
-  window.addEventListener('keydown', handleVideoSpaceKeyDown, true);
+  window.addEventListener('keydown', handlePreviewSpaceKeyDown, true);
   window.addEventListener(PREVIEW_WINDOW_FOCUS_RESTORED, restoreOpenPreviewFocus);
   window.addEventListener('keyup', handleLocalKeyUp);
   unlistenAlbumAccessChanged = await listen('album-accessibility-changed', (event: any) => {
@@ -6206,7 +6216,7 @@ onBeforeUnmount(() => {
   }
   unlistenAlbumAccessChanged?.();
   window.removeEventListener('keydown', handleLocalKeyDown);
-  window.removeEventListener('keydown', handleVideoSpaceKeyDown, true);
+  window.removeEventListener('keydown', handlePreviewSpaceKeyDown, true);
   window.removeEventListener(PREVIEW_WINDOW_FOCUS_RESTORED, restoreOpenPreviewFocus);
   window.removeEventListener('keyup', handleLocalKeyUp);
   // unlisten
