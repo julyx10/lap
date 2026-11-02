@@ -146,7 +146,7 @@ function showPlaybackFeedback() {
   clearPlaybackFeedback();
   if (isLoading.value || !props.isActive || isSeeking.value || getActivePlayer()?.scrubbing()) return;
   playbackFeedback.value = 'pause';
-  playbackFeedbackTimer = setTimeout(clearPlaybackFeedback, 1000);
+  playbackFeedbackTimer = setTimeout(clearPlaybackFeedback, 1500);
 }
 
 const isFit = ref(false);
@@ -1270,19 +1270,17 @@ function handleWheel(event: WheelEvent) {
 }
 .playback-overlay-enter-active,
 .playback-overlay-leave-active {
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition: opacity 0.3s ease, transform 0.3s ease;
 }
 .playback-overlay-enter-from,
 .playback-overlay-leave-to {
   opacity: 0;
+  transform: scale(0.8);
 }
 .playback-overlay-leave-active {
   pointer-events: none;
 }
 .playback-overlay-leave-active > div {
   pointer-events: none;
-}
-.playback-overlay-leave-to {
-  transform: scale(0.8);
 }
 </style>
