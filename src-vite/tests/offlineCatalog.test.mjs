@@ -162,7 +162,10 @@ function dragFixture(collection = false) {
     confirmLargeBatch: async () => { calls.transfers++; return true; },
     addFilesToCollection: async (id, selected) => { calls.added.push([id, selected]); return { added: selected.length, skipped: 0 }; },
     t: key => key, toast: { success: () => {}, info: () => {} },
-    libConfig: { activePane: 'album' },
+    libConfig: { activePane: 'album', _libraryId: 'library' },
+    currentContentRequestId: 1,
+    ref,
+    nextTick: fn => Promise.resolve().then(fn),
   };
   const result = new Function('deps', 'const {' + Object.keys(deps).join(',') + '} = deps; let pointerDragUsesSelection = false; let pointerDragFiles = null; let nativeDragFiles = null; let nativeDragPreview = []; const pointerDropTarget = ' + JSON.stringify({ dataset: collection ? { collectionDropId: '7' } : { fileDropPath: '/destination', fileDropAlbumId: '10' } }) + '; ' + dragBody + '; return { markContentInternalDrag, clearContentInternalDrag };')(deps);
   return { ...result, deps, calls, files };
