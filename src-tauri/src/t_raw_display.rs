@@ -23,10 +23,11 @@ impl RawDisplayOptions {
     pub fn embedded(self) -> bool { self.mode == RawPreviewMode::Embedded }
     pub fn cache_tag(self) -> &'static str {
         match (self.mode, self.auto_bright) {
-            (RawPreviewMode::Embedded, false) => "embedded-original-v3",
-            (RawPreviewMode::Embedded, true) => "embedded-bright-v3",
-            (RawPreviewMode::Rendered, false) => "rendered-original-v3",
-            (RawPreviewMode::Rendered, true) => "rendered-bright-v3",
+            (RawPreviewMode::Embedded, false) => "embedded-original-v5",
+            (RawPreviewMode::Embedded, true) => "embedded-bright-v5",
+            // Rendered thumbnails can also fall back to embedded pixels.
+            (RawPreviewMode::Rendered, false) => "rendered-original-v4",
+            (RawPreviewMode::Rendered, true) => "rendered-bright-v4",
         }
     }
 }

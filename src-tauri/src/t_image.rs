@@ -1924,7 +1924,7 @@ pub fn register_raw_preview_request(viewer: &str) -> std::sync::Arc<std::sync::a
 }
 
 fn raw_preview_disk_path(path: &str, signature: (u64, u128), options: RawDisplayOptions, full_size: bool) -> Result<std::path::PathBuf, String> {
-    let key = blake3::hash(format!("raw-preview-v6:{path}:{signature:?}:{options:?}:{full_size}").as_bytes());
+    let key = blake3::hash(format!("raw-preview-v6:{}:{path}:{signature:?}:{options:?}:{full_size}", options.cache_tag()).as_bytes());
     Ok(crate::t_config::get_app_cache_dir()?.join("raw-previews").join(key.to_hex().as_str()))
 }
 
@@ -2002,6 +2002,64 @@ pub async fn get_raw_preview_cached(path: &str, options: RawDisplayOptions, full
 #[cfg(test)]
 mod offline_preview_tests {
     use super::*;
+
+    #[test]
+    fn raw_preview_disk_cache_invalidates_legacy_orientation_results() {
+        let path = "/fixture/pentax/sample.pef";
+        let signature = (123, 456);
+        let options = RawDisplayOptions::default();
+        let legacy = blake3::hash(format!("raw-preview-v6:{path}:{signature:?}:{options:?}:false").as_bytes());
+        let current = raw_preview_disk_path(path, signature, options, false).unwrap();
+        assert_ne!(current.file_name().unwrap().to_str().unwrap(), legacy.to_hex().as_str());
+        assert_ne!(current, raw_preview_disk_path(path, signature, options, true).unwrap());
+        assert_ne!(current, raw_preview_disk_path(path, signature, RawDisplayOptions::rendered_bright(), false).unwrap());
+    }
+
+    #[test]
+    #[ignore = "requires LAP_RAW_ORIENTATION_MANIFEST listing local RAW samples"]
+    fn raw_fixture_batch_orientation() {
+        let manifest = std::env::var("LAP_RAW_ORIENTATION_MANIFEST").unwrap();
+        let output = std::env::temp_dir().join("lap-raw-orientation");
+        fs::create_dir_all(&output).unwrap();
+        for path in fs::read_to_string(manifest).unwrap().lines() {
+            let name = Path::new(path).file_name().unwrap().to_str().unwrap();
+            println!("FILE {name}, type={:?}, EXIF={}", t_utils::get_file_type(path), get_image_orientation(path));
+            t_libraw::inspect_raw_fixture_orientation(path);
+            for mode in [crate::t_raw_display::RawPreviewMode::Embedded, crate::t_raw_display::RawPreviewMode::Rendered] {
+                let options = RawDisplayOptions { mode, prefer_pair: false, auto_bright: false };
+                let thumb = if t_utils::get_file_type(path) == Some(3) {
+                    get_raw_thumbnail(path, get_image_orientation(path), 512, options)
+                } else { get_image_thumbnail(path, get_image_orientation(path), 512) }.unwrap().unwrap();
+                let (preview, source) = if t_utils::get_file_type(path) == Some(3) {
+                    let (data, source, _) = get_raw_preview_with_source(path, options, false).unwrap();
+                    (data, source)
+                } else { (tauri::async_runtime::block_on(get_file_image_bytes_cached(path, options)).unwrap(), "tiff") };
+                let a = image::load_from_memory(&thumb).unwrap();
+                let b = image::load_from_memory(&preview).unwrap();
+                println!("  {mode:?}: thumb={}x{} preview={}x{} source={source}",a.width(),a.height(),b.width(),b.height());
+                assert_eq!(a.width() > a.height(), b.width() > b.height(), "{name}: {mode:?} orientation differs");
+                fs::write(output.join(format!("{name}-{mode:?}-thumb.jpg")), thumb).unwrap();
+                fs::write(output.join(format!("{name}-{mode:?}-preview.jpg")), preview).unwrap();
+            }
+        }
+    }
+
+    #[test]
+    #[ignore = "requires LAP_RAW_PREVIEW_FIXTURE pointing to a portrait Nikon E5700 NEF"]
+    fn nikon_e5700_thumbnail_matches_preview_orientation() {
+        let path = std::env::var("LAP_RAW_PREVIEW_FIXTURE").unwrap();
+        for mode in [crate::t_raw_display::RawPreviewMode::Embedded, crate::t_raw_display::RawPreviewMode::Rendered] {
+            let options = RawDisplayOptions { mode, prefer_pair: false, auto_bright: false };
+            let thumbnail = get_raw_thumbnail(&path, get_image_orientation(&path), 512, options).unwrap().unwrap();
+            let thumbnail_image = image::load_from_memory(&thumbnail).unwrap();
+            let (preview, source, _) = get_raw_preview_with_source(&path, options, false).unwrap();
+            let preview_image = image::load_from_memory(&preview).unwrap();
+            println!("{mode:?}: thumbnail {}x{}, preview {}x{} ({source})",
+                thumbnail_image.width(), thumbnail_image.height(), preview_image.width(), preview_image.height());
+            assert!(preview_image.height() > preview_image.width());
+            assert!(thumbnail_image.height() > thumbnail_image.width());
+        }
+    }
 
     #[test]
     #[ignore = "requires LAP_RAW_PREVIEW_FIXTURE pointing to an unsupported RAW file"]
