@@ -307,7 +307,7 @@
 
           <!-- film strip preview -->
           <div v-if="showFilmstripLayout" ref="previewDiv"
-            class="flex-1 bg-base-200 overflow-hidden"
+            class="isolate flex-1 bg-base-200 overflow-hidden"
           >
             <div v-if="selectedItemIndex >= 0 && selectedItemIndex < fileList.length"
               class="w-full h-full flex items-center justify-center"
