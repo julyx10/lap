@@ -1272,6 +1272,7 @@
     "loading_original": "Cargando foto original...",
     "failed": "No se pudo cargar la foto. El archivo falta o está dañado.",
     "raw_render_unavailable": "No se puede renderizar este RAW; se muestra la vista previa incrustada.",
+    "af_unavailable": "No hay datos de AF compatibles para esta imagen",
     "toolbar": {
       "prev": "Anterior",
       "next": "Siguiente",
@@ -1605,6 +1606,7 @@
         "zoom_in": "Acercar",
         "zoom_out": "Alejar",
         "zoom_fit": "Alternar tamaño real / ajustar a la ventana",
+        "toggle_af_areas": "Mostrar u ocultar áreas de AF",
         "cycle_background": "Cambiar fondo",
         "open_new_window": "Ver en nueva ventana",
         "open_external_app": "Abrir en app externa",

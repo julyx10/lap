@@ -1272,6 +1272,7 @@
     "loading_original": "Eredeti fotó betöltése...",
     "failed": "A fotó nem tölthető be. A fájl hiányzik vagy sérült.",
     "raw_render_unavailable": "Ez a RAW nem dolgozható fel; a beágyazott előnézet jelenik meg.",
+    "af_unavailable": "Ehhez a képhez nincs támogatott AF-adat",
     "toolbar": {
       "prev": "Előző",
       "next": "Következő",
@@ -1605,6 +1606,7 @@
         "zoom_in": "Nagyítás",
         "zoom_out": "Kicsinyítés",
         "zoom_fit": "Tényleges méret / ablakhoz igazítás",
+        "toggle_af_areas": "AF-területek megjelenítése/elrejtése",
         "cycle_background": "Háttér váltása",
         "open_new_window": "Megtekintés új ablakban",
         "open_external_app": "Megnyitás külső alkalmazásban",

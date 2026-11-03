@@ -96,7 +96,8 @@
           :selected="showAfAreas"
           :disabled="fileIndex < 0 || !canInteract || ![1, 3].includes(Number(file?.file_type))"
           :tooltip="$t('image_viewer.toolbar.af_area')"
-          @click="showAfAreas = !showAfAreas"
+          :shortcut="shortcut('view.toggleAfAreas')"
+          @click="toggleAfAreas"
         />
         <template v-if="showExtraIcons">
           <IconSeparator class="t-icon-size-sm text-base-content/30" />
@@ -367,6 +368,7 @@
         <Image
           ref="mediaRef"
           :showAfAreas="showAfAreas"
+          :afAreaFeedbackRequest="afAreaFeedbackRequest"
           :filePath="file?.file_path"
           :fileId="file?.id"
           :fileType="file?.file_type"
@@ -464,8 +466,7 @@ import { isOriginalUnavailable, setFileAccessibility } from '@/common/availabili
 import { getMotionPhotoVideoPath, checkFileAccessibility } from '@/common/api';
 
 import Image from '@/components/Image.vue';
-import { storeToRefs } from 'pinia';
-import { useUIStore } from '@/stores/uiStore';
+import { emit as tauriEmit } from '@tauri-apps/api/event';
 import TButton from '@/components/TButton.vue';
 import { 
   IconLeft, 
@@ -686,6 +687,7 @@ const emit = defineEmits([
   'viewport-change',
   'view-background-change',
   'activate',
+  'toggle-af-areas',
 ]);
 
 const { locale, messages, t } = useI18n();
@@ -697,7 +699,29 @@ const containerRef = ref<HTMLElement | null>(null);
 const mediaAreaRef = ref<HTMLElement | null>(null);
 const mediaRef = ref<any>(null);
 const toast = useToast();
-const { showAfAreas } = storeToRefs(useUIStore());
+const showAfAreas = computed({
+  get: () => Boolean(config.mediaViewer.showAfAreas),
+  set: (value: boolean) => {
+    config.mediaViewer.showAfAreas = value;
+    void tauriEmit('af-area-display-changed', value).catch(console.error);
+  },
+});
+const afAreaFeedbackRequest = ref<{ filePath: string; fileVersion: number } | null>(null);
+function toggleAfAreas() {
+  if (props.fileIndex < 0 || !props.canInteract || ![1, 3].includes(Number(props.file?.file_type))) return;
+  if (props.toolbarOnly) {
+    emit('toggle-af-areas');
+    return;
+  }
+  const enabled = !showAfAreas.value;
+  // Only the clicked pane may notify, and only for the file present at this click.
+  afAreaFeedbackRequest.value = enabled ? {
+    filePath: props.file?.file_path || '',
+    fileVersion: props.file?.modified_at || 0,
+  } : null;
+  showAfAreas.value = enabled;
+}
+
 const isHoverLeft = ref(false);
 const isHoverRight = ref(false);
 const isHoverTop = ref(false);
@@ -1409,6 +1433,7 @@ defineExpose({
   zoomActual,
   rotateView,
   togglePlay,
+  toggleAfAreas,
   getViewportState,
   applyViewportState,
   navigateImage: (point: { normX: number; normY: number }) => mediaRef.value?.navigateImage?.(point),

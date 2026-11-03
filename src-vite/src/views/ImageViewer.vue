@@ -87,6 +87,7 @@
             :isSyncViewport="isSyncViewport"
             :showSyncViewportControl="isCompareModeSession"
             :forceToolbarVisible="isFullScreen && splitToolbarVisible"
+            @toggle-af-areas="getViewerRef(activePane)?.toggleAfAreas?.()"
             @prev="clickPrev(activePane)"
             @next="clickNext(activePane)"
             @toggle-slide-show="clickSlideShow(activePane)"
@@ -663,6 +664,14 @@ function handleKeyDown(event: KeyboardEvent) {
   if (viewBackground !== null) {
     event.preventDefault();
     setViewerBackground(viewBackground);
+    return;
+  }
+
+  if (matchesShortcut('view.toggleAfAreas', event, shortcutPlatform)) {
+    const target = event.target as HTMLElement | null;
+    if (event.defaultPrevented || target?.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target?.tagName || '')) return;
+    event.preventDefault();
+    if (!event.repeat) getViewerRef(getActivePane())?.toggleAfAreas?.();
     return;
   }
 

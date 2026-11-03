@@ -62,6 +62,7 @@ export type ShortcutActionId =
   | 'view.zoomInDirectional'
   | 'view.zoomOutDirectional'
   | 'view.zoomFit'
+  | 'view.toggleAfAreas'
   | 'view.cycleBackground'
   | 'view.backgroundTheme'
   | 'view.backgroundBlack'
@@ -439,6 +440,11 @@ export const SHORTCUTS: readonly ShortcutDefinition[] = [
     id: 'view.zoomFit',
     contexts: ['content', 'media-viewer', 'image-viewer'],
     defaultBindings: [{ code: 'KeyZ', label: 'Z' }],
+  },
+  {
+    id: 'view.toggleAfAreas',
+    contexts: ['content', 'media-viewer', 'image-viewer'],
+    defaultBindings: [{ code: 'KeyA', label: 'A' }],
   },
   {
     id: 'view.cycleBackground',

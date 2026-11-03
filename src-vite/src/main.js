@@ -42,6 +42,13 @@ listen('image-editor-config-changed', (event) => {
   }
 })
 
+listen('af-area-display-changed', (event) => {
+  // All open windows keep the same preference so later store writes preserve it.
+  if (typeof event.payload === 'boolean' && config.mediaViewer.showAfAreas !== event.payload) {
+    config.mediaViewer.showAfAreas = event.payload
+  }
+})
+
 // Resolve Regional Format before components first render dates.
 await getSystemRegionLocale().then((loc) => config.setSystemLocale(loc)).catch(() => {})
 

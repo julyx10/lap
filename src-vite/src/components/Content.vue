@@ -5032,6 +5032,13 @@ function handleLocalKeyDown(event: KeyboardEvent) {
   }
 
 
+  if (getActivePreviewMode() !== 'none' && matchesShortcut('view.toggleAfAreas', event, shortcutPlatform)) {
+    if (target.tagName === 'SELECT') return;
+    event.preventDefault();
+    if (!event.repeat) getActivePreviewMediaRef()?.toggleAfAreas?.();
+    return;
+  }
+
   if (getActivePreviewMode() !== 'none' && matchesShortcut('view.zoomFit', event, shortcutPlatform)) {
     event.preventDefault();
     if (!event.repeat) {

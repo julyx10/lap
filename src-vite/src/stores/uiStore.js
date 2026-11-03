@@ -12,8 +12,6 @@ export const useUIStore = defineStore('ui', {
     countUpdateRequest: null,
     countUpdateTick: 0,
     mapActive: false,
-    // Shared across viewer panes; off by default and not persisted.
-    showAfAreas: false,
     activeAdjustments: {
       filePath: null,
       brightness: 0,

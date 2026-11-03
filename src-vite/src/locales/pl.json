@@ -1272,6 +1272,7 @@
     "loading_original": "Wczytywanie oryginalnego zdjęcia...",
     "failed": "Nie udało się wczytać zdjęcia. Plik jest uszkodzony lub nie istnieje.",
     "raw_render_unavailable": "Nie można wyrenderować tego RAW; pokazano osadzony podgląd.",
+    "af_unavailable": "Brak obsługiwanych danych AF dla tego obrazu",
     "toolbar": {
       "prev": "Poprzednie",
       "next": "Następne",
@@ -1605,6 +1606,7 @@
         "zoom_in": "Powiększ",
         "zoom_out": "Pomniejsz",
         "zoom_fit": "Przełącz rzeczywisty rozmiar / dopasowanie do okna",
+        "toggle_af_areas": "Pokaż/ukryj obszary AF",
         "cycle_background": "Zmień tło",
         "open_new_window": "Otwórz w nowym oknie",
         "open_external_app": "Otwórz w aplikacji zewnętrznej",
