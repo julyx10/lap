@@ -1289,7 +1289,7 @@
       "zoom_out": "Zoom out",
       "zoom_fit": "Fit to window",
       "zoom_actual": "Actual size",
-      "af_area": "Show AF Area (green: in focus, red: out of focus)",
+      "af_area": "Show AF areas",
       "fullscreen": "Fullscreen",
       "exit_fullscreen": "Exit fullscreen",
       "pin": "Pin toolbar",

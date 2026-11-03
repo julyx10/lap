@@ -92,7 +92,7 @@
           @click="$emit('update:isZoomFit', !isZoomFit)"
         />
         <TButton
-          :icon="IconFocus"
+          :icon="IconAutoFocus"
           :selected="showAfAreas"
           :disabled="fileIndex < 0 || !canInteract || ![1, 3].includes(Number(file?.file_type))"
           :tooltip="$t('image_viewer.toolbar.af_area')"
@@ -464,7 +464,6 @@ import { isOriginalUnavailable, setFileAccessibility } from '@/common/availabili
 import { getMotionPhotoVideoPath, checkFileAccessibility } from '@/common/api';
 
 import Image from '@/components/Image.vue';
-import IconFocus from '@/assets/icons/focus.svg';
 import { storeToRefs } from 'pinia';
 import { useUIStore } from '@/stores/uiStore';
 import TButton from '@/components/TButton.vue';
@@ -508,6 +507,7 @@ import {
   IconVideoPlay,
   IconLivePhoto,
   IconExclamation,
+  IconAutoFocus,
 } from '@/common/icons';
 import ContextMenu from '@/components/ContextMenu.vue';
 import iconLogo from '@/assets/images/icon.png';
