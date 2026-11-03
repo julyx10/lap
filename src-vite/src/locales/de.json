@@ -361,7 +361,14 @@
     "not_found": "Keine Tags gefunden",
     "name_exists": "Ein Tag mit diesem Namen existiert bereits",
     "name_save_failed": "Tag-Name konnte nicht gespeichert werden",
-    "load_failed": "Tag-Status konnte nicht geladen werden. Schließen Sie diesen Dialog und versuchen Sie es erneut."
+    "move_failed": "Tag konnte nicht verschoben werden",
+    "delete_failed": "Tag konnte nicht gelöscht werden",
+    "load_failed": "Tag-Status konnte nicht geladen werden. Schließen Sie diesen Dialog und versuchen Sie es erneut.",
+    "root": "Oberste Ebene",
+    "add_child": "Neues Untertag",
+    "invalid_name": "Tag-Namen dürfen kein , ; oder {'|'} enthalten.",
+    "invalid_move": "Ein Tag kann nicht unter sich selbst verschoben werden.",
+    "delete_tree": "Dieses Tag und seine Untertags werden gelöscht. Fotos bleiben erhalten."
   },
   "subject": {
     "title": "Motive",
@@ -443,6 +450,7 @@
       "placeholder": "Dateiname"
     },
     "filter": {
+      "favorites_only": "Nur Favoriten",
       "select_mode": "Mehrfachauswahl",
       "select_files": "Dateien auswählen",
       "show_selection_panel": "Mehrfachauswahl-Bereich öffnen",
@@ -772,20 +780,8 @@
     "tag": {
       "rename": "Umbenennen",
       "delete": "Löschen",
-      "new_group": "Neue Gruppe",
-      "edit_group": "Gruppe bearbeiten",
-      "delete_group": "Gruppe löschen",
-      "search": "Tags oder Gruppen suchen",
-      "clear_search": "Suche leeren",
-      "active_tag": "Ausgewähltes Tag in dieser Gruppe",
-      "name": "Name",
-      "locate": "Tag anzeigen",
-      "empty": "Noch keine Tags",
-      "move_to": "In Gruppe verschieben",
-      "delete_message": "„{name}“ löschen? Die Tags werden nach Default verschoben. Tags an Dateien bleiben erhalten.",
-      "exists_in": "Dieses Tag existiert bereits in „{group}“.",
-      "name_exists": "Eine Gruppe mit diesem Namen existiert bereits.",
-      "new_tag_group": "Gruppe für neues Tag"
+      "search": "Tags suchen",
+      "clear_search": "Suche leeren"
     },
     "meta": {
       "favorite": "Favorisieren",
@@ -979,7 +975,8 @@
       "title": "Verschieben in den Papierkorb fehlgeschlagen",
       "file_content": "Die Datei '{file}' konnte nicht in den Papierkorb verschoben werden.\n\nMöchtest du sie stattdessen endgültig löschen?",
       "files_content": "{count} ausgewählte Dateien konnten nicht in den Papierkorb verschoben werden.\n\nMöchtest du sie stattdessen endgültig löschen?",
-      "folder_content": "Der Ordner '{folder}' konnte nicht in den Papierkorb verschoben werden.\n\nMöchtest du ihn stattdessen endgültig löschen?",
+      "folder_content": "Der Ordner '{folder}' konnte nicht in den Papierkorb verschoben werden.\n\nMöchtest du ihn stattdessen endgültig löschen?\n\nDieser Vorgang kann nicht über den Papierkorb rückgängig gemacht werden.",
+      "folder_partial_warning": "Beim vorherigen Versuch wurden möglicherweise einige Inhalte in den Papierkorb verschoben. Das endgültige Löschen entfernt diesen Ordner und seine verbleibenden Inhalte.",
       "ok": "Endgültig löschen"
     },
     "open_external_many": {
@@ -993,7 +990,7 @@
       "error": "Tag konnte nicht erstellt werden."
     },
     "delete_tag": {
-      "title": "Tag löschen",
+      "title": "„{tag}“ löschen?",
       "content": "'{tag}' wird gelöscht.",
       "ok": "Löschen",
       "success": "'{tag}' gelöscht.",
@@ -1012,11 +1009,6 @@
     },
     "file_refresh": {
       "skipped": "Übersprungen: {count}",
-      "checking": "Wird geprüft…",
-      "pending": "{count} Dateien müssen aktualisiert werden",
-      "up_to_date": "Die Dateiinformationen sind aktuell.",
-      "check_failed": "Einige Dateien konnten nicht geprüft werden.",
-      "update": "Aktualisieren",
       "status": "Aktualisierungsstatus",
       "running": "Wird aktualisiert…",
       "cancelling": "Wird abgebrochen…",

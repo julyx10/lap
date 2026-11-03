@@ -361,7 +361,14 @@
     "not_found": "Nincs címke",
     "name_exists": "Már van ilyen nevű címke",
     "name_save_failed": "A címkenév nem menthető",
-    "load_failed": "A címkeállapotok nem tölthetők be. Zárja be az ablakot, majd próbálja újra."
+    "move_failed": "A címkét nem sikerült áthelyezni",
+    "delete_failed": "A címkét nem sikerült törölni",
+    "load_failed": "A címkeállapotok nem tölthetők be. Zárja be az ablakot, majd próbálja újra.",
+    "root": "Gyökérszint",
+    "add_child": "Új gyermekcímke",
+    "invalid_name": "A címkenév nem tartalmazhat , ; vagy {'|'} karaktert.",
+    "invalid_move": "A címke nem helyezhető át a saját részfájába.",
+    "delete_tree": "A címke és az alcímkéi törlésre kerülnek. A fényképek megmaradnak."
   },
   "subject": {
     "title": "Témák",
@@ -443,6 +450,7 @@
       "placeholder": "Keresés fájlnévre"
     },
     "filter": {
+      "favorites_only": "Csak kedvencek",
       "select_mode": "Többszörös kijelölés",
       "select_files": "Fájlok kijelölése",
       "show_selection_panel": "Többszörös kijelölési panel megnyitása",
@@ -772,20 +780,8 @@
     "tag": {
       "rename": "Átnevezés",
       "delete": "Törlés",
-      "new_group": "Új csoport",
-      "edit_group": "Csoport szerkesztése",
-      "delete_group": "Csoport törlése",
-      "search": "Címkék vagy csoportok keresése",
-      "clear_search": "Keresés törlése",
-      "active_tag": "A csoport kijelölt címkéje",
-      "name": "Név",
-      "locate": "Címke megkeresése",
-      "empty": "Még nincs címke",
-      "move_to": "Áthelyezés csoportba",
-      "delete_message": "Törli ezt: „{name}”? Címkéi az Alapértelmezett csoportba kerülnek. A fájlok címkéi megmaradnak.",
-      "exists_in": "Ez a címke már létezik a(z) „{group}” csoportban.",
-      "name_exists": "Már létezik ilyen nevű csoport.",
-      "new_tag_group": "Az új címke csoportja"
+      "search": "Címkék keresése",
+      "clear_search": "Keresés törlése"
     },
     "meta": {
       "favorite": "Kedvenc",
@@ -979,7 +975,8 @@
       "title": "Sikertelen kukába helyezés",
       "file_content": "A(z) \"{file}\" fájl nem helyezhető át a kukába.\n\nEhelyett véglegesen törölni szeretné?",
       "files_content": "{count} kiválasztott fájlt nem sikerült a kukába helyezni.\n\nEhelyett véglegesen törölni szeretné őket?",
-      "folder_content": "A(z) \"{folder}\" mappa nem helyezhető át a kukába.\n\nEhelyett véglegesen törölni szeretné?",
+      "folder_content": "A(z) \"{folder}\" mappa nem helyezhető át a kukába.\n\nEhelyett véglegesen törölni szeretné?\n\nEz a művelet nem vonható vissza a rendszer Lomtárából.",
+      "folder_partial_warning": "Az előző kísérlet során a tartalom egy része a Lomtárba kerülhetett. A végleges törlés ezt a mappát és a megmaradt tartalmát törli.",
       "ok": "Végleges törlés"
     },
     "open_external_many": {
@@ -993,7 +990,7 @@
       "error": "Nem sikerült létrehozni a címkét."
     },
     "delete_tag": {
-      "title": "Címke törlése",
+      "title": "Törli a(z) „{tag}” címkét?",
       "content": "A „{tag}” címke törlésre kerül.",
       "ok": "Törlés",
       "success": "A „{tag}” címke törölve.",
@@ -1012,11 +1009,6 @@
     },
     "file_refresh": {
       "skipped": "Kihagyva: {count}",
-      "checking": "Ellenőrzés…",
-      "pending": "{count} fájl frissítést igényel",
-      "up_to_date": "A fájlinformációk naprakészek.",
-      "check_failed": "Néhány fájl nem ellenőrizhető.",
-      "update": "Frissítés",
       "status": "Frissítés állapota",
       "running": "Frissítés…",
       "cancelling": "Megszakítás…",

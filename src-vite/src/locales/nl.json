@@ -361,7 +361,14 @@
     "not_found": "Geen tags gevonden",
     "name_exists": "Er bestaat al een tag met deze naam",
     "name_save_failed": "Kan de tagnaam niet opslaan",
-    "load_failed": "Kan de tagstatus niet laden. Sluit dit venster en probeer het opnieuw."
+    "move_failed": "Tag kon niet worden verplaatst",
+    "delete_failed": "Tag kon niet worden verwijderd",
+    "load_failed": "Kan de tagstatus niet laden. Sluit dit venster en probeer het opnieuw.",
+    "root": "Hoofdniveau",
+    "add_child": "Nieuwe subtag",
+    "invalid_name": "Tagnamen mogen geen , ; of {'|'} bevatten.",
+    "invalid_move": "Een tag kan niet binnen zijn eigen boom worden verplaatst.",
+    "delete_tree": "Deze tag en de onderliggende tags worden verwijderd. Foto’s blijven behouden."
   },
   "subject": {
     "title": "Onderwerpen",
@@ -443,6 +450,7 @@
       "placeholder": "Zoek op bestandsnaam"
     },
     "filter": {
+      "favorites_only": "Alleen favorieten",
       "select_mode": "Meervoudige selectie",
       "select_files": "Bestanden selecteren",
       "show_selection_panel": "Paneel voor meervoudige selectie openen",
@@ -772,20 +780,8 @@
     "tag": {
       "rename": "Wijzig naam",
       "delete": "Verwijderen",
-      "new_group": "Nieuwe groep",
-      "edit_group": "Groep bewerken",
-      "delete_group": "Groep verwijderen",
-      "search": "Tags of groepen zoeken",
-      "clear_search": "Zoekopdracht wissen",
-      "active_tag": "Geselecteerde tag in deze groep",
-      "name": "Naam",
-      "locate": "Tag opzoeken",
-      "empty": "Nog geen tags",
-      "move_to": "Verplaatsen naar groep",
-      "delete_message": "“{name}” verwijderen? De tags worden verplaatst naar Standaard. Tags op bestanden blijven behouden.",
-      "exists_in": "Deze tag bestaat al in “{group}”.",
-      "name_exists": "Er bestaat al een groep met deze naam.",
-      "new_tag_group": "Groep voor nieuwe tag"
+      "search": "Tags zoeken",
+      "clear_search": "Zoekopdracht wissen"
     },
     "meta": {
       "favorite": "Favoriet",
@@ -979,7 +975,8 @@
       "title": "Naar prullenbak mislukt",
       "file_content": "Het bestand '{file}' kon niet naar de prullenbak worden verplaatst.\n\nWil je het in plaats daarvan definitief verwijderen?",
       "files_content": "{count} geselecteerde bestanden konden niet naar de prullenbak worden verplaatst.\n\nWil je ze in plaats daarvan definitief verwijderen?",
-      "folder_content": "De map '{folder}' kon niet naar de prullenbak worden verplaatst.\n\nWil je deze in plaats daarvan definitief verwijderen?",
+      "folder_content": "De map '{folder}' kon niet naar de prullenbak worden verplaatst.\n\nWil je deze in plaats daarvan definitief verwijderen?\n\nDeze actie kan niet via de prullenbak van het systeem ongedaan worden gemaakt.",
+      "folder_partial_warning": "Bij de vorige poging is mogelijk een deel van de inhoud naar de prullenbak verplaatst. Permanent verwijderen wist deze map en de resterende inhoud.",
       "ok": "Definitief verwijderen"
     },
     "open_external_many": {
@@ -993,7 +990,7 @@
       "error": "Kan tag niet aanmaken."
     },
     "delete_tag": {
-      "title": "Tag verwijderen",
+      "title": "‘{tag}’ verwijderen?",
       "content": "De tag '{tag}' wordt verwijderd.",
       "ok": "Verwijderen",
       "success": "De tag '{tag}' is verwijderd.",
@@ -1012,11 +1009,6 @@
     },
     "file_refresh": {
       "skipped": "Overgeslagen: {count}",
-      "checking": "Controleren…",
-      "pending": "{count} bestanden moeten worden bijgewerkt",
-      "up_to_date": "De bestandsinformatie is actueel.",
-      "check_failed": "Sommige bestanden konden niet worden gecontroleerd.",
-      "update": "Bijwerken",
       "status": "Vernieuwingsstatus",
       "running": "Vernieuwen…",
       "cancelling": "Annuleren…",

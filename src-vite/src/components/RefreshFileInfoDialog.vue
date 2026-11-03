@@ -1,37 +1,31 @@
 <template>
   <ModalDialog :title="$t(freeSpace ? 'menu.file.index_cloud_files' : 'menu.file.refresh_file_info')" :width="440" @cancel="closeOrCancel">
     <section class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
-      <template v-if="!ready">
-        <div class="font-bold uppercase text-[10px] tracking-widest text-base-content/30">{{ $t('msgbox.file_refresh.status') }}</div>
-        <div class="space-y-2 px-1 text-xs" role="status" aria-live="polite">
-          <div class="flex items-center justify-between gap-2 text-base-content/75">
-            <span>{{ $t(checking ? (cancelled ? 'msgbox.file_refresh.cancelling' : 'msgbox.file_refresh.checking') : running ? (cancelled ? 'msgbox.file_refresh.cancelling' : 'msgbox.file_refresh.running') : cancelled ? 'msgbox.file_refresh.cancelled' : 'msgbox.file_refresh.complete') }}</span>
-            <span class="tabular-nums">{{ processed.toLocaleString() }} / {{ activeIds.length.toLocaleString() }}</span>
-          </div>
-          <progress class="progress progress-primary w-full" :value="processed" :max="Math.max(activeIds.length, 1)"></progress>
-          <div v-if="!checking" class="flex flex-wrap gap-x-3 gap-y-1 text-base-content/60">
-            <span>{{ $t('msgbox.file_refresh.succeeded', { count: succeeded.toLocaleString() }) }}</span>
-            <span v-if="warned" class="text-warning">{{ $t('msgbox.file_refresh.warnings', { count: warned.toLocaleString() }) }}</span>
-            <span v-if="skipped">{{ $t('msgbox.file_refresh.skipped', { count: skipped.toLocaleString() }) }}</span>
-            <span :class="{ 'text-error/70': failed > 0 }">{{ $t('msgbox.file_refresh.failed', { count: failed.toLocaleString() }) }}</span>
-          </div>
-          <div v-if="freeSpace" class="flex gap-3 text-base-content/60">
-            <span>{{ $t('msgbox.file_refresh.release_requested', { count: releaseRequested.toLocaleString() }) }}</span>
-            <span :title="$t('msgbox.file_refresh.kept_local_hint')">{{ $t('msgbox.file_refresh.kept_local', { count: keptLocal.toLocaleString() }) }}</span>
-          </div>
+      <div class="font-bold uppercase text-[10px] tracking-widest text-base-content/30">{{ $t('msgbox.file_refresh.status') }}</div>
+      <div class="space-y-2 px-1 text-xs" role="status" aria-live="polite">
+        <div class="flex items-center justify-between gap-2 text-base-content/75">
+          <span>{{ $t(running ? (cancelled ? 'msgbox.file_refresh.cancelling' : 'msgbox.file_refresh.running') : cancelled ? 'msgbox.file_refresh.cancelled' : 'msgbox.file_refresh.complete') }}</span>
+          <span class="tabular-nums">{{ processed.toLocaleString() }} / {{ selectionIds.length.toLocaleString() }}</span>
         </div>
-      </template>
-      <p v-else class="px-1 text-xs text-base-content/75" role="status">
-        {{ $t(filesToUpdate().length ? 'msgbox.file_refresh.pending' : lastError ? 'msgbox.file_refresh.check_failed' : 'msgbox.file_refresh.up_to_date', { count: filesToUpdate().length.toLocaleString() }) }}
-      </p>
+        <progress class="progress progress-primary w-full" :value="processed" :max="Math.max(selectionIds.length, 1)"></progress>
+        <div class="flex flex-wrap gap-x-3 gap-y-1 text-base-content/60">
+          <span>{{ $t('msgbox.file_refresh.succeeded', { count: succeeded.toLocaleString() }) }}</span>
+          <span v-if="warned" class="text-warning">{{ $t('msgbox.file_refresh.warnings', { count: warned.toLocaleString() }) }}</span>
+          <span v-if="skipped">{{ $t('msgbox.file_refresh.skipped', { count: skipped.toLocaleString() }) }}</span>
+          <span :class="{ 'text-error/70': failed > 0 }">{{ $t('msgbox.file_refresh.failed', { count: failed.toLocaleString() }) }}</span>
+        </div>
+        <div v-if="freeSpace" class="flex gap-3 text-base-content/60">
+          <span>{{ $t('msgbox.file_refresh.release_requested', { count: releaseRequested.toLocaleString() }) }}</span>
+          <span :title="$t('msgbox.file_refresh.kept_local_hint')">{{ $t('msgbox.file_refresh.kept_local', { count: keptLocal.toLocaleString() }) }}</span>
+        </div>
+      </div>
       <p v-if="lastWarning" class="text-xs text-warning wrap-break-word" role="status">{{ lastWarning }}</p>
       <p v-if="lastError" class="text-xs text-error/70 wrap-break-word" role="alert">{{ lastError }}</p>
     </section>
     <div class="mt-4 flex justify-end gap-4">
       <button class="t-button-default" :disabled="running && cancelled" @click="closeOrCancel">
-        {{ $t(running || (ready && filesToUpdate().length) ? 'msgbox.cancel' : 'msgbox.close') }}
+        {{ $t(running ? 'msgbox.cancel' : 'msgbox.close') }}
       </button>
-      <button v-if="ready && filesToUpdate().length" class="t-button-primary" @click="runRefresh(filesToUpdate())">{{ $t('msgbox.file_refresh.update') }}</button>
     </div>
   </ModalDialog>
 </template>
@@ -49,11 +43,6 @@ const props = defineProps<{ fileIds: number[]; libraryId: string; freeSpace?: bo
 const emit = defineEmits(['close']);
 const uiStore = useUIStore();
 const selectionIds = [...new Set(props.fileIds)];
-const activeIds = ref(selectionIds);
-const pendingIds = ref<number[]>([]);
-const checking = ref(!props.freeSpace);
-const ready = ref(false);
-function filesToUpdate() { return pendingIds.value; }
 const running = ref(true);
 const cancelled = ref(false);
 const processed = ref(0);
@@ -76,46 +65,19 @@ function handleKeyDown(event: KeyboardEvent) {
   if (!uiStore.isInputActive('RefreshFileInfoDialog')) return;
   if (event.key === 'Escape' || (event.key === 'Enter' && !running.value)) {
     event.preventDefault();
-    if (event.key === 'Enter' && ready.value && filesToUpdate().length) void runRefresh(filesToUpdate());
-    else closeOrCancel();
+    closeOrCancel();
   }
 }
 watch(() => libConfig._libraryId, () => { cancelled.value = true; if (!running.value) emit('close'); });
 onMounted(async () => {
   uiStore.pushInputHandler('RefreshFileInfoDialog');
   window.addEventListener('keydown', handleKeyDown);
-  if (props.freeSpace) await runRefresh(selectionIds);
-  else await checkSelection();
+  await runRefresh();
 });
-async function checkSelection() {
-  let batchId: number | undefined;
-  try {
-    batchId = await invoke<number>('begin_file_refresh_batch', { libraryId: props.libraryId });
-    for (const fileId of selectionIds) {
-      if (disposed || cancelled.value || libConfig._libraryId !== props.libraryId) break;
-      try {
-        if (await invoke<boolean>('check_selected_file_info', { libraryId: props.libraryId, fileId, batchId, thumbnailSize: config.settings.thumbnailSize, rawDisplayOptions: getRawDisplayOptions() })) pendingIds.value.push(fileId);
-      } catch (error) { lastError.value = String(error); }
-      processed.value++;
-    }
-  } catch (error) { lastError.value = String(error); }
-  finally {
-    if (batchId !== undefined) {
-      try { await invoke('end_file_refresh_batch', { batchId }); }
-      catch (error) { console.error('Failed to release refresh index:', error); }
-    }
-    checking.value = false;
-    running.value = false;
-    ready.value = true;
-    if (!disposed && cancelled.value) emit('close');
-  }
-}
-async function runRefresh(ids: number[]) {
+async function runRefresh() {
   if (disposed || libConfig._libraryId !== props.libraryId) { running.value = false; return; }
   const results: FileRefreshResult[] = [];
-  ready.value = false;
   running.value = true;
-  activeIds.value = [...ids];
   processed.value = 0;
   lastError.value = '';
   lastWarning.value = '';
@@ -124,7 +86,7 @@ async function runRefresh(ids: number[]) {
   let batchId: number | undefined;
   try {
     batchId = await invoke<number>('begin_file_refresh_batch', { libraryId: props.libraryId });
-    for (const fileId of activeIds.value) {
+    for (const fileId of selectionIds) {
       if (disposed || cancelled.value || libConfig._libraryId !== props.libraryId) {
         cancelled.value = true;
         break;

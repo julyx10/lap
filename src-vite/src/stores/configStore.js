@@ -56,6 +56,7 @@ export const useConfigStore = defineStore('configStore', {
 
     search: {
       maxSearchHistory: 20,     // max search history
+      favoritesOnly: false,    // limit the current view to favorite files
       fileType: 0,              // filter file type bitmask (0: all, 1: image, 2: video, 4: raw)
       sortType: 0,              // sort type (default to time)
       sortOrder: 0,             // sort order(0: ascending, 1: descending)

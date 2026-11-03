@@ -11,16 +11,15 @@
 //! | `afiles.is_favorite` | `https://github.com/julyx10/lap/ns/1.0/` | `lap:Favorite` | Boolean; missing remains `None`; independent of rating, picks and labels. Lap-specific interoperability. |
 //! | `afiles.rating` | `http://ns.adobe.com/xap/1.0/` | `xmp:Rating` (`xap:Rating`) | `0..=5` → `Some(0..=5)`; `""` → `Some(0)`; `-1` → `Some(0)` (and sets reject flag if unflagged); missing → `None` |
 //! | `afiles.culling_flag` | `http://ns.adobe.com/xmp/1.0/DynamicMedia/`<br>`http://darktable.sf.net/`<br>`http://ns.adobe.com/xap/1.0/` | `xmpDM:pick` / `xmpDM:good`<br>`darktable:rejected`<br>`xmp:Rating="-1"` / `xmp:Label` | `xmpDM:pick="1"` or `xmp:Label="Pick"\|"Select"` → `Some(1)` (Pick)<br>`xmpDM:pick="-1"` or `darktable:rejected="1"` or `xmp:Rating="-1"` or `xmp:Label="Reject"\|"Rejected"` → `Some(2)` (Reject)<br>`xmpDM:pick="0"` or `darktable:rejected="0"` → `Some(0)` (Unflagged)<br>missing → `None` |
-//! | `atags` / `afile_tags` | `http://purl.org/dc/elements/1.1/`<br>`http://ns.adobe.com/lightroom/1.0/`<br>`http://www.digikam.org/ns/1.0/` | `dc:subject` (`rdf:Bag`)<br>`lr:hierarchicalSubject` (`rdf:Bag`)<br>`digiKam:TagsList` (`rdf:Seq`) | Deduplicated union preserving order; internal `darktable\|*` system tags excluded; empty container → `Some(vec![])`; missing → `None` |
+//! | `atags` / `afile_tags` | See `t_xmp_compat` | Registered keyword formats | Shared import, path normalization and explicit write capabilities |
 //! | `afiles.comments` | `http://purl.org/dc/elements/1.1/`<br>`http://ns.adobe.com/exif/1.0/`<br>`http://ns.adobe.com/photoshop/1.0/` | `dc:description` (`rdf:Alt`)<br>`exif:UserComment` (`rdf:Alt`)<br>`photoshop:Caption` | Priority: `dc:description` (`xml:lang="x-default"` preferred) → `exif:UserComment` → `photoshop:Caption`; empty element/attr → `Some("")`; missing → `None` |
 
-//! Existing LR/digiKam tag stores are synchronized with Lap's flat tag strings.
-//! A string such as `A|B|C` is preserved literally; hierarchy is not inferred.
+//! Keyword source rules live in `t_xmp_compat`; XML and catalog operations stay here.
 
 use quick_xml::{events::Event, name::ResolveResult, reader::NsReader};
 use rusqlite::{Connection, params};
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::fs;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
@@ -30,6 +29,9 @@ use std::sync::{
 };
 
 use crate::t_sqlite::open_conn;
+use crate::t_xmp_compat;
+#[cfg(test)]
+use crate::t_xmp_compat::{NS_LR, NS_DIGIKAM, NS_ACDSEE};
 
 // Canonical XMP Namespace URIs
 /// Lap-owned schema. URI identity is stable and need not resolve to a web page.
@@ -38,10 +40,8 @@ pub const NS_XMP: &str = "http://ns.adobe.com/xap/1.0/";
 pub const NS_XMP_DM: &str = "http://ns.adobe.com/xmp/1.0/DynamicMedia/";
 pub const NS_DARKTABLE: &str = "http://darktable.sf.net/";
 pub const NS_DC: &str = "http://purl.org/dc/elements/1.1/";
-pub const NS_LR: &str = "http://ns.adobe.com/lightroom/1.0/";
 pub const NS_EXIF: &str = "http://ns.adobe.com/exif/1.0/";
 pub const NS_PHOTOSHOP: &str = "http://ns.adobe.com/photoshop/1.0/";
-pub const NS_DIGIKAM: &str = "http://www.digikam.org/ns/1.0/";
 pub const NS_RDF: &str = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
 
 static XMP_IMPORT_ENABLED: AtomicBool = AtomicBool::new(true);
@@ -77,6 +77,8 @@ pub struct XmpMetadata {
     /// - `Some(vec![])`: tag container exists in the sidecar but contains no user tags.
     /// - `Some(tags)`: non-empty list of deduplicated user tags.
     pub tags: Option<Vec<String>>,
+    /// Paths explicitly read from hierarchical keyword fields, not inferred from flat text.
+    pub hierarchical_tags: Option<Vec<String>>,
     /// User comment / caption (`dc:description`, `exif:UserComment`, `photoshop:Caption`).
     /// - `None`: no description/caption property exists in the sidecar.
     /// - `Some("")`: property exists in the sidecar, but is explicitly empty.
@@ -273,13 +275,15 @@ pub fn read_xmp_file(path: &Path) -> Result<XmpMetadata, String> {
     }
     use std::io::Read;
     let file = fs::File::open(path).map_err(|e| e.to_string())?;
-    let mut content = String::new();
+    let mut content = Vec::new();
     file.take(MAX_XMP_BYTES as u64 + 1)
-        .read_to_string(&mut content)
+        .read_to_end(&mut content)
         .map_err(|e| e.to_string())?;
     if content.len() > MAX_XMP_BYTES {
         return Err("XMP exceeds 16 MiB size limit".into());
     }
+    let content = crate::t_metadata::decode_xmp_text(&content)
+        .ok_or("Invalid or oversized XMP text encoding")?;
     parse_xmp_str(&content)
 }
 
@@ -288,6 +292,10 @@ pub fn parse_xmp_str(content: &str) -> Result<XmpMetadata, String> {
     let root = parse_xml(content)?;
     let mut properties = Vec::new();
     collect_properties(&root, &mut properties);
+    Ok(metadata_from_properties(&properties))
+}
+
+fn metadata_from_properties(properties: &[&XmlNode]) -> XmpMetadata {
     let value = |uri: &str, name: &str| {
         properties
             .iter()
@@ -320,74 +328,31 @@ pub fn parse_xmp_str(content: &str) -> Result<XmpMetadata, String> {
         label.as_deref(),
         if rejected { Some(-1) } else { meta.rating },
     );
-    let mut seen = HashSet::new();
-    for node in &properties {
-        if matches!(
-            (node.uri.as_str(), node.name.as_str()),
-            (NS_DC, "subject") | (NS_LR, "hierarchicalSubject") | (NS_DIGIKAM, "TagsList")
-        ) {
-            let tags = meta.tags.get_or_insert_with(Vec::new);
-            for container in &node.children {
-                if container.uri != NS_RDF || !matches!(container.name.as_str(), "Bag" | "Seq") {
-                    continue;
-                }
-                for item in &container.children {
-                    let tag = item.text.trim();
-                    if item.uri == NS_RDF
-                        && item.name == "li"
-                        && !tag.is_empty()
-                        && !is_internal_system_tag(tag)
-                        && seen.insert(tag.to_lowercase())
-                    {
-                        tags.push(tag.to_string());
-                    }
-                }
-            }
-        }
-    }
+    t_xmp_compat::import_properties(properties, &mut meta);
     meta.description = value(NS_DC, "description")
         .or_else(|| value(NS_EXIF, "UserComment"))
         .or_else(|| value(NS_PHOTOSHOP, "Caption"));
-    Ok(meta)
+    meta
 }
 
-/// Standard and referenced extended XMP are one logical metadata record.
-/// Resolve namespace-aware properties before applying the shared flag precedence.
-pub(crate) fn flags_from_packets(packets: &[String]) -> (Option<i32>, Option<bool>) {
+/// Standard and referenced extended packets form one logical metadata record.
+pub(crate) fn metadata_from_packets(packets: &[String]) -> XmpMetadata {
     let roots: Vec<_> = packets
         .iter()
         .filter_map(|packet| parse_xml(packet).ok())
         .collect();
     let mut properties = Vec::new();
-    // Referenced extended packets follow the standard packet and override it.
-    // Keep the existing first-property rule within each individual packet.
+    // Extended packets override standard scalar properties; tags remain a union.
     for root in roots.iter().rev() {
         collect_properties(root, &mut properties);
     }
-    let value = |uri: &str, name: &str| {
-        properties
-            .iter()
-            .find(|node| node.uri == uri && node.name == name)
-            .map(|node| node.value())
-    };
-    let pick = value(NS_XMP_DM, "pick");
-    let good = value(NS_XMP_DM, "good");
-    let rejected = value(NS_DARKTABLE, "rejected");
-    let label = value(NS_XMP, "Label");
-    let rating = value(NS_XMP, "Rating").and_then(|v| v.trim().parse().ok());
-    let culling = culling_from_values(
-        pick.as_deref(),
-        good.as_deref(),
-        rejected.as_deref(),
-        label.as_deref(),
-        rating,
-    );
-    (
-        culling,
-        value(NS_LAP, "Favorite")
-            .as_deref()
-            .and_then(parse_favorite),
-    )
+    metadata_from_properties(&properties)
+}
+
+#[cfg(test)]
+pub(crate) fn flags_from_packets(packets: &[String]) -> (Option<i32>, Option<bool>) {
+    let meta = metadata_from_packets(packets);
+    (meta.culling_flag, meta.favorite)
 }
 
 fn parse_favorite(value: &str) -> Option<bool> {
@@ -401,12 +366,6 @@ fn parse_favorite(value: &str) -> Option<bool> {
 #[cfg(test)]
 fn culling_from_packets(packets: &[String]) -> Option<i32> {
     flags_from_packets(packets).0
-}
-
-/// Returns `true` for internal darktable / host system tags that should not be imported as user tags.
-fn is_internal_system_tag(tag: &str) -> bool {
-    let lower = tag.trim().to_ascii_lowercase();
-    lower.starts_with("darktable|") || lower == "darktable"
 }
 
 /// Shared precedence for sidecar and embedded XMP. Explicit unflagged wins
@@ -462,6 +421,7 @@ pub fn import_xmp_for_file_with_conn(
     let sidecar_path = find_xmp_sidecar(Path::new(file_path));
     // The media fingerprint also backfills embedded metadata on existing files
     // once, without repeating deep parsing on every unchanged folder scan.
+    // v4 reimports legacy flattened keywords using the tag-tree/vendor schemas.
     let media_info = fs::metadata(file_path).ok();
     if media_info.is_none() && sidecar_path.is_none() {
         return Ok(false);
@@ -472,7 +432,7 @@ pub fn import_xmp_for_file_with_conn(
         .transpose()
         .map_err(|e| e.to_string())?;
     let fingerprint = format!(
-        "embedded-v3:{}:{:?}:{}:{:?}:{:?}",
+        "embedded-v4:{}:{:?}:{}:{:?}:{:?}",
         file_path,
         media_info.as_ref().and_then(|info| info.modified().ok()),
         media_info.map(|info| info.len()).unwrap_or(0),
@@ -509,7 +469,10 @@ pub fn import_xmp_for_file_with_conn(
             embedded.favorite = sidecar.favorite.or(embedded.favorite);
             embedded.rating = sidecar.rating.or(embedded.rating);
             embedded.culling_flag = sidecar.culling_flag.or(embedded.culling_flag);
-            embedded.tags = sidecar.tags.or(embedded.tags);
+            if sidecar.tags.is_some() {
+                embedded.tags = sidecar.tags;
+                embedded.hierarchical_tags = sidecar.hierarchical_tags;
+            }
             embedded.description = sidecar.description.or(embedded.description);
         }
         embedded
@@ -538,6 +501,7 @@ pub fn import_scanned_description(
 /// Installs durable import state and observes local edits, including clears.
 /// Import writes restore the prior dirty mask within the same transaction.
 pub fn initialize(conn: &Connection) -> Result<(), String> {
+    crate::t_tags::initialize(conn)?;
     conn.execute_batch(
         "CREATE TABLE IF NOT EXISTS axmp_imports (
         file_id INTEGER PRIMARY KEY REFERENCES afiles(id) ON DELETE CASCADE,
@@ -566,9 +530,10 @@ pub fn initialize(conn: &Connection) -> Result<(), String> {
         ON CONFLICT(file_id) DO UPDATE SET dirty = dirty | 8; END;" )).map_err(|e| e.to_string())?;
     }
     conn.execute_batch(
-        "CREATE TRIGGER IF NOT EXISTS axmp_local_tag_name AFTER UPDATE OF name ON atags
-        WHEN NEW.name IS NOT OLD.name BEGIN
-        INSERT INTO axmp_imports(file_id,dirty) SELECT file_id,8 FROM afile_tags WHERE tag_id=NEW.id
+        "CREATE TRIGGER IF NOT EXISTS axmp_local_tag_name AFTER UPDATE OF name,parent_id ON atags
+        WHEN NEW.name IS NOT OLD.name OR NEW.parent_id IS NOT OLD.parent_id BEGIN
+        INSERT INTO axmp_imports(file_id,dirty) SELECT DISTINCT file_id,8 FROM afile_tags
+        WHERE tag_id IN (WITH RECURSIVE tree(id) AS (SELECT NEW.id UNION ALL SELECT t.id FROM atags t JOIN tree ON t.parent_id=tree.id) SELECT id FROM tree)
         ON CONFLICT(file_id) DO UPDATE SET dirty=dirty|8; END;",
     )
     .map_err(|e| e.to_string())?;
@@ -735,40 +700,25 @@ fn apply_fields(
                 .map_err(|e| e.to_string())?;
             }
         } else {
-            let default_group_id: i64 = conn
-                .query_row("SELECT id FROM atag_groups WHERE is_default = 1", [], |r| {
-                    r.get(0)
-                })
-                .unwrap_or(1);
-
-            let mut added_any = false;
-            for tag in tags {
-                let trimmed = tag.trim();
-                if trimmed.is_empty() {
-                    continue;
+            let paths = meta.hierarchical_tags.as_deref().unwrap_or_default();
+            // Flat stores may contain every ancestor, not just the assigned leaf.
+            let represented = |tag: &str| paths.iter().any(|path| path.eq_ignore_ascii_case(tag.trim())
+                || path.split('|').any(|part| part.trim().eq_ignore_ascii_case(tag.trim())));
+            // Only explicit source paths justify replacing old flattened associations.
+            // Keep the old root nodes themselves; they may be used on other files.
+            if dirty & 8 == 0 {
+                for tag in tags.iter().filter(|tag| represented(tag)) {
+                    conn.execute("DELETE FROM afile_tags WHERE file_id=?1 AND tag_id IN (SELECT id FROM atags WHERE parent_id IS NULL AND name=?2 COLLATE NOCASE)", params![file_id,tag])
+                        .map_err(|e|e.to_string())?;
                 }
-
-                let tag_id: i64 = match conn.query_row(
-                    "SELECT id FROM atags WHERE name = ?1 COLLATE NOCASE",
-                    params![trimmed],
-                    |r| r.get(0),
-                ) {
-                    Ok(id) => id,
-                    Err(_) => {
-                        conn.execute(
-                            "INSERT INTO atags (name, group_id) VALUES (?1, ?2)",
-                            params![trimmed, default_group_id],
-                        )
-                        .map_err(|e| e.to_string())?;
-                        conn.last_insert_rowid()
-                    }
-                };
-
-                conn.execute(
-                    "INSERT OR IGNORE INTO afile_tags (file_id, tag_id) VALUES (?1, ?2)",
-                    params![file_id, tag_id],
-                )
-                .map_err(|e| e.to_string())?;
+            }
+            let mut added_any = false;
+            for value in paths.iter().map(|p| (p, true)).chain(tags.iter()
+                .filter(|tag| !represented(tag))
+                .map(|tag| (tag, false))) {
+                let Some(tag_id) = crate::t_tags::import_path(conn, value.0, value.1)? else { continue };
+                conn.execute("INSERT OR IGNORE INTO afile_tags(file_id,tag_id) VALUES(?1,?2)", params![file_id,tag_id])
+                    .map_err(|e|e.to_string())?;
                 added_any = true;
             }
 
@@ -800,16 +750,16 @@ pub fn import_xmp_for_file_with_mode(
 // ---------------------------------------------------------------------------
 
 #[derive(Default)]
-struct XmlNode {
-    uri: String,
-    name: String,
-    text: String,
-    lang: Option<String>,
-    attributes: Vec<XmlNode>,
-    children: Vec<XmlNode>,
+pub(crate) struct XmlNode {
+    pub(crate) uri: String,
+    pub(crate) name: String,
+    pub(crate) text: String,
+    pub(crate) lang: Option<String>,
+    pub(crate) attributes: Vec<XmlNode>,
+    pub(crate) children: Vec<XmlNode>,
 }
 impl XmlNode {
-    fn value(&self) -> String {
+    pub(crate) fn value(&self) -> String {
         if let Some(alt) = self
             .children
             .iter()
@@ -874,7 +824,7 @@ fn resolved_name(result: quick_xml::name::ResolveResult<'_>) -> Result<String, S
         }
     }
 }
-fn parse_xml(content: &str) -> Result<XmlNode, String> {
+pub(crate) fn parse_xml(content: &str) -> Result<XmlNode, String> {
     use quick_xml::{events::Event, reader::NsReader};
     if content.len() > MAX_XMP_BYTES {
         return Err("XMP exceeds 16 MiB size limit".into());
@@ -1068,13 +1018,6 @@ fn property_text(xml: &str, node: &Node) -> Result<String, String> {
     Ok(text)
 }
 
-fn tag_property(uri: &str, name: &[u8]) -> bool {
-    matches!(
-        (uri, name),
-        (NS_DC, b"subject") | (NS_LR, b"hierarchicalSubject") | (NS_DIGIKAM, b"TagsList")
-    )
-}
-
 #[cfg(test)]
 fn merge_with_culling(
     xml: &str,
@@ -1087,6 +1030,7 @@ fn merge_with_culling(
     merge_with_favorite(xml, rating, culling, false, tags, description, mask & !16)
 }
 
+#[cfg(test)]
 fn merge_with_favorite(
     xml: &str,
     rating: i32,
@@ -1096,6 +1040,13 @@ fn merge_with_favorite(
     description: &str,
     mask: i32,
 ) -> Result<String, String> {
+    merge_with_paths(xml,rating,culling,favorite,tags,None,description,mask)
+}
+
+fn merge_with_paths(
+    xml: &str, rating: i32, culling: i32, favorite: bool,
+    tags: &[String], paths: Option<&[String]>, description: &str, mask: i32,
+) -> Result<String,String> {
     parse_xmp_str(xml)?; // reuse bounded, DTD-free validation
     // Rating and culling are one export unit: normalize legacy Rating=-1
     // while preserving the independent Lap star rating and current flag.
@@ -1104,7 +1055,7 @@ fn merge_with_favorite(
     let mut nodes: Vec<Node> = Vec::new();
     let mut stack: Vec<usize> = Vec::new();
     let mut patches: Vec<(usize, usize, String)> = Vec::new();
-    let mut hierarchy = [false; 2];
+    let mut tag_writer = t_xmp_compat::TagWriter::default();
     let mut had_darktable_rejected = false;
     loop {
         let start = reader.buffer_position() as usize;
@@ -1164,7 +1115,7 @@ fn merge_with_favorite(
                             && local.as_ref() == b"Favorite"
                             && mask & 16 != 0)
                             || (uri == NS_XMP && local.as_ref() == b"Rating" && mask & 1 != 0)
-                            || (tag_property(&uri, local.as_ref()) && mask & 8 != 0)
+                            || (t_xmp_compat::writable_property(&uri, local.as_ref()) && mask & 8 != 0)
                             || (uri == NS_DC && local.as_ref() == b"description" && mask & 4 != 0)
                             || (mask & 2 != 0
                                 && culling_property(
@@ -1174,9 +1125,7 @@ fn merge_with_favorite(
                                         .map_err(|e| e.to_string())?,
                                 ));
                         if own {
-                            hierarchy[0] |=
-                                uri == NS_LR && local.as_ref() == b"hierarchicalSubject";
-                            hierarchy[1] |= uri == NS_DIGIKAM && local.as_ref() == b"TagsList";
+                            tag_writer.observe(&uri, &String::from_utf8_lossy(local.as_ref()));
                             had_darktable_rejected |=
                                 uri == NS_DARKTABLE && local.as_ref() == b"rejected";
                             changed = true;
@@ -1269,13 +1218,12 @@ fn merge_with_favorite(
         }
         if (mask & 16 != 0 && n.uri == NS_LAP && n.name == "Favorite")
             || (mask & 1 != 0 && n.uri == NS_XMP && n.name == "Rating")
-            || (mask & 8 != 0 && tag_property(&n.uri, n.name.as_bytes()))
+            || (mask & 8 != 0 && t_xmp_compat::writable_property(&n.uri, n.name.as_bytes()))
             || (mask & 2 != 0
                 && culling_property(&n.uri, n.name.as_bytes(), &property_text(xml, n)?))
         {
             had_darktable_rejected |= n.uri == NS_DARKTABLE && n.name == "rejected";
-            hierarchy[0] |= n.uri == NS_LR && n.name == "hierarchicalSubject";
-            hierarchy[1] |= n.uri == NS_DIGIKAM && n.name == "TagsList";
+            tag_writer.observe(&n.uri, &n.name);
             patches.push((n.start, n.end, String::new()));
         }
         if mask & 4 != 0 && n.uri == NS_DC && n.name == "description" {
@@ -1355,24 +1303,7 @@ fn merge_with_favorite(
         }
     }
     if mask & 8 != 0 {
-        properties += "<dc:subject><rdf:Bag>";
-        for tag in tags {
-            properties += &format!("<rdf:li>{}</rdf:li>", escape(tag));
-        }
-        properties += "</rdf:Bag></dc:subject>";
-        for (present, prefix, uri, property, container) in [
-            (hierarchy[0], "lr", NS_LR, "hierarchicalSubject", "Bag"),
-            (hierarchy[1], "digiKam", NS_DIGIKAM, "TagsList", "Seq"),
-        ] {
-            if present {
-                properties +=
-                    &format!("<{prefix}:{property} xmlns:{prefix}=\"{uri}\"><rdf:{container}>");
-                for tag in tags {
-                    properties += &format!("<rdf:li>{}</rdf:li>", escape(tag));
-                }
-                properties += &format!("</rdf:{container}></{prefix}:{property}>");
-            }
-        }
+        properties += &tag_writer.render(tags, paths);
     }
     if mask & 4 != 0 && !found_description {
         properties += &description_xml(description);
@@ -1531,6 +1462,42 @@ fn destination(media: &Path, cache: &mut ExportIndex) -> Result<PathBuf, String>
     Ok(existing.clone())
 }
 
+/// Preserve the original BOM encoding, including any XML encoding declaration.
+fn encode_xmp_text<'a>(text: &'a str, original: Option<&[u8]>) -> std::borrow::Cow<'a, [u8]> {
+    let original = original.unwrap_or_default();
+    if original.starts_with(&[0xff, 0xfe, 0, 0]) || original.starts_with(&[0, 0, 0xfe, 0xff]) {
+        let little = original[0] == 0xff;
+        let mut bytes = original[..4].to_vec();
+        for character in text.chars() {
+            let value = character as u32;
+            bytes.extend(if little {
+                value.to_le_bytes()
+            } else {
+                value.to_be_bytes()
+            });
+        }
+        bytes.into()
+    } else if original.starts_with(&[0xff, 0xfe]) || original.starts_with(&[0xfe, 0xff]) {
+        let little = original[0] == 0xff;
+        let mut bytes = original[..2].to_vec();
+        for value in text.encode_utf16() {
+            bytes.extend(if little {
+                value.to_le_bytes()
+            } else {
+                value.to_be_bytes()
+            });
+        }
+        bytes.into()
+    } else {
+        if !original.starts_with(&[0xef, 0xbb, 0xbf]) {
+            return std::borrow::Cow::Borrowed(text.as_bytes());
+        }
+        let mut bytes = original[..3].to_vec();
+        bytes.extend_from_slice(text.as_bytes());
+        bytes.into()
+    }
+}
+
 fn write_one(conn: &Connection, file_id: i64, cache: &mut ExportIndex) -> Result<(), String> {
     // A consistent catalog snapshot for this explicit manual export.
     let tx = conn.unchecked_transaction().map_err(|e| e.to_string())?;
@@ -1538,13 +1505,7 @@ fn write_one(conn: &Connection, file_id: i64, cache: &mut ExportIndex) -> Result
         .query_row("SELECT f.path,a.name,COALESCE(a.rating,0),COALESCE(a.culling_flag,0),COALESCE(a.comments,''),COALESCE(a.is_favorite,0) FROM afiles a JOIN afolders f ON f.id=a.folder_id WHERE a.id=?1",
             [file_id], |r|Ok((r.get(0)?,r.get(1)?,r.get(2)?,r.get(3)?,r.get(4)?,r.get(5)?)))
         .map_err(|e|e.to_string())?;
-    let tags: Vec<String> = {
-        let mut stmt=tx.prepare("SELECT t.name FROM atags t JOIN afile_tags ft ON ft.tag_id=t.id WHERE ft.file_id=?1 ORDER BY t.name COLLATE NOCASE,t.id").map_err(|e|e.to_string())?;
-        let rows = stmt
-            .query_map([file_id], |r| r.get(0))
-            .map_err(|e| e.to_string())?;
-        rows.collect::<Result<_, _>>().map_err(|e| e.to_string())?
-    };
+    let (tags, paths) = crate::t_tags::keywords_for_file(&tx,file_id)?;
     tx.commit().map_err(|e| e.to_string())?;
     let mut components = Path::new(&name).components();
     if !matches!(components.next(), Some(std::path::Component::Normal(_)))
@@ -1565,14 +1526,13 @@ fn write_one(conn: &Connection, file_id: i64, cache: &mut ExportIndex) -> Result
         Err(e) => return Err(e.to_string()),
     };
     let xml = match before.as_deref() {
-        Some(b) => std::str::from_utf8(b)
-            .map_err(|e| e.to_string())?
-            .to_owned(),
+        Some(b) => crate::t_metadata::decode_xmp_text(b)
+            .ok_or("Invalid or oversized XMP text encoding")?,
         None => format!(
             "<x:xmpmeta xmlns:x=\"adobe:ns:meta/\"><rdf:RDF xmlns:rdf=\"{NS_RDF}\"></rdf:RDF></x:xmpmeta>"
         ),
     };
-    let output = merge_with_favorite(&xml, rating, culling, favorite, &tags, &description, ALL)?;
+    let output = merge_with_paths(&xml, rating, culling, favorite, &tags, Some(&paths), &description, ALL)?;
     let temp = dest.with_file_name(format!(
         ".lap-xmp-{}-{}.tmp",
         std::process::id(),
@@ -1584,7 +1544,7 @@ fn write_one(conn: &Connection, file_id: i64, cache: &mut ExportIndex) -> Result
         .open(&temp)
         .map_err(|e| e.to_string())?;
     let result = (|| {
-        file.write_all(output.as_bytes())
+        file.write_all(&encode_xmp_text(&output, before.as_deref()))
             .map_err(|e| e.to_string())?;
         if before.is_some() {
             file.set_permissions(
@@ -1711,23 +1671,16 @@ mod import_tests {
                 comments TEXT,
                 has_tags INTEGER DEFAULT 0
             );
-            CREATE TABLE atag_groups (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL,
-                is_default INTEGER DEFAULT 0,
-                sort_order INTEGER DEFAULT 0
-            );
             CREATE TABLE atags (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
-                group_id INTEGER NOT NULL
+                parent_id INTEGER REFERENCES atags(id) ON DELETE CASCADE
             );
             CREATE TABLE afile_tags (
                 file_id INTEGER NOT NULL,
                 tag_id INTEGER NOT NULL,
                 UNIQUE(file_id, tag_id)
-            );
-            INSERT INTO atag_groups (id, name, is_default, sort_order) VALUES (1, 'Default', 1, 0);",
+            );",
         )
         .unwrap();
         initialize(&conn).unwrap();
@@ -1927,6 +1880,7 @@ mod import_tests {
 
         // 1. Initial scan imports metadata from XMP
         let initial_xmp = XmpMetadata {
+            hierarchical_tags: None,
             favorite: None,
             rating: Some(2),
             culling_flag: Some(1), // Pick
@@ -1953,7 +1907,7 @@ mod import_tests {
         )
         .unwrap();
         conn.execute(
-            "INSERT INTO atags (id, name, group_id) VALUES (10, 'Favorite', 1)",
+            "INSERT INTO atags (id, name) VALUES (10, 'Favorite')",
             [],
         )
         .unwrap();
@@ -1965,6 +1919,7 @@ mod import_tests {
 
         // 3. Background rescan runs on an updated sidecar (e.g. darktable saved exposure history with old Rating=2, Flag=1, and added "Mountains" tag)
         let rescan_xmp = XmpMetadata {
+            hierarchical_tags: None,
             favorite: None,
             rating: Some(2),
             culling_flag: Some(1),
@@ -2058,6 +2013,7 @@ mod import_tests {
         let conn = setup_in_memory_db();
         file(&conn);
         let meta = XmpMetadata {
+            hierarchical_tags: None,
             favorite: None,
             rating: Some(4),
             culling_flag: Some(1),
@@ -2328,9 +2284,8 @@ mod export_tests {
         let conn = Connection::open_in_memory().unwrap();
         conn.execute_batch("CREATE TABLE afolders(id INTEGER PRIMARY KEY,path TEXT); INSERT INTO afolders(id) VALUES(1);
             CREATE TABLE afiles(id INTEGER PRIMARY KEY,folder_id INTEGER DEFAULT 1,name TEXT DEFAULT 'photo.jpg',is_favorite INTEGER DEFAULT 0,rating INTEGER DEFAULT 0,culling_flag INTEGER DEFAULT 0,comments TEXT,has_tags INTEGER DEFAULT 0);
-            CREATE TABLE atags(id INTEGER PRIMARY KEY,name TEXT,group_id INTEGER);CREATE TABLE afile_tags(file_id INTEGER,tag_id INTEGER,UNIQUE(file_id,tag_id));
-            CREATE TABLE atag_groups(id INTEGER PRIMARY KEY,is_default INTEGER);INSERT INTO atag_groups VALUES(1,1);
-            INSERT INTO afiles(id,rating,comments) VALUES(1,4,'local caption'); INSERT INTO atags VALUES(1,'旅行, travel & <test>',1);INSERT INTO afile_tags VALUES(1,1);").unwrap();
+            CREATE TABLE atags(id INTEGER PRIMARY KEY,name TEXT,parent_id INTEGER REFERENCES atags(id) ON DELETE CASCADE);CREATE TABLE afile_tags(file_id INTEGER,tag_id INTEGER,UNIQUE(file_id,tag_id));
+            INSERT INTO afiles(id,rating,comments) VALUES(1,4,'local caption'); INSERT INTO atags(id,name) VALUES(1,'旅行, travel & <test>');INSERT INTO afile_tags VALUES(1,1);").unwrap();
         conn.execute(
             "UPDATE afolders SET path=?1 WHERE id=1",
             [folder.to_str().unwrap()],
@@ -2879,6 +2834,22 @@ mod export_tests {
         assert_eq!(parse_xmp_str(&output).unwrap().tags, Some(vec![]));
     }
     #[test]
+    fn existing_acdsee_attributes_and_elements_follow_replacements_and_clears() {
+        let categories = escape(r#"<Categories><Category Assigned="0">Places<Category Assigned="1">Paris</Category></Category></Categories>"#);
+        for description in [
+            format!("<rdf:Description xmlns:a=\"{NS_ACDSEE}\" a:categories=\"{categories}\"/>"),
+            format!("<rdf:Description xmlns:a=\"{NS_ACDSEE}\"><a:categories>{categories}</a:categories></rdf:Description>"),
+        ] {
+            let xml = format!("<rdf:RDF xmlns:rdf=\"{NS_RDF}\">{description}</rdf:RDF>");
+            let cleared = merge_with_paths(&xml, 0, 0, false, &[], Some(&[]), "", 8).unwrap();
+            assert_eq!(parse_xmp_str(&cleared).unwrap().tags, Some(vec![]));
+            let paths = vec!["Places|Rome".into()];
+            let replaced = merge_with_paths(&xml, 0, 0, false, &["Rome".into()], Some(&paths), "", 8).unwrap();
+            assert_eq!(parse_xmp_str(&replaced).unwrap().hierarchical_tags, Some(paths));
+            assert!(!replaced.contains("Paris"));
+        }
+    }
+    #[test]
     fn packet_readonly_marker_is_not_caption_text() {
         let xml = format!(
             "<rdf:RDF xmlns:rdf=\"{NS_RDF}\"><rdf:Description xmlns:dc=\"{NS_DC}\"><dc:description><![CDATA[end=\"r\"]]></dc:description></rdf:Description></rdf:RDF>"
@@ -3049,6 +3020,79 @@ mod export_tests {
         fs::remove_dir_all(dir).unwrap();
     }
     #[test]
+    fn hierarchical_catalog_export_roundtrips_without_flat_duplicates_or_group_names() {
+        let (conn,dir,media)=fixture();
+        conn.execute("DELETE FROM afile_tags",[]).unwrap();
+        let xml=packet("<d:subject><rdf:Bag><rdf:li>Paris</rdf:li></rdf:Bag></d:subject><lr:hierarchicalSubject xmlns:lr=\"http://ns.adobe.com/lightroom/1.0/\"><rdf:Bag><rdf:li>Places|France|Paris</rdf:li><rdf:li>Clients|Paris</rdf:li></rdf:Bag></lr:hierarchicalSubject><digiKam:TagsList xmlns:digiKam=\"http://www.digikam.org/ns/1.0/\"><rdf:Seq><rdf:li>Places/France/Paris</rdf:li><rdf:li>Clients/Paris</rdf:li></rdf:Seq></digiKam:TagsList>");
+        let meta=parse_xmp_str(&xml).unwrap();
+        apply_xmp_metadata_to_db(1,&meta,&conn,XmpImportMode::InitialScan).unwrap();
+        assert_eq!(conn.query_row("SELECT COUNT(*) FROM afile_tags WHERE file_id=1",[],|r|r.get::<_,i64>(0)).unwrap(),2);
+        assert_eq!(crate::t_tags::find(&conn,"Paris",None).unwrap(),None);
+        fs::write(media.with_extension("xmp"), &xml).unwrap();
+        let result=save_batch(&conn,&[1]);
+        assert_eq!(result.saved_ids,vec![1]);
+        assert!(result.failures.is_empty());
+        let output=fs::read_to_string(find_xmp_sidecar(&media).unwrap()).unwrap();
+        assert!(output.contains("<rdf:li>Places/France/Paris</rdf:li>"));
+        assert!(output.contains("<rdf:li>Places|France|Paris</rdf:li>"));
+        let reread=parse_xmp_str(&output).unwrap();
+        assert_eq!(reread.hierarchical_tags,Some(vec!["Clients|Paris".into(),"Places|France|Paris".into()]));
+        conn.execute("INSERT INTO afiles(id) VALUES(2)",[]).unwrap();
+        apply_xmp_metadata_to_db(2,&reread,&conn,XmpImportMode::InitialScan).unwrap();
+        assert_eq!(conn.query_row("SELECT COUNT(*) FROM afile_tags WHERE file_id=2",[],|r|r.get::<_,i64>(0)).unwrap(),2);
+        let country=crate::t_tags::find(&conn,"France",crate::t_tags::find(&conn,"Places",None).unwrap()).unwrap().unwrap();
+        conn.execute("UPDATE atags SET name='French places' WHERE id=?1",[country]).unwrap();
+        conn.execute("INSERT INTO afiles(id) VALUES(3)",[]).unwrap();
+        apply_xmp_metadata_to_db(3,&meta,&conn,XmpImportMode::InitialScan).unwrap();
+        let (_,paths)=crate::t_tags::keywords_for_file(&conn,3).unwrap();
+        assert!(paths.contains(&"Places|French places|Paris".to_string()));
+        assert!(crate::t_tags::find(&conn,"France",crate::t_tags::find(&conn,"Places",None).unwrap()).unwrap().is_none());
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn acdsee_only_tags_and_cross_source_paths_share_the_same_nodes() {
+        let (conn, dir, _) = fixture();
+        conn.execute("DELETE FROM afile_tags", []).unwrap();
+        let categories = r#"<Categories><Category Assigned="0">Places<Category Assigned="1">Paris</Category><Category Assigned="0">Unused</Category></Category></Categories>"#;
+        let property = format!(
+            "<a:categories xmlns:a=\"{NS_ACDSEE}\">{}</a:categories>",
+            escape(categories)
+        );
+        let meta = parse_xmp_str(&packet(&property)).unwrap();
+        apply_xmp_metadata_to_db(1, &meta, &conn, XmpImportMode::InitialScan).unwrap();
+        assert_eq!(
+            crate::t_tags::keywords_for_file(&conn, 1).unwrap(),
+            (vec!["Paris".into()], vec!["Places|Paris".into()])
+        );
+        assert!(crate::t_tags::find(&conn, "Unused", None)
+            .unwrap()
+            .is_none());
+        let combined = packet(&format!("{property}<lr:hierarchicalSubject xmlns:lr=\"{NS_LR}\"><rdf:Bag><rdf:li>Places|Paris</rdf:li></rdf:Bag></lr:hierarchicalSubject><k:TagsList xmlns:k=\"{NS_DIGIKAM}\"><rdf:Seq><rdf:li>Places/Paris</rdf:li></rdf:Seq></k:TagsList>"));
+        let combined = parse_xmp_str(&combined).unwrap();
+        conn.execute("INSERT INTO afiles(id) VALUES(2)", [])
+            .unwrap();
+        for _ in 0..2 {
+            apply_xmp_metadata_to_db(2, &combined, &conn, XmpImportMode::InitialScan).unwrap();
+            assert_eq!(
+                crate::t_tags::keywords_for_file(&conn, 2).unwrap(),
+                crate::t_tags::keywords_for_file(&conn, 1).unwrap()
+            );
+            assert_eq!(
+                conn.query_row("SELECT COUNT(*) FROM afile_tags WHERE file_id=2", [], |r| r
+                    .get::<_, i64>(0))
+                    .unwrap(),
+                1
+            );
+        }
+        let broken = packet(&format!("<a:categories xmlns:a=\"{NS_ACDSEE}\">&lt;Categories&gt;</a:categories><d:subject><rdf:Bag><rdf:li>Keep</rdf:li></rdf:Bag></d:subject>"));
+        let parsed = parse_xmp_str(&broken).unwrap();
+        assert_eq!(parsed.tags, Some(vec!["Keep".into()]));
+        assert!(parsed.hierarchical_tags.is_none());
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
     fn tag_lookup_uses_nocase_index() {
         let (conn, dir, _) = fixture();
         let plan: String = conn
@@ -3146,6 +3190,45 @@ mod export_tests {
     }
 
     #[test]
+    fn tag_tree_upgrade_reimports_unchanged_sources_once_and_preserves_local_edits() {
+        for dirty in [0, 8] {
+            let (conn, dir, media) = fixture();
+            let categories = escape(r#"<Categories><Category Assigned="1">Vendor</Category></Categories>"#);
+            let xml = packet(&format!("<lr:hierarchicalSubject xmlns:lr=\"{NS_LR}\"><rdf:Bag><rdf:li>Places|Paris</rdf:li></rdf:Bag></lr:hierarchicalSubject><a:categories xmlns:a=\"{NS_ACDSEE}\">{categories}</a:categories>"));
+            fs::write(media.with_extension("xmp"), &xml).unwrap();
+            let import = || import_xmp_for_file_with_conn(
+                1, media.to_str().unwrap(), &conn, XmpImportMode::RescanNonDestructive,
+            ).unwrap();
+            assert!(import());
+            // Simulate the migrated catalog and unchanged v3 source fingerprint.
+            conn.execute_batch("DELETE FROM afile_tags; DELETE FROM axmp_tag_paths; DELETE FROM atags;
+                INSERT INTO atags(id,name) VALUES(1,'Places|Paris');
+                INSERT INTO afile_tags VALUES(1,1);
+                UPDATE afiles SET has_tags=1 WHERE id=1;
+                UPDATE axmp_imports SET fingerprint=REPLACE(fingerprint,'embedded-v4:','embedded-v3:') WHERE file_id=1;").unwrap();
+            conn.execute("UPDATE axmp_imports SET dirty=?1 WHERE file_id=1", [dirty]).unwrap();
+
+            assert!(import());
+            assert!(!import());
+            let (flat, paths) = crate::t_tags::keywords_for_file(&conn, 1).unwrap();
+            if dirty == 0 {
+                assert_eq!(flat, vec!["Paris", "Vendor"]);
+                assert_eq!(paths, vec!["Places|Paris", "Vendor"]);
+                assert_eq!(save_batch(&conn, &[1]).saved_ids, vec![1]);
+                let output = read_xmp_file(&media.with_extension("xmp")).unwrap();
+                assert_eq!(output.hierarchical_tags, Some(paths));
+            } else {
+                assert_eq!(flat, vec!["Places|Paris"]);
+                assert!(paths.is_empty());
+                assert_eq!(fs::read_to_string(media.with_extension("xmp")).unwrap(), xml);
+            }
+            assert_eq!(conn.query_row("SELECT dirty FROM axmp_imports WHERE file_id=1", [], |r| r.get::<_, i32>(0)).unwrap(), dirty);
+            assert_eq!(fs::read(&media).unwrap(), b"unchanged-original");
+            fs::remove_dir_all(dir).unwrap();
+        }
+    }
+
+    #[test]
     fn favorite_sidecar_false_overrides_embedded_true_and_upgrade_backfills() {
         let (conn, dir, media) = fixture();
         let xml = packet(&format!(
@@ -3178,7 +3261,7 @@ mod export_tests {
                 .unwrap()
         );
         fs::remove_file(sidecar).unwrap();
-        conn.execute("UPDATE axmp_imports SET fingerprint=REPLACE(fingerprint,'embedded-v3:','embedded-v2:') WHERE file_id=1",[]).unwrap();
+        conn.execute("UPDATE axmp_imports SET fingerprint=REPLACE(fingerprint,'embedded-v4:','embedded-v2:') WHERE file_id=1",[]).unwrap();
         assert!(
             import_xmp_for_file_with_conn(
                 1,

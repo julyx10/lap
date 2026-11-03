@@ -361,7 +361,14 @@
     "not_found": "No se encontraron etiquetas",
     "name_exists": "Ya existe una etiqueta con este nombre",
     "name_save_failed": "No se pudo guardar el nombre de la etiqueta",
-    "load_failed": "No se pudo cargar el estado de las etiquetas. Cierra este diálogo e inténtalo de nuevo."
+    "move_failed": "No se pudo mover la etiqueta",
+    "delete_failed": "No se pudo eliminar la etiqueta",
+    "load_failed": "No se pudo cargar el estado de las etiquetas. Cierra este diálogo e inténtalo de nuevo.",
+    "root": "Nivel raíz",
+    "add_child": "Nueva etiqueta secundaria",
+    "invalid_name": "Los nombres de las etiquetas no pueden contener , ; ni {'|'}.",
+    "invalid_move": "Una etiqueta no se puede mover dentro de su propio árbol.",
+    "delete_tree": "Se eliminarán esta etiqueta y sus subetiquetas. Las fotos se conservarán."
   },
   "subject": {
     "title": "Temas",
@@ -443,6 +450,7 @@
       "placeholder": "Buscar archivo"
     },
     "filter": {
+      "favorites_only": "Solo favoritos",
       "select_mode": "Selección múltiple",
       "select_files": "Seleccionar archivos",
       "show_selection_panel": "Abrir panel de selección múltiple",
@@ -772,20 +780,8 @@
     "tag": {
       "rename": "Renombrar",
       "delete": "Eliminar",
-      "new_group": "Nuevo grupo",
-      "edit_group": "Editar grupo",
-      "delete_group": "Eliminar grupo",
-      "search": "Buscar etiquetas o grupos",
-      "clear_search": "Borrar búsqueda",
-      "active_tag": "Etiqueta seleccionada en este grupo",
-      "name": "Nombre",
-      "locate": "Localizar etiqueta",
-      "empty": "Sin etiquetas",
-      "move_to": "Mover al grupo",
-      "delete_message": "¿Eliminar «{name}»? Sus etiquetas se moverán a Default. Se conservarán las etiquetas de los archivos.",
-      "exists_in": "Esta etiqueta ya existe en «{group}».",
-      "name_exists": "Ya existe un grupo con este nombre.",
-      "new_tag_group": "Grupo de la nueva etiqueta"
+      "search": "Buscar etiquetas",
+      "clear_search": "Borrar búsqueda"
     },
     "meta": {
       "favorite": "Favorito",
@@ -979,7 +975,8 @@
       "title": "No se pudo mover a la papelera",
       "file_content": "El archivo '{file}' no se pudo mover a la papelera.\n\n¿Quieres eliminarlo permanentemente en su lugar?",
       "files_content": "{count} archivos seleccionados no se pudieron mover a la papelera.\n\n¿Quieres eliminarlos permanentemente en su lugar?",
-      "folder_content": "La carpeta '{folder}' no se pudo mover a la papelera.\n\n¿Quieres eliminarla permanentemente en su lugar?",
+      "folder_content": "La carpeta '{folder}' no se pudo mover a la papelera.\n\n¿Quieres eliminarla permanentemente en su lugar?\n\nEsta acción no se puede deshacer desde la papelera del sistema.",
+      "folder_partial_warning": "Es posible que el intento anterior haya movido parte del contenido a la papelera. La eliminación permanente borrará esta carpeta y su contenido restante.",
       "ok": "Eliminar permanentemente"
     },
     "open_external_many": {
@@ -993,7 +990,7 @@
       "error": "No se pudo crear la etiqueta."
     },
     "delete_tag": {
-      "title": "Eliminar etiqueta",
+      "title": "¿Eliminar «{tag}»?",
       "content": "'{tag}' será eliminada.",
       "ok": "Eliminar",
       "success": "'{tag}' eliminada.",
@@ -1012,11 +1009,6 @@
     },
     "file_refresh": {
       "skipped": "Omitidos: {count}",
-      "checking": "Comprobando…",
-      "pending": "{count} archivos necesitan actualizarse",
-      "up_to_date": "La información de los archivos está actualizada.",
-      "check_failed": "No se pudieron comprobar algunos archivos.",
-      "update": "Actualizar",
       "status": "Estado de actualización",
       "running": "Actualizando…",
       "cancelling": "Cancelando…",

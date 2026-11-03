@@ -1407,13 +1407,11 @@ watch([
           placeholderLayout.height,
         );
 
-        if (isRawPreview && containerSize.value.width > 0) {
-          // Keep the thumbnail's current transform. Both the thumbnail and
-          // complete RAW use the same layout dimensions, so scale and position
-          // describe the identical viewport regardless of auto-fit state.
-          clampPosition(true);
-        } else if (containerSize.value.width > 0 && isZoomFit.value) {
+        if (containerSize.value.width > 0 && isZoomFit.value) {
+          // Orientation/aspect differences can change the placeholder layout.
           updateZoomFit(true);
+        } else if (isRawPreview && containerSize.value.width > 0) {
+          clampPosition(true);
         }
 
         setTimeout(() => {

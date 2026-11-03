@@ -30,7 +30,7 @@ edition = "2024"
 quick-xml = "0.37.5"
 rusqlite = { version = "0.32.1", features = ["bundled"] }
 serde = { version = "1", features = ["derive"] }
-exiftool-rs = { version = "=0.14.0", default-features = false }
+exiftool-rs = { version = "=1.0.0", default-features = false }
 flate2 = "1"
 memmap2 = "0.9"
 libc = "0.2"
@@ -54,7 +54,7 @@ windows = { version = "0.61.3", default-features = false, features = ["Win32_Fou
     type_reader = "pub fn get_file_type(" + type_reader
     modules = '\n'.join(
         f'#[path={json.dumps(str(root / "src-tauri/src" / (name + ".rs")))}] mod {name};'
-        for name in ("t_xmp", "t_metadata", "t_xmp_files", "t_common")
+        for name in ("t_xmp", "t_xmp_compat", "t_metadata", "t_xmp_files", "t_common", "t_tags")
     )
     (work / "src/lib.rs").write_text('''#![allow(dead_code)]
 mod t_batch_rename;

@@ -3,23 +3,25 @@
     <div class="sidebar-panel-header">
       <span class="sidebar-panel-header-title flex-1"
         >{{ $t("tag.title")
-        }}<template v-if="displayedTagCount">
-          ({{ displayedTagCount.toLocaleString() }})</template
+        }}<template v-if="tags.length">
+          ({{ tags.length.toLocaleString() }})</template
         ></span
       >
       <SortMenuButton v-model="config.settings.tagSort" kind="category" />
       <TButton
         :icon="IconAdd"
         buttonSize="small"
-        :tooltip="$t('menu.tag.new_group')"
-        @click="editGroup()"
+        :tooltip="$t('msgbox.new_tag.title')"
+        @click="clickAddTag()"
       />
     </div>
-    <div class="mx-1 mb-2 px-1 shrink-0">
+    <div v-if="tags.length > 0" class="mx-1 mb-2 px-1 shrink-0">
       <div
         :class="[
           'h-8 flex items-center rounded-box transition-colors bg-base-100/40',
-          isSearchFocused ? 'border-2 border-primary' : 'border border-base-content/10 hover:border-base-content/30',
+          isSearchFocused
+            ? 'border-2 border-primary'
+            : 'border border-base-content/10 hover:border-base-content/30',
         ]"
         @click="searchInputRef?.focus()"
       >
@@ -42,228 +44,109 @@
           type="button"
           :title="$t('menu.tag.clear_search')"
           class="mr-1 p-1 rounded-box text-base-content/30 hover:text-base-content/70"
-          @click.stop="search = ''; searchInputRef?.focus()"
+          @click.stop="
+            search = '';
+            searchInputRef?.focus();
+          "
         >
           <IconClose class="w-4 h-4" />
         </button>
       </div>
     </div>
-    <div class="grow overflow-y-auto overflow-x-hidden">
-      <VueDraggable
-        v-model="groups"
-        tag="ul"
-        :animation="200"
-        handle=".tag-group-drag-handle"
-        :disabled="
-          Boolean(search.trim()) ||
-          renaming !== null ||
-          reorderingGroupId === null ||
-          savingOrder
-        "
-        :onMove="canMoveGroup"
-        @start="onReorderStart"
-        @end="onReorderEnd"
-        @drop.stop
-      >
+
+    <div ref="tagList" class="grow min-h-0 overflow-y-auto overflow-x-hidden">
+      <ul role="tree">
         <li
-          v-for="group in visibleGroups"
-          :key="group.id"
-          :id="`tag-group-${group.id}`"
-          :data-default-group="group.is_default ? 'true' : undefined"
-          :data-reordering-group="
-            reorderingGroupId === group.id ? 'true' : undefined
-          "
+          v-for="tag in rows"
+          :key="tag.id"
+          role="treeitem"
+          :aria-level="tag.depth + 1"
+          :aria-expanded="tag.hasChildren ? expanded(tag.id) : undefined"
+          :aria-selected="libConfig.tag.id === tag.id"
         >
           <div
-            class="sidebar-item group"
-            :class="
-              libConfig.tag.groupId === group.id && !isRenaming('group', group.id)
-                ? 'sidebar-item-selected'
-                : 'sidebar-item-hover'
-            "
-            @click="selectGroup(group)"
-            @contextmenu.prevent.stop="
-              (event: MouseEvent) =>
-                groupMenus[group.id]?.open(event.clientX, event.clientY)
-            "
+            :id="`tag-${tag.id}`"
+            class="sidebar-item group select-none"
+            :class="{
+              'text-primary': libConfig.tag.id === tag.id,
+              'opacity-50': dragged === tag.id,
+              'bg-primary/10 ring-1 ring-inset ring-primary/40':
+                dropTarget === tag.id,
+            }"
+            :style="{ paddingLeft: `${4 + tag.depth * 16}px` }"
+            :data-tag-drop-id="tag.id"
+            tabindex="0"
+            @keydown.enter.stop.prevent="selectTag(tag)"
+            @keydown.space.stop.prevent="selectTag(tag)"
+            @pointerdown="startDrag($event, tag)"
+            @dragstart.prevent
+            @click="selectTag(tag)"
+            @dblclick.stop="edit(tag)"
           >
-            <IconDragHandle
-              v-if="reorderingGroupId === group.id"
-              class="tag-group-drag-handle p-1 w-6 h-6 shrink-0 cursor-move text-base-content/70 hover:text-base-content"
-              :title="$t('collection.reorder')"
-            />
-            <span
-              v-else-if="reorderingGroupId !== null"
-              class="p-1 w-6 h-6 shrink-0"
-            />
             <button
-              :aria-label="group.name"
-              :aria-expanded="expanded(group.id)"
-              @click.stop="toggleGroup(group.id)"
+              v-if="tag.hasChildren"
+              class="size-6 shrink-0 flex items-center justify-center"
+              :aria-label="tag.name"
+              @click.stop="toggle(tag.id)"
             >
               <IconRight
-                class="p-1 w-6 h-6 shrink-0 transition-transform"
-                :class="expanded(group.id) ? 'rotate-90' : ''"
+                class="size-6 p-1 transition-transform"
+                :class="{ 'rotate-90': expanded(tag.id) }"
               />
             </button>
-            <input
-                  v-if="isRenaming('group', group.id)"
-                  :ref="(el: any) => { if (el) renameInput = el; }"
-                  v-model="renaming!.name"
-                  type="text"
-                  maxlength="255"
-                  :aria-label="$t('menu.tag.rename')"
-                  :placeholder="$t('menu.tag.new_group')"
-                  class="input px-1 w-full min-w-0 text-base"
-                  :readonly="savingRename"
-                  @click.stop
-                  @mousedown.stop
-                  @keydown.stop
-                  @keydown.enter.prevent="!$event.isComposing && saveRename()"
-                  @keydown.esc.prevent="cancelRename"
-                  @blur="saveRename(true)"
-                />
-                <span v-else class="sidebar-item-label">{{ group.name }}</span>
-            <span
-              v-if="!isRenaming('group', group.id) && !expanded(group.id) && selectedTag?.group_id === group.id"
-              class="text-primary text-xs"
-              :title="$t('menu.tag.active_tag')"
-              >•</span
-            >
+            <span v-else class="size-6 shrink-0" aria-hidden="true" />
+            <IconTag class="w-5 h-5 pr-1 shrink-0" />
+            <TagNameInput
+              v-if="editor && tag.id === (editor.id ?? -1)"
+              :key="tag.id"
+              :initial-name="editor.name"
+              :saving="saving"
+              :error="error"
+              @save="saveEditor"
+              @cancel="cancelEditor"
+              @clear-error="error = ''"
+            />
+            <span v-else class="sidebar-item-label">{{
+              search ? tag.path : tag.name
+            }}</span>
+            <span v-if="Number(tag.count) > 0" class="sidebar-item-count">{{
+              Number(tag.count).toLocaleString()
+            }}</span>
             <div
-              v-if="!isRenaming('group', group.id)"
-                  class="ml-auto flex flex-row items-center text-base-content/30"
+              v-if="!editor"
+              class="ml-auto hidden group-hover:block"
+              @click.stop
             >
-              <span
-                v-if="group.count > 0"
-                class="sidebar-item-count shrink-0"
-                >{{ group.count.toLocaleString() }}</span
-              >
-              <div
-                :class="
-                  libConfig.tag.groupId === group.id
-                    ? ''
-                    : 'hidden group-hover:block'
-                "
-                @click.stop
-              >
-                <ContextMenu
-                  :ref="
-                    (el: any) => {
-                      if (el) groupMenus[group.id] = el;
-                    }
-                  "
-                  :iconMenu="IconMore"
-                  :menuItems="() => groupMenu(group)"
-                  :smallIcon="true"
-                />
-              </div>
+              <ContextMenu
+                :iconMenu="IconMore"
+                :menuItems="() => tagMenu(tag)"
+                :smallIcon="true"
+              />
             </div>
           </div>
-          <ul v-if="expanded(group.id)">
-            <li
-              v-for="tag in group.tags"
-              :key="tag.id"
-              :id="`tag-${tag.id}`"
-              class="pl-4"
-            >
-              <div
-                class="sidebar-item sidebar-item-compact ml-2 group"
-                :class="
-                  libConfig.tag.id === tag.id && !isRenaming('tag', tag.id)
-                    ? 'sidebar-item-selected'
-                    : 'sidebar-item-hover'
-                "
-                @click="selectTag(tag)"
-                @contextmenu.prevent.stop="
-                  (event: MouseEvent) =>
-                    tagMenus[tag.id]?.open(event.clientX, event.clientY)
-                "
-              >
-                <IconTag class="mx-1 w-4 h-4 shrink-0" />
-                <input
-                  v-if="isRenaming('tag', tag.id)"
-                  :ref="(el: any) => { if (el) renameInput = el; }"
-                  v-model="renaming!.name"
-                  type="text"
-                  maxlength="255"
-                  :aria-label="$t('menu.tag.rename')"
-                  :placeholder="$t('msgbox.new_tag.title')"
-                  class="input px-1 w-full min-w-0 text-base"
-                  :readonly="savingRename"
-                  @click.stop
-                  @mousedown.stop
-                  @keydown.stop
-                  @keydown.enter.prevent="!$event.isComposing && saveRename()"
-                  @keydown.esc.prevent="cancelRename"
-                  @blur="saveRename(true)"
-                />
-                <span v-else class="sidebar-item-label">{{ tag.name }}</span>
-                <div
-                  v-if="!isRenaming('tag', tag.id)"
-                  class="ml-auto flex flex-row items-center text-base-content/30"
-                >
-                  <span
-                    v-if="getTagCount(tag) > 0"
-                    class="sidebar-item-count shrink-0"
-                    >{{ getTagCount(tag).toLocaleString() }}</span
-                  >
-                  <div
-                    :class="
-                      libConfig.tag.id === tag.id
-                        ? ''
-                        : 'hidden group-hover:block'
-                    "
-                    @click.stop
-                  >
-                    <ContextMenu
-                      :ref="
-                        (el: any) => {
-                          if (el) tagMenus[tag.id] = el;
-                        }
-                      "
-                      :iconMenu="IconMore"
-                      :menuItems="() => tagMenu(tag)"
-                      :smallIcon="true"
-                    />
-                  </div>
-                </div>
-              </div>
-            </li>
-            <li
-              v-if="!group.tags.length"
-              class="pl-10 py-2 text-xs text-base-content/40"
-            >
-              {{ $t("menu.tag.empty") }}
-            </li>
-          </ul>
         </li>
-      </VueDraggable>
+      </ul>
       <div
-        v-if="!loading && !visibleGroups.length"
-        class="sidebar-empty text-sm"
+        v-if="dragged !== null"
+        data-tag-drop-root
+        class="sticky bottom-0 sidebar-item border border-dashed border-primary/40 bg-base-200 text-primary"
+        :class="{ 'ring-1 ring-inset ring-primary': dropTarget === null }"
       >
-        {{ failed ? $t("tag.load_failed") : $t("tag.not_found") }}
+        {{ $t("tag.root") }}
+      </div>
+      <div v-if="!loading && !rows.length" class="sidebar-empty text-sm">
+        {{ $t(failed ? "tag.load_failed" : "tag.not_found") }}
       </div>
     </div>
   </div>
   <MessageBox
     v-if="deleteTarget"
-    :title="
-      $t(
-        deleteTarget.kind === 'group'
-          ? 'menu.tag.delete_group'
-          : 'msgbox.delete_tag.title',
-      )
-    "
-    :message="
-      deleteTarget.kind === 'group'
-        ? $t('menu.tag.delete_message', { name: deleteTarget.name })
-        : $t('msgbox.delete_tag.content', { tag: deleteTarget.name })
-    "
+    :title="$t('msgbox.delete_tag.title', { tag: deleteTarget.name })"
+    :message="$t('tag.delete_tree')"
+    :warningOk="true"
+    :isLoading="saving"
     :OkText="$t('msgbox.delete_tag.ok')"
     :cancelText="$t('msgbox.cancel')"
-    :warningOk="true"
     @ok="confirmDelete"
     @cancel="deleteTarget = null"
   />
@@ -273,31 +156,33 @@
 import {
   ref,
   computed,
-  nextTick,
   watch,
+  nextTick,
   onMounted,
   onBeforeUnmount,
 } from "vue";
-import { VueDraggable } from "vue-draggable-plus";
 import { emit as emitEvent, listen } from "@tauri-apps/api/event";
 import { useI18n } from "vue-i18n";
 import { useToast } from "@/common/toast";
-import { config, libConfig } from "@/common/config";
 import { useUIStore } from "@/stores/uiStore";
+import { config, libConfig } from "@/common/config";
 import { SIDEBAR } from "@/common/constants";
 import {
   getAllTags,
   getTagCounts,
-  getTagGroups,
   createTag,
   renameTag,
   deleteTag,
-  saveTagGroup,
-  reorderTagGroups,
-  deleteTagGroup,
-  moveTagsToGroup,
+  moveTag,
+  getTagSubtreeInfo,
 } from "@/common/api";
-import { groupTags, type TagGroup, type LibraryTag } from "@/common/tagGroups";
+import {
+  tagRows,
+  ancestorIds,
+  subtreeIds,
+  isValidTagName,
+  type LibraryTag,
+} from "@/common/tagTree";
 import {
   IconAdd,
   IconClose,
@@ -307,14 +192,12 @@ import {
   IconTagAdd,
   IconRight,
   IconRename,
-  IconOrder,
   IconTrash,
-  IconDragHandle,
-  IconFolderMoveTo,
 } from "@/common/icons";
 import ContextMenu from "./ContextMenu.vue";
 import TButton from "./TButton.vue";
 import MessageBox from "./MessageBox.vue";
+import TagNameInput from "./TagNameInput.vue";
 import SortMenuButton from "./SortMenuButton.vue";
 
 defineProps<{ titlebar: string }>();
@@ -322,421 +205,314 @@ defineEmits(["editDataChanged"]);
 const { t } = useI18n();
 const toast = useToast();
 const uiStore = useUIStore();
+const tagsChangeSource = crypto.randomUUID();
 const tags = ref<LibraryTag[]>([]);
-const groups = ref<TagGroup[]>([]);
 const search = ref("");
 const searchInputRef = ref<HTMLInputElement | null>(null);
 const isSearchFocused = ref(false);
 const loading = ref(true);
 const failed = ref(false);
 const saving = ref(false);
-const reorderingGroupId = ref<number | null>(null);
-const savingOrder = ref(false);
-let draggingGroup = false;
-const getTagCount = (tag: LibraryTag) =>
-  Number(libConfig.tag.counts?.[String(tag.id)] || 0);
-const tagMenus = ref<Record<number, any>>({});
-const groupMenus = ref<Record<number, any>>({});
-// Tracks a placeholder tag/group created by the "+" button that has not been
-// renamed yet. If the inline editor is dismissed without a commit, the
-// placeholder is deleted so no orphan row is left behind.
-const pendingCreate = ref<{ kind: "group" | "tag"; id: number } | null>(null);
-const renameInput = ref<HTMLInputElement>();
-const renaming = ref<{ kind: "group" | "tag"; id: number; name: string; originalName: string } | null>(null);
-const savingRename = ref(false);
-const isRenaming = (kind: "group" | "tag", id: number) =>
-  renaming.value?.kind === kind && renaming.value.id === id;
-async function startRename(kind: "group" | "tag", item: TagGroup | LibraryTag, initialName?: string) {
-  if (savingRename.value) return;
-  reorderingGroupId.value = null;
-  // Callers creating a fresh placeholder pass initialName="" so the inline
-  // input starts empty instead of showing the auto-generated default name;
-  // originalName matches, so pressing Enter with no input cancels cleanly.
-  const name = initialName ?? item.name;
-  renaming.value = { kind, id: item.id, name, originalName: name };
-  uiStore.removeInputHandler("TagRename");
-  uiStore.pushInputHandler("TagRename");
-  await nextTick();
-  renameInput.value?.focus();
-}
-async function cancelRename() {
-  if (savingRename.value) return;
-  // Capture pending placeholder before finishRename clears it, so we can
-  // delete the orphan row created by the "+" button.
-  const pending = pendingCreate.value;
-  const target = renaming.value;
-  const wasPendingCreate =
-    pending !== null &&
-    target !== null &&
-    pending.kind === target.kind &&
-    pending.id === target.id;
-  finishRename();
-  if (wasPendingCreate && pending) {
-    try {
-      if (pending.kind === "group") await deleteTagGroup(pending.id);
-      else await deleteTag(pending.id);
-      await load();
-    } catch {
-      // best-effort cleanup; ignore errors
-    }
-  }
-}
-function finishRename() {
-  renaming.value = null;
-  renameInput.value = undefined;
-  pendingCreate.value = null;
-  uiStore.removeInputHandler("TagRename");
-}
-async function saveRename(fromBlur = false) {
-  const target = renaming.value;
-  if (!target || savingRename.value) return;
-  const name = target.name.trim();
-  if (!name) {
-    // Empty input:
-    // - Enter: keep the input open so the user can keep typing or press Esc
-    //   explicitly. Prevents accidentally discarding a fresh "+" placeholder
-    //   with a stray Enter.
-    // - Blur: treat as cancel (deletes the pending placeholder, or closes a
-    //   regular rename with no changes to save).
-    if (fromBlur) cancelRename();
-    return;
-  }
-  if (name === target.originalName) {
-    cancelRename();
-    return;
-  }
-  const items = target.kind === "group" ? groups.value : tags.value;
-  if (items.some(item => item.id !== target.id && item.name.toLocaleLowerCase() === name.toLocaleLowerCase())) {
-    toast.error(t(target.kind === "tag" ? "tag.name_exists" : "menu.tag.name_exists"));
-    await nextTick();
-    if (renaming.value === target) renameInput.value?.focus();
-    return;
-  }
-  savingRename.value = true;
-  try {
-    if (target.kind === "group") await saveTagGroup(target.id, name);
-    else if (!(await renameTag(target.id, name))) throw new Error("rename failed");
-    if (renaming.value === target) {
-      finishRename();
-    }
-    await load();
-    await changed();
-  } catch {
-    toast.error(t("tag.name_save_failed"));
-    if (renaming.value === target) {
-      await nextTick();
-      if (renaming.value === target) renameInput.value?.focus();
-    }
-  } finally {
-    savingRename.value = false;
-  }
-}
-const deleteTarget = ref<{
-  kind: "group" | "tag";
-  id: number;
+const error = ref("");
+const editor = ref<{
+  id: number | null;
   name: string;
+  parent: number | null;
 } | null>(null);
-const selectedTag = computed(() =>
-  tags.value.find((tag) => tag.id === libConfig.tag.id),
+const deleteTarget = ref<
+  (LibraryTag & { tag_count: number; file_count: number }) | null
+>(null);
+const dragged = ref<number | null>(null);
+const tagList = ref<HTMLElement | null>(null);
+const dropTarget = ref<number | null | undefined>(undefined);
+const rows = computed(() =>
+  tagRows(
+    editor.value?.id === null
+      ? [
+          ...tags.value,
+          {
+            id: -1,
+            name: editor.value.name,
+            parent_id: editor.value.parent,
+            path: editor.value.name,
+          },
+        ]
+      : tags.value,
+    search.value,
+    libConfig.tag.collapsedTagIds || [],
+    config.settings.tagSort,
+    -1,
+  ),
 );
-const visibleGroups = computed(() =>
-  groupTags(groups.value, tags.value, search.value),
-);
-// Header count reflects only committed tags. A "+" click immediately creates
-// a placeholder row in the DB so the inline input has something to bind to,
-// but from the user's perspective the tag isn't real until they type a name
-// and press Enter — so hide the placeholder from the count until then.
-// Group placeholders don't affect this count (title counts tags only).
-const displayedTagCount = computed(() => {
-  // While searching, count the tags actually shown (groupTags already filters).
-  const q = search.value.trim();
-  if (q) return visibleGroups.value.reduce((sum, g) => sum + (g.tags?.length || 0), 0);
-  const pending = pendingCreate.value;
-  const n = tags.value.length;
-  return pending && pending.kind === "tag" ? Math.max(0, n - 1) : n;
-});
 const expanded = (id: number) =>
-  !!search.value.trim() ||
-  !(libConfig.tag.collapsedGroupIds || []).includes(id);
-watch(
-  () => {
-    const target = renaming.value;
-    if (!target) return true;
-    return visibleGroups.value.some((group) =>
-      target.kind === "group"
-        ? group.id === target.id
-        : expanded(group.id) && group.tags.some((tag) => tag.id === target.id),
-    );
-  },
-  (visible) => {
-    // A pending save can finish even after its input has disappeared.
-    if (!visible) finishRename();
-  },
-);
-function expand(id: number) {
-  libConfig.tag.collapsedGroupIds = (
-    libConfig.tag.collapsedGroupIds || []
-  ).filter((value: number) => value !== id);
-}
-function toggleGroup(id: number) {
-  if (search.value.trim()) return;
-  libConfig.tag.collapsedGroupIds = expanded(id)
-    ? [...(libConfig.tag.collapsedGroupIds || []), id]
-    : (libConfig.tag.collapsedGroupIds || []).filter(
-        (value: number) => value !== id,
-      );
-}
-function selectGroup(group: TagGroup) {
-  libConfig.tag.id = null;
-  libConfig.tag.groupId = group.id;
+  !!search.value || !(libConfig.tag.collapsedTagIds || []).includes(id);
+function toggle(id: number) {
+  if (search.value) return;
+  const closed = libConfig.tag.collapsedTagIds || [];
+  libConfig.tag.collapsedTagIds = closed.includes(id)
+    ? closed.filter((value: number) => value !== id)
+    : [...closed, id];
 }
 function selectTag(tag: LibraryTag) {
-  libConfig.tag.groupId = null;
+  if (suppressDragClick) return;
   libConfig.tag.id = tag.id;
 }
-async function locate(tag: LibraryTag) {
-  search.value = "";
-  expand(tag.group_id);
-  selectTag(tag);
-  await nextTick();
-  document
-    .getElementById(`tag-${tag.id}`)
-    ?.scrollIntoView({ block: "nearest" });
-}
-async function editGroup() {
-  if (saving.value || renaming.value) return;
-  saving.value = true;
-  try {
-    const name = t("menu.tag.new_group");
-    const id = await saveTagGroup(null, name);
-    if (id == null) {
-      toast.error(t("tag.name_save_failed"));
-      return;
-    }
-    expand(id);
-    search.value = "";
-    await load();
-    const created = groups.value.find((g) => g.id === id);
-    if (!created) return;
-    selectGroup(created);
-    pendingCreate.value = { kind: "group", id };
-    await startRename("group", created, "");
-  } catch {
-    toast.error(t("tag.name_save_failed"));
-  } finally {
-    saving.value = false;
-  }
-}
-async function clickAddTag(groupId?: number) {
-  if (saving.value || renaming.value) return;
-  const gid = groupId ?? groups.value.find((g) => g.is_default)?.id;
-  if (gid == null) return;
-  saving.value = true;
-  try {
-    await load();
-    const names = new Set(tags.value.map(tag => tag.name.toLocaleLowerCase()));
-    const baseName = t("msgbox.new_tag.title");
-    let name = baseName;
-    let index = 0;
-    while (names.has(name.toLocaleLowerCase())) name = `${baseName} ${++index}`;
-    const result = await createTag(name, gid);
-    if (!result) {
-      toast.error(t("tag.name_save_failed"));
-      return;
-    }
-    await load();
-    const created = tags.value.find((tag) => tag.id === result.id);
-    if (!created) return;
-    // Clear search so the new placeholder is visible; otherwise the
-    // renaming-visibility watch would immediately finishRename() and skip
-    // the pending-delete cleanup, leaking the placeholder row.
-    search.value = "";
-    expand(created.group_id);
-    pendingCreate.value = { kind: "tag", id: Number(result.id) };
-    await startRename("tag", created, "");
-  } catch {
-    toast.error(t("tag.name_save_failed"));
-  } finally {
-    saving.value = false;
-  }
-}
-function groupMenu(group: TagGroup) {
-  return [
-    {
-      label: t("msgbox.new_tag.title"),
-      icon: IconTagAdd,
-      action: () => clickAddTag(group.id),
-    },
-    { label: "-", action: null },
-    {
-      label: t("menu.tag.rename"),
-      icon: IconRename,
-      disabled: group.is_default,
-      action: () => {
-        if (!group.is_default) startRename("group", group);
-      },
-    },
-    {
-      label: t("collection.reorder"),
-      icon: IconOrder,
-      disabled: group.is_default || savingOrder.value,
-      action: () => {
-        if (group.is_default || savingOrder.value) return;
-        search.value = "";
-        reorderingGroupId.value =
-          reorderingGroupId.value === group.id ? null : group.id;
-      },
-    },
-    { label: "-", action: null },
-    {
-      label: t("menu.tag.delete"),
-      icon: IconTrash,
-      disabled: group.is_default,
-      action: () => {
-        if (!group.is_default) deleteTarget.value = { kind: "group", ...group };
-      },
-    },
-  ];
-}
-function canMoveGroup(event: {
-  related: HTMLElement;
-  willInsertAfter: boolean;
-}) {
-  return (
-    event.related?.dataset.defaultGroup !== "true" || event.willInsertAfter
+function reveal(id: number) {
+  const ancestors = new Set(ancestorIds(tags.value, id));
+  libConfig.tag.collapsedTagIds = (libConfig.tag.collapsedTagIds || []).filter(
+    (value: number) => !ancestors.has(value),
   );
 }
-function handleReorderOutside(event: PointerEvent) {
-  if (event.button !== 0 || draggingGroup) return;
-  if (
-    event.target instanceof Element &&
-    event.target.closest('[data-reordering-group="true"]')
-  )
-    return;
-  reorderingGroupId.value = null;
+function cancelEditor() {
+  if (!saving.value) editor.value = null;
 }
-function onReorderStart() {
-  draggingGroup = true;
-  request++;
-  uiStore.pushInputHandler("TagGroupDrag");
-}
-async function onReorderEnd() {
-  draggingGroup = false;
-  uiStore.removeInputHandler("TagGroupDrag");
-  savingOrder.value = true;
-  try {
-    await reorderTagGroups(groups.value.map((group) => group.id));
-    await changed();
-  } catch {
-    toast.error(t("tag.name_save_failed"));
-  } finally {
-    savingOrder.value = false;
-    await load();
+function clickAddTag(parent: number | null = null) {
+  if (saving.value || editor.value) return;
+  error.value = "";
+  search.value = "";
+  const base = t("msgbox.new_tag.title");
+  let name = base;
+  let index = 0;
+  const names = new Set(
+    tags.value
+      .filter((tag) => tag.parent_id === parent)
+      .map((tag) => tag.name.toLocaleLowerCase()),
+  );
+  while (names.has(name.toLocaleLowerCase())) name = `${base} ${++index}`;
+  editor.value = { id: null, name, parent };
+  if (parent !== null) {
+    const open = new Set([parent, ...ancestorIds(tags.value, parent)]);
+    libConfig.tag.collapsedTagIds = (
+      libConfig.tag.collapsedTagIds || []
+    ).filter((id: number) => !open.has(id));
   }
 }
-function tagMenu(tag: LibraryTag) {
+function edit(tag: LibraryTag) {
+  if (saving.value || editor.value) return;
+  error.value = "";
+  search.value = "";
+  editor.value = { id: tag.id, name: tag.name, parent: tag.parent_id };
+  reveal(tag.id);
+}
+async function saveEditor(value: string) {
+  const target = editor.value;
+  if (!target || saving.value) return;
+  const name = value.trim();
+  if (!isValidTagName(name)) {
+    error.value = t("tag.invalid_name");
+    return;
+  }
+  if (
+    target.id !== null &&
+    tags.value.find((tag) => tag.id === target.id)?.name === name
+  ) {
+    editor.value = null;
+    return;
+  }
+  if (
+    tags.value.some(
+      (tag) =>
+        tag.id !== target.id &&
+        tag.parent_id === target.parent &&
+        tag.name.toLocaleLowerCase() === name.toLocaleLowerCase(),
+    )
+  ) {
+    error.value = t("tag.name_exists");
+    return;
+  }
+  saving.value = true;
+  try {
+    const result =
+      target.id === null
+        ? await createTag(name, target.parent)
+        : await renameTag(target.id, name);
+    if (!result) throw new Error("save failed");
+    editor.value = null;
+    search.value = "";
+    await load();
+    const id = target.id ?? result.id;
+    reveal(id);
+    libConfig.tag.id = id;
+    await notifyChanged();
+    await nextTick();
+    document.getElementById(`tag-${id}`)?.scrollIntoView({ block: "nearest" });
+  } catch {
+    error.value = t("tag.name_save_failed");
+  } finally {
+    saving.value = false;
+  }
+}
+function tagMenu(tag: LibraryTag): any[] {
   return [
     {
-      label: t("menu.tag.rename"),
-      icon: IconRename,
-      action: () => {
-        startRename("tag", tag);
-      },
+      label: t("tag.add_child"),
+      icon: IconTagAdd,
+      action: () => clickAddTag(tag.id),
     },
-    {
-      label: t("menu.tag.move_to"),
-      children: groups.value
-        .filter((g) => g.id !== tag.group_id)
-        .map((group) => ({
-          label: group.name,
-          action: () => moveTag(tag, group.id),
-        })),
-    },
+    { label: t("menu.tag.rename"), icon: IconRename, action: () => edit(tag) },
     { label: "-", action: null },
     {
       label: t("tag.delete_tag"),
       icon: IconTrash,
-      action: () => {
-        deleteTarget.value = { kind: "tag", ...tag };
-      },
+      action: () => prepareDelete(tag),
     },
   ];
 }
-async function changed() {
-  await emitEvent("tags-changed");
+let dragStart: {
+  id: number;
+  pointer: number;
+  x: number;
+  y: number;
+  parent: number | null;
+} | null = null;
+let excludedDropIds = new Set<number>();
+let suppressDragClick = false;
+function startDrag(event: PointerEvent, tag: LibraryTag) {
+  if (
+    event.button !== 0 ||
+    !event.isPrimary ||
+    editor.value ||
+    saving.value ||
+    (event.target as Element).closest("button, input, [role=button]")
+  )
+    return;
+  stopDrag();
+  dragStart = {
+    id: tag.id,
+    pointer: event.pointerId,
+    x: event.clientX,
+    y: event.clientY,
+    parent: tag.parent_id,
+  };
+  window.addEventListener("pointermove", dragMove);
+  window.addEventListener("pointerup", finishDrag);
+  window.addEventListener("pointercancel", stopDrag);
+  window.addEventListener("blur", stopDrag);
+  window.addEventListener("keydown", cancelDrag);
 }
-async function moveTag(tag: LibraryTag, groupId: number) {
-  try {
-    await moveTagsToGroup([tag.id], groupId);
-    await load();
-    if (libConfig.tag.id === tag.id)
-      await locate({ ...tag, group_id: groupId });
-    await changed();
-  } catch {
-    toast.error(t("tag.name_save_failed"));
+function dragMove(event: PointerEvent) {
+  if (!dragStart || event.pointerId !== dragStart.pointer) return;
+  if (dragged.value === null) {
+    if (
+      Math.hypot(event.clientX - dragStart.x, event.clientY - dragStart.y) < 5
+    )
+      return;
+    dragged.value = dragStart.id;
+    excludedDropIds = subtreeIds(tags.value, dragStart.id);
+    suppressDragClick = true;
+    uiStore.pushInputHandler("TagDrag");
   }
+  event.preventDefault();
+  const element = document.elementFromPoint(event.clientX, event.clientY);
+  dropTarget.value = undefined;
+  if (!element || !tagList.value?.contains(element)) return;
+  if (element.closest("[data-tag-drop-root]")) {
+    if (dragStart.parent !== null) dropTarget.value = null;
+    return;
+  }
+  const target = element.closest<HTMLElement>("[data-tag-drop-id]");
+  if (!target) return;
+  const id = Number(target.dataset.tagDropId);
+  if (!excludedDropIds.has(id) && id !== dragStart.parent)
+    dropTarget.value = id;
 }
-async function confirmDelete() {
-  const target = deleteTarget.value;
-  if (!target || saving.value) return;
+function finishDrag(event: PointerEvent) {
+  if (!dragStart || event.pointerId !== dragStart.pointer) return;
+  if (dragged.value !== null) dragMove(event);
+  const id = dragged.value;
+  const parent = dropTarget.value;
+  stopDrag();
+  if (id !== null && parent !== undefined) void move(id, parent);
+}
+function cancelDrag(event: KeyboardEvent) {
+  if (event.key === "Escape") stopDrag();
+}
+function stopDrag() {
+  dragStart = null;
+  dragged.value = null;
+  dropTarget.value = undefined;
+  uiStore.removeInputHandler("TagDrag");
+  window.removeEventListener("pointermove", dragMove);
+  window.removeEventListener("pointerup", finishDrag);
+  window.removeEventListener("pointercancel", stopDrag);
+  window.removeEventListener("blur", stopDrag);
+  window.removeEventListener("keydown", cancelDrag);
+  if (suppressDragClick)
+    setTimeout(() => {
+      suppressDragClick = false;
+    }, 0);
+}
+async function move(id: number, parent: number | null) {
+  if (saving.value) return;
+  if (parent !== null && subtreeIds(tags.value, id).has(parent)) {
+    toast.error(t("tag.invalid_move"));
+    return;
+  }
   saving.value = true;
   try {
-    if (target.kind === "group") await deleteTagGroup(target.id);
-    else if (!(await deleteTag(target.id))) throw new Error("delete failed");
-    deleteTarget.value = null;
+    await moveTag(id, parent);
     await load();
-    await changed();
+    reveal(id);
+    await notifyChanged();
   } catch {
-    toast.error(t("tag.name_save_failed"));
+    toast.error(t("tag.move_failed"));
   } finally {
     saving.value = false;
   }
+}
+async function prepareDelete(tag: LibraryTag) {
+  if (saving.value) return;
+  const library = libConfig._libraryId;
+  try {
+    const info = await getTagSubtreeInfo(tag.id);
+    if (!disposed && library === libConfig._libraryId && info.tag_count > 0)
+      deleteTarget.value = { ...tag, ...info };
+  } catch {
+    toast.error(t("tag.load_failed"));
+  }
+}
+async function confirmDelete() {
+  if (!deleteTarget.value || saving.value) return;
+  saving.value = true;
+  try {
+    if (!(await deleteTag(deleteTarget.value.id)))
+      throw new Error("delete failed");
+    deleteTarget.value = null;
+    await load();
+    await notifyChanged();
+  } catch {
+    toast.error(t("tag.delete_failed"));
+  } finally {
+    saving.value = false;
+  }
+}
+async function notifyChanged() {
+  await emitEvent("tags-changed", { source: tagsChangeSource });
+  if (
+    config.main.sidebarIndex === SIDEBAR.TAG &&
+    libConfig.activePane === "main"
+  )
+    libConfig.tag.activateTick++;
 }
 let request = 0;
 let disposed = false;
 let unlisten: (() => void) | undefined;
 async function load() {
-  if (draggingGroup || savingOrder.value) return;
   const current = ++request;
   const library = libConfig._libraryId;
   try {
-    const [allTags, counts, allGroups] = await Promise.all([
-      getAllTags(config.settings.tagSort),
-      getTagCounts(),
-      getTagGroups(),
-    ]);
+    const [all, counts] = await Promise.all([getAllTags(0), getTagCounts()]);
     if (disposed || current !== request || library !== libConfig._libraryId)
       return;
-    if (!allTags || !counts) throw new Error("load failed");
-    const previousGroupId = selectedTag.value?.group_id;
-    tags.value = allTags;
-    groups.value = allGroups;
-    if (
-      selectedTag.value &&
-      previousGroupId &&
-      selectedTag.value.group_id !== previousGroupId
-    ) {
-      expand(selectedTag.value.group_id);
-      const id = selectedTag.value.id;
-      void nextTick(() =>
-        document
-          .getElementById(`tag-${id}`)
-          ?.scrollIntoView({ block: "nearest" }),
-      );
-    }
+    if (!all || !counts) throw new Error("load failed");
+    tags.value = all.map((tag: LibraryTag) => ({
+      ...tag,
+      count: Number(counts[String(tag.id)] || 0),
+    }));
     libConfig.tag.counts = counts;
+    if (!tags.value.some((tag) => tag.id === libConfig.tag.id))
+      libConfig.tag.id = tags.value[0]?.id ?? null;
     failed.value = false;
-    const validTag = tags.value.some((tag) => tag.id === libConfig.tag.id);
-    const validGroup = groups.value.some(
-      (group) => group.id === libConfig.tag.groupId,
-    );
-    if (!validTag && !validGroup) {
-      const fallback = groups.value.find((g) => g.is_default);
-      if (fallback) selectGroup(fallback);
-    }
-    libConfig.tag.collapsedGroupIds = (
-      libConfig.tag.collapsedGroupIds || []
-    ).filter((id: number) => groups.value.some((g) => g.id === id));
   } catch {
     if (current === request) failed.value = true;
   } finally {
@@ -744,72 +520,39 @@ async function load() {
   }
 }
 onMounted(async () => {
-  document.addEventListener("pointerdown", handleReorderOutside, true);
-  const stop = await listen("tags-changed", async () => {
-    await load();
-    if (
-      !disposed &&
-      config.main.sidebarIndex === SIDEBAR.TAG &&
-      libConfig.activePane === "main"
-    )
-      libConfig.tag.activateTick++;
-  });
+  const stop = await listen<{ source?: string }>(
+    "tags-changed",
+    async (event) => {
+      if (event.payload?.source === tagsChangeSource) return;
+      await load();
+      if (!disposed && config.main.sidebarIndex === SIDEBAR.TAG)
+        libConfig.tag.activateTick++;
+    },
+  );
   if (disposed) stop();
   else unlisten = stop;
   await load();
-  if (selectedTag.value) expand(selectedTag.value.group_id);
+  if (libConfig.tag.id != null) reveal(libConfig.tag.id);
 });
 onBeforeUnmount(() => {
-  document.removeEventListener("pointerdown", handleReorderOutside, true);
-  uiStore.removeInputHandler("TagGroupDrag");
-  uiStore.removeInputHandler("TagRename");
+  stopDrag();
   disposed = true;
   request++;
   unlisten?.();
-  // Best-effort cleanup: if a "+" placeholder was in flight when the panel
-  // unmounts (e.g. user switched sidebar), delete the orphan row so it does
-  // not linger in the library. Fire-and-forget — the component is going away
-  // and there is nothing to update on completion.
-  const pending = pendingCreate.value;
-  if (pending) {
-    pendingCreate.value = null;
-    void (async () => {
-      try {
-        if (pending.kind === "group") await deleteTagGroup(pending.id);
-        else await deleteTag(pending.id);
-      } catch {
-        // ignore — the panel is already gone, no UI to notify
-      }
-    })();
-  }
 });
 watch(
-  () => [config.main.sidebarIndex, libConfig.activePane],
+  () => libConfig._libraryId,
   () => {
-    if (
-      config.main.sidebarIndex === SIDEBAR.TAG &&
-      libConfig.activePane === "main"
-    )
-      void load();
+    editor.value = null;
+    deleteTarget.value = null;
+    stopDrag();
+    void load();
   },
 );
 watch(
-  () => [
-    config.settings.tagSort,
-    libConfig._libraryId,
-  ],
+  () => [config.main.sidebarIndex, libConfig.activePane],
   () => {
-    // Library / sort / filter switched underneath us. Drop any in-flight
-    // inline editor state; the placeholder row (if any) stays in the old
-    // library — we deliberately do NOT delete here because the API call
-    // would run against the new library context and could hit an unrelated
-    // row that happens to share the id.
-    renaming.value = null;
-    pendingCreate.value = null;
-    uiStore.removeInputHandler("TagRename");
-    reorderingGroupId.value = null;
-    deleteTarget.value = null;
-    void load();
+    if (config.main.sidebarIndex === SIDEBAR.TAG) void load();
   },
 );
 defineExpose({ clickAddTag });

@@ -1,7 +1,8 @@
 # Embedded metadata reader
 
 Lap supplements its existing EXIF, LibRaw and video readers with the pinned
-`exiftool-rs 0.14.0` Rust library. No Perl or external ExifTool process is bundled.
+`exiftool-rs 1.0.0` Rust library. No external Perl or ExifTool process is bundled;
+the library runs the ExifTool 13.60 code through its own Rust interpreter.
 The extraction backend is read-only; it never writes media or sidecars.
 Manual **Save Metadata to XMP** writes favorites, ratings, culling flags, comments and tags
 using Lap’s independent XML writer. It preserves unrelated properties and never
@@ -28,12 +29,22 @@ This is an internal implementation and validation note, not website content.
 - A per-thread, single-file mapped-value cache avoids the duplicate extraction
   between file-info construction and organization import. Cloud-only files are
   not hydrated by this backend. Unsupported formats fall back to existing readers.
-- Unknown fields are not persisted. Hierarchical keyword strings use the existing
-  flat tag model. No new hierarchy or full metadata inspector is promised here.
+- The 1.0 path API reads metadata without the bytes API's full-file copy.
+  Scans and on-demand details reuse one ExifTool interpreter per worker thread;
+  the instance is initialized lazily and dropped when that thread exits.
+  Namespace-aware XMP parsing still uses a read-only mapping. PSD/HEIF packets
+  come from an explicitly requested raw `XMP` tag, restricted to the main document;
+  preview-document packets do not supply organization data. Other container
+  packet walkers and their size limits are unchanged.
+- Cargo defaults PCRE2 to a bundled static build so portable app packages do not
+  depend on a build-machine Homebrew/system PCRE2 library. Distribution builders
+  may explicitly override `PCRE2_SYS_STATIC` when supplying a system dependency.
+- Unknown fields are not persisted. Flat keywords and explicit hierarchical
+  keyword paths are distinguished; only the latter create parent/child tags.
 
 ## Known limits and upstream cooperation
 
-ORF IIRO header support is fixed in the pinned 0.14.0 version and covered by a
+ORF IIRO header support was fixed in 0.14.0 and is covered by a
 26-byte synthetic camera-make regression. All 45 formerly failing local ORF
 samples read successfully in the 0.14.0 comparison. Original upstream report:
 https://github.com/Le-Syl21/exiftool-rs/issues/24
@@ -76,11 +87,49 @@ the pinned dependency and its notices in addition to Lap's build sources.
 
 ## Export compatibility
 
-The catalog has flat tag strings. Existing `lr:hierarchicalSubject` and
-`digiKam:TagsList` stores are synchronized to those exact strings, including
-literal `A|B|C` paths, so removed tags cannot reappear on import. No hierarchy is
-inferred. Only an existing `darktable:rejected` field is synchronized; it is not
-introduced into other applications’ sidecars.
+The catalog stores a tag tree. `dc:subject` contains the explicitly assigned tag
+names, deduplicated for interoperability; `lr:hierarchicalSubject` contains their
+full paths using `|`. Existing `digiKam:TagsList` fields use `/` for the same
+paths. Both representations normalize to one tree on import; flat subjects keep
+literal separators. Older pipe-separated digiKam paths are also accepted.
+`lr:hierarchicalSubject` is created when valid catalog paths are nonempty;
+an existing field is also rewritten when empty to clear stale assignments.
+An absent field is not created for an empty path set.
+ACDSee `categories` is imported from its escaped XML tree (embedded or sidecar).
+Only nodes with `Assigned="1"` are linked; unassigned ancestors supply the path.
+Matching paths across ACDSee, Lightroom and digiKam share the same nodes.
+Malformed ACDSee XML is ignored without discarding other metadata. Existing
+ACDSee fields are rewritten with the current assignments, including explicit
+clears, so stale categories cannot restore removed tags. No ACDSee field is
+created when it was absent. Paths with a literal `/` in a node name are omitted
+from digiKam's ambiguous slash encoding; Lightroom and dc retain those tags.
+
+Keyword format compatibility lives in `src-tauri/src/t_xmp_compat.rs`. Its registry
+defines namespace URI/property, backend fallback name, encoding and write policy.
+Embedded packets and sidecars use the same URI-aware importer; the generic writer
+uses the registry to identify and replace writable fields. New keyword schemas
+and encodings belong in this module, not in scanner or database branches. The
+backend mapping is only a fallback when container packets cannot be extracted.
+An additional test-only schema verifies that registering a format here enables
+embedded import, sidecar parsing and writing without editing the callers.
+Parent nodes organize tags and expand searches, but are not implicitly assigned
+to images. Only an existing `darktable:rejected` field is synchronized.
+
+Migration v21 removes tag groups, retaining every tag ID, name and file link as a
+root tag. It neither reads images nor writes XMP. Legacy names containing literal
+`|` stay intact and export only as flat keywords; they are never guessed into a
+hierarchy. Root and sibling names have separate case-insensitive unique indexes.
+An upgrade encountering historical case collisions rolls back rather than merging
+or renaming user tags silently.
+
+XMP source-path aliases follow local tag renames and subtree moves; deletion
+leaves a tombstone so later import cannot recreate the removed source path.
+Local subtree edits protect all affected file tag sets. File-info and XMP export
+resolve only the ancestors of assigned tags. Parent queries and counters include
+descendants, counting each file once. Tree edits reject cycles and name collisions.
+Import fingerprint v4 schedules one metadata re-read on the next scan, even when
+the media and sidecar are unchanged, to apply hierarchy and vendor-schema parsing
+to existing files. Local-edit protection remains in effect; thumbnails are not rebuilt.
 
 The catalog snapshot transaction ends before sidecar I/O begins. Embedded
 metadata parsing shares a read-only file mapping with URI-aware XMP parsing;
@@ -182,7 +231,7 @@ Favorite standard; ratings, pick flags and keyword/label text never imply it.
 Automatic imports preserve existing favorites and locally edited/cleared states.
 Local favorite edits use dirty bit 16, independent of rating and culling. Manual
 sidecar export writes the current Boolean value, including false, without clearing
-local-edit protection. The embedded import fingerprint is v3 so unchanged libraries
+local-edit protection. The embedded import fingerprint is versioned so unchanged libraries
 backfill this field once after upgrading. Both flags share one XML parsing pass.
 
 

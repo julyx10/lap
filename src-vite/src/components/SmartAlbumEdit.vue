@@ -595,7 +595,7 @@ async function loadOptions() {
     getLensInfo(),
     getLocationInfo(),
   ]);
-  tagOptions.value = (tags || []).map((tag: any) => ({ value: tag.id, label: tag.name }));
+  tagOptions.value = (tags || []).map((tag: any) => ({ value: tag.id, label: tag.path || tag.name }));
   personOptions.value = (persons || []).map((person: any) => ({ value: person.id, label: person.name || `Person ${person.id}` }));
   albumOptions.value = (albums || []).map((album: any) => ({ value: album.id, label: album.name }));
   collectionOptions.value = (collections || []).map((collection: any) => ({ value: collection.id, label: collection.name }));

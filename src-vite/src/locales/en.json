@@ -361,7 +361,14 @@
     "not_found": "No tags found",
     "name_exists": "A tag with this name already exists",
     "name_save_failed": "Could not save tag name",
-    "load_failed": "Failed to load tag states. Close this dialog and try again."
+    "move_failed": "Could not move tag",
+    "delete_failed": "Could not delete tag",
+    "load_failed": "Failed to load tag states. Close this dialog and try again.",
+    "root": "Root level",
+    "add_child": "New child tag",
+    "invalid_name": "Tag names cannot contain , ; or {'|'}.",
+    "invalid_move": "A tag cannot be moved into its own subtree.",
+    "delete_tree": "This tag and its subtags will be deleted. Photos will be kept."
   },
   "subject": {
     "title": "Subjects",
@@ -443,6 +450,7 @@
       "placeholder": "Search file name"
     },
     "filter": {
+      "favorites_only": "Favorites only",
       "select_mode": "Multi-select",
       "select_files": "Select files",
       "show_selection_panel": "Open multi-select panel",
@@ -772,20 +780,8 @@
     "tag": {
       "rename": "Rename",
       "delete": "Delete",
-      "new_group": "New group",
-      "edit_group": "Edit group",
-      "delete_group": "Delete group",
-      "search": "Search tags or groups",
-      "clear_search": "Clear search",
-      "active_tag": "Selected tag in this group",
-      "name": "Name",
-      "locate": "Locate tag",
-      "empty": "No tags yet",
-      "move_to": "Move to group",
-      "delete_message": "Delete “{name}”? Its tags will move to Default. Tags on files will be kept.",
-      "exists_in": "This tag already exists in “{group}”.",
-      "name_exists": "A group with this name already exists.",
-      "new_tag_group": "Group for new tag"
+      "search": "Search tags",
+      "clear_search": "Clear search"
     },
     "meta": {
       "favorite": "Favorite",
@@ -979,7 +975,8 @@
       "title": "Trash failed",
       "file_content": "The file '{file}' could not be moved to trash.\n\nDo you want to permanently delete it instead?",
       "files_content": "{count} selected files could not be moved to trash.\n\nDo you want to permanently delete them instead?",
-      "folder_content": "The folder '{folder}' could not be moved to trash.\n\nDo you want to permanently delete it instead?",
+      "folder_content": "The folder '{folder}' could not be moved to trash.\n\nDo you want to permanently delete it instead?\n\nThis cannot be undone through the system Trash.",
+      "folder_partial_warning": "The previous attempt may have moved some contents to Trash. Permanent deletion will remove this folder and its remaining contents.",
       "ok": "Delete permanently"
     },
     "open_external_many": {
@@ -993,7 +990,7 @@
       "error": "Failed to create tag."
     },
     "delete_tag": {
-      "title": "Delete tag",
+      "title": "Delete “{tag}”?",
       "content": "The tag '{tag}' will be deleted.",
       "ok": "Delete",
       "success": "The tag '{tag}' has been deleted.",
@@ -1012,11 +1009,6 @@
     },
     "file_refresh": {
       "skipped": "Skipped: {count}",
-      "checking": "Checking…",
-      "pending": "{count} files need updating",
-      "up_to_date": "File info is up to date.",
-      "check_failed": "Some files could not be checked.",
-      "update": "Update",
       "status": "Refresh status",
       "running": "Refreshing…",
       "cancelling": "Cancelling…",

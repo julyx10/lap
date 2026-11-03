@@ -229,9 +229,7 @@ impl Default for CullingState {
 pub struct TagState {
     pub id: Option<i64>,
     #[serde(default)]
-    pub group_id: Option<i64>,
-    #[serde(default)]
-    pub collapsed_group_ids: Vec<i64>,
+    pub collapsed_tag_ids: Vec<i64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -255,8 +253,7 @@ impl Default for TagState {
     fn default() -> Self {
         Self {
             id: None,
-            group_id: None,
-            collapsed_group_ids: Vec::new(),
+            collapsed_tag_ids: Vec::new(),
         }
     }
 }
@@ -1023,6 +1020,28 @@ pub fn reorder_libraries(ids: Vec<String>) -> Result<(), String> {
 #[cfg(test)]
 mod config_update_tests {
     use super::*;
+
+    #[test]
+    fn tag_state_preserves_tree_folding_and_accepts_legacy_groups() {
+        let legacy: TagState = serde_json::from_value(serde_json::json!({
+            "id": 10, "groupId": 2, "collapsedGroupIds": [2]
+        }))
+        .unwrap();
+        assert_eq!(legacy.id, Some(10));
+        assert!(legacy.collapsed_tag_ids.is_empty());
+        let state = TagState {
+            id: Some(10),
+            collapsed_tag_ids: vec![10, 20],
+        };
+        let saved = serde_json::to_value(&state).unwrap();
+        assert_eq!(
+            saved,
+            serde_json::json!({"id": 10, "collapsedTagIds": [10, 20]})
+        );
+        let restored: TagState = serde_json::from_value(saved).unwrap();
+        assert_eq!(restored.collapsed_tag_ids, state.collapsed_tag_ids);
+        assert!(TagState::default().collapsed_tag_ids.is_empty());
+    }
     use std::sync::{
         atomic::{AtomicBool, Ordering},
         mpsc, Arc,

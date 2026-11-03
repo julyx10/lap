@@ -360,6 +360,8 @@ let unlistenOpenAbout: (() => void) | null = null;
 let unlistenAlbumsRefreshed: (() => void) | null = null;
 let unlistenAddAlbumRequested: (() => void) | null = null;
 let unlistenEditAlbumRequested: (() => void) | null = null;
+// Native Edit menu "Select All" routes to the photo selection via the backend event.
+let unlistenMenuSelectAll: (() => void) | null = null;
 const shortcutPlatform: ShortcutPlatform = isMac ? 'mac' : (isLinux ? 'linux' : 'windows');
 const {
   updateAvailable,
@@ -489,6 +491,9 @@ onMounted(async () => {
   unlistenOpenAbout = await listen('app-open-about', () => {
     void clickSettings(SETTINGS_TAB.ABOUT);
   });
+  unlistenMenuSelectAll = await listen('menu-select-all', () => {
+    contentRef.value?.selectAll?.();
+  });
 
   appConfig.value = await getAppConfig();
 
@@ -538,6 +543,8 @@ onBeforeUnmount(() => {
   document.removeEventListener('mouseup', stopDraggingCollectionSplitter);
   unlistenOpenPreferences?.();
   unlistenOpenPreferences = null;
+  unlistenMenuSelectAll?.();
+  unlistenMenuSelectAll = null;
   unlistenOpenAbout?.();
   unlistenOpenAbout = null;
   unlistenAlbumsRefreshed?.();

@@ -81,7 +81,7 @@ struct RawImageBlob {
     height: u32,
     colors: u16,
     bits: u16,
-    _flip: i32,
+    flip: i32,
     data: Vec<u8>,
 }
 
@@ -335,7 +335,7 @@ impl RawHandle {
             height: out.height as u32,
             colors: out.colors,
             bits: out.bits,
-            _flip: out.flip,
+            flip: out.flip,
             data,
         })
     }
@@ -392,7 +392,7 @@ impl RawHandle {
             height: out.height as u32,
             colors: out.colors,
             bits: out.bits,
-            _flip: out.flip,
+            flip: out.flip,
             data,
         })
     }
@@ -485,8 +485,8 @@ fn jpeg_exif_orientation(data: &[u8]) -> Option<i32> {
 }
 
 /// Convert LibRaw's RAW-pixel orientation into an EXIF orientation value.
-/// `sizes.flip` applies to the RAW data, so callers must only use this when
-/// an embedded JPEG does not declare its own orientation.
+/// RAW and embedded thumbnails have separate flip values; prefer the latter
+/// for embedded pixels when no JPEG EXIF orientation is available.
 fn raw_flip_to_exif_orientation(flip: i32) -> Option<i32> {
     match flip {
         0 | 360 => Some(1),
@@ -495,6 +495,34 @@ fn raw_flip_to_exif_orientation(flip: i32) -> Option<i32> {
         6 | 90 => Some(6),  // 90° clockwise
         _ => None,
     }
+}
+
+// Embedded pixels may already be oriented independently of the RAW data.
+fn embedded_jpeg_orientation(
+    jpeg_orientation: Option<i32>, thumbnail_flip: i32,
+    jpeg_size: (u32, u32), raw_size: (u32, u32, i32),
+) -> i32 {
+    if let Some(orientation) = jpeg_orientation { return orientation; }
+    let raw_orientation = raw_flip_to_exif_orientation(raw_size.2).unwrap_or(1);
+    let orientation = raw_flip_to_exif_orientation(thumbnail_flip).unwrap_or(raw_orientation);
+    // TIFF thumbnail flips can be default zero or stale after the JPEG was
+    // rotated. Resolve quarter-turn conflicts against LibRaw's oriented size,
+    // allowing small crop/border differences without decoding RAW pixels.
+    if matches!(raw_orientation, 6 | 8) && jpeg_size.0 > 0 && jpeg_size.1 > 0
+        && raw_size.0 > 0 && raw_size.1 > 0 {
+        let target_ratio = raw_size.0 as f64 / raw_size.1 as f64;
+        let matches_size = |orientation| {
+            let ratio = if matches!(orientation, 5..=8) {
+                jpeg_size.1 as f64 / jpeg_size.0 as f64
+            } else { jpeg_size.0 as f64 / jpeg_size.1 as f64 };
+            (ratio / target_ratio - 1.0).abs() <= 0.10
+        };
+        if !matches_size(orientation) {
+            if matches_size(raw_orientation) { return raw_orientation; }
+            if matches_size(1) { return 1; }
+        }
+    }
+    orientation
 }
 
 pub(crate) fn embedded_preview_is_large_enough(width: u32, height: u32, raw_width: u32, raw_height: u32) -> bool {
@@ -511,12 +539,11 @@ pub(crate) fn get_embedded_raw_preview_image(file_path: &str) -> Result<Option<V
     // Use the largest decodable embedded JPEG, including reduced previews.
     for thumb in &thumbs {
         if thumb.format == LIBRAW_THUMBNAIL_JPEG {
-            // An embedded JPEG can already be rotated. Use its own EXIF tag
-            // when available and only fall back to RAW orientation when absent.
-            let orient = jpeg_exif_orientation(&thumb.data)
-                .or_else(|| raw_flip_to_exif_orientation(raw_flip))
-                .unwrap_or(1);
+            // Prefer the JPEG's own orientation, then its thumbnail flip;
+            // RAW orientation is only a fallback for unknown thumbnail flips.
             if let Ok(image) = image::load_from_memory(&thumb.data) {
+                let orient = embedded_jpeg_orientation(jpeg_exif_orientation(&thumb.data), thumb.flip,
+                    (image.width(), image.height()), (raw_width, raw_height, raw_flip));
                 if !embedded_preview_is_large_enough(image.width(), image.height(), raw_width, raw_height) { continue; }
                 let image = orient_image(image, orient);
                 return encode_as_jpeg(&image).map(Some);
@@ -582,7 +609,7 @@ fn get_processed_raw_thumbnail(file_path: &str, thumbnail_size: u32, options: Ra
             height: out.height as u32,
             colors: out.colors,
             bits: out.bits,
-            _flip: out.flip,
+            flip: out.flip,
             data,
         };
 
@@ -604,10 +631,7 @@ fn get_processed_raw_thumbnail(file_path: &str, thumbnail_size: u32, options: Ra
 
 fn get_embedded_jpeg_thumbnail(file_path: &str, thumbnail_size: u32) -> Result<Option<Vec<u8>>, String> {
     let mut raw = RawHandle::open(file_path)?;
-    let raw_orientation = raw
-        .dimensions_with_flip()
-        .ok()
-        .and_then(|(_, _, flip)| raw_flip_to_exif_orientation(flip));
+    let raw_size = raw.dimensions_with_flip().unwrap_or((0, 0, -1));
     let thumbs = raw.extract_thumbnails();
     let best = thumbs
         .iter()
@@ -618,10 +642,9 @@ fn get_embedded_jpeg_thumbnail(file_path: &str, thumbnail_size: u32) -> Result<O
         });
 
     if let Some(thumb) = best {
-        let orient = jpeg_exif_orientation(&thumb.data)
-            .or(raw_orientation)
-            .unwrap_or(1);
         if let Ok(image) = image::load_from_memory(&thumb.data) {
+            let orient = embedded_jpeg_orientation(jpeg_exif_orientation(&thumb.data), thumb.flip,
+                (image.width(), image.height()), raw_size);
             let image = orient_image(image, orient);
             let thumbnail = image.thumbnail(u32::MAX, thumbnail_size);
             return encode_as_jpeg(&thumbnail).map(Some);
@@ -661,9 +684,33 @@ pub fn is_tiff_path(file_path: &str) -> bool {
 }
 
 #[cfg(test)]
+pub(crate) fn inspect_raw_fixture_orientation(path: &str) {
+    let Ok(mut raw) = RawHandle::open(path) else { return; };
+    eprintln!("RAW dimensions {:?}", raw.dimensions_with_flip());
+    for thumb in raw.extract_thumbnails() {
+        let pixels = image::load_from_memory(&thumb.data).ok().map(|img| (img.width(), img.height()));
+        eprintln!("  embedded format={} metadata={}x{} flip={} jpeg_exif={:?} pixels={pixels:?}",
+            thumb.format, thumb.width, thumb.height, thumb.flip, jpeg_exif_orientation(&thumb.data));
+    }
+}
+
+#[cfg(test)]
 mod raw_display_render_tests {
     use super::*;
     use crate::t_raw_display::RawPreviewMode;
+
+    #[test]
+    fn embedded_thumbnail_orientation_resolves_default_and_stale_flips() {
+        assert_eq!(embedded_jpeg_orientation(None, 0, (480, 640), (1924, 2576, 5)), 1); // E5700
+        assert_eq!(embedded_jpeg_orientation(None, 0, (3008, 2000), (2014, 3039, 5)), 8); // D70
+        assert_eq!(embedded_jpeg_orientation(None, 0, (4928, 3264), (3284, 4950, 6)), 6); // K5IIS
+        assert_eq!(embedded_jpeg_orientation(None, 6, (332, 244), (5344, 4008, 6)), 1); // Leaf
+        assert_eq!(embedded_jpeg_orientation(Some(6), 0, (480, 640), (1924, 2576, 5)), 6); // JPEG wins
+        assert_eq!(embedded_jpeg_orientation(None, -1, (300, 200), (200, 300, 5)), 8);
+        assert_eq!(embedded_jpeg_orientation(None, 3, (300, 200), (300, 200, 3)), 3);
+        assert_eq!(embedded_jpeg_orientation(None, 0, (300, 200), (0, 0, -1)), 1);
+        assert_eq!(embedded_jpeg_orientation(None, 0, (100, 100), (200, 300, 5)), 1); // ambiguous
+    }
 
     // Small uncompressed CFA DNG, generated in memory so the test does not
     // depend on downloaded camera samples or user photos.

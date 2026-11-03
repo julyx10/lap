@@ -63,10 +63,24 @@
           :selectedValues="fileTypeSelectedValues"
           :summaryLabel="fileTypeSummaryLabel"
           :separatorsAfter="[0]"
-          :disabled="isFixedAiResultView || tempViewMode === 'album' || isScanStreamingMode"
-          :selected="activeFileTypeMask !== 0"
+          :disabled="isFavoritesFilterDisabled"
+          :optionsDisabled="isFixedAiResultView"
+          :selected="activeFileTypeMask !== 0 || activeFavoritesOnly"
+          :title="activeFavoritesOnly ? $t('toolbar.filter.favorites_only') : ''"
           @multi-select="handleFileTypeSelect"
-        />
+        >
+          <template #trigger-suffix>
+            <IconHeartFilled v-if="activeFavoritesOnly" class="w-4 h-4 shrink-0" />
+          </template>
+          <template #menu-after>
+            <div class="mx-2 my-1 border-t border-base-content/10"></div>
+            <button class="p-1 flex items-center text-sm whitespace-nowrap rounded-box hover:bg-base-100/30 hover:text-base-content cursor-pointer"
+              role="menuitemcheckbox" :aria-checked="activeFavoritesOnly" @click="toggleFavoritesFilter">
+              <span class="w-5"><IconOk v-if="activeFavoritesOnly" class="w-4 h-4" /></span>
+              <span class="mr-4">{{ $t('toolbar.filter.favorites_only') }}</span>
+            </button>
+          </template>
+        </DropDownSelect>
 
         <!-- sort type options -->
         <DropDownSelect
@@ -213,7 +227,7 @@
             :class="{ 'pointer-events-none': uiStore.inputStack.length > 0 }"
             @pointerdown.stop @click.stop
           >
-            <button class="flex items-center gap-2 rounded-box px-1 py-1 text-primary/70 hover:text-primary cursor-pointer"
+            <button class="flex items-center gap-2 rounded-box px-1 py-1 text-primary cursor-pointer"
               :aria-label="$t('toolbar.filter.show_selection_panel')"
               :title="$t('toolbar.filter.show_selection_panel')" @click="openSelectionPanel"
             >
@@ -255,6 +269,7 @@
                 :dedup-statuses="dedupStatuses"
                 :dragged-file-ids="draggedFileIds"
                 :grid-size="gridSize"
+                :selection-scroll-suppressed="dragMoveSelectionScrollSuppressed"
                 @item-clicked="handleItemClicked"
                 @item-dblclicked="handleItemDblClicked"
                 @item-select-toggled="handleItemSelectToggled"
@@ -307,7 +322,7 @@
 
           <!-- film strip preview -->
           <div v-if="showFilmstripLayout" ref="previewDiv"
-            class="flex-1 bg-base-200 overflow-hidden"
+            class="isolate flex-1 bg-base-200 overflow-hidden"
           >
             <div v-if="selectedItemIndex >= 0 && selectedItemIndex < fileList.length"
               class="w-full h-full flex items-center justify-center"
@@ -781,7 +796,7 @@ import { useUIStore } from '@/stores/uiStore';
 import { getAlbum, getAllAlbums, recountAlbum, getQueryCountAndSum, getQueryTimeLine, getQueryFiles, getFilesByIds, getGroupedQueryRows, getGroupedFilePosition, getGroupFileIds, getQueryFileIds, syncAlbumFolderMtimes,
          getSmartQueryCountAndSum, getSmartQueryTimeLine, getSmartQueryFiles, getSmartGroupedQueryRows, getSmartGroupFileIds, getSmartQueryFileIds, getSmartQueryFilePosition,
          copyImages, renameFile, moveFile, moveFileOutsideLibrary, copyFile, withFileTransferBatch, deleteFile, deleteFilePermanently, batchDeleteFiles, editFileComment, getFileThumb, getFileThumbs, getFileInfo,
-         setFileRotate, setFileFavorite, setFileRating, setFileCullingFlag, batchUpdateFileMetadata, getTagsForFile, getTagGroupName, searchSimilarImages, generateEmbedding,
+         setFileRotate, setFileFavorite, setFileRating, setFileCullingFlag, batchUpdateFileMetadata, getTagsForFile, searchSimilarImages, generateEmbedding,
          revealPath, getTagName, indexAlbum, listenIndexProgress, listenIndexFinished, setAlbumCover, setDesktopWallpaper,
          updateFileInfo, refreshFileInfo, changeVideoThumbnail, getSupportedFormatExtensions, importFile, importUrl, importFileBytes, getDragPayload, importClipboard, addFileToDb, checkFileExists, checkFileAccessibility, cancelIndexing as cancelIndexingApi, selectFolder, getFacesForFile, listenFaceIndexProgress,
          openFilesWithApp, getAppConfig, getIndexRecoveryInfo, clearIndexRecoveryInfo, setLastSelectedItemIndex,
@@ -880,6 +895,7 @@ import {
   IconSimilar,
   IconCamera,
   IconHeartFilled,
+  IconOk,
   IconHistory,
   IconStack,
   IconFileSearch,
@@ -1406,11 +1422,19 @@ async function restoreSelectionAfterFileListRefresh() {
     if (targetIndex >= 0) {
       selectedItemIndex.value = targetIndex;
       await nextTick();
+      if (requestId !== currentContentRequestId || pendingSelectionRestore !== restoreState) {
+        retryForNewerRefresh = true;
+        return;
+      }
       if (groupedModeActive.value) {
         await scrollToGroupedFile(targetIndex);
       } else {
         gridViewRef.value?.scrollToItem(targetIndex);
       }
+    }
+    if (requestId !== currentContentRequestId || pendingSelectionRestore !== restoreState) {
+      retryForNewerRefresh = true;
+      return;
     }
     pendingFocusedFileId = null;
 
@@ -1471,6 +1495,7 @@ async function restoreFocusedFileAfterListRefresh() {
     }
     selectedItemIndex.value = fileIndex;
     await nextTick();
+    if (requestId !== currentContentRequestId || pendingScopeSelectionChange) return;
     if (groupedModeActive.value) {
       await scrollToGroupedFile(fileIndex);
     } else {
@@ -1494,10 +1519,12 @@ async function waitForGroupedGridLayout() {
 }
 
 async function scrollToGroupedFile(fileIndex: number) {
+  const requestId = currentContentRequestId;
   const rowIndex = getGroupedRowIndexForFileIndex(fileIndex);
   if (rowIndex < 0) return;
 
   await waitForGroupedGridLayout();
+  if (requestId !== currentContentRequestId || pendingScopeSelectionChange) return;
   gridViewRef.value?.scrollToRowIndex(rowIndex);
 
   if (isGeometryGridStyle.value) {
@@ -1506,12 +1533,17 @@ async function scrollToGroupedFile(fileIndex: number) {
       rowIndex + selectionChunkSize.value,
     );
     await waitForGroupedGridLayout();
+    if (requestId !== currentContentRequestId || pendingScopeSelectionChange) return;
     gridViewRef.value?.scrollToRowIndex(rowIndex);
   }
 }
 
 watch([fileList, contentReady], () => {
   if (!contentReady.value) return;
+  selectedItemIndex.value = fileList.value.length > 0
+    ? Math.min(Math.max(selectedItemIndex.value, 0), fileList.value.length - 1)
+    : -1;
+  if (fileList.value.length === 0) pendingFocusedFileId = null;
   if (pendingSelectionRestore) {
     void restoreSelectionAfterFileListRefresh();
   } else if (pendingFocusedFileId && fileList.value.length > 0) {
@@ -2719,6 +2751,7 @@ let pointerDragFiles: Array<{
   file_path: string;
   folder_id: number;
   album_id: number;
+  size?: number;
 }> | null = null;
 let dragGhostHotspotX = 0;
 let dragGhostHotspotY = 0;
@@ -3198,6 +3231,7 @@ function markContentInternalDrag({
     file_path: f.file_path,
     folder_id: f.folder_id,
     album_id: f.album_id,
+    size: f.size,
   }));
   createDragGhost(
     fileItem,
@@ -3215,6 +3249,8 @@ function markContentInternalDrag({
 }
 
 async function clearContentInternalDrag(event?: PointerEvent) {
+  const dragViewRequestId = currentContentRequestId;
+  const dragLibraryId = libConfig._libraryId;
   const target = pointerDropTarget;
   let files = pointerDragFiles;
   const usesSelection = pointerDragUsesSelection;
@@ -3238,6 +3274,7 @@ async function clearContentInternalDrag(event?: PointerEvent) {
         file_path: file.file_path,
         folder_id: file.folder_id,
         album_id: file.album_id,
+        size: file.size,
       }));
     }
 
@@ -3293,6 +3330,7 @@ async function clearContentInternalDrag(event?: PointerEvent) {
       let applyAllPolicy: FileConflictPolicy | null = null;
       const affectedAlbumIds = new Set<number>([albumId]);
       const affectedFolderPaths = new Set<string>([destPath]);
+      const movedFiles: Array<{ id: number; path: string }> = [];
       await withFileTransferBatch(async (batchId: number) => {
         for (const file of files) {
           if (!copy && file.folder_id === selected.id) continue;
@@ -3321,6 +3359,7 @@ async function clearContentInternalDrag(event?: PointerEvent) {
             const movedPath = await moveFile(file.id, file.file_path, selected.id, destPath, conflict.policy, batchId);
             if (movedPath) {
               done++;
+              movedFiles.push({ id: Number(file.id), path: String(movedPath) });
               affectedFolderPaths.add(getFolderPath(file.file_path));
               affectedAlbumIds.add(Number(file.album_id || 0));
             } else {
@@ -3330,10 +3369,24 @@ async function clearContentInternalDrag(event?: PointerEvent) {
         }
       });
       if (done > 0) {
+        if (!copy && dragLibraryId === libConfig._libraryId
+          && !contentQueryRefreshPending && movedFiles.length > 0) {
+          try {
+            await reconcileDraggedFileMoves(
+              movedFiles,
+              files,
+              { path: destPath, folderId: Number(selected.id), albumId },
+              currentContentRequestId,
+              dragViewRequestId !== currentContentRequestId,
+            );
+          } catch (error) {
+            console.error('Failed to reconcile moved files:', error);
+          }
+        }
         await refreshFolderSidebarCounts([...affectedFolderPaths]);
         await refreshAffectedAlbums(Array.from(affectedAlbumIds));
         await refreshLibraryTotalCount();
-        await tauriEmit('refresh-content');
+        if (copy) await tauriEmit('refresh-content');
       }
       if (indexFailureCount > 0) {
         toast.error(t('msgbox.copy_to_folder.index_error', {
@@ -3350,6 +3403,168 @@ async function clearContentInternalDrag(event?: PointerEvent) {
       }
     }
   }
+}
+
+// Drag-move reconciliation (issue #483): apply completed moves to the current
+// view in place — drop entries that left the query, refresh paths of entries
+// that stayed — without a full content refresh, so the scroll position and
+// already-loaded thumbnails survive the drop.
+// While reconcileDraggedFileMoves rewrites the list and focus, GridView must
+// not scroll the viewport to the new selection (issue #483).
+const dragMoveSelectionScrollSuppressed = ref(false);
+
+async function reconcileDraggedFileMoves(
+  movedFiles: Array<{ id: number; path: string }>,
+  dragFiles: Array<{ id: number; size?: number }>,
+  dest: { path: string; folderId: number; albumId: number },
+  dragViewRequestId: number,
+  preserveFocus = false,
+) {
+  if (dragViewRequestId !== currentContentRequestId || movedFiles.length === 0) return;
+
+  invalidateThumbnailRequests();
+  dragViewRequestId = ++currentContentRequestId;
+  pendingRequests.clear();
+  visibleRangeSeqId++;
+  dragMoveSelectionScrollSuppressed.value = true;
+  try {
+    await reconcileDraggedFileMovesInner(movedFiles, dragFiles, dest, dragViewRequestId, preserveFocus);
+  } catch (error) {
+    if (dragViewRequestId === currentContentRequestId) {
+      pendingRestoreScrollTop.value = gridViewRef.value?.getScrollTop() ?? null;
+      await updateContent(true);
+    }
+    throw error;
+  } finally {
+    // Release after the pending watcher flush so the suppressed assignments
+    // have already passed through GridView's selection watcher.
+    void nextTick(() => {
+      dragMoveSelectionScrollSuppressed.value = false;
+    });
+  }
+}
+
+async function reconcileDraggedFileMovesInner(
+  movedFiles: Array<{ id: number; path: string }>,
+  dragFiles: Array<{ id: number; size?: number }>,
+  dest: { path: string; folderId: number; albumId: number },
+  dragViewRequestId: number,
+  preserveFocus: boolean,
+) {
+  if (dragViewRequestId !== currentContentRequestId || movedFiles.length === 0) return;
+
+  // Query every membership rather than inferring the whole batch from one
+  // file: renaming on conflict can affect name filters and sort order.
+  const orderedIds = await getCurrentQueryFileIds();
+  if (dragViewRequestId !== currentContentRequestId) return;
+  if (!Array.isArray(orderedIds)) throw new Error('Failed to query moved file membership');
+  // A view opened during the transfer may already include some completed
+  // moves. Its size cannot be corrected by subtracting the whole batch again.
+  const currentTotals = preserveFocus ? await getCurrentQueryCountAndSum() : null;
+  if (dragViewRequestId !== currentContentRequestId) return;
+  if (preserveFocus && !Array.isArray(currentTotals)) throw new Error('Failed to query moved file totals');
+  const availableIds = new Set<number>(orderedIds.map(Number));
+  const movedIds = new Set(movedFiles.map(entry => Number(entry.id)));
+  const removedIds = new Set(Array.from(movedIds).filter(id => !availableIds.has(id)));
+  const scrollTop = gridViewRef.value?.getScrollTop() ?? 0;
+  const firstMovedIndex = fileList.value.findIndex(file => movedIds.has(Number(file?.id)));
+  const focusedFileId = Number(fileList.value[selectedItemIndex.value]?.id || 0);
+  const focusFileId = preserveFocus ? focusedFileId : movedFiles[0].id;
+  const selectedIds = new Set(Array.from(selectedFileIds).filter(id => availableIds.has(id)));
+  const remainingSelectedSize = Math.max(0, selectedSize.value - dragFiles.reduce(
+    (size, file) => size + (removedIds.has(Number(file.id)) && selectedFileIds.has(Number(file.id))
+      ? Number(file.size || 0) : 0), 0,
+  ));
+  const retainedFiles = new Map<number, any>();
+  for (const file of fileList.value) {
+    if (isRealFileItem(file) && availableIds.has(Number(file.id))) retainedFiles.set(Number(file.id), file);
+  }
+  for (const entry of movedFiles) {
+    const file = retainedFiles.get(entry.id);
+    if (file) Object.assign(file, {
+      file_path: entry.path, name: getFolderName(entry.path),
+      folder_id: dest.folderId, album_id: dest.albumId,
+    });
+  }
+
+  let focusIndex = !preserveFocus && firstMovedIndex >= 0 ? firstMovedIndex : selectedItemIndex.value;
+  if (groupedModeActive.value && isGroupingSupportedForCurrentView()) {
+    pendingRestoreScrollTop.value = scrollTop;
+    if (!await initializeGroupedFileList(dragViewRequestId, retainedFiles)) {
+      throw new Error('Failed to rebuild moved file groups');
+    }
+    if (dragViewRequestId !== currentContentRequestId) return;
+    if (availableIds.has(focusFileId)) {
+      const position = await resolveGroupedFileIndex(focusFileId);
+      if (dragViewRequestId !== currentContentRequestId) return;
+      if (position !== null && position >= 0) focusIndex = position;
+    }
+    focusIndex = Math.max(0, Math.min(focusIndex, fileList.value.length - 1));
+    if (fileList.value.length > 0 && !isRealFileItem(fileList.value[focusIndex])) {
+      const rowIndex = getGroupedRowIndexForFileIndex(focusIndex);
+      if (rowIndex < 0) throw new Error('Failed to locate moved file focus');
+      await fetchGroupedRowsRange(rowIndex, rowIndex + 1);
+      if (dragViewRequestId !== currentContentRequestId) return;
+      if (!isRealFileItem(fileList.value[focusIndex])) throw new Error('Failed to load moved file focus');
+    }
+  } else {
+    // Reuse loaded objects in authoritative query order; unloaded slots remain
+    // virtual, so this never reads originals or reloads existing thumbnails.
+    fileList.value = orderedIds.map(id => retainedFiles.get(Number(id)) ?? null);
+    totalFileCount.value = orderedIds.length;
+    totalFileSize.value = currentTotals ? Number(currentTotals[1] || 0) : Math.max(0, totalFileSize.value - dragFiles.reduce(
+      (size, file) => size + (removedIds.has(Number(file.id)) ? Number(file.size || 0) : 0), 0,
+    ));
+    const position = orderedIds.findIndex(id => Number(id) === focusFileId);
+    if (position >= 0) focusIndex = position;
+    lastVisibleRange = { start: -1, end: -1 };
+    if (!isSearchLikeView.value) {
+      void getCurrentQueryTimeLine().then(data => {
+        if (dragViewRequestId === currentContentRequestId) timelineData.value = data;
+      }).catch(error => console.error('Failed to refresh moved file timeline:', error));
+    }
+  }
+  selectedFileIds.clear();
+  for (const id of selectedIds) selectedFileIds.add(id);
+  for (const file of fileList.value) {
+    if (isRealFileItem(file)) file.isSelected = selectedIds.has(Number(file.id));
+  }
+  selectedCount.value = selectedIds.size;
+  selectedSize.value = remainingSelectedSize;
+  selectMode.value = selectedIds.size > 0;
+  lastSelectedIndex.value = -1;
+  keyboardSelectionAnchorIndex.value = -1;
+  recomputeLoadedGroupSelectedCounts();
+  syncSelectionVersions();
+  const previousIndex = selectedItemIndex.value;
+  selectedItemIndex.value = fileList.value.length > 0
+    ? Math.max(0, Math.min(focusIndex, fileList.value.length - 1)) : -1;
+  countedFolderRequestId.value = dragViewRequestId;
+  markDedupSourceUpdated(dragViewRequestId);
+  await nextTick();
+  if (dragViewRequestId !== currentContentRequestId) return;
+  // Replacing the file at the same index does not trigger the index watcher.
+  if (selectedItemIndex.value === previousIndex && isRealFileItem(fileList.value[previousIndex])) {
+    void updateSelectedImage(previousIndex);
+    void syncSelectionToImageViewer(previousIndex);
+  }
+  gridViewRef.value?.refreshLayout?.();
+  gridViewRef.value?.scrollToPosition(scrollTop);
+  notifyViewerFilesLeftView(Array.from(removedIds));
+}
+
+// Files that left the current view after a drag move must also leave an open
+// image viewer session; the viewer window updates its list from this event.
+function notifyViewerFilesLeftView(fileIds: number[]) {
+  if (fileIds.length === 0) return;
+  const compareFileCount = removeDeletedFilesFromImageViewerSession(fileIds);
+  void tauriEmit('files-deleted', {
+    source: 'content',
+    fileIds,
+    fileCount: fileList.value.length,
+    compareFileCount,
+    selectedIndex: selectedItemIndex.value,
+  });
 }
 
 const isProcessing = ref(false);  // show processing status
@@ -3384,7 +3599,6 @@ const currentQueryParams = ref({
   rating: -1,
   cullingFlag: -1,
   tagId: 0,
-  tagGroupId: 0,
   personId: 0,
 });
 const currentQuerySource = ref<'query' | 'smart' | 'collection' | 'search'>('query');
@@ -3518,6 +3732,7 @@ watch(
     if (countedFolderRequestId.value !== currentContentRequestId || currentQuerySource.value !== 'query' || !path
       || !contentReady.value || isLoading.value || contentQueryRefreshPending
       || !contentCountIsAuthoritative.value || tempViewMode.value !== 'none'
+      || config.search.favoritesOnly
       || !matchesRequestedSidebarCount({ source: 'album-folder', path })) return;
     setFolderFileCount(path, Math.max(0, Number(totalFileCount.value || 0)));
   },
@@ -3560,6 +3775,10 @@ function matchesRequestedSidebarCount(request: any) {
 
 function commitRequestedSidebarCount(count: number, request = uiStore.countUpdateRequest) {
   if (!request || uiStore.countUpdateRequest !== request) return;
+  if (config.search.favoritesOnly) {
+    uiStore.clearCountUpdateRequest();
+    return;
+  }
   if (!matchesRequestedSidebarCount(request)) {
     uiStore.clearCountUpdateRequest();
     return;
@@ -3794,6 +4013,7 @@ let unlistenPasteClipboard: (() => void) | null = null;
 let resizeObserver: ResizeObserver | null = null;
 let contentUpdateTimer: ReturnType<typeof setTimeout> | null = null;
 let contentQueryRefreshPending = false;
+let pendingScopeSelectionChange = false;
 let sidebarCountRequestId = 0;
 
 function scheduleContentRefresh(task: () => void) {
@@ -3813,19 +4033,14 @@ function waitForContentLoadingPaint() {
 }
 
 function refreshContentFromSelectionChange() {
-  // In single-select mode, retain the active file before the config watcher
-  // resets the viewport. This covers grouping changes as well as sorting and
-  // filters that are not initiated by a toolbar handler.
-  if (!selectMode.value && selectedItemIndex.value >= 0) {
+  // Filters/sorting/grouping retain the file by ID; a new scope starts at zero.
+  if (!pendingScopeSelectionChange && !selectMode.value && selectedItemIndex.value >= 0) {
     rememberFocusedFileForPresentationRefresh();
   }
 
   if (!selectMode.value || selectedCount.value === 0) {
     scrollPosition.value = 0;
     gridViewRef.value?.scrollToPosition(0);
-    // Keep the file index intact until its new position is resolved. A view
-    // change clears pendingFocusedFileId and therefore retains the old reset.
-    if (!pendingFocusedFileId) selectedItemIndex.value = 0;
   }
   updateContent();
   // Reset ImageViewer context if open (without focusing/showing it)
@@ -4965,10 +5180,20 @@ function handleLocalKeyDown(event: KeyboardEvent) {
   }
 }
 
-function handleVideoSpaceKeyDown(event: KeyboardEvent) {
-  if (getActivePreviewMode() === 'none' || fileList.value[selectedItemIndex.value]?.file_type !== 2
+function handlePreviewSpaceKeyDown(event: KeyboardEvent) {
+  const mode = getActivePreviewMode();
+  const togglesSelection = selectMode.value && mode === 'filmstrip' && !isSlideShow.value;
+  if (mode === 'none' || (!togglesSelection && fileList.value[selectedItemIndex.value]?.file_type !== 2)
     || uiStore.inputStack.length > 0 || uiStore.activePane === 'left-sidebar') return;
-  handleVideoPlaybackShortcut(event, shortcutPlatform, () => getActivePreviewMediaRef()?.togglePlay?.());
+  // Consume Space before video.js controls. macOS performs selection through
+  // the App capture/global channel; other platforms dispatch it here once.
+  handleVideoPlaybackShortcut(event, shortcutPlatform, () => {
+    if (togglesSelection) {
+      if (!isMac) handleQuickPreviewShortcut(event);
+    } else {
+      getActivePreviewMediaRef()?.togglePlay?.();
+    }
+  });
 }
 
 function handleQuickPreviewShortcut(event: { key: string; code?: string; repeat?: boolean }): boolean {
@@ -4989,7 +5214,7 @@ function handleQuickPreviewShortcut(event: { key: string; code?: string; repeat?
     return false;
   }
 
-  if (selectMode.value && getActivePreviewMode() === 'none') {
+  if (selectMode.value && getActivePreviewMode() !== 'quick-view') {
     checkUnsavedChanges(() => { void handleItemSelectToggled(selectedItemIndex.value); });
     return true;
   }
@@ -5381,7 +5606,6 @@ function buildScanStreamQueryParams() {
     isFavorite: false,
     rating: -1,
     tagId: 0,
-    tagGroupId: 0,
     personId: 0,
   };
 }
@@ -5627,11 +5851,12 @@ async function cancelIndexing() {
 
 onMounted( async() => {
   const appConfig = await getAppConfig();
-  pendingInitialSelectedIndex = Number(appConfig?.last_selected_item_index ?? -1);
-  hasRestoredInitialSelection = false;
+  if (!hasRestoredInitialSelection) {
+    pendingInitialSelectedIndex = Number(appConfig?.last_selected_item_index ?? -1);
+  }
 
   window.addEventListener('keydown', handleLocalKeyDown);
-  window.addEventListener('keydown', handleVideoSpaceKeyDown, true);
+  window.addEventListener('keydown', handlePreviewSpaceKeyDown, true);
   window.addEventListener(PREVIEW_WINDOW_FOCUS_RESTORED, restoreOpenPreviewFocus);
   window.addEventListener('keyup', handleLocalKeyUp);
   unlistenAlbumAccessChanged = await listen('album-accessibility-changed', (event: any) => {
@@ -6195,7 +6420,7 @@ onBeforeUnmount(() => {
   }
   unlistenAlbumAccessChanged?.();
   window.removeEventListener('keydown', handleLocalKeyDown);
-  window.removeEventListener('keydown', handleVideoSpaceKeyDown, true);
+  window.removeEventListener('keydown', handlePreviewSpaceKeyDown, true);
   window.removeEventListener(PREVIEW_WINDOW_FOCUS_RESTORED, restoreOpenPreviewFocus);
   window.removeEventListener('keyup', handleLocalKeyUp);
   // unlisten
@@ -6298,24 +6523,32 @@ watch(() => libConfig._libraryId, () => {
 /// watch for file list changes
 watch(
   () => JSON.stringify({
+    libraryId: libConfig._libraryId,
     sidebar: config.main.sidebarIndex,
     pane: libConfig.activePane,
     collectionId: libConfig.collection.selectedId,
     libraryItem: libConfig.library.item,
     smartId: libConfig.library.smartId,
+    searchText: libConfig.search.searchText,
+    rating: libConfig.rating.item,
+    culling: libConfig.culling.item,
     album: [libConfig.album.id, libConfig.album.folderId, libConfig.album.folderPath, libConfig.album.selected],
     smartAlbum: [libConfig.smartAlbum.type, libConfig.smartAlbum.id],
     personId: libConfig.person.id,
     calendar: [config.calendar.view, libConfig.calendar.year, libConfig.calendar.month, libConfig.calendar.date],
     tagId: libConfig.tag.id,
-    tagGroupId: libConfig.tag.groupId,
     location: [libConfig.location.admin1, libConfig.location.name],
     camera: [config.camera.isCamera, libConfig.camera.make, libConfig.camera.model, (libConfig.camera as any).lensMake, (libConfig.camera as any).lensModel],
   }),
   (nextView, previousView) => {
     if (previousView !== undefined && nextView !== previousView) {
+      pendingScopeSelectionChange = true;
       pendingFocusedFileId = null;
-      if (selectMode.value) selectNoneInCurrentList();
+      pendingSelectionRestore = null;
+      pendingInitialSelectedIndex = -1;
+      hasRestoredInitialSelection = true;
+      clearSelectionForFileListUpdate();
+      selectedItemIndex.value = 0;
     }
   },
 );
@@ -6334,12 +6567,12 @@ watch(
     libConfig.search.searchText,
     libConfig.rating.item, // rating
     libConfig.culling.item, // culling
-    config.search.fileType, config.search.sortType, config.search.sortOrder, // search and sort 
+    config.search.fileType, config.search.favoritesOnly, config.search.sortType, config.search.sortOrder, // search and sort
     config.settings.showSubfolderFiles,                                            // album folder view
     config.settings.folderSort, config.settings.calendarSort, config.settings.locationSort, config.settings.cameraSort, config.search.groupBy, // group sorting and filtering (tag/person sorts only affect their sidebars, not content grouping)
     libConfig.person.id,                                                              // person
     config.calendar.view, libConfig.calendar.year, libConfig.calendar.month, libConfig.calendar.date, // calendar
-    libConfig.tag.id, libConfig.tag.groupId, libConfig.tag.activateTick, // tag
+    libConfig.tag.id, libConfig.tag.activateTick, // tag
     libConfig.location.admin1, libConfig.location.name,                               // location
     libConfig.camera.make, libConfig.camera.model,                                    // camera 
     config.camera.isCamera, (libConfig.camera as any).lensMake, (libConfig.camera as any).lensModel, // lens
@@ -6933,7 +7166,9 @@ function applyGroupedRows(rows: any[], rowOffset: number) {
       const fileId = Number(file?.id || 0);
       const isSelected = Boolean(existingItem?.isSelected) || (fileId > 0 && selectedFileIds.has(fileId));
       const rotate = existingItem ? (existingItem.rotate || 0) : 0;
-      const thumbnail = existingItem?.thumbnail;
+      // Keep a thumbnail carried by the row itself (retained after a drag
+      // move); a fresh placeholder slot has none to preserve.
+      const thumbnail = existingItem?.thumbnail || file.thumbnail;
       const nextFile = {
         ...file,
         isSelected,
@@ -6961,7 +7196,7 @@ function applyGroupedRows(rows: any[], rowOffset: number) {
   return filesToFetch;
 }
 
-async function initializeGroupedFileList(requestId: number) {
+async function initializeGroupedFileList(requestId: number, retainedFiles?: Map<number, any>) {
   if (!isGroupingSupportedForCurrentView()) {
     resetGroupingState();
     return false;
@@ -6971,7 +7206,9 @@ async function initializeGroupedFileList(requestId: number) {
     await ensureFolderGroupRoots();
   }
 
-  const groupedResult = await getCurrentGroupedQueryRows(0, selectionChunkSize.value);
+  let rowOffset = retainedFiles ? Math.max(0, lastVisibleRange.start) : 0;
+  const rowLimit = Math.max(selectionChunkSize.value, retainedFiles ? lastVisibleRange.end - rowOffset + 1 : 0);
+  let groupedResult = await getCurrentGroupedQueryRows(rowOffset, rowLimit);
   if (requestId !== currentContentRequestId) return true;
   if (!groupedResult) {
     resetGroupingState();
@@ -6979,10 +7216,17 @@ async function initializeGroupedFileList(requestId: number) {
   }
 
   const normalized = normalizeGroupedRowsResult(groupedResult);
+  if (rowOffset >= normalized.totalRowCount && normalized.totalRowCount > 0) {
+    rowOffset = Math.max(0, normalized.totalRowCount - rowLimit);
+    groupedResult = await getCurrentGroupedQueryRows(rowOffset, rowLimit);
+    if (requestId !== currentContentRequestId || !groupedResult) return true;
+    Object.assign(normalized, normalizeGroupedRowsResult(groupedResult));
+  }
   // Invalidate the old viewport before replacing rows, so an unchanged range
   // still hydrates the new placeholders when the virtual scroller updates.
   lastVisibleRange = { start: -1, end: -1 };
   visibleRangeSeqId++;
+  if (retainedFiles) resetGroupingState();
   clearSelectionForFileListUpdate();
   groupedModeActive.value = true;
   groupedTimelineGroups.value = normalized.groups;
@@ -6991,7 +7235,7 @@ async function initializeGroupedFileList(requestId: number) {
   totalRowCount.value = normalized.totalRowCount;
   totalFileSize.value = normalized.totalSize;
   contentCountIsAuthoritative.value = true;
-  scrollPosition.value = 0;
+  if (!retainedFiles) scrollPosition.value = 0;
   timelineData.value = [];
   groupedRows.value = Array.from({ length: totalRowCount.value }).map((_, i) => ({
     id: `grouped-ph-${i}`,
@@ -7019,14 +7263,23 @@ async function initializeGroupedFileList(requestId: number) {
     size: 0,
   }));
 
-  const initialFiles = applyGroupedRows(normalized.rows, 0);
+  if (retainedFiles) {
+    for (const row of normalized.rows) {
+      if (isItemRow(row) && row.file) {
+        const retained = retainedFiles.get(Number(row.file.id));
+        if (retained) row.file = { ...retained, ...row.file, thumbnail: retained.thumbnail };
+      }
+    }
+  }
+  const initialFiles = applyGroupedRows(normalized.rows, rowOffset);
   if (initialFiles.length > 0) {
     await getFileListThumb(initialFiles);
   }
   await nextTick();
+  if (requestId !== currentContentRequestId) return true;
   gridViewRef.value?.refreshLayout?.();
   markDedupSourceUpdated(requestId);
-  restoreInitialSelectionIfNeeded();
+  if (!retainedFiles) restoreInitialSelectionIfNeeded();
   restoreScrollAfterRefresh();
   if (totalFileCount.value === 0) {
     openImageViewer(0, false, true);
@@ -7259,11 +7512,10 @@ async function getFileList(
     lensModel = '',
     locationAdmin1 = '', 
     locationName = '', 
-    isFavorite = false, 
+    isFavorite = activeFavoritesOnly.value,
     rating = -1,
     cullingFlag = -1,
     tagId = 0,
-    tagGroupId = 0,
     personId = 0,
     gpsMinLat = null,
     gpsMaxLat = null,
@@ -7305,7 +7557,6 @@ async function getFileList(
     rating,
     cullingFlag,
     tagId,
-    tagGroupId,
     personId,
     gpsMinLat,
     gpsMaxLat,
@@ -7461,10 +7712,9 @@ async function getCollectionFileList(collectionId: number, requestId: number) {
     lensModel: '',
     locationAdmin1: '',
     locationName: '',
-    isFavorite: false,
+    isFavorite: Boolean(config.search.favoritesOnly),
     rating: -1,
     tagId: 0,
-    tagGroupId: 0,
     personId: 0,
   };
 
@@ -7533,6 +7783,7 @@ async function getSmartFileList(smartAlbum: any, requestId: number) {
     version: Number(query.version || 1),
     match: query.match === 'any' ? 'any' : 'all',
     rules,
+    favoritesOnly: Boolean(config.search.favoritesOnly),
     sortType: Number(smartAlbum?.sort?.type ?? 0),
     sortOrder: Number(smartAlbum?.sort?.order ?? 1),
     randomSeed: createRandomSeed(),
@@ -7598,7 +7849,7 @@ async function getSmartFileList(smartAlbum: any, requestId: number) {
 }
 
 async function updateSmartAlbumCover(smartAlbum: any, requestId: number) {
-  const result = await getSmartQueryFiles(currentSmartQueryParams.value, 0, 1);
+  const result = await getSmartQueryFiles({ ...currentSmartQueryParams.value, favoritesOnly: false }, 0, 1);
   if (
     requestId !== currentContentRequestId ||
     libConfig.smartAlbum.type !== 'custom' ||
@@ -7658,7 +7909,8 @@ async function getImageSearchFileList(
     if (result) {
       clearSelectionForFileListUpdate();
       resetGroupingState();
-      fileList.value = preserveLoadedThumbnails(result.filter(passesAlbumFilters));
+      fileList.value = preserveLoadedThumbnails(result.filter(passesAlbumFilters)
+        .filter((file: any) => !activeFavoritesOnly.value || file.is_favorite));
       contentCountIsAuthoritative.value = true;
       currentSearchFileIds.value = fileList.value
         .map(file => Number(file.id))
@@ -7721,10 +7973,9 @@ async function getUnifiedSearchFileList(searchText: string, requestId: number) {
     lensModel: '',
     locationAdmin1: '',
     locationName: '',
-    isFavorite: false,
+    isFavorite: Boolean(config.search.favoritesOnly),
     rating: -1,
     tagId: 0,
-    tagGroupId: 0,
     personId: 0,
     groupBy: 0,
   };
@@ -7770,7 +8021,8 @@ async function getUnifiedSearchFileList(searchText: string, requestId: number) {
     const textIds = new Set(textMatches.map((file: any) => Number(file.id)));
     const visualMatches = (Array.isArray(visualResult) ? visualResult : [])
       .filter((file: any) => !textIds.has(Number(file.id)))
-      .filter(passesAlbumFilters);
+      .filter(passesAlbumFilters)
+      .filter((file: any) => !config.search.favoritesOnly || file.is_favorite);
     const files = preserveLoadedThumbnails([...textMatches, ...visualMatches]);
     contentCountIsAuthoritative.value = true;
 
@@ -7868,6 +8120,7 @@ async function getUnifiedSearchFileList(searchText: string, requestId: number) {
 let contentUpdateSeq = 0;
 
 async function updateContent(force = false, preserveMultiSelection = selectMode.value) {
+  pendingScopeSelectionChange = false;
   const updateSeq = ++contentUpdateSeq;
   const newIndex = config.main.sidebarIndex;
   const nextAlbumId = newIndex === SIDEBAR.ALBUM ? Number(libConfig.album.id || 0) : 0;
@@ -8166,23 +8419,11 @@ async function updateContent(force = false, preserveMultiSelection = selectMode.
     }
   } 
   else if(newIndex === SIDEBAR.TAG) {
-    if (libConfig.tag.groupId) {
-      const groupId = libConfig.tag.groupId;
-      getTagGroupName(groupId).then(name => {
-        if (requestId !== currentContentRequestId) return;
-        if (name) {
-          contentTitle.value = name;
-          getFileList({ tagGroupId: groupId }, requestId);
-        } else {
-          contentTitle.value = "";
-          showEmptyContent(requestId);
-        }
-      }).catch(() => { if (requestId === currentContentRequestId) showEmptyContent(requestId); });
-    } else if (libConfig.tag.id === null) {
+    if (libConfig.tag.id === null) {
       contentTitle.value = "";
       showEmptyContent(requestId);
     } else {
-      getTagName(libConfig.tag.id, true).then(tagName => {
+      getTagName(libConfig.tag.id).then(tagName => {
         if (requestId !== currentContentRequestId) return;
         if (tagName) {
           contentTitle.value = tagName;
@@ -10261,6 +10502,16 @@ const activeFileTypeMask = computed(() =>
     : Number(config.search.fileType || 0)
 );
 
+const isFavoritesFilterDisabled = computed(() => tempViewMode.value === 'person'
+  || tempViewMode.value === 'similar' || tempViewMode.value === 'album' || isScanStreamingMode.value);
+const activeFavoritesOnly = computed(() => Boolean(config.search.favoritesOnly) && !isFavoritesFilterDisabled.value);
+
+function toggleFavoritesFilter() {
+  if (isFavoritesFilterDisabled.value) return;
+  rememberFocusedFileForPresentationRefresh();
+  config.search.favoritesOnly = !config.search.favoritesOnly;
+}
+
 const fileTypeSelectedValues = computed(() => {
   const mask = normalizeFileTypeMask(activeFileTypeMask.value);
   if (mask === 0) return [0];
@@ -11198,6 +11449,7 @@ watch([contentReady, showWelcomeContent], ([ready, welcome]) => {
 defineExpose({
   focusContent: activateContentPane,
   refreshCenteredGridLayout: refreshGridLayoutPreservingScroll,
+  selectAll: selectAllInCurrentList,
 });
 </script>
 

@@ -167,7 +167,6 @@
                   <span
                     v-for="tag in displayTags"
                     :key="tag.id"
-                    :title="tag.group_name"
                     class="badge badge-sm badge-outline border-base-content/5 bg-base-content/5 font-medium text-base-content/70 hover:text-base-content"
                   >{{ tag.name }}</span>
                 </div>

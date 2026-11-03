@@ -80,11 +80,10 @@ export const useLibraryStore = defineStore('libraryStore', {
       item: 'pick',
     },
 
-    /** @type {{ id: number | null, groupId: number | null, collapsedGroupIds: number[], activateTick: number, counts: Record<string, number> }} */
+    /** @type {{ id: number | null, collapsedTagIds: number[], activateTick: number, counts: Record<string, number> }} */
     tag: {
       id: null,
-      groupId: null,
-      collapsedGroupIds: [],
+      collapsedTagIds: [],
       activateTick: 0,
       counts: {},
     },

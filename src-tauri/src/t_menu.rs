@@ -20,6 +20,13 @@ pub fn install_app_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
     let privacy_item = MenuItemBuilder::with_id("help_privacy", "Privacy").build(app)?;
     let report_issue_item =
         MenuItemBuilder::with_id("help_report_issue", "Report an Issue").build(app)?;
+    // The predefined select-all item only reaches text-edit responders, so it
+    // silently did nothing while photos were shown. Route a custom item to the
+    // photo selection instead. The accelerator uses the character the active
+    // layout produces, so it stays Cmd-A on AZERTY as well.
+    let select_all_item = MenuItemBuilder::with_id("select_all", "Select All")
+        .accelerator("CmdOrCtrl+A")
+        .build(app)?;
 
     let app_submenu = SubmenuBuilder::new(app, app.package_info().name.clone())
         .item(&about_item)
@@ -41,7 +48,7 @@ pub fn install_app_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
         .cut()
         .copy()
         .paste()
-        .select_all()
+        .item(&select_all_item)
         .build()?;
     let window_submenu = SubmenuBuilder::new(app, "Window")
         .minimize()
@@ -76,6 +83,11 @@ pub fn install_app_menu<R: Runtime>(_app: &AppHandle<R>) -> tauri::Result<()> {
 #[cfg(target_os = "macos")]
 pub fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, event: MenuEvent) {
     match event.id().0.as_ref() {
+        "select_all" => {
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.emit("menu-select-all", ());
+            }
+        }
         "about" => {
             if let Some(window) = app.get_webview_window("main") {
                 let _ = window.emit("app-open-about", ());

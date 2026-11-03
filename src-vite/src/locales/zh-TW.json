@@ -361,7 +361,14 @@
     "not_found": "找不到標籤",
     "name_exists": "已存在同名標籤",
     "name_save_failed": "無法儲存標籤名稱",
-    "load_failed": "無法載入標籤狀態。請關閉此對話框再試一次。"
+    "move_failed": "無法移動標籤",
+    "delete_failed": "無法刪除標籤",
+    "load_failed": "無法載入標籤狀態。請關閉此對話框再試一次。",
+    "root": "根層級標籤",
+    "add_child": "新增子標籤",
+    "invalid_name": "標籤名稱不能包含 , ; {'|'}。",
+    "invalid_move": "無法將標籤移至自身或其子標籤下。",
+    "delete_tree": "將刪除此標籤及其子標籤，相片不受影響。"
   },
   "subject": {
     "title": "主題",
@@ -443,6 +450,7 @@
       "placeholder": "搜尋檔案名稱"
     },
     "filter": {
+      "favorites_only": "僅收藏",
       "select_mode": "多選",
       "select_files": "選擇檔案",
       "show_selection_panel": "開啟多選面板",
@@ -772,20 +780,8 @@
     "tag": {
       "rename": "重新命名",
       "delete": "刪除",
-      "new_group": "新增群組",
-      "edit_group": "編輯群組",
-      "delete_group": "刪除群組",
-      "search": "搜尋標籤或群組",
-      "clear_search": "清除搜尋",
-      "active_tag": "此群組中已選取的標籤",
-      "name": "名稱",
-      "locate": "定位標籤",
-      "empty": "尚無標籤",
-      "move_to": "移到群組",
-      "delete_message": "刪除「{name}」？其標籤將移到預設。檔案上的標籤會保留。",
-      "exists_in": "此標籤已存在於「{group}」。",
-      "name_exists": "已存在同名群組。",
-      "new_tag_group": "新標籤的群組"
+      "search": "搜尋標籤",
+      "clear_search": "清除搜尋"
     },
     "meta": {
       "favorite": "我的最愛",
@@ -979,7 +975,8 @@
       "title": "移到垃圾桶失敗",
       "file_content": "無法將檔案「{file}」移到垃圾桶。\n\n要改為永久刪除嗎？",
       "files_content": "無法將已選的 {count} 個檔案移到垃圾桶。\n\n要改為永久刪除嗎？",
-      "folder_content": "無法將資料夾「{folder}」移到垃圾桶。\n\n要改為永久刪除嗎？",
+      "folder_content": "無法將資料夾「{folder}」移到垃圾桶。\n\n要改為永久刪除嗎？\n\n此操作無法透過系統垃圾桶復原。",
+      "folder_partial_warning": "上一次操作可能已將部分內容移至垃圾桶。永久刪除將刪除此資料夾及其剩餘內容。",
       "ok": "永久刪除"
     },
     "open_external_many": {
@@ -993,7 +990,7 @@
       "error": "無法建立標籤。"
     },
     "delete_tag": {
-      "title": "刪除標籤",
+      "title": "刪除「{tag}」？",
       "content": "標籤「{tag}」將被刪除。",
       "ok": "刪除",
       "success": "已刪除標籤「{tag}」。",
@@ -1012,11 +1009,6 @@
     },
     "file_refresh": {
       "skipped": "已跳過：{count}",
-      "checking": "正在檢查…",
-      "pending": "需要更新 {count} 個檔案",
-      "up_to_date": "檔案資訊已是最新。",
-      "check_failed": "部分檔案無法檢查。",
-      "update": "更新",
       "status": "重新整理狀態",
       "running": "重新整理中…",
       "cancelling": "取消中…",

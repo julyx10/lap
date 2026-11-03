@@ -165,6 +165,7 @@ const props = withDefaults(defineProps<{
   dedupStatuses?: Record<number, 'keep' | 'dup'>;
   draggedFileIds?: Set<number>;
   gridSize: number;
+  selectionScrollSuppressed?: boolean;
 }>(), {
   selectedItemIndex: -1,
   timelineData: () => [],
@@ -182,6 +183,7 @@ const props = withDefaults(defineProps<{
   dedupStatuses: () => ({}),
   draggedFileIds: () => new Set<number>(),
   gridSize: 120,
+  selectionScrollSuppressed: false,
 });
 
 const emit = defineEmits([
@@ -581,7 +583,12 @@ watch(layoutContentHeight, (newHeight) => {
   emit('layout-update', { height: newHeight });
 });
 
+// While a drag-move reconciliation updates the list, the selection moves to
+// the first moved item's slot — which may sit outside the viewport. That focus
+// change must never drag the viewport along (issue #483: keep the scroll
+// position after moving files).
 watch(() => props.selectedItemIndex, (newValue) => {
+  if (props.selectionScrollSuppressed) return;
   if (newValue !== -1) {
     scrollToItem(newValue);
   }

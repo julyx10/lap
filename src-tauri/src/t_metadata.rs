@@ -1,5 +1,6 @@
 //! Read-only embedded metadata. Existing EXIF/LibRaw values remain authoritative.
 //! Keep the backend boundary here so unsupported formats never prevent import.
+use crate::t_xmp_compat::push_keyword;
 use exiftool_rs::{ExifTool, Options, Tag, Value};
 use std::path::Path;
 
@@ -27,6 +28,8 @@ pub struct Metadata {
 // Cache only mapped values, not the potentially large full tag collection.
 thread_local! {
     static LAST: std::cell::RefCell<Option<(String, Metadata)>> = const { std::cell::RefCell::new(None) };
+    // Each worker initializes the interpreter once and releases it on exit.
+    static READER: ExifTool = ExifTool::with_options(read_options());
 }
 
 pub fn read(path: &Path) -> Metadata {
@@ -48,56 +51,91 @@ pub fn read(path: &Path) -> Metadata {
                 return values.clone();
             }
         }
-        // Reuse the bytes for URI-aware XMP flags: the backend's Tag drops
-        // namespace URIs for unregistered schemas and retains arbitrary prefixes.
+        // Resolve URI-aware XMP flags separately: backend tags do not expose
+        // namespace URIs for unregistered schemas.
         let values = read_uncached(path).unwrap_or_default();
         *cache.borrow_mut() = Some((key, values.clone()));
         values
     })
 }
 
-// Keep the mapping scoped to one parse: large video payloads are never copied
-// into an owned buffer. Mapping failures retain the backend's read fallback.
+// The path API avoids the full-file copy performed by the backend's bytes API.
+// Map separately for bounded, namespace-aware XMP extraction.
 fn read_uncached(path: &Path) -> std::io::Result<Metadata> {
     let file = std::fs::File::open(path)?;
     if file.metadata()?.len() == 0 {
         return Ok(Metadata::default());
     }
+    let tags = READER.with(|reader| reader.extract_info(path))
+        .map_err(std::io::Error::other)?;
     // SAFETY: this is a read-only mapping, used synchronously and dropped before
-    // returning. As with the backend's existing mmap reader, the source must not
-    // be truncated by another process while parsing.
+    // returning. The source must not be truncated by another process while parsing.
     match unsafe { memmap2::Mmap::map(&file) } {
-        Ok(bytes) => Ok(from_bytes(&bytes, path)),
-        Err(_) => std::fs::read(path).map(|bytes| from_bytes(&bytes, path)),
+        Ok(bytes) => Ok(from_embedded(&bytes, &tags)),
+        Err(_) => std::fs::read(path).map(|bytes| from_embedded(&bytes, &tags)),
     }
 }
 
+#[cfg(test)]
 fn from_bytes(bytes: &[u8], path: &Path) -> Metadata {
-    let options = Options {
-        duplicates: true,
-        ..Default::default()
-    };
-    let Ok(tags) = ExifTool::with_options(options).extract_info_from_bytes(bytes, path) else {
+    let Ok(tags) = ExifTool::with_options(read_options()).extract_info_from_bytes(bytes, path)
+    else {
         return Metadata::default();
     };
-    let mut metadata = from_tags(&tags);
-    if tags.iter().any(|tag| {
-        tag.group.family0 == "XMP"
-            && ["pick", "good", "rejected", "label", "favorite"]
-                .iter()
-                .any(|name| tag.name.eq_ignore_ascii_case(name))
-    }) {
-        let (culling, favorite) = embedded_flags(bytes);
-        metadata.organization.culling_flag = culling.or(metadata.organization.culling_flag);
-        metadata.organization.favorite = favorite;
+    from_embedded(bytes, &tags)
+}
+
+fn read_options() -> Options {
+    Options {
+        duplicates: true,
+        // Request the raw packet as well as parsed fields. In 1.0 the old PSD
+        // resource / HEIF item reader helpers are no longer public.
+        requested_tags: vec!["*".into(), "XMP".into()],
+        ..Default::default()
+    }
+}
+
+fn from_embedded(bytes: &[u8], tags: &[Tag]) -> Metadata {
+    // Empty/unknown XMP properties may produce no backend tags at all.
+    // The bounded container walker reads metadata blocks, never pixel payloads.
+    let packets = embedded_packets(bytes, tags);
+    let mut metadata = map_tags(tags, packets.is_empty());
+    if !packets.is_empty() {
+        // One bounded packet extraction and URI-aware parse for every schema.
+        let xmp = crate::t_xmp::metadata_from_packets(&packets);
+        metadata.organization.culling_flag =
+            xmp.culling_flag.or(metadata.organization.culling_flag);
+        metadata.organization.favorite = xmp.favorite;
+        if xmp.description.is_some() {
+            metadata.organization.description = xmp.description;
+        }
+        if let Some(values) = xmp.tags {
+            let tags = metadata.organization.tags.get_or_insert_with(Vec::new);
+            for value in values {
+                push_keyword(&value, tags);
+            }
+        }
+        if let Some(values) = xmp.hierarchical_tags {
+            let paths = metadata
+                .organization
+                .hierarchical_tags
+                .get_or_insert_with(Vec::new);
+            for value in values {
+                push_keyword(&value, paths);
+            }
+        }
     }
     metadata
+}
+
+pub(crate) fn decode_xmp_text(bytes: &[u8]) -> Option<String> {
+    xmp_packets::decode(bytes)
 }
 
 /// Resolve flags from their XML namespace URI, never from a user-chosen prefix.
 /// Only inspect container-designated metadata. PNG iTXt may compress its packet;
 /// other supported containers are handled by the bounded packet extractor.
-fn embedded_packets(bytes: &[u8]) -> Vec<String> {
+fn embedded_packets(bytes: &[u8], tags: &[Tag]) -> Vec<String> {
     const LIMIT: usize = 16 * 1024 * 1024;
     let packets = if bytes.starts_with(b"\x89PNG\r\n\x1a\n") {
         let mut packets = Vec::new();
@@ -125,15 +163,35 @@ fn embedded_packets(bytes: &[u8]) -> Vec<String> {
     } else {
         xmp_packets::extract(bytes)
     };
-    let packets: Vec<_> = packets
+    let mut packets: Vec<_> = packets
         .into_iter()
         .filter_map(|p| xmp_packets::decode(&p))
         .collect();
+    // These containers formerly used the backend's resource/item helpers.
+    // Keep its raw XMP packet (including unknown namespace URIs), not a
+    // reconstruction from flattened tags. Never search arbitrary file bytes.
+    if bytes.starts_with(b"8BPS") || bytes.get(4..8) == Some(b"ftyp") {
+        for tag in tags.iter().filter(|tag| {
+            tag.name == "XMP" && tag.group.family1 == "XMP" && tag.group.family3 == "Main"
+        }) {
+            let raw = match &tag.raw_value {
+                Value::Binary(value) | Value::Undefined(value) => value.as_slice(),
+                Value::String(value) => value.as_bytes(),
+                _ => continue,
+            };
+            if let Some(packet) = xmp_packets::decode(raw) {
+                if !packets.contains(&packet) && packets.len() < 32 {
+                    packets.insert(0, packet);
+                }
+            }
+        }
+    }
     packets
 }
 
+#[cfg(test)]
 fn embedded_flags(bytes: &[u8]) -> (Option<i32>, Option<bool>) {
-    crate::t_xmp::flags_from_packets(&embedded_packets(bytes))
+    crate::t_xmp::flags_from_packets(&embedded_packets(bytes, &[]))
 }
 
 #[cfg(test)]
@@ -195,7 +253,24 @@ fn source_rank(tag: &Tag) -> u8 {
     }
 }
 
+fn resolved_lens_id(tags: &[Tag]) -> Option<String> {
+    tags.iter().filter(|tag| tag.name == "LensID" && tag.group.family0 == "Composite")
+        .find_map(|tag| {
+            // Nikon's raw LensID is a byte signature; only use a resolved name.
+            let name = tag.print_value.trim();
+            let lower = name.to_ascii_lowercase();
+            (!name.is_empty() && !name.contains('\0') && !lower.starts_with("unknown")
+                && !matches!(lower.as_str(), "n/a" | "none")
+                && name != tag.raw_value.to_display_string().trim()).then(|| name.to_owned())
+        })
+}
+
+#[cfg(test)]
 fn from_tags(tags: &[Tag]) -> Metadata {
+    map_tags(tags, true)
+}
+
+fn map_tags(tags: &[Tag], fallback_xmp_keywords: bool) -> Metadata {
     let string = |name: &str| {
         tags.iter()
             .filter(|t| t.name == name)
@@ -247,13 +322,11 @@ fn from_tags(tags: &[Tag]) -> Metadata {
     // URI-aware pick/good/rejected/label values are supplied by from_bytes.
     // A legacy negative rating remains meaningful without an explicit flag.
     organization.culling_flag = (rating.map(|(_, value)| value) == Some(-1)).then_some(2);
-    let mut keywords = Vec::new();
-    for tag in tags.iter().filter(|t| {
-        matches!(
-            t.name.as_str(),
-            "Subject" | "Keywords" | "HierarchicalSubject" | "TagsList"
-        ) && matches!(t.group.family0.as_str(), "XMP" | "IPTC")
-    }) {
+    if fallback_xmp_keywords {
+        crate::t_xmp_compat::import_backend(tags, &mut organization);
+    }
+    let mut keywords = organization.tags.take().unwrap_or_default();
+    for tag in tags.iter().filter(|t| t.group.family0 == "IPTC" && t.name == "Keywords") {
         collect_strings(&tag.raw_value, &mut keywords);
     }
     // XPKeywords is UTF-16LE, never the backend's numeric display string.
@@ -283,7 +356,7 @@ fn from_tags(tags: &[Tag]) -> Metadata {
         make: string("Make"),
         model: string("Model"),
         lens_make: string("LensMake"),
-        lens_model: string("LensModel"),
+        lens_model: string("LensModel").or_else(|| resolved_lens_id(tags)),
         date: string("DateTimeOriginal"),
         latitude: gps.map(|(a, _)| a),
         longitude: gps.map(|(_, b)| b),
@@ -315,18 +388,6 @@ fn bit_depth_from_tags(tags: &[Tag]) -> Option<u16> {
         }
     }
     depth
-}
-
-fn push_keyword(word: &str, words: &mut Vec<String>) {
-    let word = word.trim();
-    if !word.is_empty()
-        && !word.contains('\0')
-        && !word.eq_ignore_ascii_case("darktable")
-        && !word.to_ascii_lowercase().starts_with("darktable|")
-        && !words.iter().any(|w| w == word)
-    {
-        words.push(word.to_owned());
-    }
 }
 
 fn collect_strings(value: &Value, words: &mut Vec<String>) {
@@ -382,6 +443,32 @@ fn coordinate(value: &Value, reference: Option<&str>, limit: f64) -> Option<f64>
 #[cfg(test)]
 pub(crate) mod tests {
     use super::*;
+
+    #[test]
+    fn resolved_lens_id_fills_missing_model_without_overriding_existing_model() {
+        let tag = |name: &str, group: &str, raw_value, print: &str| Tag {
+            id: exiftool_rs::TagId::Numeric(0), name: name.into(), description: String::new(),
+            group: exiftool_rs::TagGroup { family0: group.into(), family1: group.into(),
+                family2: "Camera".into(), family3: "Main".into() },
+            raw_value, print_value: print.into(), priority: 1,
+        };
+        for (id, name) in [("01 58 50 50 14 14 02 00", "AF Nikkor 50mm f/1.8"),
+            ("91 54 44 44 0C 0C 4B 06", "Sigma 35mm F1.4 DG HSM")] {
+            let lens_id = tag("LensID", "Composite", Value::String(id.into()), name);
+            assert_eq!(from_tags(&[lens_id.clone()]).lens_model.as_deref(), Some(name));
+            let model = tag("LensModel", "EXIF", Value::String("Existing lens".into()), "Existing lens");
+            assert_eq!(from_tags(&[lens_id, model]).lens_model.as_deref(), Some("Existing lens"));
+        }
+        for printed in ["", "01 58 50 50 14 14 02 00", "Unknown (01 58)", "n/a", "None", "bad\0name"] {
+            let lens_id = tag("LensID", "Composite", Value::String("01 58 50 50 14 14 02 00".into()), printed);
+            assert!(from_tags(&[lens_id]).lens_model.is_none());
+        }
+        let numeric = tag("LensID", "Composite", Value::U16(145), "145");
+        assert!(from_tags(&[numeric]).lens_model.is_none());
+        let untrusted = tag("LensID", "MakerNotes", Value::U16(145), "Sigma 35mm F1.4 DG HSM");
+        assert!(from_tags(&[untrusted]).lens_model.is_none());
+    }
+
     #[test]
     fn keywords_preserve_commas_and_ignore_numeric_garbage() {
         let mut words = Vec::new();
@@ -411,6 +498,58 @@ pub(crate) mod tests {
             ),
             Some(-30.5)
         );
+    }
+
+    #[test]
+    fn digikam_and_lightroom_paths_merge_without_splitting_flat_keywords() {
+        for lightroom in ["", "<lr:hierarchicalSubject><rdf:Bag><rdf:li>Places|France|Paris</rdf:li></rdf:Bag></lr:hierarchicalSubject>"] {
+            let xml = format!(r#"<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:lr="http://ns.adobe.com/lightroom/1.0/" xmlns:digiKam="http://www.digikam.org/ns/1.0/">
+                <dc:subject><rdf:Bag><rdf:li>Paris</rdf:li><rdf:li>literal/slash</rdf:li></rdf:Bag></dc:subject>
+                <digiKam:TagsList><rdf:Seq><rdf:li>Places/France/Paris</rdf:li></rdf:Seq></digiKam:TagsList>{lightroom}
+                </rdf:Description></rdf:RDF>"#);
+            let bytes = jpeg_with_xmp_packet(xml.as_bytes());
+            let meta = from_bytes(&bytes, Path::new("paths.jpg")).organization;
+            let parsed = crate::t_xmp::parse_xmp_str(&xml).unwrap();
+            for metadata in [meta, parsed] {
+                assert_eq!(metadata.hierarchical_tags, Some(vec!["Places|France|Paris".into()]));
+                let tags = metadata.tags.unwrap();
+                assert_eq!(tags.len(), 3);
+                assert!(tags.contains(&"literal/slash".to_string()));
+                assert!(!tags.contains(&"Places/France/Paris".to_string()));
+            }
+        }
+    }
+
+    #[test]
+    fn acdsee_categories_import_assigned_paths_from_embedded_and_sidecar_xmp() {
+        let categories = r#"<Categories><Category Assigned="0">Places<Category Assigned="1">Paris &amp; France</Category><Category Assigned="0">Unused</Category></Category><Category Assigned="1">People<Category Assigned="1">Paris</Category></Category></Categories>"#;
+        let escaped = quick_xml::escape::escape(categories);
+        for property in [format!("a:categories=\"{escaped}\""), String::new()] {
+            let body = if property.is_empty() {
+                format!("<a:categories><![CDATA[{categories}]]></a:categories>")
+            } else {
+                String::new()
+            };
+            let xml = format!(
+                r#"<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description xmlns:a="http://ns.acdsee.com/iptc/1.0/" {property}>{body}</rdf:Description></rdf:RDF>"#
+            );
+            let bytes = jpeg_with_xmp_packet(xml.as_bytes());
+            let meta = from_bytes(&bytes, Path::new("acdsee.jpg")).organization;
+            let parsed = crate::t_xmp::parse_xmp_str(&xml).unwrap();
+            for metadata in [meta, parsed] {
+                assert_eq!(
+                    metadata.hierarchical_tags,
+                    Some(vec![
+                        "Places|Paris & France".into(),
+                        "People".into(),
+                        "People|Paris".into()
+                    ])
+                );
+                assert_eq!(metadata.tags, metadata.hierarchical_tags);
+            }
+        }
+        assert!(crate::t_xmp_compat::acdsee_category_paths("<Categories><Category>").is_err());
+        assert!(crate::t_xmp_compat::acdsee_category_paths("<!DOCTYPE Categories><Categories/>").is_err());
     }
 
     pub(crate) fn jpeg_with_xmp() -> Vec<u8> {
@@ -726,15 +865,8 @@ mod final_review_encoding {
             packet.extend(unit.to_le_bytes());
         }
         let jpeg = tests::jpeg_with_xmp_packet(&packet);
-        let tags = ExifTool::with_options(Options {
-            duplicates: true,
-            ..Default::default()
-        })
-        .extract_info_from_bytes(&jpeg, Path::new("utf16.jpg"))
-        .unwrap();
-        assert!(tags.iter().any(|t| t.name == "Pick"
-            && t.group.family1 == "XMP-xmpDM"
-            && t.raw_value.to_display_string() == "1"));
+        // Unknown XMP fields need not be exposed by the backend; Lap resolves
+        // their namespace URIs from the original packet.
         assert_eq!(
             from_bytes(&jpeg, Path::new("utf16.jpg"))
                 .organization
@@ -770,17 +902,6 @@ mod staged_review {
         jpeg.extend(((data.len() + 2) as u16).to_be_bytes());
         jpeg.extend(data);
         jpeg.extend([0xff, 0xd9]);
-        let tags = ExifTool::with_options(Options {
-            duplicates: true,
-            ..Default::default()
-        })
-        .extract_info_from_bytes(&jpeg, Path::new("extended.jpg"))
-        .unwrap();
-        assert!(
-            tags.iter()
-                .any(|t| t.name == "Pick" && t.raw_value.to_display_string() == "1"),
-            "{tags:?}"
-        );
         assert_eq!(
             from_bytes(&jpeg, Path::new("extended.jpg"))
                 .organization
@@ -1033,16 +1154,11 @@ fn extract_detail_values(path: &Path, info: &std::fs::Metadata) -> Result<Detail
             &fallback
         }
     };
-    // requested_tags is a post-extraction filter in the backend. Extract once and
-    // keep only our small mapped values, never the complete tag collection.
-    let tags = ExifTool::with_options(Options {
-        duplicates: true,
-        ..Default::default()
-    })
-    .extract_info_from_bytes(bytes, path)
-    .map_err(|e| e.to_string())?;
+    // Extract once and keep only our small mapped values in the detail cache.
+    let tags = READER.with(|reader| reader.extract_info(path))
+        .map_err(|e| e.to_string())?;
     let mut details = detail_values(&tags);
-    for packet in embedded_packets(bytes) {
+    for packet in embedded_packets(bytes, &tags) {
         if let Ok(mut source) = crate::t_xmp::source_details(&packet) {
             for value in source.values_mut() {
                 value.source = value.source.replace("Sidecar XMP", "Embedded XMP");
