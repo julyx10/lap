@@ -1,0 +1,34 @@
+name: Downloader regression tests
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/**'
+      - '.github/workflows/test-downloaders.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/**'
+      - '.github/workflows/test-downloaders.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Check Bash syntax
+        shell: bash
+        run: bash -n scripts/download_models.sh scripts/download_ffmpeg_sidecar.sh
+      - name: Run downloader regression tests
+        run: python -m unittest discover -s scripts/tests -v

@@ -1,0 +1,13 @@
+# makepkg output and downloaded build inputs; keep the recipe and .SRCINFO tracked.
+/src/
+/pkg/
+/*.pkg.tar.*
+/*.tar.gz
+/*.onnx
+/tokenizer.json
+/ffmpeg-*-unknown-linux-gnu
+/ffprobe-*-unknown-linux-gnu
+/generated.SRCINFO
+/namcap.txt
+/package-*.txt
+/source-identity.txt

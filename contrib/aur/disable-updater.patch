@@ -1,0 +1,20 @@
+--- a/src-vite/src/common/updater.ts
++++ b/src-vite/src/common/updater.ts
+@@ -6,0 +7 @@
++const PACMAN_PACKAGE = import.meta.env.VITE_LAP_PACKAGE_MANAGER === 'pacman';
+@@ -186,0 +188 @@
++    if (PACMAN_PACKAGE) return;
+@@ -228,0 +231 @@
++    if (PACMAN_PACKAGE) return;
+--- a/src-vite/src/components/SettingsAbout.vue
++++ b/src-vite/src/components/SettingsAbout.vue
+@@ -24,0 +25 @@
++              v-if="!isPacmanPackage"
+@@ -102,0 +104 @@
++const isPacmanPackage = import.meta.env.VITE_LAP_PACKAGE_MANAGER === 'pacman';
+--- a/src-tauri/capabilities/default.json
++++ b/src-tauri/capabilities/default.json
+@@ -67,2 +67 @@
+-    "fs:scope",
+-    "updater:default"
++    "fs:scope"
