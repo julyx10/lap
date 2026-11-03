@@ -1211,6 +1211,7 @@ const shortcutDisplaySections: Array<{ key: string; items: ShortcutDisplayItem[]
       { actionId: 'view.zoomIn', labelKey: 'zoom_in' },
       { actionId: 'view.zoomOut', labelKey: 'zoom_out' },
       { actionId: 'view.zoomFit', labelKey: 'zoom_fit' },
+      { actionId: 'view.toggleAfAreas', labelKey: 'toggle_af_areas' },
       { actionId: 'view.togglePlayback', labelKey: 'toggle_playback' },
       { actionId: 'view.cycleBackground', labelKey: 'cycle_background' },
     ],

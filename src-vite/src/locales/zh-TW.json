@@ -1272,6 +1272,7 @@
     "loading_original": "正在載入原始相片...",
     "failed": "無法載入相片。檔案遺失或已損毀。",
     "raw_render_unavailable": "無法算繪此 RAW；已顯示內嵌預覽。",
+    "af_unavailable": "此圖片沒有可用的自動對焦資料",
     "toolbar": {
       "prev": "上一張",
       "next": "下一張",
@@ -1281,6 +1282,7 @@
       "zoom_out": "縮小",
       "zoom_fit": "符合視窗",
       "zoom_actual": "實際大小",
+      "af_area": "顯示自動對焦區域",
       "fullscreen": "全螢幕",
       "exit_fullscreen": "離開全螢幕",
       "pin": "釘選工具列",
@@ -1604,6 +1606,7 @@
         "zoom_in": "放大",
         "zoom_out": "縮小",
         "zoom_fit": "切換實際大小 / 符合視窗",
+        "toggle_af_areas": "顯示／隱藏自動對焦區域",
         "cycle_background": "切換背景",
         "open_new_window": "在新視窗檢視",
         "open_external_app": "用外部應用程式開啟",

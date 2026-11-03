@@ -1272,6 +1272,7 @@
     "loading_original": "Chargement de la photo originale...",
     "failed": "Impossible de charger la photo. Le fichier est manquant ou corrompu.",
     "raw_render_unavailable": "Impossible de rendre ce RAW ; aperçu intégré affiché.",
+    "af_unavailable": "Aucune donnée AF prise en charge pour cette image",
     "toolbar": {
       "prev": "Précédent",
       "next": "Suivant",
@@ -1281,6 +1282,7 @@
       "zoom_out": "Zoom arr.",
       "zoom_fit": "Ajuster à la fenêtre",
       "zoom_actual": "Taille réelle",
+      "af_area": "Afficher les zones AF",
       "fullscreen": "Plein écran",
       "exit_fullscreen": "Quitter plein écran",
       "pin": "Épingler barre",
@@ -1604,6 +1606,7 @@
         "zoom_in": "Zoom avant",
         "zoom_out": "Zoom arrière",
         "zoom_fit": "Taille réelle / Ajuster à la fenêtre",
+        "toggle_af_areas": "Afficher/masquer les zones AF",
         "cycle_background": "Changer d’arrière-plan",
         "open_new_window": "Détacher la fenêtre",
         "open_external_app": "Ouvrir dans une app externe",

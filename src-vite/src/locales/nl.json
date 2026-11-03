@@ -1272,6 +1272,7 @@
     "loading_original": "Originele foto laden...",
     "failed": "Kan foto niet laden. Het bestand ontbreekt of is beschadigd.",
     "raw_render_unavailable": "Kan deze RAW niet renderen; ingesloten voorbeeld getoond.",
+    "af_unavailable": "Geen ondersteunde AF-gegevens voor deze afbeelding",
     "toolbar": {
       "prev": "Vorige",
       "next": "Volgende",
@@ -1281,6 +1282,7 @@
       "zoom_out": "Uitzoomen",
       "zoom_fit": "Passend in venster",
       "zoom_actual": "Ware grootte",
+      "af_area": "AF-gebieden tonen",
       "fullscreen": "Volledig scherm",
       "exit_fullscreen": "Volledig scherm verlaten",
       "pin": "Werkbalk vastzetten",
@@ -1604,6 +1606,7 @@
         "zoom_in": "Inzoomen",
         "zoom_out": "Uitzoomen",
         "zoom_fit": "Wisselen tussen ware grootte / passend in venster",
+        "toggle_af_areas": "AF-gebieden tonen/verbergen",
         "cycle_background": "Achtergrond wisselen",
         "open_new_window": "Bekijken in nieuw venster",
         "open_external_app": "Openen in externe app",

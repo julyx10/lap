@@ -1272,6 +1272,7 @@
     "loading_original": "Caricamento della foto originale...",
     "failed": "Impossibile caricare la foto. Il file manca o è danneggiato.",
     "raw_render_unavailable": "Impossibile elaborare questo RAW; viene mostrata l'anteprima incorporata.",
+    "af_unavailable": "Nessun dato AF supportato per questa immagine",
     "toolbar": {
       "prev": "Precedente",
       "next": "Successiva",
@@ -1281,6 +1282,7 @@
       "zoom_out": "Riduci",
       "zoom_fit": "Adatta alla finestra",
       "zoom_actual": "Dimensioni reali",
+      "af_area": "Mostra aree AF",
       "fullscreen": "Schermo intero",
       "exit_fullscreen": "Esci da schermo intero",
       "pin": "Fissa la barra",
@@ -1604,6 +1606,7 @@
         "zoom_in": "Ingrandisci",
         "zoom_out": "Riduci",
         "zoom_fit": "Alterna dimensioni reali / adatta alla finestra",
+        "toggle_af_areas": "Mostra/nascondi aree AF",
         "cycle_background": "Cambia sfondo",
         "open_new_window": "Visualizza in una nuova finestra",
         "open_external_app": "Apri in app esterna",

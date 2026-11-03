@@ -1272,6 +1272,7 @@
     "loading_original": "원본 사진을 불러오는 중...",
     "failed": "사진을 불러오지 못했습니다. 파일이 없거나 손상되었습니다.",
     "raw_render_unavailable": "이 RAW는 렌더링할 수 없습니다. 내장 미리보기 표시 중.",
+    "af_unavailable": "이 이미지에는 지원되는 AF 데이터가 없습니다",
     "toolbar": {
       "prev": "이전",
       "next": "다음",
@@ -1281,6 +1282,7 @@
       "zoom_out": "축소",
       "zoom_fit": "창 맞춤",
       "zoom_actual": "실제 크기",
+      "af_area": "AF 영역 표시",
       "fullscreen": "전체 화면",
       "exit_fullscreen": "전체 화면 종료",
       "pin": "도구 모음 고정",
@@ -1604,6 +1606,7 @@
         "zoom_in": "확대",
         "zoom_out": "축소",
         "zoom_fit": "실제 크기 / 창 맞춤 전환",
+        "toggle_af_areas": "AF 영역 표시 전환",
         "cycle_background": "배경 전환",
         "open_new_window": "새 창에서 보기",
         "open_external_app": "외부 앱에서 열기",

@@ -1272,6 +1272,7 @@
     "loading_original": "元写真を読み込み中...",
     "failed": "写真を読み込めませんでした。ファイルが見つからないか、破損しています。",
     "raw_render_unavailable": "この RAW はレンダリングできません。埋め込みプレビューを表示中。",
+    "af_unavailable": "この画像には対応するAFデータがありません",
     "toolbar": {
       "prev": "前へ",
       "next": "次へ",
@@ -1281,6 +1282,7 @@
       "zoom_out": "縮小",
       "zoom_fit": "ウィンドウに合わせる",
       "zoom_actual": "実際のサイズ",
+      "af_area": "AFエリアを表示",
       "fullscreen": "全画面",
       "exit_fullscreen": "全画面終了",
       "pin": "バーを固定",
@@ -1604,6 +1606,7 @@
         "zoom_in": "拡大",
         "zoom_out": "縮小",
         "zoom_fit": "実際のサイズ / ウィンドウに合わせる",
+        "toggle_af_areas": "AFエリアの表示を切り替え",
         "cycle_background": "背景を切り替える",
         "open_new_window": "新しいウィンドウで表示",
         "open_external_app": "外部アプリで開く",

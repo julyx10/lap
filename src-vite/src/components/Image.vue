@@ -72,6 +72,19 @@
           @dblclick.stop="toggleZoomFit"
           @contextmenu.prevent.stop="$emit('context-menu', $event)"
         />
+        <!-- AF areas share the image buffer's layout and outer transition. -->
+        <div v-if="showAfAreas && !loadError && index === activeImage && imageFilePath[index] === filePath"
+          class="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+          <div :style="{ ...getImageStyle(index), pointerEvents: 'none', filter: 'none' }">
+            <div v-for="(region, regionIndex) in afAreas" :key="regionIndex"
+              class="absolute box-border"
+              :style="{
+                left: `${region.x * 100}%`, top: `${region.y * 100}%`,
+                width: `${region.width * 100}%`, height: `${region.height * 100}%`,
+                border: `${2 / scale[index]}px solid ${region.focused === true ? '#22c55e' : region.focused === false ? '#ef4444' : '#94a3b8'}`,
+              }" />
+          </div>
+        </div>
       </div>
     </TransitionGroup>
 
@@ -182,6 +195,7 @@
 
 <script setup lang="ts">
 import { ref, shallowRef, triggerRef, watch, onMounted, onBeforeUnmount, computed, nextTick } from 'vue';
+import { invoke } from '@tauri-apps/api/core';
 import { useUIStore } from '@/stores/uiStore';
 import { config, libConfig } from '@/common/config';
 import { SIDEBAR, GESTURE_LOCK_THRESHOLD, HORIZONTAL_NAV_THRESHOLD, MOUSE_DRAG_NAV_THRESHOLD } from '@/common/constants';
@@ -212,6 +226,8 @@ const { t } = useI18n();
 const toast = useToast();
 // Props
 const props = defineProps({
+  showAfAreas: { type: Boolean, default: false },
+  afAreaFeedbackRequest: { type: Object, default: null },
   originalUnavailable: { type: Boolean, default: false },
   filePath: {
     type: String,
@@ -277,6 +293,55 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['message-from-image-viewer', 'scale', 'update:isZoomFit', 'viewport-change', 'context-menu']);
+
+type AfArea = { x: number; y: number; width: number; height: number; focused: boolean | null };
+const afAreas = ref<AfArea[]>([]);
+let afAreaRequest = 0;
+let afAreaTimer: ReturnType<typeof setTimeout> | undefined;
+let afAreaBusy = false;
+let pendingAfArea: { request: number; filePath: string; notify: boolean } | null = null;
+const loadAfAreas = async () => {
+  if (afAreaBusy || !pendingAfArea) return;
+  const target = pendingAfArea;
+  pendingAfArea = null;
+  afAreaBusy = true;
+  try {
+    const regions = await invoke<AfArea[]>('get_af_areas', { filePath: target.filePath });
+    if (target.request === afAreaRequest) {
+      afAreas.value = regions;
+      if (target.notify && regions.length === 0) {
+        toast.info(t('image_viewer.af_unavailable'), { placement: 'bottom-right' });
+      }
+    }
+  } catch {
+    // Unsupported or unreadable metadata must never interrupt image viewing.
+  } finally {
+    afAreaBusy = false;
+    // Only the latest settled image may follow an in-flight request.
+    if (pendingAfArea) void loadAfAreas();
+  }
+};
+watch(() => [props.showAfAreas, props.filePath, props.fileVersion, props.originalUnavailable, props.afAreaFeedbackRequest], (_values, previousValues) => {
+  const request = ++afAreaRequest;
+  clearTimeout(afAreaTimer);
+  pendingAfArea = null;
+  afAreas.value = [];
+  if (!props.showAfAreas || !props.filePath || props.originalUnavailable) return;
+  const filePath = props.filePath;
+  const feedback = props.afAreaFeedbackRequest;
+  const notify = Boolean(previousValues && feedback && feedback !== previousValues[4]
+    && feedback.filePath === filePath && feedback.fileVersion === props.fileVersion);
+  // Holding an arrow key must not launch an unbounded number of RAW parses.
+  afAreaTimer = setTimeout(() => {
+    pendingAfArea = { request, filePath, notify };
+    void loadAfAreas();
+  }, 120);
+}, { immediate: true });
+onBeforeUnmount(() => {
+  ++afAreaRequest;
+  clearTimeout(afAreaTimer);
+  pendingAfArea = null;
+});
 
 const uiStore = useUIStore();
 

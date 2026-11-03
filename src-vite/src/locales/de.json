@@ -1272,6 +1272,7 @@
     "loading_original": "Originalfoto wird geladen...",
     "failed": "Foto konnte nicht geladen werden. Die Datei fehlt oder ist beschädigt.",
     "raw_render_unavailable": "RAW kann nicht gerendert werden; eingebettete Vorschau angezeigt.",
+    "af_unavailable": "Keine unterstützten AF-Daten für dieses Bild",
     "toolbar": {
       "prev": "Vorheriges",
       "next": "Nächstes",
@@ -1281,6 +1282,7 @@
       "zoom_out": "Zoom -",
       "zoom_fit": "An Fenster anpassen",
       "zoom_actual": "Tatsächliche Größe",
+      "af_area": "AF-Bereiche anzeigen",
       "fullscreen": "Vollbild",
       "exit_fullscreen": "Vollbild beenden",
       "pin": "Leiste anheften",
@@ -1604,6 +1606,7 @@
         "zoom_in": "Vergrößern",
         "zoom_out": "Verkleinern",
         "zoom_fit": "Originalgröße / An Fenster anpassen",
+        "toggle_af_areas": "AF-Bereiche ein-/ausblenden",
         "cycle_background": "Hintergrund wechseln",
         "open_new_window": "In neuem Fenster öffnen",
         "open_external_app": "In externer App öffnen",

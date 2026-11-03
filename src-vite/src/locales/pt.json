@@ -1272,6 +1272,7 @@
     "loading_original": "Carregando foto original...",
     "failed": "Falha ao carregar a foto. O arquivo está ausente ou corrompido.",
     "raw_render_unavailable": "Não é possível renderizar este RAW; pré-visualização incorporada exibida.",
+    "af_unavailable": "Não há dados de AF compatíveis para esta imagem",
     "toolbar": {
       "prev": "Anterior",
       "next": "Próximo",
@@ -1281,6 +1282,7 @@
       "zoom_out": "Reduzir",
       "zoom_fit": "Ajustar à janela",
       "zoom_actual": "Tamanho real",
+      "af_area": "Mostrar áreas de AF",
       "fullscreen": "Tela cheia",
       "exit_fullscreen": "Sair tela cheia",
       "pin": "Fixar barra",
@@ -1604,6 +1606,7 @@
         "zoom_in": "Ampliar",
         "zoom_out": "Reduzir",
         "zoom_fit": "Alternar tamanho real / ajustar à janela",
+        "toggle_af_areas": "Mostrar/ocultar áreas de AF",
         "cycle_background": "Alternar fundo",
         "open_new_window": "Abrir em nova janela",
         "open_external_app": "Abrir em app externo",

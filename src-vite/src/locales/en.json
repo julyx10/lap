@@ -1272,6 +1272,7 @@
     "loading_original": "Loading original photo...",
     "failed": "Failed to load photo. The file is missing or corrupted.",
     "raw_render_unavailable": "Can't render this RAW; showing embedded preview.",
+    "af_unavailable": "No supported AF data for this image",
     "toolbar": {
       "prev": "Previous",
       "next": "Next",
@@ -1281,6 +1282,7 @@
       "zoom_out": "Zoom out",
       "zoom_fit": "Fit to window",
       "zoom_actual": "Actual size",
+      "af_area": "Show AF areas",
       "fullscreen": "Fullscreen",
       "exit_fullscreen": "Exit fullscreen",
       "pin": "Pin toolbar",
@@ -1604,6 +1606,7 @@
         "zoom_in": "Zoom in",
         "zoom_out": "Zoom out",
         "zoom_fit": "Toggle actual size / fit to window",
+        "toggle_af_areas": "Toggle AF areas",
         "cycle_background": "Cycle background",
         "open_new_window": "View in new window",
         "open_external_app": "Open in external app",
