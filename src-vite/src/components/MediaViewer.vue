@@ -54,11 +54,11 @@
           >
             <template #trigger="{ toggle }">
               <button
-                class="h-7 min-w-[38px] px-1.5 inline-flex items-center justify-center gap-0.5 rounded-box text-[11px] font-medium tabular-nums transition-colors"
+                class="h-8 min-w-8 px-1 inline-flex items-center justify-center gap-0.5 rounded-box text-xs cursor-pointer"
                 :class="[
                   fileIndex < 0 || !canSlideShow || !canInteract
                     ? 'cursor-default text-base-content/30'
-                    : 'text-base-content/30 hover:bg-base-100/30 hover:text-base-content/70'
+                    : 'text-base-content/70 hover:bg-base-100/30'
                 ]"
                 :disabled="fileIndex < 0 || !canSlideShow || !canInteract"
                 :title="$t('settings.image_view.slide_show_interval', { second: getSlideShowInterval(effectiveSlideShowIntervalIndex) })"
@@ -94,7 +94,7 @@
         <TButton
           :icon="IconAutoFocus"
           :selected="showAfAreas"
-          :disabled="fileIndex < 0 || !canInteract || ![1, 3].includes(Number(file?.file_type))"
+          :disabled="fileIndex < 0 || isSlideShow || !canInteract || ![1, 3].includes(Number(file?.file_type))"
           :tooltip="$t('image_viewer.toolbar.af_area')"
           :shortcut="shortcut('view.toggleAfAreas')"
           @click="toggleAfAreas"
@@ -151,7 +151,7 @@
             @click="$emit('item-action', { action: 'tag', index: fileIndex })"
           />
           <TButton
-            :icon="IconStack"
+            :icon="IconCollection"
             :disabled="fileIndex < 0 || isSlideShow || !canInteract"
             :selected="file?.has_collections && !isSlideShow"
             :tooltip="$t('menu.meta.collection')"
@@ -494,7 +494,7 @@ import {
   IconFlagOff,
   IconStar,
   IconStarFilled,
-  IconStack,
+  IconCollection,
   IconTag,
   IconComment,
   IconRotate,
@@ -1068,7 +1068,7 @@ const quickViewStatusBadges = computed<StatusBadge[]>(() => {
     });
   }
   if (props.file?.has_tags) metaIcons.push({ icon: IconTag });
-  if (props.file?.has_collections) metaIcons.push({ icon: IconStack });
+  if (props.file?.has_collections) metaIcons.push({ icon: IconCollection });
   if (props.file?.comments?.length > 0) metaIcons.push({ icon: IconComment });
   if (normalizedFileRotate.value > 0) {
     metaIcons.push({

@@ -91,7 +91,7 @@
             :title="$t('collection.reorder')"
           />
           <span v-else-if="reorderingCollectionId !== null" class="p-1 w-6 h-6 shrink-0"></span>
-          <IconStack class="pr-1 w-6 h-6 shrink-0" />
+          <IconCollection class="pr-1 w-6 h-6 shrink-0" />
           <input
             v-if="renamingId === collection.id"
             ref="renameInputRef"
@@ -169,7 +169,7 @@ import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
 import { config, libConfig } from '@/common/config';
 import { clearCollection, createCollection, deleteCollection as deleteCollectionApi, getCollectionCounts, listCollections, renameCollection, reorderCollections } from '@/common/api';
-import { IconAdd, IconRight, IconRename, IconMore, IconStack, IconRemove, IconTrash, IconClose, IconSearch, IconDragHandle, IconOrder } from '@/common/icons';
+import { IconAdd, IconRight, IconRename, IconMore, IconCollection, IconRemove, IconTrash, IconClose, IconSearch, IconDragHandle, IconOrder } from '@/common/icons';
 import { VueDraggable } from 'vue-draggable-plus';
 import ContextMenu from '@/components/ContextMenu.vue';
 import MessageBox from '@/components/MessageBox.vue';

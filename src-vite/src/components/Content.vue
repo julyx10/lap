@@ -897,7 +897,7 @@ import {
   IconHeartFilled,
   IconOk,
   IconHistory,
-  IconStack,
+  IconCollection,
   IconFileSearch,
   IconPerson,
   IconSortingAsc,
@@ -1277,9 +1277,11 @@ const selectionMenuItems = useFileMenuItems(
   {
     selectMode: ref(true),
     selectionMediaKind,
+    selectionFirstFavorite: computed(() => Boolean(selectedFiles.value[0]?.is_favorite)),
     selectionCount: selectedCount,
     selectionHasUnavailable,
     selectionHasCloudOnly,
+    selectionInCollection: computed(() => currentQuerySource.value === 'collection'),
   },
 );
 
@@ -3949,7 +3951,7 @@ watch([dedupScanKey, similarPhotoGroupingThreshold], ([key, threshold]) => {
 }, { immediate: true });
 
 const currentTitleIcon = computed(() => {
-  if (libConfig.activePane === 'collection') return IconStack;
+  if (libConfig.activePane === 'collection') return IconCollection;
   switch (tempViewMode.value) {
     case 'none':
       if (contentTitle.value) {
@@ -4588,7 +4590,7 @@ function handleItemAction(payload: { action: string, index: number }) {
   if (action.startsWith('rating-')) {
     const rating = Number.parseInt(action.slice('rating-'.length), 10);
     if (!Number.isNaN(rating)) {
-      void setSelectedFileRating(rating);
+      void (selectMode.value ? selectModeSetRatings(rating) : setSelectedFileRating(rating));
     }
     return;
   }
@@ -4662,12 +4664,15 @@ function handleItemAction(payload: { action: string, index: number }) {
         }
       } catch (error) { toast.error(String(error)); }
     },
+    'favorite-all': () => void selectModeSetFavorites(true),
+    'unfavorite-all': () => void selectModeSetFavorites(false),
+    'remove-selected-from-collection': () => void removeSelectedFromCollection(),
     'favorite': toggleFavorite,
     'rotate': clickRotate,
     'info': toggleInfoPanel,
     'tag': clickTag,
     'add-to-collection': clickAddToCollection,
-    'comment': () => showCommentMsgbox.value = true,
+    'comment': () => selectMode.value ? openCommentEditor() : (showCommentMsgbox.value = true),
     'search-similar': () => enterSimilarSearchMode(fileList.value[selectedItemIndex.value]),
     'find-person': () => {
       if (!config.settings.face.enabled) return;
@@ -10004,7 +10009,7 @@ const toggleSelectModeFavorite = async () => {
   if (!selectMode.value || selectedCount.value === 0) return;
   const selectedItems = await getActionableSelectedItemsForAction();
   if (!selectedItems || selectedItems.length === 0) return;
-  const shouldFavorite = !selectedItems.every(item => Boolean(item.is_favorite));
+  const shouldFavorite = !Boolean(selectedItems[0].is_favorite);
   await selectModeSetFavorites(shouldFavorite);
 };
 

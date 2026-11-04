@@ -23,7 +23,7 @@
       </div>
       <div class="min-h-48 max-h-[50vh] overflow-y-auto rounded-box p-2 bg-base-100/30 border border-base-content/10 select-none">
         <div v-if="isAddingCollection" class="px-7 py-1 flex items-center gap-1 text-primary">
-          <IconStack class="w-4 h-4 shrink-0" />
+          <IconCollection class="w-4 h-4 shrink-0" />
           <input
             ref="newCollectionNameInput"
             v-model="newCollectionName"
@@ -62,7 +62,7 @@
               @change="toggle(collection.id)"
             />
           </label>
-          <IconStack class="w-4 h-4 shrink-0" />
+          <IconCollection class="w-4 h-4 shrink-0" />
           <input
             v-if="renamingId === Number(collection.id)"
             ref="renameInput"
@@ -123,7 +123,7 @@ import { emit as tauriEmit } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { useToast } from '@/common/toast';
 import { addFilesToCollection, createCollection, deleteCollection as deleteCollectionApi, getCollectionSelectionCounts, listCollections, removeFilesFromCollection, renameCollection } from '@/common/api';
-import { IconAdd, IconStack, IconClose, IconRename, IconSearch, IconTrash } from '@/common/icons';
+import { IconAdd, IconCollection, IconClose, IconRename, IconSearch, IconTrash } from '@/common/icons';
 import { config, libConfig } from '@/common/config';
 import MessageBox from '@/components/MessageBox.vue';
 import ModalDialog from '@/components/ModalDialog.vue';

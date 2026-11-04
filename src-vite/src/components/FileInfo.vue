@@ -186,7 +186,7 @@
                     class="inline-flex items-center gap-1 text-[12px] font-medium text-base-content/70 transition-colors hover:text-base-content cursor-pointer"
                     @click.stop="emit('quickEditCollection')"
                   >
-                    <IconStack class="h-4 w-4 shrink-0" />
+                    <IconCollection class="h-4 w-4 shrink-0" />
                     {{ collection.name }}
                   </button>
                 </div>
@@ -541,7 +541,7 @@ import {
   IconZoomIn,
   IconZoomOut,
   IconLivePhoto,
-  IconStack,
+  IconCollection,
   IconPerson,
 } from '@/common/icons';
 import Breadcrumb from '@/components/Breadcrumb.vue';

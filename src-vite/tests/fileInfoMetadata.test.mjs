@@ -27,7 +27,7 @@ async function render(key, overrides = {}) {
   const app = createSSRApp({ data: () => context, render: compile(section(key)) });
   app.config.globalProperties.$t = key => key;
   app.component('SmoothHeight', { setup: (_, { slots }) => () => slots.default?.() });
-  for (const name of ['IconRight', 'FavoriteRatingControl', 'TButton', 'IconRotate', 'IconStack', 'IconPerson']) {
+  for (const name of ['IconRight', 'FavoriteRatingControl', 'TButton', 'IconRotate', 'IconCollection', 'IconPerson']) {
     app.component(name, { render: () => null });
   }
   return renderToString(app);

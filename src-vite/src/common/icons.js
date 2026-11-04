@@ -13,7 +13,9 @@ export { default as IconScrollUp } from '@/assets/icons/scroll-up.svg';
 // ======================
 // FILE/FOLDER OPERATIONS
 // ======================
+export { default as IconBrackets } from '@/assets/icons/brackets.svg';
 export { default as IconClipboard } from '@/assets/icons/clipboard.svg';
+export { default as IconCollection } from '@/assets/icons/collection.svg';
 export { default as IconCopy } from '@/assets/icons/copy.svg';
 export { default as IconDragDrop } from '@/assets/icons/drag-drop.svg';
 export { default as IconFile } from '@/assets/icons/file.svg';
