@@ -2477,11 +2477,12 @@ const isDedupBulkTrash = computed(() => dedupBulkFileCount.value > 0);
 const isDedupTrash = computed(() => dedupDeleteFileIds.value.length > 0 || isDedupBulkTrash.value);
 const rawJpegCompanionDeleteCount = computed(() => {
   if (!config.settings.groupRawJpegPairs) return 0;
-  const items = isDedupTrash.value
-    ? dedupDeleteFileIds.value.map(id => fileList.value.find(file => Number(file?.id) === Number(id))).filter(Boolean)
-    : selectMode.value
-      ? getActionableSelectedItems()
-      : [fileList.value[selectedItemIndex.value]].filter(Boolean);
+  if (isDedupTrash.value) {
+    return dedupPaneRef.value?.getRawPairDeleteCount(isDedupBulkTrash.value ? undefined : dedupDeleteFileIds.value) || 0;
+  }
+  const items = selectMode.value
+    ? getActionableSelectedItems()
+    : [fileList.value[selectedItemIndex.value]].filter(Boolean);
   return items.filter((file: any) => file.media_subtype === 'raw_jpeg_pair').length;
 });
 
@@ -3946,7 +3947,7 @@ const similarViewVersion = ref(0);
 const similarScanKey = ref('');
 watch([dedupScanKey, similarPhotoGroupingThreshold], ([key, threshold]) => {
   similarScanKey.value = key
-    ? `${key}|threshold:${threshold}|similar-view:${++similarViewVersion.value}`
+    ? `${key}|raw-pair-scope:1|threshold:${threshold}|similar-view:${++similarViewVersion.value}`
     : '';
 }, { immediate: true });
 

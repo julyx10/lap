@@ -193,6 +193,7 @@
                   <div class="min-w-0 flex-1">
                     <div class="flex items-center gap-1 text-xs font-semibold text-base-content/70">
                       <span class="truncate">{{ item.file?.name }}</span>
+                      <span v-if="rawPairBadge(item.file)" class="shrink-0 rounded px-1 text-[9px] font-medium bg-base-content/10 text-base-content/60">{{ rawPairBadge(item.file) }}</span>
                       <IconExclamation v-if="isOriginalUnavailable(item.file)" class="w-3.5 h-3.5 shrink-0 text-warning" />
                     </div>
                     <div class="text-[11px] text-base-content/30 truncate">
@@ -200,7 +201,7 @@
                         {{ item.file.width }} × {{ item.file.height }}
                       </template>
                       <template v-else>—</template>
-                      · {{ formatFileSize(Number(item.file?.size || 0)) }}
+                      · {{ formatFileSize(reviewItemSize(item)) }}
                     </div>
                     <div v-if="item.file?.modified_at" class="text-[11px] text-base-content/30">
                       {{ $t('file_info.modified_at') }}: {{ formatTimestamp(item.file.modified_at, 'date_time') }}
@@ -351,7 +352,7 @@
                   class="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 to-transparent px-1.5 pb-1 pt-4 text-left text-[10px] leading-tight text-white/90 opacity-0 transition-opacity group-hover/thumb:opacity-100"
                   :class="{ 'opacity-100': selectedGroupId === group.id }"
                 >
-                  <div>{{ formatFileSize(group.file_size) }}</div>
+                  <div>{{ formatFileSize(group.keepItem ? reviewItemSize(group.keepItem) : group.file_size) }}</div>
                   <div v-if="group.keepItem?.file?.width && group.keepItem?.file?.height" class="text-white/70">
                     {{ group.keepItem.file.width }} x {{ group.keepItem.file.height }}
                   </div>
@@ -431,13 +432,14 @@
                 <div class="min-w-0 flex-1">
                   <div class="flex items-center gap-1 text-xs font-semibold text-base-content/70">
                     <span class="truncate">{{ item.file?.name }}</span>
+                      <span v-if="rawPairBadge(item.file)" class="shrink-0 rounded px-1 text-[9px] font-medium bg-base-content/10 text-base-content/60">{{ rawPairBadge(item.file) }}</span>
                     <IconExclamation v-if="isOriginalUnavailable(item.file)" class="w-3.5 h-3.5 shrink-0 text-warning" />
                   </div>
                   <div
                     class="text-[11px] text-base-content/30 truncate"
                     :title="formatDedupFolderPath(item.file)"
                   >
-                    {{ formatDedupFolderPath(item.file) }}
+                    {{ formatDedupFolderPath(item.file) }} · {{ formatFileSize(reviewItemSize(item)) }}
                   </div>
                   <div v-if="item.file?.modified_at" class="text-[11px] text-base-content/30">
                     {{ $t('file_info.modified_at') }}: {{ formatTimestamp(item.file.modified_at, 'date_time') }}
@@ -627,7 +629,7 @@ const duplicateGroups = computed(() =>
       items: keepItem ? [keepItem, ...duplicateItems] : sourceItems,
       keepItem,
       duplicateItems,
-      reclaimableBytes: Math.max(0, Number(group.total_size || 0) - Number(group.file_size || 0)),
+      reclaimableBytes: duplicateItems.reduce((sum: number, item: any) => sum + reviewItemSize(item), 0),
     };
   })
 );
@@ -664,7 +666,7 @@ const selectedDeleteCount = computed(() => {
 const selectedDeleteBytes = computed(() => {
   if (!activeGroup.value) return 0;
   return activeGroup.value.duplicateItems.reduce((sum: number, item: any) => {
-    return isDupSelected(activeGroup.value.id, item.file_id) ? sum + Number(item.file?.size || 0) : sum;
+    return isDupSelected(activeGroup.value.id, item.file_id) ? sum + reviewItemSize(item) : sum;
   }, 0);
 });
 
@@ -679,7 +681,7 @@ const selectedSimilarBytes = computed(() => {
   if (!activeSimilarGroup.value) return 0;
   return activeSimilarGroup.value.items.reduce((sum: number, item: any) =>
     item.is_keep !== 1 && isSimilarSelected(activeSimilarGroup.value.id, item.file_id)
-      ? sum + Number(item.file?.size || 0)
+      ? sum + reviewItemSize(item)
       : sum, 0);
 });
 
@@ -1295,6 +1297,15 @@ function applyDeletedSimilarFiles(groupId: number, deletedFileIds: number[]) {
   similarGroups.value[index] = { ...group, items, file_count: items.length };
 }
 
+function reviewItemSize(item: any): number {
+  return Number(item.file?.size || 0) + (config.settings.groupRawJpegPairs ? Number(item.companion_size || 0) : 0);
+}
+
+function rawPairBadge(file: any): string {
+  if (file?.media_subtype !== 'raw_jpeg_pair') return '';
+  return /\.(heic|heif|hif)$/i.test(file.live_photo_video_path || '') ? 'RAW+HEIC' : 'RAW+JPEG';
+}
+
 function formatDedupFolderPath(file: any): string {
   const folderPath = getFolderPath(file?.file_path);
   if (!folderPath) return '';
@@ -1759,7 +1770,18 @@ onUnmounted(() => {
   if (unlistenCullingStatus.value) unlistenCullingStatus.value();
 });
 
+function getRawPairDeleteCount(fileIds?: number[]): number {
+  if (!config.settings.groupRawJpegPairs) return 0;
+  const ids = fileIds ? new Set(fileIds.map(Number)) : null;
+  const groups = ids ? [...rawGroups.value, ...similarGroups.value] : rawGroups.value;
+  return new Set(groups.flatMap((group: any) => (group.items || [])
+    .filter((item: any) => item.is_keep !== 1 && item.file?.media_subtype === 'raw_jpeg_pair'
+      && (!ids || ids.has(Number(item.file_id))))
+    .map((item: any) => Number(item.file_id)))).size;
+}
+
 defineExpose({
+  getRawPairDeleteCount,
   applyDeletedFiles,
   applyDeletedSimilarFiles,
   refreshGroups: fetchGroups,

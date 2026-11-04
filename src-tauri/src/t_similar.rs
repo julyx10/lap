@@ -66,13 +66,28 @@ fn resolve_scope(
     if file_ids.is_some() && (params.is_some() || collection_id.is_some()) {
         return Err("File ID scope cannot be combined with query or collection scope.".into());
     }
-    if let Some(ids) = file_ids {
+    let files = if let Some(ids) = file_ids {
         AFile::get_files_by_ids(&ids)
     } else if let Some(id) = collection_id {
         t_dedup::get_files_by_collection(id, params.as_ref())
     } else {
         t_dedup::get_files_by_query(params.as_ref().ok_or("Query required")?)
-    }
+    }?;
+    Ok(without_raw_pair_companions(files))
+}
+
+// ID-based scopes bypass the normal query's companion exclusion. Keep the
+// primary RAW as the logical photo, using only existing pairing metadata.
+fn without_raw_pair_companions(files: Vec<AFile>) -> Vec<AFile> {
+    let companions: HashSet<i64> = files
+        .iter()
+        .filter(|file| file.media_subtype.as_deref() == Some("raw_jpeg_pair"))
+        .filter_map(|file| file.live_photo_video_id)
+        .collect();
+    files
+        .into_iter()
+        .filter(|file| file.id.is_none_or(|id| !companions.contains(&id)))
+        .collect()
 }
 
 fn load_vectors(conn: &Connection, files: Vec<AFile>) -> Result<Vec<VectorFile>, String> {
@@ -506,9 +521,20 @@ pub fn get_overview(scope_key: &str) -> Result<serde_json::Value, String> {
             |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?)),
         )
         .map_err(|e| e.to_string())?;
+    drop(conn);
+    let groups = list_groups(scope_key, i64::MAX, 0)?;
+    let mut companion_bytes = 0;
+    if let Some(groups) = groups["items"].as_array() {
+        for group in groups {
+            let detail = get_group(group["id"].as_i64().ok_or("Invalid similar group ID")?, scope_key)?;
+            if let Some(items) = detail["items"].as_array() {
+                companion_bytes += items.iter().map(|item| item["companion_size"].as_i64().unwrap_or(0)).sum::<i64>();
+            }
+        }
+    }
     Ok(serde_json::json!({
         "total_files": total_files,
-        "total_size": total_size,
+        "total_size": total_size + companion_bytes,
     }))
 }
 
@@ -530,7 +556,14 @@ pub fn get_group(group_id: i64, scope_key: &str) -> Result<serde_json::Value, St
         )
         .map_err(|e| e.to_string())?;
     let items = stmt.query_map(params![group_id], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, f32>(1)?, row.get::<_, i64>(2)?))).map_err(|e| e.to_string())?
-        .map(|item| { let (file_id, score, is_keep) = item.map_err(|e| e.to_string())?; Ok(serde_json::json!({"file_id": file_id, "score": score, "is_keep": is_keep, "file": AFile::get_file_info(file_id)?})) }).collect::<Result<Vec<_>, String>>()?;
+        .map(|item| {
+            let (file_id, score, is_keep) = item.map_err(|e| e.to_string())?;
+            let file = AFile::get_file_info(file_id)?;
+            let companion_size = file.as_ref()
+                .map(t_dedup::raw_pair_companion_size)
+                .transpose()?.unwrap_or(0);
+            Ok(serde_json::json!({"file_id": file_id, "score": score, "is_keep": is_keep, "companion_size": companion_size, "file": file}))
+        }).collect::<Result<Vec<_>, String>>()?;
     Ok(serde_json::json!({"id": group_id, "items": items}))
 }
 
