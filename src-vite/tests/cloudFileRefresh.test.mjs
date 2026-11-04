@@ -240,7 +240,7 @@ test('single-file menu refresh reports warnings and failures for both local and 
 });
 
 test('all supported locales include the refresh warnings count with its placeholder', () => {
-  for (const name of ['en','de','es','fr','hu','it','ja','ko','nl','pl','pt','ru','uk','zh-CN','zh-TW']) {
+  for (const name of ['en','de','es','fr','hu','it','ja','ko','nl','pl','pt','ru','uk','vi','zh-CN','zh-TW']) {
     const locale = JSON.parse(fs.readFileSync(new URL(`../src/locales/${name}.json`, import.meta.url), 'utf8'));
     assert.match(locale.msgbox.file_refresh.warnings, /\{count\}/, name);
   }
@@ -249,7 +249,7 @@ test('all supported locales include the refresh warnings count with its placehol
 
 test('manual rebuild options and unused locale keys are removed', () => {
   assert.doesNotMatch(source, /rebuildPreviews|rebuild_previews|rebuild_pending/);
-  for (const name of ['en','de','es','fr','hu','it','ja','ko','nl','pl','pt','ru','uk','zh-CN','zh-TW']) {
+  for (const name of ['en','de','es','fr','hu','it','ja','ko','nl','pl','pt','ru','uk','vi','zh-CN','zh-TW']) {
     const locale = JSON.parse(fs.readFileSync(new URL(`../src/locales/${name}.json`, import.meta.url), 'utf8'));
     assert.equal(locale.msgbox.file_refresh.rebuild_previews, undefined, name);
     assert.equal(locale.msgbox.file_refresh.rebuild_pending, undefined, name);
