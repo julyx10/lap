@@ -4,6 +4,7 @@ pub(crate) mod embedded;
 pub(crate) mod files;
 pub(crate) mod keywords;
 mod merge;
+pub(crate) mod import_count;
 mod model;
 pub(crate) mod packets;
 pub(crate) mod schema;

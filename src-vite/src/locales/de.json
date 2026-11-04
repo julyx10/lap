@@ -1008,6 +1008,7 @@
       "error": "Dateiauswahl fehlgeschlagen."
     },
     "file_refresh": {
+      "metadata_failed": "Metadatenimport fehlgeschlagen: {count}",
       "skipped": "Übersprungen: {count}",
       "status": "Aktualisierungsstatus",
       "running": "Wird aktualisiert…",
@@ -1016,7 +1017,6 @@
       "complete": "Abgeschlossen",
       "succeeded": "Aktualisiert: {count}",
       "failed": "Fehlgeschlagen: {count}",
-      "warnings": "Warnungen: {count}",
       "release_requested": "Freigabe angefordert: {count}",
       "kept_local": "Auf diesem Gerät behalten: {count}",
       "kept_local_hint": "Dateien, die immer auf diesem Gerät bleiben sollen oder für die Windows die Speicherplatzfreigabe durch Lap nicht zugelassen hat (überwachter Ordnerzugriff)."

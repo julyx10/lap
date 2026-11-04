@@ -1008,6 +1008,7 @@
       "error": "Impossibile selezionare il file."
     },
     "file_refresh": {
+      "metadata_failed": "Importazione metadati non riuscita: {count}",
       "skipped": "Ignorati: {count}",
       "status": "Stato aggiornamento",
       "running": "Aggiornamento…",
@@ -1016,7 +1017,6 @@
       "complete": "Completato",
       "succeeded": "Aggiornati: {count}",
       "failed": "Non riusciti: {count}",
-      "warnings": "Avvisi: {count}",
       "release_requested": "Liberazione richiesta: {count}",
       "kept_local": "Mantenuti su questo dispositivo: {count}",
       "kept_local_hint": "File da mantenere sempre su questo dispositivo o per i quali Windows non ha consentito a Lap di liberare spazio (accesso alle cartelle controllato)."

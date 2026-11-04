@@ -2,7 +2,7 @@
 //! Parsers and catalog merging consume these definitions without duplicating aliases.
 
 /// Bump when changed mappings must backfill unchanged catalog entries.
-pub(crate) const IMPORT_PREFIX: &str = "embedded-v5:";
+pub(crate) const IMPORT_PREFIX: &str = "embedded-v6:";
 
 pub const NS_LR: &str = "http://ns.adobe.com/lightroom/1.0/";
 pub const NS_DIGIKAM: &str = "http://www.digikam.org/ns/1.0/";
@@ -468,6 +468,11 @@ pub(super) const REJECTED: XmpProperty = XmpProperty {
     uri: NS_DARKTABLE,
     prefix: "darktable",
     name: "rejected",
+};
+pub(super) const DIGIKAM_PICK: XmpProperty = XmpProperty {
+    uri: NS_DIGIKAM,
+    prefix: "digiKam",
+    name: "PickLabel",
 };
 pub(super) const LABEL: XmpProperty = XmpProperty {
     uri: NS_XMP,

@@ -15,6 +15,10 @@
 //! | `afiles.comments` | `http://purl.org/dc/elements/1.1/`<br>`http://ns.adobe.com/exif/1.0/`<br>`http://ns.adobe.com/photoshop/1.0/` | `dc:description` (`rdf:Alt`)<br>`exif:UserComment` (`rdf:Alt`)<br>`photoshop:Caption` | Priority: `dc:description` (`xml:lang="x-default"` preferred) → `exif:UserComment` → `photoshop:Caption`; empty element/attr → `Some("")`; missing → `None` |
 
 //! Keyword source rules live in `schema`; XML and catalog operations stay here.
+//! digiKam PickLabel: 0/2 -> Unflagged, 1 -> Reject, 3 -> Pick. Explicit
+//! xmpDM/darktable flags take precedence; text labels/negative ratings are fallback.
+//! Existing PickLabel fields follow manual culling export; pending (2) is retained
+//! while Lap remains unflagged. No digiKam field is created when it was absent.
 
 use super::schema::{self, CatalogField};
 use super::merge::apply_with_state;
@@ -272,14 +276,23 @@ fn metadata_from_properties(properties: &[&XmlNode]) -> XmpMetadata {
     let pick = value(schema::PICK.uri, schema::PICK.name);
     let good = value(schema::GOOD.uri, schema::GOOD.name);
     let rejected_value = value(schema::REJECTED.uri, schema::REJECTED.name);
+    let digikam_pick = value(schema::DIGIKAM_PICK.uri, schema::DIGIKAM_PICK.name);
     let label = value(schema::LABEL.uri, schema::LABEL.name);
+    // Explicit app flags outrank text labels and legacy negative ratings.
+    let digikam_flag = digikam_pick.as_deref().and_then(|v| match v.trim() {
+        "0" | "2" => Some(0), // Pending validation has no equivalent in Lap.
+        "1" => Some(2),
+        "3" => Some(1),
+        _ => None,
+    });
     meta.culling_flag = culling_from_values(
         pick.as_deref(),
         good.as_deref(),
         rejected_value.as_deref(),
-        label.as_deref(),
-        if rejected { Some(-1) } else { meta.rating },
-    );
+        None,
+        None,
+    ).or(digikam_flag).or_else(|| culling_from_values(None, None, None,
+        label.as_deref(), if rejected { Some(-1) } else { meta.rating }));
     keywords::import_properties(properties, &mut meta);
     meta.description = schema::DESCRIPTION.iter().find_map(|property| value(property.uri, property.name));
     meta
@@ -316,6 +329,44 @@ fn parse_favorite(value: &str) -> Option<bool> {
 #[cfg(test)]
 fn culling_from_packets(packets: &[String]) -> Option<i32> {
     flags_from_packets(packets).0
+}
+
+#[cfg(test)]
+mod digikam_pick_tests {
+    use super::*;
+    #[test]
+    fn import_pick_labels_and_adobe_precedence() {
+        for (properties, expected) in [
+            ("k:PickLabel=\"3\"", 1),
+            ("k:PickLabel=\"1\"", 2),
+            ("k:PickLabel=\"2\"", 0),
+            ("k:PickLabel=\"1\" dm:pick=\"1\"", 1),
+            ("k:PickLabel=\"3\" dm:pick=\"0\"", 0),
+        ] {
+            let xml = format!("<rdf:RDF xmlns:rdf=\"{NS_RDF}\"><rdf:Description xmlns:k=\"{}\" xmlns:dm=\"{}\" {properties}/></rdf:RDF>", schema::NS_DIGIKAM, schema::PICK.uri);
+            assert_eq!(parse_xmp_str(&xml).unwrap().culling_flag, Some(expected), "{properties}");
+        }
+    }
+
+    #[test]
+    fn existing_pick_fields_follow_export_and_pending_is_preserved() {
+        for source in 0..=3 {
+            for attribute in [true, false] {
+                let property = if attribute { format!("k:PickLabel=\"{source}\"") } else { String::new() };
+                let child = if attribute { String::new() } else { format!("<k:PickLabel>{source}</k:PickLabel>") };
+                let xml = format!("<rdf:RDF xmlns:rdf=\"{NS_RDF}\"><rdf:Description xmlns:k=\"{}\" {property}>{child}</rdf:Description></rdf:RDF>", schema::NS_DIGIKAM);
+                for flag in 0..=2 {
+                    let output = merge_with_culling(&xml, 0, flag, &[], "", 2).unwrap();
+                    assert_eq!(parse_xmp_str(&output).unwrap().culling_flag, Some(flag));
+                    let expected = match flag { 1 => 3, 2 => 1, _ if source == 2 => 2, _ => 0 };
+                    assert!(output.contains(&format!(">{expected}</digiKam:PickLabel>")));
+                    assert!(merge_with_culling(&xml, 4, flag, &[], "", 1).unwrap().contains("PickLabel"));
+                }
+            }
+        }
+        let xml = format!("<rdf:RDF xmlns:rdf=\"{NS_RDF}\"><rdf:Description/></rdf:RDF>");
+        assert!(!merge_with_culling(&xml, 0, 1, &[], "", 2).unwrap().contains("PickLabel"));
+    }
 }
 
 /// Shared precedence for sidecar and embedded XMP. Explicit unflagged wins
@@ -372,6 +423,18 @@ pub fn import_xmp_for_file_with_conn(
 }
 
 pub(crate) fn import_with_system(
+    file_id: i64,
+    file_path: &str,
+    conn: &Connection,
+    mode: XmpImportMode,
+    system: Option<super::system::SystemMetadata>,
+) -> Result<bool, String> {
+    let result = import_sources(file_id, file_path, conn, mode, system);
+    if result.is_err() { super::import_count::record(conn, file_id); }
+    result
+}
+
+fn import_sources(
     file_id: i64,
     file_path: &str,
     conn: &Connection,
@@ -766,6 +829,7 @@ fn culling_property(uri: &str, name: &[u8], value: &str) -> bool {
     let name = String::from_utf8_lossy(name);
     (schema::PICK.matches(uri, &name) || schema::GOOD.matches(uri, &name))
         || (schema::REJECTED.matches(uri, &name))
+        || schema::DIGIKAM_PICK.matches(uri, &name)
         || (schema::LABEL.matches(uri, &name)
             && matches!(
                 value.trim().to_ascii_lowercase().as_str(),
@@ -776,7 +840,7 @@ fn culling_property(uri: &str, name: &[u8], value: &str) -> bool {
 fn property_text(xml: &str, node: &Node) -> Result<String, String> {
     // Text/CDATA scalar properties only. Other managed properties do not need
     // this value, and their nested XML must not be interpreted as a flag.
-    if !schema::LABEL.matches(&node.uri, &node.name) {
+    if !schema::LABEL.matches(&node.uri, &node.name) && !schema::DIGIKAM_PICK.matches(&node.uri, &node.name) {
         return Ok(String::new());
     }
     let mut reader = quick_xml::Reader::from_str(&xml[node.start..node.end]);
@@ -831,6 +895,7 @@ fn merge_with_paths(
     let mut patches: Vec<(usize, usize, String)> = Vec::new();
     let mut tag_writer = keywords::TagWriter::default();
     let mut had_darktable_rejected = false;
+    let mut digikam_pick = None;
     loop {
         let start = reader.buffer_position() as usize;
         let event = reader.read_event().map_err(|e| e.to_string())?;
@@ -901,6 +966,9 @@ fn merge_with_paths(
                             tag_writer.observe(&uri, &String::from_utf8_lossy(local.as_ref()));
                             had_darktable_rejected |=
                                 schema::REJECTED.matches(&uri, &String::from_utf8_lossy(local.as_ref()));
+                            if schema::DIGIKAM_PICK.matches(&uri, &String::from_utf8_lossy(local.as_ref())) {
+                                digikam_pick = Some(a.decode_and_unescape_value(reader.decoder()).map_err(|e| e.to_string())?.trim() == "2");
+                            }
                             changed = true;
                         } else {
                             // Attribute already contains validated, escaped source bytes.
@@ -996,6 +1064,9 @@ fn merge_with_paths(
                 && culling_property(&n.uri, n.name.as_bytes(), &property_text(xml, n)?))
         {
             had_darktable_rejected |= schema::REJECTED.matches(&n.uri, &n.name);
+            if schema::DIGIKAM_PICK.matches(&n.uri, &n.name) {
+                digikam_pick = Some(property_text(xml, n)?.trim() == "2");
+            }
             tag_writer.observe(&n.uri, &n.name);
             patches.push((n.start, n.end, String::new()));
         }
@@ -1067,6 +1138,10 @@ fn merge_with_paths(
         }
         if had_darktable_rejected {
             properties += &schema::REJECTED.text_xml(if culling == 2 { "1" } else { "0" });
+        }
+        if let Some(pending) = digikam_pick {
+            let value = match culling { 1 => 3, 2 => 1, _ if pending => 2, _ => 0 };
+            properties += &format!("<digiKam:PickLabel xmlns:digiKam=\"{}\">{value}</digiKam:PickLabel>", schema::NS_DIGIKAM);
         }
     }
     if mask & CatalogField::Tags.mask() != 0 {
@@ -1636,6 +1711,22 @@ mod import_tests {
         assert_eq!(meta.rating, Some(3));
         assert_eq!(meta.culling_flag, Some(2)); // Rejected via dt:rejected
         assert_eq!(meta.description.as_deref(), Some("Default English caption"));
+    }
+
+    #[test]
+    fn digikam_pending_rescan_preserves_local_culling() {
+        let conn = setup_in_memory_db();
+        conn.execute("INSERT INTO afiles(id,name) VALUES(1,'photo.jpg')", []).unwrap();
+        let parse = |value| parse_xmp_str(&format!(
+            "<rdf:RDF xmlns:rdf=\"{NS_RDF}\"><rdf:Description xmlns:k=\"{}\" k:PickLabel=\"{value}\"/></rdf:RDF>",
+            schema::NS_DIGIKAM,
+        )).unwrap();
+        apply_xmp_metadata_to_db(1, &parse(3), &conn, XmpImportMode::InitialScan).unwrap();
+        conn.execute("UPDATE afiles SET culling_flag=2 WHERE id=1", []).unwrap();
+        let pending = parse(2);
+        assert_eq!(pending.culling_flag, Some(0));
+        apply_xmp_metadata_to_db(1, &pending, &conn, XmpImportMode::RescanNonDestructive).unwrap();
+        assert_eq!(conn.query_row("SELECT culling_flag FROM afiles WHERE id=1", [], |r| r.get::<_, i32>(0)).unwrap(), 2);
     }
 
     #[test]
@@ -3153,7 +3244,8 @@ mod export_tests {
                 INSERT INTO atags(id,name) VALUES(1,'Places|Paris');
                 INSERT INTO afile_tags VALUES(1,1);
                 UPDATE afiles SET has_tags=1 WHERE id=1;
-                UPDATE axmp_imports SET fingerprint=REPLACE(fingerprint,'embedded-v5:','embedded-v3:') WHERE file_id=1;").unwrap();
+                ").unwrap();
+            conn.execute("UPDATE axmp_imports SET fingerprint=REPLACE(fingerprint,?1,'embedded-v3:') WHERE file_id=1", [schema::IMPORT_PREFIX]).unwrap();
             conn.execute("UPDATE axmp_imports SET dirty=?1 WHERE file_id=1", [dirty]).unwrap();
 
             assert!(import());
@@ -3209,7 +3301,7 @@ mod export_tests {
                 .unwrap()
         );
         fs::remove_file(sidecar).unwrap();
-        conn.execute("UPDATE axmp_imports SET fingerprint=REPLACE(fingerprint,'embedded-v5:','embedded-v2:') WHERE file_id=1",[]).unwrap();
+        conn.execute("UPDATE axmp_imports SET fingerprint=REPLACE(fingerprint,?1,'embedded-v2:') WHERE file_id=1",[schema::IMPORT_PREFIX]).unwrap();
         assert!(
             import_xmp_for_file_with_conn(
                 1,

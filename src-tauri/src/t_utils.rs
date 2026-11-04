@@ -3567,6 +3567,8 @@ struct FinishedPayload {
     failed_size: u64,
     scan_total: u64,
     scan_total_size: u64,
+    library_id: String,
+    metadata_failed: u64,
 }
 
 #[derive(serde::Serialize, Clone)]
@@ -4112,6 +4114,11 @@ pub async fn index_album_worker(
     group_raw_jpeg_pairs: bool,
 ) -> Result<(), String> {
     let _album_scan_guard = AlbumScanGuard::acquire(album_id)?;
+    let scan_library_id = crate::t_config::current_library_id().unwrap_or_default();
+    let metadata_failures = {
+        let conn = crate::t_sqlite::open_conn()?;
+        crate::metadata::import_count::ScanFailures::start(&conn, album_id)
+    };
     let scan_start = std::time::Instant::now();
     // Generate a unique scan time for this session (current timestamp)
     let current_scan_time = Utc::now().timestamp_millis();
@@ -4125,6 +4132,8 @@ pub async fn index_album_worker(
             .emit(
                 "index_finished",
                 FinishedPayload {
+                    library_id: scan_library_id.clone(),
+                    metadata_failed: metadata_failures.count(),
                     album_id,
                     phase: "complete".to_string(),
                     indexed: previous_indexed,
@@ -4149,6 +4158,8 @@ pub async fn index_album_worker(
         || cancellation_token.lock().map(|flags| flags.get(&album_id) == Some(&true)).unwrap_or(true));
     let Some((_folders, image_count, _image_size, video_count, _video_size, scan_total, scan_total_size)) = counts else {
         app_handle.emit("index_finished", FinishedPayload {
+            library_id: scan_library_id.clone(),
+            metadata_failed: metadata_failures.count(),
             album_id,
             phase: "discovering".to_string(),
             indexed: previous_indexed,
@@ -4509,6 +4520,8 @@ pub async fn index_album_worker(
         .emit(
             "index_finished",
             FinishedPayload {
+                library_id: scan_library_id,
+                metadata_failed: metadata_failures.count(),
                 album_id,
                 phase: final_snapshot.phase().to_string(),
                 indexed: if scan_failed {

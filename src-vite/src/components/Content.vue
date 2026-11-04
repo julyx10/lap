@@ -6186,6 +6186,9 @@ onMounted( async() => {
   });
 
   unlistenIndexFinished = await listenIndexFinished(async (event: any) => {
+    if (event.payload.library_id && event.payload.library_id !== libConfig._libraryId) return;
+    const metadataFailed = Number(event.payload.metadata_failed || 0);
+    if (metadataFailed > 0) toast.warning(t('msgbox.file_refresh.metadata_failed', { count: metadataFailed.toLocaleString() }));
     const { album_id, phase, indexed, processed, search_ready, total, search_total, failed } = event.payload;
     // notify album list to update cover
     await tauriEmit('album-cover-changed', { albumId: album_id, fileId: null });

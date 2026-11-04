@@ -1008,6 +1008,7 @@
       "error": "Nie udało się wybrać pliku."
     },
     "file_refresh": {
+      "metadata_failed": "Nieudany import metadanych: {count}",
       "skipped": "Pominięto: {count}",
       "status": "Stan odświeżania",
       "running": "Odświeżanie…",
@@ -1016,7 +1017,6 @@
       "complete": "Ukończono",
       "succeeded": "Zaktualizowano: {count}",
       "failed": "Błędy: {count}",
-      "warnings": "Ostrzeżenia: {count}",
       "release_requested": "Zażądano zwolnienia miejsca: {count}",
       "kept_local": "Zachowano na tym urządzeniu: {count}",
       "kept_local_hint": "Pliki, które mają zawsze pozostawać na tym urządzeniu lub dla których Windows nie zezwolił aplikacji Lap na zwolnienie miejsca (kontrolowany dostęp do folderów)."

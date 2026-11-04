@@ -1008,6 +1008,7 @@
       "error": "Falha ao selecionar arquivo."
     },
     "file_refresh": {
+      "metadata_failed": "Falha na importação de metadados: {count}",
       "skipped": "Ignorados: {count}",
       "status": "Estado da atualização",
       "running": "Atualizando…",
@@ -1016,7 +1017,6 @@
       "complete": "Concluído",
       "succeeded": "Atualizados: {count}",
       "failed": "Falhas: {count}",
-      "warnings": "Avisos: {count}",
       "release_requested": "Liberação solicitada: {count}",
       "kept_local": "Mantidos neste dispositivo: {count}",
       "kept_local_hint": "Arquivos mantidos sempre neste dispositivo ou cujo espaço o Windows não permitiu que o Lap liberasse (acesso controlado a pastas)."

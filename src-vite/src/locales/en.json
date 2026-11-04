@@ -1008,6 +1008,7 @@
       "error": "Failed to select file."
     },
     "file_refresh": {
+      "metadata_failed": "Metadata import failed: {count}",
       "skipped": "Skipped: {count}",
       "status": "Refresh status",
       "running": "Refreshing…",
@@ -1016,7 +1017,6 @@
       "complete": "Complete",
       "succeeded": "Updated: {count}",
       "failed": "Failed: {count}",
-      "warnings": "Warnings: {count}",
       "release_requested": "Release requested: {count}",
       "kept_local": "Kept on this device: {count}",
       "kept_local_hint": "Files you keep on this device, or that Windows did not let Lap free up (Controlled folder access)."

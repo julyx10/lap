@@ -10,7 +10,7 @@
         <progress class="progress progress-primary w-full" :value="processed" :max="Math.max(selectionIds.length, 1)"></progress>
         <div class="flex flex-wrap gap-x-3 gap-y-1 text-base-content/60">
           <span>{{ $t('msgbox.file_refresh.succeeded', { count: succeeded.toLocaleString() }) }}</span>
-          <span v-if="warned" class="text-warning">{{ $t('msgbox.file_refresh.warnings', { count: warned.toLocaleString() }) }}</span>
+          <span v-if="warned" class="text-warning">{{ $t('msgbox.file_refresh.metadata_failed', { count: warned.toLocaleString() }) }}</span>
           <span v-if="skipped">{{ $t('msgbox.file_refresh.skipped', { count: skipped.toLocaleString() }) }}</span>
           <span :class="{ 'text-error/70': failed > 0 }">{{ $t('msgbox.file_refresh.failed', { count: failed.toLocaleString() }) }}</span>
         </div>
@@ -19,8 +19,6 @@
           <span :title="$t('msgbox.file_refresh.kept_local_hint')">{{ $t('msgbox.file_refresh.kept_local', { count: keptLocal.toLocaleString() }) }}</span>
         </div>
       </div>
-      <p v-if="lastWarning" class="text-xs text-warning wrap-break-word" role="status">{{ lastWarning }}</p>
-      <p v-if="lastError" class="text-xs text-error/70 wrap-break-word" role="alert">{{ lastError }}</p>
     </section>
     <div class="mt-4 flex justify-end gap-4">
       <button class="t-button-default" :disabled="running && cancelled" @click="closeOrCancel">
@@ -51,8 +49,6 @@ const skipped = ref(0);
 const failed = ref(0);
 const warned = ref(0);
 const releaseRequested = ref(0);
-const lastError = ref('');
-const lastWarning = ref('');
 const keptLocal = ref(0);
 let disposed = false;
 
@@ -79,8 +75,6 @@ async function runRefresh() {
   const results: FileRefreshResult[] = [];
   running.value = true;
   processed.value = 0;
-  lastError.value = '';
-  lastWarning.value = '';
   // Sequential background commands bound memory and permit cancellation between
   // files. The backend also checks the library under its library-switch lock.
   let batchId: number | undefined;
@@ -101,24 +95,23 @@ async function runRefresh() {
         if (result && props.freeSpace) result.release_requested ? releaseRequested.value++ : keptLocal.value++;
         if (result) {
           results.push(result);
-          if (result.warning) lastWarning.value = result.warning;
-          if (result.error) {
-            failed.value++;
-            lastError.value = result.error;
-          } else if (result.warning) warned.value++;
-          else if (result.skipped) skipped.value++;
-          else succeeded.value++;
+          if (result.warning) warned.value++;
+          if (result.error) failed.value++;
+          else if (!result.warning) {
+            if (result.skipped) skipped.value++;
+            else succeeded.value++;
+          }
         }
         else failed.value++;
       } catch (error) {
         console.error('Failed to refresh selected file:', fileId, error);
-        lastError.value = String(error);
         failed.value++;
       }
       processed.value++;
     }
   } catch (error) {
-    lastError.value = String(error);
+    console.error('Failed to start file refresh batch:', error);
+    failed.value += selectionIds.length - processed.value;
   } finally {
     if (batchId !== undefined) {
       try { await invoke('end_file_refresh_batch', { batchId }); }
@@ -127,7 +120,7 @@ async function runRefresh() {
     try {
       if (!disposed && libConfig._libraryId === props.libraryId) await props.finishRefresh(results);
     } catch (error) {
-      lastError.value = String(error);
+      console.error('Failed to apply file refresh results:', error);
     } finally {
       running.value = false;
       if (!disposed && cancelled.value) emit('close');
