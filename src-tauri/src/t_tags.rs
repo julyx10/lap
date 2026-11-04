@@ -279,7 +279,7 @@ mod tests {
             CREATE TABLE afiles(id INTEGER PRIMARY KEY,name TEXT,rating INTEGER,culling_flag INTEGER,comments TEXT,is_favorite INTEGER,has_tags INTEGER);
             INSERT INTO afiles VALUES(1,'test.jpg',0,0,NULL,0,0),(2,'other.jpg',0,0,NULL,0,0);
             CREATE TABLE afile_tags(file_id INTEGER REFERENCES afiles(id) ON DELETE CASCADE,tag_id INTEGER REFERENCES atags(id) ON DELETE CASCADE,PRIMARY KEY(file_id,tag_id));").unwrap();
-        crate::t_xmp::initialize(&conn).unwrap();
+        crate::metadata::xmp::initialize(&conn).unwrap();
         conn
     }
 

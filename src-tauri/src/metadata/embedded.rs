@@ -1,6 +1,7 @@
 //! Read-only embedded metadata. Existing EXIF/LibRaw values remain authoritative.
 //! Keep the backend boundary here so unsupported formats never prevent import.
-use crate::t_xmp_compat::push_keyword;
+use super::schema::{self, CaptureField};
+use crate::metadata::keywords::push_keyword;
 use exiftool_rs::{ExifTool, Options, Tag, Value};
 use std::path::Path;
 
@@ -21,7 +22,7 @@ pub struct Metadata {
     pub latitude: Option<f64>,
     pub longitude: Option<f64>,
     pub altitude: Option<f64>,
-    pub organization: crate::t_xmp::XmpMetadata,
+    pub organization: crate::metadata::xmp::XmpMetadata,
 }
 
 // A single entry per scanning thread avoids parsing twice (file info + DB import).
@@ -102,7 +103,7 @@ fn from_embedded(bytes: &[u8], tags: &[Tag]) -> Metadata {
     let mut metadata = map_tags(tags, packets.is_empty());
     if !packets.is_empty() {
         // One bounded packet extraction and URI-aware parse for every schema.
-        let xmp = crate::t_xmp::metadata_from_packets(&packets);
+        let xmp = crate::metadata::xmp::metadata_from_packets(&packets);
         metadata.organization.culling_flag =
             xmp.culling_flag.or(metadata.organization.culling_flag);
         metadata.organization.favorite = xmp.favorite;
@@ -191,7 +192,7 @@ fn embedded_packets(bytes: &[u8], tags: &[Tag]) -> Vec<String> {
 
 #[cfg(test)]
 fn embedded_flags(bytes: &[u8]) -> (Option<i32>, Option<bool>) {
-    crate::t_xmp::flags_from_packets(&embedded_packets(bytes, &[]))
+    crate::metadata::xmp::flags_from_packets(&embedded_packets(bytes, &[]))
 }
 
 #[cfg(test)]
@@ -199,8 +200,7 @@ fn embedded_culling(bytes: &[u8]) -> Option<i32> {
     embedded_flags(bytes).0
 }
 
-#[path = "t_xmp_packets.rs"]
-mod xmp_packets;
+use super::packets as xmp_packets;
 
 fn png_xmp_packet(chunk: &[u8], limit: usize) -> Option<Vec<u8>> {
     use std::io::Read;
@@ -245,16 +245,12 @@ fn text(tag: &Tag) -> Option<String> {
 }
 
 fn source_rank(tag: &Tag) -> u8 {
-    match tag.group.family0.as_str() {
-        "XMP" => 0,
-        "IPTC" => 1,
-        "EXIF" => 2,
-        _ => 3,
-    }
+    schema::SOURCE_PRIORITY.iter().position(|source| *source == tag.group.family0)
+        .unwrap_or(schema::SOURCE_PRIORITY.len()) as u8
 }
 
 fn resolved_lens_id(tags: &[Tag]) -> Option<String> {
-    tags.iter().filter(|tag| tag.name == "LensID" && tag.group.family0 == "Composite")
+    tags.iter().filter(|tag| tag.name == schema::LENS_ID.1 && tag.group.family0 == schema::LENS_ID.0)
         .find_map(|tag| {
             // Nikon's raw LensID is a byte signature; only use a resolved name.
             let name = tag.print_value.trim();
@@ -280,10 +276,10 @@ fn map_tags(tags: &[Tag], fallback_xmp_keywords: bool) -> Metadata {
     };
     // Only accept complete coordinate pairs from the same metadata directory.
     let mut gps = None;
-    for lat in tags.iter().filter(|t| t.name == "GPSLatitude") {
+    for lat in tags.iter().filter(|t| t.name == CaptureField::GPSLatitude.backend_name()) {
         let Some(lon) = tags
             .iter()
-            .find(|t| t.name == "GPSLongitude" && t.group.family1 == lat.group.family1)
+            .find(|t| t.name == CaptureField::GPSLongitude.backend_name() && t.group.family1 == lat.group.family1)
         else {
             continue;
         };
@@ -293,10 +289,10 @@ fn map_tags(tags: &[Tag], fallback_xmp_keywords: bool) -> Metadata {
                 .and_then(text)
         };
         if let (Some(a), Some(b)) = (
-            coordinate(&lat.raw_value, reference("GPSLatitudeRef").as_deref(), 90.0),
+            coordinate(&lat.raw_value, reference(CaptureField::GPSLatitudeRef.backend_name()).as_deref(), 90.0),
             coordinate(
                 &lon.raw_value,
-                reference("GPSLongitudeRef").as_deref(),
+                reference(CaptureField::GPSLongitudeRef.backend_name()).as_deref(),
                 180.0,
             ),
         ) {
@@ -304,11 +300,11 @@ fn map_tags(tags: &[Tag], fallback_xmp_keywords: bool) -> Metadata {
             break;
         }
     }
-    let mut organization = crate::t_xmp::XmpMetadata::default();
+    let mut organization = crate::metadata::xmp::XmpMetadata::default();
     // Ignore synthetic MakerNote zero ratings: absence must not become a clear.
     let rating = tags
         .iter()
-        .filter(|t| t.name == "Rating")
+        .filter(|t| t.name == schema::RATING.name)
         .filter_map(|tag| {
             let value = tag.raw_value.to_display_string().parse::<i32>().ok()?;
             let trusted = matches!(tag.group.family0.as_str(), "XMP" | "EXIF")
@@ -323,26 +319,17 @@ fn map_tags(tags: &[Tag], fallback_xmp_keywords: bool) -> Metadata {
     // A legacy negative rating remains meaningful without an explicit flag.
     organization.culling_flag = (rating.map(|(_, value)| value) == Some(-1)).then_some(2);
     if fallback_xmp_keywords {
-        crate::t_xmp_compat::import_backend(tags, &mut organization);
+        crate::metadata::keywords::import_backend(tags, &mut organization);
     }
     let mut keywords = organization.tags.take().unwrap_or_default();
-    for tag in tags.iter().filter(|t| t.group.family0 == "IPTC" && t.name == "Keywords") {
+    for tag in tags.iter().filter(|t| t.group.family0 == schema::IPTC_KEYWORDS.0 && t.name == schema::IPTC_KEYWORDS.1) {
         collect_strings(&tag.raw_value, &mut keywords);
-    }
-    // XPKeywords is UTF-16LE, never the backend's numeric display string.
-    for tag in tags.iter().filter(|t| t.name == "XPKeywords") {
-        if let Some(value) = xp_keywords(&tag.raw_value) {
-            for word in value.split(';') {
-                push_keyword(word, &mut keywords);
-            }
-        }
     }
     if !keywords.is_empty() {
         organization.tags = Some(keywords);
     }
-    organization.description = string("Description")
-        .or_else(|| string("Caption-Abstract"))
-        .or_else(|| string("UserComment"));
+    organization.description = schema::EMBEDDED_DESCRIPTION.iter().find_map(|name| string(name));
+    crate::metadata::system::import_windows_fields(tags, &mut organization);
     let source = detail_values_for(tags, true);
     let detail = |key: &str| source.get(key).map(|d| d.values.join("; "));
     Metadata {
@@ -353,11 +340,11 @@ fn map_tags(tags: &[Tag], fallback_xmp_keywords: bool) -> Metadata {
         icc_profile: detail("iccProfile"),
         color_space: detail("colorSpace"),
         bit_depth: bit_depth_from_tags(tags),
-        make: string("Make"),
-        model: string("Model"),
-        lens_make: string("LensMake"),
-        lens_model: string("LensModel").or_else(|| resolved_lens_id(tags)),
-        date: string("DateTimeOriginal"),
+        make: string(CaptureField::Make.backend_name()),
+        model: string(CaptureField::Model.backend_name()),
+        lens_make: string(CaptureField::LensMake.backend_name()),
+        lens_model: string(CaptureField::LensModel.backend_name()).or_else(|| resolved_lens_id(tags)),
+        date: string(CaptureField::DateTimeOriginal.backend_name()),
         latitude: gps.map(|(a, _)| a),
         longitude: gps.map(|(_, b)| b),
         // Altitude reference differs between EXIF and composite output; leave it
@@ -372,8 +359,8 @@ fn map_tags(tags: &[Tag], fallback_xmp_keywords: bool) -> Metadata {
 fn bit_depth_from_tags(tags: &[Tag]) -> Option<u16> {
     let mut depth = None;
     for tag in tags.iter().filter(|tag| {
-        matches!(tag.name.as_str(), "BitsPerSample" | "BitDepth")
-            && matches!(tag.group.family0.as_str(), "EXIF" | "PNG" | "File")
+        schema::BIT_DEPTH_NAMES.contains(&tag.name.as_str())
+            && schema::BIT_DEPTH_GROUPS.contains(&tag.group.family0.as_str())
     }) {
         let raw = tag.raw_value.to_display_string();
         for token in raw
@@ -402,7 +389,7 @@ fn collect_strings(value: &Value, words: &mut Vec<String>) {
     }
 }
 
-fn xp_keywords(value: &Value) -> Option<String> {
+pub(super) fn windows_text(value: &Value) -> Option<String> {
     let bytes = match value {
         Value::Binary(v) | Value::Undefined(v) => v.clone(),
         Value::List(v) => v
@@ -482,7 +469,7 @@ pub(crate) mod tests {
         );
         assert_eq!(words, ["Paris, France"]);
         assert_eq!(
-            xp_keywords(&Value::Binary(vec![0; 10])).as_deref(),
+            windows_text(&Value::Binary(vec![0; 10])).as_deref(),
             Some("")
         );
     }
@@ -509,7 +496,7 @@ pub(crate) mod tests {
                 </rdf:Description></rdf:RDF>"#);
             let bytes = jpeg_with_xmp_packet(xml.as_bytes());
             let meta = from_bytes(&bytes, Path::new("paths.jpg")).organization;
-            let parsed = crate::t_xmp::parse_xmp_str(&xml).unwrap();
+            let parsed = crate::metadata::xmp::parse_xmp_str(&xml).unwrap();
             for metadata in [meta, parsed] {
                 assert_eq!(metadata.hierarchical_tags, Some(vec!["Places|France|Paris".into()]));
                 let tags = metadata.tags.unwrap();
@@ -535,7 +522,7 @@ pub(crate) mod tests {
             );
             let bytes = jpeg_with_xmp_packet(xml.as_bytes());
             let meta = from_bytes(&bytes, Path::new("acdsee.jpg")).organization;
-            let parsed = crate::t_xmp::parse_xmp_str(&xml).unwrap();
+            let parsed = crate::metadata::xmp::parse_xmp_str(&xml).unwrap();
             for metadata in [meta, parsed] {
                 assert_eq!(
                     metadata.hierarchical_tags,
@@ -548,8 +535,8 @@ pub(crate) mod tests {
                 assert_eq!(metadata.tags, metadata.hierarchical_tags);
             }
         }
-        assert!(crate::t_xmp_compat::acdsee_category_paths("<Categories><Category>").is_err());
-        assert!(crate::t_xmp_compat::acdsee_category_paths("<!DOCTYPE Categories><Categories/>").is_err());
+        assert!(crate::metadata::keywords::acdsee_category_paths("<Categories><Category>").is_err());
+        assert!(crate::metadata::keywords::acdsee_category_paths("<!DOCTYPE Categories><Categories/>").is_err());
     }
 
     pub(crate) fn jpeg_with_xmp() -> Vec<u8> {
@@ -590,7 +577,7 @@ pub(crate) mod tests {
         std::fs::write(&path, b"not a supported media container").unwrap();
         assert_eq!(
             read(&path).organization,
-            crate::t_xmp::XmpMetadata::default()
+            crate::metadata::xmp::XmpMetadata::default()
         );
         std::fs::remove_file(path).unwrap();
     }
@@ -643,16 +630,16 @@ pub(crate) mod tests {
     }
 
     #[test]
-    fn decodes_utf16_xp_keywords() {
+    fn decodes_utf16_windows_text() {
         let bytes = "旅行;Paris\0"
             .encode_utf16()
             .flat_map(u16::to_le_bytes)
             .collect();
         assert_eq!(
-            xp_keywords(&Value::Binary(bytes)).as_deref(),
+            windows_text(&Value::Binary(bytes)).as_deref(),
             Some("旅行;Paris")
         );
-        assert_eq!(xp_keywords(&Value::Binary(vec![0])), None);
+        assert_eq!(windows_text(&Value::Binary(vec![0])), None);
     }
 
     #[test]
@@ -691,10 +678,10 @@ pub(crate) mod tests {
         ] {
             let xml = format!(
                 "<rdf:RDF xmlns:rdf=\"{}\"><rdf:Description xmlns:xmpDM=\"{}\" xmlns:xmp=\"{}\" xmlns:darktable=\"{}\" xmlns:fake=\"urn:not-a-culling-schema\">{properties}</rdf:Description></rdf:RDF>",
-                crate::t_xmp::NS_RDF,
-                crate::t_xmp::NS_XMP_DM,
-                crate::t_xmp::NS_XMP,
-                crate::t_xmp::NS_DARKTABLE
+                crate::metadata::xmp::NS_RDF,
+                crate::metadata::xmp::NS_XMP_DM,
+                crate::metadata::xmp::NS_XMP,
+                crate::metadata::xmp::NS_DARKTABLE
             );
             let tags = ExifTool::with_options(Options {
                 duplicates: true,
@@ -716,7 +703,7 @@ pub(crate) mod tests {
                 "{properties}; tags={tags:?}"
             );
             assert_eq!(
-                crate::t_xmp::parse_xmp_str(&xml).unwrap().culling_flag,
+                crate::metadata::xmp::parse_xmp_str(&xml).unwrap().culling_flag,
                 expected,
                 "{properties}"
             );
@@ -726,22 +713,22 @@ pub(crate) mod tests {
     fn embedded_culling_resolves_uris_and_rejects_spoofed_prefixes() {
         for (declarations, properties, expected) in [
             (
-                format!("xmlns:dm=\"{}\"", crate::t_xmp::NS_XMP_DM),
+                format!("xmlns:dm=\"{}\"", crate::metadata::xmp::NS_XMP_DM),
                 "dm:pick=\"1\"",
                 Some(1),
             ),
             (
-                format!("xmlns:dm=\"{}\"", crate::t_xmp::NS_XMP_DM),
+                format!("xmlns:dm=\"{}\"", crate::metadata::xmp::NS_XMP_DM),
                 "dm:good=\"False\"",
                 Some(2),
             ),
             (
-                format!("xmlns:dt=\"{}\"", crate::t_xmp::NS_DARKTABLE),
+                format!("xmlns:dt=\"{}\"", crate::metadata::xmp::NS_DARKTABLE),
                 "dt:rejected=\"1\"",
                 Some(2),
             ),
             (
-                format!("xmlns:r=\"{}\"", crate::t_xmp::NS_XMP),
+                format!("xmlns:r=\"{}\"", crate::metadata::xmp::NS_XMP),
                 "r:Label=\"Pick\"",
                 Some(1),
             ),
@@ -758,7 +745,7 @@ pub(crate) mod tests {
         ] {
             let xml = format!(
                 "<meta:xmpmeta xmlns:meta=\"adobe:ns:meta/\"><rdf:RDF xmlns:rdf=\"{}\"><rdf:Description {declarations} {properties}/></rdf:RDF></meta:xmpmeta>",
-                crate::t_xmp::NS_RDF
+                crate::metadata::xmp::NS_RDF
             );
             let bytes = jpeg_with_xmp_packet(xml.as_bytes());
             let meta = from_bytes(&bytes, Path::new("flags.jpg"));
@@ -771,8 +758,8 @@ pub(crate) mod tests {
         use std::io::Write;
         let xml = format!(
             "<rdf:RDF xmlns:rdf=\"{}\"><rdf:Description xmlns:dm=\"{}\" dm:pick=\"-1\"/></rdf:RDF>",
-            crate::t_xmp::NS_RDF,
-            crate::t_xmp::NS_XMP_DM
+            crate::metadata::xmp::NS_RDF,
+            crate::metadata::xmp::NS_XMP_DM
         );
         for compressed in [false, true] {
             let mut packet = b"XML:com.adobe.xmp\0".to_vec();
@@ -809,15 +796,15 @@ pub(crate) mod tests {
 }
 
 #[cfg(test)]
-mod final_review {
+mod jpeg_comment_tests {
     use super::*;
     #[test]
     fn jpeg_comment_is_not_an_xmp_metadata_source() {
         let packet = |flag| {
             format!(
                 "<rdf:RDF xmlns:rdf=\"{}\"><rdf:Description xmlns:dm=\"{}\" dm:pick=\"{flag}\"/></rdf:RDF>",
-                crate::t_xmp::NS_RDF,
-                crate::t_xmp::NS_XMP_DM
+                crate::metadata::xmp::NS_RDF,
+                crate::metadata::xmp::NS_XMP_DM
             )
         };
         let comment = packet(-1);
@@ -851,14 +838,14 @@ mod final_review {
 }
 
 #[cfg(test)]
-mod final_review_encoding {
+mod utf16_xmp_tests {
     use super::*;
     #[test]
     fn utf16_embedded_pick_is_not_lost() {
         let xml = format!(
             "<rdf:RDF xmlns:rdf=\"{}\"><rdf:Description xmlns:xmpDM=\"{}\" xmpDM:pick=\"1\"/></rdf:RDF>",
-            crate::t_xmp::NS_RDF,
-            crate::t_xmp::NS_XMP_DM
+            crate::metadata::xmp::NS_RDF,
+            crate::metadata::xmp::NS_XMP_DM
         );
         let mut packet = vec![0xff, 0xfe];
         for unit in xml.encode_utf16() {
@@ -877,7 +864,7 @@ mod final_review_encoding {
 }
 
 #[cfg(test)]
-mod staged_review {
+mod extended_xmp_precedence_tests {
     use super::*;
     #[test]
     fn extended_pick_takes_precedence_over_standard_good() {
@@ -885,8 +872,8 @@ mod staged_review {
         let packet = |props: &str| {
             format!(
                 "<rdf:RDF xmlns:rdf=\"{}\"><rdf:Description xmlns:dm=\"{}\" xmlns:n=\"http://ns.adobe.com/xmp/note/\" {props}/></rdf:RDF>",
-                crate::t_xmp::NS_RDF,
-                crate::t_xmp::NS_XMP_DM
+                crate::metadata::xmp::NS_RDF,
+                crate::metadata::xmp::NS_XMP_DM
             )
         };
         let main = packet(&format!("dm:good=\"False\" n:HasExtendedXMP=\"{guid}\""));
@@ -912,14 +899,14 @@ mod staged_review {
 }
 
 #[cfg(test)]
-mod staged_review_mov {
+mod mov_xmp_tests {
     use super::*;
     #[test]
     fn mov_without_ftyp_keeps_embedded_pick() {
         let xml = format!(
             "<rdf:RDF xmlns:rdf=\"{}\"><rdf:Description xmlns:dm=\"{}\" dm:pick=\"1\"/></rdf:RDF>",
-            crate::t_xmp::NS_RDF,
-            crate::t_xmp::NS_XMP_DM
+            crate::metadata::xmp::NS_RDF,
+            crate::metadata::xmp::NS_XMP_DM
         );
         let atom = |kind: &[u8], data: &[u8]| {
             let mut v = ((data.len() + 8) as u32).to_be_bytes().to_vec();
@@ -972,14 +959,14 @@ mod mapped_read_tests {
 }
 
 #[cfg(test)]
-mod deep_review {
+mod jpeg2000_xmp_tests {
     use super::*;
     #[test]
     fn jp2_retains_culling() {
         let xml = format!(
             "<rdf:RDF xmlns:rdf=\"{}\"><rdf:Description xmlns:dm=\"{}\" dm:pick=\"1\"/></rdf:RDF>",
-            crate::t_xmp::NS_RDF,
-            crate::t_xmp::NS_XMP_DM
+            crate::metadata::xmp::NS_RDF,
+            crate::metadata::xmp::NS_XMP_DM
         );
         let atom = |kind: &[u8], data: &[u8]| {
             let mut v = ((data.len() + 8) as u32).to_be_bytes().to_vec();
@@ -1024,8 +1011,8 @@ mod favorite_tests {
         for favorite in [true, false] {
             let xml = format!(
                 "<rdf:RDF xmlns:rdf=\"{}\"><rdf:Description xmlns:custom=\"{}\" custom:Favorite=\"{}\"/></rdf:RDF>",
-                crate::t_xmp::NS_RDF,
-                crate::t_xmp::NS_LAP,
+                crate::metadata::xmp::NS_RDF,
+                crate::metadata::xmp::NS_LAP,
                 if favorite { "True" } else { "False" }
             );
             let jpeg = tests::jpeg_with_xmp_packet(xml.as_bytes());
@@ -1159,7 +1146,7 @@ fn extract_detail_values(path: &Path, info: &std::fs::Metadata) -> Result<Detail
         .map_err(|e| e.to_string())?;
     let mut details = detail_values(&tags);
     for packet in embedded_packets(bytes, &tags) {
-        if let Ok(mut source) = crate::t_xmp::source_details(&packet) {
+        if let Ok(mut source) = crate::metadata::xmp::source_details(&packet) {
             for value in source.values_mut() {
                 value.source = value.source.replace("Sidecar XMP", "Embedded XMP");
             }
@@ -1180,9 +1167,7 @@ pub fn read_details(
     refresh_key: Option<&str>,
     cancelled: Option<&std::sync::atomic::AtomicBool>,
 ) -> Result<Details, String> {
-    if !matches!(section, "source" | "capture" | "location") {
-        return Err("Unknown metadata section".into());
-    }
+    let section = schema::DetailSection::parse(section).ok_or("Unknown metadata section")?;
     let info = std::fs::metadata(path).map_err(|e| e.to_string())?;
     if crate::t_utils::is_cloud_only(&info) {
         return Err("Original is not available locally".into());
@@ -1221,8 +1206,8 @@ pub fn read_details(
         }
         let mut details = entry.embedded.as_ref().unwrap().clone();
         // Folded source sections never cause sidecar discovery or reading.
-        if section == "source" {
-            if let Some(path) = crate::t_xmp::find_xmp_sidecar(path) {
+        if section == schema::DetailSection::Source {
+            if let Some(path) = crate::metadata::xmp::find_xmp_sidecar(path) {
                 let sidecar_info = std::fs::metadata(&path).map_err(|e| e.to_string())?;
                 if !crate::t_utils::is_cloud_only(&sidecar_info) {
                     let key = format!(
@@ -1247,7 +1232,7 @@ pub fn read_details(
                         if xml.len() > 16 * 1024 * 1024 {
                             return Err("XMP exceeds 16 MiB size limit".into());
                         }
-                        let mut source = crate::t_xmp::source_details(&xml)?;
+                        let mut source = crate::metadata::xmp::source_details(&xml)?;
                         bound_details(&mut source);
                         entry.sidecar = Some((key, refresh_key.map(str::to_owned), source));
                     }
@@ -1255,32 +1240,9 @@ pub fn read_details(
                 }
             }
         }
-        details.retain(|key, _| match section {
-            "source" => matches!(
-                key.as_str(),
-                "title"
-                    | "creator"
-                    | "copyright"
-                    | "description"
-                    | "credit"
-                    | "source"
-                    | "usageTerms"
-                    | "rightsUrl"
-                    | "software"
-            ),
-            "capture" => matches!(
-                key.as_str(),
-                "flash"
-                    | "whiteBalance"
-                    | "exposureMode"
-                    | "exposureProgram"
-                    | "meteringMode"
-                    | "focalLength35mm"
-                    | "timeZone"
-            ),
-            "location" => matches!(key.as_str(), "direction" | "directionRef"),
-            _ => false,
-        });
+        details.retain(|key, _| schema::DETAIL_FIELDS.iter().any(|field|
+            field.key == key && field.section == Some(section)
+        ));
         Ok(details)
     })();
     drop(shared);
@@ -1294,66 +1256,22 @@ fn detail_values(tags: &[Tag]) -> Details {
 
 fn detail_values_for(tags: &[Tag], stored_only: bool) -> Details {
     let mut result = Details::new();
-    let mappings: &[(&str, &[&str])] = &[
-        ("title", &["Title", "ObjectName"]),
-        ("creator", &["Creator", "By-line", "Artist"]),
-        ("copyright", &["Rights", "CopyrightNotice", "Copyright"]),
-        (
-            "description",
-            &["Description", "Caption-Abstract", "ImageDescription"],
-        ),
-        ("credit", &["Credit"]),
-        ("source", &["Source"]),
-        ("usageTerms", &["UsageTerms"]),
-        ("rightsUrl", &["WebStatement"]),
-        ("software", &["CreatorTool", "Software"]),
-        ("flash", &["Flash"]),
-        ("whiteBalance", &["WhiteBalance"]),
-        ("exposureMode", &["ExposureMode"]),
-        ("exposureProgram", &["ExposureProgram"]),
-        ("meteringMode", &["MeteringMode"]),
-        ("focalLength35mm", &["FocalLengthIn35mmFormat"]),
-        ("timeZone", &["OffsetTimeOriginal"]),
-        ("direction", &["GPSImgDirection"]),
-        ("directionRef", &["GPSImgDirectionRef"]),
-        ("iccProfile", &["ProfileDescription"]),
-        ("colorSpace", &["ColorSpace"]),
-    ];
-    for (key, names) in mappings {
-        if !stored_only && matches!(*key, "iccProfile" | "colorSpace") {
+    for field in schema::DETAIL_FIELDS {
+        let key = field.key;
+        let names = field.backend_names;
+        if (!stored_only && field.section.is_none())
+            || (stored_only && !field.stored) {
             continue;
         }
-        if stored_only
-            && !matches!(
-                *key,
-                "creator" | "copyright" | "description" | "software" | "iccProfile" | "colorSpace"
-            )
-        {
-            continue;
-        }
-        let descriptive = matches!(
-            *key,
-            "title"
-                | "creator"
-                | "copyright"
-                | "description"
-                | "credit"
-                | "source"
-                | "usageTerms"
-                | "rightsUrl"
-                | "software"
-        );
+        let descriptive = field.descriptive;
         let candidate = tags
             .iter()
             .filter(|tag| names.contains(&tag.name.as_str()))
             .filter(|tag| {
                 if descriptive {
-                    matches!(tag.group.family0.as_str(), "XMP" | "IPTC" | "EXIF")
+                    schema::SOURCE_PRIORITY.contains(&tag.group.family0.as_str())
                 } else {
-                    matches!(
-                        tag.group.family0.as_str(),
-                        "EXIF" | "XMP" | "ICC_Profile" | "PNG" | "File" | "QuickTime"
-                    )
+                    schema::TECHNICAL_GROUPS.contains(&tag.group.family0.as_str())
                 }
             })
             .filter(|tag| !matches!(tag.raw_value, Value::Binary(_) | Value::Undefined(_)))
@@ -1377,7 +1295,7 @@ fn detail_values_for(tags: &[Tag], stored_only: bool) -> Details {
                 .collect();
             if !values.is_empty() {
                 result.insert(
-                    (*key).into(),
+                    key.into(),
                     DetailValue {
                         values,
                         source: format!("{}:{}", tag.group.family0, tag.name),

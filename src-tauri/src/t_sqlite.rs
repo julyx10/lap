@@ -15,6 +15,8 @@ use crate::t_storage;
 use crate::t_utils;
 use crate::t_video;
 use crate::t_raw_display::RawDisplayOptions;
+use crate::metadata::schema::CaptureField;
+
 use base64::{Engine, engine::general_purpose};
 use chrono::{Datelike, TimeZone};
 use exif::{In, Tag, Value};
@@ -127,8 +129,8 @@ fn source_version(path: &str) -> String {
     )
 }
 fn metadata_failure_version(path: &str) -> String {
-    let sidecar = if crate::t_xmp::is_xmp_import_enabled() {
-        crate::t_xmp::find_xmp_sidecar(Path::new(path))
+    let sidecar = if crate::metadata::xmp::is_xmp_import_enabled() {
+        crate::metadata::xmp::find_xmp_sidecar(Path::new(path))
     } else {
         None
     };
@@ -2463,7 +2465,7 @@ impl AFile {
             )
         {
             content_identifier = file_header_deref
-                .and_then(crate::t_apple_sidecar::apple_content_identifier_from_bytes);
+                .and_then(crate::metadata::apple_sidecar::apple_content_identifier_from_bytes);
         }
 
         // Android Motion Photo: JPEG with an embedded MP4 appended after EOI.
@@ -2546,8 +2548,8 @@ impl AFile {
             // 8: Rotate 270 CW
             e_orientation = exif.as_ref().and_then(|exif_data| {
                 exif_data
-                    .get_field(Tag::Orientation, In::PRIMARY)
-                    .or_else(|| exif_data.fields().find(|f| f.tag == Tag::Orientation))
+                    .get_field(CaptureField::Orientation.exif(), In::PRIMARY)
+                    .or_else(|| exif_data.fields().find(|f| f.tag == CaptureField::Orientation.exif()))
                     .and_then(|field| field.value.get_uint(0))
                     .map(|v| v as u32)
             });
@@ -2568,7 +2570,7 @@ impl AFile {
             // Process flash data
             e_flash = exif.as_ref().and_then(|exif_data| {
                 exif_data
-                    .get_field(Tag::Flash, In::PRIMARY)
+                    .get_field(CaptureField::Flash.exif(), In::PRIMARY)
                     .and_then(|field| field.value.get_uint(0))
                     .map(|val| {
                         if val & 1 == 1 {
@@ -2585,24 +2587,24 @@ impl AFile {
             gps_longitude = lon;
             gps_altitude = alt;
 
-            taken_date = Self::get_exif_field(&exif, Tag::DateTimeOriginal)
+            taken_date = Self::get_exif_field(&exif, CaptureField::DateTimeOriginal.exif())
                 .and_then(|exif_date| t_utils::meta_date_to_timestamp(&exif_date))
                 .or(file_info.modified);
 
-            e_make = Self::get_exif_field(&exif, Tag::Make);
-            e_model = Self::get_exif_field(&exif, Tag::Model);
-            e_date_time = Self::get_exif_field(&exif, Tag::DateTimeOriginal);
-            e_software = Self::get_exif_field(&exif, Tag::Software);
-            e_artist = Self::get_exif_field(&exif, Tag::Artist);
-            e_copyright = Self::get_exif_field(&exif, Tag::Copyright);
-            e_description = Self::get_exif_field(&exif, Tag::ImageDescription);
-            e_lens_make = Self::get_exif_field(&exif, Tag::LensMake);
-            e_lens_model = Self::get_exif_field(&exif, Tag::LensModel);
-            e_exposure_bias = Self::get_exif_field(&exif, Tag::ExposureBiasValue);
-            e_exposure_time = Self::get_exif_field(&exif, Tag::ExposureTime);
-            e_f_number = Self::get_exif_field(&exif, Tag::FNumber);
-            e_focal_length = Self::get_exif_field(&exif, Tag::FocalLength);
-            e_iso_speed = Self::get_exif_field(&exif, Tag::PhotographicSensitivity);
+            e_make = Self::get_exif_field(&exif, CaptureField::Make.exif());
+            e_model = Self::get_exif_field(&exif, CaptureField::Model.exif());
+            e_date_time = Self::get_exif_field(&exif, CaptureField::DateTimeOriginal.exif());
+            e_software = Self::get_exif_field(&exif, CaptureField::Software.exif());
+            e_artist = Self::get_exif_field(&exif, CaptureField::Artist.exif());
+            e_copyright = Self::get_exif_field(&exif, CaptureField::Copyright.exif());
+            e_description = Self::get_exif_field(&exif, CaptureField::ImageDescription.exif());
+            e_lens_make = Self::get_exif_field(&exif, CaptureField::LensMake.exif());
+            e_lens_model = Self::get_exif_field(&exif, CaptureField::LensModel.exif());
+            e_exposure_bias = Self::get_exif_field(&exif, CaptureField::ExposureBiasValue.exif());
+            e_exposure_time = Self::get_exif_field(&exif, CaptureField::ExposureTime.exif());
+            e_f_number = Self::get_exif_field(&exif, CaptureField::FNumber.exif());
+            e_focal_length = Self::get_exif_field(&exif, CaptureField::FocalLength.exif());
+            e_iso_speed = Self::get_exif_field(&exif, CaptureField::PhotographicSensitivity.exif());
 
             // The editor uses little_exif to preserve metadata. Some legacy
             // JPEGs are accepted by that reader but rejected by kamadak-exif,
@@ -2739,7 +2741,7 @@ impl AFile {
         // Deep metadata supplements missing fields without replacing values
         // already supplied by EXIF, video probing, or LibRaw.
         if matches!(file_type, 1 | 2 | 3) {
-            let deep = crate::t_metadata::read(Path::new(file_path));
+            let deep = crate::metadata::embedded::read(Path::new(file_path));
             e_make = e_make.or(deep.make);
             e_model = e_model.or(deep.model);
             e_artist = e_artist.or(deep.artist);
@@ -2906,7 +2908,7 @@ impl AFile {
                         .then(|| t_image::read_exif_permissive(file_path)).flatten()
                 })
             } else { t_image::read_exif_permissive(file_path) };
-            let mut date = Self::get_exif_field(&exif, Tag::DateTimeOriginal);
+            let mut date = Self::get_exif_field(&exif, CaptureField::DateTimeOriginal.exif());
             let mut taken = date.as_deref().and_then(t_utils::meta_date_to_timestamp).or(modified);
             if file_type == 3 && taken == modified {
                 let timestamp = match raw_info {
@@ -2933,20 +2935,20 @@ impl AFile {
         };
 
         let lat_val = exif_data
-            .get_field(Tag::GPSLatitude, In::PRIMARY)
-            .or_else(|| exif_data.fields().find(|f| f.tag == Tag::GPSLatitude))
+            .get_field(CaptureField::GPSLatitude.exif(), In::PRIMARY)
+            .or_else(|| exif_data.fields().find(|f| f.tag == CaptureField::GPSLatitude.exif()))
             .and_then(|f| Self::gps_rational_values(&f.value));
         let lat_ref = exif_data
-            .get_field(Tag::GPSLatitudeRef, In::PRIMARY)
-            .or_else(|| exif_data.fields().find(|f| f.tag == Tag::GPSLatitudeRef))
+            .get_field(CaptureField::GPSLatitudeRef.exif(), In::PRIMARY)
+            .or_else(|| exif_data.fields().find(|f| f.tag == CaptureField::GPSLatitudeRef.exif()))
             .map(|f| f.display_value().to_string());
         let lon_val = exif_data
-            .get_field(Tag::GPSLongitude, In::PRIMARY)
-            .or_else(|| exif_data.fields().find(|f| f.tag == Tag::GPSLongitude))
+            .get_field(CaptureField::GPSLongitude.exif(), In::PRIMARY)
+            .or_else(|| exif_data.fields().find(|f| f.tag == CaptureField::GPSLongitude.exif()))
             .and_then(|f| Self::gps_rational_values(&f.value));
         let lon_ref = exif_data
-            .get_field(Tag::GPSLongitudeRef, In::PRIMARY)
-            .or_else(|| exif_data.fields().find(|f| f.tag == Tag::GPSLongitudeRef))
+            .get_field(CaptureField::GPSLongitudeRef.exif(), In::PRIMARY)
+            .or_else(|| exif_data.fields().find(|f| f.tag == CaptureField::GPSLongitudeRef.exif()))
             .map(|f| f.display_value().to_string());
 
         let (gps_lat, gps_lon) = if let (Some(lat_v), Some(lat_r), Some(lon_v), Some(lon_r)) =
@@ -2961,8 +2963,8 @@ impl AFile {
         };
 
         let altitude = exif_data
-            .get_field(Tag::GPSAltitude, In::PRIMARY)
-            .or_else(|| exif_data.fields().find(|f| f.tag == Tag::GPSAltitude))
+            .get_field(CaptureField::GPSAltitude.exif(), In::PRIMARY)
+            .or_else(|| exif_data.fields().find(|f| f.tag == CaptureField::GPSAltitude.exif()))
             .and_then(|field| {
                 Self::gps_rational_values(&field.value).and_then(|values| values.first().copied())
             });
@@ -3966,7 +3968,7 @@ impl AFile {
         folder_id: i64, file_path: &str, file_type: i64, last_scan_time: i64,
         raw_info: Option<t_libraw::RawInfo>,
     ) -> Result<(Self, i32), String> {
-        let _xmp_scan = crate::t_xmp::sidecar_scan(last_scan_time);
+        let _xmp_scan = crate::metadata::xmp::sidecar_scan(last_scan_time);
         // Check if the file exists
         let existing_file = Self::fetch(folder_id, file_path)?;
         // Opening an online-only file downloads it: decide from its attributes first.
@@ -4090,13 +4092,13 @@ impl AFile {
                     {
                         if let Some(comment) = t_ai_png::extract_comment(file_path) {
                             if let Ok(conn) = open_conn() {
-                                if let Ok(true) = crate::t_xmp::import_scanned_description(file_id, comment, &conn) {
+                                if let Ok(true) = crate::metadata::xmp::import_scanned_description(file_id, comment, &conn) {
                                     if let Ok(Some(refreshed)) = Self::get_file_info(file_id) { file = refreshed; }
                                 }
                             }
                         }
                     }
-                    if Self::import_scanned_xmp(file_id, file_path, crate::t_xmp::XmpImportMode::RescanNonDestructive)? {
+                    if Self::import_scanned_xmp(file_id, file_path, crate::metadata::xmp::XmpImportMode::RescanNonDestructive)? {
                         if let Some(refreshed) = Self::get_file_info(file_id)? { file = refreshed; }
                     }
                 }
@@ -4120,7 +4122,7 @@ impl AFile {
         let new_file = Self::fetch(folder_id, file_path)?;
         if let Some(ref file) = new_file {
             if let Some(file_id) = file.id {
-                if Self::import_scanned_xmp(file_id, file_path, crate::t_xmp::XmpImportMode::InitialScan)? {
+                if Self::import_scanned_xmp(file_id, file_path, crate::metadata::xmp::XmpImportMode::InitialScan)? {
                     if let Some(refreshed) = Self::fetch(folder_id, file_path)? {
                         return Ok((refreshed, 1));
                     }
@@ -4178,10 +4180,10 @@ impl AFile {
         Ok(files)
     }
 
-    fn import_scanned_xmp(file_id: i64, file_path: &str, mode: crate::t_xmp::XmpImportMode) -> Result<bool, String> {
-        if !crate::t_xmp::is_xmp_import_enabled() { return Ok(false); }
+    fn import_scanned_xmp(file_id: i64, file_path: &str, mode: crate::metadata::xmp::XmpImportMode) -> Result<bool, String> {
+        if !crate::metadata::xmp::is_xmp_import_enabled() { return Ok(false); }
         let conn = open_conn()?;
-        match crate::t_xmp::import_xmp_for_file_with_conn(file_id, file_path, &conn, mode) {
+        match crate::metadata::xmp::import_xmp_for_file_with_conn(file_id, file_path, &conn, mode) {
             Ok(changed) => Ok(changed),
             Err(error) => {
                 conn.execute("UPDATE afiles SET metadata_pending=1 WHERE id=?1", params![file_id])
@@ -4215,7 +4217,7 @@ impl AFile {
         let info = fs::metadata(path).map_err(|e| e.to_string())?;
         let skipped = !force_download && t_utils::is_cloud_only(&info);
         let checked = chrono::Utc::now().timestamp_millis();
-        let _scan = crate::t_xmp::sidecar_scan(checked);
+        let _scan = crate::metadata::xmp::sidecar_scan(checked);
         let version = metadata_failure_version(path);
         let failure_key = refresh_failure_key("metadata", file_id);
         if !force_metadata && old.metadata_pending {
@@ -4257,8 +4259,9 @@ impl AFile {
                 warning,
             });
         }
-        let import_needed =
-            crate::t_xmp::is_xmp_import_enabled() && old.metadata_needs_refresh()?;
+        let mut system_metadata = None;
+        let import_needed = crate::metadata::xmp::is_xmp_import_enabled()
+            && old.metadata_needs_refresh(&mut system_metadata)?;
         let source_changed = old.size != info.len() as i64
             || old.modified_at != t_utils::systemtime_to_timestamp(info.modified().ok());
         if !import_needed && (!skipped || !source_changed) {
@@ -4270,11 +4273,15 @@ impl AFile {
             });
         }
         let warning = if import_needed {
-            crate::t_xmp::import_xmp_for_file_with_mode(
-                file_id,
-                path,
-                crate::t_xmp::XmpImportMode::RefreshNonDestructive,
-            )
+            open_conn().and_then(|conn| {
+                crate::metadata::xmp::import_with_system(
+                    file_id,
+                    path,
+                    &conn,
+                    crate::metadata::xmp::XmpImportMode::RefreshNonDestructive,
+                    system_metadata,
+                )
+            })
             .err()
             .map(|e| format!("XMP import failed: {e}"))
         } else {
@@ -4311,8 +4318,12 @@ impl AFile {
             || self.modified_at != t_utils::systemtime_to_timestamp(info.modified().ok())
     }
 
-    /// Check timestamps and size without reading metadata or downloading originals.
-    pub(crate) fn metadata_needs_refresh(&self) -> Result<bool, String> {
+    /// Check source versions without parsing media or downloading originals.
+    /// Retain any system-attribute read for the import in this refresh request.
+    fn metadata_needs_refresh(
+        &self,
+        system_metadata: &mut Option<crate::metadata::system::SystemMetadata>,
+    ) -> Result<bool, String> {
         let old = self;
         let path = old.file_path.as_deref().ok_or("File path missing")?;
         let info = std::fs::metadata(path).map_err(|e| e.to_string())?;
@@ -4327,15 +4338,32 @@ impl AFile {
         {
             return Ok(true);
         }
-        if crate::t_xmp::is_xmp_import_enabled()
-            && let Some(sidecar) = crate::t_xmp::find_xmp_sidecar(Path::new(path))
+        if crate::metadata::xmp::is_xmp_import_enabled()
+            && let Some(sidecar) = crate::metadata::xmp::find_xmp_sidecar(Path::new(path))
         {
             let modified = std::fs::metadata(sidecar)
                 .and_then(|info| info.modified())
                 .map_err(|e| e.to_string())?;
-            return Ok(
-                chrono::DateTime::<chrono::Utc>::from(modified).timestamp_millis() > scanned,
-            );
+            if chrono::DateTime::<chrono::Utc>::from(modified).timestamp_millis() > scanned {
+                return Ok(true);
+            }
+        }
+        if crate::metadata::xmp::is_xmp_import_enabled() && !t_utils::is_cloud_only(&info) {
+            let snapshot =
+                system_metadata.insert(crate::metadata::system::read_system(Path::new(path)));
+            let previous: Option<String> = open_conn()?
+                .query_row(
+                    "SELECT fingerprint FROM axmp_imports WHERE file_id=?1",
+                    [old.id],
+                    |row| row.get(0),
+                )
+                .optional()
+                .map_err(|error| error.to_string())?
+                .flatten();
+            return Ok(previous.is_none_or(|value| {
+                !value.starts_with(crate::metadata::schema::IMPORT_PREFIX)
+                    || !value.ends_with(&format!(":{}", snapshot.fingerprint))
+            }));
         }
         Ok(false)
     }
@@ -4357,7 +4385,7 @@ impl AFile {
         file_path: &str,
         last_scan_time: i64,
     ) -> Result<(Option<Self>, Option<String>), String> {
-        let _xmp_scan = crate::t_xmp::sidecar_scan(last_scan_time);
+        let _xmp_scan = crate::metadata::xmp::sidecar_scan(last_scan_time);
         // get old file info
         let old_file_info =
             Self::get_file_info(file_id)?.ok_or_else(|| "File not found".to_string())?;
@@ -4405,11 +4433,11 @@ impl AFile {
         Self::update_column(file_id, "cloud_only", &false)?;
 
         let mut import_error = None;
-        if crate::t_xmp::is_xmp_import_enabled() {
-            if let Err(error) = crate::t_xmp::import_xmp_for_file_with_mode(
+        if crate::metadata::xmp::is_xmp_import_enabled() {
+            if let Err(error) = crate::metadata::xmp::import_xmp_for_file_with_mode(
                 file_id,
                 file_path,
-                crate::t_xmp::XmpImportMode::RefreshNonDestructive,
+                crate::metadata::xmp::XmpImportMode::RefreshNonDestructive,
             ) {
                 // Keep successful metadata, but make the failed import retryable.
                 Self::update_column(file_id, "metadata_pending", &true)?;
@@ -4885,7 +4913,7 @@ impl AFile {
             if !t_utils::content_readable(&file_path) {
                 continue;
             }
-            let identifier = crate::t_apple_sidecar::scan_apple_content_identifiers(&file_path)
+            let identifier = crate::metadata::apple_sidecar::scan_apple_content_identifiers(&file_path)
                 .into_iter()
                 .map(|identifier| identifier.to_ascii_lowercase())
                 .find(|identifier| video_identifiers.contains(identifier))
@@ -10763,7 +10791,7 @@ fn create_db_internal() -> Result<(), String> {
 
     // Run schema migrations after base tables are ensured.
     crate::t_migration::check_and_migrate(&conn)?;
-    crate::t_xmp::initialize(&conn)?;
+    crate::metadata::xmp::initialize(&conn)?;
     conn.execute(
         "CREATE INDEX IF NOT EXISTS idx_afiles_content_identifier ON afiles(content_identifier)",
         [],

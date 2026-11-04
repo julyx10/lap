@@ -5,7 +5,7 @@
  * date:    2024-08-08
  */
 use crate::t_common;
-use crate::t_apple_sidecar;
+use crate::metadata::apple_sidecar;
 use crate::t_sqlite::{AFile, AFolder, AThumb, Album, FolderScanState, FolderSubfolderState};
 use crate::t_raw_display::RawDisplayOptions;
 use chrono::{DateTime, Local, TimeZone, Utc};
@@ -1432,8 +1432,8 @@ where
     C: Fn() -> bool,
 {
     let started = Instant::now();
-    let mut aae_cache = t_apple_sidecar::ImportAaeCache::default();
-    let mut xmp_cache = crate::t_xmp_files::Cache::default();
+    let mut aae_cache = apple_sidecar::ImportAaeCache::default();
+    let mut xmp_cache = crate::metadata::files::Cache::default();
     let album = Album::get_album_by_id(album_id)?;
     let source = fs::canonicalize(source_path)
         .map_err(|e| format!("Cannot access source folder: {}", e))?;
@@ -1617,13 +1617,13 @@ where
             // The media copy changed the directory; acknowledge this known entry
             // before checking for outside changes in the cached sidecar index.
             xmp_cache.record(Path::new(&destination), &[]);
-            let xmp = match crate::t_xmp_files::Guard::with_cache(
-                [(path.as_path(), Path::new(&destination))], crate::t_xmp_files::Operation::Copy, &mut xmp_cache,
+            let xmp = match crate::metadata::files::Guard::with_cache(
+                [(path.as_path(), Path::new(&destination))], crate::metadata::files::Operation::Copy, &mut xmp_cache,
             ) {
                 Ok(guard) => guard,
                 Err(error) => { let _ = fs::remove_file(&destination); return Err(error); }
             };
-            let copied_sidecars = match t_apple_sidecar::copy_apple_aae_paths_for_import(
+            let copied_sidecars = match apple_sidecar::copy_apple_aae_paths_for_import(
                 &path_string,
                 &destination,
                 aae_cache.paths(&path),

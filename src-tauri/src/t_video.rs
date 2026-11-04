@@ -739,21 +739,13 @@ pub async fn get_video_metadata_async(file_path: &str) -> Result<VideoMetadata, 
 
     let content_identifier = first_exist(
         &meta,
-        &[
-            "com.apple.quicktime.content.identifier",
-            "content.identifier",
-            "live-photo-info",
-        ],
+        crate::metadata::schema::APPLE_VIDEO_CONTENT_IDENTIFIER_KEYS,
     )
     .or_else(|| {
         stream_meta.as_ref().and_then(|meta| {
             first_exist(
                 meta,
-                &[
-                    "com.apple.quicktime.content.identifier",
-                    "content.identifier",
-                    "live-photo-info",
-                ],
+                crate::metadata::schema::APPLE_VIDEO_CONTENT_IDENTIFIER_KEYS,
             )
         })
     });
