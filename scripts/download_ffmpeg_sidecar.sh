@@ -77,7 +77,7 @@ else
 fi
 
 verify_file() {
-  if ! printf '%s  %s\n' "$2" "$1" | "${SHA256[@]}" -c >/dev/null; then
+  if ! printf '%s  %s\n' "$2" "$1" | "${SHA256[@]}" -c - >/dev/null; then
     echo "SHA-256 mismatch: $1; remove the rejected file before downloading again." >&2
     return 1
   fi

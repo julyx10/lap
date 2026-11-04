@@ -280,7 +280,6 @@ jobs:
           key: ${{ runner.os }}-models-${{ hashFiles('scripts/download_models.sh', 'scripts/download_models.ps1') }}
 
       - name: Download AI Models (Windows)
-        if: steps.cache-ai-models.outputs.cache-hit != 'true'
         shell: pwsh
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
