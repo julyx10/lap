@@ -31,14 +31,17 @@
       </div>
     </TransitionGroup>
 
-    <Transition name="playback-overlay" :css="!isPlaying">
-      <div v-if="showPlayOverlay && !hasError && !isLoading && !isSeeking && (playbackFeedback || isReplaying || !hasPlaybackInteraction)" class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+    <Transition name="playback-overlay" :css="hasPlaybackInteraction && !isPlaying">
+      <div v-if="showPlayOverlay && !hasError && !isLoading && !isSeeking && (playbackFeedback || isReplaying || !hasPlaybackInteraction)"
+        data-video-play-overlay
+        class="absolute inset-0 flex items-center justify-center z-10"
+        :class="playbackFeedback ? 'pointer-events-none' : 'pointer-events-auto cursor-pointer'"
+        @click.stop="clickPlayVideo">
         <div
           class="w-16 h-16 rounded-full bg-base-100/70 flex items-center justify-center transition-transform duration-200 ease-out"
-          :class="{ 'pointer-events-auto cursor-pointer hover:scale-110': !playbackFeedback }"
-          @click.stop="clickPlayVideo"
+          :class="{ 'pointer-events-auto cursor-pointer': !playbackFeedback }"
         >
-          <component :is="playbackFeedback === 'pause' ? IconPause : (isReplaying ? IconVideoReplay : IconVideoPlay)" class="w-8 h-8" />
+          <component :is="playbackFeedback === 'pause' ? IconVideoPause : (isReplaying ? IconVideoReplay : IconVideoPlay)" class="w-8 h-8" />
         </div>
       </div>
     </Transition>
@@ -80,7 +83,7 @@ import { GESTURE_LOCK_THRESHOLD, HORIZONTAL_NAV_THRESHOLD, PLAYBACK_DEADLINE_MS,
 import { ref, watch, onMounted, onBeforeUnmount, computed, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/config';
-import { IconVideoSlash, IconVideoPlay, IconVideoReplay, IconPause } from '@/common/icons';
+import { IconVideoSlash, IconVideoPlay, IconVideoReplay, IconVideoPause } from '@/common/icons';
 import videojs from 'video.js/core';
 import 'video.js/dist/video-js.min.css';
 import { getThumbUrl, getAssetSrc, isLinux, isMac, isWin } from '@/common/utils';

@@ -216,5 +216,6 @@ export { default as IconVideoSlash } from '@/assets/icons/video-slash.svg';
 export { default as IconPause } from '@/assets/icons/pause.svg';
 export { default as IconPlay } from '@/assets/icons/play.svg';
 export { default as IconVideoFill } from '@/assets/icons/video-fill.svg';
+export { default as IconVideoPause } from '@/assets/icons/video-pause.svg';
 export { default as IconVideoPlay } from '@/assets/icons/video-play.svg';
 export { default as IconVideoReplay } from '@/assets/icons/video-replay.svg';
