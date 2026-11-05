@@ -76,3 +76,14 @@ test('ordinary and collection query snapshots include the independent Favorite c
   assert.equal(deps.currentQueryParams.value.isFavorite, true);
   assert.equal(deps.currentQueryParams.value.searchFileType, 5);
 });
+
+test('toolbar media filter does not rewrite smart album rules', () => {
+  const f = fixture(true);
+  f.album.query.rules.push({ field: 'file_type', operator: 'is_not', value: 4 });
+  const before = structuredClone(f.album);
+  f.handleFileTypeSelect(2);
+  assert.equal(f.config.search.fileType, 4);
+  assert.deepEqual(f.album, before);
+  f.handleFileTypeSelect(0);
+  assert.deepEqual(f.album, before);
+});

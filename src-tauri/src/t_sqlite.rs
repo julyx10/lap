@@ -2174,6 +2174,8 @@ pub struct SmartQueryParams {
     pub rules: Vec<SmartRule>,
     #[serde(default)]
     pub favorites_only: bool,
+    #[serde(default)]
+    pub file_type: i64,
     pub sort_type: i64,
     pub sort_order: i64,
     #[serde(default)]
@@ -6440,6 +6442,9 @@ impl AFile {
             )?);
         }
 
+        if let Some(condition) = Self::build_browser_file_type_condition(params.file_type) {
+            conditions.push(condition);
+        }
         if params.favorites_only {
             conditions.push("a.is_favorite = 1".to_string());
         }
@@ -10846,6 +10851,17 @@ mod favorites_filter_tests {
         assert_eq!(params.rules.len(), 2);
         params.favorites_only = false;
         assert_eq!(ids(&params), vec![1, 2]);
+        conn.execute_batch("UPDATE afiles SET file_type=3 WHERE id=2;").unwrap();
+        for mode in ["any", "all"] {
+            params.r#match = mode.to_string();
+            params.file_type = 4;
+            assert_eq!(ids(&params), if mode == "any" { vec![2] } else { vec![] });
+            params.file_type = 2;
+            assert!(ids(&params).is_empty());
+            params.file_type = 0;
+            assert_eq!(ids(&params), if mode == "any" { vec![1, 2] } else { vec![] });
+        }
+        assert_eq!(params.rules.len(), 2);
     }
 }
 

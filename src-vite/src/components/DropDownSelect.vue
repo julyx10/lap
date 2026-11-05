@@ -50,7 +50,9 @@
             <div v-if="separatorsAfter.includes(index)" class="mx-2 my-1 border-t border-base-content/10"></div>
           </template>
 
-          <slot name="menu-after" />
+          <div @click="isDropDown = false">
+            <slot name="menu-after" />
+          </div>
 
           <!-- seperator -->
           <div v-if="extendOptions.length > 0 " class="mx-2 my-1 border-t border-base-content/10"></div>

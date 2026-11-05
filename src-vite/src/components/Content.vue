@@ -61,7 +61,7 @@
           :options="fileTypeOptions"
           :defaultIndex="fileTypeSelectedIndex"
           :disabled="isFavoritesFilterDisabled"
-          :optionsDisabled="isFixedAiResultView"
+          :optionsDisabled="tempViewMode === 'person' || tempViewMode === 'similar'"
           :selected="activeFileTypeMask !== 0 || activeFavoritesOnly"
           :title="activeFavoritesOnly ? $t('toolbar.filter.favorites_only') : ''"
           @select="handleFileTypeSelect"
@@ -3670,11 +3670,11 @@ watch(() => props.libraryEmpty, () => {
   libraryChecked.value = true;
 }, { immediate: true });
 
-watch(contentReady, (ready) => {
+watch(contentReady, async (ready) => {
   if (!ready) return;
   contentQueryRefreshPending = false;
   if (!contentCountIsAuthoritative.value || tempViewMode.value !== 'none') return;
-  commitRequestedSidebarCount(totalFileCount.value);
+  await refreshRequestedSidebarCount();
 });
 
 function updateCount(owner: any, itemId: string | number, count: number) {
@@ -3686,18 +3686,17 @@ function updateCount(owner: any, itemId: string | number, count: number) {
 
 async function refreshFolderSidebarCount(path: string) {
   const libraryId = libConfig._libraryId;
-  const fileType = config.search.fileType;
   const showSubfolderFiles = config.settings.showSubfolderFiles;
   try {
     const result = await getQueryCountAndSum({
-      searchFileName: '', searchFileType: fileType,
+      searchFileName: '', searchFileType: 0,
       sortType: 0, sortOrder: 0, searchAllSubfolders: showSubfolderFiles ? path : '',
       searchFolder: showSubfolderFiles ? '' : path,
       startDate: 0, endDate: 0, calendarSort: 0, make: '', model: '', lensMake: '', lensModel: '',
       locationAdmin1: '', locationName: '', isFavorite: false, rating: -1, cullingFlag: -1, tagId: 0, personId: 0,
     });
     if (result && libConfig._libraryId === libraryId
-      && config.search.fileType === fileType && config.settings.showSubfolderFiles === showSubfolderFiles) {
+      && config.settings.showSubfolderFiles === showSubfolderFiles) {
       setFolderFileCount(path, Number(result[0] || 0));
     }
   } catch (error) {
@@ -3731,7 +3730,7 @@ watch(
     if (countedFolderRequestId.value !== currentContentRequestId || currentQuerySource.value !== 'query' || !path
       || !contentReady.value || isLoading.value || contentQueryRefreshPending
       || !contentCountIsAuthoritative.value || tempViewMode.value !== 'none'
-      || config.search.favoritesOnly
+      || config.search.favoritesOnly || Number(currentQueryParams.value.searchFileType || 0) !== 0
       || !matchesRequestedSidebarCount({ source: 'album-folder', path })) return;
     setFolderFileCount(path, Math.max(0, Number(totalFileCount.value || 0)));
   },
@@ -6640,7 +6639,7 @@ watch(
 
     const requestId = ++sidebarCountRequestId;
     try {
-      const result = await getCurrentQueryCountAndSum();
+      const result = await getSidebarQueryCountAndSum();
       if (requestId !== sidebarCountRequestId || uiStore.countUpdateRequest !== request) return;
       if (result) {
         commitRequestedSidebarCount(Number(result[0] || 0), request);
@@ -6837,6 +6836,53 @@ function cycleGridStyle() {
 
 // Track pending requests to avoid duplicates
 const pendingRequests = new Set();
+
+// Sidebar totals describe the category, independently of the browser media filter.
+const getSidebarQueryCountAndSum = () => {
+  if (currentQuerySource.value === 'smart' && currentSmartQueryParams.value) {
+    return getSmartQueryCountAndSum({ ...currentSmartQueryParams.value, fileType: 0 });
+  }
+  if (currentQuerySource.value === 'search') {
+    return getSearchSidebarCountAndSum();
+  }
+  const params = { ...currentQueryParams.value, searchFileType: 0 };
+  if (currentQuerySource.value === 'collection' && currentCollectionId.value) {
+    return getCollectionCountAndSum(currentCollectionId.value, params);
+  }
+  return getQueryCountAndSum(params);
+};
+
+async function getSearchSidebarCountAndSum() {
+  const textParams = { ...currentQueryParams.value, searchFileType: 0 };
+  const imageParams = { ...currentImageSearchParams.value, fileType: 0 };
+  const visualDisabled = imageSearchLanguageUnsupported.value;
+  const [textResult, visualResult] = await Promise.all([
+    getQueryFiles(textParams, 0, 0),
+    visualDisabled ? Promise.resolve([]) : searchSimilarImages(imageParams),
+  ]);
+  // A failed query must not overwrite the previous authoritative history count.
+  if (!Array.isArray(textResult) || !Array.isArray(visualResult)) return null;
+  const files = new Map<number, any>();
+  for (const file of textResult) files.set(Number(file.id), file);
+  for (const file of visualResult) {
+    if (passesAlbumFilters(file)) files.set(Number(file.id), file);
+  }
+  return [files.size, [...files.values()].reduce((sum, file) => sum + Number(file.size || 0), 0)];
+}
+
+async function refreshRequestedSidebarCount() {
+  const request = uiStore.countUpdateRequest;
+  if (!request) return;
+  const requestId = ++sidebarCountRequestId;
+  const contentRequestId = currentContentRequestId;
+  try {
+    const result = await getSidebarQueryCountAndSum();
+    if (requestId !== sidebarCountRequestId || contentRequestId !== currentContentRequestId) return;
+    if (result) commitRequestedSidebarCount(Number(result[0] || 0), request);
+  } catch (error) {
+    console.error('Failed to refresh sidebar count:', error);
+  }
+}
 
 const getCurrentQueryCountAndSum = () => {
   if (currentQuerySource.value === 'search') {
@@ -7798,6 +7844,7 @@ async function getSmartFileList(smartAlbum: any, requestId: number) {
     match: query.match === 'any' ? 'any' : 'all',
     rules,
     favoritesOnly: Boolean(config.search.favoritesOnly),
+    fileType: Number(config.search.fileType || 0),
     sortType: Number(smartAlbum?.sort?.type ?? 0),
     sortOrder: Number(smartAlbum?.sort?.order ?? 1),
     randomSeed: createRandomSeed(),
@@ -7863,7 +7910,7 @@ async function getSmartFileList(smartAlbum: any, requestId: number) {
 }
 
 async function updateSmartAlbumCover(smartAlbum: any, requestId: number) {
-  const result = await getSmartQueryFiles({ ...currentSmartQueryParams.value, favoritesOnly: false }, 0, 1);
+  const result = await getSmartQueryFiles({ ...currentSmartQueryParams.value, favoritesOnly: false, fileType: 0 }, 0, 1);
   if (
     requestId !== currentContentRequestId ||
     libConfig.smartAlbum.type !== 'custom' ||
@@ -10500,19 +10547,9 @@ const statusBarEmptyMessage = computed(() => (
     : ''
 ));
 
-const smartAlbumFileTypeMask = computed(() => {
-  if (!isSmartAlbumView.value) return 0;
-  const album = getActiveCustomSmartAlbum();
-  if (!album) return 0;
-  const ftRules = (album.query?.rules || []).filter((r: any) => r.field === 'file_type' && r.operator === 'is');
-  return ftRules.reduce((mask: number, r: any) => mask | Number(r.value || 0), 0);
-});
-
 const activeFileTypeMask = computed(() =>
-  isFixedAiResultView.value
+  (tempViewMode.value === 'person' || tempViewMode.value === 'similar')
     ? 0
-    : isSmartAlbumView.value
-    ? smartAlbumFileTypeMask.value
     : Number(config.search.fileType || 0)
 );
 
@@ -10536,20 +10573,6 @@ const handleFileTypeSelect = (index: number) => {
   const mask = fileTypeOptions.value[index]?.value ?? 0;
   if (normalizeFileTypeMask(activeFileTypeMask.value) === normalizeFileTypeMask(mask)) return;
   rememberFocusedFileForPresentationRefresh();
-  if (isSmartAlbumView.value) {
-    const album = getActiveCustomSmartAlbum();
-    if (!album) return;
-    album.query.rules = (album.query.rules || []).filter((r: any) => r.field !== 'file_type');
-    if (mask !== 0) {
-      album.query.rules.push({
-        id: crypto.randomUUID?.() || `${Date.now()}-${Math.random()}`,
-        field: 'file_type',
-        operator: 'is',
-        value: mask,
-      });
-    }
-    return;
-  }
   config.search.fileType = normalizeFileTypeMask(mask);
 };
 

@@ -1106,7 +1106,7 @@ export async function refreshAlbumSubfolders(albumId, folderPath) {
 export async function getFolderThumbCount(folderId) {
   try {
     let count = await invoke('get_folder_thumb_count', { 
-      fileType: config.search.fileType,
+      fileType: 0,
       folderId, 
     });
     if(count) {
