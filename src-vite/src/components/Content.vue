@@ -812,7 +812,7 @@ import {
 } from '@/common/thumbnailProfiles';
 import { getShortcutLabel, matchesShortcut, ShortcutActionId, ShortcutPlatform, VIEW_BACKGROUND_SHORTCUTS } from '@/common/shortcuts';
 import { getSmartTagById } from '@/common/smartTags';
-import { handleVideoPlaybackShortcut } from '@/common/video';
+import { handleVideoPlaybackShortcut, handleVideoEscapeShortcut } from '@/common/video';
 import { clearFolderFileCounts, setFolderFileCount, getCountedFolderPaths } from '@/composables/useAlbumSelection';
 import { createEmptyLibraryCounts } from '@/stores/libraryStore';
 import { getAlbumScanState, getAlbumScanIcon, shouldAnimateAlbumScanIcon } from '@/common/scanStatus';
@@ -5197,6 +5197,8 @@ function handlePreviewSpaceKeyDown(event: KeyboardEvent) {
   const togglesSelection = selectMode.value && mode === 'filmstrip' && !isSlideShow.value;
   if (mode === 'none' || (!togglesSelection && fileList.value[selectedItemIndex.value]?.file_type !== 2)
     || uiStore.inputStack.length > 0 || uiStore.activePane === 'left-sidebar') return;
+  handleVideoEscapeShortcut(event, shortcutPlatform, () => handleLocalKeyDown(event));
+  if (event.defaultPrevented) return;
   // Consume Space before video.js controls. macOS performs selection through
   // the App capture/global channel; other platforms dispatch it here once.
   handleVideoPlaybackShortcut(event, shortcutPlatform, () => {

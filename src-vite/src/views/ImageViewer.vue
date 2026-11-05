@@ -222,7 +222,7 @@ import { useUIStore } from '@/stores/uiStore';
 import { config, libConfig } from '@/common/config';
 import { isWin, isMac, isLinux, setTheme, getSlideShowInterval, SCALE_VALUES } from '@/common/utils';
 import { matchesShortcut, ShortcutActionId, ShortcutPlatform, VIEW_BACKGROUND_SHORTCUTS } from '@/common/shortcuts';
-import { handleVideoPlaybackShortcut } from '@/common/video';
+import { handleVideoPlaybackShortcut, handleVideoEscapeShortcut } from '@/common/video';
 import {
   editFileComment,
   getFileCollections,
@@ -609,6 +609,8 @@ onUnmounted(() => {
 // Handle keyboard shortcuts
 function handleVideoSpaceKeyDown(event: KeyboardEvent) {
   if (uiStore.inputStack.length > 0 || getFileInfoByPane(getActivePane())?.file_type !== 2) return;
+  handleVideoEscapeShortcut(event, shortcutPlatform, () => closeWindow());
+  if (event.defaultPrevented) return;
   handleVideoPlaybackShortcut(event, shortcutPlatform, () => getViewerRef(getActivePane())?.togglePlay?.());
 }
 
