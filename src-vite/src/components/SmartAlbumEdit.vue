@@ -196,7 +196,7 @@ const extensionOptions = ref<any[]>([]);
 const rules = ref<any[]>([]);
 
 const fileTypeOptions = computed(() => [
-  { value: 1, label: localeMsg.value.toolbar.filter?.file_type_options?.[1] || 'Image' },
+  { value: 1, label: localeMsg.value.toolbar.filter?.file_type_options?.[1] || 'Images' },
   { value: 4, label: localeMsg.value.toolbar.filter?.file_type_options?.[2] || 'RAW' },
   { value: 2, label: localeMsg.value.toolbar.filter?.file_type_options?.[3] || 'Video' },
 ]);

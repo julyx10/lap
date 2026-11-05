@@ -1760,7 +1760,7 @@ function formatGroupLabel(label: string) {
   if (groupBy === GROUP.FILE_TYPE) {
     const labels = localeMsg.value.toolbar.filter?.file_type_options || [];
     const fileTypeLabels: Record<string, string> = {
-      image: labels[1] || 'Photos',
+      image: labels[1] || 'Images',
       raw: labels[2] || 'RAW Files',
       video: labels[3] || 'Videos',
       other: localeMsg.value.toolbar.filter?.file_type_other || 'Other',
@@ -10738,7 +10738,7 @@ const fileTypeOptions = computed(() => {
   const options = localeMsg.value.toolbar.filter?.file_type_options || [];
   return [
     { label: options[0] || 'All', value: 0 },
-    { label: options[1] || 'Image', value: FILE_TYPE_IMAGE },
+    { label: options[1] || 'Images', value: FILE_TYPE_IMAGE },
     { label: options[2] || 'RAW', value: FILE_TYPE_RAW },
     { label: options[3] || 'Video', value: FILE_TYPE_VIDEO },
   ];
