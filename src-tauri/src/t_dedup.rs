@@ -659,30 +659,26 @@ pub struct DedupOverview {
     pub total_reclaimable_bytes: i64,
 }
 
-// Pair metadata already follows the grouping setting. Do not alter primary
-// file sizes: expose companion bytes separately for review UI accounting.
-pub(crate) fn raw_pair_companion_size(file: &AFile) -> Result<i64, String> {
-    if file.media_subtype.as_deref() != Some("raw_jpeg_pair") {
-        return Ok(0);
-    }
-    let Some(id) = file.live_photo_video_id else { return Ok(0); };
-    Ok(AFile::get_file_info(id)?.map(|pair| pair.size.max(0)).unwrap_or(0))
-}
-
 pub fn get_overview() -> Result<DedupOverview, String> {
     let conn = get_db_conn()?;
     let (total_groups, total_files, total_reclaimable_bytes): (i64, i64, i64) = conn
         .query_row(
-            "SELECT 
+            "SELECT
                 COALESCE(COUNT(*), 0),
                 COALESCE(SUM(current_file_count - 1), 0),
-                COALESCE(SUM((current_file_count - 1) * file_size), 0)
+                COALESCE(SUM((current_file_count - 1) * file_size + companion_bytes), 0)
              FROM (
-                SELECT file_size,
-                       (SELECT COUNT(*)
-                        FROM duplicate_group_items
-                        WHERE group_id = duplicate_groups.id) AS current_file_count
-                FROM duplicate_groups
+                SELECT g.file_size, COUNT(*) AS current_file_count,
+                       SUM(CASE WHEN i.is_keep = 0
+                           THEN MAX(COALESCE(companion.size, 0), 0)
+                           ELSE 0 END) AS companion_bytes
+                FROM duplicate_groups g
+                JOIN duplicate_group_items i ON i.group_id = g.id
+                LEFT JOIN afiles a ON a.id = i.file_id
+                LEFT JOIN afiles companion
+                  ON a.media_subtype = 'raw_jpeg_pair'
+                 AND companion.id = a.live_photo_video_id
+                GROUP BY g.id
              )
              WHERE current_file_count > 1",
             [],
@@ -690,17 +686,10 @@ pub fn get_overview() -> Result<DedupOverview, String> {
         )
         .map_err(|e| e.to_string())?;
 
-    drop(conn);
-    let companion_bytes: i64 = list_groups(1, 0, "count_desc", "all")?
-        .iter()
-        .flat_map(|group| &group.items)
-        .filter(|item| item.is_keep == 0)
-        .map(|item| item.companion_size)
-        .sum();
     Ok(DedupOverview {
         total_groups,
         total_files,
-        total_reclaimable_bytes: total_reclaimable_bytes + companion_bytes,
+        total_reclaimable_bytes,
     })
 }
 
@@ -783,10 +772,15 @@ pub fn list_groups(
 fn get_group_items(conn: &Connection, group_id: i64) -> Result<Vec<DedupGroupItem>, String> {
     let mut stmt = conn
         .prepare(
-            "SELECT group_id, file_id, is_keep, is_selected, score
-         FROM duplicate_group_items
-         WHERE group_id = ?1
-         ORDER BY is_keep DESC, score DESC",
+            "SELECT i.group_id, i.file_id, i.is_keep, i.is_selected, i.score,
+                    MAX(COALESCE(companion.size, 0), 0)
+         FROM duplicate_group_items i
+         LEFT JOIN afiles a ON a.id = i.file_id
+         LEFT JOIN afiles companion
+           ON a.media_subtype = 'raw_jpeg_pair'
+          AND companion.id = a.live_photo_video_id
+         WHERE i.group_id = ?1
+         ORDER BY i.is_keep DESC, i.score DESC",
         )
         .map_err(|e| e.to_string())?;
 
@@ -798,7 +792,7 @@ fn get_group_items(conn: &Connection, group_id: i64) -> Result<Vec<DedupGroupIte
                 is_keep: row.get(2)?,
                 is_selected: row.get(3)?,
                 score: row.get(4)?,
-                companion_size: 0,
+                companion_size: row.get(5)?,
                 file: None, // Will populate shortly
             })
         })
@@ -808,7 +802,6 @@ fn get_group_items(conn: &Connection, group_id: i64) -> Result<Vec<DedupGroupIte
     for it in iter {
         if let Ok(mut item) = it {
             if let Ok(Some(file_info)) = AFile::get_file_info(item.file_id) {
-                item.companion_size = raw_pair_companion_size(&file_info)?;
                 item.file = Some(file_info);
             }
             items.push(item);
