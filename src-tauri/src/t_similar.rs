@@ -66,13 +66,24 @@ fn resolve_scope(
     if file_ids.is_some() && (params.is_some() || collection_id.is_some()) {
         return Err("File ID scope cannot be combined with query or collection scope.".into());
     }
-    if let Some(ids) = file_ids {
+    let files = if let Some(ids) = file_ids {
         AFile::get_files_by_ids(&ids)
     } else if let Some(id) = collection_id {
         t_dedup::get_files_by_collection(id, params.as_ref())
     } else {
         t_dedup::get_files_by_query(params.as_ref().ok_or("Query required")?)
-    }
+    }?;
+    // ID-based scopes bypass the normal query's companion exclusion. Keep the
+    // primary RAW as the logical photo, using only existing pairing metadata.
+    let companions: HashSet<i64> = files
+        .iter()
+        .filter(|file| file.media_subtype.as_deref() == Some("raw_jpeg_pair"))
+        .filter_map(|file| file.live_photo_video_id)
+        .collect();
+    Ok(files
+        .into_iter()
+        .filter(|file| file.id.is_none_or(|id| !companions.contains(&id)))
+        .collect())
 }
 
 fn load_vectors(conn: &Connection, files: Vec<AFile>) -> Result<Vec<VectorFile>, String> {
@@ -495,11 +506,14 @@ pub fn get_overview(scope_key: &str) -> Result<serde_json::Value, String> {
         .query_row(
             "SELECT
                 COUNT(*),
-                COALESCE(SUM(a.size), 0)
+                COALESCE(SUM(a.size + MAX(COALESCE(companion.size, 0), 0)), 0)
              FROM similarity_group_items i
              JOIN similarity_groups g ON g.id = i.group_id
              JOIN similarity_scans s ON s.id = g.scan_id
              JOIN afiles a ON a.id = i.file_id
+             LEFT JOIN afiles companion
+               ON a.media_subtype = 'raw_jpeg_pair'
+              AND companion.id = a.live_photo_video_id
              WHERE s.scope_key = ?1
                AND (SELECT COUNT(*) FROM similarity_group_items WHERE group_id = i.group_id) > 1",
             params![scope_key],
@@ -526,11 +540,23 @@ pub fn get_group(group_id: i64, scope_key: &str) -> Result<serde_json::Value, St
     }
     let mut stmt = conn
         .prepare(
-            "SELECT file_id, score, is_keep FROM similarity_group_items WHERE group_id=?1 ORDER BY is_keep DESC, score DESC, file_id ASC",
+            "SELECT i.file_id, i.score, i.is_keep,
+                    MAX(COALESCE(companion.size, 0), 0)
+             FROM similarity_group_items i
+             LEFT JOIN afiles a ON a.id = i.file_id
+             LEFT JOIN afiles companion
+               ON a.media_subtype = 'raw_jpeg_pair'
+              AND companion.id = a.live_photo_video_id
+             WHERE i.group_id=?1
+             ORDER BY i.is_keep DESC, i.score DESC, i.file_id ASC",
         )
         .map_err(|e| e.to_string())?;
-    let items = stmt.query_map(params![group_id], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, f32>(1)?, row.get::<_, i64>(2)?))).map_err(|e| e.to_string())?
-        .map(|item| { let (file_id, score, is_keep) = item.map_err(|e| e.to_string())?; Ok(serde_json::json!({"file_id": file_id, "score": score, "is_keep": is_keep, "file": AFile::get_file_info(file_id)?})) }).collect::<Result<Vec<_>, String>>()?;
+    let items = stmt.query_map(params![group_id], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, f32>(1)?, row.get::<_, i64>(2)?, row.get::<_, i64>(3)?))).map_err(|e| e.to_string())?
+        .map(|item| {
+            let (file_id, score, is_keep, companion_size) = item.map_err(|e| e.to_string())?;
+            let file = AFile::get_file_info(file_id)?;
+            Ok(serde_json::json!({"file_id": file_id, "score": score, "is_keep": is_keep, "companion_size": companion_size, "file": file}))
+        }).collect::<Result<Vec<_>, String>>()?;
     Ok(serde_json::json!({"id": group_id, "items": items}))
 }
 
