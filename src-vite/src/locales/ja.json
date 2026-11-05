@@ -489,7 +489,7 @@
       "file_type_options": [
         "すべて",
         "画像",
-        "RAW ファイル",
+        "RAW のみ",
         "動画"
       ],
       "file_type_other": "その他"

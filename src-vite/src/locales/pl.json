@@ -489,7 +489,7 @@
       "file_type_options": [
         "Wszystkie",
         "Obrazy",
-        "Pliki RAW",
+        "Tylko RAW",
         "Filmy"
       ],
       "file_type_other": "Inne"

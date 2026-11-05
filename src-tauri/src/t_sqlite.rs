@@ -3834,6 +3834,15 @@ impl AFile {
         .map_err(|e| e.to_string())
     }
 
+    // Browser filters support All, Images (including RAW), RAW only and Videos.
+    // Other historical selections are treated as All without rewriting settings.
+    fn build_browser_file_type_condition(mask: i64) -> Option<String> {
+        match mask {
+            2 | 4 | 5 => Self::build_file_type_condition(mask),
+            _ => None,
+        }
+    }
+
     fn build_file_type_condition(mask: i64) -> Option<String> {
         if mask <= 0 {
             return None;
@@ -5242,7 +5251,7 @@ impl AFile {
             sql_params.push(Box::new(pattern));
         }
 
-        if let Some(condition) = Self::build_file_type_condition(params.search_file_type) {
+        if let Some(condition) = Self::build_browser_file_type_condition(params.search_file_type) {
             conditions.push(condition);
         }
 
@@ -7185,7 +7194,7 @@ impl AFile {
 
         query.push_str(&Self::album_filter_sql("a"));
 
-        if let Some(ft_condition) = Self::build_file_type_condition(params.file_type) {
+        if let Some(ft_condition) = Self::build_browser_file_type_condition(params.file_type) {
             query.push_str(" AND ");
             query.push_str(&ft_condition);
         }
@@ -8643,7 +8652,7 @@ impl AThumb {
         conditions.push("a.folder_id = ?".to_string());
         params.push(&folder_id);
 
-        if let Some(condition) = AFile::build_file_type_condition(file_type) {
+        if let Some(condition) = AFile::build_browser_file_type_condition(file_type) {
             conditions.push(condition);
         }
 
@@ -10903,6 +10912,20 @@ mod tag_tree_query_tests {
 #[cfg(test)]
 mod album_filter_tests {
     use super::*;
+
+    #[test]
+    fn browser_file_types_preserve_smart_album_masks() {
+        for mask in [0, 1, 3, 6, 7, -1, 8] {
+            assert_eq!(AFile::build_browser_file_type_condition(mask), None);
+        }
+        for mask in [2, 4, 5] {
+            assert_eq!(AFile::build_browser_file_type_condition(mask), AFile::build_file_type_condition(mask));
+            assert!(AFile::build_browser_file_type_condition(mask).is_some());
+        }
+        assert_eq!(AFile::build_file_type_condition(1).as_deref(), Some("(a.file_type = 1)"));
+        assert_eq!(AFile::build_file_type_condition(3).as_deref(), Some("(a.file_type = 1 OR a.file_type = 2)"));
+    }
+
 
     fn fixture() -> Connection {
         let conn = Connection::open_in_memory().unwrap();

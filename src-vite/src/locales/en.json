@@ -489,7 +489,7 @@
       "file_type_options": [
         "All",
         "Images",
-        "RAW Files",
+        "RAW only",
         "Videos"
       ],
       "file_type_other": "Other"

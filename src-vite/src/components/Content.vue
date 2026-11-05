@@ -59,15 +59,12 @@
         <DropDownSelect
           :icon="IconFilter"
           :options="fileTypeOptions"
-          :multiSelect="true"
-          :selectedValues="fileTypeSelectedValues"
-          :summaryLabel="fileTypeSummaryLabel"
-          :separatorsAfter="[0]"
+          :defaultIndex="fileTypeSelectedIndex"
           :disabled="isFavoritesFilterDisabled"
           :optionsDisabled="isFixedAiResultView"
           :selected="activeFileTypeMask !== 0 || activeFavoritesOnly"
           :title="activeFavoritesOnly ? $t('toolbar.filter.favorites_only') : ''"
-          @multi-select="handleFileTypeSelect"
+          @select="handleFileTypeSelect"
         >
           <template #trigger-suffix>
             <IconHeartFilled v-if="activeFavoritesOnly" class="w-4 h-4 shrink-0" />
@@ -7512,7 +7509,7 @@ function handleVisibleRangeUpdate({ startIndex, endIndex }: { startIndex: number
 // get file list 
 async function getFileList(
   {
-    searchFileType = config.search.fileType, 
+    searchFileType = config.search.fileType,
     sortType = config.search.sortType, 
     sortOrder = config.search.sortOrder, 
     searchFileName = '', 
@@ -10529,30 +10526,14 @@ function toggleFavoritesFilter() {
   config.search.favoritesOnly = !config.search.favoritesOnly;
 }
 
-const fileTypeSelectedValues = computed(() => {
+const fileTypeSelectedIndex = computed(() => {
   const mask = normalizeFileTypeMask(activeFileTypeMask.value);
-  if (mask === 0) return [0];
-  return [FILE_TYPE_IMAGE, FILE_TYPE_RAW, FILE_TYPE_VIDEO].filter(value => (mask & value) === value);
+  return Math.max(0, fileTypeOptions.value.findIndex(option => option.value === mask));
 });
 
-const fileTypeSummaryLabel = computed(() => {
-  const options = fileTypeOptions.value;
-  const mask = normalizeFileTypeMask(activeFileTypeMask.value);
-  if (mask === 0) return options[0]?.label || '';
-
-  const labels = [FILE_TYPE_IMAGE, FILE_TYPE_RAW, FILE_TYPE_VIDEO]
-    .filter(value => (mask & value) === value)
-    .map(value => options.find(option => option.value === value)?.label)
-    .filter(Boolean);
-
-  return labels.length > 0 ? labels.join(' + ') : (options[0]?.label || '');
-});
-
-const handleFileTypeSelect = (values: any[]) => {
+const handleFileTypeSelect = (index: number) => {
   if (isScanStreamingMode.value) return;
-  const nextValues = (Array.isArray(values) ? values : []).map(value => Number(value));
-  const hasAll = nextValues.includes(0);
-  const mask = hasAll ? 0 : nextValues.reduce((acc, value) => acc | value, 0);
+  const mask = fileTypeOptions.value[index]?.value ?? 0;
   if (normalizeFileTypeMask(activeFileTypeMask.value) === normalizeFileTypeMask(mask)) return;
   rememberFocusedFileForPresentationRefresh();
   if (isSmartAlbumView.value) {
@@ -10738,8 +10719,8 @@ const fileTypeOptions = computed(() => {
   const options = localeMsg.value.toolbar.filter?.file_type_options || [];
   return [
     { label: options[0] || 'All', value: 0 },
-    { label: options[1] || 'Images', value: FILE_TYPE_IMAGE },
-    { label: options[2] || 'RAW', value: FILE_TYPE_RAW },
+    { label: options[1] || 'Images', value: FILE_TYPE_IMAGE | FILE_TYPE_RAW },
+    { label: options[2] || 'RAW only', value: FILE_TYPE_RAW },
     { label: options[3] || 'Video', value: FILE_TYPE_VIDEO },
   ];
 });

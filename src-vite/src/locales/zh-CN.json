@@ -489,7 +489,7 @@
       "file_type_options": [
         "全部",
         "图片",
-        "RAW 文件",
+        "仅 RAW",
         "视频"
       ],
       "file_type_other": "其他"
