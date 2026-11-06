@@ -1211,10 +1211,11 @@
     "source_description": "Eredeti leírás",
     "coordinates": "Koordináták",
     "detail_fields": {
-      "title": "Eredeti cím",
+      "title": "Cím",
+      "headline": "Főcím",
       "creator": "Szerző",
       "copyright": "Szerzői jog",
-      "description": "Eredeti leírás",
+      "description": "Forrásleírás",
       "credit": "Készítő megjelölése",
       "source": "Forrás",
       "usageTerms": "Felhasználási feltételek",

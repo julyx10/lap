@@ -1211,10 +1211,11 @@
     "source_description": "原始描述",
     "coordinates": "座標",
     "detail_fields": {
-      "title": "原始標題",
+      "title": "標題",
+      "headline": "內容標題",
       "creator": "作者",
       "copyright": "版權",
-      "description": "原始描述",
+      "description": "來源描述",
       "credit": "提供者",
       "source": "來源",
       "usageTerms": "使用條款",

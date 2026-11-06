@@ -1211,10 +1211,11 @@
     "source_description": "원본 설명",
     "coordinates": "좌표",
     "detail_fields": {
-      "title": "원본 제목",
+      "title": "제목",
+      "headline": "헤드라인",
       "creator": "작성자",
       "copyright": "저작권",
-      "description": "원본 설명",
+      "description": "소스 설명",
       "credit": "제공자",
       "source": "출처",
       "usageTerms": "이용 약관",

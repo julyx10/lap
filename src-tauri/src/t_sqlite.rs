@@ -1578,6 +1578,7 @@ impl FolderScanState {
 /// Define the album file struct
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct AFile {
+    // e_* stores extracted source metadata, not exclusively EXIF.
     pub id: Option<i64>, // unique id (autoincrement by db)
     pub folder_id: i64,  // folder id (from folders table)
 
@@ -1592,10 +1593,13 @@ pub struct AFile {
     pub inode: Option<i64>,           // filesystem inode (for rename detection)
     pub taken_date: Option<i64>,      // taken date timestamp (e_date_time || modified_at)
 
-    // image/video
+    // Image/video properties
     pub width: Option<u32>,    // image/video width
     pub height: Option<u32>,   // image/video height
     pub duration: Option<i64>, // video duration
+    pub icc_profile: Option<String>,
+    pub color_space: Option<String>,
+    pub bit_depth: Option<u16>,
 
     // extra info
     pub is_favorite: Option<bool>, // is favorite
@@ -1606,26 +1610,31 @@ pub struct AFile {
     pub has_tags: Option<bool>,    // has tags
     pub has_faces: Option<i32>,    // has faces (0: unprocessed, 1: has faces, 2: no faces)
 
-    // exif info
+    // Camera and lens metadata (legacy e_* names)
     pub e_make: Option<String>,  // camera make
     pub e_model: Option<String>, // camera model
-    pub e_date_time: Option<String>,
-    pub e_software: Option<String>,
-    pub e_artist: Option<String>,
-    pub e_copyright: Option<String>,
-    pub e_description: Option<String>,
     pub e_lens_make: Option<String>,
     pub e_lens_model: Option<String>,
+
+    // Capture metadata (legacy e_* names)
+    pub e_date_time: Option<String>,
     pub e_exposure_bias: Option<String>,
     pub e_exposure_time: Option<String>,
     pub e_f_number: Option<String>,
     pub e_focal_length: Option<String>,
     pub e_iso_speed: Option<String>,
-    pub e_flash: Option<String>,    // flash
-    pub e_orientation: Option<u32>, // orientation
-    pub icc_profile: Option<String>,
-    pub color_space: Option<String>,
-    pub bit_depth: Option<u16>,
+    pub e_flash: Option<String>,
+    pub e_orientation: Option<u32>,
+
+    // Descriptive metadata (effective values; may come from EXIF, IPTC or XMP)
+    pub e_title: Option<String>,
+    pub e_headline: Option<String>,
+    pub e_description: Option<String>,
+    pub e_artist: Option<String>,
+    pub e_copyright: Option<String>,
+
+    // Source software metadata
+    pub e_software: Option<String>,
 
     // gps info
     pub gps_latitude: Option<f64>,
@@ -2412,6 +2421,10 @@ impl AFile {
         // get dimensions and duration based on file type
         let (mut width, mut height, mut duration) = (0u32, 0u32, 0u64);
 
+        let mut icc_profile = None;
+        let mut color_space = None;
+        let mut bit_depth = None;
+
         // Initialize metadata fields
         let mut taken_date: Option<i64> = None;
         let mut e_make: Option<String> = None;
@@ -2430,9 +2443,8 @@ impl AFile {
         let mut e_iso_speed: Option<String> = None;
         let mut e_flash: Option<String> = None;
         let mut e_orientation: Option<u32> = None;
-        let mut icc_profile = None;
-        let mut color_space = None;
-        let mut bit_depth = None;
+        let mut e_title = None;
+        let mut e_headline = None;
         let mut gps_latitude: Option<f64> = None;
         let mut gps_longitude: Option<f64> = None;
         let mut gps_altitude: Option<f64> = None;
@@ -2744,15 +2756,17 @@ impl AFile {
         // already supplied by EXIF, video probing, or LibRaw.
         if matches!(file_type, 1 | 2 | 3) {
             let deep = crate::metadata::embedded::read(Path::new(file_path));
+            icc_profile = deep.icc_profile;
+            color_space = deep.color_space;
+            bit_depth = deep.bit_depth;
             e_make = e_make.or(deep.make);
             e_model = e_model.or(deep.model);
             e_artist = e_artist.or(deep.artist);
             e_copyright = e_copyright.or(deep.copyright);
             e_description = e_description.or(deep.description);
             e_software = e_software.or(deep.software);
-            icc_profile = deep.icc_profile;
-            color_space = deep.color_space;
-            bit_depth = deep.bit_depth;
+            e_title = deep.title;
+            e_headline = deep.headline;
             e_lens_make = e_lens_make.or(deep.lens_make);
             e_lens_model = e_lens_model.or(deep.lens_model);
             if e_lens_make.is_none() {
@@ -2824,6 +2838,9 @@ impl AFile {
                 })
                 .or(Some(height)),
             duration: Some(duration as i64),
+            icc_profile,
+            color_space,
+            bit_depth,
 
             is_favorite: None,
             rating: Some(0),
@@ -2835,13 +2852,9 @@ impl AFile {
 
             e_make,
             e_model,
-            e_date_time,
-            e_software,
-            e_artist,
-            e_copyright,
-            e_description,
             e_lens_make,
             e_lens_model,
+            e_date_time,
             e_exposure_bias,
             e_exposure_time,
             e_f_number,
@@ -2849,10 +2862,12 @@ impl AFile {
             e_iso_speed,
             e_flash,
             e_orientation,
-            icc_profile,
-            color_space,
-            bit_depth,
-
+            e_title,
+            e_headline,
+            e_description,
+            e_artist,
+            e_copyright,
+            e_software,
             gps_latitude,
             gps_longitude,
             gps_altitude,
@@ -3147,16 +3162,19 @@ impl AFile {
         let conn = open_conn()?;
         let result = conn.execute(
             "INSERT INTO afiles (
-                folder_id, 
-                name, name_pinyin, size, file_type, format_label, created_at, modified_at, inode,
-                taken_date,
-                width, height, duration,
+                folder_id,
+                name, name_pinyin, size, file_type, format_label, created_at, modified_at, inode, taken_date,
+                width, height, duration, icc_profile, color_space, bit_depth,
                 is_favorite, rating, rotate, comments, has_tags,
-                e_make, e_model, e_date_time, e_software, e_artist, e_copyright, e_description, e_lens_make, e_lens_model, e_exposure_bias, e_exposure_time, e_f_number, e_focal_length, e_iso_speed, e_flash, e_orientation,
-                gps_latitude, gps_longitude, gps_altitude, geo_name, geo_admin1, geo_admin2, geo_cc,
-                last_scan_time, content_identifier, media_subtype, motion_photo_offset, cloud_only, metadata_pending, icc_profile, color_space, bit_depth
+                e_make, e_model, e_lens_make, e_lens_model,
+                e_date_time, e_exposure_bias, e_exposure_time, e_f_number, e_focal_length, e_iso_speed, e_flash, e_orientation,
+                e_title, e_headline, e_description, e_artist, e_copyright,
+                e_software,
+                gps_latitude, gps_longitude, gps_altitude,
+                geo_name, geo_admin1, geo_admin2, geo_cc,
+                last_scan_time, content_identifier, media_subtype, motion_photo_offset, cloud_only, metadata_pending
             )
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27, ?28, ?29, ?30, ?31, ?32, ?33, ?34, ?35, ?36, ?37, ?38, ?39, ?40, ?41, ?42, ?43, ?44, ?45, ?46, ?47, ?48, ?49, ?50)
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27, ?28, ?29, ?30, ?31, ?32, ?33, ?34, ?35, ?36, ?37, ?38, ?39, ?40, ?41, ?42, ?43, ?44, ?45, ?46, ?47, ?48, ?49, ?50, ?51, ?52)
             ON CONFLICT(folder_id, name) DO NOTHING",
             params![
                 self.folder_id,
@@ -3169,12 +3187,14 @@ impl AFile {
                 self.created_at,
                 self.modified_at,
                 self.inode,
-
                 self.taken_date,
 
                 self.width,
                 self.height,
                 self.duration,
+                self.icc_profile,
+                self.color_space,
+                self.bit_depth,
 
                 self.is_favorite,
                 self.rating,
@@ -3184,13 +3204,10 @@ impl AFile {
 
                 self.e_make,
                 self.e_model,
-                self.e_date_time,
-                self.e_software,
-                self.e_artist,
-                self.e_copyright,
-                self.e_description,
                 self.e_lens_make,
                 self.e_lens_model,
+
+                self.e_date_time,
                 self.e_exposure_bias,
                 self.e_exposure_time,
                 self.e_f_number,
@@ -3199,22 +3216,29 @@ impl AFile {
                 self.e_flash,
                 self.e_orientation,
 
+                self.e_title,
+                self.e_headline,
+                self.e_description,
+                self.e_artist,
+                self.e_copyright,
+
+                self.e_software,
+
                 self.gps_latitude,
                 self.gps_longitude,
                 self.gps_altitude,
+
                 self.geo_name,
                 self.geo_admin1,
                 self.geo_admin2,
                 self.geo_cc,
+
                 self.last_scan_time,
                 self.content_identifier,
                 self.media_subtype,
                 self.motion_photo_offset,
                 self.cloud_only,
                 self.metadata_pending,
-                self.icc_profile,
-                self.color_space,
-                self.bit_depth,
             ]
         ).map_err(|e| e.to_string())?;
         Ok(result)
@@ -3225,15 +3249,17 @@ impl AFile {
         let conn = open_conn()?;
         let result = conn.execute(
             "UPDATE afiles SET
-                name = ?1, name_pinyin = ?2, size = ?3, file_type = ?4, format_label = ?5, created_at = ?6, modified_at = ?7, inode = ?8,
-                taken_date = ?9,
-                width = ?10, height = ?11, duration = ?12,
-                rating = ?13,
-                e_make = ?14, e_model = ?15, e_date_time = ?16, e_software = ?17, e_artist = ?18, e_copyright = ?19, e_description = ?20, e_lens_make = ?21, e_lens_model = ?22, e_exposure_bias = ?23, e_exposure_time = ?24, e_f_number = ?25, e_focal_length = ?26, e_iso_speed = ?27, e_flash = ?28, e_orientation = ?29,
-                gps_latitude = ?30, gps_longitude = ?31, gps_altitude = ?32, geo_name = ?33, geo_admin1 = ?34, geo_admin2 = ?35, geo_cc = ?36,
-                last_scan_time = ?37, content_identifier = ?38, media_subtype = ?39, motion_photo_offset = ?40,
-                icc_profile = ?41, color_space = ?42, bit_depth = ?43, metadata_pending = 0
-            WHERE id = ?44",
+                name = ?1, name_pinyin = ?2, size = ?3, file_type = ?4, format_label = ?5, created_at = ?6, modified_at = ?7, inode = ?8, taken_date = ?9,
+                width = ?10, height = ?11, duration = ?12, icc_profile = ?13, color_space = ?14, bit_depth = ?15,
+                rating = ?16,
+                e_make = ?17, e_model = ?18, e_lens_make = ?19, e_lens_model = ?20,
+                e_date_time = ?21, e_exposure_bias = ?22, e_exposure_time = ?23, e_f_number = ?24, e_focal_length = ?25, e_iso_speed = ?26, e_flash = ?27, e_orientation = ?28,
+                e_title = ?29, e_headline = ?30, e_description = ?31, e_artist = ?32, e_copyright = ?33,
+                e_software = ?34,
+                gps_latitude = ?35, gps_longitude = ?36, gps_altitude = ?37,
+                geo_name = ?38, geo_admin1 = ?39, geo_admin2 = ?40, geo_cc = ?41,
+                last_scan_time = ?42, content_identifier = ?43, media_subtype = ?44, motion_photo_offset = ?45, metadata_pending = 0
+            WHERE id = ?46",
             params![
                 file.name,
                 file.name_pinyin,
@@ -3243,23 +3269,23 @@ impl AFile {
                 file.created_at,
                 file.modified_at,
                 file.inode,
-
                 file.taken_date,
 
                 file.width,
                 file.height,
                 file.duration,
+                file.icc_profile,
+                file.color_space,
+                file.bit_depth,
 
                 file.rating,
+
                 file.e_make,
                 file.e_model,
-                file.e_date_time,
-                file.e_software,
-                file.e_artist,
-                file.e_copyright,
-                file.e_description,
                 file.e_lens_make,
                 file.e_lens_model,
+
+                file.e_date_time,
                 file.e_exposure_bias,
                 file.e_exposure_time,
                 file.e_f_number,
@@ -3268,20 +3294,27 @@ impl AFile {
                 file.e_flash,
                 file.e_orientation,
 
+                file.e_title,
+                file.e_headline,
+                file.e_description,
+                file.e_artist,
+                file.e_copyright,
+
+                file.e_software,
+
                 file.gps_latitude,
                 file.gps_longitude,
                 file.gps_altitude,
+
                 file.geo_name,
                 file.geo_admin1,
                 file.geo_admin2,
                 file.geo_cc,
+
                 file.last_scan_time,
                 file.content_identifier,
                 file.media_subtype,
                 file.motion_photo_offset,
-                file.icc_profile,
-                file.color_space,
-                file.bit_depth,
                 file_id,
             ]
         ).map_err(|e| e.to_string())?;
@@ -3421,19 +3454,22 @@ impl AFile {
     // build the base SQL query
     fn build_base_query() -> String {
         format!(
-            "SELECT a.id, a.folder_id, 
-                a.name, a.name_pinyin, a.size, a.file_type, a.format_label, a.created_at, a.modified_at, a.inode,
-                a.taken_date,
-                a.width, a.height, a.duration,
-                a.is_favorite, a.rating, a.culling_flag, a.rotate, a.comments, a.has_tags,
-                a.e_make, a.e_model, a.e_date_time, a.e_software, a.e_artist, a.e_copyright, a.e_description, a.e_lens_make, a.e_lens_model, a.e_exposure_bias, a.e_exposure_time, a.e_f_number, a.e_focal_length, a.e_iso_speed, a.e_flash, a.e_orientation,
-                a.gps_latitude, a.gps_longitude, a.gps_altitude, a.geo_name, a.geo_admin1, a.geo_admin2, a.geo_cc,
+            "SELECT a.id, a.folder_id,
+                a.name, a.name_pinyin, a.size, a.file_type, a.format_label, a.created_at, a.modified_at, a.inode, a.taken_date,
+                a.width, a.height, a.duration, a.icc_profile, a.color_space, a.bit_depth,
+                a.is_favorite, a.rating, a.culling_flag, a.rotate, a.comments, a.has_tags, a.has_faces,
+                a.e_make, a.e_model, a.e_lens_make, a.e_lens_model,
+                a.e_date_time, a.e_exposure_bias, a.e_exposure_time, a.e_f_number, a.e_focal_length, a.e_iso_speed, a.e_flash, a.e_orientation,
+                a.e_title, a.e_headline, a.e_description, a.e_artist, a.e_copyright,
+                a.e_software,
+                a.gps_latitude, a.gps_longitude, a.gps_altitude,
+                a.geo_name, a.geo_admin1, a.geo_admin2, a.geo_cc,
                 b.path,
-                c.id AS album_id, c.name AS album_name,
+                c.id AS album_id,
+                c.name AS album_name,
                 (SELECT 1 FROM athumbs t WHERE t.file_id = a.id LIMIT 1) AS has_thumbnail,
                 (SELECT 1 FROM acollections_files cf WHERE cf.file_id = a.id LIMIT 1) AS has_collections,
                 CASE WHEN a.embeds IS NOT NULL THEN 1 ELSE 0 END AS has_embedding,
-                a.has_faces,
                 a.last_scan_time,
                 a.content_identifier,
                 a.media_subtype,
@@ -3443,11 +3479,10 @@ impl AFile {
                     THEN lpf.path || '/' || lpv.name
                     ELSE NULL
                 END AS live_photo_video_path,
-                a.motion_photo_offset,
                 {} AS album_visible,
+                a.motion_photo_offset,
                 a.cloud_only,
-                a.metadata_pending,
-                a.icc_profile, a.color_space, a.bit_depth
+                a.metadata_pending
             FROM afiles a
             LEFT JOIN afolders b ON a.folder_id = b.id
             LEFT JOIN albums c ON b.album_id = c.id
@@ -3471,29 +3506,29 @@ impl AFile {
             created_at: row.get(7)?,
             modified_at: row.get(8)?,
             inode: row.get(9)?,
-
             taken_date: row.get(10)?,
 
             width: row.get(11)?,
             height: row.get(12)?,
             duration: row.get(13)?,
+            icc_profile: row.get(14)?,
+            color_space: row.get(15)?,
+            bit_depth: row.get(16)?,
 
-            is_favorite: row.get(14)?,
-            rating: row.get(15)?,
-            culling_flag: row.get(16)?,
-            rotate: row.get(17)?,
-            comments: row.get(18)?,
-            has_tags: row.get(19)?,
+            is_favorite: row.get(17)?,
+            rating: row.get(18)?,
+            culling_flag: row.get(19)?,
+            rotate: row.get(20)?,
+            comments: row.get(21)?,
+            has_tags: row.get(22)?,
+            has_faces: row.get::<_, Option<i32>>(23)?,
 
-            e_make: row.get(20)?,
-            e_model: row.get(21)?,
-            e_date_time: row.get(22)?,
-            e_software: row.get(23)?,
-            e_artist: row.get(24)?,
-            e_copyright: row.get(25)?,
-            e_description: row.get(26)?,
-            e_lens_make: row.get(27)?,
-            e_lens_model: row.get(28)?,
+            e_make: row.get(24)?,
+            e_model: row.get(25)?,
+            e_lens_make: row.get(26)?,
+            e_lens_model: row.get(27)?,
+
+            e_date_time: row.get(28)?,
             e_exposure_bias: row.get(29)?,
             e_exposure_time: row.get(30)?,
             e_f_number: row.get(31)?,
@@ -3502,37 +3537,42 @@ impl AFile {
             e_flash: row.get(34)?,
             e_orientation: row.get(35)?,
 
-            gps_latitude: row.get(36)?,
-            gps_longitude: row.get(37)?,
-            gps_altitude: row.get(38)?,
-            geo_name: row.get(39)?,
-            geo_admin1: row.get(40)?,
-            geo_admin2: row.get(41)?,
-            geo_cc: row.get(42)?,
+            e_title: row.get(36)?,
+            e_headline: row.get(37)?,
+            e_description: row.get(38)?,
+            e_artist: row.get(39)?,
+            e_copyright: row.get(40)?,
+
+            e_software: row.get(41)?,
+
+            gps_latitude: row.get(42)?,
+            gps_longitude: row.get(43)?,
+            gps_altitude: row.get(44)?,
+
+            geo_name: row.get(45)?,
+            geo_admin1: row.get(46)?,
+            geo_admin2: row.get(47)?,
+            geo_cc: row.get(48)?,
 
             file_path: Some(t_utils::get_file_path(
-                row.get::<_, String>(43)?.as_str(),
+                row.get::<_, String>(49)?.as_str(),
                 row.get::<_, String>(2)?.as_str(),
             )),
-            album_id: row.get(44)?,
-            album_name: row.get(45)?,
-            has_thumbnail: row.get::<_, Option<i64>>(46)?.map(|v| v == 1),
-            has_collections: row.get::<_, Option<i64>>(47)?.map(|v| v == 1),
-            has_embedding: row.get::<_, Option<i64>>(48)?.map(|v| v == 1),
-            has_faces: row.get::<_, Option<i32>>(49)?,
-            last_scan_time: row.get(50)?,
-            content_identifier: row.get(51)?,
-            media_subtype: row.get(52)?,
-            live_photo_video_id: row.get(53)?,
-            live_photo_video_path: row.get(54)?,
-            motion_photo_offset: row.get(55)?,
-            album_accessible: row.get::<_, Option<i64>>(44)?.is_none_or(t_utils::album_accessible),
-            album_visible: row.get(56)?,
-            cloud_only: row.get(57)?,
-            metadata_pending: row.get(58)?,
-            icc_profile: row.get(59)?,
-            color_space: row.get(60)?,
-            bit_depth: row.get(61)?,
+            album_id: row.get(50)?,
+            album_name: row.get(51)?,
+            has_thumbnail: row.get::<_, Option<i64>>(52)?.map(|v| v == 1),
+            has_collections: row.get::<_, Option<i64>>(53)?.map(|v| v == 1),
+            has_embedding: row.get::<_, Option<i64>>(54)?.map(|v| v == 1),
+            last_scan_time: row.get(55)?,
+            content_identifier: row.get(56)?,
+            media_subtype: row.get(57)?,
+            live_photo_video_id: row.get(58)?,
+            live_photo_video_path: row.get(59)?,
+            album_accessible: row.get::<_, Option<i64>>(50)?.is_none_or(t_utils::album_accessible),
+            album_visible: row.get(60)?,
+            motion_photo_offset: row.get(61)?,
+            cloud_only: row.get(62)?,
+            metadata_pending: row.get(63)?,
         })
     }
 
@@ -4439,12 +4479,20 @@ impl AFile {
         }
         new_file_info.last_scan_time = Some(last_scan_time);
 
+        // Source titles are replaced atomically by the importer. Keep the last
+        // successful values if the sidecar cannot be imported after extraction.
+        let import_xmp = crate::metadata::xmp::is_xmp_import_enabled();
+        if import_xmp {
+            new_file_info.e_title = old_file_info.e_title.clone();
+            new_file_info.e_headline = old_file_info.e_headline.clone();
+        }
+
         // update the file info
         Self::update(file_id, &new_file_info)?;
         Self::update_column(file_id, "cloud_only", &false)?;
 
         let mut import_error = None;
-        if crate::metadata::xmp::is_xmp_import_enabled() {
+        if import_xmp {
             if let Err(error) = crate::metadata::xmp::import_xmp_for_file_with_mode(
                 file_id,
                 file_path,
@@ -5247,8 +5295,10 @@ impl AFile {
         let mut sql_params: Vec<Box<dyn ToSql>> = Vec::new();
 
         if !params.search_file_name.is_empty() {
-            conditions.push("(a.name LIKE ? COLLATE NOCASE OR a.comments LIKE ? COLLATE NOCASE)".to_string());
+            conditions.push("(a.name LIKE ? COLLATE NOCASE OR a.comments LIKE ? COLLATE NOCASE OR a.e_title LIKE ? COLLATE NOCASE OR a.e_headline LIKE ? COLLATE NOCASE)".to_string());
             let pattern = format!("%{}%", params.search_file_name);
+            sql_params.push(Box::new(pattern.clone()));
+            sql_params.push(Box::new(pattern.clone()));
             sql_params.push(Box::new(pattern.clone()));
             sql_params.push(Box::new(pattern));
         }
@@ -10428,6 +10478,9 @@ fn create_db_internal() -> Result<(), String> {
             width INTEGER,
             height INTEGER,
             duration INTEGER,
+            icc_profile TEXT,
+            color_space TEXT,
+            bit_depth INTEGER,
             is_favorite INTEGER,
             rating INTEGER NOT NULL DEFAULT 0,
             culling_flag INTEGER NOT NULL DEFAULT 0,
@@ -10437,13 +10490,9 @@ fn create_db_internal() -> Result<(), String> {
             has_faces INTEGER DEFAULT 0,
             e_make TEXT,
             e_model TEXT,
-            e_date_time TEXT,
-            e_software TEXT,
-            e_artist TEXT,
-            e_copyright TEXT,
-            e_description TEXT,
             e_lens_make TEXT,
             e_lens_model TEXT,
+            e_date_time TEXT,
             e_exposure_bias TEXT,
             e_exposure_time TEXT,
             e_f_number TEXT,
@@ -10451,9 +10500,12 @@ fn create_db_internal() -> Result<(), String> {
             e_iso_speed TEXT,
             e_flash TEXT,
             e_orientation INTEGER,
-            icc_profile TEXT,
-            color_space TEXT,
-            bit_depth INTEGER,
+            e_title TEXT,
+            e_headline TEXT,
+            e_description TEXT,
+            e_artist TEXT,
+            e_copyright TEXT,
+            e_software TEXT,
             gps_latitude REAL,
             gps_longitude REAL,
             gps_altitude REAL,

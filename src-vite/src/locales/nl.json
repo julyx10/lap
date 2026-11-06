@@ -1211,10 +1211,11 @@
     "source_description": "Oorspronkelijke beschrijving",
     "coordinates": "Coördinaten",
     "detail_fields": {
-      "title": "Oorspronkelijke titel",
+      "title": "Titel",
+      "headline": "Koptekst",
       "creator": "Maker",
       "copyright": "Copyright",
-      "description": "Oorspronkelijke beschrijving",
+      "description": "Bronbeschrijving",
       "credit": "Naamsvermelding",
       "source": "Bron",
       "usageTerms": "Gebruiksvoorwaarden",

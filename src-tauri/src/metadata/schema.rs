@@ -2,7 +2,7 @@
 //! Parsers and catalog merging consume these definitions without duplicating aliases.
 
 /// Bump when changed mappings must backfill unchanged catalog entries.
-pub(crate) const IMPORT_PREFIX: &str = "embedded-v6:";
+pub(crate) const IMPORT_PREFIX: &str = "embedded-v7:";
 
 pub const NS_LR: &str = "http://ns.adobe.com/lightroom/1.0/";
 pub const NS_DIGIKAM: &str = "http://www.digikam.org/ns/1.0/";
@@ -181,7 +181,15 @@ pub(super) const DETAIL_FIELDS: &[DetailField] = &[
             prefix: "dc",
             name: "title",
         }),
-        stored: false,
+        stored: true,
+        descriptive: true,
+        section: Some(DetailSection::Source),
+    },
+    DetailField {
+        key: "headline",
+        backend_names: &["Headline"],
+        xmp: Some(XmpProperty { uri: NS_PHOTOSHOP, prefix: "photoshop", name: "Headline" }),
+        stored: true,
         descriptive: true,
         section: Some(DetailSection::Source),
     },

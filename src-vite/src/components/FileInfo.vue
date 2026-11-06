@@ -644,18 +644,18 @@ function cancelPendingDetails(sections = sectionNames) {
   });
   if (requestIds.length) void invoke('cancel_file_metadata_requests', { requestIds }).catch(() => {});
 }
-const sourceKeys = ['title', 'creator', 'copyright', 'description', 'credit', 'source', 'usageTerms', 'rightsUrl', 'software'];
+const sourceKeys = ['title', 'headline', 'creator', 'copyright', 'description', 'credit', 'source', 'usageTerms', 'rightsUrl', 'software'];
 const detailKeys: Record<DetailSection, string[]> = {
   source: sourceKeys,
   capture: ['flash', 'whiteBalance', 'exposureMode', 'exposureProgram', 'meteringMode', 'focalLength35mm', 'timeZone'],
   location: ['direction', 'directionRef'],
 };
-const sourceFallbacks: Record<string, string> = { creator: 'e_artist', copyright: 'e_copyright', description: 'e_description', software: 'e_software' };
+const sourceFallbacks: Record<string, string> = { title: 'e_title', headline: 'e_headline', creator: 'e_artist', copyright: 'e_copyright', description: 'e_description', software: 'e_software' };
 function detailRows(keys: string[]) {
   return keys.flatMap(key => {
     const detail = metadataDetails.value[key];
     const fallback = sourceFallbacks[key] ? props.fileInfo?.[sourceFallbacks[key]] : key === 'flash' ? props.fileInfo?.e_flash : null;
-    let value = detail ? detail.values.filter(v => v.trim()).join('\n') : fallback;
+    let value = key === 'title' || key === 'headline' ? fallback : detail ? detail.values.filter(v => v.trim()).join('\n') : fallback;
     if (key === 'direction' && value && Number.isFinite(Number(value))) {
       const degrees = Number(value);
       if (degrees < 0 || degrees > 360) return [];

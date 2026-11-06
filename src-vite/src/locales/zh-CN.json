@@ -1211,10 +1211,11 @@
     "source_description": "原始描述",
     "coordinates": "坐标",
     "detail_fields": {
-      "title": "原始标题",
+      "title": "标题",
+      "headline": "内容标题",
       "creator": "作者",
       "copyright": "版权",
-      "description": "原始描述",
+      "description": "来源描述",
       "credit": "提供方",
       "source": "来源",
       "usageTerms": "使用条款",

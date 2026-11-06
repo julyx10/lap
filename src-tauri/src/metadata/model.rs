@@ -50,3 +50,10 @@ pub enum XmpImportMode {
     /// while leaving `None` (missing) fields untouched.
     ManualOverwrite,
 }
+
+/// Source text used for display/search; never edited by organization writeback.
+#[derive(Clone, Debug, Default)]
+pub(crate) struct SourceTitles {
+    pub title: Option<String>,
+    pub headline: Option<String>,
+}

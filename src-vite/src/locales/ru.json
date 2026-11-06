@@ -1211,10 +1211,11 @@
     "source_description": "Исходное описание",
     "coordinates": "Координаты",
     "detail_fields": {
-      "title": "Исходный заголовок",
+      "title": "Название",
+      "headline": "Заголовок материала",
       "creator": "Автор",
       "copyright": "Авторские права",
-      "description": "Исходное описание",
+      "description": "Описание из источника",
       "credit": "Поставщик",
       "source": "Источник",
       "usageTerms": "Условия использования",

@@ -1211,10 +1211,11 @@
     "source_description": "Початковий опис",
     "coordinates": "Координати",
     "detail_fields": {
-      "title": "Початковий заголовок",
+      "title": "Назва",
+      "headline": "Заголовок матеріалу",
       "creator": "Автор",
       "copyright": "Авторські права",
-      "description": "Початковий опис",
+      "description": "Опис із джерела",
       "credit": "Постачальник",
       "source": "Джерело",
       "usageTerms": "Умови використання",

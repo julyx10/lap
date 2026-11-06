@@ -6,6 +6,16 @@ import { compile, computed, createSSRApp } from 'vue';
 import { renderToString } from 'vue/server-renderer';
 
 const source = await readFile(new URL('../src/components/FileInfo.vue', import.meta.url), 'utf8');
+
+test('title and headline display stored values, including empty values, instead of lazy metadata', () => {
+  const start = source.indexOf('const sourceKeys =');
+  const end = source.indexOf('const sourceDetailRows', start);
+  const rows = fileInfo => new Function('props', 'metadataDetails', 't', ts.transpile(
+    `${source.slice(start, end)}; return detailRows(['title', 'headline']);`, { target: ts.ScriptTarget.ES2022 }
+  ))({ fileInfo }, { value: { title: { values: ['stale title'] }, headline: { values: ['stale headline'] } } }, key => key);
+  assert.deepEqual(rows({ e_title: 'Stored title', e_headline: 'Stored headline' }).map(row => row.value), ['Stored title', 'Stored headline']);
+  assert.deepEqual(rows({ e_title: null, e_headline: '' }), []);
+});
 function section(key) {
   const title = source.indexOf(`$t('file_info.${key}')`);
   assert.ok(title > 0);

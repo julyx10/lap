@@ -1211,10 +1211,11 @@
     "source_description": "元の説明",
     "coordinates": "座標",
     "detail_fields": {
-      "title": "元のタイトル",
+      "title": "タイトル",
+      "headline": "見出し",
       "creator": "作成者",
       "copyright": "著作権",
-      "description": "元の説明",
+      "description": "ソースの説明",
       "credit": "提供者",
       "source": "出典",
       "usageTerms": "利用条件",

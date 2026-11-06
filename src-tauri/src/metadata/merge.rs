@@ -21,6 +21,17 @@ pub(super) fn apply_with_state(
     mode: XmpImportMode,
     fingerprint: Option<&str>,
 ) -> Result<bool, String> {
+    apply_with_titles(file_id, meta, conn, mode, fingerprint, None)
+}
+
+pub(super) fn apply_with_titles(
+    file_id: i64,
+    meta: &XmpMetadata,
+    conn: &Connection,
+    mode: XmpImportMode,
+    fingerprint: Option<&str>,
+    titles: Option<&super::model::SourceTitles>,
+) -> Result<bool, String> {
     let tx = conn.unchecked_transaction().map_err(|e| e.to_string())?;
     let dirty: i32 = tx
         .query_row(
@@ -33,6 +44,10 @@ pub(super) fn apply_with_state(
     tx.execute("INSERT INTO axmp_imports(file_id, fingerprint, dirty) VALUES(?1, ?2, ?3)
         ON CONFLICT(file_id) DO UPDATE SET fingerprint = COALESCE(excluded.fingerprint, fingerprint), dirty = excluded.dirty",
         params![file_id, fingerprint, dirty]).map_err(|e| e.to_string())?;
+    if let Some(titles) = titles {
+        tx.execute("UPDATE afiles SET e_title=?1, e_headline=?2 WHERE id=?3 AND (e_title IS NOT ?1 OR e_headline IS NOT ?2)",
+            params![titles.title, titles.headline, file_id]).map_err(|e| e.to_string())?;
+    }
     tx.commit().map_err(|e| e.to_string())?;
     Ok(result)
 }

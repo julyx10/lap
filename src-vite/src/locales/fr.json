@@ -1211,10 +1211,11 @@
     "source_description": "Description originale",
     "coordinates": "Coordonnées",
     "detail_fields": {
-      "title": "Titre original",
+      "title": "Titre",
+      "headline": "En-tête",
       "creator": "Auteur",
       "copyright": "Copyright",
-      "description": "Description originale",
+      "description": "Description source",
       "credit": "Crédit",
       "source": "Source",
       "usageTerms": "Conditions d’utilisation",
