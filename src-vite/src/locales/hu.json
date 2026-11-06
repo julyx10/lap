@@ -155,6 +155,7 @@
       "delete_message": "A(z) „{name}” intelligens album törlődik.",
       "validation_name": "Adja meg az intelligens album nevét.",
       "validation_rule": "Adjon hozzá legalább egy teljes szabályt.",
+      "validation_no_values": "Nem található {field} ebben a könyvtárban.",
       "fields": {
         "folder_name": "Mappanév",
         "name": "Fájlnév",

@@ -155,6 +155,7 @@
       "delete_message": "Das Smart-Album „{name}“ wird gelöscht.",
       "validation_name": "Gib einen Namen für das Smart-Album ein.",
       "validation_rule": "Füge mindestens eine vollständige Regel hinzu.",
+      "validation_no_values": "Keine {field} in dieser Bibliothek gefunden.",
       "fields": {
         "folder_name": "Ordnername",
         "name": "Dateiname",

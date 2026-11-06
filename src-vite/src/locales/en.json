@@ -155,6 +155,7 @@
       "delete_message": "The smart album '{name}' will be deleted.",
       "validation_name": "Enter a smart album name.",
       "validation_rule": "Add at least one complete rule.",
+      "validation_no_values": "No {field} found in this library.",
       "fields": {
         "folder_name": "Folder name",
         "name": "File name",

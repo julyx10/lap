@@ -155,6 +155,7 @@
       "delete_message": "Het slimme album '{name}' wordt verwijderd.",
       "validation_name": "Voer een naam in voor het slimme album.",
       "validation_rule": "Voeg minstens één volledige regel toe.",
+      "validation_no_values": "Geen {field} gevonden in deze bibliotheek.",
       "fields": {
         "folder_name": "Mapnaam",
         "name": "Bestandsnaam",

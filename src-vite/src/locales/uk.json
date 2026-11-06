@@ -155,6 +155,7 @@
       "delete_message": "Розумний альбом '{name}' буде видалено.",
       "validation_name": "Введіть назву розумного альбому.",
       "validation_rule": "Додайте принаймні одне повне правило.",
+      "validation_no_values": "У цій бібліотеці не знайдено: {field}.",
       "fields": {
         "folder_name": "Назва папки",
         "name": "Назва файлу",

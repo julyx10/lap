@@ -155,6 +155,7 @@
       "delete_message": "将删除智能相册“{name}”。",
       "validation_name": "请输入智能相册名称。",
       "validation_rule": "请至少添加一条完整规则。",
+      "validation_no_values": "库中未发现{field}。",
       "fields": {
         "folder_name": "文件夹名称",
         "name": "文件名",

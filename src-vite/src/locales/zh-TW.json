@@ -155,6 +155,7 @@
       "delete_message": "智慧相簿「{name}」將被刪除。",
       "validation_name": "請輸入智慧相簿名稱。",
       "validation_rule": "請至少新增一條完整規則。",
+      "validation_no_values": "庫中未發現{field}。",
       "fields": {
         "folder_name": "資料夾名稱",
         "name": "檔案名稱",

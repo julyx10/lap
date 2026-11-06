@@ -155,6 +155,7 @@
       "delete_message": "スマートアルバム「{name}」を削除します。",
       "validation_name": "スマートアルバム名を入力してください。",
       "validation_rule": "完全なルールを少なくとも 1 つ追加してください。",
+      "validation_no_values": "このライブラリには{field}が見つかりません。",
       "fields": {
         "folder_name": "フォルダー名",
         "name": "ファイル名",

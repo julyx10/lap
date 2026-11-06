@@ -5955,6 +5955,15 @@ impl AFile {
         value: &JsonValue,
         sql_params: &mut Vec<Box<dyn ToSql>>,
     ) -> Result<String, String> {
+        // An empty string is a complete rule: contains matches everything,
+        // not_contains matches nothing. Only null or non-string values are errors.
+        if value.as_str().map(str::trim).is_some_and(str::is_empty) {
+            return Ok(match operator {
+                "contains" | "has" => "1 = 1".to_string(),
+                "not_contains" | "not_has" => "1 = 0".to_string(),
+                _ => return Err(format!("Unsupported name operator: {}", operator)),
+            });
+        }
         let name =
             Self::smart_rule_string(value).ok_or_else(|| "Name value required".to_string())?;
         let name = name.replace('\\', "\\\\").replace('%', "\\%").replace('_', "\\_");
@@ -11358,6 +11367,29 @@ mod smart_folder_name_tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn empty_name_filters_match_all_or_none_instead_of_erroring() {
+        let conn = Connection::open_in_memory().unwrap();
+        conn.execute_batch("CREATE TABLE names(name TEXT);
+            INSERT INTO names VALUES ('Project_1'), ('Houses'), ('photo.jpg');").unwrap();
+        for (operator, expected) in [("contains", 3), ("not_contains", 0)] {
+            for value in [serde_json::json!(""), serde_json::json!("   ")] {
+                let mut params = Vec::new();
+                let condition = AFile::build_smart_name_condition(
+                    "name", operator, &value, &mut params,
+                ).unwrap();
+                assert_eq!(condition, if operator == "contains" { "1 = 1" } else { "1 = 0" });
+                let matches: usize = conn.prepare(&format!(
+                    "SELECT COUNT(*) FROM names WHERE {}", condition,
+                )).unwrap().query_row([], |row| row.get(0)).unwrap();
+                assert_eq!(matches, expected);
+            }
+        }
+        // Non-string values remain a hard error rather than silently matching all.
+        assert!(AFile::build_smart_name_condition("name", "contains", &serde_json::json!(null), &mut Vec::new()).is_err());
+        assert!(AFile::build_smart_name_condition("name", "contains", &serde_json::json!(5), &mut Vec::new()).is_err());
     }
 
 }

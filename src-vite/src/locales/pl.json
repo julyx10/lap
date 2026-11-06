@@ -155,6 +155,7 @@
       "delete_message": "Inteligentny album „{name}” zostanie usunięty.",
       "validation_name": "Wprowadź nazwę inteligentnego albumu.",
       "validation_rule": "Dodaj co najmniej jedną kompletną regułę.",
+      "validation_no_values": "Nie znaleziono {field} w tej bibliotece.",
       "fields": {
         "folder_name": "Nazwa folderu",
         "name": "Nazwa pliku",

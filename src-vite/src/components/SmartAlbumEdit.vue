@@ -277,10 +277,37 @@ const fieldOptions = computed(() => [
   { value: 'has_gps', label: t('album.smart_edit.fields.has_gps') },
 ]);
 
+// Referenced-entity fields pick their value from a library-backed list;
+// an empty list is the library's state, not an incomplete form.
+const referenceOptionsByField: Record<string, () => any[]> = {
+  tag: () => tagOptions.value,
+  person: () => personOptions.value,
+  album: () => albumOptions.value,
+  collection: () => collectionOptions.value,
+  camera: () => cameraOptions.value,
+  lens: () => lensOptions.value,
+  location: () => locationOptions.value,
+};
+
+function fieldLabel(field: string) {
+  return fieldOptions.value.find(option => option.value === field)?.label || field;
+}
+
 const validationMessage = computed(() => {
   if (rules.value.length === 0) return t('album.smart_edit.validation_rule');
-  if (!rules.value.every(isRuleValid)) return t('album.smart_edit.validation_rule');
-  return '';
+  const incomplete = rules.value.filter(rule => !isRuleValid(rule));
+  if (incomplete.length === 0) return '';
+  const missingLists = incomplete.filter(rule => {
+    const options = referenceOptionsByField[rule.field]?.();
+    return options?.length === 0;
+  });
+  // Only speak about missing values when that explains every incomplete rule;
+  // otherwise the generic message still covers genuinely unfinished rules.
+  if (missingLists.length === incomplete.length) {
+    const fields = [...new Set(missingLists.map(rule => fieldLabel(rule.field)))];
+    return t('album.smart_edit.validation_no_values', { field: fields.join(', ') });
+  }
+  return t('album.smart_edit.validation_rule');
 });
 const canSave = computed(() => name.value.trim().length > 0 && validationMessage.value.length === 0);
 
@@ -365,6 +392,9 @@ function setDefaultRuleValue(rule: any) {
 
 function isRuleValid(rule: any) {
   if (!rule.field || !rule.operator) return false;
+  // contains/not_contains accept any text, including empty: an empty value
+  // matches all (contains) or none (not_contains) on the backend.
+  if (['folder_name', 'name'].includes(rule.field)) return true;
   if (['empty', 'not_empty'].includes(rule.operator)) return true;
   if (rule.operator === 'between') {
     return Boolean(

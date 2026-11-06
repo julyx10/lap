@@ -155,6 +155,7 @@
       "delete_message": "Смарт-альбом \"{name}\" будет удалён.",
       "validation_name": "Введите название смарт-альбома.",
       "validation_rule": "Добавьте хотя бы одно полное правило.",
+      "validation_no_values": "В этой библиотеке не найдено: {field}.",
       "fields": {
         "folder_name": "Имя папки",
         "name": "Имя файла",
