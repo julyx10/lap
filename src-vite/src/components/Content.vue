@@ -526,6 +526,7 @@
             v-else-if="renderedRightPanelContent === 'info'"
             ref="fileInfoRef"
             :fileInfo="fileList[selectedItemIndex]"
+            :empty="hasConfirmedEmptyContent"
             :refresh-file="refreshFileInfoFromPanel"
             :change-thumbnail="changeVideoThumbnailFromPanel"
             :navigator-viewport="infoNavigatorViewport"

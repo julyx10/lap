@@ -3073,6 +3073,9 @@ pub async fn get_file_metadata_details(
         return Err("Metadata request cancelled".into());
     }
     let file = AFile::get_file_info(file_id)?.ok_or("File not found")?;
+    if !file.album_accessible || file.cloud_only {
+        return Ok(Default::default());
+    }
     let path = file.file_path.ok_or("File has no path")?;
     static READS: std::sync::OnceLock<tokio::sync::Semaphore> = std::sync::OnceLock::new();
     let _permit = READS

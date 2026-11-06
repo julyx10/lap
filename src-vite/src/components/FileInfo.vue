@@ -25,8 +25,9 @@
     </div>
 
     <!-- Info Content -->
-    <div v-if="fileInfo" class="mb-2 px-2 flex-1 overflow-y-auto overflow-x-hidden flex flex-col [overflow-anchor:none]">
+    <div v-if="fileInfo" :class="{ invisible: !infoReady && (!hasDisplayedInfo || showDelayedLoading) }" :inert="!infoReady || undefined" :aria-hidden="!infoReady || undefined" class="mb-2 px-2 flex-1 overflow-y-auto overflow-x-hidden flex flex-col [overflow-anchor:none]">
 
+      <div v-memo="[renderInfoRevision()]" class="contents">
       <!-- Preview Section -->
       <div class="group/thumbnail shrink-0 border-t border-base-content/5 px-1 py-3">
         <div
@@ -62,7 +63,7 @@
           </div>
         </div>
 
-        <SmoothHeight>
+        <div class="shrink-0">
           <div v-if="showPreviewPanel" class="pt-3 overflow-hidden">
             <div
               v-if="!isHistogramPreview"
@@ -139,7 +140,7 @@
               <ImageHistogram :source="fileInfo?.thumbnail || ''" />
             </div>
           </div>
-        </SmoothHeight>
+        </div>
       </div>
 
       <div class="shrink-0 border-t border-base-content/5 px-1 py-3">
@@ -147,7 +148,7 @@
           <IconRight class="w-3 h-3 transition-transform duration-200" :class="{ 'rotate-90': showOrganizationPanel }" />
           <span class="font-bold uppercase text-xs tracking-wide text-base-content/30">{{ $t('file_info.organization') }}</span>
         </button>
-        <SmoothHeight>
+        <div class="shrink-0">
           <div v-if="showOrganizationPanel" class="pt-3 space-y-1.5">
             <FavoriteRatingControl class="pl-4"
               :favorite="Boolean(fileInfo?.is_favorite)"
@@ -242,7 +243,7 @@
 
           </div>
           </div>
-        </SmoothHeight>
+        </div>
       </div>
 
       <!-- File Info Section -->
@@ -272,7 +273,7 @@
           </div>
         </div>
 
-        <SmoothHeight>
+        <div class="shrink-0">
           <div v-if="showBasicInfoPanel" class="pt-3 overflow-hidden">
             <div class="pl-4 grid grid-cols-[84px_minmax(0,1fr)] gap-y-1.5 gap-x-4 text-xs">
             <!-- Name -->
@@ -370,11 +371,11 @@
             
             </div>
           </div>
-        </SmoothHeight>
+        </div>
       </div>
 
       <!-- Capture information -->
-      <SmoothHeight>
+      <div class="shrink-0">
       <div v-if="hasCaptureInfo" class="border-t border-base-content/5 px-1 py-4">
 
         <div class="flex items-center gap-1 cursor-pointer text-base-content/70 hover:text-base-content" @click.stop="toggleMetadata">
@@ -426,9 +427,9 @@
 
         </div>
       </div>
-      </SmoothHeight>
+      </div>
 
-      <SmoothHeight>
+      <div class="shrink-0">
       <div v-if="hasLocationInfo" class="border-t border-base-content/5 px-1 py-3">
         <button type="button" class="flex w-full items-center gap-1 cursor-pointer text-base-content/70 hover:text-base-content" :aria-expanded="showMapPanel" @click="toggleMapPanel">
           <IconRight class="w-3 h-3 transition-transform duration-200" :class="{ 'rotate-90': showMapPanel }" />
@@ -463,9 +464,9 @@
             </template>
         </div>
       </div>
-      </SmoothHeight>
+      </div>
 
-      <SmoothHeight>
+      <div class="shrink-0">
       <div v-if="hasSourceMetadata" class="border-t border-base-content/5 px-1 py-3">
         <button type="button" class="flex w-full items-center gap-1 cursor-pointer text-base-content/70 hover:text-base-content" :aria-expanded="showSourceMetadataPanel" @click="toggleSourceMetadata">
           <IconRight class="w-3 h-3 transition-transform duration-200" :class="{ 'rotate-90': showSourceMetadataPanel }" />
@@ -479,12 +480,13 @@
 
         </div>
       </div>
-      </SmoothHeight>
+      </div>
 
       <button v-if="detailsError" type="button" class="px-1 text-left text-xs text-warning" @click="loadMetadataDetails(true)">{{ $t('file_info.metadata_details_retry') }}</button>
+      </div>
     </div>
 
-    <div v-else class="mb-2 px-2 flex-1 overflow-y-auto overflow-x-hidden flex flex-col">
+    <div v-else-if="empty" class="mb-2 px-2 flex-1 overflow-y-auto overflow-x-hidden flex flex-col">
       <div class="p-4 flex-1 flex items-center justify-center">
         <div class="text-center text-base-content/30 space-y-3 max-w-65">
           <IconFile class="w-8 h-8 mx-auto text-base-content/30" />
@@ -498,7 +500,6 @@
 
 <script setup lang="ts">
 import ImageNavigator from '@/components/ImageNavigator.vue';
-import SmoothHeight from '@/components/SmoothHeight.vue';
 import { invoke } from '@tauri-apps/api/core';
 import { navigatorLayout } from '@/common/imageNavigator';
 import { h, ref, nextTick, computed, watch, onBeforeUnmount, onMounted } from 'vue';
@@ -551,6 +552,7 @@ import ImageHistogram from '@/components/ImageHistogram.vue';
 import MapView from '@/components/MapView.vue';
 
 const props = defineProps({
+  empty: { type: Boolean, default: false },
   navigatorViewport: { type: Object, default: null },
   refreshFile: { type: Function, default: null },
   changeThumbnail: { type: Function, default: null },
@@ -611,6 +613,17 @@ const previewScale = computed({
 });
 type MetadataDetail = { values: string[]; source: string };
 const metadataDetails = ref<Record<string, MetadataDetail>>({});
+const detailData = ref<Record<string, MetadataDetail>>({});
+const infoReady = ref(false);
+const hasDisplayedInfo = ref(false);
+let displayedRevision = 0;
+// Keep the last rendered panel intact until the next file is ready. The outer
+// container disables interaction and hides it only after the loading delay.
+function renderInfoRevision() {
+  if (infoReady.value) displayedRevision++;
+  return displayedRevision;
+}
+const skipDetailReads = computed(() => isOriginalUnavailable(props.fileInfo) || !!props.fileInfo?.cloud_only);
 type DetailSection = 'source' | 'capture' | 'location';
 const sectionNames: DetailSection[] = ['source', 'capture', 'location'];
 function emptyDetailSections() {
@@ -625,7 +638,7 @@ function detailSnapshotKey() {
 function rememberDetailSnapshot() {
   const key = detailSnapshotKey();
   detailSnapshots.delete(key);
-  detailSnapshots.set(key, { data: metadataDetails.value, bytes: JSON.stringify(metadataDetails.value).length * 2,
+  detailSnapshots.set(key, { data: detailData.value, bytes: JSON.stringify(detailData.value).length * 2,
     loaded: sectionNames.filter(section => detailSections.value[section].loaded && !detailSections.value[section].error) });
   while (detailSnapshots.size > 16 || [...detailSnapshots.values()].reduce((bytes, snapshot) => bytes + snapshot.bytes, 0) > 4 * 1024 * 1024) {
     detailSnapshots.delete(detailSnapshots.keys().next().value!);
@@ -644,7 +657,7 @@ function cancelPendingDetails(sections = sectionNames) {
   });
   if (requestIds.length) void invoke('cancel_file_metadata_requests', { requestIds }).catch(() => {});
 }
-const sourceKeys = ['title', 'headline', 'creator', 'copyright', 'description', 'credit', 'source', 'usageTerms', 'rightsUrl', 'software'];
+const sourceKeys = ['title', 'headline', 'creator', 'copyright', 'description', 'software', 'credit', 'source', 'usageTerms', 'rightsUrl'];
 const detailKeys: Record<DetailSection, string[]> = {
   source: sourceKeys,
   capture: ['flash', 'whiteBalance', 'exposureMode', 'exposureProgram', 'meteringMode', 'focalLength35mm', 'timeZone'],
@@ -686,7 +699,7 @@ function sectionOpen(section: DetailSection) {
 async function loadDetailSection(section: DetailSection, force = false) {
   const fileId = Number(props.fileInfo?.id);
   const state = detailSections.value[section];
-  if (!fileId || !sectionOpen(section) || state.loading || (state.loaded && !state.stale && !state.revalidate && !force)) return;
+  if (skipDetailReads.value || !fileId || !sectionOpen(section) || state.loading || (state.loaded && !state.stale && !state.revalidate && !force)) return;
   force ||= state.stale;
   const generation = detailsRequest;
   const request = ++state.request;
@@ -696,23 +709,41 @@ async function loadDetailSection(section: DetailSection, force = false) {
   state.loading = true;
   state.error = false;
   const current = () => generation === detailsRequest && request === state.request
-    && libraryId === libConfig._libraryId && sectionOpen(section);
+    && fileId === Number(props.fileInfo?.id) && libraryId === libConfig._libraryId && sectionOpen(section);
+  let timeout: ReturnType<typeof setTimeout> | undefined;
   try {
-    const result = await invoke<Record<string, MetadataDetail>>('get_file_metadata_details', { fileId, section, requestId, force, refreshKey: force ? `${detailClientId}:${generation}` : null });
+    const result = await Promise.race([
+      invoke<Record<string, MetadataDetail>>('get_file_metadata_details', { fileId, section, requestId, force, refreshKey: force ? `${detailClientId}:${generation}` : null }),
+      new Promise<never>((_, reject) => {
+        timeout = setTimeout(() => {
+          void invoke('cancel_file_metadata_requests', { requestIds: [requestId] }).catch(() => {});
+          reject(new Error('Metadata read timed out'));
+        }, 10000);
+      }),
+    ]);
     if (!current()) return;
     // Replace one complete section in a single assignment, including removed fields.
-    const next = { ...metadataDetails.value };
+    const next = { ...detailData.value };
     for (const key of detailKeys[section]) delete next[key];
     for (const key of detailKeys[section]) if (result[key]) next[key] = result[key];
-    metadataDetails.value = next;
+    detailData.value = next;
     state.loaded = true;
     state.stale = false;
     state.revalidate = false;
-    rememberDetailSnapshot();
   } catch {
-    if (current()) state.error = true;
+    if (current()) {
+      state.error = true;
+      const next = { ...detailData.value };
+      for (const key of detailKeys[section]) delete next[key];
+      detailData.value = next;
+    }
   } finally {
-    if (generation === detailsRequest && request === state.request) { state.loading = false; state.token = null; }
+    clearTimeout(timeout);
+    if (generation === detailsRequest && request === state.request) {
+      state.loading = false;
+      state.token = null;
+      publishFileInfo();
+    }
   }
 }
 function invalidateDetailSections() {
@@ -727,13 +758,30 @@ function invalidateDetailSections() {
     state.stale = true;
   }
 }
+function publishFileInfo() {
+  if (sectionNames.some(section => sectionOpen(section) && (detailSections.value[section].loading
+    || (!detailSections.value[section].loaded && !detailSections.value[section].error)))) return;
+  metadataDetails.value = { ...detailData.value };
+  hasDisplayedInfo.value = true;
+  infoReady.value = true;
+  if (!skipDetailReads.value) rememberDetailSnapshot();
+}
+function useDbFieldsOnly() {
+  detailData.value = {};
+  metadataDetails.value = {};
+  for (const section of sectionNames) Object.assign(detailSections.value[section], { loaded: true, loading: false, error: false });
+  hasDisplayedInfo.value = true;
+  infoReady.value = true;
+}
 function loadMetadataDetails(force = false) {
+  if (skipDetailReads.value) { useDbFieldsOnly(); return; }
   for (const section of sectionNames) if (sectionOpen(section)) void loadDetailSection(section, force);
+  publishFileInfo();
 }
 const LoadingIcon = { render: () => h('span', { class: 'loading loading-spinner' }) };
 const refreshingFile = ref<string | null>(null);
 const activeInfoKey = computed(() => `${libConfig._libraryId}:${props.fileInfo?.id ?? ''}`);
-const fileInfoBusy = computed(() => refreshingFile.value === activeInfoKey.value
+const fileInfoBusy = computed(() => (!!props.fileInfo && !infoReady.value) || refreshingFile.value === activeInfoKey.value
   || sectionNames.some(section => detailSections.value[section].loading));
 const showDelayedLoading = ref(false);
 let loadingTimer: ReturnType<typeof setTimeout> | undefined;
@@ -752,11 +800,15 @@ async function refreshInfo() {
     if (props.refreshFile) await props.refreshFile(file);
     if (activeInfoKey.value !== key) return;
     await nextTick();
-    await Promise.all(sectionNames.filter(sectionOpen).map(section => loadDetailSection(section, true)));
+    if (skipDetailReads.value) useDbFieldsOnly();
+    else await Promise.all(sectionNames.filter(sectionOpen).map(section => loadDetailSection(section, true)));
   } catch {
     if (activeInfoKey.value === key) toast.error(t('tooltip.update_image.failed'));
   } finally {
-    if (refreshingFile.value === key) refreshingFile.value = null;
+    if (refreshingFile.value === key) {
+      refreshingFile.value = null;
+      publishFileInfo();
+    }
   }
 }
 const changingThumbnail = ref(false);
@@ -792,40 +844,44 @@ const exposureText = computed(() => formatCaptureSettings(props.fileInfo?.e_foca
   props.fileInfo?.e_f_number, props.fileInfo?.e_iso_speed, props.fileInfo?.e_exposure_bias) || '');
 const captureTimeText = computed(() => props.fileInfo?.e_date_time?.trim() && props.fileInfo?.taken_date != null
   ? formatTimestamp(props.fileInfo.taken_date, 'date_time') : '');
-const hasCaptureInfo = computed(() => (!detailSections.value.capture.loaded || detailSections.value.capture.loading || detailSections.value.capture.error) || !!(cameraText.value.trim() || props.fileInfo?.e_lens_model?.trim()
+const hasCaptureInfo = computed(() => (!detailSections.value.capture.loaded) || !!(cameraText.value.trim() || props.fileInfo?.e_lens_model?.trim()
   || exposureText.value.trim() || captureTimeText.value || captureDetailRows.value.length));
-const hasLocationInfo = computed(() => (!detailSections.value.location.loaded || detailSections.value.location.loading || detailSections.value.location.error) || !!(locationDetailRows.value.length || hasCoordinates.value || hasAltitude.value || formatGeoLocation().trim()));
-const hasSourceMetadata = computed(() => (!detailSections.value.source.loaded || detailSections.value.source.loading || detailSections.value.source.error) || sourceDetailRows.value.length > 0);
+const hasLocationInfo = computed(() => (!detailSections.value.location.loaded) || !!(locationDetailRows.value.length || hasCoordinates.value || hasAltitude.value || formatGeoLocation().trim()));
+const hasSourceMetadata = computed(() => (!detailSections.value.source.loaded) || sourceDetailRows.value.length > 0);
 const showBasicInfoPanel = computed(() => config.infoPanel.showBasicInfo);
 const showMetadataPanel = computed(() => config.infoPanel.showMetadata);
 const showMapPanel = computed(() => config.infoPanel.showMap);
-watch(() => [libConfig._libraryId, props.fileInfo?.id, props.fileInfo?.file_path, props.fileInfo?.last_scan_time, props.fileInfo?.modified_at], (values, previous) => {
+watch(() => [libConfig._libraryId, props.fileInfo?.id, props.fileInfo?.file_path, props.fileInfo?.last_scan_time, props.fileInfo?.modified_at, skipDetailReads.value], (values, previous) => {
   const sameFile = previous && values[0] === previous[0] && values[1] === previous[1];
   if (sameFile) {
     invalidateDetailSections();
   } else {
+    infoReady.value = false;
     cancelPendingDetails();
     detailsRequest++;
     const snapshot = detailSnapshots.get(detailSnapshotKey());
-    metadataDetails.value = snapshot ? { ...snapshot.data } : {};
+    detailData.value = snapshot ? { ...snapshot.data } : {};
     detailSections.value = emptyDetailSections();
     for (const section of snapshot?.loaded || []) {
       detailSections.value[section].loaded = true;
       detailSections.value[section].revalidate = true;
     }
   }
+  if (skipDetailReads.value) { useDbFieldsOnly(); return; }
+  publishFileInfo();
   // The explicit refresh waits for catalog updates before fetching open sections.
   if (refreshingFile.value !== activeInfoKey.value) loadMetadataDetails();
 }, { immediate: true });
 for (const section of sectionNames) {
   watch(() => sectionOpen(section), open => {
     const state = detailSections.value[section];
-    if (open) void loadDetailSection(section);
+    if (open) loadMetadataDetails();
     else {
       cancelPendingDetails([section]);
       if (state.loading) state.stale = true;
       state.request++;
       state.loading = false;
+      publishFileInfo();
     }
   });
 }
@@ -942,9 +998,11 @@ const previewFormatLabel = computed(() => {
     return t('image_viewer.motion');
   }
 
-  const formatLabel = (props.fileInfo?.format_label || '').trim();
+  if (isRawJpegPair.value) return `RAW+${rawJpegCompanionLabel.value}`;
   const isRaw = Number(props.fileInfo?.file_type || 0) === 3;
-  if (formatLabel && !(isRaw && formatLabel.toUpperCase() === 'RAW')) {
+  if (isRaw) return 'RAW';
+  const formatLabel = (props.fileInfo?.format_label || '').trim();
+  if (formatLabel) {
     return formatLabel.toUpperCase();
   }
 
