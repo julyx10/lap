@@ -355,6 +355,8 @@
     "unreviewed": "Não revisadas"
   },
   "tag": {
+    "no_selected_tags": "Nenhuma etiqueta selecionada",
+    "show_selected_only": "Mostrar apenas etiquetas selecionadas",
     "title": "Tags",
     "delete_tag": "Excluir tag",
     "edit_tag": "Editar tags",

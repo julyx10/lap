@@ -355,6 +355,8 @@
     "unreviewed": "Átnézendőek"
   },
   "tag": {
+    "no_selected_tags": "Nincsenek kijelölt címkék",
+    "show_selected_only": "Csak a kijelölt címkék megjelenítése",
     "title": "Címkék",
     "delete_tag": "Címke törlése",
     "edit_tag": "Címkék szerkesztése",

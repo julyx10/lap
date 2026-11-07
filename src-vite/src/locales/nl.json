@@ -355,6 +355,8 @@
     "unreviewed": "Niet bekeken"
   },
   "tag": {
+    "no_selected_tags": "Geen geselecteerde tags",
+    "show_selected_only": "Alleen geselecteerde tags tonen",
     "title": "Tags",
     "delete_tag": "Tag verwijderen",
     "edit_tag": "Tags bewerken",

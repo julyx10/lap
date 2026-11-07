@@ -355,6 +355,8 @@
     "unreviewed": "Non examinées"
   },
   "tag": {
+    "no_selected_tags": "Aucune étiquette sélectionnée",
+    "show_selected_only": "Afficher uniquement les étiquettes sélectionnées",
     "title": "Tags",
     "delete_tag": "Supprimer tag",
     "edit_tag": "Modifier les étiquettes",

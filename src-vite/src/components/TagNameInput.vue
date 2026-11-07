@@ -5,7 +5,8 @@
       v-model="name"
       type="text"
       maxlength="255"
-      class="input px-1 w-full text-base"
+      class="input px-1 w-full"
+      :class="compact ? 'h-6 text-sm' : 'text-base'"
       :readonly="saving"
       :aria-invalid="!!error"
       @keydown.stop
@@ -14,7 +15,7 @@
       @blur="emit('save', name)"
       @input="emit('clear-error')"
     />
-    <p v-if="error" class="text-xs text-error">{{ error }}</p>
+    <p v-if="error && !compact" class="text-xs text-error">{{ error }}</p>
   </div>
 </template>
 
@@ -26,6 +27,7 @@ const props = defineProps<{
   initialName: string;
   saving: boolean;
   error: string;
+  compact?: boolean;
 }>();
 const emit = defineEmits<{
   save: [name: string];

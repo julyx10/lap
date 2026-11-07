@@ -355,6 +355,8 @@
     "unreviewed": "待筛选"
   },
   "tag": {
+    "no_selected_tags": "没有已选标签",
+    "show_selected_only": "仅显示已选标签",
     "title": "标签",
     "delete_tag": "删除标签",
     "edit_tag": "编辑标签",

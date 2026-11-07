@@ -355,6 +355,8 @@
     "unreviewed": "Nicht geprüft"
   },
   "tag": {
+    "no_selected_tags": "Keine ausgewählten Tags",
+    "show_selected_only": "Nur ausgewählte Tags anzeigen",
     "title": "Tags",
     "delete_tag": "Tag löschen",
     "edit_tag": "Tags bearbeiten",

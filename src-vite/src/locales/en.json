@@ -355,6 +355,8 @@
     "unreviewed": "Unreviewed"
   },
   "tag": {
+    "no_selected_tags": "No selected tags",
+    "show_selected_only": "Show selected tags only",
     "title": "Tags",
     "delete_tag": "Delete tag",
     "edit_tag": "Edit tags",

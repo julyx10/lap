@@ -355,6 +355,8 @@
     "unreviewed": "未檢視"
   },
   "tag": {
+    "no_selected_tags": "沒有已選標籤",
+    "show_selected_only": "僅顯示已選標籤",
     "title": "標籤",
     "delete_tag": "刪除標籤",
     "edit_tag": "編輯標籤",

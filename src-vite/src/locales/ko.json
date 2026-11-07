@@ -355,6 +355,8 @@
     "unreviewed": "미선별"
   },
   "tag": {
+    "no_selected_tags": "선택한 태그가 없습니다",
+    "show_selected_only": "선택한 태그만 표시",
     "title": "태그",
     "delete_tag": "태그 삭제",
     "edit_tag": "태그 편집",

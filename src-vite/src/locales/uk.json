@@ -355,6 +355,8 @@
     "unreviewed": "Не переглянуті"
   },
   "tag": {
+    "no_selected_tags": "Немає вибраних тегів",
+    "show_selected_only": "Показати лише вибрані теги",
     "title": "Теги",
     "delete_tag": "Видалити тег",
     "edit_tag": "Редагувати теги",

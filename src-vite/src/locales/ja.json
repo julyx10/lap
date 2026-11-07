@@ -355,6 +355,8 @@
     "unreviewed": "未選別"
   },
   "tag": {
+    "no_selected_tags": "選択したタグはありません",
+    "show_selected_only": "選択したタグのみ表示",
     "title": "タグ",
     "delete_tag": "タグを削除",
     "edit_tag": "タグを編集",
