@@ -15,8 +15,9 @@ export const fileInfoFieldGroups = [
   ] },
   { key: 'location', label: 'file_info.geo_location', fields: [
     ...fields('location', ['geo_location']),
-    { key: 'location.gps', label: 'GPS' }, { key: 'location.map', label: 'file_info.map' },
+    { key: 'location.gps', label: 'GPS' },
     ...fields('location', ['direction', 'directionRef'], true),
+    { key: 'location.map', label: 'file_info.map' },
   ] },
   { key: 'source', label: 'file_info.source_metadata', fields: fields('source',
     ['title', 'headline', 'creator', 'copyright', 'description', 'software', 'credit', 'source', 'usageTerms', 'rightsUrl'], true) },
