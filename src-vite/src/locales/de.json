@@ -148,6 +148,9 @@
       "add_rule": "Regel hinzufügen",
       "rules_count": "{count}/{max} Regeln",
       "remove_rule": "Regel entfernen",
+      "search_options": "Filter…",
+      "no_matches": "Keine Treffer",
+      "select_value": "Auswählen…",
       "group": "Gruppierung",
       "sort": "Sortierung",
       "order": "Reihenfolge",
@@ -155,7 +158,6 @@
       "delete_message": "Das Smart-Album „{name}“ wird gelöscht.",
       "validation_name": "Gib einen Namen für das Smart-Album ein.",
       "validation_rule": "Füge mindestens eine vollständige Regel hinzu.",
-      "validation_no_values": "Keine {field} in dieser Bibliothek gefunden.",
       "fields": {
         "folder_name": "Ordnername",
         "name": "Dateiname",

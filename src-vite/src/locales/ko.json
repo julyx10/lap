@@ -148,6 +148,9 @@
       "add_rule": "규칙 추가",
       "rules_count": "{count}/{max} 규칙",
       "remove_rule": "규칙 제거",
+      "search_options": "필터…",
+      "no_matches": "일치 항목 없음",
+      "select_value": "선택…",
       "group": "그룹",
       "sort": "정렬",
       "order": "순서",
@@ -155,7 +158,6 @@
       "delete_message": "스마트 앨범 “{name}”이 삭제됩니다.",
       "validation_name": "스마트 앨범 이름을 입력하세요.",
       "validation_rule": "완성된 규칙을 하나 이상 추가하세요.",
-      "validation_no_values": "이 라이브러리에서 {field}을(를) 찾을 수 없습니다.",
       "fields": {
         "folder_name": "폴더 이름",
         "name": "파일 이름",

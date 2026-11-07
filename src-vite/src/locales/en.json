@@ -148,6 +148,9 @@
       "add_rule": "Add rule",
       "rules_count": "{count}/{max} rules",
       "remove_rule": "Remove rule",
+      "search_options": "Filter…",
+      "no_matches": "No matches",
+      "select_value": "Select…",
       "group": "Group",
       "sort": "Sort",
       "order": "Order",
@@ -155,7 +158,6 @@
       "delete_message": "The smart album '{name}' will be deleted.",
       "validation_name": "Enter a smart album name.",
       "validation_rule": "Add at least one complete rule.",
-      "validation_no_values": "No {field} found in this library.",
       "fields": {
         "folder_name": "Folder name",
         "name": "File name",

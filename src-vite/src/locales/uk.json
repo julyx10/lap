@@ -148,6 +148,9 @@
       "add_rule": "Додати правило",
       "rules_count": "{count}/{max} правил",
       "remove_rule": "Вилучити правило",
+      "search_options": "Фільтр…",
+      "no_matches": "Немає збігів",
+      "select_value": "Вибрати…",
       "group": "Група",
       "sort": "Сортування",
       "order": "Порядок",
@@ -155,7 +158,6 @@
       "delete_message": "Розумний альбом '{name}' буде видалено.",
       "validation_name": "Введіть назву розумного альбому.",
       "validation_rule": "Додайте принаймні одне повне правило.",
-      "validation_no_values": "У цій бібліотеці не знайдено: {field}.",
       "fields": {
         "folder_name": "Назва папки",
         "name": "Назва файлу",

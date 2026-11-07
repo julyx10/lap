@@ -148,6 +148,9 @@
       "add_rule": "新增規則",
       "rules_count": "{count}/{max} 條規則",
       "remove_rule": "移除規則",
+      "search_options": "篩選…",
+      "no_matches": "無相符項目",
+      "select_value": "選擇…",
       "group": "群組",
       "sort": "排序",
       "order": "順序",
@@ -155,7 +158,6 @@
       "delete_message": "智慧相簿「{name}」將被刪除。",
       "validation_name": "請輸入智慧相簿名稱。",
       "validation_rule": "請至少新增一條完整規則。",
-      "validation_no_values": "庫中未發現{field}。",
       "fields": {
         "folder_name": "資料夾名稱",
         "name": "檔案名稱",

@@ -148,6 +148,9 @@
       "add_rule": "Szabály hozzáadása",
       "rules_count": "{count}/{max} szabály",
       "remove_rule": "Szabály eltávolítása",
+      "search_options": "Szűrés…",
+      "no_matches": "Nincs találat",
+      "select_value": "Kiválasztás…",
       "group": "Csoport",
       "sort": "Rendezés",
       "order": "Sorrend",
@@ -155,7 +158,6 @@
       "delete_message": "A(z) „{name}” intelligens album törlődik.",
       "validation_name": "Adja meg az intelligens album nevét.",
       "validation_rule": "Adjon hozzá legalább egy teljes szabályt.",
-      "validation_no_values": "Nem található {field} ebben a könyvtárban.",
       "fields": {
         "folder_name": "Mappanév",
         "name": "Fájlnév",

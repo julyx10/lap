@@ -153,6 +153,7 @@ import { useUIStore } from '@/stores/uiStore';
 import { config } from '@/common/config';
 import { GROUP } from '@/common/constants';
 import ModalDialog from '@/components/ModalDialog.vue';
+import SearchableSelect from '@/components/SearchableSelect.vue';
 import TButton from '@/components/TButton.vue';
 
 const props = defineProps({
@@ -277,39 +278,18 @@ const fieldOptions = computed(() => [
   { value: 'has_gps', label: t('album.smart_edit.fields.has_gps') },
 ]);
 
-// Referenced-entity fields pick their value from a library-backed list;
-// an empty list is the library's state, not an incomplete form.
-const referenceOptionsByField: Record<string, () => any[]> = {
-  tag: () => tagOptions.value,
-  person: () => personOptions.value,
-  album: () => albumOptions.value,
-  collection: () => collectionOptions.value,
-  camera: () => cameraOptions.value,
-  lens: () => lensOptions.value,
-  location: () => locationOptions.value,
-};
-
-function fieldLabel(field: string) {
-  return fieldOptions.value.find(option => option.value === field)?.label || field;
-}
+const allRulesComplete = computed(() => rules.value.length > 0 && rules.value.every(rule => isRuleValid(rule)));
 
 const validationMessage = computed(() => {
   if (rules.value.length === 0) return t('album.smart_edit.validation_rule');
   const incomplete = rules.value.filter(rule => !isRuleValid(rule));
   if (incomplete.length === 0) return '';
-  const missingLists = incomplete.filter(rule => {
-    const options = referenceOptionsByField[rule.field]?.();
-    return options?.length === 0;
-  });
-  // Only speak about missing values when that explains every incomplete rule;
-  // otherwise the generic message still covers genuinely unfinished rules.
-  if (missingLists.length === incomplete.length) {
-    const fields = [...new Set(missingLists.map(rule => fieldLabel(rule.field)))];
-    return t('album.smart_edit.validation_no_values', { field: fields.join(', ') });
-  }
+  // Library-backed rules start empty by design; the empty picker already shows
+  // what is expected, so don't flash the warning until a value is chosen.
+  if (incomplete.every(rule => rule.value === null || rule.value === undefined || rule.value === '')) return '';
   return t('album.smart_edit.validation_rule');
 });
-const canSave = computed(() => name.value.trim().length > 0 && validationMessage.value.length === 0);
+const canSave = computed(() => name.value.trim().length > 0 && allRulesComplete.value);
 
 function makeRule(field = 'date_taken') {
   const rule = {
@@ -367,7 +347,7 @@ function setDefaultRuleValue(rule: any) {
   if (['folder_name', 'name'].includes(rule.field)) rule.value = '';
   else if (rule.field === 'file_type') rule.value = 1;
   else if (rule.field === 'media_subtype') rule.value = 'motion_photo';
-  else if (rule.field === 'extension') rule.value = extensionOptions.value[0]?.value || 'jpg';
+  else if (rule.field === 'extension') rule.value = '';
   else if (rule.field === 'favorite' || rule.field === 'has_gps') rule.value = true;
   else if (rule.field === 'orientation') rule.value = 'landscape';
   else if (rule.field === 'rating') rule.value = rule.operator === 'between' ? { min: 1, max: 5 } : 1;
@@ -381,13 +361,15 @@ function setDefaultRuleValue(rule: any) {
   else if (rule.field === 'size') rule.value = rule.operator === 'between' ? { min: 1, max: 10 } : 1;
   else if (rule.field === 'duration') rule.value = rule.operator === 'between' ? { min: 60, max: 600 } : 60;
   else if (rule.field === 'width' || rule.field === 'height') rule.value = rule.operator === 'between' ? { min: 1000, max: 4000 } : 1000;
-  else if (rule.field === 'tag') rule.value = tagOptions.value[0]?.value || null;
-  else if (rule.field === 'person') rule.value = personOptions.value[0]?.value || null;
-  else if (rule.field === 'album') rule.value = albumOptions.value[0]?.value || null;
-  else if (rule.field === 'collection') rule.value = collectionOptions.value[0]?.value || null;
-  else if (rule.field === 'camera') rule.value = cameraOptions.value[0]?.value || null;
-  else if (rule.field === 'lens') rule.value = lensOptions.value[0]?.value || null;
-  else if (rule.field === 'location') rule.value = locationOptions.value[0]?.value || null;
+  // Library-backed fields have no safe default: picking the first tag/person/
+  // camera would silently create a rule the user never chose.
+  else if (rule.field === 'tag') rule.value = null;
+  else if (rule.field === 'person') rule.value = null;
+  else if (rule.field === 'album') rule.value = null;
+  else if (rule.field === 'collection') rule.value = null;
+  else if (rule.field === 'camera') rule.value = null;
+  else if (rule.field === 'lens') rule.value = null;
+  else if (rule.field === 'location') rule.value = null;
 }
 
 function isRuleValid(rule: any) {
@@ -837,13 +819,17 @@ const RuleValueControl = defineComponent({
       onChange: (event: any) => { props.rule.value = coerceOptionValue(event.target.value, options); },
     }, options.map(option => h('option', { value: option.value }, option.label)));
 
-    const extensionSelect = (options: any[], extension: string, onSelect: (value: string) => void) => {
-      return h('select', {
-        class: selectClass,
-        value: extension,
-        onChange: (event: any) => { onSelect(event.target.value); },
-      }, options.map((option: any) => h('option', { value: option.value }, option.label)));
-    };
+    // Fields backed by library-wide lists (tags, people, cameras, lenses,
+    // locations, ...) can grow large, so they use a filterable picker instead
+    // of a native <select>; the user still has to pick a concrete option.
+    const searchableInput = (options: any[]) => h(SearchableSelect, {
+      options,
+      modelValue: props.rule.value,
+      'onUpdate:modelValue': (value: any) => { props.rule.value = value; },
+      placeholder: t('album.smart_edit.select_value'),
+      searchPlaceholder: t('album.smart_edit.search_options'),
+      emptyText: t('album.smart_edit.no_matches'),
+    });
     const fileTypeInput = () => h('select', {
       class: selectClass,
       value: getFileTypeValue(props.rule.value),
@@ -858,9 +844,7 @@ const RuleValueControl = defineComponent({
           ...props.extensionOptions,
           { value: extension, label: `${extension.toUpperCase()} (Custom Extension)` },
         ];
-      return extensionSelect(options, extension, (nextExtension: string) => {
-        props.rule.value = nextExtension;
-      });
+      return searchableInput(options);
     };
     const boolSelect = () => selectInput([
       { value: 'true', label: t('album.smart_edit.boolean.yes') },
@@ -936,13 +920,13 @@ const RuleValueControl = defineComponent({
       if (isDateRuleField(props.rule.field)) return dateControl();
       if (props.rule.field === 'size') return props.rule.operator === 'between' ? rangeInput(valueUnit()) : unitNumberInput(props.rule.value, valueUnit(), (event: any) => { props.rule.value = Number(event.target.value); });
       if (['width', 'height', 'duration'].includes(props.rule.field)) return props.rule.operator === 'between' ? rangeInput(valueUnit()) : unitNumberInput(props.rule.value, valueUnit(), (event: any) => { props.rule.value = Number(event.target.value); });
-      if (props.rule.field === 'tag') return selectInput(props.tagOptions);
-      if (props.rule.field === 'person') return selectInput(props.personOptions);
-      if (props.rule.field === 'album') return selectInput(props.albumOptions);
-      if (props.rule.field === 'collection') return selectInput(props.collectionOptions);
-      if (props.rule.field === 'camera') return selectInput(props.cameraOptions);
-      if (props.rule.field === 'lens') return selectInput(props.lensOptions);
-      if (props.rule.field === 'location') return selectInput(props.locationOptions);
+      if (props.rule.field === 'tag') return searchableInput(props.tagOptions);
+      if (props.rule.field === 'person') return searchableInput(props.personOptions);
+      if (props.rule.field === 'album') return searchableInput(props.albumOptions);
+      if (props.rule.field === 'collection') return searchableInput(props.collectionOptions);
+      if (props.rule.field === 'camera') return searchableInput(props.cameraOptions);
+      if (props.rule.field === 'lens') return searchableInput(props.lensOptions);
+      if (props.rule.field === 'location') return searchableInput(props.locationOptions);
       return textInput();
     };
   },

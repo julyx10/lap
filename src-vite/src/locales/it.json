@@ -148,6 +148,9 @@
       "add_rule": "Aggiungi regola",
       "rules_count": "{count}/{max} regole",
       "remove_rule": "Rimuovi regola",
+      "search_options": "Filtra…",
+      "no_matches": "Nessun risultato",
+      "select_value": "Seleziona…",
       "group": "Gruppo",
       "sort": "Ordina",
       "order": "Ordine",
@@ -155,7 +158,6 @@
       "delete_message": "L'album intelligente '{name}' verrà eliminato.",
       "validation_name": "Inserisci un nome per l'album intelligente.",
       "validation_rule": "Aggiungi almeno una regola completa.",
-      "validation_no_values": "Nessun {field} trovato in questa libreria.",
       "fields": {
         "folder_name": "Nome cartella",
         "name": "Nome file",

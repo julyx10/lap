@@ -148,6 +148,9 @@
       "add_rule": "添加规则",
       "rules_count": "{count}/{max} 条规则",
       "remove_rule": "移除规则",
+      "search_options": "筛选…",
+      "no_matches": "无匹配项",
+      "select_value": "选择…",
       "group": "分组",
       "sort": "排序",
       "order": "顺序",
@@ -155,7 +158,6 @@
       "delete_message": "将删除智能相册“{name}”。",
       "validation_name": "请输入智能相册名称。",
       "validation_rule": "请至少添加一条完整规则。",
-      "validation_no_values": "库中未发现{field}。",
       "fields": {
         "folder_name": "文件夹名称",
         "name": "文件名",

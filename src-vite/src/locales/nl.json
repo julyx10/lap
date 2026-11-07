@@ -148,6 +148,9 @@
       "add_rule": "Regel toevoegen",
       "rules_count": "{count}/{max} regels",
       "remove_rule": "Regel verwijderen",
+      "search_options": "Filteren…",
+      "no_matches": "Geen resultaten",
+      "select_value": "Selecteren…",
       "group": "Groeperen",
       "sort": "Sorteren",
       "order": "Volgorde",
@@ -155,7 +158,6 @@
       "delete_message": "Het slimme album '{name}' wordt verwijderd.",
       "validation_name": "Voer een naam in voor het slimme album.",
       "validation_rule": "Voeg minstens één volledige regel toe.",
-      "validation_no_values": "Geen {field} gevonden in deze bibliotheek.",
       "fields": {
         "folder_name": "Mapnaam",
         "name": "Bestandsnaam",
