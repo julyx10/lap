@@ -155,6 +155,7 @@
       "delete_message": "The smart album '{name}' will be deleted.",
       "validation_name": "Enter a smart album name.",
       "validation_rule": "Add at least one complete rule.",
+      "validation_no_values": "No {field} found in this library.",
       "fields": {
         "folder_name": "Folder name",
         "name": "File name",
@@ -1151,6 +1152,17 @@
     }
   },
   "file_info": {
+    "paths_copied": "{count} file path(s) copied to clipboard",
+    "copy_path": "Copy file path",
+    "copy_path_failed": "Failed to copy file path",
+    "video_only": "(video only)",
+    "field_preset": "Visible fields",
+    "fields_default": "Default",
+    "fields_all": "Show all",
+    "fields_custom": "Custom",
+
+    "hide_empty_fields": "Automatically hide empty fields",
+    "customize_fields": "Customize fields",
     "title": "Information",
     "preview": "Preview",
     "thumbnail": "Thumbnail",
@@ -1210,10 +1222,11 @@
     "source_description": "Original description",
     "coordinates": "Coordinates",
     "detail_fields": {
-      "title": "Original title",
+      "title": "Title",
+      "headline": "Headline",
       "creator": "Creator",
       "copyright": "Copyright",
-      "description": "Original description",
+      "description": "Source description",
       "credit": "Credit",
       "source": "Source",
       "usageTerms": "Usage terms",
@@ -1384,6 +1397,10 @@
     "raw": {
       "title": "RAW",
       "section_pairs": "Paired files",
+      "clipboard_both": "Both files",
+      "clipboard_raw": "RAW only",
+      "clipboard_jpeg": "JPEG/HEIC only",
+      "clipboard_hint": "Also applies to copying file paths. Does not affect copying or moving files to folders.",
       "pair_source": "Default display for pairs",
       "pair_source_hint": "Used for paired thumbnails and previews",
       "pair_jpeg": "JPEG / HEIC",
@@ -1612,6 +1629,7 @@
         "open_new_window": "View in new window",
         "open_external_app": "Open in external app",
         "edit_image": "Edit",
+        "copy_file_path": "Copy file path",
         "copy_file": "Copy to clipboard",
         "paste_file": "Paste",
         "reveal_in_finder": "Reveal in Finder",

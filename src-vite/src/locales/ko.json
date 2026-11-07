@@ -155,6 +155,7 @@
       "delete_message": "스마트 앨범 “{name}”이 삭제됩니다.",
       "validation_name": "스마트 앨범 이름을 입력하세요.",
       "validation_rule": "완성된 규칙을 하나 이상 추가하세요.",
+      "validation_no_values": "이 라이브러리에서 {field}을(를) 찾을 수 없습니다.",
       "fields": {
         "folder_name": "폴더 이름",
         "name": "파일 이름",
@@ -1151,6 +1152,17 @@
     }
   },
   "file_info": {
+    "paths_copied": "파일 경로 {count}개를 클립보드에 복사했습니다",
+    "copy_path": "파일 경로 복사",
+    "copy_path_failed": "파일 경로를 복사하지 못했습니다",
+    "video_only": "(동영상만)",
+    "field_preset": "표시 항목",
+    "fields_default": "기본값",
+    "fields_all": "모두 표시",
+    "fields_custom": "사용자 지정",
+
+    "hide_empty_fields": "빈 항목 자동 숨기기",
+    "customize_fields": "표시 항목 설정",
     "title": "파일 정보",
     "preview": "미리보기",
     "thumbnail": "썸네일",
@@ -1210,10 +1222,11 @@
     "source_description": "원본 설명",
     "coordinates": "좌표",
     "detail_fields": {
-      "title": "원본 제목",
+      "title": "제목",
+      "headline": "헤드라인",
       "creator": "작성자",
       "copyright": "저작권",
-      "description": "원본 설명",
+      "description": "소스 설명",
       "credit": "제공자",
       "source": "출처",
       "usageTerms": "이용 약관",
@@ -1384,6 +1397,10 @@
     "raw": {
       "title": "RAW",
       "section_pairs": "쌍을 이룬 파일",
+      "clipboard_both": "두 파일 모두",
+      "clipboard_raw": "RAW만",
+      "clipboard_jpeg": "JPEG/HEIC만",
+      "clipboard_hint": "파일 경로 복사에도 적용됩니다. 폴더로 복사하거나 이동하는 작업에는 영향을 주지 않습니다.",
       "pair_source": "쌍의 기본 표시",
       "pair_source_hint": "쌍을 이룬 썸네일과 미리보기에 사용됩니다",
       "pair_jpeg": "JPEG / HEIC",
@@ -1612,6 +1629,7 @@
         "open_new_window": "새 창에서 보기",
         "open_external_app": "외부 앱에서 열기",
         "edit_image": "편집",
+        "copy_file_path": "파일 경로 복사",
         "copy_file": "클립보드에 복사",
         "paste_file": "붙여넣기",
         "reveal_in_finder": "Finder에서 보기",

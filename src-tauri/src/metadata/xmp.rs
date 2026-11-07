@@ -221,6 +221,10 @@ pub fn find_xmp_sidecar(image_path: &Path) -> Option<PathBuf> {
 
 /// Reads and parses an XMP sidecar file, skipping cloud-only (unhydrated) placeholders.
 pub fn read_xmp_file(path: &Path) -> Result<XmpMetadata, String> {
+    parse_xmp_str(&read_xmp_content(path)?)
+}
+
+fn read_xmp_content(path: &Path) -> Result<String, String> {
     if let Ok(meta) = fs::metadata(path) {
         if crate::t_utils::is_cloud_only(&meta) {
             return Err(format!(
@@ -240,15 +244,28 @@ pub fn read_xmp_file(path: &Path) -> Result<XmpMetadata, String> {
     }
     let content = crate::metadata::embedded::decode_xmp_text(&content)
         .ok_or("Invalid or oversized XMP text encoding")?;
-    parse_xmp_str(&content)
+    Ok(content)
 }
 
 /// Parse the complete XML document before exposing any metadata to the importer.
 pub fn parse_xmp_str(content: &str) -> Result<XmpMetadata, String> {
+    parse_xmp_with_titles(content).map(|(meta, _)| meta)
+}
+
+fn parse_xmp_with_titles(content: &str) -> Result<(XmpMetadata, super::model::SourceTitles), String> {
     let root = parse_xml(content)?;
     let mut properties = Vec::new();
     collect_properties(&root, &mut properties);
-    Ok(metadata_from_properties(&properties))
+    Ok((metadata_from_properties(&properties), titles_from_properties(&properties)))
+}
+
+fn titles_from_properties(properties: &[&XmlNode]) -> super::model::SourceTitles {
+    let value = |key| {
+        let property = schema::DETAIL_FIELDS.iter().find(|f| f.key == key).and_then(|f| f.xmp)?;
+        properties.iter().find(|n| n.uri == property.uri && n.name == property.name)
+            .map(|n| n.value().chars().filter(|c| *c != '\0').take(32768).collect())
+    };
+    super::model::SourceTitles { title: value("title"), headline: value("headline") }
 }
 
 fn metadata_from_properties(properties: &[&XmlNode]) -> XmpMetadata {
@@ -299,7 +316,12 @@ fn metadata_from_properties(properties: &[&XmlNode]) -> XmpMetadata {
 }
 
 /// Standard and referenced extended packets form one logical metadata record.
+#[cfg(test)]
 pub(crate) fn metadata_from_packets(packets: &[String]) -> XmpMetadata {
+    metadata_and_titles_from_packets(packets).0
+}
+
+pub(crate) fn metadata_and_titles_from_packets(packets: &[String]) -> (XmpMetadata, super::model::SourceTitles) {
     let roots: Vec<_> = packets
         .iter()
         .filter_map(|packet| parse_xml(packet).ok())
@@ -309,7 +331,7 @@ pub(crate) fn metadata_from_packets(packets: &[String]) -> XmpMetadata {
     for root in roots.iter().rev() {
         collect_properties(root, &mut properties);
     }
-    metadata_from_properties(&properties)
+    (metadata_from_properties(&properties), titles_from_properties(&properties))
 }
 
 #[cfg(test)]
@@ -473,6 +495,7 @@ fn import_sources(
             fingerprint: String::new(),
         }
     };
+    let local_media = media_info.as_ref().is_some_and(|info| !crate::t_utils::is_cloud_only(info));
     let fingerprint = format!(
         "{}{}:{:?}:{}:{:?}:{:?}:{}",
         schema::IMPORT_PREFIX,
@@ -499,13 +522,27 @@ fn import_sources(
             return Ok(false);
         }
     }
-    let mut meta = crate::metadata::embedded::read(Path::new(file_path)).organization;
+    let embedded = crate::metadata::embedded::read(Path::new(file_path));
+    let mut titles = super::model::SourceTitles { title: embedded.title, headline: embedded.headline };
+    let mut meta = embedded.organization;
     super::merge::merge_system(&mut meta, snapshot.metadata);
     if let Some(path) = sidecar_path {
-        let sidecar = read_xmp_file(&path)?;
+        let (sidecar, source) = parse_xmp_with_titles(&read_xmp_content(&path)?)?;
+        if source.title.is_some() { titles.title = source.title; }
+        if source.headline.is_some() { titles.headline = source.headline; }
         super::merge::merge_sidecar(&mut meta, sidecar);
     }
-    apply_with_state(file_id, &meta, conn, mode, Some(&fingerprint))
+    if !local_media {
+        let previous: (Option<String>, Option<String>) = conn.query_row(
+            "SELECT e_title,e_headline FROM afiles WHERE id=?1", [file_id],
+            |row| Ok((row.get(0)?,row.get(1)?))).map_err(|e| e.to_string())?;
+        titles.title = titles.title.or(previous.0);
+        titles.headline = titles.headline.or(previous.1);
+    }
+    // Empty source values are valid clears, stored as NULL for consistent UI/search.
+    titles.title = titles.title.filter(|v| !v.trim().is_empty());
+    titles.headline = titles.headline.filter(|v| !v.trim().is_empty());
+    super::merge::apply_with_titles(file_id, &meta, conn, mode, Some(&fingerprint), Some(&titles))
 }
 
 /// Scanner-derived descriptions preserve local edits and explicit clears.
@@ -1509,6 +1546,7 @@ mod import_tests {
             "CREATE TABLE afiles (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
+                e_title TEXT, e_headline TEXT,
                 rating INTEGER NOT NULL DEFAULT 0,
                 culling_flag INTEGER NOT NULL DEFAULT 0,
                 is_favorite INTEGER DEFAULT 0,
@@ -2143,7 +2181,7 @@ mod export_tests {
         fs::write(&media, b"unchanged-original").unwrap();
         let conn = Connection::open_in_memory().unwrap();
         conn.execute_batch("CREATE TABLE afolders(id INTEGER PRIMARY KEY,path TEXT); INSERT INTO afolders(id) VALUES(1);
-            CREATE TABLE afiles(id INTEGER PRIMARY KEY,folder_id INTEGER DEFAULT 1,name TEXT DEFAULT 'photo.jpg',is_favorite INTEGER DEFAULT 0,rating INTEGER DEFAULT 0,culling_flag INTEGER DEFAULT 0,comments TEXT,has_tags INTEGER DEFAULT 0);
+            CREATE TABLE afiles(id INTEGER PRIMARY KEY,folder_id INTEGER DEFAULT 1,name TEXT DEFAULT 'photo.jpg',e_title TEXT,e_headline TEXT,is_favorite INTEGER DEFAULT 0,rating INTEGER DEFAULT 0,culling_flag INTEGER DEFAULT 0,comments TEXT,has_tags INTEGER DEFAULT 0);
             CREATE TABLE atags(id INTEGER PRIMARY KEY,name TEXT,parent_id INTEGER REFERENCES atags(id) ON DELETE CASCADE);CREATE TABLE afile_tags(file_id INTEGER,tag_id INTEGER,UNIQUE(file_id,tag_id));
             INSERT INTO afiles(id,rating,comments) VALUES(1,4,'local caption'); INSERT INTO atags(id,name) VALUES(1,'旅行, travel & <test>');INSERT INTO afile_tags VALUES(1,1);").unwrap();
         conn.execute(
@@ -2154,6 +2192,33 @@ mod export_tests {
         initialize(&conn).unwrap();
         (conn, folder, media)
     }
+    #[test]
+    fn titles_import_sidecar_overrides_embedded_and_clears_without_editing_description() {
+        let (conn, dir, media) = fixture();
+        let xml = packet("<d:title><rdf:Alt><rdf:li xml:lang=\"fr\">Titre</rdf:li><rdf:li xml:lang=\"x-default\">Embedded title</rdf:li></rdf:Alt></d:title><p:Headline xmlns:p=\"http://ns.adobe.com/photoshop/1.0/\">Embedded headline</p:Headline>");
+        fs::write(&media, crate::metadata::embedded::tests::jpeg_with_xmp_packet(xml.as_bytes())).unwrap();
+        let fields = || conn.query_row("SELECT e_title,e_headline,comments FROM afiles WHERE id=1", [],
+            |r| Ok((r.get::<_,Option<String>>(0)?,r.get::<_,Option<String>>(1)?,r.get::<_,String>(2)?))).unwrap();
+        let import = || import_xmp_for_file_with_conn(1, media.to_str().unwrap(), &conn, XmpImportMode::RefreshNonDestructive).unwrap();
+        assert!(import());
+        assert_eq!(fields(), (Some("Embedded title".into()),Some("Embedded headline".into()),"local caption".into()));
+        let sidecar = media.with_extension("xmp");
+        fs::write(&sidecar, packet("<d:title>Sidecar title</d:title>")).unwrap();
+        assert!(import());
+        assert_eq!(fields().0.as_deref(), Some("Sidecar title"));
+        assert_eq!(fields().1.as_deref(), Some("Embedded headline"));
+        fs::write(&sidecar, packet("<d:title/><p:Headline xmlns:p=\"http://ns.adobe.com/photoshop/1.0/\"/>")).unwrap();
+        assert!(import());
+        assert_eq!(fields(), (None,None,"local caption".into()));
+        fs::write(&sidecar, "<broken>").unwrap();
+        assert!(import_xmp_for_file_with_conn(1, media.to_str().unwrap(), &conn, XmpImportMode::RefreshNonDestructive).is_err());
+        assert_eq!(fields().0, None);
+        fs::remove_file(sidecar).unwrap();
+        assert!(import());
+        assert_eq!(fields().0.as_deref(), Some("Embedded title"));
+        fs::remove_dir_all(dir).unwrap();
+    }
+
     #[test]
     fn manual_import_preserves_the_automatic_source_fingerprint() {
         let (conn, dir, media) = fixture();

@@ -155,6 +155,7 @@
       "delete_message": "O álbum inteligente “{name}” será excluído.",
       "validation_name": "Insira um nome para o álbum inteligente.",
       "validation_rule": "Adicione pelo menos uma regra completa.",
+      "validation_no_values": "Nenhum {field} encontrado nesta biblioteca.",
       "fields": {
         "folder_name": "Nome da pasta",
         "name": "Nome do arquivo",
@@ -1151,6 +1152,17 @@
     }
   },
   "file_info": {
+    "paths_copied": "{count} caminho(s) de arquivo copiado(s) para a área de transferência",
+    "copy_path": "Copiar caminho do arquivo",
+    "copy_path_failed": "Não foi possível copiar o caminho",
+    "video_only": "(somente vídeos)",
+    "field_preset": "Campos visíveis",
+    "fields_default": "Padrão",
+    "fields_all": "Mostrar todos",
+    "fields_custom": "Personalizado",
+
+    "hide_empty_fields": "Ocultar automaticamente campos vazios",
+    "customize_fields": "Personalizar campos",
     "title": "Info do arquivo",
     "preview": "Pré-visualização",
     "thumbnail": "Miniatura",
@@ -1210,10 +1222,11 @@
     "source_description": "Descrição original",
     "coordinates": "Coordenadas",
     "detail_fields": {
-      "title": "Título original",
+      "title": "Título",
+      "headline": "Manchete",
       "creator": "Autor",
       "copyright": "Direitos de autor",
-      "description": "Descrição original",
+      "description": "Descrição de origem",
       "credit": "Crédito",
       "source": "Fonte",
       "usageTerms": "Condições de utilização",
@@ -1384,6 +1397,10 @@
     "raw": {
       "title": "RAW",
       "section_pairs": "Arquivos pareados",
+      "clipboard_both": "Ambos os arquivos",
+      "clipboard_raw": "Apenas RAW",
+      "clipboard_jpeg": "Apenas JPEG/HEIC",
+      "clipboard_hint": "Também se aplica aos caminhos. Não afeta copiar ou mover arquivos para pastas.",
       "pair_source": "Exibição padrão para pares",
       "pair_source_hint": "Usado para miniaturas e pré-visualizações pareadas",
       "pair_jpeg": "JPEG / HEIC",
@@ -1612,6 +1629,7 @@
         "open_new_window": "Abrir em nova janela",
         "open_external_app": "Abrir em app externo",
         "edit_image": "Editar",
+        "copy_file_path": "Copiar caminho do arquivo",
         "copy_file": "Copiar para a área de transferência",
         "paste_file": "Colar",
         "reveal_in_finder": "Mostrar no Finder",

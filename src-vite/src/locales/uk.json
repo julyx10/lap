@@ -155,6 +155,7 @@
       "delete_message": "Розумний альбом '{name}' буде видалено.",
       "validation_name": "Введіть назву розумного альбому.",
       "validation_rule": "Додайте принаймні одне повне правило.",
+      "validation_no_values": "У цій бібліотеці не знайдено: {field}.",
       "fields": {
         "folder_name": "Назва папки",
         "name": "Назва файлу",
@@ -1151,6 +1152,17 @@
     }
   },
   "file_info": {
+    "paths_copied": "Скопійовано шляхів до файлів у буфер обміну: {count}",
+    "copy_path": "Копіювати шлях до файлу",
+    "copy_path_failed": "Не вдалося скопіювати шлях",
+    "video_only": "(лише відео)",
+    "field_preset": "Видимі поля",
+    "fields_default": "Типові",
+    "fields_all": "Показати всі",
+    "fields_custom": "Власні",
+
+    "hide_empty_fields": "Автоматично приховувати порожні поля",
+    "customize_fields": "Налаштувати поля",
     "title": "Відомості",
     "preview": "Попередній перегляд",
     "thumbnail": "Мініатюра",
@@ -1210,10 +1222,11 @@
     "source_description": "Початковий опис",
     "coordinates": "Координати",
     "detail_fields": {
-      "title": "Початковий заголовок",
+      "title": "Назва",
+      "headline": "Заголовок матеріалу",
       "creator": "Автор",
       "copyright": "Авторські права",
-      "description": "Початковий опис",
+      "description": "Опис із джерела",
       "credit": "Постачальник",
       "source": "Джерело",
       "usageTerms": "Умови використання",
@@ -1384,6 +1397,10 @@
     "raw": {
       "title": "RAW",
       "section_pairs": "Парні файли",
+      "clipboard_both": "Обидва файли",
+      "clipboard_raw": "Лише RAW",
+      "clipboard_jpeg": "Лише JPEG/HEIC",
+      "clipboard_hint": "Також застосовується до шляхів. Не впливає на копіювання та переміщення до папок.",
       "pair_source": "Типове відображення для пар",
       "pair_source_hint": "Використовується для парних мініатюр і попередніх переглядів",
       "pair_jpeg": "JPEG / HEIC",
@@ -1612,6 +1629,7 @@
         "open_new_window": "Переглянути в новому вікні",
         "open_external_app": "Відкрити у зовнішньому застосунку",
         "edit_image": "Редагувати",
+        "copy_file_path": "Копіювати шлях до файлу",
         "copy_file": "Копіювати до буфера обміну",
         "paste_file": "Вставити",
         "reveal_in_finder": "Показати у Finder",

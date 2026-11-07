@@ -155,6 +155,7 @@
       "delete_message": "Das Smart-Album „{name}“ wird gelöscht.",
       "validation_name": "Gib einen Namen für das Smart-Album ein.",
       "validation_rule": "Füge mindestens eine vollständige Regel hinzu.",
+      "validation_no_values": "Keine {field} in dieser Bibliothek gefunden.",
       "fields": {
         "folder_name": "Ordnername",
         "name": "Dateiname",
@@ -1151,6 +1152,17 @@
     }
   },
   "file_info": {
+    "paths_copied": "{count} Dateipfad(e) in die Zwischenablage kopiert",
+    "copy_path": "Dateipfad kopieren",
+    "copy_path_failed": "Dateipfad konnte nicht kopiert werden",
+    "video_only": "(nur Videos)",
+    "field_preset": "Sichtbare Felder",
+    "fields_default": "Standard",
+    "fields_all": "Alle anzeigen",
+    "fields_custom": "Benutzerdefiniert",
+
+    "hide_empty_fields": "Leere Felder automatisch ausblenden",
+    "customize_fields": "Felder anpassen",
     "title": "Datei-Info",
     "preview": "Vorschau",
     "thumbnail": "Miniatur",
@@ -1210,10 +1222,11 @@
     "source_description": "Originalbeschreibung",
     "coordinates": "Koordinaten",
     "detail_fields": {
-      "title": "Originaltitel",
+      "title": "Titel",
+      "headline": "Überschrift",
       "creator": "Urheber",
       "copyright": "Copyright",
-      "description": "Originalbeschreibung",
+      "description": "Quellbeschreibung",
       "credit": "Bildnachweis",
       "source": "Quelle",
       "usageTerms": "Nutzungsbedingungen",
@@ -1384,6 +1397,10 @@
     "raw": {
       "title": "RAW",
       "section_pairs": "Gepaarte Dateien",
+      "clipboard_both": "Beide Dateien",
+      "clipboard_raw": "Nur RAW",
+      "clipboard_jpeg": "Nur JPEG/HEIC",
+      "clipboard_hint": "Gilt auch für Dateipfade. Kopieren oder Verschieben in Ordner bleibt unverändert.",
       "pair_source": "Standardanzeige für Paare",
       "pair_source_hint": "Wird für gepaarte Miniaturansichten und Vorschauen verwendet",
       "pair_jpeg": "JPEG / HEIC",
@@ -1612,6 +1629,7 @@
         "open_new_window": "In neuem Fenster öffnen",
         "open_external_app": "In externer App öffnen",
         "edit_image": "Bearbeiten",
+        "copy_file_path": "Dateipfad kopieren",
         "copy_file": "In Zwischenablage kopieren",
         "paste_file": "Einfügen",
         "reveal_in_finder": "Im Finder anzeigen",

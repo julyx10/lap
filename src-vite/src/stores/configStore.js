@@ -1,11 +1,12 @@
 /**
  * Config Store - Global application configuration
- */
+*/
 import { defineStore } from 'pinia';
 import { i18n, loadLanguage } from '@/common/i18n';
 let languageRequest = 0;
 let pendingUserLanguageRequest = 0;
 import { SIDEBAR, MAP_MARKER_SIZES } from '@/common/constants';
+import { defaultFileInfoFields } from '@/common/fileInfoFields';
 
 export const useConfigStore = defineStore('configStore', {
   state: () => ({
@@ -42,6 +43,8 @@ export const useConfigStore = defineStore('configStore', {
     },
 
     infoPanel: {
+      fields: [...defaultFileInfoFields],
+      hideEmptyFields: false,
       showPreview: true,         // show preview thumbnail
       previewMode: 'thumbnail',  // preview section mode ('thumbnail' | 'histogram')
       previewScale: 1,           // preview thumbnail scale (1, 0.5, 0.25)
@@ -158,6 +161,7 @@ export const useConfigStore = defineStore('configStore', {
 
       // RAW display settings
       groupRawJpegPairs: false,   // group matching RAW and JPEG/HEIC files
+      rawPairClipboardMode: 'both', // both | raw | jpeg; clipboard operations only
       rawPairDisplaySource: 'jpeg', // jpeg | raw (used when pairs are grouped)
       rawPreviewSource: 'embedded', // embedded | rendered
       rawRenderBrightness: 'original', // original | brightened
@@ -342,6 +346,9 @@ export const useConfigStore = defineStore('configStore', {
     setThumbnailSize(thumbnailSize) {
       this.settings.thumbnailSize = thumbnailSize;
     },
+    setRawPairClipboardMode(mode) {
+      this.settings.rawPairClipboardMode = ['both', 'raw', 'jpeg'].includes(mode) ? mode : 'both';
+    },
     setRawPairDisplaySource(source) {
       this.settings.rawPairDisplaySource = source === 'raw' ? 'raw' : 'jpeg';
     },
@@ -458,6 +465,8 @@ export const useConfigStore = defineStore('configStore', {
           settings.rawPreviewSource = settings.rawPreviewSource === 'rendered' ? 'rendered' : 'embedded';
           settings.rawRenderBrightness = settings.rawRenderBrightness === 'brightened' ? 'brightened' : 'original';
           settings.rawPairDisplaySource = settings.rawPairDisplaySource === 'raw' ? 'raw' : 'jpeg';
+          settings.rawPairClipboardMode = ['both', 'raw', 'jpeg'].includes(settings.rawPairClipboardMode)
+            ? settings.rawPairClipboardMode : 'both';
         }
         return state;
       },

@@ -155,6 +155,7 @@
       "delete_message": "スマートアルバム「{name}」を削除します。",
       "validation_name": "スマートアルバム名を入力してください。",
       "validation_rule": "完全なルールを少なくとも 1 つ追加してください。",
+      "validation_no_values": "このライブラリには{field}が見つかりません。",
       "fields": {
         "folder_name": "フォルダー名",
         "name": "ファイル名",
@@ -1151,6 +1152,17 @@
     }
   },
   "file_info": {
+    "paths_copied": "{count} 件のファイルパスをクリップボードにコピーしました",
+    "copy_path": "ファイルパスをコピー",
+    "copy_path_failed": "パスのコピーに失敗しました",
+    "video_only": "（動画のみ）",
+    "field_preset": "表示項目",
+    "fields_default": "既定",
+    "fields_all": "すべて表示",
+    "fields_custom": "カスタム",
+
+    "hide_empty_fields": "空の項目を自動的に非表示",
+    "customize_fields": "表示項目の設定",
     "title": "ファイル情報",
     "preview": "プレビュー",
     "thumbnail": "サムネイル",
@@ -1210,10 +1222,11 @@
     "source_description": "元の説明",
     "coordinates": "座標",
     "detail_fields": {
-      "title": "元のタイトル",
+      "title": "タイトル",
+      "headline": "見出し",
       "creator": "作成者",
       "copyright": "著作権",
-      "description": "元の説明",
+      "description": "ソースの説明",
       "credit": "提供者",
       "source": "出典",
       "usageTerms": "利用条件",
@@ -1384,6 +1397,10 @@
     "raw": {
       "title": "RAW",
       "section_pairs": "ペアファイル",
+      "clipboard_both": "両方のファイル",
+      "clipboard_raw": "RAW のみ",
+      "clipboard_jpeg": "JPEG/HEIC のみ",
+      "clipboard_hint": "パスのコピーにも適用します。フォルダーへのコピーや移動には影響しません。",
       "pair_source": "ペアの既定の表示",
       "pair_source_hint": "ペアのサムネイルとプレビューに使用します",
       "pair_jpeg": "JPEG / HEIC",
@@ -1612,6 +1629,7 @@
         "open_new_window": "新しいウィンドウで表示",
         "open_external_app": "外部アプリで開く",
         "edit_image": "編集",
+        "copy_file_path": "ファイルパスをコピー",
         "copy_file": "クリップボードにコピー",
         "paste_file": "ペースト",
         "reveal_in_finder": "Finderで表示",

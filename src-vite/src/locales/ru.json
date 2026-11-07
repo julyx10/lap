@@ -155,6 +155,7 @@
       "delete_message": "Смарт-альбом \"{name}\" будет удалён.",
       "validation_name": "Введите название смарт-альбома.",
       "validation_rule": "Добавьте хотя бы одно полное правило.",
+      "validation_no_values": "В этой библиотеке не найдено: {field}.",
       "fields": {
         "folder_name": "Имя папки",
         "name": "Имя файла",
@@ -1151,6 +1152,17 @@
     }
   },
   "file_info": {
+    "paths_copied": "Скопировано путей к файлам в буфер обмена: {count}",
+    "copy_path": "Копировать путь к файлу",
+    "copy_path_failed": "Не удалось скопировать путь",
+    "video_only": "(только видео)",
+    "field_preset": "Видимые поля",
+    "fields_default": "По умолчанию",
+    "fields_all": "Показать все",
+    "fields_custom": "Настроить",
+
+    "hide_empty_fields": "Автоматически скрывать пустые поля",
+    "customize_fields": "Настроить поля",
     "title": "Информация",
     "preview": "Предпросмотр",
     "thumbnail": "Миниатюра",
@@ -1210,10 +1222,11 @@
     "source_description": "Исходное описание",
     "coordinates": "Координаты",
     "detail_fields": {
-      "title": "Исходный заголовок",
+      "title": "Название",
+      "headline": "Заголовок материала",
       "creator": "Автор",
       "copyright": "Авторские права",
-      "description": "Исходное описание",
+      "description": "Описание из источника",
       "credit": "Поставщик",
       "source": "Источник",
       "usageTerms": "Условия использования",
@@ -1384,6 +1397,10 @@
     "raw": {
       "title": "RAW",
       "section_pairs": "Парные файлы",
+      "clipboard_both": "Оба файла",
+      "clipboard_raw": "Только RAW",
+      "clipboard_jpeg": "Только JPEG/HEIC",
+      "clipboard_hint": "Применяется также к путям. Не влияет на копирование и перемещение в папки.",
       "pair_source": "Отображение пар по умолчанию",
       "pair_source_hint": "Используется для парных миниатюр и предпросмотров",
       "pair_jpeg": "JPEG / HEIC",
@@ -1612,6 +1629,7 @@
         "open_new_window": "Показать в новом окне",
         "open_external_app": "Открыть во внешнем приложении",
         "edit_image": "Редактировать",
+        "copy_file_path": "Копировать путь к файлу",
         "copy_file": "Скопировать в буфер обмена",
         "paste_file": "Вставить",
         "reveal_in_finder": "Показать в Finder",

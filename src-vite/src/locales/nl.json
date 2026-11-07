@@ -155,6 +155,7 @@
       "delete_message": "Het slimme album '{name}' wordt verwijderd.",
       "validation_name": "Voer een naam in voor het slimme album.",
       "validation_rule": "Voeg minstens één volledige regel toe.",
+      "validation_no_values": "Geen {field} gevonden in deze bibliotheek.",
       "fields": {
         "folder_name": "Mapnaam",
         "name": "Bestandsnaam",
@@ -1151,6 +1152,17 @@
     }
   },
   "file_info": {
+    "paths_copied": "{count} bestandspad(en) naar klembord gekopieerd",
+    "copy_path": "Bestandspad kopiëren",
+    "copy_path_failed": "Bestandspad kopiëren mislukt",
+    "video_only": "(alleen video's)",
+    "field_preset": "Zichtbare velden",
+    "fields_default": "Standaard",
+    "fields_all": "Alles tonen",
+    "fields_custom": "Aangepast",
+
+    "hide_empty_fields": "Lege velden automatisch verbergen",
+    "customize_fields": "Velden aanpassen",
     "title": "Informatie",
     "preview": "Voorbeeld",
     "thumbnail": "Miniatuur",
@@ -1210,10 +1222,11 @@
     "source_description": "Oorspronkelijke beschrijving",
     "coordinates": "Coördinaten",
     "detail_fields": {
-      "title": "Oorspronkelijke titel",
+      "title": "Titel",
+      "headline": "Koptekst",
       "creator": "Maker",
       "copyright": "Copyright",
-      "description": "Oorspronkelijke beschrijving",
+      "description": "Bronbeschrijving",
       "credit": "Naamsvermelding",
       "source": "Bron",
       "usageTerms": "Gebruiksvoorwaarden",
@@ -1384,6 +1397,10 @@
     "raw": {
       "title": "RAW",
       "section_pairs": "Gekoppelde bestanden",
+      "clipboard_both": "Beide bestanden",
+      "clipboard_raw": "Alleen RAW",
+      "clipboard_jpeg": "Alleen JPEG/HEIC",
+      "clipboard_hint": "Geldt ook voor bestandspaden. Kopiëren of verplaatsen naar mappen blijft ongewijzigd.",
       "pair_source": "Standaardweergave voor paren",
       "pair_source_hint": "Gebruikt voor miniaturen en voorbeelden van gekoppelde bestanden",
       "pair_jpeg": "JPEG / HEIC",
@@ -1612,6 +1629,7 @@
         "open_new_window": "Bekijken in nieuw venster",
         "open_external_app": "Openen in externe app",
         "edit_image": "Bewerken",
+        "copy_file_path": "Bestandspad kopiëren",
         "copy_file": "Kopiëren naar klembord",
         "paste_file": "Plakken",
         "reveal_in_finder": "Toon in Finder",

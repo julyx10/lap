@@ -155,6 +155,7 @@
       "delete_message": "智慧相簿「{name}」將被刪除。",
       "validation_name": "請輸入智慧相簿名稱。",
       "validation_rule": "請至少新增一條完整規則。",
+      "validation_no_values": "庫中未發現{field}。",
       "fields": {
         "folder_name": "資料夾名稱",
         "name": "檔案名稱",
@@ -1151,6 +1152,17 @@
     }
   },
   "file_info": {
+    "paths_copied": "已複製 {count} 個檔案路徑到剪貼簿",
+    "copy_path": "複製檔案路徑",
+    "copy_path_failed": "複製路徑失敗",
+    "video_only": "（僅影片）",
+    "field_preset": "顯示欄位",
+    "fields_default": "預設",
+    "fields_all": "全部顯示",
+    "fields_custom": "自訂",
+
+    "hide_empty_fields": "自動隱藏空白欄位",
+    "customize_fields": "自訂欄位",
     "title": "資訊",
     "preview": "預覽",
     "thumbnail": "縮圖",
@@ -1210,10 +1222,11 @@
     "source_description": "原始描述",
     "coordinates": "座標",
     "detail_fields": {
-      "title": "原始標題",
+      "title": "標題",
+      "headline": "內容標題",
       "creator": "作者",
       "copyright": "版權",
-      "description": "原始描述",
+      "description": "來源描述",
       "credit": "提供者",
       "source": "來源",
       "usageTerms": "使用條款",
@@ -1384,6 +1397,10 @@
     "raw": {
       "title": "RAW",
       "section_pairs": "配對檔案",
+      "clipboard_both": "兩個檔案",
+      "clipboard_raw": "僅 RAW",
+      "clipboard_jpeg": "僅 JPEG/HEIC",
+      "clipboard_hint": "同時影響複製檔案路徑，不影響複製或移動檔案至資料夾。",
       "pair_source": "配對的預設顯示",
       "pair_source_hint": "用於配對的縮圖與預覽",
       "pair_jpeg": "JPEG / HEIC",
@@ -1612,6 +1629,7 @@
         "open_new_window": "在新視窗檢視",
         "open_external_app": "用外部應用程式開啟",
         "edit_image": "編輯",
+        "copy_file_path": "複製檔案路徑",
         "copy_file": "複製到剪貼簿",
         "paste_file": "貼上",
         "reveal_in_finder": "在 Finder 中顯示",

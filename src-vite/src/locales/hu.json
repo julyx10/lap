@@ -155,6 +155,7 @@
       "delete_message": "A(z) „{name}” intelligens album törlődik.",
       "validation_name": "Adja meg az intelligens album nevét.",
       "validation_rule": "Adjon hozzá legalább egy teljes szabályt.",
+      "validation_no_values": "Nem található {field} ebben a könyvtárban.",
       "fields": {
         "folder_name": "Mappanév",
         "name": "Fájlnév",
@@ -1151,6 +1152,17 @@
     }
   },
   "file_info": {
+    "paths_copied": "{count} fájlútvonal a vágólapra másolva",
+    "copy_path": "Fájlútvonal másolása",
+    "copy_path_failed": "Az útvonal másolása sikertelen",
+    "video_only": "(csak videók)",
+    "field_preset": "Látható mezők",
+    "fields_default": "Alapértelmezett",
+    "fields_all": "Összes megjelenítése",
+    "fields_custom": "Egyéni",
+
+    "hide_empty_fields": "Üres mezők automatikus elrejtése",
+    "customize_fields": "Mezők testreszabása",
     "title": "Adatok",
     "preview": "Előnézet",
     "thumbnail": "Bélyegkép",
@@ -1210,10 +1222,11 @@
     "source_description": "Eredeti leírás",
     "coordinates": "Koordináták",
     "detail_fields": {
-      "title": "Eredeti cím",
+      "title": "Cím",
+      "headline": "Főcím",
       "creator": "Szerző",
       "copyright": "Szerzői jog",
-      "description": "Eredeti leírás",
+      "description": "Forrásleírás",
       "credit": "Készítő megjelölése",
       "source": "Forrás",
       "usageTerms": "Felhasználási feltételek",
@@ -1384,6 +1397,10 @@
     "raw": {
       "title": "RAW",
       "section_pairs": "Párosított fájlok",
+      "clipboard_both": "Mindkét fájl",
+      "clipboard_raw": "Csak RAW",
+      "clipboard_jpeg": "Csak JPEG/HEIC",
+      "clipboard_hint": "Az útvonalak másolására is érvényes. A mappákba másolást és áthelyezést nem érinti.",
       "pair_source": "A párok alapértelmezett megjelenítése",
       "pair_source_hint": "A párosított bélyegképek és előnézetek használják",
       "pair_jpeg": "JPEG / HEIC",
@@ -1612,6 +1629,7 @@
         "open_new_window": "Megtekintés új ablakban",
         "open_external_app": "Megnyitás külső alkalmazásban",
         "edit_image": "Szerkesztés",
+        "copy_file_path": "Fájlútvonal másolása",
         "copy_file": "Másolás a vágólapra",
         "paste_file": "Beillesztés",
         "reveal_in_finder": "Megjelenítés a Finderben",

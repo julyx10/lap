@@ -220,7 +220,7 @@ import { useI18n } from 'vue-i18n';
 import { useToast } from '@/common/toast';
 import { useUIStore } from '@/stores/uiStore';
 import { config, libConfig } from '@/common/config';
-import { isWin, isMac, isLinux, getSlideShowInterval, SCALE_VALUES } from '@/common/utils';
+import { isWin, isMac, isLinux, copyFilePaths, getSlideShowInterval, SCALE_VALUES } from '@/common/utils';
 import { matchesShortcut, ShortcutActionId, ShortcutPlatform, VIEW_BACKGROUND_SHORTCUTS } from '@/common/shortcuts';
 import { handleVideoPlaybackShortcut, handleVideoEscapeShortcut } from '@/common/video';
 import {
@@ -606,6 +606,16 @@ onUnmounted(() => {
   unlistenAlbumAccessChanged?.();
 });
 
+async function copyActiveFilePath() {
+  try {
+    const count = await copyFilePaths([getFileInfoByPane(getActivePane())], config.settings.rawPairClipboardMode);
+    if (count > 0) toast.success(t('file_info.paths_copied', { count }));
+  } catch (error) {
+    console.error('Failed to copy file path:', error);
+    toast.error(t('file_info.copy_path_failed'));
+  }
+}
+
 // Handle keyboard shortcuts
 function handleVideoSpaceKeyDown(event: KeyboardEvent) {
   if (uiStore.inputStack.length > 0 || getFileInfoByPane(getActivePane())?.file_type !== 2) return;
@@ -616,6 +626,14 @@ function handleVideoSpaceKeyDown(event: KeyboardEvent) {
 
 function handleKeyDown(event: KeyboardEvent) {
   if(uiStore.inputStack.length > 0) {
+    return;
+  }
+
+  const isEditingText = event.target instanceof HTMLElement
+    && (event.target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target.tagName));
+  if (matchesShortcut('file.copyPath', event, shortcutPlatform) && !isEditingText) {
+    event.preventDefault();
+    if (!event.repeat) void copyActiveFilePath();
     return;
   }
 

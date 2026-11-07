@@ -155,6 +155,7 @@
       "delete_message": "L'album intelligente '{name}' verrà eliminato.",
       "validation_name": "Inserisci un nome per l'album intelligente.",
       "validation_rule": "Aggiungi almeno una regola completa.",
+      "validation_no_values": "Nessun {field} trovato in questa libreria.",
       "fields": {
         "folder_name": "Nome cartella",
         "name": "Nome file",
@@ -1151,6 +1152,17 @@
     }
   },
   "file_info": {
+    "paths_copied": "{count} percorsi di file copiati negli appunti",
+    "copy_path": "Copia percorso del file",
+    "copy_path_failed": "Impossibile copiare il percorso",
+    "video_only": "(solo video)",
+    "field_preset": "Campi visibili",
+    "fields_default": "Predefinito",
+    "fields_all": "Mostra tutti",
+    "fields_custom": "Personalizzato",
+
+    "hide_empty_fields": "Nascondi automaticamente i campi vuoti",
+    "customize_fields": "Personalizza campi",
     "title": "Informazioni",
     "preview": "Anteprima",
     "thumbnail": "Miniatura",
@@ -1210,10 +1222,11 @@
     "source_description": "Descrizione originale",
     "coordinates": "Coordinate",
     "detail_fields": {
-      "title": "Titolo originale",
+      "title": "Titolo",
+      "headline": "Titolo descrittivo",
       "creator": "Autore",
       "copyright": "Copyright",
-      "description": "Descrizione originale",
+      "description": "Descrizione di origine",
       "credit": "Credito",
       "source": "Fonte",
       "usageTerms": "Condizioni d’uso",
@@ -1384,6 +1397,10 @@
     "raw": {
       "title": "RAW",
       "section_pairs": "File accoppiati",
+      "clipboard_both": "Entrambi i file",
+      "clipboard_raw": "Solo RAW",
+      "clipboard_jpeg": "Solo JPEG/HEIC",
+      "clipboard_hint": "Si applica anche ai percorsi. Non influisce sulla copia o sullo spostamento nelle cartelle.",
       "pair_source": "Visualizzazione predefinita per le coppie",
       "pair_source_hint": "Usata per miniature e anteprime accoppiate",
       "pair_jpeg": "JPEG / HEIC",
@@ -1612,6 +1629,7 @@
         "open_new_window": "Visualizza in una nuova finestra",
         "open_external_app": "Apri in app esterna",
         "edit_image": "Modifica",
+        "copy_file_path": "Copia percorso del file",
         "copy_file": "Copia negli appunti",
         "paste_file": "Incolla",
         "reveal_in_finder": "Mostra nel Finder",

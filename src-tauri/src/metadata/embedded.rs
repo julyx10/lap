@@ -7,6 +7,8 @@ use std::path::Path;
 
 #[derive(Clone, Debug, Default)]
 pub struct Metadata {
+    pub title: Option<String>,
+    pub headline: Option<String>,
     pub make: Option<String>,
     pub model: Option<String>,
     pub artist: Option<String>,
@@ -103,7 +105,9 @@ fn from_embedded(bytes: &[u8], tags: &[Tag]) -> Metadata {
     let mut metadata = map_tags(tags, packets.is_empty());
     if !packets.is_empty() {
         // One bounded packet extraction and URI-aware parse for every schema.
-        let xmp = crate::metadata::xmp::metadata_from_packets(&packets);
+        let (xmp, titles) = crate::metadata::xmp::metadata_and_titles_from_packets(&packets);
+        metadata.title = titles.title.or(metadata.title);
+        metadata.headline = titles.headline.or(metadata.headline);
         metadata.organization.culling_flag =
             xmp.culling_flag.or(metadata.organization.culling_flag);
         metadata.organization.favorite = xmp.favorite;
@@ -333,6 +337,8 @@ fn map_tags(tags: &[Tag], fallback_xmp_keywords: bool) -> Metadata {
     let source = detail_values_for(tags, true);
     let detail = |key: &str| source.get(key).map(|d| d.values.join("; "));
     Metadata {
+        title: detail("title"),
+        headline: detail("headline"),
         artist: detail("creator"),
         copyright: detail("copyright"),
         description: detail("description"),
@@ -430,6 +436,25 @@ fn coordinate(value: &Value, reference: Option<&str>, limit: f64) -> Option<f64>
 #[cfg(test)]
 pub(crate) mod tests {
     use super::*;
+
+    #[test]
+    fn iptc_title_and_headline_are_separate_and_xmp_takes_precedence() {
+        let tag = |name: &str, group: &str, value: &str| Tag {
+            id: exiftool_rs::TagId::Numeric(0), name: name.into(), description: String::new(),
+            group: exiftool_rs::TagGroup { family0: group.into(), family1: group.into(),
+                family2: "Other".into(), family3: "Main".into() },
+            raw_value: Value::String(value.into()), print_value: value.into(), priority: 1,
+        };
+        let mut tags = vec![tag("ObjectName", "IPTC", "IPTC title"), tag("Headline", "IPTC", "IPTC headline")];
+        let meta = from_tags(&tags);
+        assert_eq!(meta.title.as_deref(), Some("IPTC title"));
+        assert_eq!(meta.headline.as_deref(), Some("IPTC headline"));
+        tags.push(tag("Title", "XMP", "XMP title"));
+        tags.push(tag("Headline", "XMP", "XMP headline"));
+        let meta = from_tags(&tags);
+        assert_eq!(meta.title.as_deref(), Some("XMP title"));
+        assert_eq!(meta.headline.as_deref(), Some("XMP headline"));
+    }
 
     #[test]
     fn resolved_lens_id_fills_missing_model_without_overriding_existing_model() {

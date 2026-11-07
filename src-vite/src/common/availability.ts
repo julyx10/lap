@@ -53,8 +53,10 @@ export function resetLibraryAccessibility() {
   resetFileAccessibility();
 }
 
+// Clipboard copy validates its policy-selected paths in clickCopyImages.
+// A RAW primary can be offline while its JPEG companion remains available.
 const originalActions = new Set([
-  'edit', 'print', 'rename', 'copy', 'move-within-library', 'move-to-folder',
+  'edit', 'print', 'rename', 'move-within-library', 'move-to-folder',
   'save-xmp', 'copy-to-folder', 'trash', 'reveal', 'refresh-file-info', 'set-desktop-wallpaper', 'create-montage',
 ]);
 export function requiresOriginalAction(action: string): boolean {
