@@ -692,13 +692,13 @@ function cancelPendingDetails(sections = sectionNames) {
   });
   if (requestIds.length) void invoke('cancel_file_metadata_requests', { requestIds }).catch(() => {});
 }
-const sourceKeys = ['title', 'headline', 'creator', 'copyright', 'description', 'software', 'credit', 'source', 'usageTerms', 'rightsUrl'];
+const sourceKeys = ['title', 'headline', 'creator', 'copyright', 'software', 'credit', 'source', 'usageTerms', 'rightsUrl'];
 const detailKeys: Record<DetailSection, string[]> = {
   source: sourceKeys,
   capture: ['flash', 'whiteBalance', 'exposureMode', 'exposureProgram', 'meteringMode', 'focalLength35mm', 'timeZone'],
   location: ['direction', 'directionRef'],
 };
-const sourceFallbacks: Record<string, string> = { title: 'e_title', headline: 'e_headline', creator: 'e_artist', copyright: 'e_copyright', description: 'e_description', software: 'e_software' };
+const sourceFallbacks: Record<string, string> = { title: 'e_title', headline: 'e_headline', creator: 'e_artist', copyright: 'e_copyright', software: 'e_software' };
 function detailRows(section: DetailSection, keys = detailKeys[section]) {
   return keys.filter(key => fieldVisible(`${section}.${key}`)).map(key => {
     const detail = metadataDetails.value[key];

@@ -2,7 +2,7 @@
 //! Parsers and catalog merging consume these definitions without duplicating aliases.
 
 /// Bump when changed mappings must backfill unchanged catalog entries.
-pub(crate) const IMPORT_PREFIX: &str = "embedded-v7:";
+pub(crate) const IMPORT_PREFIX: &str = "embedded-v8:";
 
 pub const NS_LR: &str = "http://ns.adobe.com/lightroom/1.0/";
 pub const NS_DIGIKAM: &str = "http://www.digikam.org/ns/1.0/";
@@ -495,19 +495,21 @@ pub(super) const DESCRIPTION: &[XmpProperty] = &[
         name: "description",
     },
     XmpProperty {
-        uri: NS_EXIF,
-        prefix: "exif",
-        name: "UserComment",
-    },
-    XmpProperty {
         uri: NS_PHOTOSHOP,
         prefix: "photoshop",
         name: "Caption",
     },
+    XmpProperty {
+        uri: NS_EXIF,
+        prefix: "exif",
+        name: "UserComment",
+    },
 ];
 
+// Standard descriptions precede legacy caption/comment aliases.
 pub(super) const EMBEDDED_DESCRIPTION: &[&str] =
-    &["Description", "Caption-Abstract", "UserComment"];
+    &["Description", "Caption-Abstract", "ImageDescription"];
+pub(super) const LEGACY_DESCRIPTION: &[&str] = &["Caption", "UserComment"];
 pub(super) const SOURCE_PRIORITY: &[&str] = &["XMP", "IPTC", "EXIF"];
 pub(super) const IPTC_KEYWORDS: (&str, &str) = ("IPTC", "Keywords");
 

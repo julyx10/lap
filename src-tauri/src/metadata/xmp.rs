@@ -12,7 +12,7 @@
 //! | `afiles.rating` | `http://ns.adobe.com/xap/1.0/` | `xmp:Rating` (`xap:Rating`) | `0..=5` → `Some(0..=5)`; `""` → `Some(0)`; `-1` → `Some(0)` (and sets reject flag if unflagged); missing → `None` |
 //! | `afiles.culling_flag` | `http://ns.adobe.com/xmp/1.0/DynamicMedia/`<br>`http://darktable.sf.net/`<br>`http://ns.adobe.com/xap/1.0/` | `xmpDM:pick` / `xmpDM:good`<br>`darktable:rejected`<br>`xmp:Rating="-1"` / `xmp:Label` | `xmpDM:pick="1"` or `xmp:Label="Pick"\|"Select"` → `Some(1)` (Pick)<br>`xmpDM:pick="-1"` or `darktable:rejected="1"` or `xmp:Rating="-1"` or `xmp:Label="Reject"\|"Rejected"` → `Some(2)` (Reject)<br>`xmpDM:pick="0"` or `darktable:rejected="0"` → `Some(0)` (Unflagged)<br>missing → `None` |
 //! | `atags` / `afile_tags` | See `schema` | Registered keyword formats | Shared import, path normalization and explicit write capabilities |
-//! | `afiles.comments` | `http://purl.org/dc/elements/1.1/`<br>`http://ns.adobe.com/exif/1.0/`<br>`http://ns.adobe.com/photoshop/1.0/` | `dc:description` (`rdf:Alt`)<br>`exif:UserComment` (`rdf:Alt`)<br>`photoshop:Caption` | Priority: `dc:description` (`xml:lang="x-default"` preferred) → `exif:UserComment` → `photoshop:Caption`; empty element/attr → `Some("")`; missing → `None` |
+//! | `afiles.comments` | `http://purl.org/dc/elements/1.1/`<br>`http://ns.adobe.com/exif/1.0/`<br>`http://ns.adobe.com/photoshop/1.0/` | `dc:description` (`rdf:Alt`)<br>`photoshop:Caption`<br>`exif:UserComment` (`rdf:Alt`) | Priority: `dc:description` (`xml:lang="x-default"` preferred) → `photoshop:Caption` → `exif:UserComment`; empty element/attr → `Some("")`; missing → `None` |
 
 //! Keyword source rules live in `schema`; XML and catalog operations stay here.
 //! digiKam PickLabel: 0/2 -> Unflagged, 1 -> Reject, 3 -> Pick. Explicit
@@ -318,10 +318,10 @@ fn metadata_from_properties(properties: &[&XmlNode]) -> XmpMetadata {
 /// Standard and referenced extended packets form one logical metadata record.
 #[cfg(test)]
 pub(crate) fn metadata_from_packets(packets: &[String]) -> XmpMetadata {
-    metadata_and_titles_from_packets(packets).0
+    metadata_and_titles_from_packets(packets, None).0
 }
 
-pub(crate) fn metadata_and_titles_from_packets(packets: &[String]) -> (XmpMetadata, super::model::SourceTitles) {
+pub(crate) fn metadata_and_titles_from_packets(packets: &[String], standard_description: Option<String>) -> (XmpMetadata, super::model::SourceTitles) {
     let roots: Vec<_> = packets
         .iter()
         .filter_map(|packet| parse_xml(packet).ok())
@@ -331,7 +331,15 @@ pub(crate) fn metadata_and_titles_from_packets(packets: &[String]) -> (XmpMetada
     for root in roots.iter().rev() {
         collect_properties(root, &mut properties);
     }
-    (metadata_from_properties(&properties), titles_from_properties(&properties))
+    let mut meta = metadata_from_properties(&properties);
+    // Embedded IPTC/EXIF descriptions outrank legacy XMP comment aliases.
+    // An explicitly empty dc:description still clears lower-priority values.
+    meta.description = properties.iter()
+        .find(|node| schema::DESCRIPTION[0].matches(&node.uri, &node.name))
+        .map(|node| node.value())
+        .or(standard_description)
+        .or(meta.description);
+    (meta, titles_from_properties(&properties))
 }
 
 #[cfg(test)]

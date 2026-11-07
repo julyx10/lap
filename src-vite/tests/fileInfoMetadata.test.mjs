@@ -27,7 +27,7 @@ function section(key) {
 async function render(key, overrides = {}) {
   const context = {
     detailSections: {source:{loading:false}},
-    sourceDetailRows: [{ key: "description", value: "ORIGINAL SOURCE TEXT", source: "EXIF", label: "file_info.detail_fields.description" }], detailsLoading: false, detailsError: false,
+    sourceDetailRows: [{ key: "software", value: "SOURCE SOFTWARE", source: "EXIF", label: "file_info.detail_fields.software" }], detailsLoading: false, detailsError: false,
     showOrganizationPanel: true, showSourceMetadataPanel: false, hasSourceMetadata: true,
     toggleOrganization() {}, toggleSourceMetadata() {}, emit() {},
     isPrimaryGeneralInfo: false, displayTags: [], fileCollections: [], filePersons: [],
@@ -55,11 +55,12 @@ test('organization keeps catalog controls on the companion tab and hides empty d
   assert.match(filled, /USER DESCRIPTION/);
 });
 
-test('source metadata is hidden until expanded and retains the original description', async () => {
-  assert.doesNotMatch(await render('source_metadata'), /ORIGINAL SOURCE TEXT/);
+test('source metadata is hidden until expanded and displays source software', async () => {
+  assert.doesNotMatch(await render('source_metadata'), /SOURCE SOFTWARE/);
   const expanded = await render('source_metadata', { showSourceMetadataPanel: true });
-  assert.match(expanded, /ORIGINAL SOURCE TEXT/);
-  assert.match(expanded, /file_info.detail_fields.description/);
+  assert.match(expanded, /SOURCE SOFTWARE/);
+  assert.match(expanded, /file_info.detail_fields.software/);
+  assert.doesNotMatch(source, /description: 'e_description'/);
 });
 
 test('location accepts zero coordinates and rejects missing or invalid coordinates', () => {
@@ -233,6 +234,7 @@ test('field choices allow no fields and reject unknown fields', async () => {
   const registry = await readFile(new URL('../src/common/fileInfoFields.ts', import.meta.url), 'utf8');
   const module = await import(`data:text/javascript;base64,${Buffer.from(ts.transpile(registry, {target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext})).toString('base64')}`);
   assert.deepEqual(module.normalizeFileInfoFields([]), []);
+  assert.equal(module.allFileInfoFields.includes('source.description'), false);
   assert.deepEqual(module.normalizeFileInfoFields(['unknown', 'source.title', 'source.title']), ['source.title']);
   assert.deepEqual(module.normalizeFileInfoFields(undefined), module.normalizeFileInfoFields(module.defaultFileInfoFields));
   assert.equal(module.normalizeFileInfoFields(module.defaultFileInfoFields).length, module.defaultFileInfoFields.length);

@@ -105,7 +105,7 @@ fn from_embedded(bytes: &[u8], tags: &[Tag]) -> Metadata {
     let mut metadata = map_tags(tags, packets.is_empty());
     if !packets.is_empty() {
         // One bounded packet extraction and URI-aware parse for every schema.
-        let (xmp, titles) = crate::metadata::xmp::metadata_and_titles_from_packets(&packets);
+        let (xmp, titles) = crate::metadata::xmp::metadata_and_titles_from_packets(&packets, embedded_description(tags, schema::EMBEDDED_DESCRIPTION));
         metadata.title = titles.title.or(metadata.title);
         metadata.headline = titles.headline.or(metadata.headline);
         metadata.organization.culling_flag =
@@ -253,6 +253,14 @@ fn source_rank(tag: &Tag) -> u8 {
         .unwrap_or(schema::SOURCE_PRIORITY.len()) as u8
 }
 
+fn embedded_description(tags: &[Tag], names: &[&str]) -> Option<String> {
+    names.iter().find_map(|name| tags.iter()
+        .filter(|tag| tag.name == *name)
+        .filter_map(|tag| text(tag).map(|value| (source_rank(tag), value)))
+        .min_by_key(|(rank, _)| *rank)
+        .map(|(_, value)| value))
+}
+
 fn resolved_lens_id(tags: &[Tag]) -> Option<String> {
     tags.iter().filter(|tag| tag.name == schema::LENS_ID.1 && tag.group.family0 == schema::LENS_ID.0)
         .find_map(|tag| {
@@ -332,7 +340,8 @@ fn map_tags(tags: &[Tag], fallback_xmp_keywords: bool) -> Metadata {
     if !keywords.is_empty() {
         organization.tags = Some(keywords);
     }
-    organization.description = schema::EMBEDDED_DESCRIPTION.iter().find_map(|name| string(name));
+    organization.description = embedded_description(tags, schema::EMBEDDED_DESCRIPTION)
+        .or_else(|| embedded_description(tags, schema::LEGACY_DESCRIPTION));
     crate::metadata::system::import_windows_fields(tags, &mut organization);
     let source = detail_values_for(tags, true);
     let detail = |key: &str| source.get(key).map(|d| d.values.join("; "));
@@ -436,6 +445,55 @@ fn coordinate(value: &Value, reference: Option<&str>, limit: f64) -> Option<f64>
 #[cfg(test)]
 pub(crate) mod tests {
     use super::*;
+
+    #[test]
+    fn description_prefers_standard_fields_then_legacy_aliases() {
+        let tag = |name: &str, group: &str, value: &str| Tag {
+            id: exiftool_rs::TagId::Numeric(0), name: name.into(), description: String::new(),
+            group: exiftool_rs::TagGroup { family0: group.into(), family1: group.into(),
+                family2: "Other".into(), family3: "Main".into() },
+            raw_value: Value::String(value.into()), print_value: value.into(), priority: 1,
+        };
+        let mut tags = vec![tag("UserComment", "EXIF", "comment")];
+        for (name, group, expected) in [
+            ("Caption", "XMP", "legacy caption"),
+            ("ImageDescription", "EXIF", "EXIF description"),
+            ("Caption-Abstract", "IPTC", "IPTC description"),
+            ("Description", "XMP", "XMP description"),
+        ] {
+            tags.push(tag(name, group, expected));
+            assert_eq!(from_tags(&tags).organization.description.as_deref(), Some(expected));
+        }
+        // URI-aware embedded XMP must not let a legacy alias override IPTC/EXIF.
+        tags.retain(|tag| tag.group.family0 != "XMP");
+        for (body, expected) in [
+            ("<e:UserComment>XMP comment</e:UserComment>", "IPTC description"),
+            ("<p:Caption>XMP caption</p:Caption>", "IPTC description"),
+            ("<d:description>XMP description</d:description>", "XMP description"),
+            ("<d:description/>", ""),
+        ] {
+            let xml = format!("<rdf:RDF xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\"><rdf:Description xmlns:d=\"http://purl.org/dc/elements/1.1/\" xmlns:p=\"http://ns.adobe.com/photoshop/1.0/\" xmlns:e=\"http://ns.adobe.com/exif/1.0/\">{body}</rdf:Description></rdf:RDF>");
+            let jpeg = jpeg_with_xmp_packet(xml.as_bytes());
+            assert_eq!(from_embedded(&jpeg, &tags).organization.description.as_deref(), Some(expected));
+            let sidecar = crate::metadata::xmp::parse_xmp_str(&xml).unwrap();
+            let mut embedded = from_tags(&tags).organization;
+            crate::metadata::merge::merge_sidecar(&mut embedded, sidecar);
+            let expected = if body.contains("UserComment") { "XMP comment" }
+                else if body.contains("p:Caption") { "XMP caption" } else { expected };
+            assert_eq!(embedded.description.as_deref(), Some(expected));
+        }
+        // Empty higher-priority IPTC must not suppress a valid EXIF description.
+        tags.retain(|tag| tag.name != "Caption-Abstract");
+        for empty in ["", "   "] {
+            tags.push(tag("Caption-Abstract", "IPTC", empty));
+            let xml = "<rdf:RDF xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\"><rdf:Description xmlns:e=\"http://ns.adobe.com/exif/1.0/\"><e:UserComment>XMP comment</e:UserComment></rdf:Description></rdf:RDF>";
+            let jpeg = jpeg_with_xmp_packet(xml.as_bytes());
+            assert_eq!(from_embedded(&jpeg, &tags).organization.description.as_deref(), Some("EXIF description"));
+        }
+        let xml = "<rdf:RDF xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\"><rdf:Description xmlns:p=\"http://ns.adobe.com/photoshop/1.0/\" xmlns:e=\"http://ns.adobe.com/exif/1.0/\"><e:UserComment>comment</e:UserComment><p:Caption>caption</p:Caption></rdf:Description></rdf:RDF>";
+        let jpeg = jpeg_with_xmp_packet(xml.as_bytes());
+        assert_eq!(from_embedded(&jpeg, &[]).organization.description.as_deref(), Some("caption"));
+    }
 
     #[test]
     fn iptc_title_and_headline_are_separate_and_xmp_takes_precedence() {

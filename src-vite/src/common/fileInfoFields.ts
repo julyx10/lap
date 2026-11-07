@@ -20,7 +20,7 @@ export const fileInfoFieldGroups = [
     { key: 'location.map', label: 'file_info.map' },
   ] },
   { key: 'source', label: 'file_info.source_metadata', fields: fields('source',
-    ['title', 'headline', 'creator', 'copyright', 'description', 'software', 'credit', 'source', 'usageTerms', 'rightsUrl'], true) },
+    ['title', 'headline', 'creator', 'copyright', 'software', 'credit', 'source', 'usageTerms', 'rightsUrl'], true) },
 ];
 export const allFileInfoFields = fileInfoFieldGroups.flatMap(group => group.fields.map(field => field.key));
 export const defaultFileInfoFields = [
