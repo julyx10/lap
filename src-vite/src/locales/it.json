@@ -84,7 +84,7 @@
       "name": "Nome",
       "description": "Descrizione",
       "description_placeholder": "Inserisci la descrizione dell'album",
-      "images": "Foto",
+      "images": "Immagini",
       "videos": "Video",
       "section_general": "Generali",
       "section_scan": "Stato scansione",
@@ -109,7 +109,6 @@
       "last_scan_time": "Ultima scansione",
       "tab_general": "Generali",
       "file_types": "Escludi tipi di file",
-      "photos": "Foto",
       "raw": "RAW",
       "file_types_required": "Mantieni almeno un tipo di file incluso.",
       "pixel_filter": "Escludi immagini piccole",
@@ -371,7 +370,7 @@
     "add_child": "Nuovo tag figlio",
     "invalid_name": "I nomi dei tag non possono contenere , ; o {'|'}.",
     "invalid_move": "Un tag non può essere spostato nel proprio sottoalbero.",
-    "delete_tree": "Questo tag e i suoi tag secondari verranno eliminati. Le foto verranno conservate."
+    "delete_tree": "Questo tag e i suoi tag secondari verranno eliminati. Le immagini verranno conservate."
   },
   "subject": {
     "title": "Soggetti",
@@ -537,8 +536,8 @@
       "move": "Sposta"
     },
     "edit_disabled": "Seleziona una singola foto da modificare",
-    "type_image": "Foto",
-    "type_images": "Foto",
+    "type_image": "Immagine",
+    "type_images": "Immagini",
     "type_video": "Video",
     "type_videos": "Video",
     "select_title": "Selezione",
@@ -553,7 +552,7 @@
       "title": "Duplicati",
       "tabs": {
         "exact": "Duplicati",
-        "similar": "Foto simili"
+        "similar": "Immagini simili"
       },
       "scanning": "Scansione dei duplicati...",
       "error_title": "Impossibile scansionare i duplicati",
@@ -1561,7 +1560,7 @@
     },
     "image_search": {
       "title": "Ricerca",
-      "search_image": "Ricerca foto",
+      "search_image": "Ricerca immagini",
       "search_model": "Scegli modello",
       "default_model_hint": "Il modello predefinito supporta solo la ricerca di foto in inglese",
       "multilingual_model_hint": "Cerca in oltre 50 lingue",

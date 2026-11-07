@@ -84,7 +84,7 @@
       "name": "名前",
       "description": "説明",
       "description_placeholder": "アルバムの説明を入力",
-      "images": "写真",
+      "images": "画像",
       "videos": "動画",
       "section_general": "一般",
       "section_scan": "スキャンの状態",
@@ -109,7 +109,6 @@
       "last_scan_time": "最終スキャン",
       "tab_general": "一般",
       "file_types": "ファイル形式を除外",
-      "photos": "写真",
       "raw": "RAW",
       "file_types_required": "少なくとも1つのファイル形式を対象として残してください。",
       "pixel_filter": "小さい画像を除外",
@@ -371,7 +370,7 @@
     "add_child": "子タグを作成",
     "invalid_name": "タグ名に , ; {'|'} は使えません。",
     "invalid_move": "タグを自身やその子タグの下へ移動できません。",
-    "delete_tree": "このタグと子タグを削除します。写真は保持されます。"
+    "delete_tree": "このタグと子タグを削除します。画像は保持されます。"
   },
   "subject": {
     "title": "被写体",
@@ -537,8 +536,8 @@
       "move": "移動"
     },
     "edit_disabled": "編集する写真を1枚選択してください",
-    "type_image": "写真",
-    "type_images": "写真",
+    "type_image": "画像",
+    "type_images": "画像",
     "type_video": "本の動画",
     "type_videos": "本の動画",
     "select_title": "選択",
@@ -553,7 +552,7 @@
       "title": "重複",
       "tabs": {
         "exact": "重複",
-        "similar": "類似写真"
+        "similar": "類似画像"
       },
       "scanning": "重複をスキャン中...",
       "error_title": "重複をスキャンできません",
@@ -1561,7 +1560,7 @@
     },
     "image_search": {
       "title": "検索",
-      "search_image": "写真検索",
+      "search_image": "画像検索",
       "search_model": "モデルを選択",
       "default_model_hint": "デフォルトモデルは英語の写真検索のみ対応しています",
       "multilingual_model_hint": "50以上の言語で検索できます",

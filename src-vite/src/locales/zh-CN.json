@@ -84,7 +84,7 @@
       "name": "名称",
       "description": "描述",
       "description_placeholder": "输入相册描述",
-      "images": "照片",
+      "images": "图片",
       "videos": "视频",
       "section_general": "通用",
       "section_scan": "扫描状态",
@@ -109,7 +109,6 @@
       "last_scan_time": "最近扫描",
       "tab_general": "常规",
       "file_types": "排除文件类型",
-      "photos": "照片",
       "raw": "RAW",
       "file_types_required": "请至少保留一种文件类型。",
       "pixel_filter": "排除小尺寸图片",
@@ -371,7 +370,7 @@
     "add_child": "新建子标签",
     "invalid_name": "标签名称不能包含 , ; {'|'}。",
     "invalid_move": "不能将标签移动到自身或其子标签下。",
-    "delete_tree": "将删除此标签及其子标签，照片不受影响。"
+    "delete_tree": "将删除此标签及其子标签，图片不受影响。"
   },
   "subject": {
     "title": "主题",
@@ -537,8 +536,8 @@
       "move": "移动"
     },
     "edit_disabled": "请选择单张照片进行编辑",
-    "type_image": "张照片",
-    "type_images": "张照片",
+    "type_image": "张图片",
+    "type_images": "张图片",
     "type_video": "个视频",
     "type_videos": "个视频",
     "select_title": "选择",
@@ -553,7 +552,7 @@
       "title": "重复项",
       "tabs": {
         "exact": "重复项",
-        "similar": "相似照片"
+        "similar": "相似图片"
       },
       "scanning": "扫描重复项中...",
       "error_title": "无法扫描重复项",
@@ -1561,7 +1560,7 @@
     },
     "image_search": {
       "title": "搜索",
-      "search_image": "照片搜索",
+      "search_image": "图片搜索",
       "search_model": "选择模型",
       "default_model_hint": "默认模型仅支持英文的照片搜索",
       "multilingual_model_hint": "支持 50+ 语言搜索",

@@ -84,7 +84,7 @@
       "name": "Nazwa",
       "description": "Opis",
       "description_placeholder": "Wprowadź opis albumu",
-      "images": "Zdjęcia",
+      "images": "Obrazy",
       "videos": "Filmy",
       "section_general": "Ogólne",
       "section_scan": "Stan skanowania",
@@ -109,7 +109,6 @@
       "last_scan_time": "Ostatnie skanowanie",
       "tab_general": "Ogólne",
       "file_types": "Wyklucz typy plików",
-      "photos": "Zdjęcia",
       "raw": "RAW",
       "file_types_required": "Co najmniej jeden typ plików musi pozostać włączony.",
       "pixel_filter": "Wyklucz małe zdjęcia",
@@ -371,7 +370,7 @@
     "add_child": "Nowy tag podrzędny",
     "invalid_name": "Nazwy tagów nie mogą zawierać , ; ani {'|'}.",
     "invalid_move": "Nie można przenieść tagu do jego własnego poddrzewa.",
-    "delete_tree": "Ten tag i jego tagi podrzędne zostaną usunięte. Zdjęcia zostaną zachowane."
+    "delete_tree": "Ten tag i jego tagi podrzędne zostaną usunięte. Obrazy zostaną zachowane."
   },
   "subject": {
     "title": "Tematy",
@@ -537,8 +536,8 @@
       "move": "Przenieś"
     },
     "edit_disabled": "Wybierz jedno zdjęcie, aby je edytować",
-    "type_image": "Zdjęcie",
-    "type_images": "Zdjęcia",
+    "type_image": "Obraz",
+    "type_images": "Obrazy",
     "type_video": "Film",
     "type_videos": "Filmy",
     "select_title": "Zaznaczenie",
@@ -553,7 +552,7 @@
       "title": "Duplikaty",
       "tabs": {
         "exact": "Duplikaty",
-        "similar": "Podobne zdjęcia"
+        "similar": "Podobne obrazy"
       },
       "scanning": "Skanowanie duplikatów...",
       "error_title": "Nie można przeskanować duplikatów",
@@ -1561,7 +1560,7 @@
     },
     "image_search": {
       "title": "Wyszukiwanie",
-      "search_image": "Wyszukiwanie zdjęć",
+      "search_image": "Wyszukiwanie obrazów",
       "search_model": "Wybierz model",
       "default_model_hint": "Domyślny model obsługuje tylko wyszukiwanie zdjęć po angielsku",
       "multilingual_model_hint": "Wyszukiwanie w ponad 50 językach",

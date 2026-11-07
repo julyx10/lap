@@ -84,7 +84,7 @@
       "name": "Név",
       "description": "Leírás",
       "description_placeholder": "Albumleírás megadása",
-      "images": "Fotók",
+      "images": "Képek",
       "videos": "Videók",
       "section_general": "Általános",
       "section_scan": "Beolvasás állapota",
@@ -109,7 +109,6 @@
       "last_scan_time": "Utolsó beolvasás",
       "tab_general": "Általános",
       "file_types": "Fájltípusok kizárása",
-      "photos": "Fotók",
       "raw": "RAW",
       "file_types_required": "Legalább egy fájltípust meg kell hagynia.",
       "pixel_filter": "Kis képek kizárása",
@@ -371,7 +370,7 @@
     "add_child": "Új gyermekcímke",
     "invalid_name": "A címkenév nem tartalmazhat , ; vagy {'|'} karaktert.",
     "invalid_move": "A címke nem helyezhető át a saját részfájába.",
-    "delete_tree": "A címke és az alcímkéi törlésre kerülnek. A fényképek megmaradnak."
+    "delete_tree": "A címke és az alcímkéi törlésre kerülnek. A képek megmaradnak."
   },
   "subject": {
     "title": "Témák",
@@ -537,8 +536,8 @@
       "move": "Áthelyezés"
     },
     "edit_disabled": "Jelöljön ki egy fotót a szerkesztéshez",
-    "type_image": "Fotó",
-    "type_images": "Fotók",
+    "type_image": "Kép",
+    "type_images": "Képek",
     "type_video": "Videó",
     "type_videos": "Videók",
     "select_title": "Kijelölés",
@@ -553,7 +552,7 @@
       "title": "Duplikátumok",
       "tabs": {
         "exact": "Duplikátumok",
-        "similar": "Hasonló fotók"
+        "similar": "Hasonló képek"
       },
       "scanning": "Duplikátumok keresése...",
       "error_title": "A duplikátumok nem kereshetők",
@@ -1561,7 +1560,7 @@
     },
     "image_search": {
       "title": "Keresés",
-      "search_image": "Fotókeresés",
+      "search_image": "Képkeresés",
       "search_model": "Modell kiválasztása",
       "default_model_hint": "Az alapértelmezett modell csak az angol fotókeresést támogatja",
       "multilingual_model_hint": "Keresés több mint 50 nyelven",

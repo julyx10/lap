@@ -84,7 +84,7 @@
       "name": "이름",
       "description": "설명",
       "description_placeholder": "앨범 설명 입력",
-      "images": "사진",
+      "images": "이미지",
       "videos": "비디오",
       "section_general": "일반",
       "section_scan": "스캔 상태",
@@ -109,7 +109,6 @@
       "last_scan_time": "최근 스캔",
       "tab_general": "일반",
       "file_types": "파일 형식 제외",
-      "photos": "사진",
       "raw": "RAW",
       "file_types_required": "파일 형식을 하나 이상 포함해야 합니다.",
       "pixel_filter": "작은 이미지 제외",
@@ -371,7 +370,7 @@
     "add_child": "하위 태그 만들기",
     "invalid_name": "태그 이름에 , ; {'|'} 문자를 사용할 수 없습니다.",
     "invalid_move": "태그를 자신이나 하위 태그로 이동할 수 없습니다.",
-    "delete_tree": "이 태그와 하위 태그가 삭제됩니다. 사진은 유지됩니다."
+    "delete_tree": "이 태그와 하위 태그가 삭제됩니다. 이미지는 유지됩니다."
   },
   "subject": {
     "title": "주제",
@@ -537,8 +536,8 @@
       "move": "이동"
     },
     "edit_disabled": "편집할 사진 한 장을 선택하세요",
-    "type_image": "사진",
-    "type_images": "사진",
+    "type_image": "이미지",
+    "type_images": "이미지",
     "type_video": "개 비디오",
     "type_videos": "개 비디오",
     "select_title": "선택",
@@ -553,7 +552,7 @@
       "title": "중복",
       "tabs": {
         "exact": "중복 항목",
-        "similar": "유사 사진"
+        "similar": "유사 이미지"
       },
       "scanning": "중복 항목 스캔 중...",
       "error_title": "중복 항목을 스캔할 수 없습니다",
@@ -1561,7 +1560,7 @@
     },
     "image_search": {
       "title": "검색",
-      "search_image": "사진 검색",
+      "search_image": "이미지 검색",
       "search_model": "모델 선택",
       "default_model_hint": "기본 모델은 영어 사진 검색만 지원합니다",
       "multilingual_model_hint": "50개 이상 언어 검색 지원",

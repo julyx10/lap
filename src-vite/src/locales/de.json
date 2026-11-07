@@ -84,7 +84,7 @@
       "name": "Name",
       "description": "Beschreibung",
       "description_placeholder": "Albumbeschreibung eingeben",
-      "images": "Fotos",
+      "images": "Bilder",
       "videos": "Videos",
       "section_general": "Allgemein",
       "section_scan": "Scanstatus",
@@ -109,7 +109,6 @@
       "last_scan_time": "Zuletzt gescannt",
       "tab_general": "Allgemein",
       "file_types": "Dateitypen ausschließen",
-      "photos": "Fotos",
       "raw": "RAW",
       "file_types_required": "Mindestens einen Dateityp eingeschlossen lassen.",
       "pixel_filter": "Kleine Bilder ausschließen",
@@ -371,7 +370,7 @@
     "add_child": "Neues Untertag",
     "invalid_name": "Tag-Namen dürfen kein , ; oder {'|'} enthalten.",
     "invalid_move": "Ein Tag kann nicht unter sich selbst verschoben werden.",
-    "delete_tree": "Dieses Tag und seine Untertags werden gelöscht. Fotos bleiben erhalten."
+    "delete_tree": "Dieses Tag und seine Untertags werden gelöscht. Bilder bleiben erhalten."
   },
   "subject": {
     "title": "Motive",
@@ -537,8 +536,8 @@
       "move": "Verschieben"
     },
     "edit_disabled": "Wählen Sie ein einzelnes Foto zum Bearbeiten",
-    "type_image": "Foto",
-    "type_images": "Fotos",
+    "type_image": "Bild",
+    "type_images": "Bilder",
     "type_video": "Video",
     "type_videos": "Videos",
     "select_title": "Auswahl",
@@ -553,7 +552,7 @@
       "title": "Duplikate",
       "tabs": {
         "exact": "Duplikate",
-        "similar": "Ähnliche Fotos"
+        "similar": "Ähnliche Bilder"
       },
       "scanning": "Duplikate werden gescannt...",
       "error_title": "Duplikate konnten nicht gescannt werden",
@@ -1561,7 +1560,7 @@
     },
     "image_search": {
       "title": "Suche",
-      "search_image": "Fotosuche",
+      "search_image": "Bildersuche",
       "search_model": "Modell auswählen",
       "default_model_hint": "Das Standardmodell unterstützt nur die Fotosuche auf Englisch",
       "multilingual_model_hint": "Suche in über 50 Sprachen",

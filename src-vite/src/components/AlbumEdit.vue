@@ -322,7 +322,7 @@ const isFolderSearchFocused = ref(false);
 const foldersLoading = ref(false);
 const foldersError = ref(false);
 const fileTypeOptions = [
-  { value: 1, label: 'album.edit.photos' },
+  { value: 1, label: 'album.edit.images' },
   { value: 4, label: 'album.edit.raw' },
   { value: 2, label: 'album.edit.videos' },
 ];

@@ -84,7 +84,7 @@
       "name": "Naam",
       "description": "Beschrijving",
       "description_placeholder": "Voer een albumbeschrijving in",
-      "images": "Foto's",
+      "images": "Afbeeldingen",
       "videos": "Video's",
       "section_general": "Algemeen",
       "section_scan": "Scanstatus",
@@ -109,7 +109,6 @@
       "last_scan_time": "Laatst gescand",
       "tab_general": "Algemeen",
       "file_types": "Bestandstypen uitsluiten",
-      "photos": "Foto's",
       "raw": "RAW",
       "file_types_required": "Laat minstens één bestandstype meedoen.",
       "pixel_filter": "Kleine afbeeldingen uitsluiten",
@@ -371,7 +370,7 @@
     "add_child": "Nieuwe subtag",
     "invalid_name": "Tagnamen mogen geen , ; of {'|'} bevatten.",
     "invalid_move": "Een tag kan niet binnen zijn eigen boom worden verplaatst.",
-    "delete_tree": "Deze tag en de onderliggende tags worden verwijderd. Foto’s blijven behouden."
+    "delete_tree": "Deze tag en de onderliggende tags worden verwijderd. Afbeeldingen blijven behouden."
   },
   "subject": {
     "title": "Onderwerpen",
@@ -537,8 +536,8 @@
       "move": "Verplaatsen"
     },
     "edit_disabled": "Selecteer één foto om te bewerken",
-    "type_image": "Foto",
-    "type_images": "Foto's",
+    "type_image": "Afbeelding",
+    "type_images": "Afbeeldingen",
     "type_video": "Video",
     "type_videos": "Video's",
     "select_title": "Selectie",
@@ -553,7 +552,7 @@
       "title": "Duplicaten",
       "tabs": {
         "exact": "Duplicaten",
-        "similar": "Vergelijkbare foto's"
+        "similar": "Vergelijkbare afbeeldingen"
       },
       "scanning": "Zoeken naar duplicaten...",
       "error_title": "Kan niet naar duplicaten zoeken",
@@ -1561,7 +1560,7 @@
     },
     "image_search": {
       "title": "Zoeken",
-      "search_image": "Foto's zoeken",
+      "search_image": "Afbeeldingen zoeken",
       "search_model": "Kies model",
       "default_model_hint": "Het standaardmodel ondersteunt alleen zoeken in het Engels",
       "multilingual_model_hint": "Zoeken in meer dan 50 talen",

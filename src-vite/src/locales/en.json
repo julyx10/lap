@@ -84,7 +84,7 @@
       "name": "Name",
       "description": "Description",
       "description_placeholder": "Enter album description",
-      "images": "Photos",
+      "images": "Images",
       "videos": "Videos",
       "section_general": "General",
       "section_scan": "Scan Status",
@@ -109,7 +109,6 @@
       "last_scan_time": "Last scanned",
       "tab_general": "General",
       "file_types": "Exclude file types",
-      "photos": "Photos",
       "raw": "RAW",
       "file_types_required": "Keep at least one file type included.",
       "pixel_filter": "Exclude small images",
@@ -371,7 +370,7 @@
     "add_child": "New child tag",
     "invalid_name": "Tag names cannot contain , ; or {'|'}.",
     "invalid_move": "A tag cannot be moved into its own subtree.",
-    "delete_tree": "This tag and its subtags will be deleted. Photos will be kept."
+    "delete_tree": "This tag and its subtags will be deleted. Images will be kept."
   },
   "subject": {
     "title": "Subjects",
@@ -537,8 +536,8 @@
       "move": "Move"
     },
     "edit_disabled": "Select a single photo to edit",
-    "type_image": "Photo",
-    "type_images": "Photos",
+    "type_image": "Image",
+    "type_images": "Images",
     "type_video": "Video",
     "type_videos": "Videos",
     "select_title": "Selection",
@@ -553,7 +552,7 @@
       "title": "Duplicates",
       "tabs": {
         "exact": "Duplicates",
-        "similar": "Similar Photos"
+        "similar": "Similar Images"
       },
       "scanning": "Scanning duplicates...",
       "error_title": "Unable to scan duplicates",
@@ -1561,7 +1560,7 @@
     },
     "image_search": {
       "title": "Search",
-      "search_image": "Photo search",
+      "search_image": "Image search",
       "search_model": "Choose model",
       "default_model_hint": "The default model only supports English photo search",
       "multilingual_model_hint": "Search across 50+ languages",

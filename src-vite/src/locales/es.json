@@ -84,7 +84,7 @@
       "name": "Nombre",
       "description": "Descripción",
       "description_placeholder": "Introduce la descripción del álbum",
-      "images": "Fotos",
+      "images": "Imágenes",
       "videos": "Vídeos",
       "section_general": "General",
       "section_scan": "Estado del escaneo",
@@ -109,7 +109,6 @@
       "last_scan_time": "Último escaneo",
       "tab_general": "General",
       "file_types": "Excluir tipos de archivo",
-      "photos": "Fotos",
       "raw": "RAW",
       "file_types_required": "Mantén al menos un tipo de archivo incluido.",
       "pixel_filter": "Excluir imágenes pequeñas",
@@ -371,7 +370,7 @@
     "add_child": "Nueva etiqueta secundaria",
     "invalid_name": "Los nombres de las etiquetas no pueden contener , ; ni {'|'}.",
     "invalid_move": "Una etiqueta no se puede mover dentro de su propio árbol.",
-    "delete_tree": "Se eliminarán esta etiqueta y sus subetiquetas. Las fotos se conservarán."
+    "delete_tree": "Se eliminarán esta etiqueta y sus subetiquetas. Las imágenes se conservarán."
   },
   "subject": {
     "title": "Temas",
@@ -537,8 +536,8 @@
       "move": "Mover"
     },
     "edit_disabled": "Selecciona una sola foto para editar",
-    "type_image": "Foto",
-    "type_images": "Fotos",
+    "type_image": "Imagen",
+    "type_images": "Imágenes",
     "type_video": "Vídeo",
     "type_videos": "Vídeos",
     "select_title": "Selección",
@@ -553,7 +552,7 @@
       "title": "Duplicados",
       "tabs": {
         "exact": "Duplicados",
-        "similar": "Fotos similares"
+        "similar": "Imágenes similares"
       },
       "scanning": "Escaneando duplicados...",
       "error_title": "No se pudieron escanear los duplicados",
@@ -1561,7 +1560,7 @@
     },
     "image_search": {
       "title": "Buscar",
-      "search_image": "Búsqueda de fotos",
+      "search_image": "Búsqueda de imágenes",
       "search_model": "Elegir modelo",
       "default_model_hint": "El modelo predeterminado solo admite búsqueda de fotos en inglés",
       "multilingual_model_hint": "Busca en más de 50 idiomas",

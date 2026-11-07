@@ -84,7 +84,7 @@
       "name": "Nome",
       "description": "Descrição",
       "description_placeholder": "Digite a descrição do álbum",
-      "images": "Fotos",
+      "images": "Imagens",
       "videos": "Vídeos",
       "section_general": "Geral",
       "section_scan": "Status da verificação",
@@ -109,7 +109,6 @@
       "last_scan_time": "Última verificação",
       "tab_general": "Geral",
       "file_types": "Excluir tipos de arquivo",
-      "photos": "Fotos",
       "raw": "RAW",
       "file_types_required": "Mantenha pelo menos um tipo de arquivo incluído.",
       "pixel_filter": "Excluir imagens pequenas",
@@ -371,7 +370,7 @@
     "add_child": "Nova etiqueta filha",
     "invalid_name": "Os nomes das etiquetas não podem conter , ; ou {'|'}.",
     "invalid_move": "Uma etiqueta não pode ser movida para a própria subárvore.",
-    "delete_tree": "Esta etiqueta e as suas subetiquetas serão eliminadas. As fotos serão mantidas."
+    "delete_tree": "Esta etiqueta e as suas subetiquetas serão eliminadas. As imagens serão mantidas."
   },
   "subject": {
     "title": "Temas",
@@ -537,8 +536,8 @@
       "move": "Mover"
     },
     "edit_disabled": "Selecione uma única foto para editar",
-    "type_image": "Foto",
-    "type_images": "Fotos",
+    "type_image": "Imagem",
+    "type_images": "Imagens",
     "type_video": "Vídeo",
     "type_videos": "Vídeos",
     "select_title": "Seleção",
@@ -553,7 +552,7 @@
       "title": "Duplicados",
       "tabs": {
         "exact": "Duplicados",
-        "similar": "Fotos semelhantes"
+        "similar": "Imagens semelhantes"
       },
       "scanning": "Escaneando duplicados...",
       "error_title": "Não foi possível escanear os duplicados",
@@ -1561,7 +1560,7 @@
     },
     "image_search": {
       "title": "Pesquisa",
-      "search_image": "Pesquisa de fotos",
+      "search_image": "Pesquisa de imagens",
       "search_model": "Escolher modelo",
       "default_model_hint": "O modelo padrão só oferece suporte à pesquisa de fotos em inglês",
       "multilingual_model_hint": "Pesquisa em mais de 50 idiomas",

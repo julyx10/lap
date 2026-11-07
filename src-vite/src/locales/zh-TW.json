@@ -84,7 +84,7 @@
       "name": "名稱",
       "description": "描述",
       "description_placeholder": "輸入相簿描述",
-      "images": "相片",
+      "images": "圖片",
       "videos": "影片",
       "section_general": "一般",
       "section_scan": "掃描狀態",
@@ -109,7 +109,6 @@
       "last_scan_time": "上次掃描",
       "tab_general": "一般",
       "file_types": "排除檔案類型",
-      "photos": "相片",
       "raw": "RAW",
       "file_types_required": "請至少保留一種檔案類型。",
       "pixel_filter": "排除小圖片",
@@ -371,7 +370,7 @@
     "add_child": "新增子標籤",
     "invalid_name": "標籤名稱不能包含 , ; {'|'}。",
     "invalid_move": "無法將標籤移至自身或其子標籤下。",
-    "delete_tree": "將刪除此標籤及其子標籤，相片不受影響。"
+    "delete_tree": "將刪除此標籤及其子標籤，圖片不受影響。"
   },
   "subject": {
     "title": "主題",
@@ -537,8 +536,8 @@
       "move": "移動"
     },
     "edit_disabled": "請選擇單一相片以編輯",
-    "type_image": "相片",
-    "type_images": "相片",
+    "type_image": "圖片",
+    "type_images": "圖片",
     "type_video": "影片",
     "type_videos": "影片",
     "select_title": "選取",
@@ -553,7 +552,7 @@
       "title": "重複項",
       "tabs": {
         "exact": "重複項",
-        "similar": "相似相片"
+        "similar": "相似圖片"
       },
       "scanning": "正在掃描重複項...",
       "error_title": "無法掃描重複項",
@@ -1561,7 +1560,7 @@
     },
     "image_search": {
       "title": "搜尋",
-      "search_image": "相片搜尋",
+      "search_image": "圖片搜尋",
       "search_model": "選擇模型",
       "default_model_hint": "預設模型僅支援英文相片搜尋",
       "multilingual_model_hint": "以超過 50 種語言搜尋",
