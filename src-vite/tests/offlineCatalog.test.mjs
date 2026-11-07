@@ -48,15 +48,16 @@ test('single-file menu retains catalog organization and blocks original-file ope
   setAlbumAccessibility(1, false);
   const called = [];
   const menu = useFileMenuItems(file, locale, true, key => key, name => called.push(name));
-  for (const name of ['edit', 'print', 'rename', 'copy', 'move-within-library', 'move-to-folder', 'copy-to-folder', 'trash', 'reveal', 'refresh-file-info', 'set-desktop-wallpaper', 'open-external-app:editor']) {
+  for (const name of ['edit', 'print', 'rename', 'move-within-library', 'move-to-folder', 'copy-to-folder', 'trash', 'reveal', 'refresh-file-info', 'set-desktop-wallpaper', 'open-external-app:editor']) {
     assert.equal(action(menu.value, name).disabled, true, name);
     action(menu.value, name).action();
   }
   assert.deepEqual(called, []);
-  for (const name of ['favorite', 'rating-5', 'tag', 'comment', 'add-to-collection', 'rotate', 'open', 'set-album-cover']) {
+  for (const name of ['copy', 'favorite', 'rating-5', 'tag', 'comment', 'add-to-collection', 'rotate', 'open', 'set-album-cover']) {
     assert.equal(action(menu.value, name).disabled, false, name);
     action(menu.value, name).action();
   }
+  assert.ok(called.includes('copy'));
   assert.ok(called.includes('tag'));
   setAlbumAccessibility(1, true);
   assert.equal(action(menu.value, 'rename').disabled, false);

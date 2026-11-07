@@ -329,6 +329,17 @@
                 <option value="raw">RAW</option>
               </select>
             </div>
+            <div v-if="config.settings.groupRawJpegPairs" class="flex items-center justify-between gap-3 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <label for="raw-pair-clipboard" class="min-w-0 flex flex-col gap-0.5 text-sm leading-5">
+                <span>{{ $t('menu.file.copy') }}</span>
+                <span class="text-xs text-base-content/30">{{ $t('settings.raw.clipboard_hint') }}</span>
+              </label>
+              <select id="raw-pair-clipboard" class="select select-bordered select-sm w-40 shrink-0 max-w-full" v-model="config.settings.rawPairClipboardMode">
+                <option value="both">{{ $t('settings.raw.clipboard_both') }}</option>
+                <option value="raw">{{ $t('settings.raw.clipboard_raw') }}</option>
+                <option value="jpeg">{{ $t('settings.raw.clipboard_jpeg') }}</option>
+              </select>
+            </div>
           </div>
           <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
             <div class="flex items-center gap-2 text-base-content/30">
@@ -1224,6 +1235,7 @@ const shortcutDisplaySections: Array<{ key: string; items: ShortcutDisplayItem[]
       { actionId: 'file.moveTo', labelKey: 'move_within_library' },
       { actionId: 'file.moveToFolder', labelKey: 'move_to_folder' },
       { actionId: 'file.copy', labelKey: 'copy_file' },
+      { actionId: 'file.copyPath', labelKey: 'copy_file_path' },
       { actionId: 'file.paste', labelKey: 'paste_file' },
       { actionId: 'file.reveal', labelKey: 'reveal_in_file_manager' },
       { actionId: 'file.trash', labelKey: 'move_to_trash' },
@@ -1557,6 +1569,10 @@ watch(() => config.settings.showSubfolderFiles, (newValue) => {
 });
 watch(() => config.settings.groupRawJpegPairs, (newValue) => {
   emit('settings-groupRawJpegPairs-changed', newValue);
+});
+
+watch(() => config.settings.rawPairClipboardMode, (newValue) => {
+  emit('settings-rawPairClipboardMode-changed', newValue);
 });
 
 watch(() => config.settings.rawPairDisplaySource, (newValue) => {

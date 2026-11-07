@@ -1152,6 +1152,9 @@
     }
   },
   "file_info": {
+    "paths_copied": "已複製 {count} 個檔案路徑到剪貼簿",
+    "copy_path": "複製檔案路徑",
+    "copy_path_failed": "複製路徑失敗",
     "video_only": "（僅影片）",
     "field_preset": "顯示欄位",
     "fields_default": "預設",
@@ -1393,6 +1396,10 @@
     "raw": {
       "title": "RAW",
       "section_pairs": "配對檔案",
+      "clipboard_both": "兩個檔案",
+      "clipboard_raw": "僅 RAW",
+      "clipboard_jpeg": "僅 JPEG/HEIC",
+      "clipboard_hint": "同時影響複製檔案路徑，不影響複製或移動檔案至資料夾。",
       "pair_source": "配對的預設顯示",
       "pair_source_hint": "用於配對的縮圖與預覽",
       "pair_jpeg": "JPEG / HEIC",
@@ -1621,6 +1628,7 @@
         "open_new_window": "在新視窗檢視",
         "open_external_app": "用外部應用程式開啟",
         "edit_image": "編輯",
+        "copy_file_path": "複製檔案路徑",
         "copy_file": "複製到剪貼簿",
         "paste_file": "貼上",
         "reveal_in_finder": "在 Finder 中顯示",

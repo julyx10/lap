@@ -1332,13 +1332,16 @@ pub async fn copy_files_to_clipboard(
 ) -> Result<usize, String> {
     let file_paths = file_paths
         .into_iter()
-        .filter(|path| Path::new(path).is_file())
         // The UI limits copying to 10 content items. RAW+JPEG pairs expand
         // one item into two physical files, so retain both components.
         .take(20)
         .collect::<Vec<_>>();
     if file_paths.is_empty() {
         return Err("No valid files to copy".to_string());
+    }
+    // Do not silently copy only part of a RAW pair or multi-file selection.
+    if let Some(path) = file_paths.iter().find(|path| !Path::new(path).is_file()) {
+        return Err(format!("File is unavailable: {}", path));
     }
     let preview = clipboard_preview_png(&file_paths).await;
     crate::t_pasteboard::copy_files_and_image(app_handle, &file_paths, preview.as_deref()).await?;

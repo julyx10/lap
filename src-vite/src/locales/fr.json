@@ -1152,6 +1152,9 @@
     }
   },
   "file_info": {
+    "paths_copied": "{count} chemin(s) de fichier copié(s) dans le presse-papiers",
+    "copy_path": "Copier le chemin du fichier",
+    "copy_path_failed": "Impossible de copier le chemin",
     "video_only": "(vidéos uniquement)",
     "field_preset": "Champs visibles",
     "fields_default": "Par défaut",
@@ -1393,6 +1396,10 @@
     "raw": {
       "title": "RAW",
       "section_pairs": "Fichiers appariés",
+      "clipboard_both": "Les deux fichiers",
+      "clipboard_raw": "RAW uniquement",
+      "clipboard_jpeg": "JPEG/HEIC uniquement",
+      "clipboard_hint": "S’applique aussi aux chemins. Sans effet sur la copie ou le déplacement vers un dossier.",
       "pair_source": "Affichage par défaut des paires",
       "pair_source_hint": "Utilisé pour les miniatures et aperçus appariés",
       "pair_jpeg": "JPEG / HEIC",
@@ -1621,6 +1628,7 @@
         "open_new_window": "Détacher la fenêtre",
         "open_external_app": "Ouvrir dans une app externe",
         "edit_image": "Modifier",
+        "copy_file_path": "Copier le chemin du fichier",
         "copy_file": "Copier dans le presse-papier",
         "paste_file": "Coller",
         "reveal_in_finder": "Afficher dans le Finder",

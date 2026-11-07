@@ -145,6 +145,9 @@ if (isMainWindow) {
   listen('settings-thumbnailSize-changed', (event) => {
     config.setThumbnailSize(event.payload)
   })
+  listen('settings-rawPairClipboardMode-changed', (event) => {
+    config.setRawPairClipboardMode(event.payload)
+  })
   listen('settings-rawPairDisplaySource-changed', (event) => {
     config.setRawPairDisplaySource(event.payload)
   })

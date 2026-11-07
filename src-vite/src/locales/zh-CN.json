@@ -1152,6 +1152,9 @@
     }
   },
   "file_info": {
+    "paths_copied": "已复制 {count} 个文件路径到剪贴板",
+    "copy_path": "复制文件路径",
+    "copy_path_failed": "复制路径失败",
     "video_only": "（仅视频）",
     "field_preset": "显示字段",
     "fields_default": "默认",
@@ -1393,6 +1396,10 @@
     "raw": {
       "title": "RAW",
       "section_pairs": "配对文件",
+      "clipboard_both": "两个文件",
+      "clipboard_raw": "仅 RAW",
+      "clipboard_jpeg": "仅 JPEG/HEIC",
+      "clipboard_hint": "同时影响复制文件路径，不影响复制或移动文件到文件夹。",
       "pair_source": "配对时默认显示",
       "pair_source_hint": "用于配对照片的缩略图和预览",
       "pair_jpeg": "JPEG / HEIC",
@@ -1621,6 +1628,7 @@
         "open_new_window": "在新窗口中查看",
         "open_external_app": "在外部应用中打开",
         "edit_image": "编辑",
+        "copy_file_path": "复制文件路径",
         "copy_file": "复制到剪贴板",
         "paste_file": "粘贴",
         "reveal_in_finder": "在访达中显示",

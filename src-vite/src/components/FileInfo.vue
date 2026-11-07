@@ -307,6 +307,15 @@
                 @dblclick.stop="isPrimaryGeneralInfo && startRename()"
               >
                 <span class="min-w-0 break-all">{{ generalFileInfo?.name }}</span>
+                <button
+                  type="button"
+                  class="shrink-0 p-1 cursor-pointer hover:text-primary"
+                  :title="t('file_info.copy_path')"
+                  :aria-label="t('file_info.copy_path')"
+                  @click.stop="copyInfoFilePath"
+                >
+                  <IconCopy class="size-3.5" />
+                </button>
                 <IconExclamation v-if="isOriginalUnavailable(generalFileInfo)" class="h-3.5 w-3.5 shrink-0 text-warning/70" :aria-label="t('offline.original_unavailable')" />
               </span>
             </div>
@@ -527,6 +536,7 @@ import { isWebViewVideoPlaybackDisabled, getGStreamerAvailability } from '@/comm
 import { isOriginalUnavailable } from '@/common/availability';
 import { getTagsForFile, renameFile, editImage, getAlbum, getFileCollections, getFileInfo, getMotionPhotoVideoPath, revealPath, getFacesForFile, getPersonThumbnail, isCloudOnlyFile } from '@/common/api';
 import { 
+  copyFilePaths,
   extractFileName, 
   getFileExtension,
   getFolderPath,
@@ -545,6 +555,7 @@ import {
   getAssetSrc,
 } from '@/common/utils';
 import {
+  IconCopy,
   IconClose,
   IconRefresh,
   IconAdjustments,
@@ -625,6 +636,7 @@ onMounted(async () => { const stop = await listen('tags-changed', refreshTags); 
 onBeforeUnmount(() => { tagsDisposed = true; tagsRequest++; stopTags?.(); });
 
 const toast = useToast();
+
 const showPreviewPanel = computed(() => config.infoPanel.showPreview);
 const previewScaleOptions = [1, 0.75, 0.5, 0.25];
 const previewScale = computed({
@@ -1240,6 +1252,18 @@ const quickSave = async (): Promise<boolean> => {
     return false;
   }
 };
+
+// File path actions
+async function copyInfoFilePath() {
+  try {
+    if (await copyFilePaths([generalFileInfo.value])) {
+      toast.success(t('file_info.paths_copied', { count: 1 }));
+    }
+  } catch (error) {
+    console.error('Failed to copy file path:', error);
+    toast.error(t('file_info.copy_path_failed'));
+  }
+}
 
 // Rename logic
 const isRenaming = ref(false);

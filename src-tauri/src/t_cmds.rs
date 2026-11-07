@@ -38,6 +38,10 @@ use tauri::{AppHandle, Emitter, Manager, State};
 // Keep their library stable until all reads and writes have completed.
 static FILE_REFRESH_LIBRARY_LOCK: RwLock<()> = RwLock::new(());
 
+// Linux serves clipboard data from its owner; keep it alive between commands.
+// Serialize writes from the main window and separate viewer windows.
+static FILE_PATH_CLIPBOARD: Mutex<Option<arboard::Clipboard>> = Mutex::new(None);
+
 fn with_library_context<T>(
     lock: &RwLock<()>,
     library_id: &str,
@@ -1787,6 +1791,28 @@ pub async fn copy_images(
     file_paths: Vec<String>,
 ) -> Result<usize, String> {
     t_image::copy_files_to_clipboard(&app_handle, file_paths).await
+}
+
+/// Copy recorded paths as plain text, including paths to offline originals.
+#[tauri::command]
+pub fn copy_file_paths(file_paths: Vec<String>) -> Result<(), String> {
+    let text = file_paths
+        .into_iter()
+        .filter(|path| !path.is_empty())
+        .collect::<Vec<_>>()
+        .join("\n");
+    if text.is_empty() {
+        return Err("No file paths selected".into());
+    }
+    let mut clipboard = FILE_PATH_CLIPBOARD.lock().map_err(|error| error.to_string())?;
+    if clipboard.is_none() {
+        *clipboard = Some(arboard::Clipboard::new().map_err(|error| error.to_string())?);
+    }
+    clipboard
+        .as_mut()
+        .ok_or_else(|| "Clipboard is unavailable".to_string())?
+        .set_text(text)
+        .map_err(|error| error.to_string())
 }
 
 /// Preview names and conflicts without modifying files.

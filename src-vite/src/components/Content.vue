@@ -820,7 +820,7 @@ import { isWin, isMac, isLinux, setTheme, separator,
          getCachedThumbnailDataUrl,
          clearCachedThumbnailDataUrl,
          extractFileName, combineFileName, getFolderPath, getFolderName, getSelectOptions, 
-         shortenFilename, getSlideShowInterval, getFullPath, normalizePathForCompare, isWithinRootPath, shouldUseBackendPreview } from '@/common/utils';
+         shortenFilename, getSlideShowInterval, copyFilePaths, getClipboardItemPaths, getFullPath, normalizePathForCompare, isWithinRootPath, shouldUseBackendPreview } from '@/common/utils';
 
 import DropDownSelect from '@/components/DropDownSelect.vue';
 import ProgressBar from '@/components/ProgressBar.vue';
@@ -5342,6 +5342,9 @@ const handleKeyDown = (e: any) => {
     // GridView may consume Enter before Content's DOM keydown handler on macOS.
     // Handle the shortcut in the capture/global channel as a fallback.
     clickRename();
+  } else if (matchesShortcut('file.copyPath', event, shortcutPlatform)) {
+    event.preventDefault?.();
+    if (!event.repeat) void clickCopyFilePaths();
   } else if (matchesShortcut('file.copy', event, shortcutPlatform)) {
     if (selectMode.value && selectedCount.value === 0) return;
     void clickCopyImages(fileList.value[selectedItemIndex.value]);
@@ -8842,15 +8845,7 @@ const getClipboardFilePaths = (files: any[], limit = 10) => {
   const seenPaths = new Set<string>();
 
   for (const file of files) {
-    const primaryPath = String(file?.file_path || '');
-    if (!primaryPath) continue;
-
-    const groupPaths = [primaryPath];
-    if (file?.media_subtype === 'raw_jpeg_pair') {
-      const companionPath = String(file.live_photo_video_path || '');
-      if (companionPath) groupPaths.push(companionPath);
-    }
-
+    const groupPaths = getClipboardItemPaths(file, config.settings.rawPairClipboardMode);
     const uniqueGroupPaths = groupPaths.filter(path => !seenPaths.has(path));
     if (paths.length + uniqueGroupPaths.length > limit) continue;
     for (const path of uniqueGroupPaths) {
@@ -8862,8 +8857,23 @@ const getClipboardFilePaths = (files: any[], limit = 10) => {
   return paths;
 };
 
+async function clickCopyFilePaths() {
+  try {
+    const files = selectMode.value
+      ? await getActionableSelectedItemsForAction()
+      : [fileList.value[selectedItemIndex.value]];
+    if (!files) return;
+    const count = await copyFilePaths(files, config.settings.rawPairClipboardMode);
+    if (count > 0) {
+      toast.success(t('file_info.paths_copied', { count }));
+    }
+  } catch (error) {
+    console.error('Failed to copy file paths:', error);
+    toast.error(t('file_info.copy_path_failed'));
+  }
+}
+
 const clickCopyImages = async (fallbackFile?: any) => {
-  if (!await requireCurrentOriginals()) return;
   if (isProcessing.value) return;
 
   let copiedCount = 0;
@@ -8888,7 +8898,15 @@ const clickCopyImages = async (fallbackFile?: any) => {
       return;
     }
     isProcessing.value = true;
+    const available = await Promise.all(filePaths.map(path => checkFileAccessibility(path)));
+    if (available.some(value => !value)) {
+      cancelled = true;
+      toast.warning(t('offline.requires_original'));
+      return;
+    }
     copiedCount = Number(await copyImages(filePaths)) || 0;
+  } catch (error) {
+    console.error('Failed to copy files to clipboard:', error);
   } finally {
     isProcessing.value = false;
     if (cancelled) {
