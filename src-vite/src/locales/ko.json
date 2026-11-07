@@ -1333,7 +1333,8 @@
       "appearance": "색상 모드",
       "appearance_options": [
         "라이트",
-        "다크"
+        "다크",
+        "시스템 설정 따름"
       ],
       "theme": "테마",
       "theme_options_light": [

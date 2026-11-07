@@ -1333,7 +1333,8 @@
       "appearance": "Apariencia",
       "appearance_options": [
         "Claro",
-        "Oscuro"
+        "Oscuro",
+        "Seguir el sistema"
       ],
       "theme": "Tema",
       "theme_options_light": [

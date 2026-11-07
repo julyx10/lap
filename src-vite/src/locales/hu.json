@@ -1333,7 +1333,8 @@
       "appearance": "Színmód",
       "appearance_options": [
         "Világos",
-        "Sötét"
+        "Sötét",
+        "Rendszer követése"
       ],
       "theme": "Téma",
       "theme_options_light": [

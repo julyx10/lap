@@ -220,7 +220,7 @@ import { useI18n } from 'vue-i18n';
 import { useToast } from '@/common/toast';
 import { useUIStore } from '@/stores/uiStore';
 import { config, libConfig } from '@/common/config';
-import { copyFilePaths, isWin, isMac, isLinux, setTheme, getSlideShowInterval, SCALE_VALUES } from '@/common/utils';
+import { isWin, isMac, isLinux, copyFilePaths, getSlideShowInterval, SCALE_VALUES } from '@/common/utils';
 import { matchesShortcut, ShortcutActionId, ShortcutPlatform, VIEW_BACKGROUND_SHORTCUTS } from '@/common/shortcuts';
 import { handleVideoPlaybackShortcut, handleVideoEscapeShortcut } from '@/common/video';
 import {
@@ -917,21 +917,6 @@ const handleResize = async () => {
     setTimeout(checkFullScreen, 600); 
   }
 };
-
-/// watch appearance
-watch(() => config.settings.appearance, (newAppearance) => {
-  setTheme(newAppearance, newAppearance === 0 ? config.settings.lightTheme : config.settings.darkTheme);
-});
-
-/// watch light theme
-watch(() => config.settings.lightTheme, (newLightTheme) => {
-  setTheme(config.settings.appearance, newLightTheme);
-});
-
-/// watch dark theme
-watch(() => config.settings.darkTheme, (newDarkTheme) => {
-  setTheme(config.settings.appearance, newDarkTheme);
-});
 
 watch(() => Number(config.settings.scale || 1), (newScale) => {
   applyViewerScale(newScale);

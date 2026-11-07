@@ -1333,7 +1333,8 @@
       "appearance": "Modalità colore",
       "appearance_options": [
         "Chiaro",
-        "Scuro"
+        "Scuro",
+        "Segui il sistema"
       ],
       "theme": "Tema",
       "theme_options_light": [

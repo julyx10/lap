@@ -17,13 +17,15 @@ import { useConfigStore } from '@/stores/configStore';
 import { useLibraryStore } from '@/stores/libraryStore';
 import { useUIStore } from '@/stores/uiStore';
 import { clearIndexRecoveryInfo } from '@/common/api';
-import { isMac, setTheme, SCALE_VALUES } from '@/common/utils';
+import { isMac, SCALE_VALUES } from '@/common/utils';
+import { useAppTheme } from '@/composables/useAppearance';
 import { matchesShortcut } from '@/common/shortcuts';
 import ToastContainer from '@/components/ToastContainer.vue';
 
 const libConfig = useLibraryStore();
 const isReady = ref(false);
 const config = useConfigStore();
+useAppTheme();
 const uiStore = useUIStore();
 const isMainWindow = getCurrentWebviewWindow().label === 'main';
 let unlistenMainCloseRequested = null;
@@ -111,9 +113,6 @@ onMounted(async () => {
       });
     }
   }
-
-  setTheme(config.settings.appearance, 
-    config.settings.appearance === 0 ? config.settings.lightTheme : config.settings.darkTheme);
 
   // Show the themed loading screen while library and first-content loading run.
   if (isMainWindow) {

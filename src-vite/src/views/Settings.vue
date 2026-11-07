@@ -768,7 +768,8 @@ import {
   cancelMultilingualImageSearchModelDownload,
   listenImageSearchModelDownloadProgress,
 } from '@/common/api';
-import { formatFileSize, isLinux, isMac, setTheme, SCALE_VALUES } from '@/common/utils';
+import { formatFileSize, isLinux, isMac, SCALE_VALUES } from '@/common/utils';
+import { useAppearance } from '@/composables/useAppearance';
 import { getShortcutLabels, ShortcutActionId, ShortcutPlatform } from '@/common/shortcuts';
 import { useToast } from '@/common/toast';
 import { IconClose, IconRestore } from '@/common/icons';
@@ -882,9 +883,11 @@ const appearanceOptions = computed(() => {
   }));
 });
 
-// Define the theme options
+const appearance = useAppearance();
+
+// Show and edit the theme for the currently displayed appearance.
 const themeOptions = computed(() => {
-  const options = config.settings.appearance === 0 
+  const options = appearance.value === 0
     ? localeMsg.value.settings.general.theme_options_light 
     : localeMsg.value.settings.general.theme_options_dark;
 
@@ -897,10 +900,10 @@ const themeOptions = computed(() => {
 
 const currentTheme = computed({
   get() {
-    return config.settings.appearance === 0 ? config.settings.lightTheme : config.settings.darkTheme;
+    return appearance.value === 0 ? config.settings.lightTheme : config.settings.darkTheme;
   },
   set(value) {
-    config.settings.appearance === 0 ? config.settings.lightTheme = value : config.settings.darkTheme = value;
+    appearance.value === 0 ? config.settings.lightTheme = value : config.settings.darkTheme = value;
   }
 });
 
@@ -1522,15 +1525,12 @@ watch(() => config.settings.tabIndex, (newValue) => {
   emit('settings-settingsTabIndex-changed', newValue);
 });
 watch(() => config.settings.appearance, (newValue) => {
-  setTheme(newValue, newValue === 0 ? config.settings.lightTheme : config.settings.darkTheme);
   emit('settings-appearance-changed', newValue);
 });
 watch(() => config.settings.lightTheme, (newValue) => {
-  setTheme(config.settings.appearance, newValue);
   emit('settings-lightTheme-changed', newValue);
 });
 watch(() => config.settings.darkTheme, (newValue) => {
-  setTheme(config.settings.appearance, newValue);
   emit('settings-darkTheme-changed', newValue);
 });
 watch(() => config.settings.scale, (newValue) => {

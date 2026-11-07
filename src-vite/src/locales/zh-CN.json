@@ -1333,7 +1333,8 @@
       "appearance": "配色模式",
       "appearance_options": [
         "明亮",
-        "暗黑"
+        "暗黑",
+        "跟随系统"
       ],
       "theme": "主题",
       "theme_options_light": [

@@ -1333,7 +1333,8 @@
       "appearance": "Color mode",
       "appearance_options": [
         "Light",
-        "Dark"
+        "Dark",
+        "Follow system"
       ],
       "theme": "Theme",
       "theme_options_light": [

@@ -1333,7 +1333,8 @@
       "appearance": "外観",
       "appearance_options": [
         "ライト",
-        "ダーク"
+        "ダーク",
+        "システムに従う"
       ],
       "theme": "テーマ",
       "theme_options_light": [
