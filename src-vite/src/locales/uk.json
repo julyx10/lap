@@ -1152,6 +1152,14 @@
     }
   },
   "file_info": {
+    "video_only": "(лише відео)",
+    "field_preset": "Видимі поля",
+    "fields_default": "Типові",
+    "fields_all": "Показати всі",
+    "fields_custom": "Власні",
+
+    "hide_empty_fields": "Автоматично приховувати порожні поля",
+    "customize_fields": "Налаштувати поля",
     "title": "Відомості",
     "preview": "Попередній перегляд",
     "thumbnail": "Мініатюра",

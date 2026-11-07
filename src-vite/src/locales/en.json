@@ -1152,6 +1152,14 @@
     }
   },
   "file_info": {
+    "video_only": "(video only)",
+    "field_preset": "Visible fields",
+    "fields_default": "Default",
+    "fields_all": "Show all",
+    "fields_custom": "Custom",
+
+    "hide_empty_fields": "Automatically hide empty fields",
+    "customize_fields": "Customize fields",
     "title": "Information",
     "preview": "Preview",
     "thumbnail": "Thumbnail",

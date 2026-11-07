@@ -1152,6 +1152,14 @@
     }
   },
   "file_info": {
+    "video_only": "(tylko filmy)",
+    "field_preset": "Widoczne pola",
+    "fields_default": "Domyślne",
+    "fields_all": "Pokaż wszystkie",
+    "fields_custom": "Niestandardowe",
+
+    "hide_empty_fields": "Automatycznie ukrywaj puste pola",
+    "customize_fields": "Dostosuj pola",
     "title": "Informacje",
     "preview": "Podgląd",
     "thumbnail": "Miniatura",

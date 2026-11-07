@@ -10,11 +10,11 @@ const source = await readFile(new URL('../src/components/FileInfo.vue', import.m
 test('title and headline display stored values, including empty values, instead of lazy metadata', () => {
   const start = source.indexOf('const sourceKeys =');
   const end = source.indexOf('const sourceDetailRows', start);
-  const rows = fileInfo => new Function('props', 'metadataDetails', 't', ts.transpile(
-    `${source.slice(start, end)}; return detailRows(['title', 'headline']);`, { target: ts.ScriptTarget.ES2022 }
-  ))({ fileInfo }, { value: { title: { values: ['stale title'] }, headline: { values: ['stale headline'] } } }, key => key);
+  const rows = fileInfo => new Function('props', 'metadataDetails', 't', 'fieldVisible', 'displayField', ts.transpile(
+    `${source.slice(start, end)}; return detailRows('source', ['title', 'headline']);`, { target: ts.ScriptTarget.ES2022 }
+  ))({ fileInfo }, { value: { title: { values: ['stale title'] }, headline: { values: ['stale headline'] } } }, key => key, () => true, () => true);
   assert.deepEqual(rows({ e_title: 'Stored title', e_headline: 'Stored headline' }).map(row => row.value), ['Stored title', 'Stored headline']);
-  assert.deepEqual(rows({ e_title: null, e_headline: '' }), []);
+  assert.deepEqual(rows({ e_title: null, e_headline: '' }).map(row => row.value), ['', '']);
 });
 function section(key) {
   const title = source.indexOf(`$t('file_info.${key}')`);
@@ -73,28 +73,14 @@ test('location accepts zero coordinates and rejects missing or invalid coordinat
 });
 
 
-test('capture and location sections are hidden only when all their displayed data is empty', () => {
+test('section visibility follows field choices even when values are empty', () => {
   const start = source.indexOf('const hasCaptureInfo = computed(');
   const end = source.indexOf('const showBasicInfoPanel', start);
-  assert.ok(start >= 0 && end > start);
-  const evaluate = (fileInfo, coordinates = false, location = '', state = { loaded: true }) => new Function(
-    'computed', 'props', 'hasCoordinates', 'formatGeoLocation', 'hasAltitude', 'detailsLoaded', 'captureDetailRows', 'locationDetailRows', 'sourceDetailRows', 'detailSections', 'cameraText', 'exposureText', 'captureTimeText',
-    `${source.slice(start, end)}; return [hasCaptureInfo.value, hasLocationInfo.value];`,
-  )(computed, { fileInfo }, { value: coordinates }, () => location, { value: fileInfo?.gps_altitude != null }, { value: true }, { value: [] }, { value: [] }, { value: [] }, {value:{capture:state,location:state,source:state}}, {value: fileInfo.e_make || fileInfo.e_model || ''}, {value: ['e_focal_length','e_exposure_time','e_f_number','e_iso_speed','e_exposure_bias'].map(k=>fileInfo[k] || '').join('').trim()}, {value: fileInfo.e_date_time && fileInfo.taken_date ? 'date' : ''});
-  assert.deepEqual(evaluate({}), [false, false]);
-  assert.deepEqual(evaluate({}, false, '', { loaded: true, loading: true }), [false, false], 'refreshing empty sections must not insert temporary headers');
-  assert.deepEqual(evaluate({}, false, '', { loaded: true, error: true }), [false, false]);
-  assert.deepEqual(evaluate({ e_make: '  ', e_model: null }), [false, false]);
-  for (const key of ['e_make', 'e_model', 'e_lens_model', 'e_focal_length', 'e_exposure_time', 'e_f_number', 'e_iso_speed', 'e_exposure_bias']) {
-    assert.equal(evaluate({ [key]: 'value' })[0], true);
-  }
-  assert.equal(evaluate({ e_date_time: '2026:01:01', taken_date: 1767225600 })[0], true);
-  assert.deepEqual(evaluate({}, true), [false, true]);
-  assert.deepEqual(evaluate({ gps_altitude: 0 }), [false, true]);
-  assert.deepEqual(evaluate({}, false, 'Beijing'), [false, true]);
-  assert.deepEqual(evaluate({}, false, '  '), [false, false]);
-  assert.match(source, /<div v-if="hasCaptureInfo"/);
-  assert.match(source, /<div v-if="hasLocationInfo"/);
+  const evaluate = selected => new Function('computed', 'hasVisibleFields', 'hideEmptyFields',
+    `${source.slice(start, end)}; return [hasCaptureInfo.value, hasLocationInfo.value, hasSourceMetadata.value];`
+  )(computed, section => selected.includes(section), { value: false });
+  assert.deepEqual(evaluate([]), [false, false, false]);
+  assert.deepEqual(evaluate(['capture', 'source']), [true, false, true]);
 });
 
 
@@ -113,15 +99,8 @@ test('GPS display uses DMS and hemisphere letters with correct rounding at bound
 });
 
 
-test('source metadata section is absent when all source fields are empty', async () => {
+test('source metadata section is absent when no source fields are selected', async () => {
   assert.doesNotMatch(await render('source_metadata', { hasSourceMetadata: false }), /file_info.source_metadata/);
-  const start = source.indexOf('const hasSourceMetadata = computed(');
-  const end = source.indexOf('const showBasicInfoPanel', start);
-  assert.ok(start >= 0 && end > start);
-  const hasData = (loaded, rows) => new Function('computed', 'detailsLoaded', 'sourceDetailRows', 'detailSections', 'showSourceMetadataPanel', `${source.slice(start, end)}; return hasSourceMetadata.value;`)(computed, {value:loaded}, {value:rows}, {value:{source:{loaded}}}, {value:false});
-  assert.equal(hasData(false, []), true);
-  assert.equal(hasData(true, []), false);
-  assert.equal(hasData(true, [{value:'Author'}]), true);
 });
 
 
@@ -134,11 +113,11 @@ test('altitude accepts sea level and negative elevations but not missing or inva
   for (const altitude of [null, undefined, '', ' ', NaN, Infinity, 'bad']) assert.equal(valid(altitude), false);
 });
 
-function detailsFixture(file = { id: 1, file_path: '/1.jpg', e_title: 'DB title' }) {
+function detailsFixture(file = { id: 1, file_path: '/1.jpg', e_title: 'DB title' }, fieldVisible = () => true) {
   const props = reactive({ fileInfo: file });
   const pending = [], calls = [], timers = [];
   const deps = {
-    props, ref, computed, libConfig: { _libraryId: 'test' }, t: key => key,
+    props, ref, computed, fieldVisible, displayField: key => fieldVisible(key), libConfig: { _libraryId: 'test' }, t: key => key,
     isOriginalUnavailable: file => file?.album_accessible === false,
     showSourceMetadataPanel: ref(true), showMetadataPanel: ref(true), showMapPanel: ref(false),
     generalFileInfo: ref({}), refreshingFile: ref(null),
@@ -239,4 +218,102 @@ test('empty-file message is shown only when the parent confirms the new view is 
     const html = await renderToString(app);
     assert.equal(html.includes('file_info.empty_title'), empty);
   }
+});
+
+
+test('DB-only field choices do not start realtime metadata reads', () => {
+  const f = detailsFixture(undefined, key => ['source.title', 'source.headline', 'capture.camera'].includes(key));
+  f.state.changeFile(['test', 1], undefined);
+  assert.equal(f.calls.length, 0);
+  assert.equal(f.state.infoReady.value, true);
+  assert.equal(f.state.sourceDetailRows.value[0].value, 'DB title');
+});
+
+test('field choices allow no fields and reject unknown fields', async () => {
+  const registry = await readFile(new URL('../src/common/fileInfoFields.ts', import.meta.url), 'utf8');
+  const module = await import(`data:text/javascript;base64,${Buffer.from(ts.transpile(registry, {target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext})).toString('base64')}`);
+  assert.deepEqual(module.normalizeFileInfoFields([]), []);
+  assert.deepEqual(module.normalizeFileInfoFields(['unknown', 'source.title', 'source.title']), ['source.title']);
+  assert.deepEqual(module.normalizeFileInfoFields(undefined), module.normalizeFileInfoFields(module.defaultFileInfoFields));
+  assert.equal(module.normalizeFileInfoFields(module.defaultFileInfoFields).length, module.defaultFileInfoFields.length);
+  for (const locale of ['en','zh-CN','zh-TW','de','es','fr','hu','it','ja','ko','nl','pl','pt','ru','uk']) {
+    const messages = JSON.parse(await readFile(new URL(`../src/locales/${locale}.json`, import.meta.url), 'utf8'));
+    for (const group of module.fileInfoFieldGroups) {
+      for (const key of [group.label, ...group.fields.map(field => field.label)].filter(key => key !== 'GPS')) {
+        assert.equal(typeof key.split('.').reduce((object, part) => object?.[part], messages), 'string', `${locale}: ${key}`);
+      }
+    }
+  }
+});
+
+
+test('auto-hide removes only empty fields, retaining zero values', () => {
+  const start = source.indexOf('const hideEmptyFields =');
+  const end = source.indexOf('const hasVisibleFields =', start);
+  const config = reactive({ infoPanel: { hideEmptyFields: false } });
+  const display = new Function('computed', 'config', 'fieldVisible', `${ts.transpile(source.slice(start, end))}; return displayField;`)(computed, config, key => key !== 'hidden');
+  assert.equal(display('file.size', null), true);
+  config.infoPanel.hideEmptyFields = true;
+  for (const value of [null, undefined, '', '  ']) assert.equal(display('file.size', value), false);
+  for (const value of [0, '0', 'text']) assert.equal(display('file.size', value), true);
+  assert.equal(display('hidden', 'text'), false);
+  assert.match(source, /v-if="displayField\('file.name'/);
+  assert.match(source, /v-if="hasFileInfo"/);
+});
+
+test('auto-hide removes empty sections while retaining sections with selected content', () => {
+  const start = source.indexOf('const hasCaptureInfo =');
+  const end = source.indexOf('const showBasicInfoPanel', start);
+  const selected = new Set(['capture.camera', 'location.gps', 'source.title']);
+  const deps = {
+    computed, hideEmptyFields: { value: true },
+    displayField: (key, value) => selected.has(key) && value != null && String(value).trim() !== '',
+    fieldVisible: key => selected.has(key), hasVisibleFields: () => true,
+    cameraText: ref(''), captureTimeText: ref(''), exposureText: ref(''), props: { fileInfo: {} },
+    captureDetailRows: ref([]), locationDetailRows: ref([]), sourceDetailRows: ref([]),
+    hasCoordinates: ref(false), hasAltitude: ref(false), formatGeoLocation: () => '',
+  };
+  const sections = new Function(...Object.keys(deps), `${source.slice(start, end)}; return [hasCaptureInfo, hasLocationInfo, hasSourceMetadata];`)(...Object.values(deps));
+  assert.deepEqual(sections.map(section => section.value), [false, false, false]);
+  deps.cameraText.value = 'Nikon';
+  deps.hasAltitude.value = true;
+  deps.sourceDetailRows.value = [{ key: 'title', value: 'Title' }];
+  assert.deepEqual(sections.map(section => section.value), [true, true, true]);
+});
+
+
+test('File section follows rendered fields including auto-hide and video-only duration', () => {
+  const start = source.indexOf('const hasFileInfo =');
+  const end = source.indexOf('const hasCaptureInfo =', start);
+  const generalFileInfo = ref({ file_type: 1 });
+  const imageDetailRows = ref([]);
+  const selected = new Set(['file.iccProfile']);
+  let hideEmpty = true;
+  const displayField = (key, value) => selected.has(key) && (!hideEmpty || (value != null && String(value).trim() !== ''));
+  const hasInfo = new Function('computed', 'generalFileInfo', 'generalFolderBreadcrumbs', 'imageDetailRows', 'displayField',
+    `${source.slice(start, end)}; return hasFileInfo;`)(computed, generalFileInfo, ref([]), imageDetailRows, displayField);
+  assert.equal(hasInfo.value, false, 'missing selected ICC profile must not leave an empty section');
+  imageDetailRows.value = [{ key: 'iccProfile', value: 'sRGB' }];
+  assert.equal(hasInfo.value, true);
+  imageDetailRows.value = [];
+  selected.clear();
+  selected.add('file.duration');
+  generalFileInfo.value = { file_type: 1, duration: 15 };
+  assert.equal(hasInfo.value, false, 'duration does not apply to images');
+  generalFileInfo.value = { file_type: 2, duration: 15 };
+  assert.equal(hasInfo.value, true);
+  generalFileInfo.value = { file_type: 2 };
+  assert.equal(hasInfo.value, false, 'empty video duration is hidden');
+  hideEmpty = false;
+  generalFileInfo.value = { file_type: 2 };
+  assert.equal(hasInfo.value, true, 'empty video duration remains visible with auto-hide disabled');
+  generalFileInfo.value = { file_type: 1 };
+  assert.equal(hasInfo.value, false, 'image duration stays hidden even with auto-hide disabled');
+  selected.clear();
+  generalFileInfo.value = { file_type: 1, name: 'image.jpg' };
+  assert.equal(hasInfo.value, false, 'no selected fields hides the section');
+  selected.add('file.size');
+  hideEmpty = true;
+  generalFileInfo.value = { file_type: 1, size: 0 };
+  assert.equal(hasInfo.value, true, 'zero bytes is a valid value');
 });

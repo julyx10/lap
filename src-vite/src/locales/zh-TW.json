@@ -1152,6 +1152,14 @@
     }
   },
   "file_info": {
+    "video_only": "（僅影片）",
+    "field_preset": "顯示欄位",
+    "fields_default": "預設",
+    "fields_all": "全部顯示",
+    "fields_custom": "自訂",
+
+    "hide_empty_fields": "自動隱藏空白欄位",
+    "customize_fields": "自訂欄位",
     "title": "資訊",
     "preview": "預覽",
     "thumbnail": "縮圖",

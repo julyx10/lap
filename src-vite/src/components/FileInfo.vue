@@ -15,6 +15,7 @@
           :disabled="!fileInfo || fileInfoBusy"
           @click.stop="refreshInfo"
         />
+        <TButton :icon="IconAdjustments" :tooltip="$t('file_info.customize_fields')" :buttonSize="'small'" @click.stop="showFieldSettings = true" />
         <TButton
           :icon="IconClose"
           :tooltip="$t('msgbox.close')"
@@ -23,6 +24,8 @@
         />
       </div>
     </div>
+
+    <FileInfoFieldsDialog v-if="showFieldSettings" @cancel="showFieldSettings = false" />
 
     <!-- Info Content -->
     <div v-if="fileInfo" :class="{ invisible: !infoReady && (!hasDisplayedInfo || showDelayedLoading) }" :inert="!infoReady || undefined" :aria-hidden="!infoReady || undefined" class="mb-2 px-2 flex-1 overflow-y-auto overflow-x-hidden flex flex-col [overflow-anchor:none]">
@@ -247,7 +250,7 @@
       </div>
 
       <!-- File Info Section -->
-      <div class="group/general shrink-0 border-t border-base-content/5 px-1 py-3">
+      <div v-if="hasFileInfo" class="group/general shrink-0 border-t border-base-content/5 px-1 py-3">
 
         <div class="flex items-center gap-1 cursor-pointer text-base-content/70 hover:text-base-content transition-all duration-200 ease-in-out" 
           @click.stop="toggleBasicInfo"
@@ -276,6 +279,7 @@
         <div class="shrink-0">
           <div v-if="showBasicInfoPanel" class="pt-3 overflow-hidden">
             <div class="pl-4 grid grid-cols-[84px_minmax(0,1fr)] gap-y-1.5 gap-x-4 text-xs">
+            <template v-if="displayField('file.name', generalFileInfo?.name)">
             <!-- Name -->
             <div class="flex items-center text-[11px] text-base-content/30 h-6">{{ $t('file_info.name') }}</div>
             <div class="group/field flex items-center gap-1">
@@ -306,7 +310,9 @@
                 <IconExclamation v-if="isOriginalUnavailable(generalFileInfo)" class="h-3.5 w-3.5 shrink-0 text-warning/70" :aria-label="t('offline.original_unavailable')" />
               </span>
             </div>
+            </template>
 
+            <template v-if="displayField('file.folder', generalFolderBreadcrumbs.length ? 'folder' : '')">
             <!-- Path -->
             <div class="flex items-center text-[11px] text-base-content/30 h-6">{{ $t('file_info.folder') }}</div>
             <Breadcrumb
@@ -314,55 +320,58 @@
               :items="generalFolderBreadcrumbs"
               @navigate="(path: string) => emit('navigateFolder', path)"
             />
+            </template>
 
-            <template v-if="generalFileInfo?.album_name?.trim()">
+            <template v-if="displayField('file.album_name', generalFileInfo?.album_name)">
             <!-- Album -->
             <div class="flex items-center text-[11px] text-base-content/30 h-6">{{ $t('file_info.album_name') }}</div>
             <div class="flex items-center min-w-0 text-[12px] text-base-content/70 break-all">{{ generalFileInfo?.album_name }}</div>
             </template>
 
-            <template v-if="generalFileInfo?.size != null">
+            <template v-if="displayField('file.size', generalFileInfo?.size)">
             <!-- Size -->
             <div class="flex items-center text-[11px] text-base-content/30 h-6">{{ $t('file_info.size') }}</div>
-            <div class="flex items-center text-[12px] text-base-content/70">{{ formatFileSize(generalFileInfo?.size) }}</div>
+            <div class="flex items-center text-[12px] text-base-content/70">{{ generalFileInfo?.size != null ? formatFileSize(generalFileInfo.size) : '' }}</div>
             </template>
 
-            <template v-if="generalFileInfo?.width && generalFileInfo?.height">
+            <template v-if="displayField('file.dimension', generalFileInfo?.width && generalFileInfo?.height ? 'dimension' : '')">
             <!-- Dimension -->
             <div class="flex items-center text-[11px] text-base-content/30 h-6">{{ $t('file_info.dimension') }}</div>
-            <div class="flex items-center text-[12px] text-base-content/70">{{ formatDimensionText(generalFileInfo?.width, generalFileInfo?.height, true) }}</div>
+            <div class="flex items-center text-[12px] text-base-content/70">{{ generalFileInfo?.width && generalFileInfo?.height ? formatDimensionText(generalFileInfo.width, generalFileInfo.height, true) : '' }}</div>
+            </template>
+
+            <!-- Duration -->
+            <template v-if="generalFileInfo?.file_type === 2 && displayField('file.duration', Number.isFinite(generalFileInfo?.duration) && generalFileInfo.duration > 0 ? generalFileInfo.duration : '')">
+              <div class="flex items-center text-[11px] text-base-content/30 h-6">{{ $t('file_info.duration') }}</div>
+              <div class="flex items-center text-[12px] text-base-content/70">{{ Number.isFinite(generalFileInfo?.duration) && generalFileInfo.duration > 0 ? formatDuration(generalFileInfo.duration) : '' }}</div>
             </template>
 
             <template v-for="row in imageDetailRows" :key="row.key">
               <div class="text-[11px] text-base-content/30 min-h-6 py-1">{{ row.label }}</div>
               <div class="min-h-6 text-[12px] text-base-content/70 wrap-break-word py-1">{{ row.value }}</div>
             </template>
-            <!-- Duration -->
-            <template v-if="generalFileInfo?.file_type === 2">
-              <div class="flex items-center text-[11px] text-base-content/30 h-6">{{ $t('file_info.duration') }}</div>
-              <div class="flex items-center text-[12px] text-base-content/70">{{ Number.isFinite(generalFileInfo?.duration) && generalFileInfo.duration > 0 ? formatDuration(generalFileInfo.duration) : $t('file_info.unknown_duration') }}</div>
-            </template>
+
 
             <div class="col-span-2">
               <div class="grid grid-cols-[84px_1fr] gap-y-1.5 gap-x-4">
-                <template v-if="generalFileInfo?.created_at != null">
+                <template v-if="displayField('file.created_at', generalFileInfo?.created_at)">
                 <!-- Created At -->
                 <div class="flex items-center text-[11px] text-base-content/30 h-6">{{ $t('file_info.created_at') }}</div>
-                <div class="flex items-center text-[12px] text-base-content/70">{{ formatTimestamp(generalFileInfo?.created_at, 'date_time') }}</div>
+                <div class="flex items-center text-[12px] text-base-content/70">{{ generalFileInfo?.created_at != null ? formatTimestamp(generalFileInfo.created_at, 'date_time') : '' }}</div>
                 </template>
 
-                <template v-if="generalFileInfo?.modified_at != null">
+                <template v-if="displayField('file.modified_at', generalFileInfo?.modified_at)">
                 <!-- Modified At -->
                 <div class="flex items-center text-[11px] text-base-content/30 h-6">{{ $t('file_info.modified_at') }}</div>
-                <div class="flex items-center text-[12px] text-base-content/70">{{ formatTimestamp(generalFileInfo?.modified_at, 'date_time') }}</div>
+                <div class="flex items-center text-[12px] text-base-content/70">{{ generalFileInfo?.modified_at != null ? formatTimestamp(generalFileInfo.modified_at, 'date_time') : '' }}</div>
                 </template>
 
                 <!-- Last Scan -->
-                <template v-if="generalFileInfo?.last_scan_time && generalFileInfo.last_scan_time > 0">
+                <template v-if="displayField('file.last_scan_time', generalFileInfo?.last_scan_time > 0 ? generalFileInfo.last_scan_time : '')">
                   <div class="flex items-center text-[11px] text-base-content/30 h-6">{{ $t('file_info.last_scan_time') }}</div>
                   <div class="flex min-h-6 items-center gap-2">
                     <!-- <span class="text-[12px] text-base-content/70">{{ formatTimestamp(fileInfo.last_scan_time / 1000, 'date_time') }}</span> -->
-                    <span class="text-[11px] text-base-content/30">{{ formatRelativeTime(generalFileInfo.last_scan_time / 1000, $t) }}</span>
+                    <span class="text-[11px] text-base-content/30">{{ generalFileInfo?.last_scan_time > 0 ? formatRelativeTime(generalFileInfo.last_scan_time / 1000, $t) : '' }}</span>
                   </div>
                 </template>
               </div>
@@ -388,13 +397,13 @@
         </div>
 
           <div v-if="showMetadataPanel" class="pt-3 pl-4 grid grid-cols-[84px_1fr] gap-y-1.5 gap-x-4 text-xs overflow-hidden">
-            <template v-if="captureTimeText">
+            <template v-if="displayField('capture.taken_at', captureTimeText)">
               <!-- Taken At -->
             <div class="flex items-center text-[11px] text-base-content/30 h-6">{{ $t('file_info.taken_at') }}</div>
             <div class="flex items-center text-[12px] text-base-content/70">{{ captureTimeText }}</div>
             </template>
 
-            <template v-if="cameraText.trim()">
+            <template v-if="displayField('capture.camera', cameraText)">
             <!-- Camera -->
             <div class="flex items-center text-[11px] text-base-content/30 h-6">{{ $t('file_info.camera') }}</div>
             <div
@@ -403,7 +412,7 @@
             >{{ cameraText }}</div>
             </template>
 
-            <template v-if="fileInfo?.e_lens_model?.trim()">
+            <template v-if="displayField('capture.lens', fileInfo?.e_lens_model)">
             <!-- Lens -->
             <div class="flex items-center text-[11px] text-base-content/30 h-6">{{ $t('file_info.lens') }}</div>
             <div
@@ -412,7 +421,7 @@
             >{{ fileInfo?.e_lens_model }}</div>
             </template>
 
-            <template v-if="exposureText.trim()">
+            <template v-if="displayField('capture.capture_settings', exposureText)">
             <!-- Capture Settings -->
             <div class="flex items-center text-[11px] text-base-content/30 h-6">{{ $t('file_info.capture_settings') }}</div>
             <div class="flex items-center text-[12px] text-base-content/70">{{ exposureText }}</div>
@@ -436,7 +445,7 @@
           <span class="font-bold uppercase text-xs tracking-wide text-base-content/30">{{ $t('file_info.geo_location') }}</span>
         </button>
         <div v-if="showMapPanel" class="pt-3 pl-4 grid grid-cols-[84px_minmax(0,1fr)] gap-y-1.5 gap-x-4 text-xs">
-            <template v-if="formatGeoLocation().trim()">
+            <template v-if="displayField('location.geo_location', formatGeoLocation())">
             <!-- Geo Location -->
             <div class="flex items-center text-[11px] text-base-content/30 h-6">{{ $t('file_info.geo_location') }}</div>
             <div
@@ -445,7 +454,7 @@
             >{{ formatGeoLocation() }}</div>
             </template>
 
-            <template v-if="hasCoordinates || hasAltitude">
+            <template v-if="displayField('location.gps', hasCoordinates || hasAltitude ? 'gps' : '')">
               <div class="flex items-center text-[11px] text-base-content/30 h-6">GPS</div>
               <div class="text-[12px] text-base-content/70 wrap-break-word">
                 <span v-if="hasCoordinates">{{ formatGpsCoordinates(fileInfo.gps_latitude, fileInfo.gps_longitude) }}</span>
@@ -457,10 +466,14 @@
               <div class="text-[11px] text-base-content/30 min-h-6 py-1">{{ row.label }}</div>
               <div class="text-[12px] text-base-content/70 wrap-break-word py-1">{{ row.value }}</div>
             </template>
-            <template v-if="hasCoordinates">
+            <template v-if="fieldVisible('location.map') && hasCoordinates">
               <div class="col-span-2 h-75 rounded-box overflow-hidden relative z-0 border border-base-content/5">
                 <MapView :lat="Number(fileInfo.gps_latitude)" :lon="Number(fileInfo.gps_longitude)" :label="fileInfo.geo_name || fileInfo.name || 'Lap'" />
               </div>
+            </template>
+            <template v-else-if="displayField('location.map', '')">
+              <div class="flex items-center text-[11px] text-base-content/30 h-6">{{ $t('file_info.map') }}</div>
+              <div></div>
             </template>
         </div>
       </div>
@@ -499,6 +512,8 @@
 </template>
 
 <script setup lang="ts">
+import FileInfoFieldsDialog from '@/components/FileInfoFieldsDialog.vue';
+import { normalizeFileInfoFields } from '@/common/fileInfoFields';
 import ImageNavigator from '@/components/ImageNavigator.vue';
 import { invoke } from '@tauri-apps/api/core';
 import { navigatorLayout } from '@/common/imageNavigator';
@@ -532,6 +547,7 @@ import {
 import {
   IconClose,
   IconRefresh,
+  IconAdjustments,
   IconRight,
   IconFile,
   IconExclamation,
@@ -585,6 +601,13 @@ const emit = defineEmits([
   'navigatePerson',
 ]);
 
+const showFieldSettings = ref(false);
+const visibleFields = computed(() => new Set(normalizeFileInfoFields(config.infoPanel.fields)));
+const fieldVisible = (key: string) => visibleFields.value.has(key);
+const hideEmptyFields = computed(() => config.infoPanel.hideEmptyFields === true);
+const displayField = (key: string, value: unknown) => fieldVisible(key)
+  && (!hideEmptyFields.value || (value != null && String(value).trim() !== ''));
+const hasVisibleFields = (section: string) => [...visibleFields.value].some(key => key.startsWith(`${section}.`));
 const displayTags = ref<any[]>([]);
 let tagsRequest = 0;
 let tagsDisposed = false;
@@ -664,37 +687,39 @@ const detailKeys: Record<DetailSection, string[]> = {
   location: ['direction', 'directionRef'],
 };
 const sourceFallbacks: Record<string, string> = { title: 'e_title', headline: 'e_headline', creator: 'e_artist', copyright: 'e_copyright', description: 'e_description', software: 'e_software' };
-function detailRows(keys: string[]) {
-  return keys.flatMap(key => {
+function detailRows(section: DetailSection, keys = detailKeys[section]) {
+  return keys.filter(key => fieldVisible(`${section}.${key}`)).map(key => {
     const detail = metadataDetails.value[key];
     const fallback = sourceFallbacks[key] ? props.fileInfo?.[sourceFallbacks[key]] : key === 'flash' ? props.fileInfo?.e_flash : null;
     let value = key === 'title' || key === 'headline' ? fallback : detail ? detail.values.filter(v => v.trim()).join('\n') : fallback;
     if (key === 'direction' && value && Number.isFinite(Number(value))) {
       const degrees = Number(value);
-      if (degrees < 0 || degrees > 360) return [];
-      const compass = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][Math.round(degrees / 45) % 8];
-      value = `${compass} ${Number(degrees.toFixed(2))}°`;
+      if (degrees < 0 || degrees > 360) value = '';
+      else {
+        const compass = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][Math.round(degrees / 45) % 8];
+        value = `${compass} ${Number(degrees.toFixed(2))}°`;
+      }
     }
     if (key === 'directionRef' && value) {
       const reference = String(value).trim().toUpperCase();
       if (reference === 'T' || reference === 'TRUE NORTH') value = t('file_info.true_north');
       if (reference === 'M' || reference === 'MAGNETIC NORTH') value = t('file_info.magnetic_north');
     }
-    return value && String(value).trim() ? [{ key, value, label: t(`file_info.detail_fields.${key}`) }] : [];
-  });
+    return { key, value: value == null ? '' : String(value), label: t(`file_info.detail_fields.${key}`) };
+  }).filter(row => displayField(`${section}.${row.key}`, row.value));
 }
-const sourceDetailRows = computed(() => detailRows(sourceKeys));
-const captureDetailRows = computed(() => detailRows(detailKeys.capture));
+const sourceDetailRows = computed(() => detailRows('source'));
+const captureDetailRows = computed(() => detailRows('capture'));
 const imageDetailRows = computed(() => [
   { key: 'iccProfile', value: generalFileInfo.value?.icc_profile },
   { key: 'colorSpace', value: generalFileInfo.value?.color_space },
   { key: 'bitDepth', value: generalFileInfo.value?.bit_depth > 0 ? `${generalFileInfo.value.bit_depth} bit` : '' },
-].filter(row => row.value != null && String(row.value).trim() !== '')
+].filter(row => displayField(`file.${row.key}`, row.value))
   .map(row => ({ ...row, label: t(`file_info.detail_fields.${row.key}`) })));
-const locationDetailRows = computed(() => detailRows(detailKeys.location));
+const locationDetailRows = computed(() => detailRows('location'));
 function sectionOpen(section: DetailSection) {
-  return section === 'source' ? showSourceMetadataPanel.value : section === 'capture' ? showMetadataPanel.value
-    : showMapPanel.value;
+  const expanded = section === 'source' ? showSourceMetadataPanel.value : section === 'capture' ? showMetadataPanel.value : showMapPanel.value;
+  return expanded && detailKeys[section].some(key => key !== 'title' && key !== 'headline' && fieldVisible(`${section}.${key}`));
 }
 async function loadDetailSection(section: DetailSection, force = false) {
   const fileId = Number(props.fileInfo?.id);
@@ -844,10 +869,25 @@ const exposureText = computed(() => formatCaptureSettings(props.fileInfo?.e_foca
   props.fileInfo?.e_f_number, props.fileInfo?.e_iso_speed, props.fileInfo?.e_exposure_bias) || '');
 const captureTimeText = computed(() => props.fileInfo?.e_date_time?.trim() && props.fileInfo?.taken_date != null
   ? formatTimestamp(props.fileInfo.taken_date, 'date_time') : '');
-const hasCaptureInfo = computed(() => (!detailSections.value.capture.loaded) || !!(cameraText.value.trim() || props.fileInfo?.e_lens_model?.trim()
-  || exposureText.value.trim() || captureTimeText.value || captureDetailRows.value.length));
-const hasLocationInfo = computed(() => (!detailSections.value.location.loaded) || !!(locationDetailRows.value.length || hasCoordinates.value || hasAltitude.value || formatGeoLocation().trim()));
-const hasSourceMetadata = computed(() => (!detailSections.value.source.loaded) || sourceDetailRows.value.length > 0);
+const hasFileInfo = computed(() => {
+  const file = generalFileInfo.value;
+  return ['name', 'album_name', 'size', 'created_at', 'modified_at'].some(key => displayField(`file.${key}`, file?.[key]))
+    || displayField('file.folder', generalFolderBreadcrumbs.value.length ? 'folder' : '')
+    || displayField('file.dimension', file?.width && file?.height ? 'dimension' : '')
+    || (file?.file_type === 2 && displayField('file.duration', Number.isFinite(file?.duration) && file.duration > 0 ? file.duration : ''))
+    || displayField('file.last_scan_time', file?.last_scan_time > 0 ? file.last_scan_time : '')
+    || imageDetailRows.value.length > 0;
+});
+const hasCaptureInfo = computed(() => hideEmptyFields.value
+  ? displayField('capture.taken_at', captureTimeText.value) || displayField('capture.camera', cameraText.value)
+    || displayField('capture.lens', props.fileInfo?.e_lens_model) || displayField('capture.capture_settings', exposureText.value)
+    || captureDetailRows.value.length > 0
+  : hasVisibleFields('capture'));
+const hasLocationInfo = computed(() => hideEmptyFields.value
+  ? displayField('location.geo_location', formatGeoLocation()) || displayField('location.gps', hasCoordinates.value || hasAltitude.value ? 'gps' : '')
+    || (fieldVisible('location.map') && hasCoordinates.value) || locationDetailRows.value.length > 0
+  : hasVisibleFields('location'));
+const hasSourceMetadata = computed(() => hideEmptyFields.value ? sourceDetailRows.value.length > 0 : hasVisibleFields('source'));
 const showBasicInfoPanel = computed(() => config.infoPanel.showBasicInfo);
 const showMetadataPanel = computed(() => config.infoPanel.showMetadata);
 const showMapPanel = computed(() => config.infoPanel.showMap);
@@ -885,6 +925,8 @@ for (const section of sectionNames) {
     }
   });
 }
+watch(visibleFields, () => loadMetadataDetails());
+watch(hideEmptyFields, () => publishFileInfo());
 onBeforeUnmount(() => { cancelPendingDetails(); detailsRequest++; });
 const isVideoFile = computed(() => Number(props.fileInfo?.file_type || 0) === 2);
 const isLivePhoto = computed(() => (

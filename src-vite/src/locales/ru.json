@@ -1152,6 +1152,14 @@
     }
   },
   "file_info": {
+    "video_only": "(только видео)",
+    "field_preset": "Видимые поля",
+    "fields_default": "По умолчанию",
+    "fields_all": "Показать все",
+    "fields_custom": "Настроить",
+
+    "hide_empty_fields": "Автоматически скрывать пустые поля",
+    "customize_fields": "Настроить поля",
     "title": "Информация",
     "preview": "Предпросмотр",
     "thumbnail": "Миниатюра",

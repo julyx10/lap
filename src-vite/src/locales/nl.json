@@ -1152,6 +1152,14 @@
     }
   },
   "file_info": {
+    "video_only": "(alleen video's)",
+    "field_preset": "Zichtbare velden",
+    "fields_default": "Standaard",
+    "fields_all": "Alles tonen",
+    "fields_custom": "Aangepast",
+
+    "hide_empty_fields": "Lege velden automatisch verbergen",
+    "customize_fields": "Velden aanpassen",
     "title": "Informatie",
     "preview": "Voorbeeld",
     "thumbnail": "Miniatuur",

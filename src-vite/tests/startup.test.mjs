@@ -8,6 +8,8 @@ import { ref, watch, nextTick } from 'vue';
 import ts from 'typescript';
 
 const source = await readFile(new URL('../src/common/i18n.js', import.meta.url), 'utf8');
+const fieldSource = await readFile(new URL('../src/common/fileInfoFields.ts', import.meta.url), 'utf8');
+const { defaultFileInfoFields } = await import(`data:text/javascript;base64,${Buffer.from(ts.transpile(fieldSource, { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext })).toString('base64')}`);
 const storeSource = await readFile(new URL('../src/stores/configStore.js', import.meta.url), 'utf8');
 
 async function fixture(customLoaders = {}) {
@@ -72,6 +74,7 @@ test('language configuration changes only after messages load; latest choice win
   await storeModule.link(specifier => {
     if (specifier === 'pinia') return f.synthetic({ defineStore });
     if (specifier === '@/common/i18n') return f.module;
+    if (specifier === '@/common/fileInfoFields') return f.synthetic({ defaultFileInfoFields });
     return f.synthetic({ SIDEBAR: { ALBUM: 1 }, MAP_MARKER_SIZES: [10, 20] });
   });
   await storeModule.evaluate();

@@ -1152,6 +1152,14 @@
     }
   },
   "file_info": {
+    "video_only": "(csak videók)",
+    "field_preset": "Látható mezők",
+    "fields_default": "Alapértelmezett",
+    "fields_all": "Összes megjelenítése",
+    "fields_custom": "Egyéni",
+
+    "hide_empty_fields": "Üres mezők automatikus elrejtése",
+    "customize_fields": "Mezők testreszabása",
     "title": "Adatok",
     "preview": "Előnézet",
     "thumbnail": "Bélyegkép",

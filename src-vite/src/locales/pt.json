@@ -1152,6 +1152,14 @@
     }
   },
   "file_info": {
+    "video_only": "(somente vídeos)",
+    "field_preset": "Campos visíveis",
+    "fields_default": "Padrão",
+    "fields_all": "Mostrar todos",
+    "fields_custom": "Personalizado",
+
+    "hide_empty_fields": "Ocultar automaticamente campos vazios",
+    "customize_fields": "Personalizar campos",
     "title": "Info do arquivo",
     "preview": "Pré-visualização",
     "thumbnail": "Miniatura",

@@ -1152,6 +1152,14 @@
     }
   },
   "file_info": {
+    "video_only": "（動画のみ）",
+    "field_preset": "表示項目",
+    "fields_default": "既定",
+    "fields_all": "すべて表示",
+    "fields_custom": "カスタム",
+
+    "hide_empty_fields": "空の項目を自動的に非表示",
+    "customize_fields": "表示項目の設定",
     "title": "ファイル情報",
     "preview": "プレビュー",
     "thumbnail": "サムネイル",

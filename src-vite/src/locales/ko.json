@@ -1152,6 +1152,14 @@
     }
   },
   "file_info": {
+    "video_only": "(동영상만)",
+    "field_preset": "표시 항목",
+    "fields_default": "기본값",
+    "fields_all": "모두 표시",
+    "fields_custom": "사용자 지정",
+
+    "hide_empty_fields": "빈 항목 자동 숨기기",
+    "customize_fields": "표시 항목 설정",
     "title": "파일 정보",
     "preview": "미리보기",
     "thumbnail": "썸네일",

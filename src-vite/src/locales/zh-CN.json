@@ -1152,6 +1152,14 @@
     }
   },
   "file_info": {
+    "video_only": "（仅视频）",
+    "field_preset": "显示字段",
+    "fields_default": "默认",
+    "fields_all": "全部显示",
+    "fields_custom": "自定义",
+
+    "hide_empty_fields": "自动隐藏空值字段",
+    "customize_fields": "自定义字段",
     "title": "信息",
     "preview": "预览",
     "thumbnail": "缩略图",

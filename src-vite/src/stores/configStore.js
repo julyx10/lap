@@ -1,11 +1,12 @@
 /**
  * Config Store - Global application configuration
- */
+*/
 import { defineStore } from 'pinia';
 import { i18n, loadLanguage } from '@/common/i18n';
 let languageRequest = 0;
 let pendingUserLanguageRequest = 0;
 import { SIDEBAR, MAP_MARKER_SIZES } from '@/common/constants';
+import { defaultFileInfoFields } from '@/common/fileInfoFields';
 
 export const useConfigStore = defineStore('configStore', {
   state: () => ({
@@ -42,6 +43,8 @@ export const useConfigStore = defineStore('configStore', {
     },
 
     infoPanel: {
+      fields: [...defaultFileInfoFields],
+      hideEmptyFields: false,
       showPreview: true,         // show preview thumbnail
       previewMode: 'thumbnail',  // preview section mode ('thumbnail' | 'histogram')
       previewScale: 1,           // preview thumbnail scale (1, 0.5, 0.25)
