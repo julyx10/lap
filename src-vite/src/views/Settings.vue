@@ -403,8 +403,8 @@
                 ></progress>
                 <button
                   class="btn btn-ghost btn-xs h-6 min-h-0 w-6 p-0 text-base-content/30 hover:text-base-content"
-                  :title="$t('msgbox.cancel')"
-                  :aria-label="$t('msgbox.cancel')"
+                  :title="$t('image_viewer.toolbar.pause')"
+                  :aria-label="$t('image_viewer.toolbar.pause')"
                   @click="cancelMultilingualModelDownload"
                 >
                   <IconClose class="w-3.5 h-3.5" />
