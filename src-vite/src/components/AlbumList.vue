@@ -65,187 +65,194 @@
       </div>
     </div>
 
-    <ul
-      ref="albumListRootRef"
-      tabindex="0"
-      data-album-list-root="true"
-      class="min-h-0 flex-1 overflow-x-hidden overflow-y-auto rounded-box select-none outline-none"
-      @keydown="handleLocalAlbumListKeyDown"
-      @mousedown.capture="focusAlbumListRoot"
-      @drop.prevent.stop
-    >
-      <!-- drag to change albums' display order -->
-      <VueDraggable
-        v-if="visibleAlbums.length > 0"
-        v-model="albums"
-        :disabled="!isMainPane || isFolderFiltering || reorderingAlbumId === null"
-        group="album-folder"
-        :handle="'.album-drag-handle'"
-        :animation="200"
-        @start="onDragStart"
-        @end="onDragEnd"
+    <div class="flex min-h-0 flex-1 transform-gpu overflow-hidden rounded-box">
+      <ul
+        ref="albumListRootRef"
+        tabindex="0"
+        data-album-list-root="true"
+        class="min-h-0 flex-1 overflow-x-hidden overflow-y-auto rounded-box select-none outline-none"
+        @keydown="handleLocalAlbumListKeyDown"
+        @mousedown.capture="focusAlbumListRoot"
+        @drop.prevent.stop
       >
-        <li
-          v-for="album in visibleAlbums"
-          :key="album.id"
-          :data-album-id="album.id"
-          :data-selected-album-folder="
-            selection.albumId.value === album.id && !selection.selected.value ? 'true' : undefined
-          "
+        <!-- drag to change albums' display order -->
+        <VueDraggable
+          v-if="visibleAlbums.length > 0"
+          v-model="albums"
+          :disabled="!isMainPane || isFolderFiltering || reorderingAlbumId === null"
+          handle=".album-drag-handle"
+          direction="vertical"
+          :group="{ name: 'album-folder', pull: false, put: false }"
+          :force-fallback="true"
+          ghost-class="sidebar-reorder-placeholder"
+          :revertOnSpill="true"
+          :bubble-scroll="false"
+          :animation="150"
+          @start="onDragStart"
+          @end="onDragEnd"
         >
-          <div
-            :data-reordering-album="isReorderingAlbum(album) ? 'true' : undefined"
-            :data-file-drop-path="album.is_accessible === false ? undefined : album.path"
-            :data-file-drop-album-id="album.is_accessible === false ? undefined : album.id"
-            :class="[
-              'mx-1 p-1 h-12 flex items-center rounded-box whitespace-nowrap cursor-pointer group border-2 border-transparent transition-all duration-200 ease-in-out',
-              selection.albumId.value === album.id
-                ? (selection.selected.value ? `${isMainSourceActive ? 'text-primary' : 'text-base-content/70 bg-base-100/30 hover:bg-base-100/70'} bg-base-100 hover:bg-base-100` : 'text-base-content hover:bg-base-100/30')
-                : 'hover:text-base-content hover:bg-base-100/30',
-            ]"
-            @click.stop="clickAlbum(album)"
-            @dblclick.stop="dlbClickAlbum(album)"
-            @contextmenu.prevent.stop="(e: MouseEvent) => handleAlbumContextMenu(album, e)"
-          >
-            <IconDragHandle
-              v-if="isReorderingAlbum(album)"
-              class="album-drag-handle p-1 w-6 h-6 shrink-0 cursor-move text-base-content/70 hover:text-base-content"
-              :title="$t('menu.album.reorder')"
-              @click.stop
-              @dblclick.stop
-            />
-            <IconRight
-              v-else
-              :class="[
-                'p-1 w-6 h-6 shrink-0 transition-transform hover:text-base-content',
-                isFolderFiltering
-                  ? (shouldShowFilteredFolderTree(album.id) ? 'rotate-90 pointer-events-none' : 'opacity-0 pointer-events-none')
-                  : (album.is_expanded ? 'rotate-90' : ''),
-              ]"
-              @click.stop="!isFolderFiltering && toggleAlbumExpansion(album)"
-              @dblclick.stop
-            />
-            <div class="w-10 h-10 mr-2 rounded-box shrink-0 overflow-hidden border border-base-content/5 bg-base-content/5" @click.stop>
-              <!-- Scanning / Paused / Queued -->
-              <div v-if="isAlbumScanning(album.id)"
-                class="w-full h-full flex items-center justify-center cursor-pointer"
-                :title="$t('toolbar.tooltip.scanning')"
-                @click="toggleIndexAlbum(album.id)"
-              >
-                <IconUpdate class="w-6 h-6 animate-spin" />
-              </div>
-              <div v-else-if="isAlbumPaused(album.id) || (Number(album.indexed) > 0 && Number(album.indexed) < Number(album.total))"
-                class="w-full h-full flex items-center justify-center"
-                :class="album.is_accessible === false ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'"
-                :title="$t('toolbar.tooltip.scan_paused')"
-                @click="toggleIndexAlbum(album.id)"
-              >
-                <IconUpdateDot class="w-6 h-6" />
-              </div>
-              <div v-else-if="getAlbumIcon(album) === 'update'"
-                class="w-full h-full flex items-center justify-center cursor-pointer hover:bg-base-100/30"
-                :title="$t('toolbar.tooltip.scan_queued')"
-                @click="toggleIndexAlbum(album.id)"
-              >
-                <IconUpdate class="w-6 h-6" />
-              </div>
-              <!-- Cover -->
-              <img
-                v-else-if="album.cover_file_id && albumCovers[album.id] && !albumCoverErrors[album.id]"
-                :src="albumCovers[album.id]"
-                class="w-full h-full object-cover"
-                @error="albumCoverErrors[album.id] = true"
-                @click="clickAlbum(album)"
-              >
-              <!-- Fallback -->
-              <div v-else
-                class="w-full h-full flex items-center justify-center cursor-pointer"
-                @click="clickAlbum(album)"
-              >
-                <IconFolders class="w-6 h-6" />
-              </div>
-            </div>
-
-            <div class="flex flex-col overflow-hidden">
-              <div class="flex min-w-0 items-center gap-1">
-                <span class="truncate whitespace-pre">{{ album.name }}</span>
-                <IconExclamation v-if="album.is_accessible === false" class="size-4 shrink-0 text-warning/70" :aria-label="t('offline.original_unavailable')" />
-              </div>
-              <div
-                v-if="album.description"
-                class="text-xs overflow-hidden whitespace-nowrap text-ellipsis text-base-content/50"
-              >{{ album.description }}</div>
-            </div>
-
-            <!-- Right side: Count and Status Icons -->
-            <div class="ml-auto flex flex-row items-center text-base-content/30">
-              <span
-                v-if="props.showTotalCount !== false && getAlbumDisplayCount(album) > 0"
-                class="sidebar-item-count shrink-0"
-              >
-                {{ getAlbumDisplayCount(album).toLocaleString() }}
-              </span>
-              <div v-if="isMainPane"
-                :class="[
-                  selection.albumId.value === album.id && selection.selected.value ? '' : 'hidden group-hover:block'
-                ]"
-              >
-                <ContextMenu
-                  :ref="(el: any) => { if (el) albumContextMenus[album.id] = el }"
-                  :iconMenu="IconMore"
-                  :menuItems="() => getMoreMenuItems(album)"
-                  :smallIcon="true"
-                />
-              </div>
-            </div>
-          </div>
-          <transition
-            enter-active-class="transition-all duration-200 ease-out overflow-hidden"
-            enter-from-class="max-h-0"
-            enter-to-class="max-h-96"
+          <li
+            v-for="album in visibleAlbums"
+            :key="album.id"
+            :data-album-id="album.id"
+            :data-selected-album-folder="
+              selection.albumId.value === album.id && !selection.selected.value ? 'true' : undefined
+            "
           >
             <div
-              v-if="(isFolderFiltering ? shouldShowFilteredFolderTree(album.id) : album.is_expanded) && getAlbumQueueIndex(album.id, libConfig.index.albumQueue as any[]) === -1"
-              class="ml-6 mr-2 my-1 p-1 rounded-box bg-base-300/30 border border-base-content/5 shadow-sm"
+              :data-reordering-album="isReorderingAlbum(album) ? 'true' : undefined"
+              :data-file-drop-path="album.is_accessible === false ? undefined : album.path"
+              :data-file-drop-album-id="album.is_accessible === false ? undefined : album.id"
+              :class="[
+                'mx-1 p-1 h-12 flex items-center rounded-box whitespace-nowrap cursor-pointer group border-2 border-transparent transition-colors duration-200 ease-in-out',
+                selection.albumId.value === album.id
+                  ? (selection.selected.value ? `${isMainSourceActive ? 'text-primary' : 'text-base-content/70 bg-base-100/30 hover:bg-base-100/70'} bg-base-100 hover:bg-base-100` : 'text-base-content hover:bg-base-100/30')
+                  : 'hover:text-base-content hover:bg-base-100/30',
+              ]"
+              @click.stop="clickAlbum(album)"
+              @dblclick.stop="dlbClickAlbum(album)"
+              @contextmenu.prevent.stop="(e: MouseEvent) => handleAlbumContextMenu(album, e)"
             >
-              <AlbumFolder
-                :ref="(el: any) => { if (el) albumFolderRefs[album.id] = el; else delete albumFolderRefs[album.id]; }"
-                :children="isFolderFiltering ? getFilteredFolderTree(album.id) : album.children"
-                :albumId="album.id"
-                :rootPath="album.path"
-                :unavailable="album.is_accessible === false"
-                :allowContextMenu="isMainPane"
-                :showFolderActions="selectionSource === 'destFolder'"
-                :filterVisiblePaths="isFolderFiltering ? getVisibleFolderPaths(album.id) : undefined"
-                :filterMatchedPaths="isFolderFiltering ? getMatchedFolderPaths(album.id) : undefined"
-                @folder-favorite-changed="refreshFolderSearchFolders"
-                @folder-path-changed="refreshFolderSearchFolders"
-                @root-renamed="handleRootRenamed"
+              <IconDragHandle
+                v-if="isReorderingAlbum(album)"
+                class="album-drag-handle p-1 w-6 h-6 shrink-0 cursor-grab text-base-content/30"
+                :title="$t('menu.album.reorder')"
+                @click.stop
+                @dblclick.stop
               />
+              <IconRight
+                v-else
+                :class="[
+                  'p-1 w-6 h-6 shrink-0 transition-transform hover:text-base-content',
+                  isFolderFiltering
+                    ? (shouldShowFilteredFolderTree(album.id) ? 'rotate-90 pointer-events-none' : 'opacity-0 pointer-events-none')
+                    : (album.is_expanded ? 'rotate-90' : ''),
+                ]"
+                @click.stop="!isFolderFiltering && toggleAlbumExpansion(album)"
+                @dblclick.stop
+              />
+              <div class="w-10 h-10 mr-2 rounded-box shrink-0 overflow-hidden border border-base-content/5 bg-base-content/5" @click.stop>
+                <!-- Scanning / Paused / Queued -->
+                <div v-if="isAlbumScanning(album.id)"
+                  class="w-full h-full flex items-center justify-center cursor-pointer"
+                  :title="$t('toolbar.tooltip.scanning')"
+                  @click="toggleIndexAlbum(album.id)"
+                >
+                  <IconUpdate class="w-6 h-6 animate-spin" />
+                </div>
+                <div v-else-if="isAlbumPaused(album.id) || (Number(album.indexed) > 0 && Number(album.indexed) < Number(album.total))"
+                  class="w-full h-full flex items-center justify-center"
+                  :class="album.is_accessible === false ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'"
+                  :title="$t('toolbar.tooltip.scan_paused')"
+                  @click="toggleIndexAlbum(album.id)"
+                >
+                  <IconUpdateDot class="w-6 h-6" />
+                </div>
+                <div v-else-if="getAlbumIcon(album) === 'update'"
+                  class="w-full h-full flex items-center justify-center cursor-pointer hover:bg-base-100/30"
+                  :title="$t('toolbar.tooltip.scan_queued')"
+                  @click="toggleIndexAlbum(album.id)"
+                >
+                  <IconUpdate class="w-6 h-6" />
+                </div>
+                <!-- Cover -->
+                <img
+                  v-else-if="album.cover_file_id && albumCovers[album.id] && !albumCoverErrors[album.id]"
+                  :src="albumCovers[album.id]"
+                  class="w-full h-full object-cover"
+                  @error="albumCoverErrors[album.id] = true"
+                  @click="clickAlbum(album)"
+                >
+                <!-- Fallback -->
+                <div v-else
+                  class="w-full h-full flex items-center justify-center cursor-pointer"
+                  @click="clickAlbum(album)"
+                >
+                  <IconFolders class="w-6 h-6" />
+                </div>
+              </div>
+
+              <div class="flex flex-col overflow-hidden">
+                <div class="flex min-w-0 items-center gap-1">
+                  <span class="truncate whitespace-pre">{{ album.name }}</span>
+                  <IconExclamation v-if="album.is_accessible === false" class="size-4 shrink-0 text-warning/70" :aria-label="t('offline.original_unavailable')" />
+                </div>
+                <div
+                  v-if="album.description"
+                  class="text-xs overflow-hidden whitespace-nowrap text-ellipsis text-base-content/50"
+                >{{ album.description }}</div>
+              </div>
+
+              <!-- Right side: Count and Status Icons -->
+              <div class="ml-auto flex flex-row items-center text-base-content/30">
+                <span
+                  v-if="props.showTotalCount !== false && getAlbumDisplayCount(album) > 0"
+                  class="sidebar-item-count shrink-0"
+                >
+                  {{ getAlbumDisplayCount(album).toLocaleString() }}
+                </span>
+                <div v-if="isMainPane"
+                  :class="[
+                    selection.albumId.value === album.id && selection.selected.value ? '' : 'hidden group-hover:block'
+                  ]"
+                >
+                  <ContextMenu
+                    :ref="(el: any) => { if (el) albumContextMenus[album.id] = el }"
+                    :iconMenu="IconMore"
+                    :menuItems="() => getMoreMenuItems(album)"
+                    :smallIcon="true"
+                  />
+                </div>
+              </div>
             </div>
-          </transition>
+            <transition
+              enter-active-class="transition-all duration-200 ease-out overflow-hidden"
+              enter-from-class="max-h-0"
+              enter-to-class="max-h-96"
+            >
+              <div
+                v-if="(isFolderFiltering ? shouldShowFilteredFolderTree(album.id) : album.is_expanded) && getAlbumQueueIndex(album.id, libConfig.index.albumQueue as any[]) === -1"
+                class="ml-6 mr-2 my-1 p-1 rounded-box bg-base-300/30 border border-base-content/5 shadow-sm"
+              >
+                <AlbumFolder
+                  :ref="(el: any) => { if (el) albumFolderRefs[album.id] = el; else delete albumFolderRefs[album.id]; }"
+                  :children="isFolderFiltering ? getFilteredFolderTree(album.id) : album.children"
+                  :albumId="album.id"
+                  :rootPath="album.path"
+                  :unavailable="album.is_accessible === false"
+                  :allowContextMenu="isMainPane"
+                  :showFolderActions="selectionSource === 'destFolder'"
+                  :filterVisiblePaths="isFolderFiltering ? getVisibleFolderPaths(album.id) : undefined"
+                  :filterMatchedPaths="isFolderFiltering ? getMatchedFolderPaths(album.id) : undefined"
+                  @folder-favorite-changed="refreshFolderSearchFolders"
+                  @folder-path-changed="refreshFolderSearchFolders"
+                  @root-renamed="handleRootRenamed"
+                />
+              </div>
+            </transition>
+          </li>
+        </VueDraggable>
+
+        <li
+          v-if="isMainPane && showAlbumDrop"
+          ref="albumDropRef"
+          data-album-drop-new
+          class="mx-1 my-1 p-2 min-h-12 flex items-center gap-2 rounded-box border-2 border-dashed border-primary/30 text-primary/70 transition-colors"
+          :class="{ '!bg-primary/10 !border-primary/60': albumDropHovered }"
+          @drop.prevent.stop="handleAlbumFolderDrop"
+        >
+          <IconAdd class="w-6 h-6 shrink-0" />
+          <span class="text-sm">{{ $t('album.drop.add') }}</span>
         </li>
-      </VueDraggable>
 
-      <li
-        v-if="isMainPane && showAlbumDrop"
-        ref="albumDropRef"
-        data-album-drop-new
-        class="mx-1 my-1 p-2 min-h-12 flex items-center gap-2 rounded-box border-2 border-dashed border-primary/30 text-primary/70 transition-colors"
-        :class="{ '!bg-primary/10 !border-primary/60': albumDropHovered }"
-        @drop.prevent.stop="handleAlbumFolderDrop"
-      >
-        <IconAdd class="w-6 h-6 shrink-0" />
-        <span class="text-sm">{{ $t('album.drop.add') }}</span>
-      </li>
-
-      <li v-if="!isFolderSearchLoading && visibleAlbums.length === 0 && albums.length > 0" class="sidebar-empty text-sm">
-        <span class="text-center">{{ $t('album.no_folders_found') }}</span>
-      </li>
-      <li v-else-if="!isLoading && albums.length === 0" class="sidebar-empty text-sm">
-        <span class="text-center">{{ $t('tooltip.not_found.albums') }}</span>
-      </li>
-    </ul>
+        <li v-if="!isFolderSearchLoading && visibleAlbums.length === 0 && albums.length > 0" class="sidebar-empty text-sm">
+          <span class="text-center">{{ $t('album.no_folders_found') }}</span>
+        </li>
+        <li v-else-if="!isLoading && albums.length === 0" class="sidebar-empty text-sm">
+          <span class="text-center">{{ $t('tooltip.not_found.albums') }}</span>
+        </li>
+      </ul>
+    </div>
 
     <!-- edit album information -->
     <AlbumEdit
@@ -287,7 +294,7 @@ import { isReturningNativeFileDrag } from '@/common/nativeDrag';
 import { externalDragKind, updateExternalDrag, resetExternalDrag, finishExternalDrag } from '@/common/externalDrag';
 import { ref, watch, computed, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { VueDraggable } from 'vue-draggable-plus'
+import { VueDraggable, type DraggableEvent } from 'vue-draggable-plus'
 import { listen, emit as tauriEmit } from '@tauri-apps/api/event';
 import { config, libConfig } from '@/common/config';
 import { useUIStore } from '@/stores/uiStore';
@@ -966,7 +973,7 @@ onMounted( async () => {
 
   // Keep the sidebar folder selection in sync with content navigation.
   unlistenExpandAlbumFolder = await listen('expand-album-folder', async (event: any) => {
-    const { albumId, folderPath } = event.payload;
+      const { albumId, folderPath } = event.payload;
     if (albumId && folderPath) {
       await clickFinalSubFolder(albumId, folderPath);
     }
@@ -1558,9 +1565,10 @@ const onDragStart = () => {
   uiStore.pushInputHandler('AlbumListDrag');
 };
 
-const onDragEnd = async () => {
+const onDragEnd = async ({ oldIndex, newIndex }: DraggableEvent) => {
   isDragging.value = false;
   setTimeout(() => uiStore.removeInputHandler('AlbumListDrag'), 0);
+  if (oldIndex === newIndex) return;
   try {
     await reorderAlbums(albums.value.map((album, displayOrder) => ({ id: album.id, displayOrder })));
   } catch (error) {

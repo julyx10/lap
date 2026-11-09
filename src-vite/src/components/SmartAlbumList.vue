@@ -42,64 +42,71 @@
       </div>
     </div>
 
-    <VueDraggable
-      v-if="filteredSmartAlbums.length > 0"
-      v-model="customSmartAlbums"
-      tag="ul"
-      :disabled="reorderingSmartAlbumId === null || Boolean(smartAlbumSearch.trim())"
-      :handle="'.smart-album-drag-handle'"
-      :animation="200"
-      @start="onDragStart"
-      @end="onDragEnd"
-      @drop.stop
-      class="flex-1 overflow-x-hidden overflow-y-auto rounded-box select-none"
-    >
-      <li v-for="smartAlbum in filteredSmartAlbums" :key="smartAlbum.id">
-        <div
-          :data-reordering-smart-album="isReorderingSmartAlbum(smartAlbum) ? 'true' : undefined"
-          :class="[
-            'sidebar-item sidebar-item-media group',
-            libConfig.smartAlbum.type === 'custom' && libConfig.smartAlbum.id === smartAlbum.id ? 'sidebar-item-selected' : 'sidebar-item-hover',
-          ]"
-          @click="clickCustomSmartAlbum(smartAlbum)"
-          @contextmenu.prevent.stop="(event: MouseEvent) => handleSmartAlbumContextMenu(smartAlbum, event)"
-        >
-          <IconDragHandle
-            v-if="isReorderingSmartAlbum(smartAlbum)"
-            class="smart-album-drag-handle p-1 w-6 h-6 shrink-0 cursor-move text-base-content/70 hover:text-base-content"
-            :title="$t('album.smart_edit.reorder')"
-            @click.stop
-          />
-          <span v-else-if="reorderingSmartAlbumId !== null" class="p-1 w-6 h-6 shrink-0"></span>
-          <div class="w-10 h-10 mr-2 rounded-box shrink-0 overflow-hidden border border-base-content/5 bg-base-content/5">
-            <img
-              v-if="getSmartAlbumCount(smartAlbum) > 0 && getSmartAlbumCoverSrc(smartAlbum) && Number(smartAlbumCoverErrors[smartAlbum.id]) !== Number(smartAlbum.coverFileId)"
-              :src="getSmartAlbumCoverSrc(smartAlbum)"
-              class="w-full h-full object-cover"
-              @error="smartAlbumCoverErrors[smartAlbum.id] = Number(smartAlbum.coverFileId)"
+    <div v-if="filteredSmartAlbums.length > 0" class="flex min-h-0 flex-1 transform-gpu overflow-hidden rounded-box">
+      <VueDraggable
+        v-model="customSmartAlbums"
+        tag="ul"
+        :disabled="reorderingSmartAlbumId === null || Boolean(smartAlbumSearch.trim())"
+        handle=".smart-album-drag-handle"
+        direction="vertical"
+        :group="{ name: 'smart-album-list', pull: false, put: false }"
+        :force-fallback="true"
+        ghost-class="sidebar-reorder-placeholder"
+        :revertOnSpill="true"
+        :bubble-scroll="false"
+        :animation="150"
+        @start="onDragStart"
+        @end="onDragEnd"
+        @drop.stop
+        class="min-h-0 flex-1 overflow-x-hidden overflow-y-auto select-none"
+      >
+        <li v-for="smartAlbum in filteredSmartAlbums" :key="smartAlbum.id">
+          <div
+            :data-reordering-smart-album="isReorderingSmartAlbum(smartAlbum) ? 'true' : undefined"
+            :class="[
+              'sidebar-item sidebar-item-media group transition-colors',
+              libConfig.smartAlbum.type === 'custom' && libConfig.smartAlbum.id === smartAlbum.id ? 'sidebar-item-selected' : 'sidebar-item-hover',
+            ]"
+            @click="clickCustomSmartAlbum(smartAlbum)"
+            @contextmenu.prevent.stop="(event: MouseEvent) => handleSmartAlbumContextMenu(smartAlbum, event)"
+          >
+            <IconDragHandle
+              v-if="isReorderingSmartAlbum(smartAlbum)"
+              class="smart-album-drag-handle p-1 w-6 h-6 shrink-0 cursor-grab text-base-content/30"
+              :title="$t('album.smart_edit.reorder')"
+              @click.stop
             />
-            <div v-else class="w-full h-full flex items-center justify-center text-base-content/30">
-              <IconFolderCog class="w-5 h-5" />
-            </div>
-          </div>
-          <span class="sidebar-item-label">{{ smartAlbum.name }}</span>
-          <div class="ml-auto flex flex-row items-center text-base-content/30">
-            <span
-              v-if="hasSmartAlbumCount(smartAlbum)"
-              class="sidebar-item-count shrink-0"
-            >{{ getSmartAlbumCount(smartAlbum).toLocaleString() }}</span>
-            <div :class="[isSmartAlbumSelected(smartAlbum) ? '' : 'hidden group-hover:flex']">
-              <ContextMenu
-                :ref="(element: any) => { if (element) smartAlbumContextMenus[smartAlbum.id] = element }"
-                :iconMenu="IconMore"
-                :menuItems="getMoreMenuItems(smartAlbum)"
-                :smallIcon="true"
+            <span v-else-if="reorderingSmartAlbumId !== null" class="p-1 w-6 h-6 shrink-0"></span>
+            <div class="w-10 h-10 mr-2 rounded-box shrink-0 overflow-hidden border border-base-content/5 bg-base-content/5">
+              <img
+                v-if="getSmartAlbumCount(smartAlbum) > 0 && getSmartAlbumCoverSrc(smartAlbum) && Number(smartAlbumCoverErrors[smartAlbum.id]) !== Number(smartAlbum.coverFileId)"
+                :src="getSmartAlbumCoverSrc(smartAlbum)"
+                class="w-full h-full object-cover"
+                @error="smartAlbumCoverErrors[smartAlbum.id] = Number(smartAlbum.coverFileId)"
               />
+              <div v-else class="w-full h-full flex items-center justify-center text-base-content/30">
+                <IconFolderCog class="w-5 h-5" />
+              </div>
+            </div>
+            <span class="sidebar-item-label">{{ smartAlbum.name }}</span>
+            <div class="ml-auto flex flex-row items-center text-base-content/30">
+              <span
+                v-if="hasSmartAlbumCount(smartAlbum)"
+                class="sidebar-item-count shrink-0"
+              >{{ getSmartAlbumCount(smartAlbum).toLocaleString() }}</span>
+              <div :class="[isSmartAlbumSelected(smartAlbum) ? '' : 'hidden group-hover:flex']">
+                <ContextMenu
+                  :ref="(element: any) => { if (element) smartAlbumContextMenus[smartAlbum.id] = element }"
+                  :iconMenu="IconMore"
+                  :menuItems="getMoreMenuItems(smartAlbum)"
+                  :smallIcon="true"
+                />
+              </div>
             </div>
           </div>
-        </div>
-      </li>
-    </VueDraggable>
+        </li>
+      </VueDraggable>
+    </div>
     <div v-else-if="customSmartAlbums.length > 0" class="sidebar-empty text-sm">
       <span class="text-center">{{ $t('album.no_smart_albums_found') }}</span>
     </div>
@@ -130,7 +137,7 @@
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { listen } from '@tauri-apps/api/event';
-import { VueDraggable } from 'vue-draggable-plus';
+import { VueDraggable, type DraggableEvent } from 'vue-draggable-plus';
 import { config, libConfig } from '@/common/config';
 import { useUIStore } from '@/stores/uiStore';
 import { getThumbUrl, getThumbnailDataUrl, getThumbnailDataUrlInflight, isWin, setThumbnailDataUrlInflight } from '@/common/utils';
@@ -328,6 +335,7 @@ onBeforeUnmount(() => {
   ++smartCountRequest;
   unlistenSmartCounts.forEach(stop => stop());
   document.removeEventListener('pointerdown', handleReorderOutsidePointerDown, true);
+  uiStore.removeInputHandler('SmartAlbumListDrag');
 });
 
 function onDragStart() {
@@ -335,8 +343,9 @@ function onDragStart() {
   uiStore.pushInputHandler('SmartAlbumListDrag');
 }
 
-function onDragEnd() {
+function onDragEnd({ oldIndex, newIndex }: DraggableEvent) {
   setTimeout(() => uiStore.removeInputHandler('SmartAlbumListDrag'), 0);
+  if (oldIndex === newIndex) return;
   libConfig.smartAlbums = [...customSmartAlbums.value];
 }
 
