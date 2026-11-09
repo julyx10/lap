@@ -1,5 +1,5 @@
 <template>
-  <ModalDialog :title="$t('import_organize.import')" :width="520" position-key="import-organize" @cancel="close">
+  <ModalDialog :title="$t('import_organize.title')" :width="520" position-key="import-organize" @cancel="close">
     <div class="space-y-2 select-none">
       <section class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
         <div class="font-bold uppercase text-[10px] tracking-widest text-base-content/30">{{ $t('import_organize.section_folders') }}</div>
@@ -28,7 +28,7 @@
             <option value="day">{{ $t('import_organize.layout_day') }}</option>
             <option value="month">{{ $t('import_organize.layout_month') }}</option>
             <option value="year">{{ $t('import_organize.layout_year') }}</option>
-            <option value="none">{{ $t('import_organize.layout_none') }}</option>
+            <option value="structure">{{ $t('import_organize.layout_structure') }}</option>
           </select>
         </div>
       </section>

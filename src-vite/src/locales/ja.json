@@ -249,6 +249,7 @@
     "copy_failed": "このファイルをインポートできませんでした。"
   },
   "import_organize": {
+    "title": "フォルダーをインポート",
     "section_folders": "フォルダーを選択",
     "section_status": "インポート状況",
     "to_import": "インポート予定",
@@ -260,7 +261,7 @@
     "layout_day": "日別 — YYYY/YYYY-MM-DD",
     "layout_month": "月別 — YYYY/YYYY-MM",
     "layout_year": "年別 — YYYY",
-    "layout_none": "単一フォルダー",
+    "layout_structure": "フォルダー構造を保持",
     "import": "読み込む",
     "preparing": "読み込みを準備中",
     "importing": "ファイルを読み込み中",
@@ -551,6 +552,30 @@
     "more_actions": "その他の操作",
     "tag_all": "タグ",
     "dedup": {
+      "keep_rules": {
+        "title": "保持ルール",
+        "priority_order": "優先順位",
+        "folders": "優先フォルダー",
+        "subfolders": "サブフォルダーも対象です。リストの上位が優先されます。",
+        "folders_skipped": "未設定のためスキップ",
+        "add_folder": "フォルダーを追加",
+        "folder_already_added": "追加済み",
+        "format": "優先する形式",
+        "similar_only": "類似画像のみ",
+        "raw_first": "RAW を優先",
+        "jpeg_heic_first": "JPEG / HEIC を優先",
+        "size": "優先するサイズ",
+        "largest_dimensions": "最高解像度",
+        "smallest_dimensions": "最低解像度",
+        "largest_file_size": "ファイルサイズが最大",
+        "smallest_file_size": "ファイルサイズが最小",
+        "ignore": "考慮しない",
+        "time": "優先する日付",
+        "created_earliest": "作成日時が最も古い",
+        "created_latest": "作成日時が最も新しい",
+        "modified_earliest": "更新日時が最も古い",
+        "modified_latest": "更新日時が最も新しい"
+      },
       "title": "重複",
       "tabs": {
         "exact": "重複",
@@ -708,6 +733,7 @@
     "album": {
       "add": "新規アルバム",
       "edit": "アルバムを編集...",
+      "import_folder": "フォルダーをインポート…",
       "scan": "アルバムをスキャン",
       "reorder": "並べ替え",
       "pause_scan": "スキャンを一時停止",

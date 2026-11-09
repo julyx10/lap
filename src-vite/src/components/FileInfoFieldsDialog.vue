@@ -1,7 +1,8 @@
 <template>
   <ModalDialog :title="$t('file_info.customize_fields')" :width="460" position-key="file-info-fields" @cancel="emit('cancel')">
     <div class="overflow-y-auto max-h-[65vh] space-y-2 p-1">
-      <section class="rounded-box p-3 space-y-3 bg-base-300/30 border border-base-content/5 shadow-sm">
+      <section aria-labelledby="info-fields-general-heading" class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+        <h2 id="info-fields-general-heading" class="flex items-center font-bold uppercase text-[10px] tracking-widest text-base-content/30">{{ $t('file_info.general') }}</h2>
         <label class="flex items-center justify-between gap-4 text-sm">
           <span>{{ $t('file_info.field_preset') }}</span>
           <select class="select select-bordered select-sm w-40 shrink-0" :value="preset" @change="applyPreset(($event.target as HTMLSelectElement).value)">
@@ -15,8 +16,8 @@
           <input v-model="config.infoPanel.hideEmptyFields" type="checkbox" class="toggle toggle-primary toggle-sm shrink-0" />
         </label>
       </section>
-      <section v-for="group in fileInfoFieldGroups" :key="group.key" class="rounded-box p-3 space-y-3 bg-base-300/30 border border-base-content/5 shadow-sm" :aria-labelledby="`info-fields-${group.key}`">
-        <h2 :id="`info-fields-${group.key}`" class="font-bold uppercase text-[10px] tracking-widest text-base-content/50">{{ $t(group.label) }}</h2>
+      <section v-for="group in fileInfoFieldGroups" :key="group.key" class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm" :aria-labelledby="`info-fields-${group.key}`">
+        <h2 :id="`info-fields-${group.key}`" class="flex items-center font-bold uppercase text-[10px] tracking-widest text-base-content/30">{{ $t(group.label) }}</h2>
         <div class="grid grid-cols-2 gap-x-3 gap-y-2">
           <label v-for="field in group.fields" :key="field.key" class="flex items-center gap-2 text-xs">
             <input type="checkbox" class="checkbox checkbox-primary checkbox-sm shrink-0"

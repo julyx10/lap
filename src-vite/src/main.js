@@ -1,4 +1,4 @@
-import { createApp } from 'vue'
+import { createApp, watch } from 'vue'
 import { i18n, initializeLanguage, resolveSystemLanguage } from '@/common/i18n'
 import { locale as getSystemLanguage } from '@tauri-apps/plugin-os'
 import { createPinia } from 'pinia'
@@ -42,6 +42,13 @@ listen('image-editor-config-changed', (event) => {
   }
 })
 
+listen('dedup-config-changed', (event) => {
+  // Keep other windows current so their later writes preserve dedup keep rules.
+  if (currentWindowLabel !== 'main') {
+    Object.assign(config.dedup, event.payload)
+  }
+})
+
 listen('af-area-display-changed', (event) => {
   // All open windows keep the same preference so later store writes preserve it.
   if (typeof event.payload === 'boolean' && config.mediaViewer.showAfAreas !== event.payload) {
@@ -56,6 +63,9 @@ if (isMainWindow) {
   config.$subscribe((_mutation, state) => {
     void emit('config-settings-synced', JSON.parse(JSON.stringify(state.settings)))
   })
+  watch(() => config.dedup.keepRules, () => {
+    void emit('dedup-config-changed', JSON.parse(JSON.stringify(config.dedup)))
+  }, { deep: true })
 } else {
   listen('config-settings-synced', async (event) => {
     const request = ++settingsSyncRequest

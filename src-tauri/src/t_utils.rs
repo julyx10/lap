@@ -1415,9 +1415,13 @@ pub struct ImportOrganizeResult {
     pub cancelled: bool,
 }
 
-/// Copy supported media from a source folder into a folder in an album and
-/// create the corresponding folder/file records. `layout` is day, month, year,
-/// or none.
+fn import_structure_folder(source: &Path, root_name: &std::ffi::OsStr, file: &Path) -> Result<PathBuf, String> {
+    let parent = file.parent().and_then(|parent| parent.strip_prefix(source).ok())
+        .ok_or_else(|| "Import file is outside the source folder".to_string())?;
+    Ok(Path::new(root_name).join(parent))
+}
+
+/// Copy supported media into an album, organized by date or by source folder structure.
 pub fn import_and_organize<F, C>(
     album_id: i64,
     source_path: &str,
@@ -1440,6 +1444,12 @@ where
     if !source.is_dir() {
         return Err("The import source must be a folder".to_string());
     }
+    let structure_root = if layout == "structure" {
+        Some(Path::new(source_path).file_name().or_else(|| source.file_name())
+            .ok_or_else(|| "The import source must have a folder name".to_string())?)
+    } else {
+        None
+    };
     let album_root = fs::canonicalize(&album.path)
         .map_err(|e| format!("Cannot access album folder: {}", e))?;
     let destination_folder = fs::canonicalize(destination_path)
@@ -1469,7 +1479,7 @@ where
     // Resume only files successfully imported by this dialog, including renamed collisions.
     let mut completed_paths = completed_paths;
     let mut last_progress = Instant::now();
-    let mut files: Vec<(PathBuf, i64, String, Option<crate::t_libraw::RawInfo>)> = Vec::new();
+    let mut files = Vec::new();
     let mut failed = 0;
     let mut total_size: u64 = 0;
     for entry in WalkDir::new(&source)
@@ -1498,20 +1508,22 @@ where
         let path_string = path.to_string_lossy().to_string();
         if completed_paths.contains(&path_string) { continue; }
         total_size += file_size;
-        let raw_info = if file_type == 3 && layout != "none" {
+        let raw_info = if file_type == 3 && structure_root.is_none() {
             crate::t_libraw::get_raw_info(&path_string).ok()
         } else { None };
-        let relative_folder = match (|| -> Result<String, String> {
-            if layout == "none" { return Ok(String::new()); }
+        let relative_folder = match (|| -> Result<PathBuf, String> {
+            if let Some(root_name) = structure_root {
+                return import_structure_folder(&source, root_name, &path);
+            }
             let timestamp = AFile::capture_timestamp_with_raw_info(&path_string, file_type, raw_info.as_ref())?;
             let date = Local.timestamp_opt(timestamp, 0).single()
                 .ok_or_else(|| format!("Invalid capture date: {}", path_string))?;
-            Ok(match layout {
+            Ok(PathBuf::from(match layout {
                 "day" => date.format("%Y/%Y-%m-%d").to_string(),
                 "month" => date.format("%Y/%Y-%m").to_string(),
                 "year" => date.format("%Y").to_string(),
                 _ => return Err("Invalid import folder layout".to_string()),
-            })
+            }))
         })() {
             Ok(relative_folder) => relative_folder,
             Err(_) => {
@@ -1550,6 +1562,21 @@ where
         let result = (|| -> Result<bool, String> {
             // Cache file sizes once per target directory. Include successful copies below.
             if !candidates.contains_key(&target_folder) {
+                // Source names can collide with links in the destination tree.
+                if structure_root.is_some() {
+                    let mut folder = destination_folder.clone();
+                    for component in relative_folder.components() {
+                        folder.push(component);
+                        match fs::symlink_metadata(&folder) {
+                            Ok(metadata) if metadata.file_type().is_symlink() => {
+                                return Err(format!("Import destination contains a symbolic link: {}", folder.display()));
+                            }
+                            Ok(_) => {}
+                            Err(error) if error.kind() == std::io::ErrorKind::NotFound => break,
+                            Err(error) => return Err(error.to_string()),
+                        }
+                    }
+                }
                 let mut by_size: HashMap<u64, Vec<PathBuf>> = HashMap::new();
                 if target_folder.exists() {
                     for entry in fs::read_dir(&target_folder).map_err(|e| e.to_string())? {
@@ -1569,8 +1596,8 @@ where
                 fs::create_dir_all(&target_folder).map_err(|e| format!("Cannot create destination folder: {}", e))?;
 
                 let mut folder = AFolder::add_to_db(album_id, &album_root.to_string_lossy())?;
-                for component in destination_components.iter().map(String::as_str)
-                    .chain(relative_folder.split('/').filter(|component| !component.is_empty()))
+                for component in destination_components.iter().map(std::ffi::OsStr::new)
+                    .chain(relative_folder.components().map(|component| component.as_os_str()))
                 {
                     let parent = Path::new(&folder.path).join(component);
                     folder = AFolder::add_to_db(album_id, &parent.to_string_lossy())?;
@@ -4722,8 +4749,23 @@ mod album_accessibility_cache_tests {
 
 #[cfg(test)]
 mod import_file_concurrency_tests {
-    use super::import_file;
-    use std::{fs, sync::{Arc, Barrier}, thread};
+    use super::{import_file, import_structure_folder};
+    use std::{ffi::OsStr, fs, path::Path, sync::{Arc, Barrier}, thread};
+
+    #[test]
+    fn import_structure_keeps_source_name_and_nested_folders() {
+        let source = Path::new("source").join("Trip");
+        let root_name = OsStr::new("Trip");
+        assert_eq!(
+            import_structure_folder(&source, root_name, &source.join("cover.jpg")).unwrap(),
+            Path::new("Trip")
+        );
+        assert_eq!(
+            import_structure_folder(&source, root_name, &source.join("Day 1").join("photo.jpg")).unwrap(),
+            Path::new("Trip").join("Day 1")
+        );
+        assert!(import_structure_folder(&source, root_name, Path::new("other/photo.jpg")).is_err());
+    }
 
     #[test]
     fn concurrent_imports_preserve_every_file_and_existing_destination() {

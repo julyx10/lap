@@ -13,10 +13,10 @@
       :id="'folder-' + child.id" 
       :class="{ 'pl-4': child.path !== rootPath }"
     >
-      <div v-if="child.id != 0 || selection.folderPath.value == rootPath"
-        :data-file-drop-path="unavailable || isFolderUnavailable(child.path) ? undefined : child.path"
-        :data-file-drop-album-id="unavailable || isFolderUnavailable(child.path) ? undefined : albumId"
-        class="group/folder"
+      <div v-if="shouldRenderFolder(child)"
+        :data-file-drop-path="folderPicker || unavailable || isFolderUnavailable(child.path) ? undefined : child.path"
+        :data-file-drop-album-id="folderPicker || unavailable || isFolderUnavailable(child.path) ? undefined : albumId"
+        class="group/folder p-1 h-8 flex items-center rounded-box whitespace-nowrap cursor-pointer border-2 border-transparent"
         :class="folderClass(child)"
         @click="clickFolder(albumId, child)"
         @dblclick="!isFolderFiltering && expandFolder(child)"
@@ -25,8 +25,8 @@
         @mouseleave="hoveredFolderPath === child.path && (hoveredFolderPath = '')"
       >
         <IconRight
+          class="album-tree-chevron"
           :class="[
-            'p-1 w-6 h-6 shrink-0 transition-transform',
             isFolderFiltering
               ? (shouldShowFilteredChildren(child) ? 'rotate-90 pointer-events-none' : 'opacity-0 pointer-events-none')
               : (child.has_subfolders && !child.is_excluded_from_search ? '' : 'opacity-0 pointer-events-none'),
@@ -34,7 +34,10 @@
           ]"
           @click.stop="!isFolderFiltering && expandFolder(child)"
         />
-        <component :is="child.is_excluded_from_search ? IconFolderOff : IconFolder" class="p-1 w-6 h-6 shrink-0" />
+        <component
+          :is="child.is_excluded_from_search ? IconFolderOff : IconFolder"
+          class="p-1 w-6 h-6 shrink-0"
+        />
 
         <!-- name -->
         <input v-if="isCreatingFolder && creatingFolderPath === child.path"
@@ -69,7 +72,7 @@
           <div class="ml-auto flex flex-row items-center text-base-content/30">
             <IconHeartFilled v-if="child.is_favorite" class="mr-1 w-4 h-4 shrink-0 text-primary/70" />
             <span
-              v-if="!showFolderActions && getFolderFileCount(child.path) > 0"
+              v-if="!folderPicker && !showFolderActions && getFolderFileCount(child.path) > 0"
               class="sidebar-item-count shrink-0"
             >
               {{ getFolderFileCount(child.path).toLocaleString() }}
@@ -123,6 +126,7 @@
         :rootPath="rootPath"
         :allowContextMenu="allowContextMenu"
         :showFolderActions="showFolderActions"
+        :folderPicker="folderPicker"
         :unavailable="unavailable"
         :treeRoot="false"
         :filterVisiblePaths="filterVisiblePaths"
@@ -235,6 +239,7 @@ const props = withDefaults(defineProps<{
   rootPath: string;         // root folder path (album path)
   allowContextMenu?: boolean; // whether to show context menu
   showFolderActions?: boolean;
+  folderPicker?: boolean;
   treeRoot?: boolean;       // only root tree listens to keyboard
   filterVisiblePaths?: string[];
   filterMatchedPaths?: string[];
@@ -283,10 +288,10 @@ const folderClass = (folder: Folder) => {
   const selected = isSelectedFolder(folder);
   const matched = isFolderFiltering.value && matchedFolderPaths.value.has(folder.path);
   return [
-    'p-1 h-8 flex items-center rounded-box whitespace-nowrap cursor-pointer group border-2',
     selected
-      ? 'text-primary! bg-base-100 hover:bg-base-100 border-transparent'
-      : 'hover:text-base-content hover:bg-base-100/30 border-transparent',
+      ? 'bg-base-100 hover:bg-base-100'
+      : 'hover:text-base-content hover:bg-base-100/30',
+    selected ? 'text-primary!' : '',
     folder.is_excluded_from_search ? 'text-base-content/30! hover:text-base-content/30!' : '',
     matched ? 'text-primary/70' : isFolderFiltering.value && !selected ? 'text-base-content/60' : '',
   ];
@@ -593,7 +598,7 @@ const expandFolder = async (folder: any, forceRefresh = false) => {
 };
 
 const shouldRenderFolder = (folder: Folder) =>
-  folder.id !== 0 || selection.folderPath.value === props.rootPath;
+  folder.id !== 0 || props.folderPicker || selection.folderPath.value === props.rootPath;
 
 const flattenVisibleFolders = (nodes: Folder[] | undefined, result: Folder[] = []) => {
   if (!nodes) return result;
@@ -630,7 +635,7 @@ const shouldHandleTreeNavigation = (key: string) => {
   if (!props.treeRoot) return false;
   if (isFolderFiltering.value) return false;
   if (selection.albumId.value !== props.albumId || selection.selected.value) return false;
-  if (uiStore.inputStack.length > 0) return false;
+  if (!props.folderPicker && uiStore.inputStack.length > 0) return false;
   if (props.allowContextMenu && uiStore.activePane !== 'left-sidebar') return false;
   if (document.activeElement !== treeRootRef.value) return false;
 
@@ -671,7 +676,7 @@ const handleTreeKeyDown = async (event: { payload: { key: string } }) => {
           path: props.rootPath,
           name: '',
         } as Album);
-        const albumListRoot = document.querySelector('[data-album-list-root="true"]') as HTMLElement | null;
+        const albumListRoot = treeRootRef.value?.closest('[data-album-list-root="true"]') as HTMLElement | null;
         albumListRoot?.focus({ preventScroll: true });
       } else {
         const parentFolder = getParentFolder(props.children, currentFolder.path);

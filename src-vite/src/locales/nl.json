@@ -249,6 +249,7 @@
     "copy_failed": "Dit bestand kon niet worden geïmporteerd."
   },
   "import_organize": {
+    "title": "Map importeren",
     "section_folders": "Kies map",
     "section_status": "Importstatus",
     "to_import": "Te importeren",
@@ -260,7 +261,7 @@
     "layout_day": "Per dag — JJJJ/JJJJ-MM-DD",
     "layout_month": "Per maand — JJJJ/JJJJ-MM",
     "layout_year": "Per jaar — JJJJ",
-    "layout_none": "Eén map",
+    "layout_structure": "Mapstructuur behouden",
     "import": "Importeren",
     "preparing": "Import voorbereiden",
     "importing": "Bestanden importeren",
@@ -551,6 +552,30 @@
     "more_actions": "Meer acties",
     "tag_all": "Taggen",
     "dedup": {
+      "keep_rules": {
+        "title": "Bewaarregels",
+        "priority_order": "Prioriteitsvolgorde",
+        "folders": "Voorkeursmappen",
+        "subfolders": "Inclusief submappen. Hoger in de lijst krijgt voorrang.",
+        "folders_skipped": "Geen ingesteld, overgeslagen",
+        "add_folder": "Map toevoegen",
+        "folder_already_added": "Al toegevoegd",
+        "format": "Voorkeursformaat",
+        "similar_only": "Alleen vergelijkbare afbeeldingen",
+        "raw_first": "RAW eerst",
+        "jpeg_heic_first": "JPEG / HEIC eerst",
+        "size": "Voorkeursgrootte",
+        "largest_dimensions": "Hoogste resolutie",
+        "smallest_dimensions": "Laagste resolutie",
+        "largest_file_size": "Grootste bestandsgrootte",
+        "smallest_file_size": "Kleinste bestandsgrootte",
+        "ignore": "Negeren",
+        "time": "Voorkeursdatum",
+        "created_earliest": "Oudste aanmaakdatum",
+        "created_latest": "Nieuwste aanmaakdatum",
+        "modified_earliest": "Oudste wijzigingsdatum",
+        "modified_latest": "Nieuwste wijzigingsdatum"
+      },
       "title": "Duplicaten",
       "tabs": {
         "exact": "Duplicaten",
@@ -708,6 +733,7 @@
     "album": {
       "add": "Nieuw album",
       "edit": "Album bewerken...",
+      "import_folder": "Map importeren…",
       "scan": "Album scannen",
       "reorder": "Volgorde wijzigen",
       "pause_scan": "Scannen pauzeren",

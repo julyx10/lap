@@ -236,16 +236,29 @@ test('dedup delete-all blocks unavailable items and selected deletion is indepen
   const deps = {
     currentOriginalsUnavailable: () => true, selectMode: ref(false), selectedCount: ref(0),
     dedupReclaimBytes: ref(0), dedupTrashGroupKey: ref(''), dedupDeleteFileIds: ref([]),
+    dedupDeletePreview: ref(null), dedupBulkFileCount: ref(0), dedupDeletePreviewRequest: 0, dedupDeletePreviewContext: null,
     deletePermanently: ref(false), permanentDeleteChecked: ref(false), showTrashMsgbox: ref(false),
+    libConfig, similarScanKey: ref('test-scan'), isDedupPanelOpen: ref(true),
+    dedupDelete: async request => {
+      assert.equal(request.preview, true);
+      assert.deepEqual(request.fileIds, request.deleteAll ? null : [42]);
+      return { preview: { token: 'confirmed-plan', itemCount: 1, rawCompanionCount: 1, bytes: 120 } };
+    },
   };
-  const open = new Function(...Object.keys(deps),
-    extractFunction(contentSource, 'const openTrashMsgbox =', 'const openAllDuplicatesTrashMsgbox') + '; return openTrashMsgbox;'
+  const handlers = extractFunction(contentSource, 'const openTrashMsgbox =', 'const closeTrashMsgbox');
+  const { openTrashMsgbox, openDedupTrashMsgbox } = new Function(...Object.keys(deps),
+    ts.transpile(handlers, { target: ts.ScriptTarget.ES2022 }) + '; return { openTrashMsgbox, openDedupTrashMsgbox };'
   )(...Object.values(deps));
-  open();
+  openTrashMsgbox();
   assert.equal(deps.showTrashMsgbox.value, false);
-  open(100, 'group', [42]);
+  await openDedupTrashMsgbox('group', [42]);
   assert.equal(deps.showTrashMsgbox.value, true);
   assert.deepEqual(deps.dedupDeleteFileIds.value, [42]);
+  assert.equal(deps.dedupDeletePreview.value.token, 'confirmed-plan');
+  await openDedupTrashMsgbox('all');
+  assert.equal(deps.dedupBulkFileCount.value, 1);
+  assert.equal(deps.dedupDeletePreview.value.rawCompanionCount, 1);
+  assert.equal(deps.dedupReclaimBytes.value, 120);
 });
 
 test('independent preview updates all visible panes on album recovery and ignores another library', async () => {

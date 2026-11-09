@@ -249,6 +249,7 @@
     "copy_failed": "Could not import this file."
   },
   "import_organize": {
+    "title": "Import folder",
     "section_folders": "Select folder",
     "section_status": "Import status",
     "to_import": "To import",
@@ -260,7 +261,7 @@
     "layout_day": "By day — YYYY/YYYY-MM-DD",
     "layout_month": "By month — YYYY/YYYY-MM",
     "layout_year": "By year — YYYY",
-    "layout_none": "One folder",
+    "layout_structure": "Keep folder structure",
     "import": "Import",
     "preparing": "Preparing import",
     "importing": "Importing files",
@@ -551,6 +552,30 @@
     "more_actions": "More actions",
     "tag_all": "Tag",
     "dedup": {
+      "keep_rules": {
+        "title": "Keep rules",
+        "priority_order": "Priority order",
+        "folders": "Preferred folders",
+        "subfolders": "Includes subfolders. Higher in the list wins.",
+        "folders_skipped": "None set, skipped",
+        "add_folder": "Add folder",
+        "folder_already_added": "Already added",
+        "format": "Preferred format",
+        "similar_only": "Similar only",
+        "raw_first": "RAW first",
+        "jpeg_heic_first": "JPEG / HEIC first",
+        "size": "Preferred size",
+        "largest_dimensions": "Highest resolution",
+        "smallest_dimensions": "Lowest resolution",
+        "largest_file_size": "Largest file size",
+        "smallest_file_size": "Smallest file size",
+        "ignore": "Ignore",
+        "time": "Preferred date",
+        "created_earliest": "Created earliest",
+        "created_latest": "Created latest",
+        "modified_earliest": "Modified earliest",
+        "modified_latest": "Modified latest"
+      },
       "title": "Duplicates",
       "tabs": {
         "exact": "Duplicates",
@@ -708,6 +733,7 @@
     "album": {
       "add": "New album",
       "edit": "Edit album...",
+      "import_folder": "Import folder…",
       "scan": "Scan album",
       "reorder": "Reorder",
       "pause_scan": "Pause scanning",

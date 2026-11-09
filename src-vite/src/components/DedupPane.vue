@@ -1,4 +1,8 @@
 <template>
+  <DedupSettings
+    v-if="showKeepRules"
+    @cancel="showKeepRules = false"
+  />
   <div class="w-full h-full rounded-box bg-base-200 flex flex-col overflow-hidden">
     <div class="my-2 px-2 flex items-center justify-between w-full shrink-0">
       <div class="flex items-center text-sm font-semibold gap-1">
@@ -24,7 +28,7 @@
           :tooltip="$t('info_panel.dedup.rescan')"
           :buttonSize="'small'"
           :disabled="isDedupLoading"
-          @click="triggerBackendDedup(true)"
+          @click="refreshDuplicates"
         />
         <TButton
           v-else
@@ -33,6 +37,13 @@
           :buttonSize="'small'"
           :disabled="isDedupLoading || similarLoading || !similarHasScanned"
           @click="reanalyzeSimilar"
+        />
+        <TButton
+          :icon="IconAdjustments"
+          :tooltip="$t('info_panel.dedup.keep_rules.title')"
+          :buttonSize="'small'"
+          :disabled="isDedupLoading || similarLoading"
+          @click="showKeepRules = true"
         />
         <TButton
           :icon="IconClose"
@@ -151,7 +162,7 @@
               <PanelActionButton :icon="selectedSimilarCount >= 2 ? IconSplitOn4 : IconSplitOn" :disabled="selectedSimilarCount === 0 || !hasSimilarKeep" @click="compareSelectedSimilarPhotos">
                 {{ $t('info_panel.dedup.compare') }}
               </PanelActionButton>
-              <PanelActionButton :icon="IconTrash" :disabled="selectedSimilarCount === 0" danger @click="trashSelectedSimilar(activeSimilarGroup.id, selectedSimilarBytes)">
+              <PanelActionButton :icon="IconTrash" :disabled="selectedSimilarCount === 0" danger @click="trashSelectedSimilar(activeSimilarGroup.id)">
                 {{ $t('info_panel.dedup.delete_selected') }}
               </PanelActionButton>
             </div>
@@ -167,7 +178,7 @@
                 :key="item.file_id"
                 role="button"
                 tabindex="0"
-                class="w-full rounded-box p-2.5 border text-left transition-colors cursor-pointer"
+                class="group/row w-full rounded-box p-2.5 border text-left transition-colors cursor-pointer"
                 :class="getDedupItemClass(item.file_id, item.is_keep !== 1 && isSimilarSelected(activeSimilarGroup.id, item.file_id))"
                 @click="handleSimilarSelection(item.file_id)"
                 @dblclick="handleSimilarSelection(item.file_id, true)"
@@ -185,7 +196,9 @@
                       @change="toggleSimilarSelected(activeSimilarGroup.id, item.file_id)"
                     />
                   </label>
-                  <div v-else class="w-4 shrink-0"></div>
+                  <div v-else class="w-4 shrink-0 flex items-center justify-center">
+                  <IconLock class="w-3.5 h-3.5 text-base-content/40" aria-hidden="true" />
+                </div>
                   <div class="w-10 h-10 rounded-box overflow-hidden shrink-0">
                     <img v-if="item.file?.thumbnail" :src="item.file.thumbnail" class="w-full h-full object-cover" />
                     <div v-else class="w-full h-full skeleton"></div>
@@ -207,16 +220,18 @@
                     </div>
                   </div>
                   <div class="shrink-0 w-16 min-h-10 flex flex-col items-center justify-center gap-0.5">
-                    <button
-                      class="btn btn-ghost btn-xs min-h-0 h-5 w-5 p-0"
-                      :class="item.is_keep === 1 ? 'text-primary' : 'text-base-content/30 hover:text-primary/70'"
-                      :title="$t(item.is_keep === 1 ? 'info_panel.dedup.keep_label' : 'info_panel.dedup.unkeep_label')"
-                      :aria-label="$t(item.is_keep === 1 ? 'info_panel.dedup.keep_label' : 'info_panel.dedup.unkeep_label')"
-                      :aria-current="item.is_keep === 1 ? 'true' : undefined"
-                      @click.stop="item.is_keep !== 1 && setSimilarKeep(activeSimilarGroup.id, item.file_id)"
+                    <span v-if="item.is_keep === 1" class="thumb-badge">KEEP</span>
+                    <PanelActionButton
+                      v-else
+                      size="small"
+                      class="transition-opacity"
+                      :class="keepActionClass(item.file_id)"
+                      :title="$t('info_panel.dedup.keep_label')"
+                      :aria-label="$t('info_panel.dedup.keep_label')"
+                      @click.stop="setSimilarKeep(activeSimilarGroup.id, item.file_id)"
                     >
-                      <component :is="item.is_keep === 1 ? IconLock : IconUnlock" class="w-3.5 h-3.5" />
-                    </button>
+                      {{ $t('info_panel.dedup.keep_label') }}
+                    </PanelActionButton>
                     <div class="flex items-center gap-0.5" @click.stop>
                       <button
                         class="btn btn-ghost btn-xs min-h-0 h-5 w-5 p-0"
@@ -270,7 +285,7 @@
             class="mx-auto"
             :icon="IconRefresh"
             primary
-            @click="triggerBackendDedup(true)"
+            @click="refreshDuplicates"
           >
             {{ $t('info_panel.dedup.rescan') }}
           </PanelActionButton>
@@ -388,7 +403,7 @@
               :icon="IconTrash"
               :disabled="selectedDeleteCount === 0"
               danger
-              @click="trashSelectedDuplicates(activeGroup.id, selectedDeleteBytes)"
+              @click="trashSelectedDuplicates(activeGroup.id)"
             >
               {{ $t('info_panel.dedup.delete_selected') }}
             </PanelActionButton>
@@ -405,7 +420,7 @@
               :key="item.file_id"
               role="button"
               tabindex="0"
-              class="w-full rounded-box p-2.5 border text-left transition-colors cursor-pointer"
+              class="group/row w-full rounded-box p-2.5 border text-left transition-colors cursor-pointer"
               :class="getDedupItemClass(item.file_id, item.is_keep !== 1 && isDupSelected(activeGroup.id, item.file_id))"
               @click="handleDuplicateSelection(item.file_id)"
               @dblclick="handleDuplicateSelection(item.file_id, true)"
@@ -423,7 +438,9 @@
                     @change="toggleDupSelected(activeGroup.id, item.file_id)"
                   />
                 </label>
-                <div v-else class="w-4 shrink-0"></div>
+                <div v-else class="w-4 shrink-0 flex items-center justify-center">
+                  <IconLock class="w-3.5 h-3.5 text-base-content/40" aria-hidden="true" />
+                </div>
                 <div class="w-10 h-10 rounded-box overflow-hidden shrink-0">
                   <img v-if="item.file?.thumbnail" :src="item.file.thumbnail" class="w-full h-full object-cover" />
                   <div v-else class="w-full h-full skeleton"></div>
@@ -444,17 +461,18 @@
                   </div>
                 </div>
                 <div class="shrink-0 w-16 min-h-10 flex items-center justify-center">
-                  <button
-                    type="button"
-                    class="btn btn-ghost btn-xs min-h-0 h-5 w-5 p-0"
-                    :class="item.is_keep === 1 ? 'text-primary' : 'text-base-content/30 hover:text-primary/70'"
-                    :title="$t(item.is_keep === 1 ? 'info_panel.dedup.keep_label' : 'info_panel.dedup.unkeep_label')"
-                    :aria-label="$t(item.is_keep === 1 ? 'info_panel.dedup.keep_label' : 'info_panel.dedup.unkeep_label')"
-                    :aria-current="item.is_keep === 1 ? 'true' : undefined"
-                    @click.stop="item.is_keep !== 1 && setKeep(activeGroup.id, item.file_id)"
+                  <span v-if="item.is_keep === 1" class="thumb-badge">KEEP</span>
+                  <PanelActionButton
+                    v-else-if="!config.settings.groupRawJpegPairs || item.can_set_keep !== false"
+                    size="small"
+                    class="transition-opacity"
+                    :class="keepActionClass(item.file_id)"
+                    :title="$t('info_panel.dedup.keep_label')"
+                    :aria-label="$t('info_panel.dedup.keep_label')"
+                    @click.stop="setKeep(activeGroup.id, item.file_id)"
                   >
-                    <component :is="item.is_keep === 1 ? IconLock : IconUnlock" class="w-3.5 h-3.5" />
-                  </button>
+                    {{ $t('info_panel.dedup.keep_label') }}
+                  </PanelActionButton>
                 </div>
               </div>
             </div>
@@ -489,10 +507,11 @@ import {
   isMac,
   formatTimestamp,
 } from '@/common/utils';
+import DedupSettings from './DedupSettings.vue';
 import TButton from '@/components/TButton.vue';
 import PanelActionButton from '@/components/PanelActionButton.vue';
 import MessageBox from '@/components/MessageBox.vue';
-import { IconChecked, IconExclamation, IconUnChecked, IconClose, IconFlag, IconFlagFilled, IconFlagOff, IconLock, IconRefresh, IconSplitOn, IconSplitOn4, IconTrash, IconUnlock } from '@/common/icons';
+import { IconAdjustments, IconChecked, IconExclamation, IconUnChecked, IconClose, IconFlag, IconFlagFilled, IconFlagOff, IconLock, IconRefresh, IconSplitOn, IconSplitOn4, IconTrash } from '@/common/icons';
 import {
   dedupStartScan,
   dedupCancelScan,
@@ -562,9 +581,9 @@ const emit = defineEmits<{
   close: [];
   'select-file': [fileId: number];
   'preview-file': [fileId: number];
-  'trash-selected-duplicates': [groupId: string, fileIds: number[], reclaimableBytes: number];
-  'trash-all-duplicates': [fileCount: number, reclaimableBytes: number];
-  'trash-selected-similar': [groupId: string, fileIds: number[], reclaimableBytes: number];
+  'trash-selected-duplicates': [groupId: string, fileIds: number[]];
+  'trash-all-duplicates': [];
+  'trash-selected-similar': [groupId: string, fileIds: number[]];
   'compare-selected-photos': [files: any[]];
   'culling-status-updated': [fileId: number, cullingFlag: number];
   'dedup-status-updated': [statuses: Record<number, 'keep' | 'dup'>];
@@ -577,6 +596,13 @@ const activeTab = ref<'duplicates' | 'similar'>(
   config.dedup.activeTab === 'similar' ? 'similar' : 'duplicates',
 );
 const similarLoading = ref(activeTab.value === 'similar');
+const showKeepRules = ref(false);
+const keepRules = computed(() => ({
+  preferFormat: config.dedup.keepRules?.preferFormat ?? 'raw',
+  preferredDate: config.dedup.keepRules?.preferredDate ?? 'modifiedEarliest',
+  preferredSize: config.dedup.keepRules?.preferredSize ?? 'largestDimensions',
+  folderIds: libConfig.dedupPreferredFolderIds ?? [],
+}));
 const similarStatus = ref<any>({ phase: 'idle', current: 0, total: 0 });
 const similarGroups = ref<any[]>([]);
 const similarTotalGroups = ref(0);
@@ -794,14 +820,21 @@ function compareSelectedSimilarPhotos() {
   if (files.length >= 2) emit('compare-selected-photos', files);
 }
 
-function trashSelectedSimilar(groupId: number, reclaimableBytes: number) {
+function trashSelectedSimilar(groupId: number) {
   const keptIds = new Set(
     (activeSimilarGroup.value?.items || [])
       .filter((item: any) => item.is_keep === 1)
       .map((item: any) => Number(item.file_id)),
   );
   const fileIds = Array.from(getSimilarSelectedSet(groupId)).filter(fileId => !keptIds.has(fileId) && isSimilarSelected(groupId, fileId));
-  if (fileIds.length > 0) emit('trash-selected-similar', String(groupId), fileIds, reclaimableBytes);
+  if (fileIds.length > 0) emit('trash-selected-similar', String(groupId), fileIds);
+}
+
+function keepActionClass(fileId: number) {
+  const isActive = Number(props.selectedFileId) === Number(fileId);
+  return isActive
+    ? 'opacity-100'
+    : 'opacity-0 pointer-events-none group-hover/row:opacity-100 group-hover/row:pointer-events-auto focus-visible:opacity-100 focus-visible:pointer-events-auto';
 }
 
 function getDedupItemClass(fileId: number, isDuplicateSelected = false) {
@@ -1044,6 +1077,7 @@ function resetSimilarResults() {
 
 async function reanalyzeSimilar() {
   if (isDedupLoading.value || similarLoading.value) return;
+  const scopeKey = props.similarScanKey;
   let eligibleCount;
   try {
     eligibleCount = Number(await similarGetEligibleCount(
@@ -1053,9 +1087,10 @@ async function reanalyzeSimilar() {
     ));
   } catch (error) {
     console.error('getSimilarEligibleCount error:', error);
-    similarError.value = true;
+    if (scopeKey === props.similarScanKey) similarError.value = true;
     return;
   }
+  if (scopeKey !== props.similarScanKey) return;
   similarEligibleCount.value = eligibleCount;
   if (eligibleCount > SIMILAR_SCAN.LARGE_RESULT_THRESHOLD) {
     pendingSimilarReanalyze.value = true;
@@ -1068,8 +1103,9 @@ async function reanalyzeSimilar() {
 
 async function confirmLargeSimilarScan() {
   showLargeSimilarScanConfirm.value = false;
-  if (pendingSimilarReanalyze.value) resetSimilarResults();
+  const reanalyze = pendingSimilarReanalyze.value;
   pendingSimilarReanalyze.value = false;
+  if (reanalyze) resetSimilarResults();
   await runSimilarScan();
 }
 
@@ -1090,6 +1126,7 @@ async function runSimilarScan() {
       props.dedupFileIds === null ? (props.dedupQueryParams || null) : null,
       props.dedupFileIds === null ? props.dedupCollectionId : null,
       props.dedupFileIds,
+      keepRules.value,
     );
   } catch (error) {
     console.error('startSimilar error:', error);
@@ -1140,6 +1177,9 @@ async function setKeep(groupId: number, fileId: number) {
   if (groupIndex < 0) return;
 
   const group = rawGroups.value[groupIndex];
+  const previousKeepId = Number(
+    (group.items || []).find((item: any) => Number(item.is_keep) === 1)?.file_id || 0,
+  );
   const items = (group.items || []).map((item: any) => ({
     ...item,
     is_keep: Number(item.file_id) === fileId ? 1 : 0,
@@ -1147,8 +1187,10 @@ async function setKeep(groupId: number, fileId: number) {
   rawGroups.value[groupIndex] = { ...group, items };
   emitDedupStatuses();
 
+  // The new keep replaces the old one; the old keep becomes deletable again.
   const selectedIds = getDupSelectedSet(groupId);
   selectedIds.delete(fileId);
+  if (previousKeepId > 0 && previousKeepId !== fileId) selectedIds.add(previousKeepId);
   emit('select-file', fileId);
 }
 
@@ -1158,6 +1200,9 @@ async function setSimilarKeep(groupId: number, fileId: number) {
   if (groupIndex < 0) return;
 
   const group = similarGroups.value[groupIndex];
+  const previousKeepId = Number(
+    (group.items || []).find((item: any) => Number(item.is_keep) === 1)?.file_id || 0,
+  );
   const items = (group.items || []).map((item: any) => ({
     ...item,
     is_keep: Number(item.file_id) === fileId ? 1 : 0,
@@ -1167,7 +1212,10 @@ async function setSimilarKeep(groupId: number, fileId: number) {
     representative: items.find((item: any) => item.is_keep === 1)?.file || group.representative,
     items: items.sort((a: any, b: any) => Number(b.is_keep) - Number(a.is_keep)),
   };
-  getSimilarSelectedSet(groupId).delete(fileId);
+  // The new keep replaces the old one; the old keep becomes deletable again.
+  const selected = getSimilarSelectedSet(groupId);
+  selected.delete(fileId);
+  if (previousKeepId > 0 && previousKeepId !== fileId) selected.add(previousKeepId);
   emit('select-file', fileId);
 }
 
@@ -1198,10 +1246,10 @@ function isAllGroupDuplicatesSelected(groupId: number) {
   return available.length > 0 && available.every((item: any) => set.has(item.file_id));
 }
 
-function trashSelectedDuplicates(groupId: number, reclaimableBytes: number) {
+function trashSelectedDuplicates(groupId: number) {
   const ids = Array.from(getDupSelectedSet(groupId).values()).filter(fileId => isDupSelected(groupId, fileId));
   if (ids.length === 0) return;
-  emit('trash-selected-duplicates', String(groupId), ids, reclaimableBytes);
+  emit('trash-selected-duplicates', String(groupId), ids);
 }
 
 async function trashAllDuplicates() {
@@ -1212,7 +1260,7 @@ async function trashAllDuplicates() {
     await refreshFileAccess(rawGroups.value.flatMap((group: any) => (group.items || [])
       .filter((item: any) => item.is_keep !== 1).map((item: any) => item.file)));
     if (libraryId !== libConfig._libraryId || hasUnavailableDuplicates.value) return;
-    emit('trash-all-duplicates', totalDuplicateFileCount.value, totalReclaimableBytes.value);
+    emit('trash-all-duplicates');
   } finally {
     duplicateAccessPending.value = false;
   }
@@ -1560,6 +1608,10 @@ function ensureDedupStatusPolling() {
   }, 1000);
 }
 
+function refreshDuplicates() {
+  void triggerBackendDedup(true);
+}
+
 async function triggerBackendDedup(force = false) {
   if (!props.dedupScanKey) {
     stopDedupStatusPolling();
@@ -1588,13 +1640,16 @@ async function triggerBackendDedup(force = false) {
       return;
     }
 
+    const scanKey = props.dedupScanKey;
     const hasFileIdScope = props.dedupFileIds !== null;
     await dedupStartScan(
       hasFileIdScope ? null : (props.dedupQueryParams || null),
       hasFileIdScope ? null : props.dedupCollectionId,
       props.dedupFileIds,
+      keepRules.value,
     );
-    dedupPaneGlobalState.lastScanKey = props.dedupScanKey;
+    selectedDupIdsByGroup.value.clear();
+    dedupPaneGlobalState.lastScanKey = scanKey;
 
     const latest = await dedupGetScanStatus();
     totalGroupCount.value = Math.max(Number(latest?.groups || 0), rawGroups.value.length);
@@ -1653,6 +1708,7 @@ watch(
     similarLoadedScope.value = '';
     similarLoading.value = Boolean(newKey && activeTab.value === 'similar');
     showLargeSimilarScanConfirm.value = false;
+    pendingSimilarReanalyze.value = false;
     if (newKey && activeTab.value === 'similar') void openSimilarTab();
   },
 );

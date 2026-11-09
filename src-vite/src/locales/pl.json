@@ -249,6 +249,7 @@
     "copy_failed": "Nie udało się zaimportować tego pliku."
   },
   "import_organize": {
+    "title": "Importuj folder",
     "section_folders": "Wybierz folder",
     "section_status": "Stan importu",
     "to_import": "Do zaimportowania",
@@ -260,7 +261,7 @@
     "layout_day": "Według dnia — RRRR/RRRR-MM-DD",
     "layout_month": "Według miesiąca — RRRR/RRRR-MM",
     "layout_year": "Według roku — RRRR",
-    "layout_none": "Jeden folder",
+    "layout_structure": "Zachowaj strukturę folderów",
     "import": "Importuj",
     "preparing": "Przygotowywanie importu",
     "importing": "Importowanie plików",
@@ -551,6 +552,30 @@
     "more_actions": "Więcej akcji",
     "tag_all": "Otaguj",
     "dedup": {
+      "keep_rules": {
+        "title": "Reguły zachowania",
+        "priority_order": "Kolejność priorytetów",
+        "folders": "Preferowane foldery",
+        "subfolders": "Obejmuje podfoldery. Wyższa pozycja na liście ma pierwszeństwo.",
+        "folders_skipped": "Nie ustawiono, pominięto",
+        "add_folder": "Dodaj folder",
+        "folder_already_added": "Już dodano",
+        "format": "Preferowany format",
+        "similar_only": "Tylko podobne obrazy",
+        "raw_first": "Najpierw RAW",
+        "jpeg_heic_first": "Najpierw JPEG / HEIC",
+        "size": "Preferowany rozmiar",
+        "largest_dimensions": "Najwyższa rozdzielczość",
+        "smallest_dimensions": "Najniższa rozdzielczość",
+        "largest_file_size": "Największy rozmiar pliku",
+        "smallest_file_size": "Najmniejszy rozmiar pliku",
+        "ignore": "Ignoruj",
+        "time": "Preferowana data",
+        "created_earliest": "Najwcześniej utworzony",
+        "created_latest": "Najpóźniej utworzony",
+        "modified_earliest": "Najwcześniej zmodyfikowany",
+        "modified_latest": "Najpóźniej zmodyfikowany"
+      },
       "title": "Duplikaty",
       "tabs": {
         "exact": "Duplikaty",
@@ -708,6 +733,7 @@
     "album": {
       "add": "Nowy album",
       "edit": "Edytuj album...",
+      "import_folder": "Importuj folder…",
       "scan": "Skanuj album",
       "reorder": "Zmień kolejność",
       "pause_scan": "Wstrzymaj skanowanie",

@@ -63,6 +63,7 @@ export const useLibraryStore = defineStore('libraryStore', {
 
     /** @type {Array<{ id: string, name: string, description: string, source: 'rules', query: { version: number, match: 'all' | 'any', rules: Array<{ id: string, field: string, operator: string, value: any }> }, group: { type: number }, sort: { type: number, order: number }, coverFileId: number | null, count: number | null, createdAt: number, updatedAt: number }>} */
     smartAlbums: [],          // custom smart albums
+    dedupPreferredFolderIds: [],
 
     /** @type {{ selectedId: number | null, activateTick: number, counts: Record<string, number> }} */
     collection: {
@@ -228,7 +229,8 @@ export const useLibraryStore = defineStore('libraryStore', {
     },
 
     async save() {
-      if (this._libraryId && this._initialized) {
+      const libraryId = this._libraryId;
+      if (libraryId && this._initialized) {
         try {
           // These panels now obtain their counts from live grouped aggregates.
           // Keep the values in memory for rendering, but never persist them.
@@ -257,6 +259,7 @@ export const useLibraryStore = defineStore('libraryStore', {
             album: albumState,
             smartAlbum: this.smartAlbum,
             smartAlbums: this.smartAlbums,
+            dedupPreferredFolderIds: this.dedupPreferredFolderIds,
             collection: collectionState,
             rating: this.rating,
             culling: this.culling,
@@ -284,9 +287,9 @@ export const useLibraryStore = defineStore('libraryStore', {
             };
 
           const payload = JSON.stringify(stateToSave);
-          if (lastSavedPayloads.get(this._libraryId) === payload) return;
-          await saveLibraryState(this._libraryId, stateToSave);
-          lastSavedPayloads.set(this._libraryId, payload);
+          if (lastSavedPayloads.get(libraryId) === payload) return;
+          await saveLibraryState(libraryId, stateToSave);
+          lastSavedPayloads.set(libraryId, payload);
         } catch (error) {
           console.error('Failed to save library state:', error);
         }

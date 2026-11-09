@@ -249,6 +249,7 @@
     "copy_failed": "无法导入此文件。"
   },
   "import_organize": {
+    "title": "导入文件夹",
     "section_folders": "选择文件夹",
     "section_status": "导入状态",
     "to_import": "待导入",
@@ -260,7 +261,7 @@
     "layout_day": "按天 — YYYY/YYYY-MM-DD",
     "layout_month": "按月 — YYYY/YYYY-MM",
     "layout_year": "按年 — YYYY",
-    "layout_none": "单个文件夹",
+    "layout_structure": "保留文件夹结构",
     "import": "导入",
     "preparing": "正在准备导入",
     "importing": "正在导入文件",
@@ -551,6 +552,30 @@
     "more_actions": "更多操作",
     "tag_all": "标签",
     "dedup": {
+      "keep_rules": {
+        "title": "保留规则",
+        "priority_order": "优先顺序",
+        "folders": "首选保留文件夹",
+        "subfolders": "包含子文件夹。列表中越靠前，优先级越高。",
+        "folders_skipped": "未设置，已跳过",
+        "add_folder": "添加文件夹",
+        "folder_already_added": "已添加",
+        "format": "首选格式",
+        "similar_only": "仅相似图片",
+        "raw_first": "RAW 优先",
+        "jpeg_heic_first": "JPEG / HEIC 优先",
+        "size": "首选大小",
+        "largest_dimensions": "最高分辨率",
+        "smallest_dimensions": "最低分辨率",
+        "largest_file_size": "最大文件大小",
+        "smallest_file_size": "最小文件大小",
+        "ignore": "不考虑",
+        "time": "首选日期",
+        "created_earliest": "最早创建",
+        "created_latest": "最新创建",
+        "modified_earliest": "最早修改",
+        "modified_latest": "最新修改"
+      },
       "title": "重复项",
       "tabs": {
         "exact": "重复项",
@@ -708,6 +733,7 @@
     "album": {
       "add": "新建相册",
       "edit": "编辑相册...",
+      "import_folder": "导入文件夹…",
       "scan": "扫描相册",
       "reorder": "重新排序",
       "pause_scan": "暂停扫描",

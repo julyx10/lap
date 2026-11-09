@@ -249,6 +249,7 @@
     "copy_failed": "Не удалось импортировать этот файл."
   },
   "import_organize": {
+    "title": "Импортировать папку",
     "section_folders": "Выбор папки",
     "section_status": "Состояние импорта",
     "to_import": "К импорту",
@@ -260,7 +261,7 @@
     "layout_day": "По дням — YYYY/YYYY-MM-DD",
     "layout_month": "По месяцам — YYYY/YYYY-MM",
     "layout_year": "По годам — YYYY",
-    "layout_none": "Одна папка",
+    "layout_structure": "Сохранить структуру папок",
     "import": "Импортировать",
     "preparing": "Подготовка импорта",
     "importing": "Импорт файлов",
@@ -551,6 +552,30 @@
     "more_actions": "Другие действия",
     "tag_all": "Тег",
     "dedup": {
+      "keep_rules": {
+        "title": "Правила сохранения",
+        "priority_order": "Порядок приоритета",
+        "folders": "Предпочтительные папки",
+        "subfolders": "Включая подпапки. Выше в списке — выше приоритет.",
+        "folders_skipped": "Не задано, правило пропущено",
+        "add_folder": "Добавить папку",
+        "folder_already_added": "Уже добавлена",
+        "format": "Предпочтительный формат",
+        "similar_only": "Только похожие изображения",
+        "raw_first": "Сначала RAW",
+        "jpeg_heic_first": "Сначала JPEG / HEIC",
+        "size": "Предпочтительный размер",
+        "largest_dimensions": "Наивысшее разрешение",
+        "smallest_dimensions": "Наименьшее разрешение",
+        "largest_file_size": "Наибольший размер файла",
+        "smallest_file_size": "Наименьший размер файла",
+        "ignore": "Не учитывать",
+        "time": "Предпочтительная дата",
+        "created_earliest": "Создан раньше всех",
+        "created_latest": "Создан позже всех",
+        "modified_earliest": "Изменён раньше всех",
+        "modified_latest": "Изменён позже всех"
+      },
       "title": "Дубликаты",
       "tabs": {
         "exact": "Дубликаты",
@@ -708,6 +733,7 @@
     "album": {
       "add": "Новый альбом",
       "edit": "Редактировать альбом...",
+      "import_folder": "Импортировать папку…",
       "scan": "Сканировать",
       "reorder": "Изменить порядок",
       "pause_scan": "Приостановить сканирование",

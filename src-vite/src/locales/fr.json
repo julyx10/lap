@@ -249,6 +249,7 @@
     "copy_failed": "Impossible d’importer ce fichier."
   },
   "import_organize": {
+    "title": "Importer un dossier",
     "section_folders": "Sélectionner un dossier",
     "section_status": "État de l’importation",
     "to_import": "À importer",
@@ -260,7 +261,7 @@
     "layout_day": "Par jour — YYYY/YYYY-MM-DD",
     "layout_month": "Par mois — YYYY/YYYY-MM",
     "layout_year": "Par année — YYYY",
-    "layout_none": "Un dossier",
+    "layout_structure": "Conserver la structure des dossiers",
     "import": "Importer",
     "preparing": "Préparation de l’importation",
     "importing": "Importation des fichiers",
@@ -551,6 +552,30 @@
     "more_actions": "Autres actions",
     "tag_all": "Tag",
     "dedup": {
+      "keep_rules": {
+        "title": "Règles de conservation",
+        "priority_order": "Ordre de priorité",
+        "folders": "Dossiers préférés",
+        "subfolders": "Sous-dossiers inclus. Les premiers de la liste sont prioritaires.",
+        "folders_skipped": "Aucun dossier, règle ignorée",
+        "add_folder": "Ajouter un dossier",
+        "folder_already_added": "Déjà ajouté",
+        "format": "Format préféré",
+        "similar_only": "Images similaires uniquement",
+        "raw_first": "RAW en priorité",
+        "jpeg_heic_first": "JPEG / HEIC en priorité",
+        "size": "Taille préférée",
+        "largest_dimensions": "Résolution la plus élevée",
+        "smallest_dimensions": "Résolution la plus faible",
+        "largest_file_size": "Taille de fichier maximale",
+        "smallest_file_size": "Taille de fichier minimale",
+        "ignore": "Ignorer",
+        "time": "Date préférée",
+        "created_earliest": "Création la plus ancienne",
+        "created_latest": "Création la plus récente",
+        "modified_earliest": "Modification la plus ancienne",
+        "modified_latest": "Modification la plus récente"
+      },
       "title": "Doublons",
       "tabs": {
         "exact": "Doublons",
@@ -708,6 +733,7 @@
     "album": {
       "add": "Nouvel album",
       "edit": "Modifier l’album...",
+      "import_folder": "Importer un dossier…",
       "scan": "Scanner l'album",
       "reorder": "Réorganiser",
       "pause_scan": "Mettre en pause le scan",

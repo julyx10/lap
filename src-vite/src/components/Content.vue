@@ -2188,6 +2188,11 @@ const dedupReclaimBytes = ref(0);
 const dedupTrashGroupKey = ref('');
 const dedupDeleteFileIds = ref<number[]>([]);
 const dedupBulkFileCount = ref(0);
+type DedupDeletePreview = { token: string; itemCount: number; rawCompanionCount: number; bytes: number };
+const dedupDeletePreview = ref<DedupDeletePreview | null>(null);
+const pendingDedupRetryPreview = ref<DedupDeletePreview | null>(null);
+let dedupDeletePreviewContext: { libraryId: string; scanKey: string } | null = null;
+let dedupDeletePreviewRequest = 0;
 const dedupPaneRef = ref<InstanceType<typeof DedupPane> | null>(null);
 const dedupStatuses = ref<Record<number, 'keep' | 'dup'>>({});
 const showCommentMsgbox = ref(false);
@@ -2443,27 +2448,53 @@ async function removeSelectedFromCollection() {
   toast.success(t('collection.removed_toast', { count: fileIds.length }));
 }
 
-const openTrashMsgbox = (reclaimBytes = 0, groupKey = '', fileIds: number[] = []) => {
-  if (fileIds.length === 0 && currentOriginalsUnavailable()) return;
-  if (selectMode.value && selectedCount.value === 0 && fileIds.length === 0) return;
-  dedupReclaimBytes.value = Math.max(0, reclaimBytes);
-  dedupTrashGroupKey.value = groupKey || '';
-  dedupDeleteFileIds.value = Array.isArray(fileIds) ? [...new Set(fileIds)] : [];
+const openTrashMsgbox = () => {
+  if (currentOriginalsUnavailable()) return;
+  if (selectMode.value && selectedCount.value === 0) return;
+  dedupDeletePreviewRequest++;
   deletePermanently.value = permanentDeleteChecked.value;
   showTrashMsgbox.value = true;
 };
 
-const openAllDuplicatesTrashMsgbox = (fileCount: number, reclaimBytes: number) => {
-  if (fileCount <= 0) return;
-  dedupReclaimBytes.value = Math.max(0, reclaimBytes);
-  dedupBulkFileCount.value = fileCount;
-  dedupTrashGroupKey.value = 'all';
-  dedupDeleteFileIds.value = [];
-  deletePermanently.value = false;
-  showTrashMsgbox.value = true;
+const openDedupTrashMsgbox = async (groupKey: string, fileIds: number[] = []) => {
+  const requestId = ++dedupDeletePreviewRequest;
+  const libraryId = libConfig._libraryId;
+  const scanKey = similarScanKey.value;
+  const deleteAll = groupKey === 'all';
+  const similarGroupId = groupKey.startsWith('similar:') ? Number(groupKey.slice('similar:'.length)) : null;
+  const isCurrent = () => requestId === dedupDeletePreviewRequest
+    && libraryId === libConfig._libraryId
+    && scanKey === similarScanKey.value
+    && isDedupPanelOpen.value;
+  try {
+    const result = await dedupDelete({
+      fileIds: deleteAll ? null : fileIds, deleteAll, similarGroupId, preview: true,
+    });
+    if (!isCurrent()) return;
+    const preview = result?.preview;
+    if (!preview?.itemCount) {
+      toast.warning(localeMsg.value.info_panel.dedup.no_removable_files);
+      return;
+    }
+    dedupDeletePreviewContext = { libraryId, scanKey };
+    dedupDeletePreview.value = preview;
+    dedupReclaimBytes.value = preview.bytes;
+    dedupBulkFileCount.value = deleteAll ? preview.itemCount : 0;
+    dedupTrashGroupKey.value = groupKey;
+    dedupDeleteFileIds.value = fileIds;
+    deletePermanently.value = deleteAll ? false : permanentDeleteChecked.value;
+    showTrashMsgbox.value = true;
+  } catch (error) {
+    if (!isCurrent()) return;
+    console.error('Failed to preview dedup deletion:', error);
+    toast.error(getDeleteFilesErrorMessage(false));
+  }
 };
 
 const closeTrashMsgbox = () => {
+  dedupDeletePreviewRequest++;
+  dedupDeletePreviewContext = null;
+  dedupDeletePreview.value = null;
   showTrashMsgbox.value = false;
   dedupReclaimBytes.value = 0;
   dedupTrashGroupKey.value = '';
@@ -2474,10 +2505,9 @@ const closeTrashMsgbox = () => {
 const isDedupBulkTrash = computed(() => dedupBulkFileCount.value > 0);
 const isDedupTrash = computed(() => dedupDeleteFileIds.value.length > 0 || isDedupBulkTrash.value);
 const rawJpegCompanionDeleteCount = computed(() => {
+  if (dedupDeletePreview.value) return dedupDeletePreview.value.rawCompanionCount;
   if (!config.settings.groupRawJpegPairs) return 0;
-  const items = isDedupTrash.value
-    ? dedupDeleteFileIds.value.map(id => fileList.value.find(file => Number(file?.id) === Number(id))).filter(Boolean)
-    : selectMode.value
+  const items = selectMode.value
       ? getActionableSelectedItems()
       : [fileList.value[selectedItemIndex.value]].filter(Boolean);
   return items.filter((file: any) => file.media_subtype === 'raw_jpeg_pair').length;
@@ -2498,9 +2528,7 @@ const trashMsgboxOkText = computed(() => {
 });
 
 const trashMsgboxMessage = computed(() => {
-  const deleteCount = isDedupBulkTrash.value
-    ? dedupBulkFileCount.value
-    : (isDedupTrash.value ? dedupDeleteFileIds.value.length : selectedCount.value);
+  const deleteCount = dedupDeletePreview.value?.itemCount ?? selectedCount.value;
   const base = isDedupBulkTrash.value
     ? t(
         deletePermanently.value
@@ -2527,7 +2555,11 @@ const trashFailedMsgboxMessage = computed(() => {
     ? pendingTrashFailedItems.value.length
     : (isDedupTrash.value ? dedupDeleteFileIds.value.length : selectedCount.value);
   if (deleteCount > 1 || isDedupTrash.value || selectMode.value) {
-    return localeMsg.value.msgbox.trash_failed.files_content.replace('{count}', deleteCount.toLocaleString());
+    const base = localeMsg.value.msgbox.trash_failed.files_content.replace('{count}', deleteCount.toLocaleString());
+    const companions = pendingDedupRetryPreview.value?.rawCompanionCount || 0;
+    return companions > 0
+      ? `${base}\n${localeMsg.value.msgbox.move_to_trash.raw_jpeg_companions_content.replace('{count}', companions.toLocaleString())}`
+      : base;
   }
   return localeMsg.value.msgbox.trash_failed.file_content.replace(
     '{file}',
@@ -2540,6 +2572,7 @@ const confirmTrashFailedPermanentDelete = async () => {
   const previousPermanentDeleteChecked = permanentDeleteChecked.value;
   const retryItems = [...pendingTrashFailedItems.value];
   const retryDedupGroupKey = pendingTrashFailedDedupGroupKey.value;
+  const retryToken = pendingDedupRetryPreview.value?.token;
   showTrashFailedMsgbox.value = false;
   deletePermanently.value = true;
   try {
@@ -2547,10 +2580,11 @@ const confirmTrashFailedPermanentDelete = async () => {
       dedupTrashGroupKey.value = retryDedupGroupKey;
       dedupDeleteFileIds.value = retryItems.map(item => Number(item.id)).filter(id => id > 0);
     }
-    await onTrashFile(retryItems);
+    await onTrashFile(retryItems, retryToken);
   } finally {
     pendingTrashFailedItems.value = [];
     pendingTrashFailedDedupGroupKey.value = '';
+    pendingDedupRetryPreview.value = null;
     pendingTrashFailedOtherFailureCount.value = 0;
     deletePermanently.value = previousDeletePermanently;
     permanentDeleteChecked.value = previousPermanentDeleteChecked;
@@ -2566,6 +2600,7 @@ const cancelTrashFailedMsgbox = () => {
   showTrashFailedMsgbox.value = false;
   pendingTrashFailedItems.value = [];
   pendingTrashFailedDedupGroupKey.value = '';
+  pendingDedupRetryPreview.value = null;
   pendingTrashFailedOtherFailureCount.value = 0;
   closeTrashMsgbox();
 };
@@ -3933,7 +3968,7 @@ const dedupFileIds = computed(() =>
 const dedupScanKey = computed(() => {
   if (dedupSourceVersion.value <= 0) return '';
   if (currentQuerySource.value === 'smart' && dedupFileIds.value === null) return '';
-  return `query:${JSON.stringify(dedupQueryParams.value)}|collection:${dedupCollectionId.value ?? ''}|files:${JSON.stringify(dedupFileIds.value)}`;
+  return `query:${JSON.stringify(dedupQueryParams.value)}|collection:${dedupCollectionId.value ?? ''}|files:${JSON.stringify(dedupFileIds.value)}|raw-pairs:${Boolean(config.settings.groupRawJpegPairs)}`;
 });
 const similarPhotoGroupingThreshold = computed(() => {
   const index = config.settings.similarPhotos?.groupingThresholdIndex ?? 1;
@@ -9432,7 +9467,7 @@ const onTrashAllDuplicates = async () => {
   const libraryId = libConfig._libraryId;
   try {
     const permanently = deletePermanently.value;
-    const result = await dedupDelete({ deleteAll: true, permanently });
+    const result = await dedupDelete({ deleteAll: true, permanently, planToken: dedupDeletePreview.value?.token });
     if (libConfig._libraryId !== libraryId) return;
     const deletedCount = Number(result?.deletedCount || 0);
     const failedCount = Number(result?.failedCount || 0);
@@ -9459,6 +9494,13 @@ const onTrashAllDuplicates = async () => {
 
 const handleTrashMsgboxOk = async () => {
   if (isTrashDeleting.value) return;
+  if (dedupDeletePreviewContext && (
+    dedupDeletePreviewContext.libraryId !== libConfig._libraryId ||
+    dedupDeletePreviewContext.scanKey !== similarScanKey.value
+  )) {
+    closeTrashMsgbox();
+    return;
+  }
   isTrashDeleting.value = true;
   try {
     if (isDedupBulkTrash.value) {
@@ -9471,7 +9513,7 @@ const handleTrashMsgboxOk = async () => {
   }
 };
 
-const onTrashFile = async (retryItemsOverride: any[] = []) => {
+const onTrashFile = async (retryItemsOverride: any[] = [], retryToken?: string) => {
   permanentDeleteChecked.value = deletePermanently.value;
   const permanently = deletePermanently.value;
   const deletedFileIds: number[] = [];
@@ -9489,6 +9531,7 @@ const onTrashFile = async (retryItemsOverride: any[] = []) => {
   let otherFailureCount = 0;
   pendingTrashFailedItems.value = [];
   pendingTrashFailedDedupGroupKey.value = '';
+  pendingDedupRetryPreview.value = null;
   pendingTrashFailedOtherFailureCount.value = 0;
   const shouldUpdateDedup =
     isDedupPanelOpen.value &&
@@ -9502,83 +9545,70 @@ const onTrashFile = async (retryItemsOverride: any[] = []) => {
   try {
     if (dedupDeleteFileIds.value.length > 0) {
       const ids = [...dedupDeleteFileIds.value];
-      if (permanently || isSimilarDedupTrash) {
-        const selectedItems = (await Promise.all(ids.map(async (id) =>
-          fileList.value.find(file => Number(file?.id) === id) || getFileInfo(id)
-        ))).filter((file): file is any => !!file?.id && !!file.file_path);
-        const result = await batchDeleteFiles(
-          selectedItems.map(item => ({ fileId: item.id, filePath: item.file_path })),
-          permanently,
+      // Selected IDs can include virtual rows whose file metadata is not
+      // loaded. Capture only those missing records before deleting them.
+      const deleteRequestId = currentContentRequestId;
+      const candidateIds = new Set(ids.map(Number));
+      const filesToRecord = new Map(fileList.value
+        .filter(file => candidateIds.has(Number(file?.id)))
+        .map(file => [Number(file.id), file]));
+      const missingIds = ids.filter(id => (isSimilarDedupTrash || selectedFileIds.has(Number(id))) && !filesToRecord.has(Number(id)));
+      for (let i = 0; i < missingIds.length; i += 500) {
+        const files = await getFilesByIds(missingIds.slice(i, i + 500));
+        if (deleteRequestId !== currentContentRequestId) return;
+        if (!Array.isArray(files)) throw new Error('Failed to load selected files before deletion');
+        for (const file of files) filesToRecord.set(Number(file.id), file);
+      }
+      const result = await dedupDelete({
+        fileIds: ids,
+        similarGroupId: isSimilarDedupTrash ? currentDedupGroupId : null,
+        permanently,
+        planToken: retryToken ?? dedupDeletePreview.value?.token,
+      });
+      if (result !== undefined) {
+        for (const path of result?.affectedFolderPaths || []) affectedFolderPaths.add(path);
+        const resultDeletedIds = Array.isArray(result?.deletedFileIds)
+          ? result.deletedFileIds.map((id: any) => Number(id)).filter((id: number) => id > 0)
+          : [];
+        const trashFailedIdSet = new Set(
+          Array.isArray(result?.trashFailedFileIds)
+            ? result.trashFailedFileIds.map((id: any) => Number(id)).filter((id: number) => id > 0)
+            : [],
         );
-        if (!result) throw new Error(`Failed to ${permanently ? 'permanently delete' : 'trash'} dedup files`);
-        const deletedIdSet = new Set(result.deletedFileIds.map((id: any) => Number(id)));
-        const deletedItems = selectedItems.filter(item => deletedIdSet.has(Number(item.id)));
-        failedDeleteCount = Number(result.failedCount || 0) + (ids.length - selectedItems.length);
-        if (!permanently && isSimilarDedupTrash) {
-          const trashFailedIdSet = new Set(
-            Array.isArray(result.trashFailedFileIds)
-              ? result.trashFailedFileIds.map((id: any) => Number(id)).filter((id: number) => id > 0)
-              : [],
-          );
-          if (trashFailedIdSet.size > 0) {
-            pendingTrashFailedDedupGroupKey.value = dedupTrashGroupKey.value;
-            pendingTrashFailedItems.value = selectedItems.filter(item => trashFailedIdSet.has(Number(item.id)));
-            otherFailureCount = Math.max(0, failedDeleteCount - trashFailedIdSet.size);
-            pendingTrashFailedOtherFailureCount.value = otherFailureCount;
+        deletedFileIds.push(...resultDeletedIds);
+        const deletedIdSet = new Set(deletedFileIds);
+        for (const id of deletedIdSet) {
+          const file = filesToRecord.get(id);
+          if (file) recordDeletedFile(file);
+        }
+        failedDeleteCount = Number(result?.failedCount || 0);
+        if (trashFailedIdSet.size > 0) {
+          const retryItems = isSimilarDedupTrash ? [...filesToRecord.values()] : getFileItemsByIds(ids);
+          const failedItems = retryItems.filter(item => trashFailedIdSet.has(Number(item.id)));
+          if (failedItems.length > 0) {
+            try {
+              const retry = await dedupDelete({
+                fileIds: failedItems.map(item => Number(item.id)),
+                similarGroupId: isSimilarDedupTrash ? currentDedupGroupId : null,
+                preview: true,
+              });
+              if (retry?.preview?.itemCount === failedItems.length) {
+                pendingDedupRetryPreview.value = retry.preview;
+                pendingTrashFailedDedupGroupKey.value = dedupTrashGroupKey.value;
+                pendingTrashFailedItems.value = failedItems;
+                otherFailureCount = Math.max(0, failedDeleteCount - failedItems.length);
+                pendingTrashFailedOtherFailureCount.value = otherFailureCount;
+              }
+            } catch (error) {
+              console.error('Failed to preview dedup deletion retry:', error);
+            }
           }
         }
-
-        if (failedDeleteCount > 0 && deletedItems.length === 0) {
-          throw new Error(`Failed to ${permanently ? 'permanently delete' : 'trash'} dedup files`);
+        if (deletedFileIds.length === 0) {
+          failedDeleteCount = Math.max(1, failedDeleteCount);
         }
-
-        deletedItems.forEach(recordDeletedFile);
-        deletedFileIds.push(...deletedItems.map(item => item.id));
       } else {
-        // Selected IDs can include virtual rows whose file metadata is not
-        // loaded. Capture only those missing records before deleting them.
-        const deleteRequestId = currentContentRequestId;
-        const candidateIds = new Set(ids.map(Number));
-        const filesToRecord = new Map(fileList.value
-          .filter(file => candidateIds.has(Number(file?.id)))
-          .map(file => [Number(file.id), file]));
-        const missingIds = ids.filter(id => selectedFileIds.has(Number(id)) && !filesToRecord.has(Number(id)));
-        for (let i = 0; i < missingIds.length; i += 500) {
-          const files = await getFilesByIds(missingIds.slice(i, i + 500));
-          if (deleteRequestId !== currentContentRequestId) return;
-          if (!Array.isArray(files)) throw new Error('Failed to load selected files before deletion');
-          for (const file of files) filesToRecord.set(Number(file.id), file);
-        }
-        const result = await dedupDelete({ fileIds: ids });
-        if (result !== undefined) {
-          for (const path of result?.affectedFolderPaths || []) affectedFolderPaths.add(path);
-          const resultDeletedIds = Array.isArray(result?.deletedFileIds)
-            ? result.deletedFileIds.map((id: any) => Number(id)).filter((id: number) => id > 0)
-            : [];
-          const trashFailedIdSet = new Set(
-            Array.isArray(result?.trashFailedFileIds)
-              ? result.trashFailedFileIds.map((id: any) => Number(id)).filter((id: number) => id > 0)
-              : [],
-          );
-          deletedFileIds.push(...resultDeletedIds);
-          const deletedIdSet = new Set(deletedFileIds);
-          for (const id of deletedIdSet) {
-            const file = filesToRecord.get(id);
-            if (file) recordDeletedFile(file);
-          }
-          failedDeleteCount = Number(result?.failedCount || 0);
-          if (trashFailedIdSet.size > 0) {
-            pendingTrashFailedDedupGroupKey.value = dedupTrashGroupKey.value;
-            pendingTrashFailedItems.value = getFileItemsByIds(ids).filter(item => trashFailedIdSet.has(Number(item.id)));
-            otherFailureCount = Math.max(0, failedDeleteCount - trashFailedIdSet.size);
-            pendingTrashFailedOtherFailureCount.value = otherFailureCount;
-          }
-          if (deletedFileIds.length === 0) {
-            failedDeleteCount = Math.max(1, failedDeleteCount);
-          }
-        } else {
-          throw new Error('Failed to trash dedup files');
-        }
+        throw new Error(`Failed to ${permanently ? 'permanently delete' : 'trash'} dedup files`);
       }
 
       if (failedDeleteCount > 0 && deletedFileIds.length === 0 && pendingTrashFailedItems.value.length === 0) {
@@ -9722,6 +9752,11 @@ const onTrashFile = async (retryItemsOverride: any[] = []) => {
     }
   } catch (error) {
     console.error(`Failed to ${permanently ? 'permanently delete' : 'trash'} file(s):`, error);
+    if (String(error).startsWith('dedup_plan_changed:')) {
+      closeTrashMsgbox();
+      toast.error(getDeleteFilesErrorMessage(permanently));
+      return;
+    }
     if (String(error).startsWith('original_unavailable:')) {
       closeTrashMsgbox();
       toast.warning(t('offline.requires_original'));
@@ -10719,18 +10754,18 @@ const handleDedupPreviewFile = (fileId: number) => {
   });
 };
 
-const handleDedupTrashSelectedDuplicates = (groupKey: string, fileIds: number[], reclaimableBytes: number) => {
+const handleDedupTrashSelectedDuplicates = (groupKey: string, fileIds: number[]) => {
   if (!groupKey || !fileIds || fileIds.length === 0) return;
-  openTrashMsgbox(reclaimableBytes, groupKey, fileIds);
+  void openDedupTrashMsgbox(groupKey, fileIds);
 };
 
-const handleDedupTrashAllDuplicates = (fileCount: number, reclaimableBytes: number) => {
-  openAllDuplicatesTrashMsgbox(fileCount, reclaimableBytes);
+const handleDedupTrashAllDuplicates = () => {
+  void openDedupTrashMsgbox('all');
 };
 
-const handleDedupTrashSelectedSimilar = (groupKey: string, fileIds: number[], reclaimableBytes: number) => {
+const handleDedupTrashSelectedSimilar = (groupKey: string, fileIds: number[]) => {
   if (!groupKey || !fileIds || fileIds.length === 0) return;
-  openTrashMsgbox(reclaimableBytes, `similar:${groupKey}`, fileIds);
+  void openDedupTrashMsgbox(`similar:${groupKey}`, fileIds);
 };
 
 const handleDedupCompareSelectedPhotos = (files: any[]) => {

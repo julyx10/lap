@@ -249,6 +249,7 @@
     "copy_failed": "Diese Datei konnte nicht importiert werden."
   },
   "import_organize": {
+    "title": "Ordner importieren",
     "section_folders": "Ordner auswählen",
     "section_status": "Importstatus",
     "to_import": "Zu importieren",
@@ -260,7 +261,7 @@
     "layout_day": "Nach Tag — YYYY/YYYY-MM-DD",
     "layout_month": "Nach Monat — YYYY/YYYY-MM",
     "layout_year": "Nach Jahr — YYYY",
-    "layout_none": "Ein Ordner",
+    "layout_structure": "Ordnerstruktur beibehalten",
     "import": "Importieren",
     "preparing": "Import wird vorbereitet",
     "importing": "Dateien werden importiert",
@@ -551,6 +552,30 @@
     "more_actions": "Weitere Aktionen",
     "tag_all": "Tag",
     "dedup": {
+      "keep_rules": {
+        "title": "Behalten-Regeln",
+        "priority_order": "Prioritätsreihenfolge",
+        "folders": "Bevorzugte Ordner",
+        "subfolders": "Unterordner sind eingeschlossen. Weiter oben hat Vorrang.",
+        "folders_skipped": "Keine ausgewählt, übersprungen",
+        "add_folder": "Ordner hinzufügen",
+        "folder_already_added": "Bereits hinzugefügt",
+        "format": "Bevorzugtes Format",
+        "similar_only": "Nur ähnliche Bilder",
+        "raw_first": "RAW zuerst",
+        "jpeg_heic_first": "JPEG / HEIC zuerst",
+        "size": "Bevorzugte Größe",
+        "largest_dimensions": "Höchste Auflösung",
+        "smallest_dimensions": "Niedrigste Auflösung",
+        "largest_file_size": "Größte Dateigröße",
+        "smallest_file_size": "Kleinste Dateigröße",
+        "ignore": "Ignorieren",
+        "time": "Bevorzugtes Datum",
+        "created_earliest": "Zuerst erstellt",
+        "created_latest": "Zuletzt erstellt",
+        "modified_earliest": "Zuerst geändert",
+        "modified_latest": "Zuletzt geändert"
+      },
       "title": "Duplikate",
       "tabs": {
         "exact": "Duplikate",
@@ -708,6 +733,7 @@
     "album": {
       "add": "Neues Album",
       "edit": "Album bearbeiten...",
+      "import_folder": "Ordner importieren…",
       "scan": "Album scannen",
       "reorder": "Neu anordnen",
       "pause_scan": "Scannen pausieren",

@@ -249,6 +249,7 @@
     "copy_failed": "이 파일을 가져올 수 없습니다."
   },
   "import_organize": {
+    "title": "폴더 가져오기",
     "section_folders": "폴더 선택",
     "section_status": "가져오기 상태",
     "to_import": "가져올 파일",
@@ -260,7 +261,7 @@
     "layout_day": "일별 — YYYY/YYYY-MM-DD",
     "layout_month": "월별 — YYYY/YYYY-MM",
     "layout_year": "연도별 — YYYY",
-    "layout_none": "단일 폴더",
+    "layout_structure": "폴더 구조 유지",
     "import": "가져오기",
     "preparing": "가져오기 준비 중",
     "importing": "파일 가져오는 중",
@@ -551,6 +552,30 @@
     "more_actions": "추가 작업",
     "tag_all": "태그",
     "dedup": {
+      "keep_rules": {
+        "title": "보존 규칙",
+        "priority_order": "우선순위",
+        "folders": "우선 폴더",
+        "subfolders": "하위 폴더를 포함합니다. 목록에서 위에 있는 폴더가 우선입니다.",
+        "folders_skipped": "설정 없음, 건너뜀",
+        "add_folder": "폴더 추가",
+        "folder_already_added": "이미 추가됨",
+        "format": "우선 형식",
+        "similar_only": "유사 이미지만",
+        "raw_first": "RAW 우선",
+        "jpeg_heic_first": "JPEG / HEIC 우선",
+        "size": "우선 크기",
+        "largest_dimensions": "가장 높은 해상도",
+        "smallest_dimensions": "가장 낮은 해상도",
+        "largest_file_size": "가장 큰 파일 크기",
+        "smallest_file_size": "가장 작은 파일 크기",
+        "ignore": "무시",
+        "time": "우선 날짜",
+        "created_earliest": "가장 오래된 생성 시간",
+        "created_latest": "가장 최근 생성 시간",
+        "modified_earliest": "가장 오래된 수정 시간",
+        "modified_latest": "가장 최근 수정 시간"
+      },
       "title": "중복",
       "tabs": {
         "exact": "중복 항목",
@@ -708,6 +733,7 @@
     "album": {
       "add": "새 앨범",
       "edit": "앨범 편집...",
+      "import_folder": "폴더 가져오기…",
       "scan": "앨범 스캔",
       "reorder": "순서 변경",
       "pause_scan": "스캔 일시중지",

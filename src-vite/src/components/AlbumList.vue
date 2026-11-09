@@ -101,8 +101,8 @@
           >
             <div
               :data-reordering-album="isReorderingAlbum(album) ? 'true' : undefined"
-              :data-file-drop-path="album.is_accessible === false ? undefined : album.path"
-              :data-file-drop-album-id="album.is_accessible === false ? undefined : album.id"
+              :data-file-drop-path="selectionSource === 'local' || album.is_accessible === false ? undefined : album.path"
+              :data-file-drop-album-id="selectionSource === 'local' || album.is_accessible === false ? undefined : album.id"
               :class="[
                 'mx-1 p-1 h-12 flex items-center rounded-box whitespace-nowrap cursor-pointer group border-2 border-transparent transition-colors duration-200 ease-in-out',
                 selection.albumId.value === album.id
@@ -122,8 +122,8 @@
               />
               <IconRight
                 v-else
+                class="album-tree-chevron"
                 :class="[
-                  'p-1 w-6 h-6 shrink-0 transition-transform hover:text-base-content',
                   isFolderFiltering
                     ? (shouldShowFilteredFolderTree(album.id) ? 'rotate-90 pointer-events-none' : 'opacity-0 pointer-events-none')
                     : (album.is_expanded ? 'rotate-90' : ''),
@@ -222,6 +222,7 @@
                   :unavailable="album.is_accessible === false"
                   :allowContextMenu="isMainPane"
                   :showFolderActions="selectionSource === 'destFolder'"
+                  :folderPicker="selectionSource === 'local'"
                   :filterVisiblePaths="isFolderFiltering ? getVisibleFolderPaths(album.id) : undefined"
                   :filterMatchedPaths="isFolderFiltering ? getMatchedFolderPaths(album.id) : undefined"
                   @folder-favorite-changed="refreshFolderSearchFolders"
@@ -371,15 +372,20 @@ const selection = useAlbumSelectionProvider(
   }
 );
 
-let unlistenAlbumCoverChanged: () => void;
-let unlistenExpandAlbumFolder: (() => void) | undefined;
-let unlistenIndexProgress: (() => void) | undefined;
-let unlistenIndexFinished: (() => void) | undefined;
-let unlistenAlbumsRefreshed: (() => void) | undefined;
-let unlistenAlbumFolderPathsMigrated: (() => void) | undefined;
+let disposed = false;
+const albumListeners: (() => void)[] = [];
+
+async function registerAlbumListener(register: () => Promise<() => void>) {
+  if (disposed) return;
+  const unlisten = await register();
+  if (disposed) unlisten();
+  else albumListeners.push(unlisten);
+}
+
 let albumCountRequest = 0;
 
 async function refreshAlbumVisibleCounts() {
+  if (props.selectionSource === 'local') return;
   const request = ++albumCountRequest;
   const libraryId = libConfig._libraryId;
   const counts = await getAlbumVisibleCounts();
@@ -528,6 +534,10 @@ const importAlbum = ref<Album | null>(null);
 
 const albums = ref<Album[]>([]);
 const albumFolderRefs = ref<Record<number, InstanceType<typeof AlbumFolder>>>({});
+const selectedFolder = computed(() => selection.selected.value || !selection.folderPath.value ? null : {
+  albumId: selection.albumId.value,
+  path: selection.folderPath.value,
+});
 const selectedFolderTree = computed(() => albumFolderRefs.value[selection.albumId.value]);
 const isCreatingFolder = computed(() => !!selectedFolderTree.value?.isCreatingFolder);
 const canCreateSelectedFolder = computed(() => !!selectedFolderTree.value?.canCreateSelectedFolder);
@@ -856,7 +866,7 @@ const getMoreMenuItems = async (album: any) => {
       action: () => {}
     },
     {
-      label: `${localeMsg.value.import_organize.import}…`,
+      label: t('menu.album.import_folder'),
       icon: IconDownload,
       disabled: !isAccessible,
       action: () => { importAlbum.value = album; }
@@ -937,9 +947,12 @@ onMounted( async () => {
   window.addEventListener('blur', finishAlbumDrag);
   if (albums.value.length === 0) {
     // Startup defers the full filesystem probe until the first content paint.
-    albums.value = await getAllAlbums(uiStore.startupReady || !isMainPane.value);
+    const loadedAlbums = await getAllAlbums(uiStore.startupReady || !isMainPane.value);
+    if (disposed) return;
+    albums.value = loadedAlbums;
     void refreshAlbumVisibleCounts();
     await loadAlbumCovers();
+    if (disposed) return;
     isLoading.value = false;
 
     if (selection.albumId.value > 0) {
@@ -949,7 +962,7 @@ onMounted( async () => {
   }
 
   // listen for album-cover-changed event
-  unlistenAlbumCoverChanged = await listen('album-cover-changed', async (event: any) => {
+  await registerAlbumListener(() => listen('album-cover-changed', async (event: any) => {
     const eventAlbumId = Number(event.payload?.albumId || 0);
     const fileId = Number(event.payload?.fileId || 0);
     const album = getAlbumById(eventAlbumId);
@@ -969,17 +982,18 @@ onMounted( async () => {
       // Update the cover in albumCovers
       await loadAlbumCover(eventAlbumId, album.cover_file_id ?? null, true);
     }
-  });
+  }));
 
   // Keep the sidebar folder selection in sync with content navigation.
-  unlistenExpandAlbumFolder = await listen('expand-album-folder', async (event: any) => {
-      const { albumId, folderPath } = event.payload;
+  await registerAlbumListener(() => listen('expand-album-folder', async (event: any) => {
+    if (props.selectionSource === 'local') return;
+    const { albumId, folderPath } = event.payload;
     if (albumId && folderPath) {
       await clickFinalSubFolder(albumId, folderPath);
     }
-  });
+  }));
 
-  unlistenAlbumFolderPathsMigrated = await listen('album-folder-paths-migrated', (event: any) => {
+  await registerAlbumListener(() => listen('album-folder-paths-migrated', (event: any) => {
     for (const migration of event.payload || []) {
       const albumId = Number(migration?.albumId || 0);
       const oldPath = String(migration?.oldPath || '');
@@ -996,20 +1010,20 @@ onMounted( async () => {
       }
     }
     refreshFolderSearchFolders();
-  });
+  }));
 
   // listen for index progress
-  unlistenIndexProgress = await listenIndexProgress(async (event: any) => {
+  await registerAlbumListener(() => listenIndexProgress(async (event: any) => {
     const { album_id, current, total } = event.payload;
     const album = getAlbumById(album_id);
     if (album) {
       album.indexed = current;
       album.total = total;
     }
-  });
+  }));
 
   // listen for index finished
-  unlistenIndexFinished = await listenIndexFinished(async (event: any) => {
+  await registerAlbumListener(() => listenIndexFinished(async (event: any) => {
     const { album_id } = event.payload;
     const album = getAlbumById(album_id);
     if (album) {
@@ -1041,9 +1055,9 @@ onMounted( async () => {
       }
     }
     refreshFolderSearchFolders();
-  });
+  }));
 
-  unlistenAlbumsRefreshed = await listen('albums-refreshed', async (event: any) => {
+  await registerAlbumListener(() => listen('albums-refreshed', async (event: any) => {
     if (event.payload?.libraryId && event.payload.libraryId !== libConfig._libraryId) return;
     const refreshedAlbums = Array.isArray(event.payload?.albums) ? event.payload.albums : [];
     const refreshFolders = event.payload?.refreshFolders !== false;
@@ -1099,7 +1113,7 @@ onMounted( async () => {
     }
     if (event.payload?.refreshCounts) await refreshAlbumVisibleCounts();
     refreshFolderSearchFolders();
-  });
+  }));
 
 });
 
@@ -1136,6 +1150,7 @@ watch(isFolderFiltering, (filtering) => {
 });
 
 onBeforeUnmount(() => {
+  disposed = true;
   if (isMainPane.value) resetExternalDrag();
   document.removeEventListener('pointerdown', handleReorderOutsidePointerDown, true);
   document.removeEventListener('dragenter', handleWindowAlbumDrag, true);
@@ -1145,12 +1160,7 @@ onBeforeUnmount(() => {
   document.removeEventListener('dragend', finishAlbumDrag);
   document.removeEventListener('keydown', cancelAlbumDrag);
   window.removeEventListener('blur', finishAlbumDrag);
-  if (unlistenAlbumCoverChanged) unlistenAlbumCoverChanged();
-  if (unlistenExpandAlbumFolder) unlistenExpandAlbumFolder();
-  if (unlistenIndexProgress) unlistenIndexProgress();
-  if (unlistenIndexFinished) unlistenIndexFinished();
-  if (unlistenAlbumsRefreshed) unlistenAlbumsRefreshed();
-  if (unlistenAlbumFolderPathsMigrated) unlistenAlbumFolderPathsMigrated();
+  albumListeners.splice(0).forEach(unlisten => unlisten());
   uiStore.removeInputHandler('AlbumListDrag');
 });
 
@@ -1463,7 +1473,7 @@ const focusExpandedFolderTree = async (albumId: number) => {
 };
 
 const shouldHandleAlbumListNavigation = (key: string) => {
-  if (uiStore.inputStack.length > 0 || isDragging.value) return false;
+  if (isDragging.value || (props.selectionSource !== 'local' && uiStore.inputStack.length > 0)) return false;
   if (isMainPane.value && uiStore.activePane !== 'left-sidebar') return false;
   if (document.activeElement !== albumListRootRef.value) return false;
 
@@ -1591,6 +1601,7 @@ function handleReorderOutsidePointerDown(event: PointerEvent) {
 defineExpose({
   isCreatingFolder,
   canCreateSelectedFolder,
+  selectedFolder,
   startNewFolder: async () => { await selectedFolderTree.value?.startNewFolder(); },
   albums,
   clickNewAlbum,

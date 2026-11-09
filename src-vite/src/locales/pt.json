@@ -249,6 +249,7 @@
     "copy_failed": "Não foi possível importar este arquivo."
   },
   "import_organize": {
+    "title": "Importar pasta",
     "section_folders": "Selecionar pasta",
     "section_status": "Status da importação",
     "to_import": "Para importar",
@@ -260,7 +261,7 @@
     "layout_day": "Por dia — YYYY/YYYY-MM-DD",
     "layout_month": "Por mês — YYYY/YYYY-MM",
     "layout_year": "Por ano — YYYY",
-    "layout_none": "Uma pasta",
+    "layout_structure": "Manter a estrutura de pastas",
     "import": "Importar",
     "preparing": "Preparando a importação",
     "importing": "Importando arquivos",
@@ -551,6 +552,30 @@
     "more_actions": "Mais ações",
     "tag_all": "Tag",
     "dedup": {
+      "keep_rules": {
+        "title": "Regras de retenção",
+        "priority_order": "Ordem de prioridade",
+        "folders": "Pastas preferidas",
+        "subfolders": "Inclui subpastas. As primeiras da lista têm prioridade.",
+        "folders_skipped": "Nenhuma pasta, regra ignorada",
+        "add_folder": "Adicionar pasta",
+        "folder_already_added": "Já adicionada",
+        "format": "Formato preferido",
+        "similar_only": "Apenas imagens semelhantes",
+        "raw_first": "RAW primeiro",
+        "jpeg_heic_first": "JPEG / HEIC primeiro",
+        "size": "Tamanho preferido",
+        "largest_dimensions": "Maior resolução",
+        "smallest_dimensions": "Menor resolução",
+        "largest_file_size": "Maior tamanho de arquivo",
+        "smallest_file_size": "Menor tamanho de arquivo",
+        "ignore": "Ignorar",
+        "time": "Data preferida",
+        "created_earliest": "Criação mais antiga",
+        "created_latest": "Criação mais recente",
+        "modified_earliest": "Modificação mais antiga",
+        "modified_latest": "Modificação mais recente"
+      },
       "title": "Duplicados",
       "tabs": {
         "exact": "Duplicados",
@@ -708,6 +733,7 @@
     "album": {
       "add": "Novo álbum",
       "edit": "Editar álbum...",
+      "import_folder": "Importar pasta…",
       "scan": "Escanear álbum",
       "reorder": "Reordenar",
       "pause_scan": "Pausar varredura",

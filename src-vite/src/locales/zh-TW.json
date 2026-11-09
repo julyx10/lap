@@ -249,6 +249,7 @@
     "copy_failed": "無法匯入此檔案。"
   },
   "import_organize": {
+    "title": "匯入資料夾",
     "section_folders": "選擇資料夾",
     "section_status": "匯入狀態",
     "to_import": "待匯入",
@@ -260,7 +261,7 @@
     "layout_day": "依日 — YYYY/YYYY-MM-DD",
     "layout_month": "依月 — YYYY/YYYY-MM",
     "layout_year": "依年 — YYYY",
-    "layout_none": "單一資料夾",
+    "layout_structure": "保留資料夾結構",
     "import": "匯入",
     "preparing": "正在準備匯入",
     "importing": "正在匯入檔案",
@@ -551,6 +552,30 @@
     "more_actions": "更多動作",
     "tag_all": "標籤",
     "dedup": {
+      "keep_rules": {
+        "title": "保留規則",
+        "priority_order": "優先順序",
+        "folders": "優先保留資料夾",
+        "subfolders": "包含子資料夾。清單中越靠前，優先順序越高。",
+        "folders_skipped": "未設定，已略過",
+        "add_folder": "新增資料夾",
+        "folder_already_added": "已新增",
+        "format": "偏好格式",
+        "similar_only": "僅相似影像",
+        "raw_first": "RAW 優先",
+        "jpeg_heic_first": "JPEG / HEIC 優先",
+        "size": "偏好大小",
+        "largest_dimensions": "最高解析度",
+        "smallest_dimensions": "最低解析度",
+        "largest_file_size": "最大檔案大小",
+        "smallest_file_size": "最小檔案大小",
+        "ignore": "不考慮",
+        "time": "偏好日期",
+        "created_earliest": "最早建立",
+        "created_latest": "最新建立",
+        "modified_earliest": "最早修改",
+        "modified_latest": "最新修改"
+      },
       "title": "重複項",
       "tabs": {
         "exact": "重複項",
@@ -708,6 +733,7 @@
     "album": {
       "add": "新增相簿",
       "edit": "編輯相簿...",
+      "import_folder": "匯入資料夾…",
       "scan": "掃描相簿",
       "reorder": "重新排序",
       "pause_scan": "暫停掃描",

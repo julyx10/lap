@@ -249,6 +249,7 @@
     "copy_failed": "Не вдалося імпортувати цей файл."
   },
   "import_organize": {
+    "title": "Імпортувати папку",
     "section_folders": "Виберіть теку",
     "section_status": "Стан імпорту",
     "to_import": "До імпорту",
@@ -260,7 +261,7 @@
     "layout_day": "За днями — РРРР/РРРР-ММ-ДД",
     "layout_month": "За місяцями — РРРР/РРРР-ММ",
     "layout_year": "За роками — РРРР",
-    "layout_none": "Одна тека",
+    "layout_structure": "Зберегти структуру папок",
     "import": "Імпортувати",
     "preparing": "Підготовка імпорту",
     "importing": "Імпортування файлів",
@@ -551,6 +552,30 @@
     "more_actions": "Більше дій",
     "tag_all": "Тег",
     "dedup": {
+      "keep_rules": {
+        "title": "Правила збереження",
+        "priority_order": "Порядок пріоритетів",
+        "folders": "Пріоритетні папки",
+        "subfolders": "Включно з підпапками. Вищі позиції в списку мають пріоритет.",
+        "folders_skipped": "Не задано, правило пропущено",
+        "add_folder": "Додати папку",
+        "folder_already_added": "Уже додано",
+        "format": "Бажаний формат",
+        "similar_only": "Лише схожі зображення",
+        "raw_first": "Спочатку RAW",
+        "jpeg_heic_first": "Спочатку JPEG / HEIC",
+        "size": "Бажаний розмір",
+        "largest_dimensions": "Найвища роздільна здатність",
+        "smallest_dimensions": "Найнижча роздільна здатність",
+        "largest_file_size": "Найбільший розмір файлу",
+        "smallest_file_size": "Найменший розмір файлу",
+        "ignore": "Не враховувати",
+        "time": "Бажана дата",
+        "created_earliest": "Створено найраніше",
+        "created_latest": "Створено найпізніше",
+        "modified_earliest": "Змінено найраніше",
+        "modified_latest": "Змінено найпізніше"
+      },
       "title": "Дублікати",
       "tabs": {
         "exact": "Дублікати",
@@ -708,6 +733,7 @@
     "album": {
       "add": "Новий альбом",
       "edit": "Редагувати альбом...",
+      "import_folder": "Імпортувати папку…",
       "scan": "Сканувати альбом",
       "reorder": "Змінити порядок",
       "pause_scan": "Призупинити сканування",

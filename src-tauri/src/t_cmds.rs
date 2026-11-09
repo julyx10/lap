@@ -534,7 +534,10 @@ pub fn get_all_albums(refresh_accessibility: bool) -> Result<Vec<Album>, String>
 
 /// Get the indexed folder records used by the album sidebar search.
 #[tauri::command]
-pub fn get_all_album_folders() -> Result<Vec<AFolder>, String> {
+pub fn get_all_album_folders(include_excluded: Option<bool>) -> Result<Vec<AFolder>, String> {
+    if include_excluded == Some(true) {
+        return AFolder::get_all();
+    }
     let albums = Album::get_all_albums()?;
     Ok(AFolder::get_all()?.into_iter().filter(|folder| albums.iter()
         .find(|album| album.id == Some(folder.album_id))
@@ -2769,6 +2772,14 @@ pub(crate) fn delete_files_grouped(
     files: Vec<BatchDeleteFile>,
     permanently: bool,
 ) -> Result<BatchDeleteResult, String> {
+    delete_files_with_components(files, permanently, None)
+}
+
+pub(crate) fn delete_files_with_components(
+    files: Vec<BatchDeleteFile>,
+    permanently: bool,
+    mut resolved_components: Option<HashMap<i64, Vec<(i64, String)>>>,
+) -> Result<BatchDeleteResult, String> {
     struct DeleteGroup {
         primary_id: i64,
         primary_path: String,
@@ -2776,17 +2787,7 @@ pub(crate) fn delete_files_grouped(
         aae_sidecars: Vec<String>,
     }
 
-    // Preflight the entire selection before changing disk or catalog entries.
-    for file in &files {
-        if !t_utils::file_accessible(&file.file_path) {
-            return Err(format!("original_unavailable: {}", file.file_path));
-        }
-        for component in AFile::live_photo_component_files(file.file_id)? {
-            if let Some(path) = component.file_path {
-                if !t_utils::file_accessible(&path) { return Err(format!("original_unavailable: {}", path)); }
-            }
-        }
-    }
+    // Resolve and preflight the same targets before changing disk or catalog entries.
     let mut delete_groups = Vec::with_capacity(files.len());
     let mut seen_ids = HashSet::new();
     let mut seen_aae_paths = HashSet::new();
@@ -2794,14 +2795,24 @@ pub(crate) fn delete_files_grouped(
         if !seen_ids.insert(file.file_id) {
             continue;
         }
+        if !t_utils::file_accessible(&file.file_path) {
+            return Err(format!("original_unavailable: {}", file.file_path));
+        }
+        let components = if let Some(resolved) = &mut resolved_components {
+            resolved.remove(&file.file_id).unwrap_or_default()
+        } else {
+            AFile::live_photo_component_files(file.file_id)?
+                .into_iter()
+                .filter_map(|component| Some((component.id?, component.file_path?)))
+                .collect()
+        };
         let mut component_targets = Vec::new();
-        if let Ok(components) = AFile::live_photo_component_files(file.file_id) {
-            for component in components {
-                if let (Some(id), Some(path)) = (component.id, component.file_path) {
-                    if seen_ids.insert(id) {
-                        component_targets.push((id, path));
-                    }
-                }
+        for (id, path) in components {
+            if !t_utils::file_accessible(&path) {
+                return Err(format!("original_unavailable: {}", path));
+            }
+            if seen_ids.insert(id) {
+                component_targets.push((id, path));
             }
         }
         let mut aae_sidecars = Vec::new();
@@ -2848,7 +2859,7 @@ pub(crate) fn delete_files_grouped(
                 deleted_file_ids.push(*file_id);
             } else {
                 group_failed = true;
-                eprintln!("Failed to delete Live Photo sidecar: {}", file_path);
+                eprintln!("Failed to delete paired file: {}", file_path);
             }
         }
 
@@ -3851,6 +3862,7 @@ pub fn similar_start_scan(
     params: Option<QueryParams>,
     collection_id: Option<i64>,
     file_ids: Option<Vec<i64>>,
+    keep_rules: Option<crate::t_dedup::KeepRules>,
 ) -> Result<(), String> {
     t_similar::start_scan(
         app_handle,
@@ -3861,6 +3873,7 @@ pub fn similar_start_scan(
         params,
         collection_id,
         file_ids,
+        keep_rules,
     )
 }
 
@@ -4025,8 +4038,10 @@ pub fn dedup_start_scan(
     params: Option<crate::t_sqlite::QueryParams>,
     collection_id: Option<i64>,
     file_ids: Option<Vec<i64>>,
+    keep_rules: Option<crate::t_dedup::KeepRules>,
+    group_raw_pairs: Option<bool>,
 ) -> Result<(), String> {
-    crate::t_dedup::start_scan(app_handle, state, params, collection_id, file_ids)
+    crate::t_dedup::start_scan(app_handle, state, params, collection_id, file_ids, keep_rules, group_raw_pairs.unwrap_or(false))
 }
 
 #[tauri::command]
@@ -4064,8 +4079,8 @@ pub fn dedup_get_overview() -> Result<crate::t_dedup::DedupOverview, String> {
 }
 
 #[tauri::command]
-pub fn dedup_set_keep(group_id: i64, file_id: i64) -> Result<(), String> {
-    crate::t_dedup::set_keep(group_id, file_id)
+pub fn dedup_set_keep(group_id: i64, file_id: i64, group_raw_pairs: Option<bool>) -> Result<(), String> {
+    crate::t_dedup::set_keep(group_id, file_id, group_raw_pairs.unwrap_or(false))
 }
 
 #[tauri::command]

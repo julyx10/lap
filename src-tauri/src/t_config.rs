@@ -364,6 +364,8 @@ pub struct LibraryState {
     #[serde(default)]
     pub smart_albums: Vec<CustomSmartAlbumState>,
     #[serde(default)]
+    pub dedup_preferred_folder_ids: Vec<i64>,
+    #[serde(default)]
     pub rating: RatingState,
     #[serde(default)]
     pub culling: CullingState,

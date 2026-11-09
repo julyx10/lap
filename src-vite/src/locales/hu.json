@@ -249,6 +249,7 @@
     "copy_failed": "Nem sikerült importálni ezt a fájlt."
   },
   "import_organize": {
+    "title": "Mappa importálása",
     "section_folders": "Mappa kiválasztása",
     "section_status": "Importálás állapota",
     "to_import": "Importálandó",
@@ -260,7 +261,7 @@
     "layout_day": "Nap szerint — YYYY/YYYY-MM-DD",
     "layout_month": "Hónap szerint — YYYY/YYYY-MM",
     "layout_year": "Év szerint — YYYY",
-    "layout_none": "Egy mappa",
+    "layout_structure": "Mappaszerkezet megőrzése",
     "import": "Importálás",
     "preparing": "Importálás előkészítése",
     "importing": "Fájlok importálása",
@@ -551,6 +552,30 @@
     "more_actions": "További műveletek",
     "tag_all": "Címke",
     "dedup": {
+      "keep_rules": {
+        "title": "Megtartási szabályok",
+        "priority_order": "Prioritási sorrend",
+        "folders": "Előnyben részesített mappák",
+        "subfolders": "Az almappák is számítanak. A listán előrébb állók élveznek elsőbbséget.",
+        "folders_skipped": "Nincs kiválasztva, kihagyva",
+        "add_folder": "Mappa hozzáadása",
+        "folder_already_added": "Már hozzáadva",
+        "format": "Preferált formátum",
+        "similar_only": "Csak hasonló képek",
+        "raw_first": "RAW először",
+        "jpeg_heic_first": "JPEG / HEIC először",
+        "size": "Preferált méret",
+        "largest_dimensions": "Legnagyobb felbontás",
+        "smallest_dimensions": "Legkisebb felbontás",
+        "largest_file_size": "Legnagyobb fájlméret",
+        "smallest_file_size": "Legkisebb fájlméret",
+        "ignore": "Mellőzés",
+        "time": "Preferált dátum",
+        "created_earliest": "Legrégebben létrehozott",
+        "created_latest": "Legújabban létrehozott",
+        "modified_earliest": "Legrégebben módosított",
+        "modified_latest": "Legújabban módosított"
+      },
       "title": "Duplikátumok",
       "tabs": {
         "exact": "Duplikátumok",
@@ -708,6 +733,7 @@
     "album": {
       "add": "Új album",
       "edit": "Album adatai...",
+      "import_folder": "Mappa importálása…",
       "scan": "Album beolvasása",
       "reorder": "Átrendezés",
       "pause_scan": "Beolvasás szüneteltetése",
