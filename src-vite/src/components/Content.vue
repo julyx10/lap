@@ -224,14 +224,12 @@
             :class="{ 'pointer-events-none': uiStore.inputStack.length > 0 }"
             @pointerdown.stop @click.stop
           >
-            <button class="flex items-center gap-2 rounded-box px-1 py-1 text-primary cursor-pointer"
+            <button class="flex items-center gap-1 rounded-box px-1 text-primary cursor-pointer"
               :aria-label="$t('toolbar.filter.show_selection_panel')"
               :title="$t('toolbar.filter.show_selection_panel')" @click="openSelectionPanel"
             >
-              <span class="text-sm tabular-nums" aria-live="polite">
-                {{ selectedCount > 0 ? $t('toolbar.filter.select_count', { count: selectedCount.toLocaleString() }) : $t('toolbar.filter.select_files') }}
-              </span>
-              <IconPanelMax class="size-4" />
+              {{ selectedCount > 0 ? $t('toolbar.filter.select_count', { count: selectedCount.toLocaleString() }) : $t('toolbar.filter.select_files') }}
+              <IconChevronsRight class="size-4" />
             </button>
             <button class="btn btn-ghost btn-xs btn-square" :aria-label="$t('toolbar.filter.exit_select_mode')"
               :title="`${$t('toolbar.filter.exit_select_mode')} (Esc)`" @click="handleSelectMode(false)"
@@ -902,7 +900,7 @@ import {
   IconSortingDesc,
   IconSortingShuffle,
   IconFilter,
-  IconPanelMax,
+  IconChevronsRight,
 } from '@/common/icons';
 
 const thumbnailPlaceholder = new URL('@/assets/images/image-file.png', import.meta.url).href;

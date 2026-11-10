@@ -28,14 +28,14 @@
         </div>
         <div class="flex flex-wrap items-center gap-1">
           <PanelActionButton
-            :icon="IconChecked"
+            :icon="IconSelectAll"
             :disabled="fileCount === 0"
             @click="$emit('selectAll')"
           >
             {{ $t('menu.select.all') }}
           </PanelActionButton>
           <PanelActionButton
-            :icon="IconUnChecked"
+            :icon="IconDeselect"
             :disabled="selectedCount === 0"
             @click="$emit('selectNone')"
           >
@@ -217,8 +217,8 @@ import { computed, type CSSProperties } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { formatFileSize, formatTimestamp, isMac } from '@/common/utils';
 import {
-  IconChecked,
-  IconUnChecked,
+  IconSelectAll,
+  IconDeselect,
   IconClose,
   IconComment,
   IconFileArrowRight,

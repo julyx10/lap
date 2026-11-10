@@ -2010,4 +2010,254 @@ mod keep_rules_tests {
         apply_keep_rules_on(&conn, None, rules(vec![2, 1])).unwrap();
         assert_eq!(winner(&conn), 1);
     }
+
+    #[derive(Deserialize)]
+    struct SampleSuite {
+        samples: std::path::PathBuf,
+        cases: Vec<SampleCase>,
+    }
+
+    #[derive(Deserialize)]
+    struct SampleCase {
+        name: String,
+        folders: Vec<(i64, String)>,
+        files: Vec<SampleFile>,
+        rules: KeepRules,
+        group_raw_pairs: bool,
+        similar: bool,
+        expected_keep: Vec<i64>,
+        expected_remove: Vec<i64>,
+        expected_components: Vec<(i64, i64)>,
+    }
+
+    #[derive(Deserialize)]
+    struct SampleFile {
+        id: i64,
+        folder: i64,
+        sample: String,
+        created: i64,
+        modified: i64,
+        subtype: Option<String>,
+        companion: Option<i64>,
+    }
+
+    #[test]
+    #[ignore = "run with the external dedup sample suite"]
+    fn external_sample_keep_rules() {
+        let manifest = std::env::var_os("LAP_DEDUP_SAMPLE_SUITE")
+            .expect("set LAP_DEDUP_SAMPLE_SUITE to the fixture manifest");
+        let suite: SampleSuite = serde_json::from_slice(&std::fs::read(manifest).unwrap()).unwrap();
+        assert!(!suite.cases.is_empty());
+        let mut catalog = HashMap::new();
+
+        for case in suite.cases {
+            let mut conn = Connection::open_in_memory().unwrap();
+            conn.execute_batch(
+                "CREATE TABLE afolders(id INTEGER PRIMARY KEY,path TEXT);
+                 CREATE TABLE afiles(id INTEGER PRIMARY KEY,folder_id INTEGER,name TEXT,file_type INTEGER,
+                     size INTEGER,width INTEGER,height INTEGER,created_at INTEGER,taken_date INTEGER,
+                     media_subtype TEXT,live_photo_video_id INTEGER,format_label TEXT,modified_at INTEGER,
+                     UNIQUE(folder_id,name));
+                 CREATE TABLE file_hashes(file_id INTEGER PRIMARY KEY,hash TEXT,file_size INTEGER,mtime INTEGER);
+                 CREATE TABLE duplicate_groups(id INTEGER PRIMARY KEY,hash TEXT,file_size INTEGER,
+                     file_count INTEGER,total_size INTEGER,updated_at INTEGER,UNIQUE(hash,file_size));
+                 CREATE TABLE duplicate_group_items(group_id INTEGER,file_id INTEGER,is_keep INTEGER,
+                     is_selected INTEGER,score REAL,PRIMARY KEY(group_id,file_id));
+                 CREATE TABLE similarity_scans(id INTEGER PRIMARY KEY,scope_key TEXT);
+                 INSERT INTO similarity_scans VALUES(1,'samples');
+                 CREATE TABLE similarity_groups(id INTEGER PRIMARY KEY,scan_id INTEGER,representative_file_id INTEGER);
+                 INSERT INTO similarity_groups VALUES(1,1,1);
+                 CREATE TABLE similarity_group_items(group_id INTEGER,file_id INTEGER,is_keep INTEGER);",
+            ).unwrap();
+
+            let folders: HashMap<_, _> = case.folders.into_iter().collect();
+            for (id, path) in &folders {
+                conn.execute("INSERT INTO afolders VALUES(?1,?2)", params![id, path])
+                    .unwrap();
+            }
+
+            let companion_owners: HashMap<_, _> = case
+                .files
+                .iter()
+                .filter_map(|file| file.companion.map(|id| (id, file.id)))
+                .collect();
+            let mut file_sizes = HashMap::new();
+            for file in case.files {
+                let owner = companion_owners.get(&file.id).copied().unwrap_or(file.id);
+                let name = format!("{owner}-{}", file.sample);
+                let (kind, label, size, (width, height), hash) =
+                    &*catalog.entry(file.sample.clone()).or_insert_with(|| {
+                        let path = suite.samples.join(&file.sample);
+                        let path = path.to_str().unwrap();
+                        let kind = crate::t_utils::get_file_type(path)
+                            .unwrap_or_else(|| panic!("{}: unsupported sample {path}", case.name));
+                        let label = crate::t_utils::detect_file_format_label(path, kind);
+                        let dimensions = match kind {
+                            2 => Ok((0, 0)),
+                            3 => crate::t_image::get_raw_dimensions(path),
+                            _ => crate::t_image::get_image_dimensions(path),
+                        }
+                        .unwrap_or_else(|error| {
+                            panic!("{}: dimensions for {path}: {error}", case.name)
+                        });
+                        (
+                            kind,
+                            label,
+                            std::fs::metadata(path).unwrap().len() as i64,
+                            dimensions,
+                            compute_blake3_hash(path).unwrap(),
+                        )
+                    });
+                conn.execute(
+                    "INSERT INTO afiles VALUES(?1,?2,?3,?4,?5,?6,?7,?8,0,?9,?10,?11,?12)",
+                    params![
+                        file.id,
+                        file.folder,
+                        name,
+                        kind,
+                        size,
+                        width,
+                        height,
+                        file.created,
+                        file.subtype,
+                        file.companion,
+                        label,
+                        file.modified
+                    ],
+                )
+                .unwrap();
+                conn.execute(
+                    "INSERT INTO file_hashes VALUES(?1,?2,?3,?4)",
+                    params![file.id, hash, size, file.modified],
+                )
+                .unwrap();
+                file_sizes.insert(file.id, *size);
+                if case.similar {
+                    conn.execute(
+                        "INSERT INTO similarity_group_items VALUES(1,?1,?2)",
+                        params![file.id, file.id == 1],
+                    )
+                    .unwrap();
+                }
+            }
+
+            let items = if case.similar {
+                apply_keep_rules_on(&conn, Some("samples"), case.rules).unwrap();
+                "similarity_group_items"
+            } else {
+                let mut stmt = conn
+                    .prepare(
+                        "SELECT id FROM afiles WHERE id NOT IN (
+                    SELECT live_photo_video_id FROM afiles WHERE media_subtype = 'live_photo'
+                        AND live_photo_video_id IS NOT NULL
+                )",
+                    )
+                    .unwrap();
+                let scope = stmt
+                    .query_map([], |row| row.get(0))
+                    .unwrap()
+                    .collect::<Result<Vec<i64>, _>>()
+                    .unwrap();
+                drop(stmt);
+                rebuild_duplicate_groups(
+                    &mut conn,
+                    Some(&scope),
+                    Some(case.rules),
+                    case.group_raw_pairs,
+                )
+                .unwrap();
+                "duplicate_group_items"
+            };
+            let mut stmt = conn
+                .prepare(&format!(
+                "SELECT i.file_id, i.is_keep, f.path || '/' || a.name FROM {items} i
+                 JOIN afiles a ON a.id=i.file_id JOIN afolders f ON f.id=a.folder_id ORDER BY i.file_id"
+            ))
+                .unwrap();
+            let mut kept = Vec::new();
+            let mut removed = Vec::new();
+            for row in stmt
+                .query_map([], |row| {
+                    Ok((
+                        row.get::<_, i64>(0)?,
+                        row.get::<_, bool>(1)?,
+                        row.get::<_, String>(2)?,
+                    ))
+                })
+                .unwrap()
+            {
+                let (file_id, is_keep, file_path) = row.unwrap();
+                if is_keep {
+                    kept.push(file_id);
+                } else {
+                    removed.push(crate::t_cmds::BatchDeleteFile { file_id, file_path });
+                }
+            }
+            assert_eq!(kept, case.expected_keep, "{}: KEEP", case.name);
+            assert_eq!(
+                removed.iter().map(|file| file.file_id).collect::<Vec<_>>(),
+                case.expected_remove,
+                "{}: DUP",
+                case.name
+            );
+            if !case.similar && case.group_raw_pairs {
+                let protected = raw_pair_protected_delete_ids(&conn).unwrap();
+                for file in &removed {
+                    assert!(
+                        !protected.contains(&file.file_id),
+                        "{}: protected DUP",
+                        case.name
+                    );
+                    assert!(
+                        raw_pair_has_exact_keep(&conn, file.file_id).unwrap(),
+                        "{}: DUP would fail exact-pair deletion check",
+                        case.name
+                    );
+                }
+            }
+            let (preview, components) = delete_preview(&conn, &removed, case.group_raw_pairs).unwrap();
+            let mut component_ids = components
+                .iter()
+                .flat_map(|(&primary, members)| members.iter().map(move |(id, _)| (primary, *id)))
+                .collect::<Vec<_>>();
+            component_ids.sort_unstable();
+            assert_eq!(
+                preview.item_count,
+                removed.len(),
+                "{}: preview count",
+                case.name
+            );
+            assert_eq!(
+                component_ids, case.expected_components,
+                "{}: preview companions",
+                case.name
+            );
+            let expected_bytes: i64 = case
+                .expected_remove
+                .iter()
+                .map(|id| file_sizes[id])
+                .chain(
+                    case.expected_components
+                        .iter()
+                        .map(|(_, id)| file_sizes[id]),
+                )
+                .sum();
+            assert_eq!(
+                preview.bytes, expected_bytes,
+                "{}: preview bytes",
+                case.name
+            );
+            if case.similar {
+                let representative = conn
+                    .query_row(
+                        "SELECT representative_file_id FROM similarity_groups",
+                        [],
+                        |row| row.get::<_, i64>(0),
+                    )
+                    .unwrap();
+                assert_eq!(kept, [representative], "{}: representative", case.name);
+            }
+            println!("PASS {}", case.name);
+        }
+    }
 }

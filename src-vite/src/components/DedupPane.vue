@@ -208,15 +208,21 @@
                       <span class="truncate">{{ item.file?.name }}</span>
                       <IconExclamation v-if="isOriginalUnavailable(item.file)" class="w-3.5 h-3.5 shrink-0 text-warning" />
                     </div>
-                    <div class="text-[11px] text-base-content/30 truncate">
+                    <div
+                      class="text-[11px] text-base-content/30 truncate"
+                      :title="formatDedupFolderPath(item.file)"
+                    >
+                      {{ formatDedupFolderPath(item.file) }}
+                    </div>
+                    <div v-if="keepRules.preferredSize !== 'ignore'" class="text-[11px] text-base-content/30 truncate">
                       <template v-if="item.file?.width && item.file?.height">
                         {{ item.file.width }} × {{ item.file.height }}
                       </template>
                       <template v-else>—</template>
                       · {{ formatFileSize(Number(item.file?.size || 0)) }}
                     </div>
-                    <div v-if="item.file?.modified_at" class="text-[11px] text-base-content/30">
-                      {{ $t('file_info.modified_at') }}: {{ formatTimestamp(item.file.modified_at, 'date_time') }}
+                    <div v-else-if="item.file?.[preferredDateField] > 0" class="text-[11px] text-base-content/30">
+                      {{ $t(`file_info.${preferredDateField}`) }}: {{ formatTimestamp(item.file[preferredDateField], 'date_time') }}
                     </div>
                   </div>
                   <div class="shrink-0 w-16 min-h-10 flex flex-col items-center justify-center gap-0.5">
@@ -456,8 +462,8 @@
                   >
                     {{ formatDedupFolderPath(item.file) }}
                   </div>
-                  <div v-if="item.file?.modified_at" class="text-[11px] text-base-content/30">
-                    {{ $t('file_info.modified_at') }}: {{ formatTimestamp(item.file.modified_at, 'date_time') }}
+                  <div v-if="item.file?.[preferredDateField] > 0" class="text-[11px] text-base-content/30">
+                    {{ $t(`file_info.${preferredDateField}`) }}: {{ formatTimestamp(item.file[preferredDateField], 'date_time') }}
                   </div>
                 </div>
                 <div class="shrink-0 w-16 min-h-10 flex items-center justify-center">
@@ -603,6 +609,9 @@ const keepRules = computed(() => ({
   preferredSize: config.dedup.keepRules?.preferredSize ?? 'largestDimensions',
   folderIds: libConfig.dedupPreferredFolderIds ?? [],
 }));
+const preferredDateField = computed(() =>
+  ['createdEarliest', 'createdLatest'].includes(keepRules.value.preferredDate) ? 'created_at' : 'modified_at'
+);
 const similarStatus = ref<any>({ phase: 'idle', current: 0, total: 0 });
 const similarGroups = ref<any[]>([]);
 const similarTotalGroups = ref(0);
