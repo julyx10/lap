@@ -390,7 +390,7 @@ test('dedup delete-all blocks unavailable items and selected deletion is indepen
     currentOriginalsUnavailable: () => true, selectMode: ref(false), selectedCount: ref(0),
     dedupReclaimBytes: ref(0), dedupTrashGroupKey: ref(''), dedupDeleteFileIds: ref([]),
     dedupDeletePreview: ref(null), dedupBulkFileCount: ref(0), dedupDeletePreviewRequest: 0, dedupDeletePreviewContext: null,
-    deletePermanently: ref(false), permanentDeleteChecked: ref(false), showTrashMsgbox: ref(false),
+    deletePermanently: ref(false), config: { settings: { deletePermanently: true } }, showTrashMsgbox: ref(false),
     libConfig, similarScanKey: ref('test-scan'), isDedupPanelOpen: ref(true),
     dedupDelete: async request => {
       assert.equal(request.preview, true);
@@ -408,10 +408,38 @@ test('dedup delete-all blocks unavailable items and selected deletion is indepen
   assert.equal(deps.showTrashMsgbox.value, true);
   assert.deepEqual(deps.dedupDeleteFileIds.value, [42]);
   assert.equal(deps.dedupDeletePreview.value.token, 'confirmed-plan');
+  assert.equal(deps.deletePermanently.value, true);
+  deps.deletePermanently.value = false;
   await openDedupTrashMsgbox('all');
+  assert.equal(deps.deletePermanently.value, true);
   assert.equal(deps.dedupBulkFileCount.value, 1);
   assert.equal(deps.dedupDeletePreview.value.rawCompanionCount, 1);
   assert.equal(deps.dedupReclaimBytes.value, 120);
+});
+
+test('confirmed ordinary and bulk dedup deletions remember their permanent-delete choice', async () => {
+  const config = { settings: { deletePermanently: false } };
+  const deletePermanently = ref(true);
+  const isDedupBulkTrash = ref(false);
+  const calls = [];
+  const deps = {
+    config, deletePermanently, isDedupBulkTrash, isTrashDeleting: ref(false),
+    dedupDeletePreviewContext: null,
+    onTrashFile: async () => calls.push('ordinary'),
+    onTrashAllDuplicates: async () => calls.push('bulk'),
+  };
+  const confirm = new Function(...Object.keys(deps),
+    extractFunction(contentSource, 'const handleTrashMsgboxOk =', 'const onTrashFile =')
+      + '; return handleTrashMsgboxOk;'
+  )(...Object.values(deps));
+
+  await confirm();
+  assert.equal(config.settings.deletePermanently, true);
+  deletePermanently.value = false;
+  isDedupBulkTrash.value = true;
+  await confirm();
+  assert.equal(config.settings.deletePermanently, false);
+  assert.deepEqual(calls, ['ordinary', 'bulk']);
 });
 
 test('independent preview updates all visible panes on album recovery and ignores another library', async () => {

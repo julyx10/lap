@@ -70,7 +70,8 @@ if (isMainWindow) {
   listen('config-settings-synced', async (event) => {
     const request = ++settingsSyncRequest
     if (isSettingsWindow) {
-      // Settings receives application language updates without replacing unsaved fields.
+      // Keep main-window choices in sync while preserving edits in Settings.
+      config.settings.deletePermanently = event.payload.deletePermanently === true
       config.setLanguage(event.payload.language)
     } else {
       const { language, ...settings } = event.payload

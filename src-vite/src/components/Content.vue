@@ -2202,7 +2202,6 @@ const showTrashFailedMsgbox = ref(false);
 const showExternalOpenWarningMsgbox = ref(false);
 const showExternalAppsDialog = ref(false);
 const pendingExternalOpen = ref<{ paths: string[]; appPath: string } | null>(null);
-const permanentDeleteChecked = ref(false);
 const deletePermanently = ref(false);
 const pendingTrashFailedItems = ref<any[]>([]);
 const pendingTrashFailedDedupGroupKey = ref('');
@@ -2475,7 +2474,7 @@ const openTrashMsgbox = () => {
   if (currentOriginalsUnavailable()) return;
   if (selectMode.value && selectedCount.value === 0) return;
   dedupDeletePreviewRequest++;
-  deletePermanently.value = permanentDeleteChecked.value;
+  deletePermanently.value = config.settings.deletePermanently === true;
   showTrashMsgbox.value = true;
 };
 
@@ -2505,7 +2504,7 @@ const openDedupTrashMsgbox = async (groupKey: string, fileIds: number[] = []) =>
     dedupBulkFileCount.value = deleteAll ? preview.itemCount : 0;
     dedupTrashGroupKey.value = groupKey;
     dedupDeleteFileIds.value = fileIds;
-    deletePermanently.value = deleteAll ? false : permanentDeleteChecked.value;
+    deletePermanently.value = config.settings.deletePermanently === true;
     showTrashMsgbox.value = true;
   } catch (error) {
     if (!isCurrent()) return;
@@ -2592,7 +2591,6 @@ const trashFailedMsgboxMessage = computed(() => {
 
 const confirmTrashFailedPermanentDelete = async () => {
   const previousDeletePermanently = deletePermanently.value;
-  const previousPermanentDeleteChecked = permanentDeleteChecked.value;
   const retryItems = [...pendingTrashFailedItems.value];
   const retryDedupGroupKey = pendingTrashFailedDedupGroupKey.value;
   const retryToken = pendingDedupRetryPreview.value?.token;
@@ -2610,7 +2608,6 @@ const confirmTrashFailedPermanentDelete = async () => {
     pendingDedupRetryPreview.value = null;
     pendingTrashFailedOtherFailureCount.value = 0;
     deletePermanently.value = previousDeletePermanently;
-    permanentDeleteChecked.value = previousPermanentDeleteChecked;
   }
 };
 
@@ -9523,6 +9520,7 @@ const handleTrashMsgboxOk = async () => {
     return;
   }
   isTrashDeleting.value = true;
+  config.settings.deletePermanently = deletePermanently.value;
   try {
     if (isDedupBulkTrash.value) {
       await onTrashAllDuplicates();
@@ -9535,7 +9533,6 @@ const handleTrashMsgboxOk = async () => {
 };
 
 const onTrashFile = async (retryItemsOverride: any[] = [], retryToken?: string) => {
-  permanentDeleteChecked.value = deletePermanently.value;
   const permanently = deletePermanently.value;
   const deletedFileIds: number[] = [];
   const affectedAlbumIds = new Set<number>();
