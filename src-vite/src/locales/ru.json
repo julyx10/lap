@@ -288,7 +288,7 @@
   "search": {
     "title": "Поиск",
     "similar_images": "Связанные фотографии",
-    "image_search_placeholder": "Поиск изображений, имён файлов или описаний",
+    "image_search_placeholder": "Поиск в библиотеке",
     "matches": "Совпадения",
     "unknown_location": "Неизвестное место",
     "unknown_camera": "Неизвестная камера",

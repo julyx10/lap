@@ -36,11 +36,16 @@ thread_local! {
 }
 
 pub fn read(path: &Path) -> Metadata {
-    let Ok(info) = std::fs::metadata(path) else {
-        return Metadata::default();
-    };
+    try_read(path).unwrap_or_default()
+}
+
+pub(super) fn try_read(path: &Path) -> std::io::Result<Metadata> {
+    let info = std::fs::metadata(path)?;
+    if !info.is_file() {
+        return Err(std::io::Error::other("Metadata source is not a regular file"));
+    }
     if crate::t_utils::is_cloud_only(&info) {
-        return Metadata::default();
+        return Ok(Metadata::default());
     }
     let key = format!(
         "{}:{:?}:{}",
@@ -51,14 +56,14 @@ pub fn read(path: &Path) -> Metadata {
     LAST.with(|cache| {
         if let Some((previous, values)) = cache.borrow().as_ref() {
             if previous == &key {
-                return values.clone();
+                return Ok(values.clone());
             }
         }
         // Resolve URI-aware XMP flags separately: backend tags do not expose
         // namespace URIs for unregistered schemas.
-        let values = read_uncached(path).unwrap_or_default();
+        let values = read_uncached(path)?;
         *cache.borrow_mut() = Some((key, values.clone()));
-        values
+        Ok(values)
     })
 }
 
@@ -105,9 +110,12 @@ fn from_embedded(bytes: &[u8], tags: &[Tag]) -> Metadata {
     let mut metadata = map_tags(tags, packets.is_empty());
     if !packets.is_empty() {
         // One bounded packet extraction and URI-aware parse for every schema.
-        let (xmp, titles) = crate::metadata::xmp::metadata_and_titles_from_packets(&packets, embedded_description(tags, schema::EMBEDDED_DESCRIPTION));
-        metadata.title = titles.title.or(metadata.title);
-        metadata.headline = titles.headline.or(metadata.headline);
+        let (xmp, source) = crate::metadata::xmp::metadata_and_source_text_from_packets(&packets, embedded_description(tags, schema::EMBEDDED_DESCRIPTION));
+        metadata.title = source.title.or(metadata.title);
+        metadata.headline = source.headline.or(metadata.headline);
+        metadata.artist = source.creator.or(metadata.artist);
+        metadata.copyright = source.copyright.or(metadata.copyright);
+        metadata.software = source.software.or(metadata.software);
         metadata.organization.culling_flag =
             xmp.culling_flag.or(metadata.organization.culling_flag);
         metadata.organization.favorite = xmp.favorite;

@@ -7,14 +7,17 @@ import { renderToString } from 'vue/server-renderer';
 
 const source = await readFile(new URL('../src/components/FileInfo.vue', import.meta.url), 'utf8');
 
-test('title and headline display stored values, including empty values, instead of lazy metadata', () => {
+test('searchable source metadata displays the indexed values, including empty values', () => {
   const start = source.indexOf('const sourceKeys =');
   const end = source.indexOf('const sourceDetailRows', start);
+  const keys = ['title', 'headline', 'creator', 'copyright', 'software'];
+  const fields = ['e_title', 'e_headline', 'e_artist', 'e_copyright', 'e_software'];
+  const details = Object.fromEntries(keys.map(key => [key, { values: [`stale ${key}`] }]));
   const rows = fileInfo => new Function('props', 'metadataDetails', 't', 'fieldVisible', 'displayField', ts.transpile(
-    `${source.slice(start, end)}; return detailRows('source', ['title', 'headline']);`, { target: ts.ScriptTarget.ES2022 }
-  ))({ fileInfo }, { value: { title: { values: ['stale title'] }, headline: { values: ['stale headline'] } } }, key => key, () => true, () => true);
-  assert.deepEqual(rows({ e_title: 'Stored title', e_headline: 'Stored headline' }).map(row => row.value), ['Stored title', 'Stored headline']);
-  assert.deepEqual(rows({ e_title: null, e_headline: '' }).map(row => row.value), ['', '']);
+    `${source.slice(start, end)}; return detailRows('source', ${JSON.stringify(keys)});`, { target: ts.ScriptTarget.ES2022 }
+  ))({ fileInfo }, { value: details }, key => key, () => true, () => true);
+  assert.deepEqual(rows(Object.fromEntries(fields.map((field, index) => [field, keys[index]]))).map(row => row.value), keys);
+  assert.deepEqual(rows({}).map(row => row.value), keys.map(() => ''));
 });
 function section(key) {
   const title = source.indexOf(`$t('file_info.${key}')`);

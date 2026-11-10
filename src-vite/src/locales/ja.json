@@ -288,7 +288,7 @@
   "search": {
     "title": "検索",
     "similar_images": "関連写真",
-    "image_search_placeholder": "画像、ファイル名、説明を検索",
+    "image_search_placeholder": "ライブラリを検索",
     "matches": "一致結果",
     "unknown_location": "不明な場所",
     "unknown_camera": "不明なカメラ",

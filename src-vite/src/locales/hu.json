@@ -288,7 +288,7 @@
   "search": {
     "title": "Keresés",
     "similar_images": "Kapcsolódó fotók",
-    "image_search_placeholder": "Képek, fájlnevek vagy leírások keresése",
+    "image_search_placeholder": "Keresés a könyvtárban",
     "matches": "Egyezések",
     "unknown_location": "Ismeretlen hely",
     "unknown_camera": "Ismeretlen kamera",

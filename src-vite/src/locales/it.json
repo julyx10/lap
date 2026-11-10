@@ -288,7 +288,7 @@
   "search": {
     "title": "Cerca",
     "similar_images": "Foto correlate",
-    "image_search_placeholder": "Cerca immagini, nomi di file o descrizioni",
+    "image_search_placeholder": "Cerca nella libreria",
     "matches": "Corrispondenze",
     "unknown_location": "Luogo sconosciuto",
     "unknown_camera": "Fotocamera sconosciuta",

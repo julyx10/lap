@@ -288,7 +288,7 @@
   "search": {
     "title": "Search",
     "similar_images": "Related photos",
-    "image_search_placeholder": "Search images, filenames, or descriptions",
+    "image_search_placeholder": "Search your library",
     "matches": "Matches",
     "unknown_location": "Unknown location",
     "unknown_camera": "Unknown camera",

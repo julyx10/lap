@@ -713,7 +713,7 @@ function detailRows(section: DetailSection, keys = detailKeys[section]) {
   return keys.filter(key => fieldVisible(`${section}.${key}`)).map(key => {
     const detail = metadataDetails.value[key];
     const fallback = sourceFallbacks[key] ? props.fileInfo?.[sourceFallbacks[key]] : key === 'flash' ? props.fileInfo?.e_flash : null;
-    let value = key === 'title' || key === 'headline' ? fallback : detail ? detail.values.filter(v => v.trim()).join('\n') : fallback;
+    let value = sourceFallbacks[key] ? fallback : detail ? detail.values.filter(v => v.trim()).join('\n') : fallback;
     if (key === 'direction' && value && Number.isFinite(Number(value))) {
       const degrees = Number(value);
       if (degrees < 0 || degrees > 360) value = '';
@@ -741,7 +741,7 @@ const imageDetailRows = computed(() => [
 const locationDetailRows = computed(() => detailRows('location'));
 function sectionOpen(section: DetailSection) {
   const expanded = section === 'source' ? showSourceMetadataPanel.value : section === 'capture' ? showMetadataPanel.value : showMapPanel.value;
-  return expanded && detailKeys[section].some(key => key !== 'title' && key !== 'headline' && fieldVisible(`${section}.${key}`));
+  return expanded && detailKeys[section].some(key => !sourceFallbacks[key] && fieldVisible(`${section}.${key}`));
 }
 async function loadDetailSection(section: DetailSection, force = false) {
   const fileId = Number(props.fileInfo?.id);

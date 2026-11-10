@@ -288,7 +288,7 @@
   "search": {
     "title": "검색",
     "similar_images": "관련 사진",
-    "image_search_placeholder": "이미지, 파일 이름 또는 설명 검색",
+    "image_search_placeholder": "라이브러리 검색",
     "matches": "일치 항목",
     "unknown_location": "알 수 없는 위치",
     "unknown_camera": "알 수 없는 카메라",

@@ -288,7 +288,7 @@
   "search": {
     "title": "Пошук",
     "similar_images": "Схожі фотографії",
-    "image_search_placeholder": "Пошук зображень, назв файлів або описів",
+    "image_search_placeholder": "Пошук у бібліотеці",
     "matches": "Збіги",
     "unknown_location": "Невідоме місце",
     "unknown_camera": "Невідома камера",

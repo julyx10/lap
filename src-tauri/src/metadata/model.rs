@@ -53,7 +53,10 @@ pub enum XmpImportMode {
 
 /// Source text used for display/search; never edited by organization writeback.
 #[derive(Clone, Debug, Default)]
-pub(crate) struct SourceTitles {
+pub(crate) struct SourceText {
     pub title: Option<String>,
     pub headline: Option<String>,
+    pub creator: Option<String>,
+    pub copyright: Option<String>,
+    pub software: Option<String>,
 }

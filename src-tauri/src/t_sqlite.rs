@@ -2118,7 +2118,7 @@ pub struct ATimeLine {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct QueryParams {
-    pub search_file_name: String, // file name search
+    pub search_file_name: String, // filename and metadata text search
     pub search_file_type: i64,
     pub sort_type: i64,
     pub sort_order: i64,
@@ -4149,7 +4149,7 @@ impl AFile {
                             }
                         }
                     }
-                    if Self::import_scanned_xmp(file_id, file_path, crate::metadata::xmp::XmpImportMode::RescanNonDestructive)? {
+                    if Self::import_scanned_xmp(file_id, file_path, crate::metadata::xmp::XmpImportMode::RescanNonDestructive, None)? {
                         if let Some(refreshed) = Self::get_file_info(file_id)? { file = refreshed; }
                     }
                 }
@@ -4173,7 +4173,10 @@ impl AFile {
         let new_file = Self::fetch(folder_id, file_path)?;
         if let Some(ref file) = new_file {
             if let Some(file_id) = file.id {
-                if Self::import_scanned_xmp(file_id, file_path, crate::metadata::xmp::XmpImportMode::InitialScan)? {
+                if Self::import_scanned_xmp(
+                    file_id, file_path, crate::metadata::xmp::XmpImportMode::InitialScan,
+                    Some(new_file_struct.e_software.as_deref()),
+                )? {
                     if let Some(refreshed) = Self::fetch(folder_id, file_path)? {
                         return Ok((refreshed, 1));
                     }
@@ -4231,10 +4234,15 @@ impl AFile {
         Ok(files)
     }
 
-    fn import_scanned_xmp(file_id: i64, file_path: &str, mode: crate::metadata::xmp::XmpImportMode) -> Result<bool, String> {
+    fn import_scanned_xmp(
+        file_id: i64,
+        file_path: &str,
+        mode: crate::metadata::xmp::XmpImportMode,
+        extracted_software: Option<Option<&str>>,
+    ) -> Result<bool, String> {
         if !crate::metadata::xmp::is_xmp_import_enabled() { return Ok(false); }
         let conn = open_conn()?;
-        match crate::metadata::xmp::import_xmp_for_file_with_conn(file_id, file_path, &conn, mode) {
+        match crate::metadata::xmp::import_with_system(file_id, file_path, &conn, mode, None, extracted_software) {
             Ok(changed) => Ok(changed),
             Err(error) => {
                 conn.execute("UPDATE afiles SET metadata_pending=1 WHERE id=?1", params![file_id])
@@ -4331,6 +4339,7 @@ impl AFile {
                     &conn,
                     crate::metadata::xmp::XmpImportMode::RefreshNonDestructive,
                     system_metadata,
+                    None,
                 )
             })
             .err()
@@ -4479,12 +4488,16 @@ impl AFile {
         }
         new_file_info.last_scan_time = Some(last_scan_time);
 
-        // Source titles are replaced atomically by the importer. Keep the last
+        // Source text is replaced atomically by the importer. Keep the last
         // successful values if the sidecar cannot be imported after extraction.
         let import_xmp = crate::metadata::xmp::is_xmp_import_enabled();
+        let mut extracted_software = None;
         if import_xmp {
             new_file_info.e_title = old_file_info.e_title.clone();
             new_file_info.e_headline = old_file_info.e_headline.clone();
+            new_file_info.e_artist = old_file_info.e_artist.clone();
+            new_file_info.e_copyright = old_file_info.e_copyright.clone();
+            extracted_software = std::mem::replace(&mut new_file_info.e_software, old_file_info.e_software.clone());
         }
 
         // update the file info
@@ -4493,11 +4506,16 @@ impl AFile {
 
         let mut import_error = None;
         if import_xmp {
-            if let Err(error) = crate::metadata::xmp::import_xmp_for_file_with_mode(
-                file_id,
-                file_path,
-                crate::metadata::xmp::XmpImportMode::RefreshNonDestructive,
-            ) {
+            if let Err(error) = open_conn().and_then(|conn| {
+                crate::metadata::xmp::import_with_system(
+                    file_id,
+                    file_path,
+                    &conn,
+                    crate::metadata::xmp::XmpImportMode::RefreshNonDestructive,
+                    None,
+                    Some(extracted_software.as_deref()),
+                )
+            }) {
                 // Keep successful metadata, but make the failed import retryable.
                 Self::update_column(file_id, "metadata_pending", &true)?;
                 let message = format!("XMP import failed: {error}");
@@ -5295,12 +5313,21 @@ impl AFile {
         let mut sql_params: Vec<Box<dyn ToSql>> = Vec::new();
 
         if !params.search_file_name.is_empty() {
-            conditions.push("(a.name LIKE ? COLLATE NOCASE OR a.comments LIKE ? COLLATE NOCASE OR a.e_title LIKE ? COLLATE NOCASE OR a.e_headline LIKE ? COLLATE NOCASE)".to_string());
+            let columns = [
+                "a.name",
+                "a.comments",
+                "a.e_title",
+                "a.e_headline",
+                "a.e_artist",
+                "a.e_copyright",
+                "a.e_software",
+            ];
+            let matches = columns.map(|column| format!("{column} LIKE ? COLLATE NOCASE"));
+            conditions.push(format!("({})", matches.join(" OR ")));
             let pattern = format!("%{}%", params.search_file_name);
-            sql_params.push(Box::new(pattern.clone()));
-            sql_params.push(Box::new(pattern.clone()));
-            sql_params.push(Box::new(pattern.clone()));
-            sql_params.push(Box::new(pattern));
+            for _ in columns {
+                sql_params.push(Box::new(pattern.clone()));
+            }
         }
 
         if let Some(condition) = Self::build_browser_file_type_condition(params.search_file_type) {
@@ -10905,6 +10932,49 @@ mod album_filter_tests {
             ALTER TABLE afiles ADD COLUMN media_subtype TEXT;
             UPDATE afiles SET media_subtype='raw_jpeg_pair' WHERE id=13;").unwrap();
         conn
+    }
+
+    #[test]
+    fn text_search_matches_creator_copyright_and_software() {
+        let conn = fixture();
+        conn.execute_batch(
+            "ALTER TABLE afolders ADD COLUMN is_excluded_from_search INTEGER DEFAULT 0;
+             ALTER TABLE afiles ADD COLUMN name TEXT;
+             ALTER TABLE afiles ADD COLUMN comments TEXT;
+             ALTER TABLE afiles ADD COLUMN e_title TEXT;
+             ALTER TABLE afiles ADD COLUMN e_headline TEXT;
+             ALTER TABLE afiles ADD COLUMN e_artist TEXT;
+             ALTER TABLE afiles ADD COLUMN e_copyright TEXT;
+             ALTER TABLE afiles ADD COLUMN e_software TEXT;
+             UPDATE afiles SET e_artist = 'Morgan Rivera' WHERE id IN (6, 7);
+             UPDATE afiles SET e_copyright = 'Copyright Night Studio' WHERE id = 8;
+             UPDATE afiles SET e_software = 'Photo Editor 5' WHERE id = 10;
+             UPDATE afiles SET e_headline = 'Summer headline' WHERE id = 12;",
+        ).unwrap();
+        let mut params: QueryParams = serde_json::from_value(serde_json::json!({
+            "searchFileName":"","searchFileType":0,"sortType":0,"sortOrder":0,
+            "searchAllSubfolders":"","searchFolder":"","startDate":0,"endDate":0,
+            "calendarSort":0,"make":"","model":"","lensMake":"","lensModel":"",
+            "locationAdmin1":"","locationName":"","isFavorite":false,"rating":-1,
+            "tagId":0,"personId":0
+        })).unwrap();
+
+        for (term, expected) in [
+            ("RIVERA", vec![7]),
+            ("night studio", vec![8]),
+            ("editor 5", vec![10]),
+            ("headline", vec![12]),
+            ("unmatched", vec![]),
+        ] {
+            params.search_file_name = term.into();
+            let (joins, conditions, values) = AFile::build_search_query_parts(&params);
+            let mut stmt = conn.prepare(&format!(
+                "SELECT a.id FROM afiles a JOIN afolders b ON b.id=a.folder_id {joins}{conditions} ORDER BY a.id"
+            )).unwrap();
+            let ids = stmt.query_map(params_from_iter(values.iter()), |row| row.get::<_, i64>(0))
+                .unwrap().collect::<Result<Vec<_>, _>>().unwrap();
+            assert_eq!(ids, expected, "search term {term}");
+        }
     }
 
     #[test]

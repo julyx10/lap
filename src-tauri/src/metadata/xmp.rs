@@ -38,7 +38,6 @@ use std::sync::{
     atomic::{AtomicBool, AtomicU64, Ordering},
 };
 
-use crate::t_sqlite::open_conn;
 use crate::metadata::keywords as keywords;
 #[cfg(test)]
 use super::schema::{NS_LR, NS_DIGIKAM, NS_ACDSEE};
@@ -249,23 +248,34 @@ fn read_xmp_content(path: &Path) -> Result<String, String> {
 
 /// Parse the complete XML document before exposing any metadata to the importer.
 pub fn parse_xmp_str(content: &str) -> Result<XmpMetadata, String> {
-    parse_xmp_with_titles(content).map(|(meta, _)| meta)
+    parse_xmp_with_source_text(content).map(|(meta, _)| meta)
 }
 
-fn parse_xmp_with_titles(content: &str) -> Result<(XmpMetadata, super::model::SourceTitles), String> {
+fn parse_xmp_with_source_text(content: &str) -> Result<(XmpMetadata, super::model::SourceText), String> {
     let root = parse_xml(content)?;
     let mut properties = Vec::new();
     collect_properties(&root, &mut properties);
-    Ok((metadata_from_properties(&properties), titles_from_properties(&properties)))
+    Ok((metadata_from_properties(&properties), source_text_from_properties(&properties)))
 }
 
-fn titles_from_properties(properties: &[&XmlNode]) -> super::model::SourceTitles {
-    let value = |key| {
+fn source_text_from_properties(properties: &[&XmlNode]) -> super::model::SourceText {
+    let property_for = |key| {
         let property = schema::DETAIL_FIELDS.iter().find(|f| f.key == key).and_then(|f| f.xmp)?;
-        properties.iter().find(|n| n.uri == property.uri && n.name == property.name)
-            .map(|n| n.value().chars().filter(|c| *c != '\0').take(32768).collect())
+        properties.iter().copied().find(|n| n.uri == property.uri && n.name == property.name)
     };
-    super::model::SourceTitles { title: value("title"), headline: value("headline") }
+    let bounded = |value: String| value.chars().filter(|c| *c != '\0').take(32768).collect();
+    let scalar = |key| property_for(key).map(|node| bounded(node.value()));
+    let descriptive = |key| property_for(key).map(|node| {
+        bounded(source_property_values(node).into_iter()
+            .filter(|value| !value.trim().is_empty()).collect::<Vec<_>>().join("\n"))
+    });
+    super::model::SourceText {
+        title: scalar("title"),
+        headline: scalar("headline"),
+        creator: descriptive("creator"),
+        copyright: descriptive("copyright"),
+        software: descriptive("software"),
+    }
 }
 
 fn metadata_from_properties(properties: &[&XmlNode]) -> XmpMetadata {
@@ -318,10 +328,10 @@ fn metadata_from_properties(properties: &[&XmlNode]) -> XmpMetadata {
 /// Standard and referenced extended packets form one logical metadata record.
 #[cfg(test)]
 pub(crate) fn metadata_from_packets(packets: &[String]) -> XmpMetadata {
-    metadata_and_titles_from_packets(packets, None).0
+    metadata_and_source_text_from_packets(packets, None).0
 }
 
-pub(crate) fn metadata_and_titles_from_packets(packets: &[String], standard_description: Option<String>) -> (XmpMetadata, super::model::SourceTitles) {
+pub(crate) fn metadata_and_source_text_from_packets(packets: &[String], standard_description: Option<String>) -> (XmpMetadata, super::model::SourceText) {
     let roots: Vec<_> = packets
         .iter()
         .filter_map(|packet| parse_xml(packet).ok())
@@ -339,7 +349,7 @@ pub(crate) fn metadata_and_titles_from_packets(packets: &[String], standard_desc
         .map(|node| node.value())
         .or(standard_description)
         .or(meta.description);
-    (meta, titles_from_properties(&properties))
+    (meta, source_text_from_properties(&properties))
 }
 
 #[cfg(test)]
@@ -442,14 +452,14 @@ pub(crate) fn culling_from_values(
 // Database Synchronization Operations
 // ---------------------------------------------------------------------------
 
-/// Imports XMP metadata into the database for a specific file using the provided mode.
-pub fn import_xmp_for_file_with_conn(
+#[cfg(test)]
+fn import_xmp_for_file_with_conn(
     file_id: i64,
     file_path: &str,
     conn: &Connection,
     mode: XmpImportMode,
 ) -> Result<bool, String> {
-    import_with_system(file_id, file_path, conn, mode, None)
+    import_with_system(file_id, file_path, conn, mode, None, None)
 }
 
 pub(crate) fn import_with_system(
@@ -458,8 +468,9 @@ pub(crate) fn import_with_system(
     conn: &Connection,
     mode: XmpImportMode,
     system: Option<super::system::SystemMetadata>,
+    extracted_software: Option<Option<&str>>, // Some(None) means extraction found no value.
 ) -> Result<bool, String> {
-    let result = import_sources(file_id, file_path, conn, mode, system);
+    let result = import_sources(file_id, file_path, conn, mode, system, extracted_software);
     if result.is_err() { super::import_count::record(conn, file_id); }
     result
 }
@@ -470,6 +481,7 @@ fn import_sources(
     conn: &Connection,
     mode: XmpImportMode,
     system: Option<super::system::SystemMetadata>,
+    extracted_software: Option<Option<&str>>,
 ) -> Result<bool, String> {
     let sidecar_path = find_xmp_sidecar(Path::new(file_path));
     // Manual import changes catalog values, not the automatic source snapshot.
@@ -530,27 +542,71 @@ fn import_sources(
             return Ok(false);
         }
     }
-    let embedded = crate::metadata::embedded::read(Path::new(file_path));
-    let mut titles = super::model::SourceTitles { title: embedded.title, headline: embedded.headline };
+    let embedded = local_media
+        .then(|| super::embedded::try_read(Path::new(file_path)))
+        .transpose();
+    let embedded_failed = embedded.is_err();
+    let embedded = embedded.ok().flatten().unwrap_or_default();
+    let mut source = super::model::SourceText {
+        title: embedded.title,
+        headline: embedded.headline,
+        creator: embedded.artist,
+        copyright: embedded.copyright,
+        software: embedded.software,
+    };
     let mut meta = embedded.organization;
     super::merge::merge_system(&mut meta, snapshot.metadata);
     if let Some(path) = sidecar_path {
-        let (sidecar, source) = parse_xmp_with_titles(&read_xmp_content(&path)?)?;
-        if source.title.is_some() { titles.title = source.title; }
-        if source.headline.is_some() { titles.headline = source.headline; }
+        let (sidecar, text) = parse_xmp_with_source_text(&read_xmp_content(&path)?)?;
+        source.title = text.title.or(source.title);
+        source.headline = text.headline.or(source.headline);
+        source.creator = text.creator.or(source.creator);
+        source.copyright = text.copyright.or(source.copyright);
+        source.software = text.software.or(source.software);
         super::merge::merge_sidecar(&mut meta, sidecar);
     }
-    if !local_media {
-        let previous: (Option<String>, Option<String>) = conn.query_row(
-            "SELECT e_title,e_headline FROM afiles WHERE id=?1", [file_id],
-            |row| Ok((row.get(0)?,row.get(1)?))).map_err(|e| e.to_string())?;
-        titles.title = titles.title.or(previous.0);
-        titles.headline = titles.headline.or(previous.1);
+    let mut probe_failed = false;
+    if local_media && source.software.is_none() && crate::t_utils::get_file_type(file_path) == Some(2) {
+        // FFprobe exposes native video tags (such as encoder) that the XMP reader does not map.
+        source.software = match extracted_software {
+            Some(value) => value.map(str::to_owned),
+            None => match crate::t_video::get_video_metadata(file_path) {
+                Ok(metadata) => metadata.e_software,
+                Err(_) => {
+                    probe_failed = true;
+                    None
+                }
+            },
+        };
     }
-    // Empty source values are valid clears, stored as NULL for consistent UI/search.
-    titles.title = titles.title.filter(|v| !v.trim().is_empty());
-    titles.headline = titles.headline.filter(|v| !v.trim().is_empty());
-    super::merge::apply_with_titles(file_id, &meta, conn, mode, Some(&fingerprint), Some(&titles))
+    let preserve_source = !local_media || embedded_failed;
+    if preserve_source || probe_failed {
+        let previous = conn.query_row(
+            "SELECT e_title,e_headline,e_artist,e_copyright,e_software FROM afiles WHERE id=?1",
+            [file_id],
+            |row| Ok(super::model::SourceText {
+                title: row.get(0)?, headline: row.get(1)?, creator: row.get(2)?,
+                copyright: row.get(3)?, software: row.get(4)?,
+            }),
+        ).map_err(|e| e.to_string())?;
+        if preserve_source {
+            source.title = source.title.or(previous.title);
+            source.headline = source.headline.or(previous.headline);
+            source.creator = source.creator.or(previous.creator);
+            source.copyright = source.copyright.or(previous.copyright);
+        }
+        source.software = source.software.or(previous.software);
+    }
+    // Explicit empty sidecar properties clear the corresponding catalog value.
+    for value in [&mut source.title, &mut source.headline, &mut source.creator,
+                  &mut source.copyright, &mut source.software] {
+        if value.as_ref().is_some_and(|value| value.trim().is_empty()) {
+            *value = None;
+        }
+    }
+    // Leave the fingerprint invalid so the next scan can retry a partial read.
+    let fingerprint = if embedded_failed || probe_failed { "" } else { &fingerprint };
+    super::merge::apply_with_source_text(file_id, &meta, conn, mode, Some(fingerprint), Some(&source))
 }
 
 /// Scanner-derived descriptions preserve local edits and explicit clears.
@@ -614,16 +670,6 @@ pub fn initialize(conn: &Connection) -> Result<(), String> {
     .map_err(|e| e.to_string())?;
     remove_legacy_auto_writeback(conn)?;
     Ok(())
-}
-
-/// Imports XMP metadata into the database for a file using a fresh connection.
-pub fn import_xmp_for_file_with_mode(
-    file_id: i64,
-    file_path: &str,
-    mode: XmpImportMode,
-) -> Result<bool, String> {
-    let conn = open_conn()?;
-    import_xmp_for_file_with_conn(file_id, file_path, &conn, mode)
 }
 
 // ---------------------------------------------------------------------------
@@ -1554,7 +1600,7 @@ mod import_tests {
             "CREATE TABLE afiles (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
-                e_title TEXT, e_headline TEXT,
+                e_title TEXT, e_headline TEXT, e_artist TEXT, e_copyright TEXT, e_software TEXT,
                 rating INTEGER NOT NULL DEFAULT 0,
                 culling_flag INTEGER NOT NULL DEFAULT 0,
                 is_favorite INTEGER DEFAULT 0,
@@ -2189,7 +2235,7 @@ mod export_tests {
         fs::write(&media, b"unchanged-original").unwrap();
         let conn = Connection::open_in_memory().unwrap();
         conn.execute_batch("CREATE TABLE afolders(id INTEGER PRIMARY KEY,path TEXT); INSERT INTO afolders(id) VALUES(1);
-            CREATE TABLE afiles(id INTEGER PRIMARY KEY,folder_id INTEGER DEFAULT 1,name TEXT DEFAULT 'photo.jpg',e_title TEXT,e_headline TEXT,is_favorite INTEGER DEFAULT 0,rating INTEGER DEFAULT 0,culling_flag INTEGER DEFAULT 0,comments TEXT,has_tags INTEGER DEFAULT 0);
+            CREATE TABLE afiles(id INTEGER PRIMARY KEY,folder_id INTEGER DEFAULT 1,name TEXT DEFAULT 'photo.jpg',e_title TEXT,e_headline TEXT,e_artist TEXT,e_copyright TEXT,e_software TEXT,is_favorite INTEGER DEFAULT 0,rating INTEGER DEFAULT 0,culling_flag INTEGER DEFAULT 0,comments TEXT,has_tags INTEGER DEFAULT 0);
             CREATE TABLE atags(id INTEGER PRIMARY KEY,name TEXT,parent_id INTEGER REFERENCES atags(id) ON DELETE CASCADE);CREATE TABLE afile_tags(file_id INTEGER,tag_id INTEGER,UNIQUE(file_id,tag_id));
             INSERT INTO afiles(id,rating,comments) VALUES(1,4,'local caption'); INSERT INTO atags(id,name) VALUES(1,'旅行, travel & <test>');INSERT INTO afile_tags VALUES(1,1);").unwrap();
         conn.execute(
@@ -2224,6 +2270,153 @@ mod export_tests {
         fs::remove_file(sidecar).unwrap();
         assert!(import());
         assert_eq!(fields().0.as_deref(), Some("Embedded title"));
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn indexed_source_fields_prefer_sidecar_and_restore_embedded_values() {
+        let (conn, dir, media) = fixture();
+        let embedded = packet(concat!(
+            "<d:creator><rdf:Seq><rdf:li>Embedded creator</rdf:li></rdf:Seq></d:creator>",
+            "<d:rights>Embedded copyright</d:rights>",
+            "<r:CreatorTool>Embedded software</r:CreatorTool>",
+        ));
+        fs::write(&media, crate::metadata::embedded::tests::jpeg_with_xmp_packet(embedded.as_bytes())).unwrap();
+        let sidecar = media.with_extension("xmp");
+        let import = || {
+            import_xmp_for_file_with_conn(1, media.to_str().unwrap(), &conn, XmpImportMode::RescanNonDestructive).unwrap()
+        };
+        let fields = || {
+            conn.query_row(
+                "SELECT e_artist,e_copyright,e_software FROM afiles WHERE id=1",
+                [],
+                |row| Ok((row.get::<_, Option<String>>(0)?, row.get::<_, Option<String>>(1)?, row.get::<_, Option<String>>(2)?)),
+            ).unwrap()
+        };
+        assert!(import());
+        let embedded_fields = fields();
+        assert_eq!(embedded_fields, (Some("Embedded creator".into()), Some("Embedded copyright".into()), Some("Embedded software".into())));
+
+        fs::write(&sidecar, packet(concat!(
+            "<d:creator><rdf:Seq><rdf:li>Sidecar Alice</rdf:li><rdf:li>Sidecar Bob</rdf:li></rdf:Seq></d:creator>",
+            "<r:CreatorTool>Sidecar software</r:CreatorTool>",
+        ))).unwrap();
+        assert!(import());
+        assert_eq!(fields(), (Some("Sidecar Alice\nSidecar Bob".into()), Some("Embedded copyright".into()), Some("Sidecar software".into())));
+        assert!(!import());
+
+        fs::write(&sidecar, packet("<d:creator/><d:rights>Sidecar copyright</d:rights>")).unwrap();
+        assert!(import());
+        assert_eq!(fields(), (None, Some("Sidecar copyright".into()), Some("Embedded software".into())));
+
+        fs::remove_file(sidecar).unwrap();
+        assert!(import());
+        assert_eq!(fields(), embedded_fields);
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn indexed_video_software_falls_back_to_native_encoder() {
+        let (conn, dir, _) = fixture();
+        let media = dir.join("video.mp4");
+        let output = match std::process::Command::new("ffmpeg")
+            .args([
+                "-v", "error", "-f", "lavfi", "-i", "color=s=16x16",
+                "-frames:v", "1", "-c:v", "mpeg4",
+            ])
+            .arg(&media)
+            .output()
+        {
+            Ok(output) => output,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                fs::remove_dir_all(dir).unwrap();
+                return;
+            }
+            Err(error) => panic!("Could not run ffmpeg: {error}"),
+        };
+        assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+        let native = crate::t_video::get_video_metadata(media.to_str().unwrap())
+            .unwrap()
+            .e_software
+            .unwrap();
+        let import = || {
+            import_xmp_for_file_with_conn(
+                1, media.to_str().unwrap(), &conn, XmpImportMode::RescanNonDestructive,
+            ).unwrap();
+            conn.query_row("SELECT e_software FROM afiles WHERE id=1", [], |row| {
+                row.get::<_, Option<String>>(0)
+            }).unwrap()
+        };
+        assert_eq!(import().as_deref(), Some(native.as_str()));
+        let sidecar = media.with_extension("xmp");
+        fs::write(&sidecar, packet("<r:CreatorTool>Sidecar software</r:CreatorTool>")).unwrap();
+        assert_eq!(import().as_deref(), Some("Sidecar software"));
+        fs::write(&sidecar, packet("<r:CreatorTool/>")).unwrap();
+        assert_eq!(import(), None);
+        fs::remove_file(sidecar).unwrap();
+        assert_eq!(import().as_deref(), Some(native.as_str()));
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn video_import_reuses_extracted_software_and_tolerates_probe_failure() {
+        let (conn, dir, _) = fixture();
+        let media = dir.join("unprobeable.mp4");
+        fs::write(&media, b"").unwrap();
+        fs::write(media.with_extension("xmp"), packet("<d:title>Sidecar title</d:title>")).unwrap();
+        let import = |extracted_software| {
+            import_with_system(
+                1,
+                media.to_str().unwrap(),
+                &conn,
+                XmpImportMode::RefreshNonDestructive,
+                None,
+                extracted_software,
+            ).unwrap();
+            conn.query_row("SELECT e_software,e_title FROM afiles WHERE id=1", [], |row| {
+                Ok((row.get::<_, Option<String>>(0)?, row.get::<_, String>(1)?))
+            }).unwrap()
+        };
+        let (software, title) = import(Some(Some("Already extracted")));
+        assert_eq!(software.as_deref(), Some("Already extracted"));
+        assert_eq!(title, "Sidecar title");
+        assert_eq!(import(None), (Some("Already extracted".into()), "Sidecar title".into()));
+        let fingerprint: String = conn.query_row(
+            "SELECT fingerprint FROM axmp_imports WHERE file_id=1",
+            [],
+            |row| row.get(0),
+        ).unwrap();
+        assert!(fingerprint.is_empty());
+        assert_eq!(import(Some(None)), (None, "Sidecar title".into()));
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn embedded_read_failure_preserves_source_fields_and_allows_sidecar_overrides() {
+        let (conn, dir, media) = fixture();
+        conn.execute(
+            "UPDATE afiles SET e_artist='Previous creator', e_copyright='Previous copyright',
+             e_software='Previous software' WHERE id=1",
+            [],
+        ).unwrap();
+        fs::remove_file(&media).unwrap();
+        fs::create_dir(&media).unwrap();
+        fs::write(media.join("child"), b"").unwrap();
+        assert!(super::super::embedded::try_read(&media).is_err());
+        fs::write(media.with_extension("xmp"), packet("<d:creator>Sidecar creator</d:creator><d:rights/>")).unwrap();
+        let import = || {
+            import_xmp_for_file_with_conn(
+                1, media.to_str().unwrap(), &conn, XmpImportMode::RescanNonDestructive,
+            ).unwrap();
+            conn.query_row("SELECT e_artist,e_copyright,e_software FROM afiles WHERE id=1", [], |row| {
+                Ok((row.get::<_, Option<String>>(0)?, row.get::<_, Option<String>>(1)?,
+                    row.get::<_, Option<String>>(2)?))
+            }).unwrap()
+        };
+        assert_eq!(import(), (Some("Sidecar creator".into()), None, Some("Previous software".into())));
+        fs::remove_dir_all(&media).unwrap();
+        fs::write(&media, b"").unwrap();
+        assert_eq!(import(), (Some("Sidecar creator".into()), None, None));
         fs::remove_dir_all(dir).unwrap();
     }
 
@@ -2297,6 +2490,7 @@ mod export_tests {
             &conn,
             XmpImportMode::RefreshNonDestructive,
             Some(snapshot),
+            None,
         )
         .unwrap();
         assert_eq!(
@@ -3430,36 +3624,39 @@ pub(crate) fn source_details(content: &str) -> Result<crate::metadata::embedded:
         let Some(property) = field.xmp else { continue };
         let (key, uri, name) = (field.key, property.uri, property.name);
         if let Some(node) = properties.iter().find(|n| n.uri == uri && n.name == name) {
-            let container = node
-                .children
-                .iter()
-                .find(|n| n.uri == NS_RDF && matches!(n.name.as_str(), "Seq" | "Bag" | "Alt"));
-            let values = if let Some(container) = container {
-                container
-                    .children
-                    .iter()
-                    .filter(|n| n.uri == NS_RDF && n.name == "li")
-                    .map(|n| match n.lang.as_deref() {
-                        Some(lang) if lang != "x-default" => format!("[{lang}] {}", n.text.trim()),
-                        _ => n.text.trim().to_owned(),
-                    })
-                    .collect()
-            } else {
-                vec![node
-                    .attributes
-                    .iter()
-                    .find(|a| a.uri == NS_RDF && a.name == "resource")
-                    .map(|a| a.text.clone())
-                    .unwrap_or_else(|| node.value())]
-            };
             details.insert(
                 key.into(),
                 crate::metadata::embedded::DetailValue {
-                    values,
+                    values: source_property_values(node),
                     source: format!("Sidecar XMP:{name}"),
                 },
             );
         }
     }
     Ok(details)
+}
+
+fn source_property_values(node: &XmlNode) -> Vec<String> {
+    let container = node
+        .children
+        .iter()
+        .find(|n| n.uri == NS_RDF && matches!(n.name.as_str(), "Seq" | "Bag" | "Alt"));
+    if let Some(container) = container {
+        container
+            .children
+            .iter()
+            .filter(|n| n.uri == NS_RDF && n.name == "li")
+            .map(|n| match n.lang.as_deref() {
+                Some(lang) if lang != "x-default" => format!("[{lang}] {}", n.text.trim()),
+                _ => n.text.trim().to_owned(),
+            })
+            .collect()
+    } else {
+        vec![node
+            .attributes
+            .iter()
+            .find(|a| a.uri == NS_RDF && a.name == "resource")
+            .map(|a| a.text.clone())
+            .unwrap_or_else(|| node.value())]
+    }
 }
