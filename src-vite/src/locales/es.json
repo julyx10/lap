@@ -234,6 +234,7 @@
     }
   },
   "offline": {
+    "badge": "Sin conexión",
     "cloud_only": "Disponible solo en línea",
     "cloud_only_pending": "Disponible solo en línea — información incompleta",
     "original_unavailable": "El archivo original no está disponible",

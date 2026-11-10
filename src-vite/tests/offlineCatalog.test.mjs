@@ -9,8 +9,16 @@ function moduleBody(path) {
   return ts.transpile(source.replace(/^import[\s\S]*?from ['"][^'"]+['"];?\n/gm, '').replace(/export /g, ''), { target: ts.ScriptTarget.ES2022 });
 }
 const libConfig = { _libraryId: 'offline-test', album: { id: 1 }, activePane: 'album' };
-const availability = new Function('reactive', 'libConfig', moduleBody('../src/common/availability.ts') + '; return { isOriginalUnavailable, setAlbumAccessibility, setFileAccessibility, setFolderAccessibility, resetFileAccessibility, resetLibraryAccessibility, requiresOriginalAction };')(reactive, libConfig);
-const { isOriginalUnavailable, setAlbumAccessibility, setFileAccessibility, setFolderAccessibility, resetFileAccessibility, resetLibraryAccessibility, requiresOriginalAction } = availability;
+const clipboardUtils = fs.readFileSync(new URL('../src/common/utils.ts', import.meta.url), 'utf8');
+const getClipboardItemPaths = new Function(
+  ts.transpile(clipboardUtils.slice(
+    clipboardUtils.indexOf('export function getClipboardItemPaths'),
+    clipboardUtils.indexOf('// A null policy copies exactly the file shown in File Info.'),
+  ).replace('export function', 'function'), { target: ts.ScriptTarget.ES2022 })
+    + '; return getClipboardItemPaths;'
+)();
+const availability = new Function('reactive', 'libConfig', moduleBody('../src/common/availability.ts') + '; return { isOriginalStorageUnavailable, isOriginalUnavailable, setAlbumAccessibility, setFileAccessibility, setFolderAccessibility, resetFileAccessibility, resetLibraryAccessibility, requiresOriginalAction };')(reactive, libConfig);
+const { isOriginalStorageUnavailable, isOriginalUnavailable, setAlbumAccessibility, setFileAccessibility, setFolderAccessibility, resetFileAccessibility, resetLibraryAccessibility, requiresOriginalAction } = availability;
 
 test('offline state does not remove catalog data and follows reconnection, individual files and library scope', () => {
   const file = { id: 42, album_id: 1, album_accessible: true, file_path: '/photos/sub/image.jpg', rating: 5, thumbnail: 'cached' };
@@ -35,8 +43,8 @@ test('offline state does not remove catalog data and follows reconnection, indiv
 const source = fs.readFileSync(new URL('../src/common/fileMenu.ts', import.meta.url), 'utf8');
 const iconNames = source.match(/import \{([^}]+)\} from '@\/common\/icons'/)[1].split(',').map(s => s.trim()).filter(Boolean);
 const config = { main: { sidebarIndex: 1 }, settings: { face: { enabled: true } }, externalAppsFor: () => [{ id: 'editor', name: 'Editor' }], defaultExternalApp: () => null };
-const useFileMenuItems = new Function('computed', 'markRaw', 'config', 'libConfig', 'SIDEBAR', 'DEFAULT_PLATFORM', 'getShortcutLabel', 'isOriginalUnavailable', 'requiresOriginalAction', 'isWin', ...iconNames, moduleBody('../src/common/fileMenu.ts') + '; return useFileMenuItems;')(
-  computed, markRaw, config, libConfig, { ALBUM: 1 }, '', () => '', isOriginalUnavailable, requiresOriginalAction, true, ...iconNames.map(() => ({})),
+const useFileMenuItems = new Function('computed', 'markRaw', 'config', 'libConfig', 'SIDEBAR', 'DEFAULT_PLATFORM', 'getShortcutLabel', 'isOriginalStorageUnavailable', 'isOriginalUnavailable', 'requiresOriginalAction', 'isWin', ...iconNames, moduleBody('../src/common/fileMenu.ts') + '; return useFileMenuItems;')(
+  computed, markRaw, config, libConfig, { ALBUM: 1 }, '', () => '', isOriginalStorageUnavailable, isOriginalUnavailable, requiresOriginalAction, true, ...iconNames.map(() => ({})),
 );
 const words = () => new Proxy({}, { get: (_, key) => String(key) });
 const locale = ref({ menu: { file: words(), meta: words() }, rating: words(), culling: words() });
@@ -48,34 +56,69 @@ test('single-file menu retains catalog organization and blocks original-file ope
   setAlbumAccessibility(1, false);
   const called = [];
   const menu = useFileMenuItems(file, locale, true, key => key, name => called.push(name));
-  for (const name of ['edit', 'print', 'rename', 'move-within-library', 'move-to-folder', 'copy-to-folder', 'trash', 'reveal', 'refresh-file-info', 'set-desktop-wallpaper', 'open-external-app:editor']) {
+  for (const name of ['edit', 'print', 'rename', 'copy', 'move-within-library', 'move-to-folder', 'copy-to-folder', 'trash', 'reveal', 'refresh-file-info', 'set-desktop-wallpaper', 'open-external-app:editor']) {
     assert.equal(action(menu.value, name).disabled, true, name);
     action(menu.value, name).action();
   }
   assert.deepEqual(called, []);
-  for (const name of ['copy', 'favorite', 'rating-5', 'tag', 'comment', 'add-to-collection', 'rotate', 'open', 'set-album-cover']) {
+  for (const name of ['favorite', 'rating-5', 'tag', 'comment', 'add-to-collection', 'rotate', 'open', 'set-album-cover']) {
     assert.equal(action(menu.value, name).disabled, false, name);
     action(menu.value, name).action();
   }
-  assert.ok(called.includes('copy'));
   assert.ok(called.includes('tag'));
+
   setAlbumAccessibility(1, true);
+  assert.equal(action(menu.value, 'copy').disabled, false);
   assert.equal(action(menu.value, 'rename').disabled, false);
   action(menu.value, 'rename').action();
   assert.equal(called.at(-1), 'rename');
 });
 
+test('clipboard menu blocks offline storage and leaves individual RAW pair checks to copy', () => {
+  const file = ref({
+    album_id: 1, file_type: 3, media_subtype: 'raw_jpeg_pair',
+    file_path: '/photos/pair.nef', live_photo_video_path: '/photos/pair.jpg',
+  });
+  const called = [];
+  const menu = useFileMenuItems(file, locale, true, key => key, name => called.push(name));
+  try {
+    setFileAccessibility(file.value.file_path, false);
+    assert.equal(action(menu.value, 'rename').disabled, true);
+    assert.equal(action(menu.value, 'copy').disabled, false);
+    action(menu.value, 'copy').action();
+    assert.deepEqual(called, ['copy']);
+
+    setFolderAccessibility('/photos', false);
+    assert.equal(action(menu.value, 'copy').disabled, true);
+    action(menu.value, 'copy').action();
+    assert.deepEqual(called, ['copy']);
+
+    setFolderAccessibility('/photos', true);
+    setAlbumAccessibility(1, false);
+    assert.equal(action(menu.value, 'copy').disabled, true);
+  } finally {
+    setAlbumAccessibility(1, true);
+    resetFileAccessibility();
+  }
+});
+
 test('mixed availability blocks the entire selection rather than silently skipping offline files', () => {
   const unavailable = ref(true);
+  const storageUnavailable = ref(true);
   const menu = useFileMenuItems(ref(null), locale, true, key => key, () => {}, {
-    selectMode: ref(true), selectionMediaKind: ref('image'), selectionCount: ref(3), selectionHasUnavailable: unavailable,
+    selectMode: ref(true), selectionMediaKind: ref('image'), selectionCount: ref(3), selectionHasUnavailable: unavailable, selectionStorageUnavailable: storageUnavailable,
   });
   assert.equal(action(menu.value, 'refresh-file-info').disabled, true);
   assert.equal(action(menu.value, 'create-montage').disabled, true);
+  assert.equal(action(menu.value, 'copy').disabled, true);
   assert.equal(menu.value[2].disabled, true);
   assert.equal(action(menu.value, 'compare-selected-images').disabled, false);
+  storageUnavailable.value = false;
+  assert.equal(action(menu.value, 'copy').disabled, false);
+  assert.equal(action(menu.value, 'refresh-file-info').disabled, true);
   unavailable.value = false;
   assert.equal(action(menu.value, 'refresh-file-info').disabled, false);
+  assert.equal(action(menu.value, 'copy').disabled, false);
 });
 
 const imageSource = fs.readFileSync(new URL('../src/components/Image.vue', import.meta.url), 'utf8');
@@ -194,6 +237,116 @@ const dedupSource = fs.readFileSync(new URL('../src/components/DedupPane.vue', i
 function extractFunction(source, name, next) {
   return ts.transpile(source.slice(source.indexOf(name), source.indexOf(next, source.indexOf(name))), { target: ts.ScriptTarget.ES2022 });
 }
+
+test('clipboard selection checks and hydrates only the items it can copy', async () => {
+  const files = Array.from({ length: 11 }, (_, index) => ({ id: index + 1, offline: index === 10 }));
+  const selectedFiles = ref(files);
+  const fetched = [];
+  const deps = {
+    computed, selectedFiles, selectedFileIds: new Set(files.map(file => file.id)),
+    selectionAccessFiles: ref(files), libConfig,
+    isOriginalStorageUnavailable: file => file.offline,
+    getFilesByIds: async ids => { fetched.push(ids); return files.filter(file => ids.includes(file.id)); },
+  };
+  const selection = new Function(...Object.keys(deps),
+    extractFunction(contentSource, 'const CLIPBOARD_SELECTION_LIMIT =', 'const selectionHasCloudOnly')
+    + extractFunction(contentSource, 'async function getSelectedItemsForClipboard(', '// Track last visible range')
+    + '; return { selectionStorageUnavailable, getSelectedItemsForClipboard };'
+  )(...Object.values(deps));
+  assert.equal(selection.selectionStorageUnavailable.value, false);
+  assert.equal((await selection.getSelectedItemsForClipboard()).length, 10);
+  assert.deepEqual(fetched, []);
+
+  selectedFiles.value = files.slice(0, 9);
+  assert.equal(selection.selectionStorageUnavailable.value, false);
+  assert.deepEqual((await selection.getSelectedItemsForClipboard()).map(file => file.id), files.slice(0, 10).map(file => file.id));
+  assert.deepEqual(fetched, [[10]]);
+
+  selectedFiles.value = [...files.slice(0, 9), files[10]];
+  assert.equal(selection.selectionStorageUnavailable.value, true);
+});
+
+test('selection context menu resolves unloaded clipboard candidates before displaying copy', async () => {
+  const copy = { action: { actionName: 'copy' }, disabled: false };
+  const items = ref([]);
+  const files = [{ id: 1 }];
+  const deps = {
+    selectMode: ref(true), uiStore: { inputStack: [] }, fileList: ref(files),
+    isRealFileItem: file => !!file, selectedFileIds: new Set([1, 2]), selectedItemIndex: ref(0),
+    selectedFilesVersion: ref(1), libConfig, moreActionMenuItems: items,
+    selectionMenuItems: ref([copy]), nextTick: () => {},
+    getSelectedItemsForClipboard: async showError => {
+      assert.equal(showError, false);
+      return [...files, { id: 2, offline: true }];
+    },
+    isOriginalStorageUnavailable: file => !!file.offline,
+  };
+  const open = new Function(...Object.keys(deps),
+    extractFunction(contentSource, 'function handleSelectionContextMenu(', '// Opens a More-actions submenu')
+      + '; return handleSelectionContextMenu;'
+  )(...Object.values(deps));
+  open(0, { clientX: 0, clientY: 0 });
+  assert.equal((await items.value())[0].disabled, true);
+});
+
+test('image viewer copy action sends the active RAW pair path selected by policy', async () => {
+  const viewer = fs.readFileSync(new URL('../src/views/ImageViewer.vue', import.meta.url), 'utf8');
+  const calls = [];
+  const file = { file_path: '/photos/active.nef', live_photo_video_path: '/photos/active.jpg', media_subtype: 'raw_jpeg_pair' };
+  const deps = {
+    getActiveFilePane: () => 'right',
+    getFileInfoByPane: pane => { assert.equal(pane, 'right'); return file; },
+    isOriginalStorageUnavailable: () => false, getClipboardItemPaths,
+    config: { settings: { rawPairClipboardMode: 'jpeg' } },
+    checkFileAccessibility: async path => { calls.push(['check', path]); return true; },
+    copyImages: async paths => { calls.push(['copy', paths]); return paths.length; },
+    toast: { success: () => {}, warning: () => {}, error: () => {} },
+    t: key => key,
+  };
+  const handle = new Function(...Object.keys(deps),
+    extractFunction(viewer, 'async function copyActiveFiles(', '// Handle keyboard shortcuts')
+    + extractFunction(viewer, 'const handleItemAction =', '</script>')
+    + '; return handleItemAction;'
+  )(...Object.values(deps));
+  await handle({ action: 'copy' });
+  assert.deepEqual(calls, [['check', '/photos/active.jpg'], ['copy', ['/photos/active.jpg']]]);
+});
+
+test('clipboard paste distinguishes an unavailable destination from an empty clipboard', async () => {
+  const warnings = [];
+  let reads = 0;
+  const destination = { albumId: 1, folderId: 2, folderPath: '/usb/photos' };
+  const deps = {
+    isPastingClipboard: ref(false), acceptDrops: ref(true),
+    resolveCurrentAlbumImportDestination: async () => destination,
+    isDirectoryAccessible: async () => false,
+    importClipboard: async () => { reads++; return []; },
+    toast: { warning: key => warnings.push(key), error: key => warnings.push(key) },
+    t: key => key,
+    console: { error: () => {} },
+  };
+  const createPaste = new Function(...Object.keys(deps),
+    extractFunction(contentSource, 'async function pasteClipboardImage(', 'function removeDragGhost(')
+      + '; return pasteClipboardImage;'
+  );
+  const paste = () => createPaste(...Object.values(deps))();
+
+  await paste();
+  assert.equal(reads, 0);
+  deps.isDirectoryAccessible = async () => true;
+  await paste();
+
+  let checks = 0;
+  deps.isDirectoryAccessible = async () => ++checks === 1;
+  deps.importClipboard = async () => { throw new Error('Drive disconnected'); };
+  await paste();
+  assert.deepEqual(warnings, [
+    'import_files.destination_unavailable',
+    'msgbox.drop_import.no_clipboard_image',
+    'import_files.destination_unavailable',
+  ]);
+  assert.equal(deps.isPastingClipboard.value, false);
+});
 
 test('dedup detects missing files, skips offline albums and ignores responses from an old library', async () => {
   const files = [
@@ -393,7 +546,7 @@ test('oversized drag selection skips native preview and hydration while keeping 
 
 
 test('cloud indexing menu falls back to English when the locale has no new label', () => {
-  const menu = useFileMenuItems(ref(null), ref({ menu: { file: {}, meta: {} } }), true, key => key, () => {}, {
+  const menu = useFileMenuItems(ref(null), ref({ menu: { file: {}, meta: {} }, rating: words(), culling: words() }), true, key => key, () => {}, {
     selectMode: ref(true), selectionCount: ref(1), selectionHasCloudOnly: ref(true),
   });
   assert.equal(action(menu.value, 'index-cloud-files').label, 'Download, index, then free up space');

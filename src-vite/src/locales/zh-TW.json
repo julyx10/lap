@@ -234,6 +234,7 @@
     }
   },
   "offline": {
+    "badge": "離線",
     "cloud_only": "僅線上可用",
     "cloud_only_pending": "僅線上可用 — 檔案資訊待補齊",
     "original_unavailable": "原始檔案暫時無法存取",

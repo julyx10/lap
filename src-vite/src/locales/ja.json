@@ -234,6 +234,7 @@
     }
   },
   "offline": {
+    "badge": "オフライン",
     "cloud_only": "オンラインでのみ利用可能",
     "cloud_only_pending": "オンラインでのみ利用可能 — ファイル情報が未取得です",
     "original_unavailable": "元のファイルにアクセスできません",

@@ -212,7 +212,7 @@
 
 <script setup lang="ts">
 
-import { isOriginalUnavailable, setAlbumAccessibility, resetFileAccessibility } from '@/common/availability';
+import { isOriginalStorageUnavailable, isOriginalUnavailable, setAlbumAccessibility, resetFileAccessibility } from '@/common/availability';
 import { ref, watch, computed, onMounted, onUnmounted, reactive } from 'vue';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { emit, listen } from '@tauri-apps/api/event';
@@ -220,10 +220,12 @@ import { useI18n } from 'vue-i18n';
 import { useToast } from '@/common/toast';
 import { useUIStore } from '@/stores/uiStore';
 import { config, libConfig } from '@/common/config';
-import { isWin, isMac, isLinux, copyFilePaths, getSlideShowInterval, SCALE_VALUES } from '@/common/utils';
+import { isWin, isMac, isLinux, copyFilePaths, getClipboardItemPaths, getSlideShowInterval, SCALE_VALUES } from '@/common/utils';
 import { matchesShortcut, ShortcutActionId, ShortcutPlatform, VIEW_BACKGROUND_SHORTCUTS } from '@/common/shortcuts';
 import { handleVideoPlaybackShortcut, handleVideoEscapeShortcut } from '@/common/video';
 import {
+  checkFileAccessibility,
+  copyImages,
   editFileComment,
   getFileCollections,
   getFileInfo,
@@ -616,6 +618,32 @@ async function copyActiveFilePath() {
   }
 }
 
+async function copyActiveFiles(pane = getActiveFilePane()) {
+  const file = getFileInfoByPane(pane);
+  if (!file) return;
+  try {
+    if (isOriginalStorageUnavailable(file)) {
+      toast.warning(t('offline.requires_original'));
+      return;
+    }
+    const paths = getClipboardItemPaths(file, config.settings.rawPairClipboardMode);
+    if (!paths.length) return;
+    const available = await Promise.all(paths.map(path => checkFileAccessibility(path)));
+    if (available.some(value => !value)) {
+      toast.warning(t('offline.requires_original'));
+      return;
+    }
+    const count = await copyImages(paths);
+    if (count > 0) {
+      toast.success(t('tooltip.copy_image.success', { count: count.toLocaleString() }));
+      return;
+    }
+  } catch (error) {
+    console.error('Failed to copy files to clipboard:', error);
+  }
+  toast.error(t('tooltip.copy_image.failed'));
+}
+
 // Handle keyboard shortcuts
 function handleVideoSpaceKeyDown(event: KeyboardEvent) {
   if (uiStore.inputStack.length > 0 || getFileInfoByPane(getActivePane())?.file_type !== 2) return;
@@ -655,6 +683,12 @@ function handleKeyDown(event: KeyboardEvent) {
     !matchesShortcut('view.cycleBackground', event, shortcutPlatform) &&
     getMatchedViewBackground(event) === null
   ) {
+    return;
+  }
+
+  if (matchesShortcut('file.copy', event, shortcutPlatform) && !isEditingText) {
+    event.preventDefault();
+    if (!event.repeat) void copyActiveFiles();
     return;
   }
 
@@ -1479,6 +1513,9 @@ const handleItemAction = async (payload: { action: string }) => {
   const pane = getActiveFilePane();
 
   switch (payload.action) {
+    case 'copy':
+      await copyActiveFiles(pane);
+      break;
     case 'favorite':
       await toggleFavorite(pane);
       break;

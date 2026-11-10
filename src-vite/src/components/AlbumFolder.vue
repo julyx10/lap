@@ -68,7 +68,6 @@
           <div class="overflow-hidden whitespace-pre text-ellipsis">
             {{ child.name }}
           </div>
-          <IconExclamation v-if="unavailable || isFolderUnavailable(child.path)" class="ml-1 size-3 shrink-0 text-warning/70" :aria-label="t('offline.original_unavailable')" />
           <div class="ml-auto flex flex-row items-center text-base-content/30">
             <IconHeartFilled v-if="child.is_favorite" class="mr-1 w-4 h-4 shrink-0 text-primary/70" />
             <span
@@ -213,7 +212,6 @@ import { ask, open as openDialog } from '@tauri-apps/plugin-dialog';
 
 import {
   IconRight,
-  IconExclamation,
   IconMore,
   IconNewFolder,
   IconRename,

@@ -827,7 +827,7 @@ import BatchRenameDialog from '@/components/BatchRenameDialog.vue';
 const PhotoMapView = defineAsyncComponent(() => import('@/components/PhotoMapView.vue'));
 import ContextMenu from '@/components/ContextMenu.vue';
 import { MAX_NATIVE_DRAG_FILES, createDragPreview, isWindowDragEdge, isNativeFileDragActive, isReturningNativeFileDrag, startNativeFileDrag } from '@/common/nativeDrag';
-import { isOriginalUnavailable, setFileAccessibility, setFolderAccessibility, requiresOriginalAction } from '@/common/availability';
+import { isOriginalStorageUnavailable, isOriginalUnavailable, setFileAccessibility, setFolderAccessibility, requiresOriginalAction } from '@/common/availability';
 import { useFileMenuItems } from '@/common/fileMenu';
 import Welcome from '@/components/Welcome.vue';
 import MediaViewer from '@/components/MediaViewer.vue';
@@ -1236,6 +1236,19 @@ const selectionAccessPending = ref(false);
 const selectionHasUnavailable = computed(() => selectionAccessPending.value
   || selectionAccessFiles.value.some(isOriginalUnavailable)
   || getActionableSelectedItems().some(isOriginalUnavailable));
+const CLIPBOARD_SELECTION_LIMIT = 10;
+const clipboardSelection = computed(() => {
+  const files = selectedFiles.value.slice(0, CLIPBOARD_SELECTION_LIMIT);
+  const loadedIds = new Set(files.map(file => Number(file.id)));
+  const missingIds: number[] = [];
+  for (const id of selectedFileIds) {
+    if (files.length + missingIds.length >= CLIPBOARD_SELECTION_LIMIT) break;
+    if (!loadedIds.has(id)) missingIds.push(id);
+  }
+  return { files, missingIds };
+});
+const selectionStorageUnavailable = computed(() =>
+  clipboardSelection.value.files.some(isOriginalStorageUnavailable));
 const selectionHasCloudOnly = computed(() => getActionableSelectedItems().some(file => file.cloud_only));
 let selectionAccessRequest = 0;
 let selectionAccessTimer: ReturnType<typeof setTimeout> | null = null;
@@ -1276,13 +1289,14 @@ const selectionMenuItems = useFileMenuItems(
     selectionFirstFavorite: computed(() => Boolean(selectedFiles.value[0]?.is_favorite)),
     selectionCount: selectedCount,
     selectionHasUnavailable,
+    selectionStorageUnavailable,
     selectionHasCloudOnly,
     selectionInCollection: computed(() => currentQuerySource.value === 'collection'),
   },
 );
 
 const moreActionMenuRef = ref<InstanceType<typeof ContextMenu> | null>(null);
-const moreActionMenuItems = ref<any[]>([]);
+const moreActionMenuItems = ref<any[] | (() => Promise<any[]>)>([]);
 
 function handleSelectionContextMenu(index: number, event: MouseEvent) {
   if (!selectMode.value || uiStore.inputStack.length > 0) return;
@@ -1295,7 +1309,18 @@ function handleSelectionContextMenu(index: number, event: MouseEvent) {
       setItemSelected(index, true);
     }
     selectedItemIndex.value = index;
-    moreActionMenuItems.value = selectionMenuItems.value;
+    moreActionMenuItems.value = async () => {
+      const libraryId = libConfig._libraryId;
+      const selectionVersion = selectedFilesVersion.value;
+      const files = await getSelectedItemsForClipboard(false);
+      if (!selectMode.value || libraryId !== libConfig._libraryId
+        || selectionVersion !== selectedFilesVersion.value) return [];
+
+      const clipboardUnavailable = !files || files.some(isOriginalStorageUnavailable);
+      return selectionMenuItems.value.map(item => item.action?.actionName === 'copy'
+        ? { ...item, disabled: item.disabled || clipboardUnavailable }
+        : item);
+    };
     void nextTick(() => moreActionMenuRef.value?.open?.(event.clientX, event.clientY));
   };
   if (index === selectedItemIndex.value) openMenu();
@@ -2926,18 +2951,19 @@ async function pasteClipboardImage(target?: { albumId: number; folderPath?: stri
     return;
   }
 
-  const destination = target
-    ? await resolveAlbumImportDestination(Number(target.albumId || 0), target.folderPath)
-    : await resolveCurrentAlbumImportDestination();
-  if (!destination) {
-    showDropWarning.value = true;
-    return;
-  }
-
   isPastingClipboard.value = true;
+  let destination: Awaited<ReturnType<typeof resolveAlbumImportDestination>> = null;
   try {
+    destination = target
+      ? await resolveAlbumImportDestination(Number(target.albumId || 0), target.folderPath)
+      : await resolveCurrentAlbumImportDestination();
+    if (!destination || !await isDirectoryAccessible(destination.folderPath)) {
+      toast.warning(t('import_files.destination_unavailable'));
+      return;
+    }
+
     const files = await importClipboard(destination.folderId, destination.folderPath);
-    if (!Array.isArray(files) || files.length === 0) {
+    if (files.length === 0) {
       toast.warning(t('msgbox.drop_import.no_clipboard_image'));
       return;
     }
@@ -2945,7 +2971,11 @@ async function pasteClipboardImage(target?: { albumId: number; folderPath?: stri
     toast.success(t('msgbox.drop_import.success', { count: files.length }));
   } catch (error) {
     console.error('Failed to import clipboard image:', error);
-    toast.warning(t('msgbox.drop_import.no_clipboard_image'));
+    if (!destination || !await isDirectoryAccessible(destination.folderPath)) {
+      toast.warning(t('import_files.destination_unavailable'));
+    } else {
+      toast.error(t('import_files.copy_failed'));
+    }
   } finally {
     isPastingClipboard.value = false;
   }
@@ -5380,7 +5410,8 @@ const handleKeyDown = (e: any) => {
     if (!event.repeat) void clickCopyFilePaths();
   } else if (matchesShortcut('file.copy', event, shortcutPlatform)) {
     if (selectMode.value && selectedCount.value === 0) return;
-    void clickCopyImages(fileList.value[selectedItemIndex.value]);
+    event.preventDefault?.();
+    if (!event.repeat) void clickCopyImages(fileList.value[selectedItemIndex.value]);
   // macOS handles Cmd+Arrow in App's capture listener before the content DOM handler.
   } else if (isMac && matchesShortcut('view.first', event, shortcutPlatform)) {
     keyActions.Home();
@@ -7488,37 +7519,19 @@ async function getActionableSelectedItemsForAction() {
   return getActionableSelectedItems();
 }
 
-async function getSelectedItemsForClipboard(limit = 10) {
-  if (selectedFileIds.size > 0 && getActionableSelectedItems().length < Math.min(selectedFileIds.size, limit)) {
-    const hydratedItems = await hydrateSelectedFilesByIds();
-    if (!hydratedItems) {
-      toast.error(t('info_panel.selection_load_failed'));
-      return null;
-    }
-    return hydratedItems.slice(0, limit);
+async function getSelectedItemsForClipboard(showError = true) {
+  const { files, missingIds } = clipboardSelection.value;
+  if (!missingIds.length) return files;
+
+  const libraryId = libConfig._libraryId;
+  const hydrated = await getFilesByIds(missingIds);
+  if (libraryId !== libConfig._libraryId) return null;
+  const byId = new Map((hydrated || []).map(file => [Number(file.id), file]));
+  if (missingIds.some(id => !byId.has(id))) {
+    if (showError) toast.error(t('info_panel.selection_load_failed'));
+    return null;
   }
-
-  const selectedItems: any[] = [];
-  const chunkSize = Math.max(1, selectionChunkSize.value);
-
-  for (let chunkStart = 0; chunkStart < fileList.value.length && selectedItems.length < limit; chunkStart += chunkSize) {
-    const chunkEnd = Math.min(fileList.value.length, chunkStart + chunkSize);
-    const chunk = fileList.value.slice(chunkStart, chunkEnd);
-    if (chunk.some(item => item?.isSelected && item?.isPlaceholder)) {
-      if (!await hydrateRangeForSelection(chunkStart, chunkEnd)) {
-        toast.error(t('info_panel.selection_load_failed'));
-        return null;
-      }
-    }
-    for (let index = chunkStart; index < chunkEnd && selectedItems.length < limit; index++) {
-      const item = fileList.value[index];
-      if (item?.isSelected && isRealFileItem(item)) {
-        selectedItems.push(item);
-      }
-    }
-  }
-
-  return selectedItems;
+  return [...files, ...missingIds.map(id => byId.get(id))];
 }
 
 // Track last visible range to avoid redundant fetches
@@ -8894,6 +8907,7 @@ async function clickCopyFilePaths() {
 
 const clickCopyImages = async (fallbackFile?: any) => {
   if (isProcessing.value) return;
+  isProcessing.value = true;
 
   let copiedCount = 0;
   let requestedCount = 0;
@@ -8902,13 +8916,23 @@ const clickCopyImages = async (fallbackFile?: any) => {
   try {
     if (selectMode.value && selectedCount.value > 0) {
       requestedCount = selectedCount.value;
-      const selectedItems = await getSelectedItemsForClipboard(10);
+      const selectedItems = await getSelectedItemsForClipboard();
       if (!selectedItems) {
         cancelled = true;
         return;
       }
-      filePaths = getClipboardFilePaths(selectedItems, 20);
+      if (selectedItems.some(isOriginalStorageUnavailable)) {
+        cancelled = true;
+        toast.warning(t('offline.requires_original'));
+        return;
+      }
+      filePaths = getClipboardFilePaths(selectedItems, CLIPBOARD_SELECTION_LIMIT * 2);
     } else if (fallbackFile) {
+      if (isOriginalStorageUnavailable(fallbackFile)) {
+        cancelled = true;
+        toast.warning(t('offline.requires_original'));
+        return;
+      }
       filePaths = getClipboardFilePaths([fallbackFile]);
       requestedCount = filePaths.length;
     }
@@ -8916,7 +8940,6 @@ const clickCopyImages = async (fallbackFile?: any) => {
       cancelled = true;
       return;
     }
-    isProcessing.value = true;
     const available = await Promise.all(filePaths.map(path => checkFileAccessibility(path)));
     if (available.some(value => !value)) {
       cancelled = true;
@@ -8932,8 +8955,8 @@ const clickCopyImages = async (fallbackFile?: any) => {
       return;
     } else if (copiedCount > 0) {
       toast.success(t('tooltip.copy_image.success', { count: copiedCount.toLocaleString() }));
-      if (requestedCount > 10) {
-        toast.warning(t('tooltip.copy_image.limit', { count: 10 }));
+      if (requestedCount > CLIPBOARD_SELECTION_LIMIT) {
+        toast.warning(t('tooltip.copy_image.limit', { count: CLIPBOARD_SELECTION_LIMIT }));
       }
     } else {
       toast.error(localeMsg.value.tooltip.copy_image.failed);

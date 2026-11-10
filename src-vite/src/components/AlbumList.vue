@@ -175,7 +175,10 @@
               <div class="flex flex-col overflow-hidden">
                 <div class="flex min-w-0 items-center gap-1">
                   <span class="truncate whitespace-pre">{{ album.name }}</span>
-                  <IconExclamation v-if="album.is_accessible === false" class="size-4 shrink-0 text-warning/70" :aria-label="t('offline.original_unavailable')" />
+                  <span
+                    v-if="album.is_accessible === false"
+                    class="shrink-0 rounded-box bg-warning/10 px-1.5 py-0.5 text-[10px] leading-none text-warning/80"
+                  >{{ t('offline.badge') }}</span>
                 </div>
                 <div
                   v-if="album.description"
@@ -327,7 +330,6 @@ import TButton from '@/components/TButton.vue';
 
 import {
   IconAdd,
-  IconExclamation,
   IconDownload,
   IconMore,
   IconEdit,

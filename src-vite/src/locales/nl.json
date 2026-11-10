@@ -234,6 +234,7 @@
     }
   },
   "offline": {
+    "badge": "Offline",
     "cloud_only": "Alleen online beschikbaar",
     "cloud_only_pending": "Alleen online beschikbaar — bestandsinformatie onvolledig",
     "original_unavailable": "Het oorspronkelijke bestand is niet beschikbaar",

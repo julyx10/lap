@@ -234,6 +234,7 @@
     }
   },
   "offline": {
+    "badge": "离线",
     "cloud_only": "仅在线可用",
     "cloud_only_pending": "仅在线可用 — 文件信息待补全",
     "original_unavailable": "原文件暂时无法访问",

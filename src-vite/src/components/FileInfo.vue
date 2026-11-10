@@ -284,7 +284,7 @@
             <div class="flex items-center text-[11px] text-base-content/30 h-6">{{ $t('file_info.name') }}</div>
             <div class="group/field flex items-center gap-1">
               <div
-                v-if="isPrimaryGeneralInfo && isRenaming"
+                v-if="canRenameGeneralFile && isRenaming"
                 class="flex items-center w-full min-w-0"
               >
                 <input
@@ -301,12 +301,23 @@
                   class="ml-1 text-[12px] text-base-content/70 whitespace-nowrap"
                 >.{{ renamingExt }}</span>
               </div>
-              <span v-else
-                class="flex items-center gap-1 text-[12px] font-medium text-base-content/70 hover:text-base-content flex-1 min-w-0"
-                :class="{ 'cursor-text': isPrimaryGeneralInfo }"
-                @dblclick.stop="isPrimaryGeneralInfo && startRename()"
-              >
-                <span class="min-w-0 break-all">{{ generalFileInfo?.name }}</span>
+              <template v-else>
+                <span
+                  class="flex flex-1 min-w-0 items-center gap-1 text-[12px] font-medium text-base-content/70"
+                  :class="{ 'cursor-text hover:text-base-content': canRenameGeneralFile }"
+                  @dblclick.stop="startRename"
+                >
+                  <span class="min-w-0 break-all">{{ generalFileInfo?.name }}</span>
+                  <span
+                    v-if="generalFileUnavailable"
+                    class="shrink-0 text-warning/70"
+                    :title="t('offline.original_unavailable')"
+                    :aria-label="t('offline.original_unavailable')"
+                    role="img"
+                  >
+                    <IconExclamation class="size-3.5" aria-hidden="true" />
+                  </span>
+                </span>
                 <button
                   type="button"
                   class="shrink-0 p-1 cursor-pointer hover:text-primary"
@@ -316,8 +327,7 @@
                 >
                   <IconCopy class="size-3.5" />
                 </button>
-                <IconExclamation v-if="isOriginalUnavailable(generalFileInfo)" class="h-3.5 w-3.5 shrink-0 text-warning/70" :aria-label="t('offline.original_unavailable')" />
-              </span>
+              </template>
             </div>
             </template>
 
@@ -962,7 +972,8 @@ const generalFileInfo = computed(() => (
     ? rawJpegCompanion.value
     : props.fileInfo
 ));
-const isPrimaryGeneralInfo = computed(() => generalInfoTab.value === 'raw');
+const generalFileUnavailable = computed(() => isOriginalUnavailable(generalFileInfo.value));
+const canRenameGeneralFile = computed(() => generalInfoTab.value === 'raw' && !generalFileUnavailable.value);
 const motionPhotoVideoPath = ref<string | null>(null);
 let motionPhotoVideoRequestSeq = 0;
 const previewVideoPath = computed(() => {
@@ -1313,8 +1324,7 @@ watch(
 );
 
 const startRename = () => {
-  if (isOriginalUnavailable(props.fileInfo)) return;
-  if (!props.fileInfo) return;
+  if (!canRenameGeneralFile.value || !props.fileInfo) return;
   
   const { name, ext } = extractFileName(props.fileInfo.name);
   renamingName.value = name;
@@ -1336,8 +1346,16 @@ const cancelRename = () => {
   uiStore.removeInputHandler('FileInfo-rename');
 };
 
+watch(canRenameGeneralFile, (canRename) => {
+  if (!canRename && isRenaming.value) cancelRename();
+});
+
 const finishRename = async () => {
   if (!isRenaming.value || !props.fileInfo) return;
+  if (!canRenameGeneralFile.value) {
+    cancelRename();
+    return;
+  }
 
   const newName = renamingName.value.trim();
   const { ext } = extractFileName(props.fileInfo.name);

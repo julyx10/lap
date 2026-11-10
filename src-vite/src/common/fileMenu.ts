@@ -1,4 +1,4 @@
-import { isOriginalUnavailable, requiresOriginalAction } from '@/common/availability';
+import { isOriginalStorageUnavailable, isOriginalUnavailable, requiresOriginalAction } from '@/common/availability';
 import { computed, markRaw, Ref } from 'vue';
 import { config, libConfig } from '@/common/config';
 import { SIDEBAR } from '@/common/constants';
@@ -51,13 +51,25 @@ export const useFileMenuItems = (
     selectionMediaKind?: Ref<'image' | 'video' | 'mixed' | 'empty'>;
     selectionCount?: Ref<number>;
     selectionHasUnavailable?: Ref<boolean>;
+    selectionStorageUnavailable?: Ref<boolean>;
     selectionHasCloudOnly?: Ref<boolean>;
     selectionInCollection?: Ref<boolean>;
     selectionFirstFavorite?: Ref<boolean>;
   }
 ) => {
+  const requiresAvailableFile = (action: string) => action === 'copy' || requiresOriginalAction(action);
+  const actionUnavailable = (action: string, target: any) => {
+    if (options?.selectMode?.value) {
+      return action === 'copy'
+        ? (options.selectionStorageUnavailable?.value ?? options.selectionHasUnavailable?.value)
+        : options.selectionHasUnavailable?.value;
+    }
+    return action === 'copy'
+      ? isOriginalStorageUnavailable(target)
+      : isOriginalUnavailable(target);
+  };
   const createAction = (actionName: string) => Object.assign(() => {
-    if (requiresOriginalAction(actionName) && (options?.selectMode?.value ? options?.selectionHasUnavailable?.value : isOriginalUnavailable(file.value))) return;
+    if (requiresAvailableFile(actionName) && actionUnavailable(actionName, file.value)) return;
     onAction(actionName);
   }, { actionName });
   const shortcut = (actionId: ShortcutActionId) => getShortcutLabel(actionId, DEFAULT_PLATFORM);
@@ -105,10 +117,9 @@ export const useFileMenuItems = (
       batchActions.has(item.action?.actionName) || batchLabels.has(item.label)
     ).map(item => ({
       ...item,
-      disabled: selectionCount === 0 || (unavailable && (
-        requiresOriginalAction(item.action?.actionName || '')
-        || item.label === translate('menu.file.move_copy')
-      )),
+      disabled: selectionCount === 0
+        || (requiresAvailableFile(item.action?.actionName || '') && actionUnavailable(item.action.actionName, null))
+        || (unavailable && item.label === translate('menu.file.move_copy')),
       hideInSelectionPanel: true,
     }));
 
@@ -411,12 +422,15 @@ export const useFileMenuItems = (
       },
     ];
     const applyAvailability = (item: any): any => {
-      const requiresOriginal = requiresOriginalAction(item.action?.actionName || '')
-        || item.label === menuLabel(OPEN_IN_APP_LABELS.generic)
+      const action = item.action?.actionName || '';
+      const requiresAvailableGroup = item.label === menuLabel(OPEN_IN_APP_LABELS.generic)
         || item.label === translate('menu.file.move_copy');
       return {
         ...item,
-        disabled: !!item.disabled || (unavailable && requiresOriginal),
+        disabled: !!item.disabled
+          || (action === 'copy'
+            ? actionUnavailable(action, f)
+            : unavailable && (requiresOriginalAction(action) || requiresAvailableGroup)),
         children: item.children?.map(applyAvailability),
       };
     };

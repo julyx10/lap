@@ -234,6 +234,7 @@
     }
   },
   "offline": {
+    "badge": "Offline",
     "cloud_only": "Csak online érhető el",
     "cloud_only_pending": "Csak online érhető el — hiányos fájlinformációk",
     "original_unavailable": "Az eredeti fájl nem érhető el",

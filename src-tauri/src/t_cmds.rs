@@ -2545,6 +2545,7 @@ pub async fn import_clipboard(
     #[cfg(target_os = "linux")]
     {
         let clipboard_data = crate::t_pasteboard::get_clipboard_import_data(&_app_handle).await?;
+        let mut file_error = None;
         if !clipboard_data.file_paths.is_empty() {
             let mut imported = Vec::new();
             for path in clipboard_data
@@ -2559,11 +2560,10 @@ pub async fn import_clipboard(
                 }
                 match import_clipboard_file(path, folder_id, folder_path) {
                     Ok(file) => imported.push(file),
-                    Err(error) => eprintln!(
-                        "Failed to import clipboard file {}: {}",
-                        path.display(),
-                        error
-                    ),
+                    Err(error) => {
+                        eprintln!("Failed to import clipboard file {}: {}", path.display(), error);
+                        file_error.get_or_insert(error);
+                    }
                 }
             }
             if !imported.is_empty() {
@@ -2589,7 +2589,7 @@ pub async fn import_clipboard(
         }
 
         if !clipboard_data.file_paths.is_empty() {
-            return Err("Clipboard does not contain supported image files".to_string());
+            return file_error.map_or_else(|| Ok(Vec::new()), Err);
         }
     }
 
@@ -2597,6 +2597,7 @@ pub async fn import_clipboard(
         arboard::Clipboard::new().map_err(|e| format!("Failed to open clipboard: {}", e))?;
     if let Ok(file_paths) = clipboard.get().file_list() {
         if !file_paths.is_empty() {
+            let mut file_error = None;
             let mut imported = Vec::new();
             for path in file_paths.iter().filter(|path| path.is_file()) {
                 let supported = path.to_str().and_then(t_utils::get_file_type).is_some();
@@ -2605,23 +2606,24 @@ pub async fn import_clipboard(
                 }
                 match import_clipboard_file(path, folder_id, folder_path) {
                     Ok(file) => imported.push(file),
-                    Err(error) => eprintln!(
-                        "Failed to import clipboard file {}: {}",
-                        path.display(),
-                        error
-                    ),
+                    Err(error) => {
+                        eprintln!("Failed to import clipboard file {}: {}", path.display(), error);
+                        file_error.get_or_insert(error);
+                    }
                 }
             }
             if !imported.is_empty() {
                 return Ok(imported);
             }
-            return Err("Clipboard does not contain supported image files".to_string());
+            return file_error.map_or_else(|| Ok(Vec::new()), Err);
         }
     }
 
-    let clipboard_image = clipboard
-        .get_image()
-        .map_err(|e| format!("No image found in clipboard: {}", e))?;
+    let clipboard_image = match clipboard.get_image() {
+        Ok(image) => image,
+        Err(arboard::Error::ContentNotAvailable) => return Ok(Vec::new()),
+        Err(error) => return Err(format!("Failed to read clipboard image: {}", error)),
+    };
     let width = u32::try_from(clipboard_image.width)
         .map_err(|_| "Clipboard image width is too large".to_string())?;
     let height = u32::try_from(clipboard_image.height)

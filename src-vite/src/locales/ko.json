@@ -234,6 +234,7 @@
     }
   },
   "offline": {
+    "badge": "오프라인",
     "cloud_only": "온라인에서만 사용 가능",
     "cloud_only_pending": "온라인에서만 사용 가능 — 파일 정보 미완성",
     "original_unavailable": "원본 파일에 접근할 수 없습니다",
