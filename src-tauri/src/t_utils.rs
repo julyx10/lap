@@ -1515,7 +1515,17 @@ where
             if let Some(root_name) = structure_root {
                 return import_structure_folder(&source, root_name, &path);
             }
-            let timestamp = AFile::capture_timestamp_with_raw_info(&path_string, file_type, raw_info.as_ref())?;
+            let sidecar_timestamp = if crate::metadata::xmp::is_xmp_import_enabled() {
+                let sidecars = xmp_cache.import_sidecars(&path).unwrap_or_default();
+                sidecars.first()
+                    .and_then(|sidecar| crate::metadata::xmp::read_sidecar_capture_timestamp(sidecar))
+            } else {
+                None
+            };
+            let timestamp = match sidecar_timestamp {
+                Some(timestamp) => timestamp,
+                None => AFile::capture_timestamp_with_raw_info(&path_string, file_type, raw_info.as_ref())?,
+            };
             let date = Local.timestamp_opt(timestamp, 0).single()
                 .ok_or_else(|| format!("Invalid capture date: {}", path_string))?;
             Ok(PathBuf::from(match layout {

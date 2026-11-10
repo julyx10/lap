@@ -1,6 +1,12 @@
 //! Existing catalog metadata values and import modes.
 use serde::{Deserialize, Serialize};
 
+#[derive(Default)]
+pub(super) struct SourceCapture {
+    pub gps: Option<crate::t_sqlite::FileGps>,
+    pub date: Option<(Option<String>, Option<i64>)>,
+}
+
 /// Parsed XMP metadata distinguishing missing properties (`None`) from
 /// explicitly empty/cleared properties (`Some(0)`, `Some(vec![])`, `Some("")`).
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]

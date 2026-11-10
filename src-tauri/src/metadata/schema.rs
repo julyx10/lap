@@ -2,7 +2,7 @@
 //! Parsers and catalog merging consume these definitions without duplicating aliases.
 
 /// Bump when changed mappings must backfill unchanged catalog entries.
-pub(crate) const IMPORT_PREFIX: &str = "embedded-v9:";
+pub(crate) const IMPORT_PREFIX: &str = "embedded-v11:";
 
 pub const NS_LR: &str = "http://ns.adobe.com/lightroom/1.0/";
 pub const NS_DIGIKAM: &str = "http://www.digikam.org/ns/1.0/";

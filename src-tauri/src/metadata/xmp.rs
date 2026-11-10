@@ -25,7 +25,7 @@ use super::merge::apply_with_state;
 #[cfg(test)]
 use super::merge::apply_xmp_metadata_to_db;
 use quick_xml::{events::Event, name::ResolveResult, reader::NsReader};
-use rusqlite::Connection;
+use rusqlite::{Connection, OptionalExtension};
 #[cfg(test)]
 use rusqlite::params;
 use serde::Serialize;
@@ -248,14 +248,103 @@ fn read_xmp_content(path: &Path) -> Result<String, String> {
 
 /// Parse the complete XML document before exposing any metadata to the importer.
 pub fn parse_xmp_str(content: &str) -> Result<XmpMetadata, String> {
-    parse_xmp_with_source_text(content).map(|(meta, _)| meta)
+    parse_xmp_with_source_text(content).map(|(meta, _, _, _)| meta)
 }
 
-fn parse_xmp_with_source_text(content: &str) -> Result<(XmpMetadata, super::model::SourceText), String> {
+type Gps = (f64, f64, Option<f64>);
+const GPS_FINGERPRINT_MARKER: &str = "sidecar-gps:";
+const DATE_FINGERPRINT_MARKER: &str = "sidecar-date:";
+
+pub(crate) fn fingerprint_has_capture_override(fingerprint: &str) -> bool {
+    let (gps, date) = capture_overrides(fingerprint);
+    gps || date
+}
+
+fn capture_overrides(fingerprint: &str) -> (bool, bool) {
+    fingerprint.split_once(':')
+        .filter(|(version, _)| version.starts_with("embedded-"))
+        .map_or((false, false), |(_, value)| {
+            let rest = value.strip_prefix(GPS_FINGERPRINT_MARKER);
+            (rest.is_some(), rest.unwrap_or(value).starts_with(DATE_FINGERPRINT_MARKER))
+        })
+}
+
+fn parse_xmp_with_source_text(content: &str) -> Result<(XmpMetadata, super::model::SourceText, Option<Gps>, Option<i64>), String> {
     let root = parse_xml(content)?;
     let mut properties = Vec::new();
     collect_properties(&root, &mut properties);
-    Ok((metadata_from_properties(&properties), source_text_from_properties(&properties)))
+    Ok((metadata_from_properties(&properties), source_text_from_properties(&properties),
+        gps_from_properties(&properties), capture_timestamp_from_properties(&properties)))
+}
+
+fn capture_timestamp_from_properties(properties: &[&XmlNode]) -> Option<i64> {
+    for (uri, name) in [(schema::NS_EXIF, "DateTimeOriginal"), (schema::NS_PHOTOSHOP, "DateCreated")] {
+        if let Some(timestamp) = properties.iter().filter(|node| node.uri == uri && node.name == name)
+            .find_map(|node| {
+                let value = node.value();
+                let value = value.trim();
+                crate::t_utils::meta_date_to_timestamp(value).or_else(|| {
+                    let local = chrono::NaiveDateTime::parse_from_str(value, "%Y-%m-%dT%H:%M:%S%.f")
+                        .or_else(|_| chrono::NaiveDateTime::parse_from_str(value, "%Y-%m-%dT%H:%M"))
+                        .ok()?;
+                    Some(local.and_local_timezone(chrono::Local).single()?.timestamp())
+                })
+            })
+        {
+            return Some(timestamp);
+        }
+    }
+    None
+}
+
+pub(crate) fn read_sidecar_capture_timestamp(path: &Path) -> Option<i64> {
+    let root = parse_xml(&read_xmp_content(path).ok()?).ok()?;
+    let mut properties = Vec::new();
+    collect_properties(&root, &mut properties);
+    capture_timestamp_from_properties(&properties)
+}
+
+fn gps_from_properties(properties: &[&XmlNode]) -> Option<Gps> {
+    let value = |name| properties.iter()
+        .find(|node| node.uri == schema::NS_EXIF && node.name == name)
+        .map(|node| node.value());
+    let lat = xmp_coordinate(&value("GPSLatitude")?, 'N', 'S', 90.0)?;
+    let lon = xmp_coordinate(&value("GPSLongitude")?, 'E', 'W', 180.0)?;
+    let altitude = value("GPSAltitude").and_then(|text| {
+        let text = text.trim();
+        let altitude = match text.split_once('/') {
+            Some((num, den)) => num.trim().parse::<f64>().ok()? / den.trim().parse::<f64>().ok()?,
+            None => text.parse().ok()?,
+        };
+        let below_sea_level = value("GPSAltitudeRef").is_some_and(|reference| reference.trim() == "1");
+        altitude.is_finite().then_some(if below_sea_level { -altitude.abs() } else { altitude })
+    });
+    Some((lat, lon, altitude))
+}
+
+fn xmp_coordinate(text: &str, positive: char, negative: char, limit: f64) -> Option<f64> {
+    let text = text.trim();
+    let (text, sign) = if let Some(value) = text.strip_suffix(positive) {
+        (value, Some(1.0))
+    } else if let Some(value) = text.strip_suffix(negative) {
+        (value, Some(-1.0))
+    } else {
+        (text, None)
+    };
+    let mut parts = text.split(',');
+    let degrees = parts.next()?.trim().parse::<f64>().ok()?;
+    let minutes = parts.next().unwrap_or("0").trim().parse::<f64>().ok()?;
+    let seconds = parts.next().unwrap_or("0").trim().parse::<f64>().ok()?;
+    if parts.next().is_some()
+        || !(0.0..60.0).contains(&minutes)
+        || !(0.0..60.0).contains(&seconds)
+        || (sign.is_some() && degrees < 0.0)
+        || (sign.is_none() && text.contains(','))
+    {
+        return None;
+    }
+    let value = degrees.abs() + minutes / 60.0 + seconds / 3600.0;
+    (value.is_finite() && value <= limit).then_some(value * sign.unwrap_or(degrees.signum()))
 }
 
 fn source_text_from_properties(properties: &[&XmlNode]) -> super::model::SourceText {
@@ -459,7 +548,7 @@ fn import_xmp_for_file_with_conn(
     conn: &Connection,
     mode: XmpImportMode,
 ) -> Result<bool, String> {
-    import_with_system(file_id, file_path, conn, mode, None, None)
+    import_with_system(file_id, file_path, conn, mode, None, None, None)
 }
 
 pub(crate) fn import_with_system(
@@ -469,8 +558,9 @@ pub(crate) fn import_with_system(
     mode: XmpImportMode,
     system: Option<super::system::SystemMetadata>,
     extracted_software: Option<Option<&str>>, // Some(None) means extraction found no value.
+    fresh_capture: Option<&crate::t_sqlite::AFile>,
 ) -> Result<bool, String> {
-    let result = import_sources(file_id, file_path, conn, mode, system, extracted_software);
+    let result = import_sources(file_id, file_path, conn, mode, system, extracted_software, fresh_capture);
     if result.is_err() { super::import_count::record(conn, file_id); }
     result
 }
@@ -482,6 +572,7 @@ fn import_sources(
     mode: XmpImportMode,
     system: Option<super::system::SystemMetadata>,
     extracted_software: Option<Option<&str>>,
+    fresh_capture: Option<&crate::t_sqlite::AFile>,
 ) -> Result<bool, String> {
     let sidecar_path = find_xmp_sidecar(Path::new(file_path));
     // Manual import changes catalog values, not the automatic source snapshot.
@@ -516,9 +607,8 @@ fn import_sources(
         }
     };
     let local_media = media_info.as_ref().is_some_and(|info| !crate::t_utils::is_cloud_only(info));
-    let fingerprint = format!(
-        "{}{}:{:?}:{}:{:?}:{:?}:{}",
-        schema::IMPORT_PREFIX,
+    let source_version = format!(
+        "{}:{:?}:{}:{:?}:{:?}:{}",
         file_path,
         media_info.as_ref().and_then(|info| info.modified().ok()),
         media_info.map(|info| info.len()).unwrap_or(0),
@@ -526,27 +616,26 @@ fn import_sources(
         sidecar_info.map(|info| (info.modified().ok(), info.len())),
         snapshot.fingerprint
     );
-    if !matches!(
-        mode,
-        XmpImportMode::ManualOverwrite | XmpImportMode::RefreshNonDestructive
-    ) {
-        let previous: Option<String> = conn
-            .query_row(
-                "SELECT fingerprint FROM axmp_imports WHERE file_id = ?1",
-                [file_id],
-                |r| r.get(0),
-            )
-            .ok()
-            .flatten();
-        if previous.as_deref() == Some(&fingerprint) {
-            return Ok(false);
-        }
+    let previous: Option<String> = conn.query_row(
+        "SELECT fingerprint FROM axmp_imports WHERE file_id = ?1",
+        [file_id],
+        |row| row.get(0),
+    ).optional().map_err(|error| error.to_string())?.flatten();
+    let (had_sidecar_gps, had_sidecar_date) = previous.as_deref().map(capture_overrides).unwrap_or_default();
+    if mode != XmpImportMode::RefreshNonDestructive
+        && previous.as_deref().and_then(|value| value.strip_prefix(schema::IMPORT_PREFIX))
+            .and_then(|value| value.strip_prefix(if had_sidecar_gps { GPS_FINGERPRINT_MARKER } else { "" }))
+            .and_then(|value| value.strip_prefix(if had_sidecar_date { DATE_FINGERPRINT_MARKER } else { "" }))
+            == Some(source_version.as_str())
+    {
+        return Ok(false);
     }
     let embedded = local_media
         .then(|| super::embedded::try_read(Path::new(file_path)))
         .transpose();
     let embedded_failed = embedded.is_err();
     let embedded = embedded.ok().flatten().unwrap_or_default();
+    let embedded_gps = (embedded.latitude, embedded.longitude, embedded.altitude);
     let mut source = super::model::SourceText {
         title: embedded.title,
         headline: embedded.headline,
@@ -556,8 +645,12 @@ fn import_sources(
     };
     let mut meta = embedded.organization;
     super::merge::merge_system(&mut meta, snapshot.metadata);
+    let mut sidecar_gps = None;
+    let mut sidecar_date = None;
     if let Some(path) = sidecar_path {
-        let (sidecar, text) = parse_xmp_with_source_text(&read_xmp_content(&path)?)?;
+        let (sidecar, text, gps, date) = parse_xmp_with_source_text(&read_xmp_content(&path)?)?;
+        sidecar_gps = gps;
+        sidecar_date = date;
         source.title = text.title.or(source.title);
         source.headline = text.headline.or(source.headline);
         source.creator = text.creator.or(source.creator);
@@ -565,19 +658,56 @@ fn import_sources(
         source.software = text.software.or(source.software);
         super::merge::merge_sidecar(&mut meta, sidecar);
     }
-    let mut probe_failed = false;
-    if local_media && source.software.is_none() && crate::t_utils::get_file_type(file_path) == Some(2) {
+    // Explicit refresh provides freshly extracted values. On a sidecar-only
+    // rescan, read the native values again only when removing an override.
+    let restore_gps = had_sidecar_gps && sidecar_gps.is_none() && fresh_capture.is_none();
+    let restore_date = had_sidecar_date && sidecar_date.is_none() && fresh_capture.is_none();
+    let file_type = crate::t_utils::get_file_type(file_path);
+    let is_video = file_type == Some(2);
+    let probe = (local_media && is_video && extracted_software.is_none()
+        && (source.software.is_none() || restore_gps || restore_date))
+        .then(|| crate::t_video::get_video_metadata(file_path));
+    let probe_failed = probe.as_ref().is_some_and(Result::is_err);
+    let video = probe.as_ref().and_then(|result| result.as_ref().ok());
+    if local_media && source.software.is_none() && is_video {
         // FFprobe exposes native video tags (such as encoder) that the XMP reader does not map.
         source.software = match extracted_software {
             Some(value) => value.map(str::to_owned),
-            None => match crate::t_video::get_video_metadata(file_path) {
-                Ok(metadata) => metadata.e_software,
-                Err(_) => {
-                    probe_failed = true;
-                    None
-                }
-            },
+            None => video.and_then(|metadata| metadata.e_software.clone()),
         };
+    }
+    let mut gps = sidecar_gps.map(|(lat, lon, alt)| (Some(lat), Some(lon), alt));
+    if restore_gps && local_media && !embedded_failed && !probe_failed {
+        let native = if let Some(video) = video {
+            (video.gps_latitude, video.gps_longitude, video.gps_altitude)
+        } else {
+            crate::t_sqlite::AFile::extract_gps_data(&crate::t_image::read_exif_permissive(file_path))
+        };
+        let (lat, lon) = if native.0.is_none() && native.1.is_none() {
+            (embedded_gps.0, embedded_gps.1)
+        } else {
+            (native.0, native.1)
+        };
+        gps = Some((lat, lon, native.2.or(embedded_gps.2)));
+    }
+    // Store the local display form, while keeping the exact instant in taken_date.
+    let mut date = sidecar_date.and_then(|taken| {
+        let local = chrono::DateTime::from_timestamp(taken, 0)?.with_timezone(&chrono::Local);
+        Some((Some(local.format("%Y:%m:%d %H:%M:%S").to_string()), Some(taken)))
+    });
+    if restore_date && local_media && !embedded_failed && !probe_failed {
+        date = if let Some(video) = video {
+            let value = video.e_date_time.as_ref().or(embedded.date.as_ref());
+            let taken = value.and_then(|date| crate::t_utils::meta_date_to_timestamp(date))
+                .or_else(|| crate::t_utils::systemtime_to_timestamp(fs::metadata(file_path).ok()?.modified().ok()));
+            Some((value.cloned(), taken))
+        } else {
+            file_type.and_then(|file_type| crate::t_sqlite::AFile::native_capture_date(file_path, file_type).ok())
+        };
+    }
+    if let Some(fresh) = fresh_capture {
+        gps = gps.or(Some((fresh.gps_latitude, fresh.gps_longitude, fresh.gps_altitude)));
+        date = date.or_else(|| Some((fresh.e_date_time.clone(), fresh.taken_date)));
     }
     let preserve_source = !local_media || embedded_failed;
     if preserve_source || probe_failed {
@@ -605,8 +735,19 @@ fn import_sources(
         }
     }
     // Leave the fingerprint invalid so the next scan can retry a partial read.
-    let fingerprint = if embedded_failed || probe_failed { "" } else { &fingerprint };
-    super::merge::apply_with_source_text(file_id, &meta, conn, mode, Some(fingerprint), Some(&source))
+    let retry_gps = restore_gps && gps.is_none();
+    let retry_date = restore_date && date.is_none();
+    let gps_marker = if sidecar_gps.is_some() || retry_gps { GPS_FINGERPRINT_MARKER } else { "" };
+    let date_marker = if sidecar_date.is_some() || retry_date { DATE_FINGERPRINT_MARKER } else { "" };
+    let fingerprint = if embedded_failed || probe_failed || retry_gps || retry_date {
+        if gps_marker.is_empty() && date_marker.is_empty() { String::new() } else {
+            format!("{}{gps_marker}{date_marker}retry", schema::IMPORT_PREFIX)
+        }
+    } else {
+        format!("{}{gps_marker}{date_marker}{source_version}", schema::IMPORT_PREFIX)
+    };
+    let capture = super::model::SourceCapture { gps, date };
+    super::merge::apply_with_source_text(file_id, &meta, conn, mode, Some(&fingerprint), Some(&source), Some(capture))
 }
 
 /// Scanner-derived descriptions preserve local edits and explicit clears.
@@ -2224,6 +2365,157 @@ mod export_tests {
             "<x:xmpmeta xmlns:x=\"adobe:ns:meta/\"><rdf:RDF xmlns:rdf=\"{NS_RDF}\"><rdf:Description xmlns:d=\"{NS_DC}\" xmlns:r=\"{NS_XMP}\" xmlns:crs=\"http://ns.adobe.com/camera-raw-settings/1.0/\" rdf:about=\"\">{body}</rdf:Description></rdf:RDF></x:xmpmeta>"
         )
     }
+
+    #[test]
+    fn sidecar_gps_overrides_native_location_and_restores_it_when_removed() {
+        let (conn, dir, media) = fixture();
+        conn.execute_batch(
+            "ALTER TABLE afiles ADD COLUMN gps_latitude REAL;
+             ALTER TABLE afiles ADD COLUMN gps_longitude REAL;
+             ALTER TABLE afiles ADD COLUMN gps_altitude REAL;
+             ALTER TABLE afiles ADD COLUMN geo_name TEXT;
+             ALTER TABLE afiles ADD COLUMN geo_admin1 TEXT;
+             ALTER TABLE afiles ADD COLUMN geo_admin2 TEXT;
+             ALTER TABLE afiles ADD COLUMN geo_cc TEXT;",
+        ).unwrap();
+        let coordinate = |degrees| exif::Value::Rational(
+            [degrees, 0, 0].into_iter().map(|num| exif::Rational { num, denom: 1 }).collect(),
+        );
+        let fields = [
+            (exif::Tag::GPSLatitude, coordinate(48)),
+            (exif::Tag::GPSLatitudeRef, exif::Value::Ascii(vec![b"N".to_vec()])),
+            (exif::Tag::GPSLongitude, coordinate(2)),
+            (exif::Tag::GPSLongitudeRef, exif::Value::Ascii(vec![b"E".to_vec()])),
+            (exif::Tag::GPSAltitude, exif::Value::Rational(vec![exif::Rational { num: 120, denom: 1 }])),
+            (exif::Tag::GPSAltitudeRef, exif::Value::Byte(vec![0])),
+        ].map(|(tag, value)| exif::Field { tag, ifd_num: exif::In::PRIMARY, value });
+        let mut writer = exif::experimental::Writer::new();
+        for field in &fields {
+            writer.push_field(field);
+        }
+        let mut tiff = std::io::Cursor::new(Vec::new());
+        writer.write(&mut tiff, true).unwrap();
+        let tiff = tiff.into_inner();
+        let mut jpeg = vec![0xff, 0xd8, 0xff, 0xe1];
+        jpeg.extend(((tiff.len() + 8) as u16).to_be_bytes());
+        jpeg.extend(b"Exif\0\0");
+        jpeg.extend(tiff);
+        jpeg.extend([0xff, 0xd9]);
+        fs::write(&media, jpeg).unwrap();
+
+        let sidecar = media.with_extension("xmp");
+        let write_gps = |lat, lon, altitude| {
+            let ns = schema::NS_EXIF;
+            let altitude_tags = if altitude {
+                format!("<e:GPSAltitude xmlns:e=\"{ns}\">25/2</e:GPSAltitude>
+                         <e:GPSAltitudeRef xmlns:e=\"{ns}\">1</e:GPSAltitudeRef>")
+            } else {
+                String::new()
+            };
+            fs::write(&sidecar, packet(&format!(
+                "<e:GPSLatitude xmlns:e=\"{ns}\">{lat}</e:GPSLatitude>
+                 <e:GPSLongitude xmlns:e=\"{ns}\">{lon}</e:GPSLongitude>{altitude_tags}",
+            ))).unwrap();
+        };
+        let import = || import_xmp_for_file_with_conn(
+            1, media.to_str().unwrap(), &conn, XmpImportMode::RescanNonDestructive,
+        ).unwrap();
+        let gps = || conn.query_row(
+            "SELECT gps_latitude,gps_longitude,gps_altitude,geo_cc FROM afiles WHERE id=1",
+            [],
+            |row| Ok((row.get::<_, f64>(0)?, row.get::<_, f64>(1)?,
+                      row.get::<_, Option<f64>>(2)?, row.get::<_, String>(3)?)),
+        ).unwrap();
+
+        write_gps("33,30S", "151,15,0E", true);
+        assert!(import());
+        assert_eq!(gps(), (-33.5, 151.25, Some(-12.5), "AU".into()));
+        assert!(!import());
+
+        write_gps("91,0N", "151,15,0E", true);
+        assert!(import());
+        assert_eq!(gps(), (48.0, 2.0, Some(120.0), "FR".into()));
+
+        write_gps("37.75", "-122.5", false);
+        assert!(import());
+        assert_eq!(gps(), (37.75, -122.5, None, "US".into()));
+        fs::remove_file(sidecar).unwrap();
+        assert!(import());
+        assert_eq!(gps(), (48.0, 2.0, Some(120.0), "FR".into()));
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn sidecar_capture_date_overrides_and_restores_native_timestamp() {
+        let (conn, dir, media) = fixture();
+        conn.execute_batch(
+            "ALTER TABLE afiles ADD COLUMN e_date_time TEXT;
+             ALTER TABLE afiles ADD COLUMN taken_date INTEGER;
+             ALTER TABLE afiles ADD COLUMN gps_latitude REAL;
+             ALTER TABLE afiles ADD COLUMN gps_longitude REAL;
+             ALTER TABLE afiles ADD COLUMN gps_altitude REAL;
+             ALTER TABLE afiles ADD COLUMN geo_name TEXT;
+             ALTER TABLE afiles ADD COLUMN geo_admin1 TEXT;
+             ALTER TABLE afiles ADD COLUMN geo_admin2 TEXT;
+             ALTER TABLE afiles ADD COLUMN geo_cc TEXT;",
+        ).unwrap();
+        image::RgbImage::new(8, 8).save(&media).unwrap();
+        let path = media.to_str().unwrap();
+        let native = crate::t_sqlite::AFile::native_capture_date(path, 1).unwrap();
+        let sidecar = media.with_extension("xmp");
+        let write_date = |original, created| {
+            fs::write(&sidecar, packet(&format!(
+                "<e:DateTimeOriginal xmlns:e=\"{exif}\">{original}</e:DateTimeOriginal>
+                 <p:DateCreated xmlns:p=\"{photoshop}\">{created}</p:DateCreated>",
+                exif = schema::NS_EXIF, photoshop = schema::NS_PHOTOSHOP,
+            ))).unwrap();
+        };
+        let import = || import_xmp_for_file_with_conn(
+            1, path, &conn, XmpImportMode::RescanNonDestructive,
+        ).unwrap();
+        let date = || conn.query_row("SELECT e_date_time,taken_date FROM afiles WHERE id=1", [], |row| {
+            Ok((row.get::<_, Option<String>>(0)?, row.get::<_, Option<i64>>(1)?))
+        }).unwrap();
+
+        let original = "2010-03-04T10:00:00+02:00";
+        let created = "2015-06-07T10:00:00Z";
+        write_date(original, created);
+        assert!(import());
+        assert_eq!(date().1, crate::t_utils::meta_date_to_timestamp(original));
+        assert_eq!(date().1, read_sidecar_capture_timestamp(&sidecar));
+        assert!(date().0.is_some());
+        assert!(!import());
+
+        let imported = date();
+        let fresh = crate::t_sqlite::AFile {
+            e_date_time: native.0.clone(),
+            taken_date: native.1,
+            ..Default::default()
+        };
+        let refresh = || import_with_system(
+            1, path, &conn, XmpImportMode::RefreshNonDestructive, None, Some(None), Some(&fresh),
+        );
+        fs::write(&sidecar, "<broken>").unwrap();
+        assert!(import_xmp_for_file_with_conn(1, path, &conn, XmpImportMode::RescanNonDestructive).is_err());
+        assert_eq!(date(), imported);
+        assert!(refresh().is_err());
+        assert_eq!(date(), imported);
+
+        write_date("invalid", created);
+        assert!(import());
+        assert_eq!(date().1, crate::t_utils::meta_date_to_timestamp(created));
+        write_date("invalid", "");
+        assert!(import());
+        assert_eq!(date(), native);
+
+        write_date("2017-03-04T10:00", "");
+        assert!(import());
+        assert_eq!(date().1, crate::t_utils::meta_date_to_timestamp("2017:03:04 10:00:00"));
+        fs::remove_file(sidecar).unwrap();
+        assert!(refresh().unwrap());
+        assert_eq!(date(), native);
+        fs::remove_dir_all(dir).unwrap();
+    }
     fn fixture() -> (Connection, PathBuf, PathBuf) {
         let folder = std::env::temp_dir().join(format!(
             "lap-xmp-export-{}-{}",
@@ -2372,6 +2664,7 @@ mod export_tests {
                 XmpImportMode::RefreshNonDestructive,
                 None,
                 extracted_software,
+                None,
             ).unwrap();
             conn.query_row("SELECT e_software,e_title FROM afiles WHERE id=1", [], |row| {
                 Ok((row.get::<_, Option<String>>(0)?, row.get::<_, String>(1)?))
@@ -2490,6 +2783,7 @@ mod export_tests {
             &conn,
             XmpImportMode::RefreshNonDestructive,
             Some(snapshot),
+            None,
             None,
         )
         .unwrap();

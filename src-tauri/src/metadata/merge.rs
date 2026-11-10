@@ -21,7 +21,7 @@ pub(super) fn apply_with_state(
     mode: XmpImportMode,
     fingerprint: Option<&str>,
 ) -> Result<bool, String> {
-    apply_with_source_text(file_id, meta, conn, mode, fingerprint, None)
+    apply_with_source_text(file_id, meta, conn, mode, fingerprint, None, None)
 }
 
 pub(super) fn apply_with_source_text(
@@ -31,6 +31,7 @@ pub(super) fn apply_with_source_text(
     mode: XmpImportMode,
     fingerprint: Option<&str>,
     source: Option<&super::model::SourceText>,
+    capture: Option<super::model::SourceCapture>,
 ) -> Result<bool, String> {
     let tx = conn.unchecked_transaction().map_err(|e| e.to_string())?;
     let dirty: i32 = tx
@@ -50,6 +51,18 @@ pub(super) fn apply_with_source_text(
              WHERE id=?6 AND (e_title IS NOT ?1 OR e_headline IS NOT ?2 OR e_artist IS NOT ?3
                               OR e_copyright IS NOT ?4 OR e_software IS NOT ?5)",
             params![source.title, source.headline, source.creator, source.copyright, source.software, file_id],
+        ).map_err(|e| e.to_string())?;
+    }
+    if let Some((date, taken)) = capture.as_ref().and_then(|capture| capture.date.as_ref()) {
+        tx.execute("UPDATE afiles SET e_date_time=?1, taken_date=?2 WHERE id=?3",
+            params![date, taken, file_id]).map_err(|e| e.to_string())?;
+    }
+    if let Some((lat, lon, alt)) = capture.and_then(|capture| capture.gps) {
+        let (name, admin1, admin2, country) = crate::t_sqlite::AFile::geocode(lat, lon);
+        tx.execute(
+            "UPDATE afiles SET gps_latitude=?1, gps_longitude=?2, gps_altitude=?3,
+             geo_name=?4, geo_admin1=?5, geo_admin2=?6, geo_cc=?7 WHERE id=?8",
+            params![lat, lon, alt, name, admin1, admin2, country, file_id],
         ).map_err(|e| e.to_string())?;
     }
     tx.commit().map_err(|e| e.to_string())?;

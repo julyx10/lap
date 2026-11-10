@@ -1575,6 +1575,8 @@ impl FolderScanState {
     }
 }
 
+pub(crate) type FileGps = (Option<f64>, Option<f64>, Option<f64>);
+
 /// Define the album file struct
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct AFile {
@@ -2782,21 +2784,7 @@ impl AFile {
             gps_altitude = gps_altitude.or(deep.altitude);
         }
 
-        // Geocoding based on GPS coordinates from any source
-        let (geo_name, geo_admin1, geo_admin2, geo_cc) =
-            if let (Some(lat), Some(lon)) = (gps_latitude, gps_longitude) {
-                match t_utils::GEOCODER.search((lat, lon)) {
-                    Some(result) => (
-                        Some(result.record.name.clone()),
-                        Some(result.record.admin1.clone()),
-                        Some(result.record.admin2.clone()),
-                        Some(result.record.cc.clone()),
-                    ),
-                    None => (None, None, None, None),
-                }
-            } else {
-                (None, None, None, None)
-            };
+        let (geo_name, geo_admin1, geo_admin2, geo_cc) = Self::geocode(gps_latitude, gps_longitude);
 
         // RAW and TIFF dimensions already match their decoder output.
         let should_swap_dimensions_for_orientation = file_type != 3
@@ -2904,6 +2892,11 @@ impl AFile {
         } else { taken }
     }
 
+    pub(crate) fn native_capture_date(file_path: &str, file_type: i64) -> Result<(Option<String>, Option<i64>), String> {
+        let file = Self::new(0, file_path, file_type)?;
+        Ok((file.e_date_time, file.taken_date))
+    }
+
     /// Read the capture timestamp used by Lap before a file is imported.
     /// This keeps date-organized imports consistent with the timestamp shown
     /// after the same file has been indexed.
@@ -2946,7 +2939,22 @@ impl AFile {
         taken.ok_or_else(|| format!("Could not read a date from: {}", file_path))
     }
 
-    fn extract_gps_data(exif: &Option<exif::Exif>) -> (Option<f64>, Option<f64>, Option<f64>) {
+    pub(crate) fn geocode(
+        latitude: Option<f64>,
+        longitude: Option<f64>,
+    ) -> (Option<String>, Option<String>, Option<String>, Option<String>) {
+        let Some(result) = latitude.zip(longitude).and_then(|point| t_utils::GEOCODER.search(point)) else {
+            return (None, None, None, None);
+        };
+        (
+            Some(result.record.name.clone()),
+            Some(result.record.admin1.clone()),
+            Some(result.record.admin2.clone()),
+            Some(result.record.cc.clone()),
+        )
+    }
+
+    pub(crate) fn extract_gps_data(exif: &Option<exif::Exif>) -> FileGps {
         let Some(exif_data) = exif else {
             return (None, None, None);
         };
@@ -3245,19 +3253,27 @@ impl AFile {
     }
 
     /// update a file into db
-    pub fn update(file_id: i64, file: &Self) -> Result<usize, String> {
-        let conn = open_conn()?;
-        let result = conn.execute(
+    fn update(file_id: i64, file: &Self, import_xmp: bool) -> Result<usize, String> {
+        let mut conn = open_conn()?;
+        let tx = conn.transaction().map_err(|e| e.to_string())?;
+        let result = tx.execute(
             "UPDATE afiles SET
-                name = ?1, name_pinyin = ?2, size = ?3, file_type = ?4, format_label = ?5, created_at = ?6, modified_at = ?7, inode = ?8, taken_date = ?9,
+                name = ?1, name_pinyin = ?2, size = ?3, file_type = ?4, format_label = ?5, created_at = ?6, modified_at = ?7, inode = ?8,
+                taken_date = CASE WHEN ?47 THEN taken_date ELSE ?9 END,
                 width = ?10, height = ?11, duration = ?12, icc_profile = ?13, color_space = ?14, bit_depth = ?15,
                 rating = ?16,
                 e_make = ?17, e_model = ?18, e_lens_make = ?19, e_lens_model = ?20,
-                e_date_time = ?21, e_exposure_bias = ?22, e_exposure_time = ?23, e_f_number = ?24, e_focal_length = ?25, e_iso_speed = ?26, e_flash = ?27, e_orientation = ?28,
+                e_date_time = CASE WHEN ?47 THEN e_date_time ELSE ?21 END,
+                e_exposure_bias = ?22, e_exposure_time = ?23, e_f_number = ?24, e_focal_length = ?25, e_iso_speed = ?26, e_flash = ?27, e_orientation = ?28,
                 e_title = ?29, e_headline = ?30, e_description = ?31, e_artist = ?32, e_copyright = ?33,
                 e_software = ?34,
-                gps_latitude = ?35, gps_longitude = ?36, gps_altitude = ?37,
-                geo_name = ?38, geo_admin1 = ?39, geo_admin2 = ?40, geo_cc = ?41,
+                gps_latitude = CASE WHEN ?47 THEN gps_latitude ELSE ?35 END,
+                gps_longitude = CASE WHEN ?47 THEN gps_longitude ELSE ?36 END,
+                gps_altitude = CASE WHEN ?47 THEN gps_altitude ELSE ?37 END,
+                geo_name = CASE WHEN ?47 THEN geo_name ELSE ?38 END,
+                geo_admin1 = CASE WHEN ?47 THEN geo_admin1 ELSE ?39 END,
+                geo_admin2 = CASE WHEN ?47 THEN geo_admin2 ELSE ?40 END,
+                geo_cc = CASE WHEN ?47 THEN geo_cc ELSE ?41 END,
                 last_scan_time = ?42, content_identifier = ?43, media_subtype = ?44, motion_photo_offset = ?45, metadata_pending = 0
             WHERE id = ?46",
             params![
@@ -3316,8 +3332,14 @@ impl AFile {
                 file.media_subtype,
                 file.motion_photo_offset,
                 file_id,
+                import_xmp,
             ]
         ).map_err(|e| e.to_string())?;
+        if !import_xmp {
+            tx.execute("UPDATE axmp_imports SET fingerprint=NULL WHERE file_id=?1 AND fingerprint IS NOT NULL", [file_id])
+                .map_err(|e| e.to_string())?;
+        }
+        tx.commit().map_err(|e| e.to_string())?;
         Ok(result)
     }
 
@@ -4242,7 +4264,7 @@ impl AFile {
     ) -> Result<bool, String> {
         if !crate::metadata::xmp::is_xmp_import_enabled() { return Ok(false); }
         let conn = open_conn()?;
-        match crate::metadata::xmp::import_with_system(file_id, file_path, &conn, mode, None, extracted_software) {
+        match crate::metadata::xmp::import_with_system(file_id, file_path, &conn, mode, None, extracted_software, None) {
             Ok(changed) => Ok(changed),
             Err(error) => {
                 conn.execute("UPDATE afiles SET metadata_pending=1 WHERE id=?1", params![file_id])
@@ -4340,6 +4362,7 @@ impl AFile {
                     crate::metadata::xmp::XmpImportMode::RefreshNonDestructive,
                     system_metadata,
                     None,
+                    None,
                 )
             })
             .err()
@@ -4398,9 +4421,8 @@ impl AFile {
         {
             return Ok(true);
         }
-        if crate::metadata::xmp::is_xmp_import_enabled()
-            && let Some(sidecar) = crate::metadata::xmp::find_xmp_sidecar(Path::new(path))
-        {
+        let sidecar = crate::metadata::xmp::find_xmp_sidecar(Path::new(path));
+        if let Some(sidecar) = &sidecar {
             let modified = std::fs::metadata(sidecar)
                 .and_then(|info| info.modified())
                 .map_err(|e| e.to_string())?;
@@ -4423,6 +4445,7 @@ impl AFile {
             return Ok(previous.is_none_or(|value| {
                 !value.starts_with(crate::metadata::schema::IMPORT_PREFIX)
                     || !value.ends_with(&format!(":{}", snapshot.fingerprint))
+                    || (sidecar.is_none() && crate::metadata::xmp::fingerprint_has_capture_override(&value))
             }));
         }
         Ok(false)
@@ -4501,7 +4524,7 @@ impl AFile {
         }
 
         // update the file info
-        Self::update(file_id, &new_file_info)?;
+        Self::update(file_id, &new_file_info, import_xmp)?;
         Self::update_column(file_id, "cloud_only", &false)?;
 
         let mut import_error = None;
@@ -4514,6 +4537,7 @@ impl AFile {
                     crate::metadata::xmp::XmpImportMode::RefreshNonDestructive,
                     None,
                     Some(extracted_software.as_deref()),
+                    Some(&new_file_info),
                 )
             }) {
                 // Keep successful metadata, but make the failed import retryable.
