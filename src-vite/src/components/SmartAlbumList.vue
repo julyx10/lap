@@ -252,7 +252,7 @@ const loadWindowsSmartAlbumCovers = async (albums: any[]) => {
       getFileThumbById(coverFileId, config.settings.thumbnailSize, false)
         .then(thumb => getThumbnailDataUrl(thumb, '', false, config.settings.thumbnailSize))
     ));
-    return [String(smartAlbum.id), url || ''] as const;
+    return [String(smartAlbum.id), url || getThumbUrl(coverFileId, false, config.settings.thumbnailSize)] as const;
   }));
 
   if (loadToken !== smartAlbumCoverLoadToken) return;

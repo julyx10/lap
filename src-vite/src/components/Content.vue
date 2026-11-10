@@ -9833,7 +9833,7 @@ const changeVideoThumbnailFromPanel = async (file: any) => {
   if (!thumb || thumb.error_code !== 0) throw new Error('Thumbnail generation failed');
   clearCachedThumbnailDataUrl(file.id, config.settings.thumbnailSize);
   const target = fileList.value.find(item => item.id === file.id) || file;
-  target.thumbnail = getThumbnailDataUrl(thumb, thumbnailPlaceholder, true, config.settings.thumbnailSize, file.file_path, Number(file.modified_at || 0), !file.cloud_only);
+  target.thumbnail = getThumbnailDataUrl(thumb, thumbnailPlaceholder, true, config.settings.thumbnailSize, Number(file.modified_at || 0));
 };
 
 // Refresh panel data without reloading whichever image is selected after the await.
@@ -9936,8 +9936,8 @@ const updateThumbForFile = async (file: any) => {
     file.album_id || 0,
   );
   if (thumb) {
-    if (thumb.error_code === 0 || thumb.error_code === 2) {
-      file.thumbnail = getThumbnailDataUrl(thumb, thumbnailPlaceholder, true, config.settings.thumbnailSize, file.file_path, Number(file.modified_at || 0), !file.cloud_only);
+    if (thumb.error_code === 0) {
+      file.thumbnail = getThumbnailDataUrl(thumb, thumbnailPlaceholder, true, config.settings.thumbnailSize, Number(file.modified_at || 0));
       file.rawThumbnailStale = false;
     } else if (thumb.error_code === 1) {
       file.rawThumbnailStale = false;
@@ -11112,8 +11112,8 @@ async function getFileListThumb(files: any[], { bustCache = false, viewportBound
       });
       if (forceRegenerate && thumb === undefined) appliedRawThumbnailPolicies.delete(policyKey);
       if (!thumb || requestId !== currentThumbRequestId) return;
-      if (thumb.error_code === 0 || thumb.error_code === 2) {
-        file.thumbnail = getThumbnailDataUrl(thumb, thumbnailPlaceholder, bustCache, thumbnailSize, file.file_path, Number(file.modified_at || 0), !file.cloud_only);
+      if (thumb.error_code === 0) {
+        file.thumbnail = getThumbnailDataUrl(thumb, thumbnailPlaceholder, bustCache, thumbnailSize, Number(file.modified_at || 0));
         file.rawThumbnailStale = false;
       } else if (thumb.error_code === 1) {
         file.rawThumbnailStale = false;

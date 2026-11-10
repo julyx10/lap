@@ -625,6 +625,15 @@ pub fn get_image_thumbnail(
     orientation: i32,
     thumbnail_size: u32,
 ) -> Result<Option<Vec<u8>>, String> {
+    get_image_thumbnail_with_encoding(file_path, orientation, thumbnail_size, false)
+}
+
+pub(crate) fn get_image_thumbnail_with_encoding(
+    file_path: &str,
+    orientation: i32,
+    thumbnail_size: u32,
+    force_jpeg: bool,
+) -> Result<Option<Vec<u8>>, String> {
     if t_jxl::is_jxl_path(file_path) {
         return t_jxl::get_jxl_thumbnail(file_path, thumbnail_size);
     }
@@ -675,7 +684,7 @@ pub fn get_image_thumbnail(
                     }
                 }
             };
-        if should_use_png_thumbnail(file_path) {
+        if !force_jpeg && should_use_png_thumbnail(file_path) {
             resize_rgba_image_to_png(
                 apply_orientation(img, orientation).to_rgba8(),
                 thumbnail_size,

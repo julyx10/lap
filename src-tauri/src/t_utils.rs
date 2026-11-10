@@ -3071,6 +3071,7 @@ fn schedule_synced_file_processing(app_handle: tauri::AppHandle, task: SyncedFil
                 false,
                 None,
                 None,
+                false,
             )
         })
         .await;

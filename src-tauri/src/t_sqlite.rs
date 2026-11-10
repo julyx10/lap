@@ -7344,7 +7344,7 @@ impl AFile {
 pub struct AThumb {
     pub id: Option<i64>, // unique id (autoincrement by db)
     pub file_id: i64,    // file id (from files table)
-    pub error_code: i64, // error code (0: success, 1: error, 2: use original)
+    pub error_code: i64, // error code (0: success, 1: error, 2: legacy uncached image)
 
     #[serde(skip)]
     pub thumb_data: Option<Vec<u8>>, // thumbnail data (store into db as BLOB)
@@ -7370,50 +7370,41 @@ pub struct ThumbnailCacheCleanupResult {
 }
 
 impl AThumb {
-    const CACHE_EXTENSIONS: [&'static str; 2] = ["png", "jpg"];
+    const CACHE_EXTENSIONS: [&'static str; 6] = ["jpg", "png", "gif", "webp", "bmp", "avif"];
     // Cache files are written before their database row is updated. Keep recent
     // unreferenced files so maintenance cannot race thumbnail generation.
     const CLEANUP_MIN_FILE_AGE: Duration = Duration::from_secs(5 * 60);
 
-    fn should_use_original_image(file_id: i64, file_type: i64, thumbnail_size: u32) -> bool {
-        if file_type != 1 || thumbnail_size == 0 {
-            return false;
+    fn cache_extension(data: &[u8]) -> Option<&'static str> {
+        match crate::t_protocol::detect_image_mime(data) {
+            "image/jpeg" if data.ends_with(&[0xFF, 0xD9]) => Some("jpg"),
+            "image/png" => Some("png"),
+            "image/gif" => Some("gif"),
+            "image/webp" => Some("webp"),
+            "image/bmp" => Some("bmp"),
+            "image/avif" if !cfg!(target_os = "linux") => Some("avif"),
+            _ => None,
         }
-
-        AFile::get_file_info(file_id)
-            .ok()
-            .flatten()
-            .map(|file| {
-                #[cfg(target_os = "linux")]
-                if file
-                    .file_path
-                    .as_deref()
-                    .is_some_and(|path| path.to_ascii_lowercase().ends_with(".avif"))
-                {
-                    return false;
-                }
-
-                if file
-                    .file_path
-                    .as_deref()
-                    .is_some_and(t_image::is_ffmpeg_backed_image_path)
-                {
-                    return false;
-                }
-
-                let width = file.width.unwrap_or(0).max(0) as u32;
-                let height = file.height.unwrap_or(0).max(0) as u32;
-                width > 0 && height > 0 && width <= thumbnail_size && height <= thumbnail_size
-            })
-            .unwrap_or(false)
     }
 
-    fn is_png_bytes(data: &[u8]) -> bool {
-        data.starts_with(&[0x89, 0x50, 0x4E, 0x47])
-    }
-
-    fn is_complete_jpeg(data: &[u8]) -> bool {
-        data.starts_with(&[0xFF, 0xD8, 0xFF]) && data.ends_with(&[0xFF, 0xD9])
+    fn small_original_thumbnail(file_path: &str, orientation: i32, thumbnail_size: u32) -> Option<Vec<u8>> {
+        // Backend consumers expect cached pixels to have the source orientation applied.
+        if matches!(orientation, 2..=8) {
+            return None;
+        }
+        // Avoid reading unsupported originals twice before decoding them.
+        let extension = Path::new(file_path).extension()?.to_str()?.to_ascii_lowercase();
+        if !matches!(extension.as_str(), "jpg" | "jpeg" | "jpe" | "jfif" | "png" | "gif" | "webp" | "bmp" | "avif")
+            || (cfg!(target_os = "linux") && extension == "avif")
+        {
+            return None;
+        }
+        let (width, height) = t_image::get_image_dimensions(file_path).ok()?;
+        if !(1..=thumbnail_size).contains(&width) || !(1..=thumbnail_size).contains(&height) {
+            return None;
+        }
+        let data = fs::read(file_path).ok()?;
+        Self::cache_extension(&data).map(|_| data)
     }
 
     fn generation_lock_key(file_id: i64, _thumbnail_size: u32) -> String {
@@ -7553,23 +7544,17 @@ impl AThumb {
         preferred_extension: &str,
     ) -> Result<Option<Vec<u8>>, String> {
         let _cache_access = crate::t_cache_storage::access()?;
-        let extensions = if preferred_extension == "png" {
-            Self::CACHE_EXTENSIONS
-        } else {
-            ["jpg", "png"]
-        };
-        for extension in extensions {
+        for extension in std::iter::once(preferred_extension)
+            .chain(Self::CACHE_EXTENSIONS.into_iter().filter(|ext| *ext != preferred_extension))
+        {
             let path =
                 Self::get_thumb_cache_path_for_key(library_id, album_id, thumb_key, extension)?;
-            if !path.exists() {
-                continue;
-            }
-            let data = fs::read(path).map_err(|e| e.to_string())?;
-            if match extension {
-                "png" => Self::is_png_bytes(&data),
-                "jpg" => Self::is_complete_jpeg(&data),
-                _ => false,
-            } {
+            let data = match fs::read(path) {
+                Ok(data) => data,
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => continue,
+                Err(error) => return Err(error.to_string()),
+            };
+            if Self::cache_extension(&data) == Some(extension) {
                 return Ok(Some(data));
             }
         }
@@ -7583,13 +7568,7 @@ impl AThumb {
         data: &[u8],
     ) -> Result<PathBuf, String> {
         let _cache_access = crate::t_cache_storage::access()?;
-        let extension = if Self::is_png_bytes(data) {
-            "png"
-        } else if Self::is_complete_jpeg(data) {
-            "jpg"
-        } else {
-            return Err("Invalid thumbnail data".to_string());
-        };
+        let extension = Self::cache_extension(data).ok_or("Invalid thumbnail data")?;
         let path = Self::get_thumb_cache_path_for_key(library_id, album_id, thumb_key, extension)?;
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent).map_err(|e| e.to_string())?;
@@ -7615,6 +7594,9 @@ impl AThumb {
         #[cfg(not(windows))]
         let published = fs::rename(&temp_path, &path).map_err(|e| e.to_string());
         if let Err(error) = published { let _ = fs::remove_file(&temp_path); return Err(error); }
+        for other in Self::CACHE_EXTENSIONS.into_iter().filter(|other| *other != extension) {
+            let _ = fs::remove_file(path.with_extension(other));
+        }
         Ok(path)
     }
 
@@ -7635,7 +7617,7 @@ impl AThumb {
 
     /// Remove cache files no longer referenced by the target library's `athumbs`
     /// table. When `library_id` is None (or empty), falls back to the current
-    /// library. Only jpg/png files under that library's cache directory and
+    /// library. Only thumbnail files under that library's cache directory and
     /// older than `CLEANUP_MIN_FILE_AGE` are considered.
     pub fn clean_unused_cache(library_id: Option<&str>) -> Result<ThumbnailCacheCleanupResult, String> {
         // Resolve target library: explicit id (any library) or current (legacy behavior).
@@ -7687,7 +7669,8 @@ impl AThumb {
         };
         for entry in WalkDir::new(cache_root).into_iter().filter_map(|entry| entry.ok()) {
             if !entry.file_type().is_file()
-                || !matches!(entry.path().extension().and_then(|ext| ext.to_str()), Some("jpg" | "png"))
+                || !entry.path().extension().and_then(|ext| ext.to_str())
+                    .is_some_and(|ext| Self::CACHE_EXTENSIONS.contains(&ext))
             {
                 continue;
             }
@@ -7816,6 +7799,7 @@ impl AThumb {
         library_id: &str,
         known_duration: Option<u64>,
         seek_percent: Option<u8>,
+        force_jpeg: bool,
     ) -> Result<Option<Self>, String> {
         if !t_utils::content_readable(file_path) {
             return Self::fetch_for_library(file_id, library_id);
@@ -7825,7 +7809,7 @@ impl AThumb {
                 if let (Some(companion_id), Some(path)) = (companion.id, companion.file_path.as_deref()) {
                     if let Ok(Some(mut thumb)) = Self::new_for_library(
                         companion_id, path, 1, companion.e_orientation.unwrap_or(1) as i32,
-                        thumbnail_size, RawDisplayOptions::default(), library_id, None, None,
+                        thumbnail_size, RawDisplayOptions::default(), library_id, None, None, force_jpeg,
                     ) {
                         if thumb.error_code == 0 && thumb.thumb_data.is_some() {
                             thumb.file_id = file_id;
@@ -7841,7 +7825,12 @@ impl AThumb {
         let (thumb_data, error_code) = match file_type {
             1 => {
                 // image
-                if let Some(ext) = t_utils::get_file_extension(file_path) {
+                let original = (!force_jpeg)
+                    .then(|| Self::small_original_thumbnail(file_path, orientation, thumbnail_size))
+                    .flatten();
+                if let Some(data) = original {
+                    (Some(data), 0)
+                } else if let Some(ext) = t_utils::get_file_extension(file_path) {
                     match ext.to_lowercase().as_str() {
                         "heic" | "heif" | "hif" => {
                             // heic/heif/hif
@@ -7858,10 +7847,11 @@ impl AThumb {
                         }
                         _ => {
                             // other images
-                            match t_image::get_image_thumbnail(
+                            match t_image::get_image_thumbnail_with_encoding(
                                 file_path,
                                 orientation,
                                 thumbnail_size,
+                                force_jpeg,
                             ) {
                                 Ok(Some(data)) => (Some(data), 0),
                                 Ok(None) => (None, 1),
@@ -7988,6 +7978,8 @@ impl AThumb {
         thumb.thumb_data_base64 = thumb
             .thumb_data
             .as_ref()
+            // Other cache formats use the thumbnail protocol, which sends their MIME type.
+            .filter(|data| matches!(Self::cache_extension(data), Some("jpg" | "png")))
             .map(|data| general_purpose::STANDARD.encode(data));
         Ok(thumb)
     }
@@ -8081,9 +8073,6 @@ impl AThumb {
         library_id: &str,
         has_blob: bool,
     ) -> Result<bool, String> {
-        if self.error_code == 2 {
-            return Ok(true);
-        }
         if has_blob {
             return Ok(true);
         }
@@ -8091,16 +8080,7 @@ impl AThumb {
             return Ok(false);
         };
         let _access = crate::t_cache_storage::access()?;
-        let extensions = if file
-            .file_path
-            .as_deref()
-            .is_some_and(t_image::should_use_png_thumbnail)
-        {
-            ["png", "jpg"]
-        } else {
-            ["jpg", "png"]
-        };
-        for ext in extensions {
+        for ext in Self::CACHE_EXTENSIONS {
             let path = Self::get_thumb_cache_path_for_key(library_id, album, key, ext)?;
             if Self::cache_path_present(&path)? {
                 return Ok(true);
@@ -8145,14 +8125,11 @@ impl AThumb {
         let Some((thumb, has_blob)) = Self::fetch_record(id)? else {
             return Ok(true);
         };
-        if thumb.error_code == 1 {
+        if thumb.error_code != 0 {
             return Ok(true);
         }
         if thumb.is_stale(path) {
             return Ok(true);
-        }
-        if thumb.error_code == 2 {
-            return Ok(false);
         }
         if thumb.thumb_size != Some(size as i64) {
             return Ok(true);
@@ -8292,28 +8269,12 @@ impl AThumb {
         library_id: &str,
         known_duration: Option<u64>,
         seek_percent: Option<u8>,
-        require_cached_bytes: bool,
+        force_jpeg: bool,
     ) -> Result<Option<Self>, String> {
         // Reading an online-only original would download it; keep whatever is cached.
         if t_utils::is_cloud_only_path(file_path) {
             return Self::fetch_for_library(file_id, library_id);
         }
-        if !require_cached_bytes && Self::should_use_original_image(file_id, file_type, thumbnail_size) {
-            let athumb = Self {
-                id: None,
-                file_id,
-                error_code: 2,
-                thumb_data: None,
-                thumb_key: None,
-                thumb_mtime: Self::get_source_mtime(file_path),
-                thumb_size: Some(thumbnail_size as i64),
-                updated_at: Some(Self::now_ts()),
-                thumb_data_base64: None,
-            };
-            athumb.insert()?;
-            return Self::fetch_for_library(file_id, library_id);
-        }
-
         let source_version = Self::failure_version(file_id, file_path, thumbnail_size, orientation, prefer_embedded_raw_thumbnail);
         let mut athumb = match Self::new_for_library(
             file_id,
@@ -8325,6 +8286,7 @@ impl AThumb {
             library_id,
             known_duration,
             seek_percent,
+            force_jpeg,
         ) {
             Ok(Some(athumb)) => athumb,
             _ => Self {
@@ -8368,32 +8330,7 @@ impl AThumb {
         Self::fetch_for_library(file_id, library_id)
     }
 
-    fn create_cache_backed_thumb(
-        file_id: i64,
-        file_path: &str,
-        file_type: i64,
-        orientation: i32,
-        thumbnail_size: u32,
-        prefer_embedded_raw_thumbnail: RawDisplayOptions,
-        known_duration: Option<u64>,
-        seek_percent: Option<u8>,
-    ) -> Result<Option<Self>, String> {
-        let library_id = Self::get_current_library_id();
-        Self::create_cache_backed_thumb_for_library(
-            file_id,
-            file_path,
-            file_type,
-            orientation,
-            thumbnail_size,
-            prefer_embedded_raw_thumbnail,
-            &library_id,
-            known_duration,
-            seek_percent,
-            false,
-        )
-    }
-
-    /// Explicit download/index operation: always persist bytes, even for small images.
+    /// Persist a thumbnail after an explicit cloud download.
     pub fn cache_cloud_file_thumbnail(
         file_id: i64,
         file_path: &str,
@@ -8406,7 +8343,7 @@ impl AThumb {
         let _generation_guard = Self::acquire_generation_guard(file_id, thumbnail_size);
         Self::create_cache_backed_thumb_for_library(
             file_id, file_path, file_type, orientation, thumbnail_size, options,
-            &Self::get_current_library_id(), known_duration, None, true,
+            &Self::get_current_library_id(), known_duration, None, false,
         )
     }
 
@@ -8432,14 +8369,15 @@ impl AThumb {
         force_regenerate: bool,
         album_accessible: bool,
     ) -> Result<Option<Self>, String> {
+        // Legacy rows have no cache bytes. Let browsing refill them when the original is readable.
+        if thumbnail.error_code == 2 {
+            return Ok(None);
+        }
         if !album_accessible {
             return Ok(Some(thumbnail));
         }
         if t_utils::is_cloud_only_path(file_path) {
-            // A virtual thumbnail would read the online-only original.
-            return Ok(Some(if thumbnail.error_code == 2 {
-                Self { error_code: 1, ..thumbnail }
-            } else { thumbnail }));
+            return Ok(Some(thumbnail));
         }
         if force_regenerate {
             return Ok(if t_utils::content_readable(file_path) { None } else { Some(thumbnail) });
@@ -8490,6 +8428,7 @@ impl AThumb {
                         force_regenerate,
                         None,
                         seek_percent,
+                        false,
                     )?;
                     Ok((result, had_cache))
                 })
@@ -8534,6 +8473,7 @@ impl AThumb {
                     true,
                     file.duration.map(|d| d as u64),
                     None,
+                    false,
                 ) {
                     Ok(Some(thumb)) if thumb.error_code != 1 => {
                         refresh.file.has_thumbnail = Some(true);
@@ -8559,6 +8499,7 @@ impl AThumb {
         force_regenerate: bool,
         known_duration: Option<u64>,
         seek_percent: Option<u8>,
+        force_jpeg: bool,
     ) -> Result<Option<Self>, String> {
         let before = Self::fetch_record(file_id)?.and_then(|(t, _)| t.id);
         Self::with_generation_guard(file_id, thumbnail_size, || {
@@ -8574,6 +8515,7 @@ impl AThumb {
                 force_regenerate && before == current,
                 file.duration.map(|d| d as u64).or(known_duration),
                 seek_percent,
+                force_jpeg,
             )
         })
     }
@@ -8588,6 +8530,7 @@ impl AThumb {
         force: bool,
         duration: Option<u64>,
         seek: Option<u8>,
+        force_jpeg: bool,
     ) -> Result<Option<Self>, String> {
         let accessible = Self::get_file_album_id(file_id)?.is_none_or(t_utils::album_accessible);
         if !accessible || !t_utils::content_readable(file_path) {
@@ -8612,81 +8555,18 @@ impl AThumb {
                 return Ok(Some(thumb));
             }
         }
-        Self::create_cache_backed_thumb(
+        Self::create_cache_backed_thumb_for_library(
             file_id,
             file_path,
             file_type,
             orientation,
             thumbnail_size,
             options,
+            &Self::get_current_library_id(),
             duration,
             seek,
+            force_jpeg,
         )
-    }
-
-    /// fetch raw thumbnail bytes for protocol handler
-    pub fn fetch_raw_for_library(
-        file_id: i64,
-        library_id: &str,
-    ) -> Result<Option<Vec<u8>>, String> {
-        let thumb = Self::fetch_for_library(file_id, library_id)?;
-
-        // error_code 2: image is small enough to use the original file directly
-        if let Some(ref thumb) = thumb {
-            if thumb.error_code == 2 {
-                if let Ok(Some(file)) = AFile::get_file_info(file_id) {
-                    if let Some(ref file_path) = file.file_path {
-                        // A small image is shown from its original; an online-only one would download.
-                        if t_utils::content_readable(file_path)
-                            && let Ok(data) = std::fs::read(file_path)
-                        {
-                            return Ok(Some(data));
-                        }
-                    }
-                }
-            }
-        }
-
-        if let Some(thumb) = thumb.filter(|t| t.error_code == 0) {
-            if let Some(data) = thumb.thumb_data {
-                return Ok(Some(data));
-            }
-
-            let file = AFile::get_file_info(file_id)
-                .map_err(|e| e.to_string())?
-                .ok_or_else(|| format!("File not found for thumbnail: {}", file_id))?;
-            let file_path = file
-                .file_path
-                .ok_or_else(|| format!("File path not found for thumbnail: {}", file_id))?;
-            let file_type = file.file_type.unwrap_or(0);
-            let orientation = file.e_orientation.unwrap_or(1) as i32;
-            let thumbnail_size = thumb.thumb_size.unwrap_or(200).max(1) as u32;
-            let prefer_embedded_raw_thumbnail = thumb
-                .thumb_key
-                .as_deref()
-                .map(|key| RawDisplayOptions {
-                    mode: if key.starts_with('e') || key.starts_with('b') { crate::t_raw_display::RawPreviewMode::Embedded } else { crate::t_raw_display::RawPreviewMode::Rendered },
-                    auto_bright: key.starts_with('a') || key.starts_with('b'),
-                    prefer_pair: false,
-                })
-                .unwrap_or_default();
-
-            return Ok(Self::create_cache_backed_thumb_for_library(
-                file_id,
-                &file_path,
-                file_type,
-                orientation,
-                thumbnail_size,
-                prefer_embedded_raw_thumbnail,
-                library_id,
-                file.duration.map(|d| d as u64),
-                None,
-                true,
-            )?
-            .and_then(|thumb| thumb.thumb_data));
-        }
-
-        Ok(None)
     }
 
     /// delete a thumbnail from db
@@ -11218,6 +11098,55 @@ mod raw_display_cache_tests {
     use crate::t_raw_display::RawPreviewMode;
 
     #[test]
+    fn small_webp_is_cached_byte_for_byte_and_large_images_are_resized() {
+        let path = std::env::temp_dir().join(format!("lap-thumb-{}.webp", uuid::Uuid::new_v4()));
+        image::RgbImage::new(16, 8).save(&path).unwrap();
+        let original = fs::read(&path).unwrap();
+        let copied = AThumb::small_original_thumbnail(path.to_str().unwrap(), 1, 16);
+        let larger_than_limit = AThumb::small_original_thumbnail(path.to_str().unwrap(), 1, 15);
+        let rotated = AThumb::small_original_thumbnail(path.to_str().unwrap(), 6, 16);
+        fs::remove_file(path).unwrap();
+        assert!(rotated.is_none());
+        assert_eq!(AThumb::cache_extension(&original), Some("webp"));
+        assert_eq!(copied, Some(original));
+        assert!(larger_than_limit.is_none());
+    }
+
+    #[test]
+    fn small_tiff_uses_jpeg_thumbnail_encoding() {
+        let path = std::env::temp_dir().join(format!("lap-thumb-{}.tiff", uuid::Uuid::new_v4()));
+        image::RgbImage::new(16, 8).save(&path).unwrap();
+        let copied = AThumb::small_original_thumbnail(path.to_str().unwrap(), 1, 16);
+        let converted = t_image::get_image_thumbnail(path.to_str().unwrap(), 1, 16);
+        fs::remove_file(path).unwrap();
+        assert!(copied.is_none());
+        assert_eq!(AThumb::cache_extension(&converted.unwrap().unwrap()), Some("jpg"));
+    }
+
+    #[test]
+    fn jpeg_repair_encodes_png_pixels_with_source_orientation_applied() {
+        let path = std::env::temp_dir().join(format!("lap-thumb-{}.png", uuid::Uuid::new_v4()));
+        image::RgbImage::new(16, 8).save(&path).unwrap();
+        let repaired = t_image::get_image_thumbnail_with_encoding(path.to_str().unwrap(), 6, 16, true);
+        fs::remove_file(path).unwrap();
+        let data = repaired.unwrap().unwrap();
+        assert_eq!(AThumb::cache_extension(&data), Some("jpg"));
+        let decoded = image::load_from_memory(&data).unwrap();
+        assert_eq!((decoded.width(), decoded.height()), (8, 16));
+    }
+
+    #[test]
+    fn legacy_small_image_row_is_treated_as_a_cache_miss() {
+        let legacy = AThumb {
+            id: Some(1), file_id: 42, error_code: 2, thumb_data: None,
+            thumb_key: None, thumb_mtime: Some(123), thumb_size: Some(256),
+            updated_at: Some(123), thumb_data_base64: None,
+        };
+        assert!(AThumb::resolve_fetched_thumb_if_available(legacy, "small.jpg", false, true)
+            .unwrap().is_none());
+    }
+
+    #[test]
     fn unavailable_original_preserves_cached_thumbnail_even_during_forced_refresh() {
         let thumb = AThumb {
             id: Some(1),
@@ -11274,7 +11203,7 @@ mod raw_display_cache_tests {
             t, &path, false, true,
         ).unwrap();
         assert_eq!(resolve(thumb(0)).map(|t| t.error_code), Some(0), "a stale-dated cached thumbnail was dropped");
-        assert_eq!(resolve(thumb(2)).map(|t| t.error_code), Some(1), "a small image would be shown from its original");
+        assert_eq!(resolve(thumb(2)).map(|t| t.error_code), None, "a legacy small image has no cached bytes");
         assert!(crate::t_utils::is_cloud_only_path(&path));
     }
 

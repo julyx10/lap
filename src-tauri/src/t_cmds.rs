@@ -3333,7 +3333,7 @@ pub async fn change_video_thumbnail(
             AThumb::get_or_create_thumb(
                 file_id, file.file_path.as_deref().unwrap_or_default(), 2,
                 file.e_orientation.unwrap_or(1) as i32, thumbnail_size.clamp(64, 2048),
-                RawDisplayOptions::default(), true, file.duration.map(|d| d as u64), Some(seek_percent),
+                RawDisplayOptions::default(), true, file.duration.map(|d| d as u64), Some(seek_percent), false,
             )
         })
     }).await.map_err(|e| format!("Thumbnail task failed: {e}"))?
