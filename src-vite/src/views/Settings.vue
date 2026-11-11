@@ -867,6 +867,7 @@ const languages = [
   { label: 'Nederlands', value: 'nl' },
   { label: 'Polski', value: 'pl' },
   { label: 'Português', value: 'pt' },
+  { label: 'Tiếng Việt', value: 'vi' },
   { label: 'Русский', value: 'ru' },
   { label: 'Українська', value: 'uk' },
   { label: '中文简体', value: 'zh' },
