@@ -112,8 +112,139 @@ fn raw_preview_response(data: Vec<u8>, source: &'static str, unavailable: bool, 
     response
 }
 
+/// Parses the first range of a `Range: bytes=...` header into an inclusive
+/// `(start, end)` pair. `None` means the range cannot be satisfied.
+fn parse_byte_range(header: &str, len: u64) -> Option<(u64, u64)> {
+    let spec = header.trim().strip_prefix("bytes=")?.split(',').next()?.trim();
+    let (start, end) = spec.split_once('-')?;
+    if len == 0 {
+        return None;
+    }
+    let (start, end) = if start.is_empty() {
+        let suffix: u64 = end.trim().parse().ok()?;
+        if suffix == 0 {
+            return None;
+        }
+        (len.saturating_sub(suffix), len - 1)
+    } else {
+        let start: u64 = start.trim().parse().ok()?;
+        let end = if end.trim().is_empty() { len - 1 } else { end.trim().parse::<u64>().ok()?.min(len - 1) };
+        (start, end)
+    };
+    (start < len && start <= end).then_some((start, end))
+}
+
+/// Serves `asset://` like Tauri's built-in handler, but off the UI thread.
+/// The built-in handler blocks the scheme callback until the file is read; on
+/// macOS that callback runs on the main thread, so an online-only (iCloud)
+/// original froze the whole app while it downloaded.
+fn asset_file_response(path: &str, range: Option<&str>, head: bool, origin: &str) -> http::Response<Vec<u8>> {
+    use std::io::{Read, Seek, SeekFrom};
+    const MAX_RANGE_LEN: u64 = 1000 * 1024;
+
+    let status_only = |status: http::StatusCode| {
+        http::Response::builder()
+            .status(status)
+            .header(http::header::ACCESS_CONTROL_ALLOW_ORIGIN, origin)
+            .body(Vec::new())
+            .unwrap()
+    };
+    let mut file = match std::fs::File::open(path) {
+        Ok(file) => file,
+        Err(e) => {
+            return status_only(match e.kind() {
+                std::io::ErrorKind::NotFound => http::StatusCode::NOT_FOUND,
+                std::io::ErrorKind::PermissionDenied => http::StatusCode::FORBIDDEN,
+                _ => http::StatusCode::INTERNAL_SERVER_ERROR,
+            });
+        }
+    };
+    let read = |file: &mut std::fs::File, start: u64, nbytes: u64| -> std::io::Result<Vec<u8>> {
+        let mut buf = Vec::with_capacity(nbytes as usize);
+        file.seek(SeekFrom::Start(start))?;
+        file.take(nbytes).read_to_end(&mut buf)?;
+        Ok(buf)
+    };
+    let Ok(len) = file.metadata().map(|m| m.len()) else {
+        return status_only(http::StatusCode::INTERNAL_SERVER_ERROR);
+    };
+    let Ok(magic) = read(&mut file, 0, len.min(8192)) else {
+        return status_only(http::StatusCode::INTERNAL_SERVER_ERROR);
+    };
+    let mime = tauri::utils::mime_type::MimeType::parse(&magic, path);
+    let builder = http::Response::builder()
+        .header(http::header::ACCESS_CONTROL_ALLOW_ORIGIN, origin)
+        .header(http::header::CONTENT_TYPE, mime);
+
+    if let Some(range) = range {
+        let Some((start, end)) = parse_byte_range(range, len) else {
+            return http::Response::builder()
+                .status(http::StatusCode::RANGE_NOT_SATISFIABLE)
+                .header(http::header::ACCESS_CONTROL_ALLOW_ORIGIN, origin)
+                .header(http::header::CONTENT_RANGE, format!("bytes */{len}"))
+                .body(Vec::new())
+                .unwrap();
+        };
+        let end = start + (end - start).min(MAX_RANGE_LEN - 1);
+        let Ok(buf) = read(&mut file, start, end + 1 - start) else {
+            return status_only(http::StatusCode::INTERNAL_SERVER_ERROR);
+        };
+        return builder
+            .status(http::StatusCode::PARTIAL_CONTENT)
+            .header(http::header::ACCEPT_RANGES, "bytes")
+            .header(http::header::ACCESS_CONTROL_EXPOSE_HEADERS, "content-range")
+            .header(http::header::CONTENT_RANGE, format!("bytes {start}-{end}/{len}"))
+            .header(http::header::CONTENT_LENGTH, end + 1 - start)
+            .body(buf)
+            .unwrap();
+    }
+    if head {
+        return builder.header(http::header::CONTENT_LENGTH, len).body(Vec::new()).unwrap();
+    }
+    let body = if len <= 8192 { Ok(magic) } else { read(&mut file, 0, len) };
+    match body {
+        Ok(buf) => builder.header(http::header::CONTENT_LENGTH, len).body(buf).unwrap(),
+        Err(_) => status_only(http::StatusCode::INTERNAL_SERVER_ERROR),
+    }
+}
+
 pub fn register_protocols(builder: Builder<Wry>) -> Builder<Wry> {
     builder
+        .register_asynchronous_uri_scheme_protocol("asset", |ctx, request, responder| {
+            use tauri::Manager;
+            // Registering "asset" replaces Tauri's built-in handler; keep its
+            // URL format, scope check and range behaviour.
+            let raw_path = request.uri().path();
+            let path = percent_encoding::percent_decode(raw_path.strip_prefix('/').unwrap_or(raw_path).as_bytes())
+                .decode_utf8_lossy()
+                .to_string();
+            let origin = request.headers().get(http::header::ORIGIN)
+                .and_then(|v| v.to_str().ok()).unwrap_or("*").to_string();
+            let traversal = std::path::Path::new(&path).components()
+                .any(|c| matches!(c, std::path::Component::ParentDir));
+            if path.is_empty() || traversal || !ctx.app_handle().asset_protocol_scope().is_allowed(&path) {
+                responder.respond(http::Response::builder()
+                    .status(http::StatusCode::FORBIDDEN)
+                    .header(http::header::ACCESS_CONTROL_ALLOW_ORIGIN, origin)
+                    .body(Vec::new())
+                    .unwrap());
+                return;
+            }
+            let range = request.headers().get(http::header::RANGE)
+                .and_then(|v| v.to_str().ok()).map(str::to_string);
+            let head = request.method() == http::Method::HEAD;
+            tauri::async_runtime::spawn(async move {
+                let fallback_origin = origin.clone();
+                let response = tauri::async_runtime::spawn_blocking(move || {
+                    asset_file_response(&path, range.as_deref(), head, &origin)
+                }).await.unwrap_or_else(|_| http::Response::builder()
+                    .status(http::StatusCode::INTERNAL_SERVER_ERROR)
+                    .header(http::header::ACCESS_CONTROL_ALLOW_ORIGIN, fallback_origin)
+                    .body(Vec::new())
+                    .unwrap());
+                responder.respond(response);
+            });
+        })
         .register_asynchronous_uri_scheme_protocol("thumb", |_ctx, request, responder| {
             // URL format: thumb://localhost/{library_id}/{file_id}
             // library_id is also used for cache namespace isolation.
@@ -306,5 +437,23 @@ mod raw_display_tests {
         assert_eq!(raw_display_options(Some("rawPreviewMode=embedded")).mode, RawPreviewMode::Embedded);
         assert!(raw_display_options(Some("rawPreviewMode=embedded&rawAutoBright=true")).auto_bright);
         assert!(!raw_display_options(None).prefer_pair);
+    }
+}
+
+#[cfg(test)]
+mod asset_range_tests {
+    use super::parse_byte_range;
+
+    #[test]
+    fn parses_ranges_like_the_built_in_asset_handler() {
+        assert_eq!(parse_byte_range("bytes=0-499", 1000), Some((0, 499)));
+        assert_eq!(parse_byte_range("bytes=500-", 1000), Some((500, 999)));
+        assert_eq!(parse_byte_range("bytes=-200", 1000), Some((800, 999)));
+        assert_eq!(parse_byte_range("bytes=0-5000", 1000), Some((0, 999)));
+        assert_eq!(parse_byte_range("bytes=0-1, 5-9", 1000), Some((0, 1)));
+        assert_eq!(parse_byte_range("bytes=1000-", 1000), None);
+        assert_eq!(parse_byte_range("bytes=9-3", 1000), None);
+        assert_eq!(parse_byte_range("bytes=0-", 0), None);
+        assert_eq!(parse_byte_range("items=0-1", 1000), None);
     }
 }
