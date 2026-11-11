@@ -84,7 +84,7 @@
       "name": "Naam",
       "description": "Beschrijving",
       "description_placeholder": "Voer een albumbeschrijving in",
-      "images": "Foto's",
+      "images": "Afbeeldingen",
       "videos": "Video's",
       "section_general": "Algemeen",
       "section_scan": "Scanstatus",
@@ -109,7 +109,6 @@
       "last_scan_time": "Laatst gescand",
       "tab_general": "Algemeen",
       "file_types": "Bestandstypen uitsluiten",
-      "photos": "Foto's",
       "raw": "RAW",
       "file_types_required": "Laat minstens één bestandstype meedoen.",
       "pixel_filter": "Kleine afbeeldingen uitsluiten",
@@ -148,6 +147,9 @@
       "add_rule": "Regel toevoegen",
       "rules_count": "{count}/{max} regels",
       "remove_rule": "Regel verwijderen",
+      "search_options": "Filteren…",
+      "no_matches": "Geen resultaten",
+      "select_value": "Selecteren…",
       "group": "Groeperen",
       "sort": "Sorteren",
       "order": "Volgorde",
@@ -232,6 +234,7 @@
     }
   },
   "offline": {
+    "badge": "Offline",
     "cloud_only": "Alleen online beschikbaar",
     "cloud_only_pending": "Alleen online beschikbaar — bestandsinformatie onvolledig",
     "original_unavailable": "Het oorspronkelijke bestand is niet beschikbaar",
@@ -247,6 +250,7 @@
     "copy_failed": "Dit bestand kon niet worden geïmporteerd."
   },
   "import_organize": {
+    "title": "Map importeren",
     "section_folders": "Kies map",
     "section_status": "Importstatus",
     "to_import": "Te importeren",
@@ -258,7 +262,7 @@
     "layout_day": "Per dag — JJJJ/JJJJ-MM-DD",
     "layout_month": "Per maand — JJJJ/JJJJ-MM",
     "layout_year": "Per jaar — JJJJ",
-    "layout_none": "Eén map",
+    "layout_structure": "Mapstructuur behouden",
     "import": "Importeren",
     "preparing": "Import voorbereiden",
     "importing": "Bestanden importeren",
@@ -284,7 +288,7 @@
   "search": {
     "title": "Zoeken",
     "similar_images": "Verwante foto's",
-    "image_search_placeholder": "Zoek afbeeldingen, bestandsnamen of beschrijvingen",
+    "image_search_placeholder": "Doorzoek je bibliotheek",
     "matches": "Resultaten",
     "unknown_location": "Onbekende locatie",
     "unknown_camera": "Onbekende camera",
@@ -353,6 +357,8 @@
     "unreviewed": "Niet bekeken"
   },
   "tag": {
+    "no_selected_tags": "Geen geselecteerde tags",
+    "show_selected_only": "Alleen geselecteerde tags tonen",
     "title": "Tags",
     "delete_tag": "Tag verwijderen",
     "edit_tag": "Tags bewerken",
@@ -368,7 +374,7 @@
     "add_child": "Nieuwe subtag",
     "invalid_name": "Tagnamen mogen geen , ; of {'|'} bevatten.",
     "invalid_move": "Een tag kan niet binnen zijn eigen boom worden verplaatst.",
-    "delete_tree": "Deze tag en de onderliggende tags worden verwijderd. Foto’s blijven behouden."
+    "delete_tree": "Deze tag en de onderliggende tags worden verwijderd. Afbeeldingen blijven behouden."
   },
   "subject": {
     "title": "Onderwerpen",
@@ -488,8 +494,8 @@
       ],
       "file_type_options": [
         "Alle",
-        "Foto's",
-        "RAW-bestanden",
+        "Afbeeldingen",
+        "Alleen RAW",
         "Video's"
       ],
       "file_type_other": "Overig"
@@ -534,8 +540,8 @@
       "move": "Verplaatsen"
     },
     "edit_disabled": "Selecteer één foto om te bewerken",
-    "type_image": "Foto",
-    "type_images": "Foto's",
+    "type_image": "Afbeelding",
+    "type_images": "Afbeeldingen",
     "type_video": "Video",
     "type_videos": "Video's",
     "select_title": "Selectie",
@@ -547,10 +553,34 @@
     "more_actions": "Meer acties",
     "tag_all": "Taggen",
     "dedup": {
+      "keep_rules": {
+        "title": "Bewaarregels",
+        "priority_order": "Prioriteitsvolgorde",
+        "folders": "Voorkeursmappen",
+        "subfolders": "Inclusief submappen. Hoger in de lijst krijgt voorrang.",
+        "folders_skipped": "Geen ingesteld, overgeslagen",
+        "add_folder": "Map toevoegen",
+        "folder_already_added": "Al toegevoegd",
+        "format": "Voorkeursformaat",
+        "similar_only": "Alleen vergelijkbare afbeeldingen",
+        "raw_first": "RAW eerst",
+        "jpeg_heic_first": "JPEG / HEIC eerst",
+        "size": "Voorkeursgrootte",
+        "largest_dimensions": "Hoogste resolutie",
+        "smallest_dimensions": "Laagste resolutie",
+        "largest_file_size": "Grootste bestandsgrootte",
+        "smallest_file_size": "Kleinste bestandsgrootte",
+        "ignore": "Negeren",
+        "time": "Voorkeursdatum",
+        "created_earliest": "Oudste aanmaakdatum",
+        "created_latest": "Nieuwste aanmaakdatum",
+        "modified_earliest": "Oudste wijzigingsdatum",
+        "modified_latest": "Nieuwste wijzigingsdatum"
+      },
       "title": "Duplicaten",
       "tabs": {
         "exact": "Duplicaten",
-        "similar": "Vergelijkbare foto's"
+        "similar": "Vergelijkbare afbeeldingen"
       },
       "scanning": "Zoeken naar duplicaten...",
       "error_title": "Kan niet naar duplicaten zoeken",
@@ -704,6 +734,7 @@
     "album": {
       "add": "Nieuw album",
       "edit": "Album bewerken...",
+      "import_folder": "Map importeren…",
       "scan": "Album scannen",
       "reorder": "Volgorde wijzigen",
       "pause_scan": "Scannen pauzeren",
@@ -844,7 +875,6 @@
       "hide": "Verbergen",
       "hidden": "Verborgen",
       "remove": "Verwijderen",
-      "reorder": "Volgorde wijzigen",
       "rename": "Wijzig naam",
       "switch_to": "Overschakelen naar",
       "add_new": "Nieuwe bibliotheek",
@@ -1008,6 +1038,7 @@
       "error": "Kan bestand niet kiezen."
     },
     "file_refresh": {
+      "metadata_failed": "Importeren van metagegevens mislukt: {count}",
       "skipped": "Overgeslagen: {count}",
       "status": "Vernieuwingsstatus",
       "running": "Vernieuwen…",
@@ -1016,7 +1047,6 @@
       "complete": "Voltooid",
       "succeeded": "Bijgewerkt: {count}",
       "failed": "Mislukt: {count}",
-      "warnings": "Waarschuwingen: {count}",
       "release_requested": "Vrijmaken aangevraagd: {count}",
       "kept_local": "Op dit apparaat behouden: {count}",
       "kept_local_hint": "Bestanden die altijd op dit apparaat moeten blijven, of waarvoor Windows Lap geen ruimte liet vrijmaken (gecontroleerde maptoegang)."
@@ -1151,6 +1181,17 @@
     }
   },
   "file_info": {
+    "paths_copied": "{count} bestandspad(en) naar klembord gekopieerd",
+    "copy_path": "Bestandspad kopiëren",
+    "copy_path_failed": "Bestandspad kopiëren mislukt",
+    "video_only": "(alleen video's)",
+    "field_preset": "Zichtbare velden",
+    "fields_default": "Standaard",
+    "fields_all": "Alles tonen",
+    "fields_custom": "Aangepast",
+
+    "hide_empty_fields": "Lege velden automatisch verbergen",
+    "customize_fields": "Velden aanpassen",
     "title": "Informatie",
     "preview": "Voorbeeld",
     "thumbnail": "Miniatuur",
@@ -1210,10 +1251,10 @@
     "source_description": "Oorspronkelijke beschrijving",
     "coordinates": "Coördinaten",
     "detail_fields": {
-      "title": "Oorspronkelijke titel",
+      "title": "Titel",
+      "headline": "Koptekst",
       "creator": "Maker",
       "copyright": "Copyright",
-      "description": "Oorspronkelijke beschrijving",
       "credit": "Naamsvermelding",
       "source": "Bron",
       "usageTerms": "Gebruiksvoorwaarden",
@@ -1320,7 +1361,8 @@
       "appearance": "Kleurmodus",
       "appearance_options": [
         "Licht",
-        "Donker"
+        "Donker",
+        "Systeem volgen"
       ],
       "theme": "Thema",
       "theme_options_light": [
@@ -1383,6 +1425,10 @@
     "raw": {
       "title": "RAW",
       "section_pairs": "Gekoppelde bestanden",
+      "clipboard_both": "Beide bestanden",
+      "clipboard_raw": "Alleen RAW",
+      "clipboard_jpeg": "Alleen JPEG/HEIC",
+      "clipboard_hint": "Geldt ook voor bestandspaden. Kopiëren of verplaatsen naar mappen blijft ongewijzigd.",
       "pair_source": "Standaardweergave voor paren",
       "pair_source_hint": "Gebruikt voor miniaturen en voorbeelden van gekoppelde bestanden",
       "pair_jpeg": "JPEG / HEIC",
@@ -1541,7 +1587,7 @@
     },
     "image_search": {
       "title": "Zoeken",
-      "search_image": "Foto's zoeken",
+      "search_image": "Afbeeldingen zoeken",
       "search_model": "Kies model",
       "default_model_hint": "Het standaardmodel ondersteunt alleen zoeken in het Engels",
       "multilingual_model_hint": "Zoeken in meer dan 50 talen",
@@ -1611,6 +1657,7 @@
         "open_new_window": "Bekijken in nieuw venster",
         "open_external_app": "Openen in externe app",
         "edit_image": "Bewerken",
+        "copy_file_path": "Bestandspad kopiëren",
         "copy_file": "Kopiëren naar klembord",
         "paste_file": "Plakken",
         "reveal_in_finder": "Toon in Finder",

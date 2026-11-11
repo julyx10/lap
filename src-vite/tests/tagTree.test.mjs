@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import ts from "typescript";
+import { computed, ref } from "vue";
 
 const treeSource = await readFile(
   new URL("../src/common/tagTree.ts", import.meta.url),
@@ -143,4 +144,99 @@ test("tag selection keeps tri-state batch semantics and never implicitly assigns
   assert.equal(mixed.tagChanges.value.get(1), "remove");
   mixed.toggle(1);
   assert.equal(mixed.tagChanges.value.size, 0);
+});
+
+
+test("virtual tag rows reveal offscreen targets and keep the inline editor at normal row height", () => {
+  const start = dialog.indexOf('const TAG_ROW_HEIGHT =');
+  const end = dialog.indexOf('let tagListObserver:', start);
+  assert.ok(start >= 0 && end > start);
+  const editor = ref(null);
+  const filteredTags = ref(Array.from({ length: 4000 }, (_, i) => ({ id: i + 1 })));
+  const code = ts.transpile(dialog.slice(start, end), { target: ts.ScriptTarget.ES2022 });
+  const { tagGeometry, tagContentHeight, tagScroller, scrollToTag, editorTagIndex } = new Function(
+    'ref', 'computed', 'editor', 'filteredTags', code + ';return { tagGeometry, tagContentHeight, tagScroller, scrollToTag, editorTagIndex };',
+  )(ref, computed, editor, filteredTags);
+  const viewport = { scrollTop: 0, clientHeight: 400 };
+  const scrolls = [];
+  tagScroller.value = { $el: viewport, scrollToPosition: value => { scrolls.push(value); viewport.scrollTop = value; } };
+  scrollToTag(3999);
+  assert.equal(viewport.scrollTop + viewport.clientHeight, tagContentHeight.value);
+  scrollToTag(0);
+  assert.equal(viewport.scrollTop, 0);
+  scrollToTag(1);
+  assert.equal(scrolls.length, 2, 'visible targets must not scroll');
+  editor.value = { id: 4000 };
+  scrollToTag(editorTagIndex.value);
+  assert.equal(tagGeometry.value.at(-1).height, 40);
+  assert.equal(viewport.scrollTop + viewport.clientHeight, tagContentHeight.value);
+  filteredTags.value = [];
+  scrollToTag(editorTagIndex.value);
+  assert.equal(tagContentHeight.value, 0);
+});
+
+
+test("tag list measures width after the modal slot mounts and ignores a closed dialog", () => {
+  const start = dialog.indexOf('  tagListObserver = new ResizeObserver(');
+  const end = dialog.indexOf('  // Catalog and selection reads', start);
+  assert.ok(start >= 0 && end > start);
+  for (const closed of [false, true]) {
+    const tagListContainer = { value: null };
+    const tagListWidth = { value: 0 };
+    const ticks = [], observed = [];
+    new Function('ResizeObserver', 'nextTick', 'disposed', 'tagListContainer', 'tagListWidth',
+      'let tagListObserver; ' + dialog.slice(start, end))(
+      class { observe(element) { observed.push(element); } },
+      callback => ticks.push(callback), closed, tagListContainer, tagListWidth,
+    );
+    assert.equal(observed.length, 0);
+    tagListContainer.value = { clientWidth: 480 };
+    ticks.forEach(callback => callback());
+    assert.equal(tagListWidth.value, closed ? 0 : 464);
+    assert.equal(observed.length, closed ? 0 : 1);
+  }
+});
+
+
+test("virtual scroll keeps an offscreen editor mounted without forcing its scroll position", async () => {
+  const source = await readFile(new URL('../src/components/VirtualScroll.vue', import.meta.url), 'utf8');
+  const start = source.indexOf('const visibleItems = computed(');
+  const end = source.indexOf('function getItemKey', start);
+  const props = { items: Array.from({ length: 400 }, (_, id) => ({ id })), gridItems: 1, pinnedIndex: 399 };
+  const range = ref({ start: 0, end: 12 });
+  const rows = new Function('computed', 'props', 'visibleRange', 'totalCount',
+    source.slice(start, end) + ';return visibleItems;')(computed, props, range, { value: 400 });
+  assert.equal(rows.value.length, 13);
+  assert.equal(rows.value.at(-1).index, 399);
+  range.value = { start: 390, end: 400 };
+  assert.equal(rows.value.length, 10, 'visible editor must not be duplicated');
+  assert.equal(rows.value.filter(row => row.index === 399).length, 1);
+  assert.doesNotMatch(dialog, /@scroll="keepEditorVisible"/);
+});
+
+
+test("selected-only tags retain unselected ancestors and combine with search", () => {
+  const start = dialog.indexOf('const filteredTags = computed(');
+  const end = dialog.indexOf('const editor = ref<', start);
+  assert.ok(start >= 0 && end > start);
+  const allTags = ref([
+    { id: 1, name: 'Parent', parent_id: null, path: 'Parent' },
+    { id: 2, name: 'Child', parent_id: 1, path: 'Parent|Child' },
+    { id: 3, name: 'Other', parent_id: null, path: 'Other' },
+  ]);
+  const selectedTags = ref(new Set([2]));
+  const intermediateTags = ref(new Set([3]));
+  const showSelectedOnly = ref(true), tagSearch = ref(''), editor = ref(null);
+  const deps = { computed, tagRows, allTags, selectedTags, intermediateTags, showSelectedOnly, tagSearch, editor, collapsed: ref([]) };
+  const rows = new Function(...Object.keys(deps), ts.transpile(dialog.slice(start, end), { target: ts.ScriptTarget.ES2022 }) + ';return filteredTags;')(...Object.values(deps));
+  assert.deepEqual(rows.value.map(tag => tag.id), [3, 1, 2]);
+  assert.equal(rows.value.at(-1).depth, 1);
+  assert.equal(selectedTags.value.has(1), false, 'ancestor is not automatically selected');
+  assert.equal(rows.value.find(tag => tag.id === 1).hasChildren, true);
+  tagSearch.value = 'Child';
+  assert.deepEqual(rows.value.map(tag => tag.id), [1, 2]);
+  selectedTags.value = new Set();
+  assert.equal(rows.value.length, 0);
+  editor.value = { id: 2, name: 'Child', parent: 1 };
+  assert.deepEqual(rows.value.map(tag => tag.id), [1, 2], 'keep the editor mounted if its selection changes');
 });

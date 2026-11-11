@@ -9,7 +9,7 @@
   </p>
 </div>
 
-[English](../README.md) | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | [Italiano](README.it.md) | Magyar | [Nederlands](README.nl.md) | [Polski](README.pl.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [Українська](README.uk.md) | [中文简体](README.zh-CN.md) | [中文繁體](README.zh-TW.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
+[English](../README.md) | [Česky](README.cs.md) | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | [Italiano](README.it.md) | Magyar | [Nederlands](README.nl.md) | [Polski](README.pl.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [Українська](README.uk.md) | [Tiếng Việt](README.vi.md) | [中文简体](README.zh-CN.md) | [中文繁體](README.zh-TW.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
 A Lap egy nyílt forráskódú, helyi alapú fotókezelő családi albumok böngészéséhez, régi fényképek gyors megtalálásához és nagy személyes médiakönyvtárak offline kezeléséhez.
 Az adatvédelmet előtérbe helyező alternatíva a felhőalapú fotószolgáltatásokkal szemben: nincs kényszerített feltöltés, helyi AI-keresés, mappaközpontú munkafolyamat és ingyenes használat.

@@ -551,7 +551,7 @@ import { useRouter } from 'vue-router';
 import { useUIStore } from '@/stores/uiStore';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/config';
-import { isWin, isLinux, setTheme, SCALE_VALUES, getFolderPath, getFileExtension, shortenFilename, getFullPath, combineFileName, getSelectOptions, getAssetSrc, getPreviewUrl, getThumbUrl, shouldUseBackendPreview } from '@/common/utils';
+import { isWin, isLinux, SCALE_VALUES, getFolderPath, getFileExtension, shortenFilename, getFullPath, combineFileName, getSelectOptions, getAssetSrc, getPreviewUrl, getThumbUrl, shouldUseBackendPreview } from '@/common/utils';
 import { editImage, checkFileExists, getFileInfo } from '@/common/api';
 import { getMaxInscribedRect, clampCenterInRotatedRect, maxResizeT } from '@/common/geometry';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
@@ -1328,18 +1328,6 @@ watch(
 
 watch(() => config.settings.language, (newLanguage) => {
   locale.value = newLanguage;
-});
-
-watch(() => config.settings.appearance, (newAppearance) => {
-  setTheme(newAppearance, newAppearance === 0 ? config.settings.lightTheme : config.settings.darkTheme);
-});
-
-watch(() => config.settings.lightTheme, (newLightTheme) => {
-  setTheme(config.settings.appearance, newLightTheme);
-});
-
-watch(() => config.settings.darkTheme, (newDarkTheme) => {
-  setTheme(config.settings.appearance, newDarkTheme);
 });
 
 watch(() => Number(config.settings.scale || 1), (newScale) => {

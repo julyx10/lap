@@ -6,10 +6,12 @@ import { createPinia, defineStore } from 'pinia';
 import { createPersistedState } from 'pinia-plugin-persistedstate';
 import ts from 'typescript';
 
+const fieldSource = readFileSync(new URL('../src/common/fileInfoFields.ts', import.meta.url), 'utf8');
+const { defaultFileInfoFields } = await import(`data:text/javascript;base64,${Buffer.from(ts.transpile(fieldSource, { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext })).toString('base64')}`);
 const storeSource = readFileSync(new URL('../src/stores/configStore.js', import.meta.url), 'utf8');
-const useConfig = new Function('defineStore', 'SIDEBAR', 'MAP_MARKER_SIZES',
+const useConfig = new Function('defineStore', 'SIDEBAR', 'MAP_MARKER_SIZES', 'defaultFileInfoFields',
   storeSource.replace(/^import .*;\n/gm, '').replace('export const useConfigStore', 'const useConfigStore')
-  + ';return useConfigStore;')(defineStore, { ALBUM: 1 }, []);
+  + ';return useConfigStore;')(defineStore, { ALBUM: 1 }, [], defaultFileInfoFields);
 const mainSource = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
 const listenerStart = mainSource.indexOf("listen('af-area-display-changed'");
 const listener = mainSource.slice(listenerStart, mainSource.indexOf('\n})', listenerStart) + 3);

@@ -9,16 +9,23 @@ new Function('exports', ts.transpile(read('../src/common/shortcuts.ts'), {
   target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS,
 }))(registry);
 const { matchesShortcut, getShortcutLabel, getShortcutConflicts } = registry;
+class HTMLElementStub {
+  constructor(properties = {}) {
+    this.tagName = 'DIV';
+    this.isContentEditable = false;
+    Object.assign(this, properties);
+  }
+}
 const event = (extra = {}) => ({ key: 'a', code: 'KeyA', repeat: false,
   ctrlKey: false, metaKey: false, altKey: false, shiftKey: false, defaultPrevented: false,
-  target: { tagName: 'DIV', isContentEditable: false },
+  target: new HTMLElementStub(),
   preventDefault() { this.defaultPrevented = true; }, ...extra });
 
 function hostHandler(viewer, mode, toggle, overrides = {}) {
   const source = read(viewer ? '../src/views/ImageViewer.vue' : '../src/components/Content.vue');
   const start = source.indexOf(viewer ? 'function handleKeyDown(event:' : 'function handleLocalKeyDown(event:');
   const end = source.indexOf(viewer ? "  if (matchesShortcut('meta.favorite'" : "  if (getActivePreviewMode() !== 'none' && matchesShortcut('view.zoomFit'", start);
-  const deps = { matchesShortcut, shortcutPlatform: 'mac', uiStore: { inputStack: [], activePane: 'content' },
+  const deps = { HTMLElement: HTMLElementStub, matchesShortcut, shortcutPlatform: 'mac', uiStore: { inputStack: [], activePane: 'content' },
     isSlideShow: { value: false }, splitCount: { value: 2 }, isMapVisible: { value: false },
     selectedItemIndex: { value: 0 }, fileList: { value: [{ file_type: 1 }] }, selectMode: { value: false },
     showQuickView: { value: mode === 'quick-view' }, getActivePreviewMode: () => mode,
@@ -53,7 +60,7 @@ test('quick preview, Filmstrip, and independent viewer invoke the button action 
     handle(event({ repeat: true }));
     assert.equal(calls, 1);
     for (const target of [{ tagName: 'INPUT' }, { tagName: 'TEXTAREA' }, { tagName: 'SELECT' }, { isContentEditable: true }]) {
-      handle(event({ target }));
+      handle(event({ target: new HTMLElementStub(target) }));
     }
     assert.equal(calls, 1);
     handle(event({ defaultPrevented: true }));

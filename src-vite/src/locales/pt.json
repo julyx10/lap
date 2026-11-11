@@ -84,7 +84,7 @@
       "name": "Nome",
       "description": "Descrição",
       "description_placeholder": "Digite a descrição do álbum",
-      "images": "Fotos",
+      "images": "Imagens",
       "videos": "Vídeos",
       "section_general": "Geral",
       "section_scan": "Status da verificação",
@@ -109,7 +109,6 @@
       "last_scan_time": "Última verificação",
       "tab_general": "Geral",
       "file_types": "Excluir tipos de arquivo",
-      "photos": "Fotos",
       "raw": "RAW",
       "file_types_required": "Mantenha pelo menos um tipo de arquivo incluído.",
       "pixel_filter": "Excluir imagens pequenas",
@@ -148,6 +147,9 @@
       "add_rule": "Adicionar regra",
       "rules_count": "{count}/{max} regras",
       "remove_rule": "Remover regra",
+      "search_options": "Filtrar…",
+      "no_matches": "Nenhum resultado",
+      "select_value": "Selecionar…",
       "group": "Agrupar",
       "sort": "Ordenar",
       "order": "Ordem",
@@ -232,6 +234,7 @@
     }
   },
   "offline": {
+    "badge": "Offline",
     "cloud_only": "Disponível somente online",
     "cloud_only_pending": "Disponível somente online — informações incompletas",
     "original_unavailable": "O ficheiro original está indisponível",
@@ -247,6 +250,7 @@
     "copy_failed": "Não foi possível importar este arquivo."
   },
   "import_organize": {
+    "title": "Importar pasta",
     "section_folders": "Selecionar pasta",
     "section_status": "Status da importação",
     "to_import": "Para importar",
@@ -258,7 +262,7 @@
     "layout_day": "Por dia — YYYY/YYYY-MM-DD",
     "layout_month": "Por mês — YYYY/YYYY-MM",
     "layout_year": "Por ano — YYYY",
-    "layout_none": "Uma pasta",
+    "layout_structure": "Manter a estrutura de pastas",
     "import": "Importar",
     "preparing": "Preparando a importação",
     "importing": "Importando arquivos",
@@ -284,7 +288,7 @@
   "search": {
     "title": "Pesquisa",
     "similar_images": "Fotos relacionadas",
-    "image_search_placeholder": "Pesquisar imagens, nomes de ficheiros ou descrições",
+    "image_search_placeholder": "Pesquisar na biblioteca",
     "matches": "Correspondências",
     "unknown_location": "Local desconhecido",
     "unknown_camera": "Câmera desconhecida",
@@ -353,6 +357,8 @@
     "unreviewed": "Não revisadas"
   },
   "tag": {
+    "no_selected_tags": "Nenhuma etiqueta selecionada",
+    "show_selected_only": "Mostrar apenas etiquetas selecionadas",
     "title": "Tags",
     "delete_tag": "Excluir tag",
     "edit_tag": "Editar tags",
@@ -368,7 +374,7 @@
     "add_child": "Nova etiqueta filha",
     "invalid_name": "Os nomes das etiquetas não podem conter , ; ou {'|'}.",
     "invalid_move": "Uma etiqueta não pode ser movida para a própria subárvore.",
-    "delete_tree": "Esta etiqueta e as suas subetiquetas serão eliminadas. As fotos serão mantidas."
+    "delete_tree": "Esta etiqueta e as suas subetiquetas serão eliminadas. As imagens serão mantidas."
   },
   "subject": {
     "title": "Temas",
@@ -488,8 +494,8 @@
       ],
       "file_type_options": [
         "Todos",
-        "Fotos",
-        "Arquivos RAW",
+        "Imagens",
+        "Apenas RAW",
         "Vídeos"
       ],
       "file_type_other": "Outros"
@@ -534,8 +540,8 @@
       "move": "Mover"
     },
     "edit_disabled": "Selecione uma única foto para editar",
-    "type_image": "Foto",
-    "type_images": "Fotos",
+    "type_image": "Imagem",
+    "type_images": "Imagens",
     "type_video": "Vídeo",
     "type_videos": "Vídeos",
     "select_title": "Seleção",
@@ -547,10 +553,34 @@
     "more_actions": "Mais ações",
     "tag_all": "Tag",
     "dedup": {
+      "keep_rules": {
+        "title": "Regras de retenção",
+        "priority_order": "Ordem de prioridade",
+        "folders": "Pastas preferidas",
+        "subfolders": "Inclui subpastas. As primeiras da lista têm prioridade.",
+        "folders_skipped": "Nenhuma pasta, regra ignorada",
+        "add_folder": "Adicionar pasta",
+        "folder_already_added": "Já adicionada",
+        "format": "Formato preferido",
+        "similar_only": "Apenas imagens semelhantes",
+        "raw_first": "RAW primeiro",
+        "jpeg_heic_first": "JPEG / HEIC primeiro",
+        "size": "Tamanho preferido",
+        "largest_dimensions": "Maior resolução",
+        "smallest_dimensions": "Menor resolução",
+        "largest_file_size": "Maior tamanho de arquivo",
+        "smallest_file_size": "Menor tamanho de arquivo",
+        "ignore": "Ignorar",
+        "time": "Data preferida",
+        "created_earliest": "Criação mais antiga",
+        "created_latest": "Criação mais recente",
+        "modified_earliest": "Modificação mais antiga",
+        "modified_latest": "Modificação mais recente"
+      },
       "title": "Duplicados",
       "tabs": {
         "exact": "Duplicados",
-        "similar": "Fotos semelhantes"
+        "similar": "Imagens semelhantes"
       },
       "scanning": "Escaneando duplicados...",
       "error_title": "Não foi possível escanear os duplicados",
@@ -704,6 +734,7 @@
     "album": {
       "add": "Novo álbum",
       "edit": "Editar álbum...",
+      "import_folder": "Importar pasta…",
       "scan": "Escanear álbum",
       "reorder": "Reordenar",
       "pause_scan": "Pausar varredura",
@@ -844,7 +875,6 @@
       "hide": "Ocultar",
       "hidden": "Oculto",
       "remove": "Remover",
-      "reorder": "Reordenar",
       "rename": "Renomear",
       "switch_to": "Alternar para",
       "add_new": "Nova biblioteca",
@@ -1008,6 +1038,7 @@
       "error": "Falha ao selecionar arquivo."
     },
     "file_refresh": {
+      "metadata_failed": "Falha na importação de metadados: {count}",
       "skipped": "Ignorados: {count}",
       "status": "Estado da atualização",
       "running": "Atualizando…",
@@ -1016,7 +1047,6 @@
       "complete": "Concluído",
       "succeeded": "Atualizados: {count}",
       "failed": "Falhas: {count}",
-      "warnings": "Avisos: {count}",
       "release_requested": "Liberação solicitada: {count}",
       "kept_local": "Mantidos neste dispositivo: {count}",
       "kept_local_hint": "Arquivos mantidos sempre neste dispositivo ou cujo espaço o Windows não permitiu que o Lap liberasse (acesso controlado a pastas)."
@@ -1151,6 +1181,17 @@
     }
   },
   "file_info": {
+    "paths_copied": "{count} caminho(s) de arquivo copiado(s) para a área de transferência",
+    "copy_path": "Copiar caminho do arquivo",
+    "copy_path_failed": "Não foi possível copiar o caminho",
+    "video_only": "(somente vídeos)",
+    "field_preset": "Campos visíveis",
+    "fields_default": "Padrão",
+    "fields_all": "Mostrar todos",
+    "fields_custom": "Personalizado",
+
+    "hide_empty_fields": "Ocultar automaticamente campos vazios",
+    "customize_fields": "Personalizar campos",
     "title": "Info do arquivo",
     "preview": "Pré-visualização",
     "thumbnail": "Miniatura",
@@ -1210,10 +1251,10 @@
     "source_description": "Descrição original",
     "coordinates": "Coordenadas",
     "detail_fields": {
-      "title": "Título original",
+      "title": "Título",
+      "headline": "Manchete",
       "creator": "Autor",
       "copyright": "Direitos de autor",
-      "description": "Descrição original",
       "credit": "Crédito",
       "source": "Fonte",
       "usageTerms": "Condições de utilização",
@@ -1320,7 +1361,8 @@
       "appearance": "Aparência",
       "appearance_options": [
         "Claro",
-        "Escuro"
+        "Escuro",
+        "Seguir o sistema"
       ],
       "theme": "Tema",
       "theme_options_light": [
@@ -1383,6 +1425,10 @@
     "raw": {
       "title": "RAW",
       "section_pairs": "Arquivos pareados",
+      "clipboard_both": "Ambos os arquivos",
+      "clipboard_raw": "Apenas RAW",
+      "clipboard_jpeg": "Apenas JPEG/HEIC",
+      "clipboard_hint": "Também se aplica aos caminhos. Não afeta copiar ou mover arquivos para pastas.",
       "pair_source": "Exibição padrão para pares",
       "pair_source_hint": "Usado para miniaturas e pré-visualizações pareadas",
       "pair_jpeg": "JPEG / HEIC",
@@ -1541,7 +1587,7 @@
     },
     "image_search": {
       "title": "Pesquisa",
-      "search_image": "Pesquisa de fotos",
+      "search_image": "Pesquisa de imagens",
       "search_model": "Escolher modelo",
       "default_model_hint": "O modelo padrão só oferece suporte à pesquisa de fotos em inglês",
       "multilingual_model_hint": "Pesquisa em mais de 50 idiomas",
@@ -1611,6 +1657,7 @@
         "open_new_window": "Abrir em nova janela",
         "open_external_app": "Abrir em app externo",
         "edit_image": "Editar",
+        "copy_file_path": "Copiar caminho do arquivo",
         "copy_file": "Copiar para a área de transferência",
         "paste_file": "Colar",
         "reveal_in_finder": "Mostrar no Finder",

@@ -59,15 +59,12 @@
         <DropDownSelect
           :icon="IconFilter"
           :options="fileTypeOptions"
-          :multiSelect="true"
-          :selectedValues="fileTypeSelectedValues"
-          :summaryLabel="fileTypeSummaryLabel"
-          :separatorsAfter="[0]"
+          :defaultIndex="fileTypeSelectedIndex"
           :disabled="isFavoritesFilterDisabled"
-          :optionsDisabled="isFixedAiResultView"
+          :optionsDisabled="tempViewMode === 'person' || tempViewMode === 'similar'"
           :selected="activeFileTypeMask !== 0 || activeFavoritesOnly"
           :title="activeFavoritesOnly ? $t('toolbar.filter.favorites_only') : ''"
-          @multi-select="handleFileTypeSelect"
+          @select="handleFileTypeSelect"
         >
           <template #trigger-suffix>
             <IconHeartFilled v-if="activeFavoritesOnly" class="w-4 h-4 shrink-0" />
@@ -227,14 +224,12 @@
             :class="{ 'pointer-events-none': uiStore.inputStack.length > 0 }"
             @pointerdown.stop @click.stop
           >
-            <button class="flex items-center gap-2 rounded-box px-1 py-1 text-primary cursor-pointer"
+            <button class="flex items-center gap-1 rounded-box px-1 text-primary cursor-pointer"
               :aria-label="$t('toolbar.filter.show_selection_panel')"
               :title="$t('toolbar.filter.show_selection_panel')" @click="openSelectionPanel"
             >
-              <span class="text-sm tabular-nums" aria-live="polite">
-                {{ selectedCount > 0 ? $t('toolbar.filter.select_count', { count: selectedCount.toLocaleString() }) : $t('toolbar.filter.select_files') }}
-              </span>
-              <IconPanelMax class="size-4" />
+              {{ selectedCount > 0 ? $t('toolbar.filter.select_count', { count: selectedCount.toLocaleString() }) : $t('toolbar.filter.select_files') }}
+              <IconChevronsRight class="size-4" />
             </button>
             <button class="btn btn-ghost btn-xs btn-square" :aria-label="$t('toolbar.filter.exit_select_mode')"
               :title="`${$t('toolbar.filter.exit_select_mode')} (Esc)`" @click="handleSelectMode(false)"
@@ -529,6 +524,7 @@
             v-else-if="renderedRightPanelContent === 'info'"
             ref="fileInfoRef"
             :fileInfo="fileList[selectedItemIndex]"
+            :empty="hasConfirmedEmptyContent"
             :refresh-file="refreshFileInfoFromPanel"
             :change-thumbnail="changeVideoThumbnailFromPanel"
             :navigator-viewport="infoNavigatorViewport"
@@ -812,17 +808,17 @@ import {
 } from '@/common/thumbnailProfiles';
 import { getShortcutLabel, matchesShortcut, ShortcutActionId, ShortcutPlatform, VIEW_BACKGROUND_SHORTCUTS } from '@/common/shortcuts';
 import { getSmartTagById } from '@/common/smartTags';
-import { handleVideoPlaybackShortcut } from '@/common/video';
+import { handleVideoPlaybackShortcut, handleVideoEscapeShortcut } from '@/common/video';
 import { clearFolderFileCounts, setFolderFileCount, getCountedFolderPaths } from '@/composables/useAlbumSelection';
 import { createEmptyLibraryCounts } from '@/stores/libraryStore';
 import { getAlbumScanState, getAlbumScanIcon, shouldAnimateAlbumScanIcon } from '@/common/scanStatus';
 import { CULLING, DATE_SORT, GROUP, LIB_ITEM, RATE, SIDEBAR, SELECTED_THUMBNAIL_LIMIT, RIGHT_PANEL_MIN_WIDTH, PANEL_ANIMATION_MS, MONTAGE_MAX_PHOTOS, LARGE_BATCH_CONFIRM_THRESHOLD, EXTERNAL_OPEN_WARNING_THRESHOLD } from '@/common/constants';
-import { isWin, isMac, isLinux, setTheme, separator,
+import { isWin, isMac, isLinux, separator,
          formatFileSize, formatDate, getCalendarDateRange, formatFolderBreadcrumb, getThumbnailDataUrl, getAssetSrc, getPreviewUrl,
          getCachedThumbnailDataUrl,
          clearCachedThumbnailDataUrl,
          extractFileName, combineFileName, getFolderPath, getFolderName, getSelectOptions, 
-         shortenFilename, getSlideShowInterval, getFullPath, normalizePathForCompare, isWithinRootPath, shouldUseBackendPreview } from '@/common/utils';
+         shortenFilename, getSlideShowInterval, copyFilePaths, getClipboardItemPaths, getFullPath, normalizePathForCompare, isWithinRootPath, shouldUseBackendPreview } from '@/common/utils';
 
 import DropDownSelect from '@/components/DropDownSelect.vue';
 import ProgressBar from '@/components/ProgressBar.vue';
@@ -831,7 +827,7 @@ import BatchRenameDialog from '@/components/BatchRenameDialog.vue';
 const PhotoMapView = defineAsyncComponent(() => import('@/components/PhotoMapView.vue'));
 import ContextMenu from '@/components/ContextMenu.vue';
 import { MAX_NATIVE_DRAG_FILES, createDragPreview, isWindowDragEdge, isNativeFileDragActive, isReturningNativeFileDrag, startNativeFileDrag } from '@/common/nativeDrag';
-import { isOriginalUnavailable, setFileAccessibility, setFolderAccessibility, requiresOriginalAction } from '@/common/availability';
+import { isOriginalStorageUnavailable, isOriginalUnavailable, setFileAccessibility, setFolderAccessibility, requiresOriginalAction } from '@/common/availability';
 import { useFileMenuItems } from '@/common/fileMenu';
 import Welcome from '@/components/Welcome.vue';
 import MediaViewer from '@/components/MediaViewer.vue';
@@ -904,7 +900,7 @@ import {
   IconSortingDesc,
   IconSortingShuffle,
   IconFilter,
-  IconPanelMax,
+  IconChevronsRight,
 } from '@/common/icons';
 
 const thumbnailPlaceholder = new URL('@/assets/images/image-file.png', import.meta.url).href;
@@ -1240,6 +1236,19 @@ const selectionAccessPending = ref(false);
 const selectionHasUnavailable = computed(() => selectionAccessPending.value
   || selectionAccessFiles.value.some(isOriginalUnavailable)
   || getActionableSelectedItems().some(isOriginalUnavailable));
+const CLIPBOARD_SELECTION_LIMIT = 10;
+const clipboardSelection = computed(() => {
+  const files = selectedFiles.value.slice(0, CLIPBOARD_SELECTION_LIMIT);
+  const loadedIds = new Set(files.map(file => Number(file.id)));
+  const missingIds: number[] = [];
+  for (const id of selectedFileIds) {
+    if (files.length + missingIds.length >= CLIPBOARD_SELECTION_LIMIT) break;
+    if (!loadedIds.has(id)) missingIds.push(id);
+  }
+  return { files, missingIds };
+});
+const selectionStorageUnavailable = computed(() =>
+  clipboardSelection.value.files.some(isOriginalStorageUnavailable));
 const selectionHasCloudOnly = computed(() => getActionableSelectedItems().some(file => file.cloud_only));
 let selectionAccessRequest = 0;
 let selectionAccessTimer: ReturnType<typeof setTimeout> | null = null;
@@ -1280,13 +1289,14 @@ const selectionMenuItems = useFileMenuItems(
     selectionFirstFavorite: computed(() => Boolean(selectedFiles.value[0]?.is_favorite)),
     selectionCount: selectedCount,
     selectionHasUnavailable,
+    selectionStorageUnavailable,
     selectionHasCloudOnly,
     selectionInCollection: computed(() => currentQuerySource.value === 'collection'),
   },
 );
 
 const moreActionMenuRef = ref<InstanceType<typeof ContextMenu> | null>(null);
-const moreActionMenuItems = ref<any[]>([]);
+const moreActionMenuItems = ref<any[] | (() => Promise<any[]>)>([]);
 
 function handleSelectionContextMenu(index: number, event: MouseEvent) {
   if (!selectMode.value || uiStore.inputStack.length > 0) return;
@@ -1299,7 +1309,18 @@ function handleSelectionContextMenu(index: number, event: MouseEvent) {
       setItemSelected(index, true);
     }
     selectedItemIndex.value = index;
-    moreActionMenuItems.value = selectionMenuItems.value;
+    moreActionMenuItems.value = async () => {
+      const libraryId = libConfig._libraryId;
+      const selectionVersion = selectedFilesVersion.value;
+      const files = await getSelectedItemsForClipboard(false);
+      if (!selectMode.value || libraryId !== libConfig._libraryId
+        || selectionVersion !== selectedFilesVersion.value) return [];
+
+      const clipboardUnavailable = !files || files.some(isOriginalStorageUnavailable);
+      return selectionMenuItems.value.map(item => item.action?.actionName === 'copy'
+        ? { ...item, disabled: item.disabled || clipboardUnavailable }
+        : item);
+    };
     void nextTick(() => moreActionMenuRef.value?.open?.(event.clientX, event.clientY));
   };
   if (index === selectedItemIndex.value) openMenu();
@@ -1760,7 +1781,7 @@ function formatGroupLabel(label: string) {
   if (groupBy === GROUP.FILE_TYPE) {
     const labels = localeMsg.value.toolbar.filter?.file_type_options || [];
     const fileTypeLabels: Record<string, string> = {
-      image: labels[1] || 'Photos',
+      image: labels[1] || 'Images',
       raw: labels[2] || 'RAW Files',
       video: labels[3] || 'Videos',
       other: localeMsg.value.toolbar.filter?.file_type_other || 'Other',
@@ -2181,7 +2202,6 @@ const showTrashFailedMsgbox = ref(false);
 const showExternalOpenWarningMsgbox = ref(false);
 const showExternalAppsDialog = ref(false);
 const pendingExternalOpen = ref<{ paths: string[]; appPath: string } | null>(null);
-const permanentDeleteChecked = ref(false);
 const deletePermanently = ref(false);
 const pendingTrashFailedItems = ref<any[]>([]);
 const pendingTrashFailedDedupGroupKey = ref('');
@@ -2190,6 +2210,11 @@ const dedupReclaimBytes = ref(0);
 const dedupTrashGroupKey = ref('');
 const dedupDeleteFileIds = ref<number[]>([]);
 const dedupBulkFileCount = ref(0);
+type DedupDeletePreview = { token: string; itemCount: number; rawCompanionCount: number; bytes: number };
+const dedupDeletePreview = ref<DedupDeletePreview | null>(null);
+const pendingDedupRetryPreview = ref<DedupDeletePreview | null>(null);
+let dedupDeletePreviewContext: { libraryId: string; scanKey: string } | null = null;
+let dedupDeletePreviewRequest = 0;
 const dedupPaneRef = ref<InstanceType<typeof DedupPane> | null>(null);
 const dedupStatuses = ref<Record<number, 'keep' | 'dup'>>({});
 const showCommentMsgbox = ref(false);
@@ -2445,27 +2470,53 @@ async function removeSelectedFromCollection() {
   toast.success(t('collection.removed_toast', { count: fileIds.length }));
 }
 
-const openTrashMsgbox = (reclaimBytes = 0, groupKey = '', fileIds: number[] = []) => {
-  if (fileIds.length === 0 && currentOriginalsUnavailable()) return;
-  if (selectMode.value && selectedCount.value === 0 && fileIds.length === 0) return;
-  dedupReclaimBytes.value = Math.max(0, reclaimBytes);
-  dedupTrashGroupKey.value = groupKey || '';
-  dedupDeleteFileIds.value = Array.isArray(fileIds) ? [...new Set(fileIds)] : [];
-  deletePermanently.value = permanentDeleteChecked.value;
+const openTrashMsgbox = () => {
+  if (currentOriginalsUnavailable()) return;
+  if (selectMode.value && selectedCount.value === 0) return;
+  dedupDeletePreviewRequest++;
+  deletePermanently.value = config.settings.deletePermanently === true;
   showTrashMsgbox.value = true;
 };
 
-const openAllDuplicatesTrashMsgbox = (fileCount: number, reclaimBytes: number) => {
-  if (fileCount <= 0) return;
-  dedupReclaimBytes.value = Math.max(0, reclaimBytes);
-  dedupBulkFileCount.value = fileCount;
-  dedupTrashGroupKey.value = 'all';
-  dedupDeleteFileIds.value = [];
-  deletePermanently.value = false;
-  showTrashMsgbox.value = true;
+const openDedupTrashMsgbox = async (groupKey: string, fileIds: number[] = []) => {
+  const requestId = ++dedupDeletePreviewRequest;
+  const libraryId = libConfig._libraryId;
+  const scanKey = similarScanKey.value;
+  const deleteAll = groupKey === 'all';
+  const similarGroupId = groupKey.startsWith('similar:') ? Number(groupKey.slice('similar:'.length)) : null;
+  const isCurrent = () => requestId === dedupDeletePreviewRequest
+    && libraryId === libConfig._libraryId
+    && scanKey === similarScanKey.value
+    && isDedupPanelOpen.value;
+  try {
+    const result = await dedupDelete({
+      fileIds: deleteAll ? null : fileIds, deleteAll, similarGroupId, preview: true,
+    });
+    if (!isCurrent()) return;
+    const preview = result?.preview;
+    if (!preview?.itemCount) {
+      toast.warning(localeMsg.value.info_panel.dedup.no_removable_files);
+      return;
+    }
+    dedupDeletePreviewContext = { libraryId, scanKey };
+    dedupDeletePreview.value = preview;
+    dedupReclaimBytes.value = preview.bytes;
+    dedupBulkFileCount.value = deleteAll ? preview.itemCount : 0;
+    dedupTrashGroupKey.value = groupKey;
+    dedupDeleteFileIds.value = fileIds;
+    deletePermanently.value = config.settings.deletePermanently === true;
+    showTrashMsgbox.value = true;
+  } catch (error) {
+    if (!isCurrent()) return;
+    console.error('Failed to preview dedup deletion:', error);
+    toast.error(getDeleteFilesErrorMessage(false));
+  }
 };
 
 const closeTrashMsgbox = () => {
+  dedupDeletePreviewRequest++;
+  dedupDeletePreviewContext = null;
+  dedupDeletePreview.value = null;
   showTrashMsgbox.value = false;
   dedupReclaimBytes.value = 0;
   dedupTrashGroupKey.value = '';
@@ -2476,13 +2527,11 @@ const closeTrashMsgbox = () => {
 const isDedupBulkTrash = computed(() => dedupBulkFileCount.value > 0);
 const isDedupTrash = computed(() => dedupDeleteFileIds.value.length > 0 || isDedupBulkTrash.value);
 const rawJpegCompanionDeleteCount = computed(() => {
+  if (dedupDeletePreview.value) return dedupDeletePreview.value.rawCompanionCount;
   if (!config.settings.groupRawJpegPairs) return 0;
-  if (isDedupTrash.value) {
-    return dedupPaneRef.value?.getRawPairDeleteCount(isDedupBulkTrash.value ? undefined : dedupDeleteFileIds.value) || 0;
-  }
   const items = selectMode.value
-    ? getActionableSelectedItems()
-    : [fileList.value[selectedItemIndex.value]].filter(Boolean);
+      ? getActionableSelectedItems()
+      : [fileList.value[selectedItemIndex.value]].filter(Boolean);
   return items.filter((file: any) => file.media_subtype === 'raw_jpeg_pair').length;
 });
 
@@ -2501,9 +2550,7 @@ const trashMsgboxOkText = computed(() => {
 });
 
 const trashMsgboxMessage = computed(() => {
-  const deleteCount = isDedupBulkTrash.value
-    ? dedupBulkFileCount.value
-    : (isDedupTrash.value ? dedupDeleteFileIds.value.length : selectedCount.value);
+  const deleteCount = dedupDeletePreview.value?.itemCount ?? selectedCount.value;
   const base = isDedupBulkTrash.value
     ? t(
         deletePermanently.value
@@ -2530,7 +2577,11 @@ const trashFailedMsgboxMessage = computed(() => {
     ? pendingTrashFailedItems.value.length
     : (isDedupTrash.value ? dedupDeleteFileIds.value.length : selectedCount.value);
   if (deleteCount > 1 || isDedupTrash.value || selectMode.value) {
-    return localeMsg.value.msgbox.trash_failed.files_content.replace('{count}', deleteCount.toLocaleString());
+    const base = localeMsg.value.msgbox.trash_failed.files_content.replace('{count}', deleteCount.toLocaleString());
+    const companions = pendingDedupRetryPreview.value?.rawCompanionCount || 0;
+    return companions > 0
+      ? `${base}\n${localeMsg.value.msgbox.move_to_trash.raw_jpeg_companions_content.replace('{count}', companions.toLocaleString())}`
+      : base;
   }
   return localeMsg.value.msgbox.trash_failed.file_content.replace(
     '{file}',
@@ -2540,9 +2591,9 @@ const trashFailedMsgboxMessage = computed(() => {
 
 const confirmTrashFailedPermanentDelete = async () => {
   const previousDeletePermanently = deletePermanently.value;
-  const previousPermanentDeleteChecked = permanentDeleteChecked.value;
   const retryItems = [...pendingTrashFailedItems.value];
   const retryDedupGroupKey = pendingTrashFailedDedupGroupKey.value;
+  const retryToken = pendingDedupRetryPreview.value?.token;
   showTrashFailedMsgbox.value = false;
   deletePermanently.value = true;
   try {
@@ -2550,13 +2601,13 @@ const confirmTrashFailedPermanentDelete = async () => {
       dedupTrashGroupKey.value = retryDedupGroupKey;
       dedupDeleteFileIds.value = retryItems.map(item => Number(item.id)).filter(id => id > 0);
     }
-    await onTrashFile(retryItems);
+    await onTrashFile(retryItems, retryToken);
   } finally {
     pendingTrashFailedItems.value = [];
     pendingTrashFailedDedupGroupKey.value = '';
+    pendingDedupRetryPreview.value = null;
     pendingTrashFailedOtherFailureCount.value = 0;
     deletePermanently.value = previousDeletePermanently;
-    permanentDeleteChecked.value = previousPermanentDeleteChecked;
   }
 };
 
@@ -2569,6 +2620,7 @@ const cancelTrashFailedMsgbox = () => {
   showTrashFailedMsgbox.value = false;
   pendingTrashFailedItems.value = [];
   pendingTrashFailedDedupGroupKey.value = '';
+  pendingDedupRetryPreview.value = null;
   pendingTrashFailedOtherFailureCount.value = 0;
   closeTrashMsgbox();
 };
@@ -2896,18 +2948,19 @@ async function pasteClipboardImage(target?: { albumId: number; folderPath?: stri
     return;
   }
 
-  const destination = target
-    ? await resolveAlbumImportDestination(Number(target.albumId || 0), target.folderPath)
-    : await resolveCurrentAlbumImportDestination();
-  if (!destination) {
-    showDropWarning.value = true;
-    return;
-  }
-
   isPastingClipboard.value = true;
+  let destination: Awaited<ReturnType<typeof resolveAlbumImportDestination>> = null;
   try {
+    destination = target
+      ? await resolveAlbumImportDestination(Number(target.albumId || 0), target.folderPath)
+      : await resolveCurrentAlbumImportDestination();
+    if (!destination || !await isDirectoryAccessible(destination.folderPath)) {
+      toast.warning(t('import_files.destination_unavailable'));
+      return;
+    }
+
     const files = await importClipboard(destination.folderId, destination.folderPath);
-    if (!Array.isArray(files) || files.length === 0) {
+    if (files.length === 0) {
       toast.warning(t('msgbox.drop_import.no_clipboard_image'));
       return;
     }
@@ -2915,7 +2968,11 @@ async function pasteClipboardImage(target?: { albumId: number; folderPath?: stri
     toast.success(t('msgbox.drop_import.success', { count: files.length }));
   } catch (error) {
     console.error('Failed to import clipboard image:', error);
-    toast.warning(t('msgbox.drop_import.no_clipboard_image'));
+    if (!destination || !await isDirectoryAccessible(destination.folderPath)) {
+      toast.warning(t('import_files.destination_unavailable'));
+    } else {
+      toast.error(t('import_files.copy_failed'));
+    }
   } finally {
     isPastingClipboard.value = false;
   }
@@ -3674,11 +3731,11 @@ watch(() => props.libraryEmpty, () => {
   libraryChecked.value = true;
 }, { immediate: true });
 
-watch(contentReady, (ready) => {
+watch(contentReady, async (ready) => {
   if (!ready) return;
   contentQueryRefreshPending = false;
   if (!contentCountIsAuthoritative.value || tempViewMode.value !== 'none') return;
-  commitRequestedSidebarCount(totalFileCount.value);
+  await refreshRequestedSidebarCount();
 });
 
 function updateCount(owner: any, itemId: string | number, count: number) {
@@ -3690,18 +3747,17 @@ function updateCount(owner: any, itemId: string | number, count: number) {
 
 async function refreshFolderSidebarCount(path: string) {
   const libraryId = libConfig._libraryId;
-  const fileType = config.search.fileType;
   const showSubfolderFiles = config.settings.showSubfolderFiles;
   try {
     const result = await getQueryCountAndSum({
-      searchFileName: '', searchFileType: fileType,
+      searchFileName: '', searchFileType: 0,
       sortType: 0, sortOrder: 0, searchAllSubfolders: showSubfolderFiles ? path : '',
       searchFolder: showSubfolderFiles ? '' : path,
       startDate: 0, endDate: 0, calendarSort: 0, make: '', model: '', lensMake: '', lensModel: '',
       locationAdmin1: '', locationName: '', isFavorite: false, rating: -1, cullingFlag: -1, tagId: 0, personId: 0,
     });
     if (result && libConfig._libraryId === libraryId
-      && config.search.fileType === fileType && config.settings.showSubfolderFiles === showSubfolderFiles) {
+      && config.settings.showSubfolderFiles === showSubfolderFiles) {
       setFolderFileCount(path, Number(result[0] || 0));
     }
   } catch (error) {
@@ -3735,7 +3791,7 @@ watch(
     if (countedFolderRequestId.value !== currentContentRequestId || currentQuerySource.value !== 'query' || !path
       || !contentReady.value || isLoading.value || contentQueryRefreshPending
       || !contentCountIsAuthoritative.value || tempViewMode.value !== 'none'
-      || config.search.favoritesOnly
+      || config.search.favoritesOnly || Number(currentQueryParams.value.searchFileType || 0) !== 0
       || !matchesRequestedSidebarCount({ source: 'album-folder', path })) return;
     setFolderFileCount(path, Math.max(0, Number(totalFileCount.value || 0)));
   },
@@ -3937,7 +3993,7 @@ const dedupFileIds = computed(() =>
 const dedupScanKey = computed(() => {
   if (dedupSourceVersion.value <= 0) return '';
   if (currentQuerySource.value === 'smart' && dedupFileIds.value === null) return '';
-  return `query:${JSON.stringify(dedupQueryParams.value)}|collection:${dedupCollectionId.value ?? ''}|files:${JSON.stringify(dedupFileIds.value)}`;
+  return `query:${JSON.stringify(dedupQueryParams.value)}|collection:${dedupCollectionId.value ?? ''}|files:${JSON.stringify(dedupFileIds.value)}|raw-pairs:${Boolean(config.settings.groupRawJpegPairs)}`;
 });
 const similarPhotoGroupingThreshold = computed(() => {
   const index = config.settings.similarPhotos?.groupingThresholdIndex ?? 1;
@@ -5198,6 +5254,8 @@ function handlePreviewSpaceKeyDown(event: KeyboardEvent) {
   const togglesSelection = selectMode.value && mode === 'filmstrip' && !isSlideShow.value;
   if (mode === 'none' || (!togglesSelection && fileList.value[selectedItemIndex.value]?.file_type !== 2)
     || uiStore.inputStack.length > 0 || uiStore.activePane === 'left-sidebar') return;
+  handleVideoEscapeShortcut(event, shortcutPlatform, () => handleLocalKeyDown(event));
+  if (event.defaultPrevented) return;
   // Consume Space before video.js controls. macOS performs selection through
   // the App capture/global channel; other platforms dispatch it here once.
   handleVideoPlaybackShortcut(event, shortcutPlatform, () => {
@@ -5344,9 +5402,13 @@ const handleKeyDown = (e: any) => {
     // GridView may consume Enter before Content's DOM keydown handler on macOS.
     // Handle the shortcut in the capture/global channel as a fallback.
     clickRename();
+  } else if (matchesShortcut('file.copyPath', event, shortcutPlatform)) {
+    event.preventDefault?.();
+    if (!event.repeat) void clickCopyFilePaths();
   } else if (matchesShortcut('file.copy', event, shortcutPlatform)) {
     if (selectMode.value && selectedCount.value === 0) return;
-    void clickCopyImages(fileList.value[selectedItemIndex.value]);
+    event.preventDefault?.();
+    if (!event.repeat) void clickCopyImages(fileList.value[selectedItemIndex.value]);
   // macOS handles Cmd+Arrow in App's capture listener before the content DOM handler.
   } else if (isMac && matchesShortcut('view.first', event, shortcutPlatform)) {
     keyActions.Home();
@@ -6187,6 +6249,9 @@ onMounted( async() => {
   });
 
   unlistenIndexFinished = await listenIndexFinished(async (event: any) => {
+    if (event.payload.library_id && event.payload.library_id !== libConfig._libraryId) return;
+    const metadataFailed = Number(event.payload.metadata_failed || 0);
+    if (metadataFailed > 0) toast.warning(t('msgbox.file_refresh.metadata_failed', { count: metadataFailed.toLocaleString() }));
     const { album_id, phase, indexed, processed, search_ready, total, search_total, failed } = event.payload;
     // notify album list to update cover
     await tauriEmit('album-cover-changed', { albumId: album_id, fileId: null });
@@ -6475,20 +6540,6 @@ watch(
   },
 );
 
-watch(() => config.settings.appearance, (newAppearance) => {
-  setTheme(newAppearance, newAppearance === 0 ? config.settings.lightTheme : config.settings.darkTheme);
-});
-
-/// watch light theme
-watch(() => config.settings.lightTheme, (newLightTheme) => {
-  setTheme(config.settings.appearance, newLightTheme);
-});
-
-/// watch dark theme
-watch(() => config.settings.darkTheme, (newDarkTheme) => {
-  setTheme(config.settings.appearance, newDarkTheme);
-});
-
 /// watch language
 watch(() => config.settings.language, (newLanguage) => {
     locale.value = newLanguage; // update locale based on config.settings.language
@@ -6639,7 +6690,7 @@ watch(
 
     const requestId = ++sidebarCountRequestId;
     try {
-      const result = await getCurrentQueryCountAndSum();
+      const result = await getSidebarQueryCountAndSum();
       if (requestId !== sidebarCountRequestId || uiStore.countUpdateRequest !== request) return;
       if (result) {
         commitRequestedSidebarCount(Number(result[0] || 0), request);
@@ -6836,6 +6887,53 @@ function cycleGridStyle() {
 
 // Track pending requests to avoid duplicates
 const pendingRequests = new Set();
+
+// Sidebar totals describe the category, independently of the browser media filter.
+const getSidebarQueryCountAndSum = () => {
+  if (currentQuerySource.value === 'smart' && currentSmartQueryParams.value) {
+    return getSmartQueryCountAndSum({ ...currentSmartQueryParams.value, fileType: 0 });
+  }
+  if (currentQuerySource.value === 'search') {
+    return getSearchSidebarCountAndSum();
+  }
+  const params = { ...currentQueryParams.value, searchFileType: 0 };
+  if (currentQuerySource.value === 'collection' && currentCollectionId.value) {
+    return getCollectionCountAndSum(currentCollectionId.value, params);
+  }
+  return getQueryCountAndSum(params);
+};
+
+async function getSearchSidebarCountAndSum() {
+  const textParams = { ...currentQueryParams.value, searchFileType: 0 };
+  const imageParams = { ...currentImageSearchParams.value, fileType: 0 };
+  const visualDisabled = imageSearchLanguageUnsupported.value;
+  const [textResult, visualResult] = await Promise.all([
+    getQueryFiles(textParams, 0, 0),
+    visualDisabled ? Promise.resolve([]) : searchSimilarImages(imageParams),
+  ]);
+  // A failed query must not overwrite the previous authoritative history count.
+  if (!Array.isArray(textResult) || !Array.isArray(visualResult)) return null;
+  const files = new Map<number, any>();
+  for (const file of textResult) files.set(Number(file.id), file);
+  for (const file of visualResult) {
+    if (passesAlbumFilters(file)) files.set(Number(file.id), file);
+  }
+  return [files.size, [...files.values()].reduce((sum, file) => sum + Number(file.size || 0), 0)];
+}
+
+async function refreshRequestedSidebarCount() {
+  const request = uiStore.countUpdateRequest;
+  if (!request) return;
+  const requestId = ++sidebarCountRequestId;
+  const contentRequestId = currentContentRequestId;
+  try {
+    const result = await getSidebarQueryCountAndSum();
+    if (requestId !== sidebarCountRequestId || contentRequestId !== currentContentRequestId) return;
+    if (result) commitRequestedSidebarCount(Number(result[0] || 0), request);
+  } catch (error) {
+    console.error('Failed to refresh sidebar count:', error);
+  }
+}
 
 const getCurrentQueryCountAndSum = () => {
   if (currentQuerySource.value === 'search') {
@@ -7418,37 +7516,19 @@ async function getActionableSelectedItemsForAction() {
   return getActionableSelectedItems();
 }
 
-async function getSelectedItemsForClipboard(limit = 10) {
-  if (selectedFileIds.size > 0 && getActionableSelectedItems().length < Math.min(selectedFileIds.size, limit)) {
-    const hydratedItems = await hydrateSelectedFilesByIds();
-    if (!hydratedItems) {
-      toast.error(t('info_panel.selection_load_failed'));
-      return null;
-    }
-    return hydratedItems.slice(0, limit);
+async function getSelectedItemsForClipboard(showError = true) {
+  const { files, missingIds } = clipboardSelection.value;
+  if (!missingIds.length) return files;
+
+  const libraryId = libConfig._libraryId;
+  const hydrated = await getFilesByIds(missingIds);
+  if (libraryId !== libConfig._libraryId) return null;
+  const byId = new Map((hydrated || []).map(file => [Number(file.id), file]));
+  if (missingIds.some(id => !byId.has(id))) {
+    if (showError) toast.error(t('info_panel.selection_load_failed'));
+    return null;
   }
-
-  const selectedItems: any[] = [];
-  const chunkSize = Math.max(1, selectionChunkSize.value);
-
-  for (let chunkStart = 0; chunkStart < fileList.value.length && selectedItems.length < limit; chunkStart += chunkSize) {
-    const chunkEnd = Math.min(fileList.value.length, chunkStart + chunkSize);
-    const chunk = fileList.value.slice(chunkStart, chunkEnd);
-    if (chunk.some(item => item?.isSelected && item?.isPlaceholder)) {
-      if (!await hydrateRangeForSelection(chunkStart, chunkEnd)) {
-        toast.error(t('info_panel.selection_load_failed'));
-        return null;
-      }
-    }
-    for (let index = chunkStart; index < chunkEnd && selectedItems.length < limit; index++) {
-      const item = fileList.value[index];
-      if (item?.isSelected && isRealFileItem(item)) {
-        selectedItems.push(item);
-      }
-    }
-  }
-
-  return selectedItems;
+  return [...files, ...missingIds.map(id => byId.get(id))];
 }
 
 // Track last visible range to avoid redundant fetches
@@ -7508,7 +7588,7 @@ function handleVisibleRangeUpdate({ startIndex, endIndex }: { startIndex: number
 // get file list 
 async function getFileList(
   {
-    searchFileType = config.search.fileType, 
+    searchFileType = config.search.fileType,
     sortType = config.search.sortType, 
     sortOrder = config.search.sortOrder, 
     searchFileName = '', 
@@ -7797,6 +7877,7 @@ async function getSmartFileList(smartAlbum: any, requestId: number) {
     match: query.match === 'any' ? 'any' : 'all',
     rules,
     favoritesOnly: Boolean(config.search.favoritesOnly),
+    fileType: Number(config.search.fileType || 0),
     sortType: Number(smartAlbum?.sort?.type ?? 0),
     sortOrder: Number(smartAlbum?.sort?.order ?? 1),
     randomSeed: createRandomSeed(),
@@ -7862,7 +7943,7 @@ async function getSmartFileList(smartAlbum: any, requestId: number) {
 }
 
 async function updateSmartAlbumCover(smartAlbum: any, requestId: number) {
-  const result = await getSmartQueryFiles({ ...currentSmartQueryParams.value, favoritesOnly: false }, 0, 1);
+  const result = await getSmartQueryFiles({ ...currentSmartQueryParams.value, favoritesOnly: false, fileType: 0 }, 0, 1);
   if (
     requestId !== currentContentRequestId ||
     libConfig.smartAlbum.type !== 'custom' ||
@@ -8793,15 +8874,7 @@ const getClipboardFilePaths = (files: any[], limit = 10) => {
   const seenPaths = new Set<string>();
 
   for (const file of files) {
-    const primaryPath = String(file?.file_path || '');
-    if (!primaryPath) continue;
-
-    const groupPaths = [primaryPath];
-    if (file?.media_subtype === 'raw_jpeg_pair') {
-      const companionPath = String(file.live_photo_video_path || '');
-      if (companionPath) groupPaths.push(companionPath);
-    }
-
+    const groupPaths = getClipboardItemPaths(file, config.settings.rawPairClipboardMode);
     const uniqueGroupPaths = groupPaths.filter(path => !seenPaths.has(path));
     if (paths.length + uniqueGroupPaths.length > limit) continue;
     for (const path of uniqueGroupPaths) {
@@ -8813,9 +8886,25 @@ const getClipboardFilePaths = (files: any[], limit = 10) => {
   return paths;
 };
 
+async function clickCopyFilePaths() {
+  try {
+    const files = selectMode.value
+      ? await getActionableSelectedItemsForAction()
+      : [fileList.value[selectedItemIndex.value]];
+    if (!files) return;
+    const count = await copyFilePaths(files, config.settings.rawPairClipboardMode);
+    if (count > 0) {
+      toast.success(t('file_info.paths_copied', { count }));
+    }
+  } catch (error) {
+    console.error('Failed to copy file paths:', error);
+    toast.error(t('file_info.copy_path_failed'));
+  }
+}
+
 const clickCopyImages = async (fallbackFile?: any) => {
-  if (!await requireCurrentOriginals()) return;
   if (isProcessing.value) return;
+  isProcessing.value = true;
 
   let copiedCount = 0;
   let requestedCount = 0;
@@ -8824,13 +8913,23 @@ const clickCopyImages = async (fallbackFile?: any) => {
   try {
     if (selectMode.value && selectedCount.value > 0) {
       requestedCount = selectedCount.value;
-      const selectedItems = await getSelectedItemsForClipboard(10);
+      const selectedItems = await getSelectedItemsForClipboard();
       if (!selectedItems) {
         cancelled = true;
         return;
       }
-      filePaths = getClipboardFilePaths(selectedItems, 20);
+      if (selectedItems.some(isOriginalStorageUnavailable)) {
+        cancelled = true;
+        toast.warning(t('offline.requires_original'));
+        return;
+      }
+      filePaths = getClipboardFilePaths(selectedItems, CLIPBOARD_SELECTION_LIMIT * 2);
     } else if (fallbackFile) {
+      if (isOriginalStorageUnavailable(fallbackFile)) {
+        cancelled = true;
+        toast.warning(t('offline.requires_original'));
+        return;
+      }
       filePaths = getClipboardFilePaths([fallbackFile]);
       requestedCount = filePaths.length;
     }
@@ -8838,16 +8937,23 @@ const clickCopyImages = async (fallbackFile?: any) => {
       cancelled = true;
       return;
     }
-    isProcessing.value = true;
+    const available = await Promise.all(filePaths.map(path => checkFileAccessibility(path)));
+    if (available.some(value => !value)) {
+      cancelled = true;
+      toast.warning(t('offline.requires_original'));
+      return;
+    }
     copiedCount = Number(await copyImages(filePaths)) || 0;
+  } catch (error) {
+    console.error('Failed to copy files to clipboard:', error);
   } finally {
     isProcessing.value = false;
     if (cancelled) {
       return;
     } else if (copiedCount > 0) {
       toast.success(t('tooltip.copy_image.success', { count: copiedCount.toLocaleString() }));
-      if (requestedCount > 10) {
-        toast.warning(t('tooltip.copy_image.limit', { count: 10 }));
+      if (requestedCount > CLIPBOARD_SELECTION_LIMIT) {
+        toast.warning(t('tooltip.copy_image.limit', { count: CLIPBOARD_SELECTION_LIMIT }));
       }
     } else {
       toast.error(localeMsg.value.tooltip.copy_image.failed);
@@ -9379,7 +9485,7 @@ const onTrashAllDuplicates = async () => {
   const libraryId = libConfig._libraryId;
   try {
     const permanently = deletePermanently.value;
-    const result = await dedupDelete({ deleteAll: true, permanently });
+    const result = await dedupDelete({ deleteAll: true, permanently, planToken: dedupDeletePreview.value?.token });
     if (libConfig._libraryId !== libraryId) return;
     const deletedCount = Number(result?.deletedCount || 0);
     const failedCount = Number(result?.failedCount || 0);
@@ -9406,7 +9512,15 @@ const onTrashAllDuplicates = async () => {
 
 const handleTrashMsgboxOk = async () => {
   if (isTrashDeleting.value) return;
+  if (dedupDeletePreviewContext && (
+    dedupDeletePreviewContext.libraryId !== libConfig._libraryId ||
+    dedupDeletePreviewContext.scanKey !== similarScanKey.value
+  )) {
+    closeTrashMsgbox();
+    return;
+  }
   isTrashDeleting.value = true;
+  config.settings.deletePermanently = deletePermanently.value;
   try {
     if (isDedupBulkTrash.value) {
       await onTrashAllDuplicates();
@@ -9418,8 +9532,7 @@ const handleTrashMsgboxOk = async () => {
   }
 };
 
-const onTrashFile = async (retryItemsOverride: any[] = []) => {
-  permanentDeleteChecked.value = deletePermanently.value;
+const onTrashFile = async (retryItemsOverride: any[] = [], retryToken?: string) => {
   const permanently = deletePermanently.value;
   const deletedFileIds: number[] = [];
   const affectedAlbumIds = new Set<number>();
@@ -9436,6 +9549,7 @@ const onTrashFile = async (retryItemsOverride: any[] = []) => {
   let otherFailureCount = 0;
   pendingTrashFailedItems.value = [];
   pendingTrashFailedDedupGroupKey.value = '';
+  pendingDedupRetryPreview.value = null;
   pendingTrashFailedOtherFailureCount.value = 0;
   const shouldUpdateDedup =
     isDedupPanelOpen.value &&
@@ -9449,83 +9563,70 @@ const onTrashFile = async (retryItemsOverride: any[] = []) => {
   try {
     if (dedupDeleteFileIds.value.length > 0) {
       const ids = [...dedupDeleteFileIds.value];
-      if (permanently || isSimilarDedupTrash) {
-        const selectedItems = (await Promise.all(ids.map(async (id) =>
-          fileList.value.find(file => Number(file?.id) === id) || getFileInfo(id)
-        ))).filter((file): file is any => !!file?.id && !!file.file_path);
-        const result = await batchDeleteFiles(
-          selectedItems.map(item => ({ fileId: item.id, filePath: item.file_path })),
-          permanently,
+      // Selected IDs can include virtual rows whose file metadata is not
+      // loaded. Capture only those missing records before deleting them.
+      const deleteRequestId = currentContentRequestId;
+      const candidateIds = new Set(ids.map(Number));
+      const filesToRecord = new Map(fileList.value
+        .filter(file => candidateIds.has(Number(file?.id)))
+        .map(file => [Number(file.id), file]));
+      const missingIds = ids.filter(id => (isSimilarDedupTrash || selectedFileIds.has(Number(id))) && !filesToRecord.has(Number(id)));
+      for (let i = 0; i < missingIds.length; i += 500) {
+        const files = await getFilesByIds(missingIds.slice(i, i + 500));
+        if (deleteRequestId !== currentContentRequestId) return;
+        if (!Array.isArray(files)) throw new Error('Failed to load selected files before deletion');
+        for (const file of files) filesToRecord.set(Number(file.id), file);
+      }
+      const result = await dedupDelete({
+        fileIds: ids,
+        similarGroupId: isSimilarDedupTrash ? currentDedupGroupId : null,
+        permanently,
+        planToken: retryToken ?? dedupDeletePreview.value?.token,
+      });
+      if (result !== undefined) {
+        for (const path of result?.affectedFolderPaths || []) affectedFolderPaths.add(path);
+        const resultDeletedIds = Array.isArray(result?.deletedFileIds)
+          ? result.deletedFileIds.map((id: any) => Number(id)).filter((id: number) => id > 0)
+          : [];
+        const trashFailedIdSet = new Set(
+          Array.isArray(result?.trashFailedFileIds)
+            ? result.trashFailedFileIds.map((id: any) => Number(id)).filter((id: number) => id > 0)
+            : [],
         );
-        if (!result) throw new Error(`Failed to ${permanently ? 'permanently delete' : 'trash'} dedup files`);
-        const deletedIdSet = new Set(result.deletedFileIds.map((id: any) => Number(id)));
-        const deletedItems = selectedItems.filter(item => deletedIdSet.has(Number(item.id)));
-        failedDeleteCount = Number(result.failedCount || 0) + (ids.length - selectedItems.length);
-        if (!permanently && isSimilarDedupTrash) {
-          const trashFailedIdSet = new Set(
-            Array.isArray(result.trashFailedFileIds)
-              ? result.trashFailedFileIds.map((id: any) => Number(id)).filter((id: number) => id > 0)
-              : [],
-          );
-          if (trashFailedIdSet.size > 0) {
-            pendingTrashFailedDedupGroupKey.value = dedupTrashGroupKey.value;
-            pendingTrashFailedItems.value = selectedItems.filter(item => trashFailedIdSet.has(Number(item.id)));
-            otherFailureCount = Math.max(0, failedDeleteCount - trashFailedIdSet.size);
-            pendingTrashFailedOtherFailureCount.value = otherFailureCount;
+        deletedFileIds.push(...resultDeletedIds);
+        const deletedIdSet = new Set(deletedFileIds);
+        for (const id of deletedIdSet) {
+          const file = filesToRecord.get(id);
+          if (file) recordDeletedFile(file);
+        }
+        failedDeleteCount = Number(result?.failedCount || 0);
+        if (trashFailedIdSet.size > 0) {
+          const retryItems = isSimilarDedupTrash ? [...filesToRecord.values()] : getFileItemsByIds(ids);
+          const failedItems = retryItems.filter(item => trashFailedIdSet.has(Number(item.id)));
+          if (failedItems.length > 0) {
+            try {
+              const retry = await dedupDelete({
+                fileIds: failedItems.map(item => Number(item.id)),
+                similarGroupId: isSimilarDedupTrash ? currentDedupGroupId : null,
+                preview: true,
+              });
+              if (retry?.preview?.itemCount === failedItems.length) {
+                pendingDedupRetryPreview.value = retry.preview;
+                pendingTrashFailedDedupGroupKey.value = dedupTrashGroupKey.value;
+                pendingTrashFailedItems.value = failedItems;
+                otherFailureCount = Math.max(0, failedDeleteCount - failedItems.length);
+                pendingTrashFailedOtherFailureCount.value = otherFailureCount;
+              }
+            } catch (error) {
+              console.error('Failed to preview dedup deletion retry:', error);
+            }
           }
         }
-
-        if (failedDeleteCount > 0 && deletedItems.length === 0) {
-          throw new Error(`Failed to ${permanently ? 'permanently delete' : 'trash'} dedup files`);
+        if (deletedFileIds.length === 0) {
+          failedDeleteCount = Math.max(1, failedDeleteCount);
         }
-
-        deletedItems.forEach(recordDeletedFile);
-        deletedFileIds.push(...deletedItems.map(item => item.id));
       } else {
-        // Selected IDs can include virtual rows whose file metadata is not
-        // loaded. Capture only those missing records before deleting them.
-        const deleteRequestId = currentContentRequestId;
-        const candidateIds = new Set(ids.map(Number));
-        const filesToRecord = new Map(fileList.value
-          .filter(file => candidateIds.has(Number(file?.id)))
-          .map(file => [Number(file.id), file]));
-        const missingIds = ids.filter(id => selectedFileIds.has(Number(id)) && !filesToRecord.has(Number(id)));
-        for (let i = 0; i < missingIds.length; i += 500) {
-          const files = await getFilesByIds(missingIds.slice(i, i + 500));
-          if (deleteRequestId !== currentContentRequestId) return;
-          if (!Array.isArray(files)) throw new Error('Failed to load selected files before deletion');
-          for (const file of files) filesToRecord.set(Number(file.id), file);
-        }
-        const result = await dedupDelete({ fileIds: ids });
-        if (result !== undefined) {
-          for (const path of result?.affectedFolderPaths || []) affectedFolderPaths.add(path);
-          const resultDeletedIds = Array.isArray(result?.deletedFileIds)
-            ? result.deletedFileIds.map((id: any) => Number(id)).filter((id: number) => id > 0)
-            : [];
-          const trashFailedIdSet = new Set(
-            Array.isArray(result?.trashFailedFileIds)
-              ? result.trashFailedFileIds.map((id: any) => Number(id)).filter((id: number) => id > 0)
-              : [],
-          );
-          deletedFileIds.push(...resultDeletedIds);
-          const deletedIdSet = new Set(deletedFileIds);
-          for (const id of deletedIdSet) {
-            const file = filesToRecord.get(id);
-            if (file) recordDeletedFile(file);
-          }
-          failedDeleteCount = Number(result?.failedCount || 0);
-          if (trashFailedIdSet.size > 0) {
-            pendingTrashFailedDedupGroupKey.value = dedupTrashGroupKey.value;
-            pendingTrashFailedItems.value = getFileItemsByIds(ids).filter(item => trashFailedIdSet.has(Number(item.id)));
-            otherFailureCount = Math.max(0, failedDeleteCount - trashFailedIdSet.size);
-            pendingTrashFailedOtherFailureCount.value = otherFailureCount;
-          }
-          if (deletedFileIds.length === 0) {
-            failedDeleteCount = Math.max(1, failedDeleteCount);
-          }
-        } else {
-          throw new Error('Failed to trash dedup files');
-        }
+        throw new Error(`Failed to ${permanently ? 'permanently delete' : 'trash'} dedup files`);
       }
 
       if (failedDeleteCount > 0 && deletedFileIds.length === 0 && pendingTrashFailedItems.value.length === 0) {
@@ -9669,6 +9770,11 @@ const onTrashFile = async (retryItemsOverride: any[] = []) => {
     }
   } catch (error) {
     console.error(`Failed to ${permanently ? 'permanently delete' : 'trash'} file(s):`, error);
+    if (String(error).startsWith('dedup_plan_changed:')) {
+      closeTrashMsgbox();
+      toast.error(getDeleteFilesErrorMessage(permanently));
+      return;
+    }
     if (String(error).startsWith('original_unavailable:')) {
       closeTrashMsgbox();
       toast.warning(t('offline.requires_original'));
@@ -9747,7 +9853,7 @@ const changeVideoThumbnailFromPanel = async (file: any) => {
   if (!thumb || thumb.error_code !== 0) throw new Error('Thumbnail generation failed');
   clearCachedThumbnailDataUrl(file.id, config.settings.thumbnailSize);
   const target = fileList.value.find(item => item.id === file.id) || file;
-  target.thumbnail = getThumbnailDataUrl(thumb, thumbnailPlaceholder, true, config.settings.thumbnailSize, file.file_path, Number(file.modified_at || 0), !file.cloud_only);
+  target.thumbnail = getThumbnailDataUrl(thumb, thumbnailPlaceholder, true, config.settings.thumbnailSize, Number(file.modified_at || 0));
 };
 
 // Refresh panel data without reloading whichever image is selected after the await.
@@ -9850,8 +9956,8 @@ const updateThumbForFile = async (file: any) => {
     file.album_id || 0,
   );
   if (thumb) {
-    if (thumb.error_code === 0 || thumb.error_code === 2) {
-      file.thumbnail = getThumbnailDataUrl(thumb, thumbnailPlaceholder, true, config.settings.thumbnailSize, file.file_path, Number(file.modified_at || 0), !file.cloud_only);
+    if (thumb.error_code === 0) {
+      file.thumbnail = getThumbnailDataUrl(thumb, thumbnailPlaceholder, true, config.settings.thumbnailSize, Number(file.modified_at || 0));
       file.rawThumbnailStale = false;
     } else if (thumb.error_code === 1) {
       file.rawThumbnailStale = false;
@@ -10499,19 +10605,9 @@ const statusBarEmptyMessage = computed(() => (
     : ''
 ));
 
-const smartAlbumFileTypeMask = computed(() => {
-  if (!isSmartAlbumView.value) return 0;
-  const album = getActiveCustomSmartAlbum();
-  if (!album) return 0;
-  const ftRules = (album.query?.rules || []).filter((r: any) => r.field === 'file_type' && r.operator === 'is');
-  return ftRules.reduce((mask: number, r: any) => mask | Number(r.value || 0), 0);
-});
-
 const activeFileTypeMask = computed(() =>
-  isFixedAiResultView.value
+  (tempViewMode.value === 'person' || tempViewMode.value === 'similar')
     ? 0
-    : isSmartAlbumView.value
-    ? smartAlbumFileTypeMask.value
     : Number(config.search.fileType || 0)
 );
 
@@ -10525,46 +10621,16 @@ function toggleFavoritesFilter() {
   config.search.favoritesOnly = !config.search.favoritesOnly;
 }
 
-const fileTypeSelectedValues = computed(() => {
+const fileTypeSelectedIndex = computed(() => {
   const mask = normalizeFileTypeMask(activeFileTypeMask.value);
-  if (mask === 0) return [0];
-  return [FILE_TYPE_IMAGE, FILE_TYPE_RAW, FILE_TYPE_VIDEO].filter(value => (mask & value) === value);
+  return Math.max(0, fileTypeOptions.value.findIndex(option => option.value === mask));
 });
 
-const fileTypeSummaryLabel = computed(() => {
-  const options = fileTypeOptions.value;
-  const mask = normalizeFileTypeMask(activeFileTypeMask.value);
-  if (mask === 0) return options[0]?.label || '';
-
-  const labels = [FILE_TYPE_IMAGE, FILE_TYPE_RAW, FILE_TYPE_VIDEO]
-    .filter(value => (mask & value) === value)
-    .map(value => options.find(option => option.value === value)?.label)
-    .filter(Boolean);
-
-  return labels.length > 0 ? labels.join(' + ') : (options[0]?.label || '');
-});
-
-const handleFileTypeSelect = (values: any[]) => {
+const handleFileTypeSelect = (index: number) => {
   if (isScanStreamingMode.value) return;
-  const nextValues = (Array.isArray(values) ? values : []).map(value => Number(value));
-  const hasAll = nextValues.includes(0);
-  const mask = hasAll ? 0 : nextValues.reduce((acc, value) => acc | value, 0);
+  const mask = fileTypeOptions.value[index]?.value ?? 0;
   if (normalizeFileTypeMask(activeFileTypeMask.value) === normalizeFileTypeMask(mask)) return;
   rememberFocusedFileForPresentationRefresh();
-  if (isSmartAlbumView.value) {
-    const album = getActiveCustomSmartAlbum();
-    if (!album) return;
-    album.query.rules = (album.query.rules || []).filter((r: any) => r.field !== 'file_type');
-    if (mask !== 0) {
-      album.query.rules.push({
-        id: crypto.randomUUID?.() || `${Date.now()}-${Math.random()}`,
-        field: 'file_type',
-        operator: 'is',
-        value: mask,
-      });
-    }
-    return;
-  }
   config.search.fileType = normalizeFileTypeMask(mask);
 };
 
@@ -10706,18 +10772,18 @@ const handleDedupPreviewFile = (fileId: number) => {
   });
 };
 
-const handleDedupTrashSelectedDuplicates = (groupKey: string, fileIds: number[], reclaimableBytes: number) => {
+const handleDedupTrashSelectedDuplicates = (groupKey: string, fileIds: number[]) => {
   if (!groupKey || !fileIds || fileIds.length === 0) return;
-  openTrashMsgbox(reclaimableBytes, groupKey, fileIds);
+  void openDedupTrashMsgbox(groupKey, fileIds);
 };
 
-const handleDedupTrashAllDuplicates = (fileCount: number, reclaimableBytes: number) => {
-  openAllDuplicatesTrashMsgbox(fileCount, reclaimableBytes);
+const handleDedupTrashAllDuplicates = () => {
+  void openDedupTrashMsgbox('all');
 };
 
-const handleDedupTrashSelectedSimilar = (groupKey: string, fileIds: number[], reclaimableBytes: number) => {
+const handleDedupTrashSelectedSimilar = (groupKey: string, fileIds: number[]) => {
   if (!groupKey || !fileIds || fileIds.length === 0) return;
-  openTrashMsgbox(reclaimableBytes, `similar:${groupKey}`, fileIds);
+  void openDedupTrashMsgbox(`similar:${groupKey}`, fileIds);
 };
 
 const handleDedupCompareSelectedPhotos = (files: any[]) => {
@@ -10734,8 +10800,8 @@ const fileTypeOptions = computed(() => {
   const options = localeMsg.value.toolbar.filter?.file_type_options || [];
   return [
     { label: options[0] || 'All', value: 0 },
-    { label: options[1] || 'Image', value: FILE_TYPE_IMAGE },
-    { label: options[2] || 'RAW', value: FILE_TYPE_RAW },
+    { label: options[1] || 'Images', value: FILE_TYPE_IMAGE | FILE_TYPE_RAW },
+    { label: options[2] || 'RAW only', value: FILE_TYPE_RAW },
     { label: options[3] || 'Video', value: FILE_TYPE_VIDEO },
   ];
 });
@@ -11066,8 +11132,8 @@ async function getFileListThumb(files: any[], { bustCache = false, viewportBound
       });
       if (forceRegenerate && thumb === undefined) appliedRawThumbnailPolicies.delete(policyKey);
       if (!thumb || requestId !== currentThumbRequestId) return;
-      if (thumb.error_code === 0 || thumb.error_code === 2) {
-        file.thumbnail = getThumbnailDataUrl(thumb, thumbnailPlaceholder, bustCache, thumbnailSize, file.file_path, Number(file.modified_at || 0), !file.cloud_only);
+      if (thumb.error_code === 0) {
+        file.thumbnail = getThumbnailDataUrl(thumb, thumbnailPlaceholder, bustCache, thumbnailSize, Number(file.modified_at || 0));
         file.rawThumbnailStale = false;
       } else if (thumb.error_code === 1) {
         file.rawThumbnailStale = false;

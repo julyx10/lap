@@ -35,7 +35,7 @@ function fixture(responses, options = {}) {
     window: { addEventListener() {}, removeEventListener() {} }, console: { error() {} },
   };
   const state = new Function(...Object.keys(deps), body +
-    '; return { processed, succeeded, skipped, failed, warned, releaseRequested, keptLocal, lastError, lastWarning, running, cancelled };')(...Object.values(deps));
+    '; return { processed, succeeded, skipped, failed, warned, releaseRequested, keptLocal, running, cancelled };')(...Object.values(deps));
   return { state, refreshed, calls, run: () => mounted() };
 }
 const result = (id, extra = {}) => ({ file: { id, cloud_only: false, metadata_pending: false },
@@ -59,7 +59,6 @@ test('thumbnail failure still refreshes the downloaded file, metadata and size d
   assert.equal(f.state.failed.value, 1);
   assert.equal(f.state.succeeded.value, 0);
   assert.equal(f.state.keptLocal.value, 1);
-  assert.equal(f.state.lastError.value, updated.error);
 });
 
 test('a mixed batch retains partial updates and continues after command and release failures', async () => {
@@ -95,7 +94,7 @@ test('failure to begin a batch is surfaced and does not invoke refresh commands'
   const f = fixture([result(1)], { beginError: new Error('Library changed') });
   await f.run();
   assert.deepEqual(f.calls.map(call => call.command), ['begin_file_refresh_batch']);
-  assert.match(f.state.lastError.value,/Library changed/);
+  assert.equal(f.state.failed.value, 1);
   assert.equal(f.state.running.value,false);
 });
 
@@ -141,8 +140,6 @@ test('XMP failure keeps extracted metadata and pending state as a warning', asyn
   assert.equal(f.state.failed.value, 0);
   assert.equal(f.state.warned.value, 1);
   assert.deepEqual(f.refreshed, [partial]);
-  assert.equal(f.state.lastWarning.value, partial.warning);
-  assert.equal(f.state.lastError.value, '');
 });
 
 test('cloud-only XMP warnings are reported while retaining skipped metadata and pending state', async () => {
@@ -154,8 +151,6 @@ test('cloud-only XMP warnings are reported while retaining skipped metadata and 
   assert.equal(f.state.warned.value, 1);
   assert.equal(f.state.succeeded.value, 0);
   assert.deepEqual(f.refreshed, [partial]);
-  assert.equal(f.state.lastWarning.value, partial.warning);
-  assert.equal(f.state.lastError.value, '');
 });
 
 
@@ -170,20 +165,16 @@ test('XMP warnings keep downloaded files local and are separate from failures', 
   assert.equal(f.state.succeeded.value, 1);
   assert.equal(f.state.keptLocal.value, 2);
   assert.equal(f.refreshed[0], partial);
-  assert.equal(f.state.lastWarning.value, partial.warning);
-  assert.equal(f.state.lastError.value, 'Error: Read failed');
 });
 
-test('preview failure takes precedence in counts while retaining an XMP warning', async () => {
+test('metadata import and preview failures are both counted while retaining updated metadata', async () => {
   const partial = result(1, { warning: 'XMP import failed: Malformed XML', error: 'Preview rebuild failed: Permission denied' });
   const f = fixture([partial], { freeSpace: false });
   await f.run();
   assert.equal(f.state.processed.value, 1);
   assert.equal(f.state.failed.value, 1);
-  assert.equal(f.state.warned.value, 0);
+  assert.equal(f.state.warned.value, 1);
   assert.equal(f.state.succeeded.value, 0);
-  assert.equal(f.state.lastWarning.value, partial.warning);
-  assert.equal(f.state.lastError.value, partial.error);
   assert.deepEqual(f.refreshed, [partial]);
 });
 
@@ -239,17 +230,17 @@ test('single-file menu refresh reports warnings and failures for both local and 
   }
 });
 
-test('all supported locales include the refresh warnings count with its placeholder', () => {
-  for (const name of ['en','de','es','fr','hu','it','ja','ko','nl','pl','pt','ru','uk','zh-CN','zh-TW']) {
+test('all supported locales include the metadata import failure count with its placeholder', () => {
+  for (const name of ['en','cs','de','es','fr','hu','it','ja','ko','nl','pl','pt','ru','uk','vi','zh-CN','zh-TW']) {
     const locale = JSON.parse(fs.readFileSync(new URL(`../src/locales/${name}.json`, import.meta.url), 'utf8'));
-    assert.match(locale.msgbox.file_refresh.warnings, /\{count\}/, name);
+    assert.match(locale.msgbox.file_refresh.metadata_failed, /\{count\}/, name);
   }
 });
 
 
 test('manual rebuild options and unused locale keys are removed', () => {
   assert.doesNotMatch(source, /rebuildPreviews|rebuild_previews|rebuild_pending/);
-  for (const name of ['en','de','es','fr','hu','it','ja','ko','nl','pl','pt','ru','uk','zh-CN','zh-TW']) {
+  for (const name of ['en','cs','de','es','fr','hu','it','ja','ko','nl','pl','pt','ru','uk','vi','zh-CN','zh-TW']) {
     const locale = JSON.parse(fs.readFileSync(new URL(`../src/locales/${name}.json`, import.meta.url), 'utf8'));
     assert.equal(locale.msgbox.file_refresh.rebuild_previews, undefined, name);
     assert.equal(locale.msgbox.file_refresh.rebuild_pending, undefined, name);

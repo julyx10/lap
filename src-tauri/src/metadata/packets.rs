@@ -296,7 +296,7 @@ mod tests {
         let guid = "0123456789ABCDEF0123456789ABCDEF";
         let standard = format!(
             "<rdf:RDF xmlns:rdf=\"{}\"><rdf:Description xmlns:n=\"http://ns.adobe.com/xmp/note/\" n:HasExtendedXMP=\"{guid}\"/></rdf:RDF>",
-            crate::t_xmp::NS_RDF
+            crate::metadata::xmp::NS_RDF
         );
         let packet = b"<extended/>";
         let mut main = b"http://ns.adobe.com/xap/1.0/\0".to_vec();
@@ -421,7 +421,7 @@ mod guid_regressions {
         let guid = "0123456789ABCDEF0123456789ABCDEF";
         let xml = format!(
             "<rdf:RDF xmlns:rdf=\"{}\"><rdf:Description xmlns:n=\"http://ns.adobe.com/xmp/note/\"><n:HasExtendedXMP/><n:HasExtendedXMP>{guid}</n:HasExtendedXMP></rdf:Description></rdf:RDF>",
-            crate::t_xmp::NS_RDF
+            crate::metadata::xmp::NS_RDF
         );
         assert_eq!(extended_guid(xml.as_bytes()).as_deref(), Some(guid));
     }

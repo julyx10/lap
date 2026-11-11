@@ -37,6 +37,7 @@ dependencies = [
  "percent-encoding",
  "pinyin",
  "pkg-config",
+ "plist",
  "png 0.18.1",
  "quick-xml 0.37.5",
  "rand 0.8.5",
@@ -62,6 +63,7 @@ dependencies = [
  "uuid",
  "walkdir",
  "windows 0.61.3",
+ "xattr",
  "zip 2.4.2",
 ]
 

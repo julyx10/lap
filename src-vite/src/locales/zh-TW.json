@@ -84,7 +84,7 @@
       "name": "名稱",
       "description": "描述",
       "description_placeholder": "輸入相簿描述",
-      "images": "相片",
+      "images": "圖片",
       "videos": "影片",
       "section_general": "一般",
       "section_scan": "掃描狀態",
@@ -109,7 +109,6 @@
       "last_scan_time": "上次掃描",
       "tab_general": "一般",
       "file_types": "排除檔案類型",
-      "photos": "相片",
       "raw": "RAW",
       "file_types_required": "請至少保留一種檔案類型。",
       "pixel_filter": "排除小圖片",
@@ -148,6 +147,9 @@
       "add_rule": "新增規則",
       "rules_count": "{count}/{max} 條規則",
       "remove_rule": "移除規則",
+      "search_options": "篩選…",
+      "no_matches": "無相符項目",
+      "select_value": "選擇…",
       "group": "群組",
       "sort": "排序",
       "order": "順序",
@@ -232,6 +234,7 @@
     }
   },
   "offline": {
+    "badge": "離線",
     "cloud_only": "僅線上可用",
     "cloud_only_pending": "僅線上可用 — 檔案資訊待補齊",
     "original_unavailable": "原始檔案暫時無法存取",
@@ -247,6 +250,7 @@
     "copy_failed": "無法匯入此檔案。"
   },
   "import_organize": {
+    "title": "匯入資料夾",
     "section_folders": "選擇資料夾",
     "section_status": "匯入狀態",
     "to_import": "待匯入",
@@ -258,7 +262,7 @@
     "layout_day": "依日 — YYYY/YYYY-MM-DD",
     "layout_month": "依月 — YYYY/YYYY-MM",
     "layout_year": "依年 — YYYY",
-    "layout_none": "單一資料夾",
+    "layout_structure": "保留資料夾結構",
     "import": "匯入",
     "preparing": "正在準備匯入",
     "importing": "正在匯入檔案",
@@ -284,7 +288,7 @@
   "search": {
     "title": "搜尋",
     "similar_images": "相關相片",
-    "image_search_placeholder": "搜尋圖片、檔名或描述",
+    "image_search_placeholder": "搜尋圖庫",
     "matches": "相符項目",
     "unknown_location": "未知地點",
     "unknown_camera": "未知相機",
@@ -353,6 +357,8 @@
     "unreviewed": "未檢視"
   },
   "tag": {
+    "no_selected_tags": "沒有已選標籤",
+    "show_selected_only": "僅顯示已選標籤",
     "title": "標籤",
     "delete_tag": "刪除標籤",
     "edit_tag": "編輯標籤",
@@ -368,7 +374,7 @@
     "add_child": "新增子標籤",
     "invalid_name": "標籤名稱不能包含 , ; {'|'}。",
     "invalid_move": "無法將標籤移至自身或其子標籤下。",
-    "delete_tree": "將刪除此標籤及其子標籤，相片不受影響。"
+    "delete_tree": "將刪除此標籤及其子標籤，圖片不受影響。"
   },
   "subject": {
     "title": "主題",
@@ -488,8 +494,8 @@
       ],
       "file_type_options": [
         "全部",
-        "相片",
-        "RAW 檔",
+        "圖片",
+        "僅 RAW",
         "影片"
       ],
       "file_type_other": "其他"
@@ -534,8 +540,8 @@
       "move": "移動"
     },
     "edit_disabled": "請選擇單一相片以編輯",
-    "type_image": "相片",
-    "type_images": "相片",
+    "type_image": "圖片",
+    "type_images": "圖片",
     "type_video": "影片",
     "type_videos": "影片",
     "select_title": "選取",
@@ -547,10 +553,34 @@
     "more_actions": "更多動作",
     "tag_all": "標籤",
     "dedup": {
+      "keep_rules": {
+        "title": "保留規則",
+        "priority_order": "優先順序",
+        "folders": "優先保留資料夾",
+        "subfolders": "包含子資料夾。清單中越靠前，優先順序越高。",
+        "folders_skipped": "未設定，已略過",
+        "add_folder": "新增資料夾",
+        "folder_already_added": "已新增",
+        "format": "偏好格式",
+        "similar_only": "僅相似影像",
+        "raw_first": "RAW 優先",
+        "jpeg_heic_first": "JPEG / HEIC 優先",
+        "size": "偏好大小",
+        "largest_dimensions": "最高解析度",
+        "smallest_dimensions": "最低解析度",
+        "largest_file_size": "最大檔案大小",
+        "smallest_file_size": "最小檔案大小",
+        "ignore": "不考慮",
+        "time": "偏好日期",
+        "created_earliest": "最早建立",
+        "created_latest": "最新建立",
+        "modified_earliest": "最早修改",
+        "modified_latest": "最新修改"
+      },
       "title": "重複項",
       "tabs": {
         "exact": "重複項",
-        "similar": "相似相片"
+        "similar": "相似圖片"
       },
       "scanning": "正在掃描重複項...",
       "error_title": "無法掃描重複項",
@@ -704,6 +734,7 @@
     "album": {
       "add": "新增相簿",
       "edit": "編輯相簿...",
+      "import_folder": "匯入資料夾…",
       "scan": "掃描相簿",
       "reorder": "重新排序",
       "pause_scan": "暫停掃描",
@@ -844,7 +875,6 @@
       "hide": "隱藏",
       "hidden": "已隱藏",
       "remove": "移除",
-      "reorder": "重新排序",
       "rename": "重新命名",
       "switch_to": "切換到",
       "add_new": "新增媒體庫",
@@ -1008,6 +1038,7 @@
       "error": "無法選擇檔案。"
     },
     "file_refresh": {
+      "metadata_failed": "中繼資料匯入失敗：{count}",
       "skipped": "已跳過：{count}",
       "status": "重新整理狀態",
       "running": "重新整理中…",
@@ -1016,7 +1047,6 @@
       "complete": "完成",
       "succeeded": "已更新：{count}",
       "failed": "失敗：{count}",
-      "warnings": "警告：{count}",
       "release_requested": "已要求釋放：{count}",
       "kept_local": "保留在此裝置：{count}",
       "kept_local_hint": "一律保留在此裝置上的檔案，或 Windows 不允許 Lap 釋放空間的檔案（受控資料夾存取）。"
@@ -1151,6 +1181,17 @@
     }
   },
   "file_info": {
+    "paths_copied": "已複製 {count} 個檔案路徑到剪貼簿",
+    "copy_path": "複製檔案路徑",
+    "copy_path_failed": "複製路徑失敗",
+    "video_only": "（僅影片）",
+    "field_preset": "顯示欄位",
+    "fields_default": "預設",
+    "fields_all": "全部顯示",
+    "fields_custom": "自訂",
+
+    "hide_empty_fields": "自動隱藏空白欄位",
+    "customize_fields": "自訂欄位",
     "title": "資訊",
     "preview": "預覽",
     "thumbnail": "縮圖",
@@ -1210,10 +1251,10 @@
     "source_description": "原始描述",
     "coordinates": "座標",
     "detail_fields": {
-      "title": "原始標題",
+      "title": "標題",
+      "headline": "內容標題",
       "creator": "作者",
       "copyright": "版權",
-      "description": "原始描述",
       "credit": "提供者",
       "source": "來源",
       "usageTerms": "使用條款",
@@ -1320,7 +1361,8 @@
       "appearance": "色彩模式",
       "appearance_options": [
         "淺色",
-        "深色"
+        "深色",
+        "跟隨系統"
       ],
       "theme": "主題",
       "theme_options_light": [
@@ -1383,6 +1425,10 @@
     "raw": {
       "title": "RAW",
       "section_pairs": "配對檔案",
+      "clipboard_both": "兩個檔案",
+      "clipboard_raw": "僅 RAW",
+      "clipboard_jpeg": "僅 JPEG/HEIC",
+      "clipboard_hint": "同時影響複製檔案路徑，不影響複製或移動檔案至資料夾。",
       "pair_source": "配對的預設顯示",
       "pair_source_hint": "用於配對的縮圖與預覽",
       "pair_jpeg": "JPEG / HEIC",
@@ -1541,7 +1587,7 @@
     },
     "image_search": {
       "title": "搜尋",
-      "search_image": "相片搜尋",
+      "search_image": "圖片搜尋",
       "search_model": "選擇模型",
       "default_model_hint": "預設模型僅支援英文相片搜尋",
       "multilingual_model_hint": "以超過 50 種語言搜尋",
@@ -1611,6 +1657,7 @@
         "open_new_window": "在新視窗檢視",
         "open_external_app": "用外部應用程式開啟",
         "edit_image": "編輯",
+        "copy_file_path": "複製檔案路徑",
         "copy_file": "複製到剪貼簿",
         "paste_file": "貼上",
         "reveal_in_finder": "在 Finder 中顯示",

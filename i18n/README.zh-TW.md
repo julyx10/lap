@@ -9,7 +9,7 @@
   </p>
 </div>
 
-[English](../README.md) | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | [Italiano](README.it.md) | [Magyar](README.hu.md) | [Nederlands](README.nl.md) | [Polski](README.pl.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [Українська](README.uk.md) | [中文简体](README.zh-CN.md) | 中文繁體 | [日本語](README.ja.md) | [한국어](README.ko.md)
+[English](../README.md) | [Česky](README.cs.md) | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | [Italiano](README.it.md) | [Magyar](README.hu.md) | [Nederlands](README.nl.md) | [Polski](README.pl.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [Українська](README.uk.md) | [Tiếng Việt](README.vi.md) | [中文简体](README.zh-CN.md) | 中文繁體 | [日本語](README.ja.md) | [한국어](README.ko.md)
 
 Lap 是一款開放原始碼、以本機為先的相片管理器，讓您輕鬆瀏覽家庭相簿、快速找出老照片，並離線管理大型個人媒體資料庫。
 它是雲端相片服務的隱私替代方案：不強制上傳、內建本機 AI 搜尋、以資料夾為中心的工作流程，且完全免費使用。

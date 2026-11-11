@@ -526,7 +526,7 @@ pub(crate) fn resolve_group_primary_target(
     file_path: &str,
     new_folder_path: &str,
     policy: t_utils::FileConflictPolicy,
-    xmp_cache: &mut crate::t_xmp_files::Cache,
+    xmp_cache: &mut crate::metadata::files::Cache,
 ) -> Result<(PathBuf, Vec<SidecarTransferPlan>), String> {
     let base_target =
         t_utils::resolve_file_transfer_destination(file_path, new_folder_path, policy)?;
@@ -698,10 +698,7 @@ pub(crate) fn apple_content_identifier_from_bytes(buf: &[u8]) -> Option<String> 
 pub(crate) fn apple_content_identifiers_from_bytes(buf: &[u8]) -> Vec<String> {
     let text = String::from_utf8_lossy(&buf);
     let mut identifiers = Vec::new();
-    for marker in [
-        "com.apple.quicktime.content.identifier",
-        "ContentIdentifier",
-    ] {
+    for marker in super::schema::APPLE_CONTENT_IDENTIFIER_MARKERS {
         if let Some(identifier) = identifier_after_marker(&text, marker) {
             identifiers.push(identifier);
         }

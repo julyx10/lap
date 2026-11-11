@@ -84,7 +84,7 @@
       "name": "名前",
       "description": "説明",
       "description_placeholder": "アルバムの説明を入力",
-      "images": "写真",
+      "images": "画像",
       "videos": "動画",
       "section_general": "一般",
       "section_scan": "スキャンの状態",
@@ -109,7 +109,6 @@
       "last_scan_time": "最終スキャン",
       "tab_general": "一般",
       "file_types": "ファイル形式を除外",
-      "photos": "写真",
       "raw": "RAW",
       "file_types_required": "少なくとも1つのファイル形式を対象として残してください。",
       "pixel_filter": "小さい画像を除外",
@@ -148,6 +147,9 @@
       "add_rule": "ルールを追加",
       "rules_count": "{count}/{max} ルール",
       "remove_rule": "ルールを削除",
+      "search_options": "絞り込み…",
+      "no_matches": "一致なし",
+      "select_value": "選択…",
       "group": "グループ",
       "sort": "並び替え",
       "order": "順序",
@@ -232,6 +234,7 @@
     }
   },
   "offline": {
+    "badge": "オフライン",
     "cloud_only": "オンラインでのみ利用可能",
     "cloud_only_pending": "オンラインでのみ利用可能 — ファイル情報が未取得です",
     "original_unavailable": "元のファイルにアクセスできません",
@@ -247,6 +250,7 @@
     "copy_failed": "このファイルをインポートできませんでした。"
   },
   "import_organize": {
+    "title": "フォルダーをインポート",
     "section_folders": "フォルダーを選択",
     "section_status": "インポート状況",
     "to_import": "インポート予定",
@@ -258,7 +262,7 @@
     "layout_day": "日別 — YYYY/YYYY-MM-DD",
     "layout_month": "月別 — YYYY/YYYY-MM",
     "layout_year": "年別 — YYYY",
-    "layout_none": "単一フォルダー",
+    "layout_structure": "フォルダー構造を保持",
     "import": "読み込む",
     "preparing": "読み込みを準備中",
     "importing": "ファイルを読み込み中",
@@ -284,7 +288,7 @@
   "search": {
     "title": "検索",
     "similar_images": "関連写真",
-    "image_search_placeholder": "画像、ファイル名、説明を検索",
+    "image_search_placeholder": "ライブラリを検索",
     "matches": "一致結果",
     "unknown_location": "不明な場所",
     "unknown_camera": "不明なカメラ",
@@ -353,6 +357,8 @@
     "unreviewed": "未選別"
   },
   "tag": {
+    "no_selected_tags": "選択したタグはありません",
+    "show_selected_only": "選択したタグのみ表示",
     "title": "タグ",
     "delete_tag": "タグを削除",
     "edit_tag": "タグを編集",
@@ -368,7 +374,7 @@
     "add_child": "子タグを作成",
     "invalid_name": "タグ名に , ; {'|'} は使えません。",
     "invalid_move": "タグを自身やその子タグの下へ移動できません。",
-    "delete_tree": "このタグと子タグを削除します。写真は保持されます。"
+    "delete_tree": "このタグと子タグを削除します。画像は保持されます。"
   },
   "subject": {
     "title": "被写体",
@@ -488,8 +494,8 @@
       ],
       "file_type_options": [
         "すべて",
-        "写真",
-        "RAW ファイル",
+        "画像",
+        "RAW のみ",
         "動画"
       ],
       "file_type_other": "その他"
@@ -534,8 +540,8 @@
       "move": "移動"
     },
     "edit_disabled": "編集する写真を1枚選択してください",
-    "type_image": "写真",
-    "type_images": "写真",
+    "type_image": "画像",
+    "type_images": "画像",
     "type_video": "本の動画",
     "type_videos": "本の動画",
     "select_title": "選択",
@@ -547,10 +553,34 @@
     "more_actions": "その他の操作",
     "tag_all": "タグ",
     "dedup": {
+      "keep_rules": {
+        "title": "保持ルール",
+        "priority_order": "優先順位",
+        "folders": "優先フォルダー",
+        "subfolders": "サブフォルダーも対象です。リストの上位が優先されます。",
+        "folders_skipped": "未設定のためスキップ",
+        "add_folder": "フォルダーを追加",
+        "folder_already_added": "追加済み",
+        "format": "優先する形式",
+        "similar_only": "類似画像のみ",
+        "raw_first": "RAW を優先",
+        "jpeg_heic_first": "JPEG / HEIC を優先",
+        "size": "優先するサイズ",
+        "largest_dimensions": "最高解像度",
+        "smallest_dimensions": "最低解像度",
+        "largest_file_size": "ファイルサイズが最大",
+        "smallest_file_size": "ファイルサイズが最小",
+        "ignore": "考慮しない",
+        "time": "優先する日付",
+        "created_earliest": "作成日時が最も古い",
+        "created_latest": "作成日時が最も新しい",
+        "modified_earliest": "更新日時が最も古い",
+        "modified_latest": "更新日時が最も新しい"
+      },
       "title": "重複",
       "tabs": {
         "exact": "重複",
-        "similar": "類似写真"
+        "similar": "類似画像"
       },
       "scanning": "重複をスキャン中...",
       "error_title": "重複をスキャンできません",
@@ -704,6 +734,7 @@
     "album": {
       "add": "新規アルバム",
       "edit": "アルバムを編集...",
+      "import_folder": "フォルダーをインポート…",
       "scan": "アルバムをスキャン",
       "reorder": "並べ替え",
       "pause_scan": "スキャンを一時停止",
@@ -844,7 +875,6 @@
       "hide": "非表示",
       "hidden": "非表示",
       "remove": "削除",
-      "reorder": "並べ替え",
       "rename": "名前変更",
       "switch_to": "切り替え先",
       "add_new": "新規ライブラリ",
@@ -1008,6 +1038,7 @@
       "error": "ファイル選択に失敗しました。"
     },
     "file_refresh": {
+      "metadata_failed": "メタデータの読み込み失敗: {count}",
       "skipped": "スキップ: {count}",
       "status": "更新状況",
       "running": "更新中…",
@@ -1016,7 +1047,6 @@
       "complete": "完了",
       "succeeded": "更新済み：{count}",
       "failed": "失敗：{count}",
-      "warnings": "警告: {count}",
       "release_requested": "解放を要求済み: {count}",
       "kept_local": "このデバイスに保持: {count}",
       "kept_local_hint": "このデバイスに常に保持するファイル、または Windows が Lap による領域の解放を許可しなかったファイル（コントロールされたフォルダーアクセス）。"
@@ -1151,6 +1181,17 @@
     }
   },
   "file_info": {
+    "paths_copied": "{count} 件のファイルパスをクリップボードにコピーしました",
+    "copy_path": "ファイルパスをコピー",
+    "copy_path_failed": "パスのコピーに失敗しました",
+    "video_only": "（動画のみ）",
+    "field_preset": "表示項目",
+    "fields_default": "既定",
+    "fields_all": "すべて表示",
+    "fields_custom": "カスタム",
+
+    "hide_empty_fields": "空の項目を自動的に非表示",
+    "customize_fields": "表示項目の設定",
     "title": "ファイル情報",
     "preview": "プレビュー",
     "thumbnail": "サムネイル",
@@ -1210,10 +1251,10 @@
     "source_description": "元の説明",
     "coordinates": "座標",
     "detail_fields": {
-      "title": "元のタイトル",
+      "title": "タイトル",
+      "headline": "見出し",
       "creator": "作成者",
       "copyright": "著作権",
-      "description": "元の説明",
       "credit": "提供者",
       "source": "出典",
       "usageTerms": "利用条件",
@@ -1320,7 +1361,8 @@
       "appearance": "外観",
       "appearance_options": [
         "ライト",
-        "ダーク"
+        "ダーク",
+        "システムに従う"
       ],
       "theme": "テーマ",
       "theme_options_light": [
@@ -1383,6 +1425,10 @@
     "raw": {
       "title": "RAW",
       "section_pairs": "ペアファイル",
+      "clipboard_both": "両方のファイル",
+      "clipboard_raw": "RAW のみ",
+      "clipboard_jpeg": "JPEG/HEIC のみ",
+      "clipboard_hint": "パスのコピーにも適用します。フォルダーへのコピーや移動には影響しません。",
       "pair_source": "ペアの既定の表示",
       "pair_source_hint": "ペアのサムネイルとプレビューに使用します",
       "pair_jpeg": "JPEG / HEIC",
@@ -1541,7 +1587,7 @@
     },
     "image_search": {
       "title": "検索",
-      "search_image": "写真検索",
+      "search_image": "画像検索",
       "search_model": "モデルを選択",
       "default_model_hint": "デフォルトモデルは英語の写真検索のみ対応しています",
       "multilingual_model_hint": "50以上の言語で検索できます",
@@ -1611,6 +1657,7 @@
         "open_new_window": "新しいウィンドウで表示",
         "open_external_app": "外部アプリで開く",
         "edit_image": "編集",
+        "copy_file_path": "ファイルパスをコピー",
         "copy_file": "クリップボードにコピー",
         "paste_file": "ペースト",
         "reveal_in_finder": "Finderで表示",

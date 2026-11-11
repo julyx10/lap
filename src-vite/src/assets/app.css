@@ -157,6 +157,14 @@ html, body {
   @apply badge badge-xs tabular-nums border-0 bg-base-100/30 text-base-content/30;
 }
 
+@utility album-tree-chevron {
+  @apply p-1 w-6 h-6 shrink-0 text-base-content/60 transition-transform;
+}
+
+.sidebar-reorder-placeholder {
+  visibility: hidden;
+}
+
 /* sidebar empty state */
 @utility sidebar-empty {
   @apply mt-2 mb-4 px-2 flex flex-col items-center justify-center text-base-content/30;

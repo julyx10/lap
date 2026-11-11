@@ -625,6 +625,15 @@ pub fn get_image_thumbnail(
     orientation: i32,
     thumbnail_size: u32,
 ) -> Result<Option<Vec<u8>>, String> {
+    get_image_thumbnail_with_encoding(file_path, orientation, thumbnail_size, false)
+}
+
+pub(crate) fn get_image_thumbnail_with_encoding(
+    file_path: &str,
+    orientation: i32,
+    thumbnail_size: u32,
+    force_jpeg: bool,
+) -> Result<Option<Vec<u8>>, String> {
     if t_jxl::is_jxl_path(file_path) {
         return t_jxl::get_jxl_thumbnail(file_path, thumbnail_size);
     }
@@ -675,7 +684,7 @@ pub fn get_image_thumbnail(
                     }
                 }
             };
-        if should_use_png_thumbnail(file_path) {
+        if !force_jpeg && should_use_png_thumbnail(file_path) {
             resize_rgba_image_to_png(
                 apply_orientation(img, orientation).to_rgba8(),
                 thumbnail_size,
@@ -1332,13 +1341,16 @@ pub async fn copy_files_to_clipboard(
 ) -> Result<usize, String> {
     let file_paths = file_paths
         .into_iter()
-        .filter(|path| Path::new(path).is_file())
         // The UI limits copying to 10 content items. RAW+JPEG pairs expand
         // one item into two physical files, so retain both components.
         .take(20)
         .collect::<Vec<_>>();
     if file_paths.is_empty() {
         return Err("No valid files to copy".to_string());
+    }
+    // Do not silently copy only part of a RAW pair or multi-file selection.
+    if let Some(path) = file_paths.iter().find(|path| !Path::new(path).is_file()) {
+        return Err(format!("File is unavailable: {}", path));
     }
     let preview = clipboard_preview_png(&file_paths).await;
     crate::t_pasteboard::copy_files_and_image(app_handle, &file_paths, preview.as_deref()).await?;

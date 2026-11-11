@@ -15,6 +15,8 @@ use crate::t_storage;
 use crate::t_utils;
 use crate::t_video;
 use crate::t_raw_display::RawDisplayOptions;
+use crate::metadata::schema::CaptureField;
+
 use base64::{Engine, engine::general_purpose};
 use chrono::{Datelike, TimeZone};
 use exif::{In, Tag, Value};
@@ -127,8 +129,8 @@ fn source_version(path: &str) -> String {
     )
 }
 fn metadata_failure_version(path: &str) -> String {
-    let sidecar = if crate::t_xmp::is_xmp_import_enabled() {
-        crate::t_xmp::find_xmp_sidecar(Path::new(path))
+    let sidecar = if crate::metadata::xmp::is_xmp_import_enabled() {
+        crate::metadata::xmp::find_xmp_sidecar(Path::new(path))
     } else {
         None
     };
@@ -1573,9 +1575,12 @@ impl FolderScanState {
     }
 }
 
+pub(crate) type FileGps = (Option<f64>, Option<f64>, Option<f64>);
+
 /// Define the album file struct
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct AFile {
+    // e_* stores extracted source metadata, not exclusively EXIF.
     pub id: Option<i64>, // unique id (autoincrement by db)
     pub folder_id: i64,  // folder id (from folders table)
 
@@ -1590,10 +1595,13 @@ pub struct AFile {
     pub inode: Option<i64>,           // filesystem inode (for rename detection)
     pub taken_date: Option<i64>,      // taken date timestamp (e_date_time || modified_at)
 
-    // image/video
+    // Image/video properties
     pub width: Option<u32>,    // image/video width
     pub height: Option<u32>,   // image/video height
     pub duration: Option<i64>, // video duration
+    pub icc_profile: Option<String>,
+    pub color_space: Option<String>,
+    pub bit_depth: Option<u16>,
 
     // extra info
     pub is_favorite: Option<bool>, // is favorite
@@ -1604,26 +1612,31 @@ pub struct AFile {
     pub has_tags: Option<bool>,    // has tags
     pub has_faces: Option<i32>,    // has faces (0: unprocessed, 1: has faces, 2: no faces)
 
-    // exif info
+    // Camera and lens metadata (legacy e_* names)
     pub e_make: Option<String>,  // camera make
     pub e_model: Option<String>, // camera model
-    pub e_date_time: Option<String>,
-    pub e_software: Option<String>,
-    pub e_artist: Option<String>,
-    pub e_copyright: Option<String>,
-    pub e_description: Option<String>,
     pub e_lens_make: Option<String>,
     pub e_lens_model: Option<String>,
+
+    // Capture metadata (legacy e_* names)
+    pub e_date_time: Option<String>,
     pub e_exposure_bias: Option<String>,
     pub e_exposure_time: Option<String>,
     pub e_f_number: Option<String>,
     pub e_focal_length: Option<String>,
     pub e_iso_speed: Option<String>,
-    pub e_flash: Option<String>,    // flash
-    pub e_orientation: Option<u32>, // orientation
-    pub icc_profile: Option<String>,
-    pub color_space: Option<String>,
-    pub bit_depth: Option<u16>,
+    pub e_flash: Option<String>,
+    pub e_orientation: Option<u32>,
+
+    // Descriptive metadata (effective values; may come from EXIF, IPTC or XMP)
+    pub e_title: Option<String>,
+    pub e_headline: Option<String>,
+    pub e_description: Option<String>,
+    pub e_artist: Option<String>,
+    pub e_copyright: Option<String>,
+
+    // Source software metadata
+    pub e_software: Option<String>,
 
     // gps info
     pub gps_latitude: Option<f64>,
@@ -2107,7 +2120,9 @@ pub struct ATimeLine {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct QueryParams {
-    pub search_file_name: String, // file name search
+    #[serde(skip)]
+    pub(crate) include_raw_companions: bool,
+    pub search_file_name: String, // filename and metadata text search
     pub search_file_type: i64,
     pub sort_type: i64,
     pub sort_order: i64,
@@ -2172,6 +2187,8 @@ pub struct SmartQueryParams {
     pub rules: Vec<SmartRule>,
     #[serde(default)]
     pub favorites_only: bool,
+    #[serde(default)]
+    pub file_type: i64,
     pub sort_type: i64,
     pub sort_order: i64,
     #[serde(default)]
@@ -2408,6 +2425,10 @@ impl AFile {
         // get dimensions and duration based on file type
         let (mut width, mut height, mut duration) = (0u32, 0u32, 0u64);
 
+        let mut icc_profile = None;
+        let mut color_space = None;
+        let mut bit_depth = None;
+
         // Initialize metadata fields
         let mut taken_date: Option<i64> = None;
         let mut e_make: Option<String> = None;
@@ -2426,9 +2447,8 @@ impl AFile {
         let mut e_iso_speed: Option<String> = None;
         let mut e_flash: Option<String> = None;
         let mut e_orientation: Option<u32> = None;
-        let mut icc_profile = None;
-        let mut color_space = None;
-        let mut bit_depth = None;
+        let mut e_title = None;
+        let mut e_headline = None;
         let mut gps_latitude: Option<f64> = None;
         let mut gps_longitude: Option<f64> = None;
         let mut gps_altitude: Option<f64> = None;
@@ -2463,7 +2483,7 @@ impl AFile {
             )
         {
             content_identifier = file_header_deref
-                .and_then(crate::t_apple_sidecar::apple_content_identifier_from_bytes);
+                .and_then(crate::metadata::apple_sidecar::apple_content_identifier_from_bytes);
         }
 
         // Android Motion Photo: JPEG with an embedded MP4 appended after EOI.
@@ -2546,8 +2566,8 @@ impl AFile {
             // 8: Rotate 270 CW
             e_orientation = exif.as_ref().and_then(|exif_data| {
                 exif_data
-                    .get_field(Tag::Orientation, In::PRIMARY)
-                    .or_else(|| exif_data.fields().find(|f| f.tag == Tag::Orientation))
+                    .get_field(CaptureField::Orientation.exif(), In::PRIMARY)
+                    .or_else(|| exif_data.fields().find(|f| f.tag == CaptureField::Orientation.exif()))
                     .and_then(|field| field.value.get_uint(0))
                     .map(|v| v as u32)
             });
@@ -2568,7 +2588,7 @@ impl AFile {
             // Process flash data
             e_flash = exif.as_ref().and_then(|exif_data| {
                 exif_data
-                    .get_field(Tag::Flash, In::PRIMARY)
+                    .get_field(CaptureField::Flash.exif(), In::PRIMARY)
                     .and_then(|field| field.value.get_uint(0))
                     .map(|val| {
                         if val & 1 == 1 {
@@ -2585,24 +2605,24 @@ impl AFile {
             gps_longitude = lon;
             gps_altitude = alt;
 
-            taken_date = Self::get_exif_field(&exif, Tag::DateTimeOriginal)
+            taken_date = Self::get_exif_field(&exif, CaptureField::DateTimeOriginal.exif())
                 .and_then(|exif_date| t_utils::meta_date_to_timestamp(&exif_date))
                 .or(file_info.modified);
 
-            e_make = Self::get_exif_field(&exif, Tag::Make);
-            e_model = Self::get_exif_field(&exif, Tag::Model);
-            e_date_time = Self::get_exif_field(&exif, Tag::DateTimeOriginal);
-            e_software = Self::get_exif_field(&exif, Tag::Software);
-            e_artist = Self::get_exif_field(&exif, Tag::Artist);
-            e_copyright = Self::get_exif_field(&exif, Tag::Copyright);
-            e_description = Self::get_exif_field(&exif, Tag::ImageDescription);
-            e_lens_make = Self::get_exif_field(&exif, Tag::LensMake);
-            e_lens_model = Self::get_exif_field(&exif, Tag::LensModel);
-            e_exposure_bias = Self::get_exif_field(&exif, Tag::ExposureBiasValue);
-            e_exposure_time = Self::get_exif_field(&exif, Tag::ExposureTime);
-            e_f_number = Self::get_exif_field(&exif, Tag::FNumber);
-            e_focal_length = Self::get_exif_field(&exif, Tag::FocalLength);
-            e_iso_speed = Self::get_exif_field(&exif, Tag::PhotographicSensitivity);
+            e_make = Self::get_exif_field(&exif, CaptureField::Make.exif());
+            e_model = Self::get_exif_field(&exif, CaptureField::Model.exif());
+            e_date_time = Self::get_exif_field(&exif, CaptureField::DateTimeOriginal.exif());
+            e_software = Self::get_exif_field(&exif, CaptureField::Software.exif());
+            e_artist = Self::get_exif_field(&exif, CaptureField::Artist.exif());
+            e_copyright = Self::get_exif_field(&exif, CaptureField::Copyright.exif());
+            e_description = Self::get_exif_field(&exif, CaptureField::ImageDescription.exif());
+            e_lens_make = Self::get_exif_field(&exif, CaptureField::LensMake.exif());
+            e_lens_model = Self::get_exif_field(&exif, CaptureField::LensModel.exif());
+            e_exposure_bias = Self::get_exif_field(&exif, CaptureField::ExposureBiasValue.exif());
+            e_exposure_time = Self::get_exif_field(&exif, CaptureField::ExposureTime.exif());
+            e_f_number = Self::get_exif_field(&exif, CaptureField::FNumber.exif());
+            e_focal_length = Self::get_exif_field(&exif, CaptureField::FocalLength.exif());
+            e_iso_speed = Self::get_exif_field(&exif, CaptureField::PhotographicSensitivity.exif());
 
             // The editor uses little_exif to preserve metadata. Some legacy
             // JPEGs are accepted by that reader but rejected by kamadak-exif,
@@ -2739,16 +2759,18 @@ impl AFile {
         // Deep metadata supplements missing fields without replacing values
         // already supplied by EXIF, video probing, or LibRaw.
         if matches!(file_type, 1 | 2 | 3) {
-            let deep = crate::t_metadata::read(Path::new(file_path));
+            let deep = crate::metadata::embedded::read(Path::new(file_path));
+            icc_profile = deep.icc_profile;
+            color_space = deep.color_space;
+            bit_depth = deep.bit_depth;
             e_make = e_make.or(deep.make);
             e_model = e_model.or(deep.model);
             e_artist = e_artist.or(deep.artist);
             e_copyright = e_copyright.or(deep.copyright);
             e_description = e_description.or(deep.description);
             e_software = e_software.or(deep.software);
-            icc_profile = deep.icc_profile;
-            color_space = deep.color_space;
-            bit_depth = deep.bit_depth;
+            e_title = deep.title;
+            e_headline = deep.headline;
             e_lens_make = e_lens_make.or(deep.lens_make);
             e_lens_model = e_lens_model.or(deep.lens_model);
             if e_lens_make.is_none() {
@@ -2764,21 +2786,7 @@ impl AFile {
             gps_altitude = gps_altitude.or(deep.altitude);
         }
 
-        // Geocoding based on GPS coordinates from any source
-        let (geo_name, geo_admin1, geo_admin2, geo_cc) =
-            if let (Some(lat), Some(lon)) = (gps_latitude, gps_longitude) {
-                match t_utils::GEOCODER.search((lat, lon)) {
-                    Some(result) => (
-                        Some(result.record.name.clone()),
-                        Some(result.record.admin1.clone()),
-                        Some(result.record.admin2.clone()),
-                        Some(result.record.cc.clone()),
-                    ),
-                    None => (None, None, None, None),
-                }
-            } else {
-                (None, None, None, None)
-            };
+        let (geo_name, geo_admin1, geo_admin2, geo_cc) = Self::geocode(gps_latitude, gps_longitude);
 
         // RAW and TIFF dimensions already match their decoder output.
         let should_swap_dimensions_for_orientation = file_type != 3
@@ -2820,6 +2828,9 @@ impl AFile {
                 })
                 .or(Some(height)),
             duration: Some(duration as i64),
+            icc_profile,
+            color_space,
+            bit_depth,
 
             is_favorite: None,
             rating: Some(0),
@@ -2831,13 +2842,9 @@ impl AFile {
 
             e_make,
             e_model,
-            e_date_time,
-            e_software,
-            e_artist,
-            e_copyright,
-            e_description,
             e_lens_make,
             e_lens_model,
+            e_date_time,
             e_exposure_bias,
             e_exposure_time,
             e_f_number,
@@ -2845,10 +2852,12 @@ impl AFile {
             e_iso_speed,
             e_flash,
             e_orientation,
-            icc_profile,
-            color_space,
-            bit_depth,
-
+            e_title,
+            e_headline,
+            e_description,
+            e_artist,
+            e_copyright,
+            e_software,
             gps_latitude,
             gps_longitude,
             gps_altitude,
@@ -2885,6 +2894,11 @@ impl AFile {
         } else { taken }
     }
 
+    pub(crate) fn native_capture_date(file_path: &str, file_type: i64) -> Result<(Option<String>, Option<i64>), String> {
+        let file = Self::new(0, file_path, file_type)?;
+        Ok((file.e_date_time, file.taken_date))
+    }
+
     /// Read the capture timestamp used by Lap before a file is imported.
     /// This keeps date-organized imports consistent with the timestamp shown
     /// after the same file has been indexed.
@@ -2906,7 +2920,7 @@ impl AFile {
                         .then(|| t_image::read_exif_permissive(file_path)).flatten()
                 })
             } else { t_image::read_exif_permissive(file_path) };
-            let mut date = Self::get_exif_field(&exif, Tag::DateTimeOriginal);
+            let mut date = Self::get_exif_field(&exif, CaptureField::DateTimeOriginal.exif());
             let mut taken = date.as_deref().and_then(t_utils::meta_date_to_timestamp).or(modified);
             if file_type == 3 && taken == modified {
                 let timestamp = match raw_info {
@@ -2927,26 +2941,41 @@ impl AFile {
         taken.ok_or_else(|| format!("Could not read a date from: {}", file_path))
     }
 
-    fn extract_gps_data(exif: &Option<exif::Exif>) -> (Option<f64>, Option<f64>, Option<f64>) {
+    pub(crate) fn geocode(
+        latitude: Option<f64>,
+        longitude: Option<f64>,
+    ) -> (Option<String>, Option<String>, Option<String>, Option<String>) {
+        let Some(result) = latitude.zip(longitude).and_then(|point| t_utils::GEOCODER.search(point)) else {
+            return (None, None, None, None);
+        };
+        (
+            Some(result.record.name.clone()),
+            Some(result.record.admin1.clone()),
+            Some(result.record.admin2.clone()),
+            Some(result.record.cc.clone()),
+        )
+    }
+
+    pub(crate) fn extract_gps_data(exif: &Option<exif::Exif>) -> FileGps {
         let Some(exif_data) = exif else {
             return (None, None, None);
         };
 
         let lat_val = exif_data
-            .get_field(Tag::GPSLatitude, In::PRIMARY)
-            .or_else(|| exif_data.fields().find(|f| f.tag == Tag::GPSLatitude))
+            .get_field(CaptureField::GPSLatitude.exif(), In::PRIMARY)
+            .or_else(|| exif_data.fields().find(|f| f.tag == CaptureField::GPSLatitude.exif()))
             .and_then(|f| Self::gps_rational_values(&f.value));
         let lat_ref = exif_data
-            .get_field(Tag::GPSLatitudeRef, In::PRIMARY)
-            .or_else(|| exif_data.fields().find(|f| f.tag == Tag::GPSLatitudeRef))
+            .get_field(CaptureField::GPSLatitudeRef.exif(), In::PRIMARY)
+            .or_else(|| exif_data.fields().find(|f| f.tag == CaptureField::GPSLatitudeRef.exif()))
             .map(|f| f.display_value().to_string());
         let lon_val = exif_data
-            .get_field(Tag::GPSLongitude, In::PRIMARY)
-            .or_else(|| exif_data.fields().find(|f| f.tag == Tag::GPSLongitude))
+            .get_field(CaptureField::GPSLongitude.exif(), In::PRIMARY)
+            .or_else(|| exif_data.fields().find(|f| f.tag == CaptureField::GPSLongitude.exif()))
             .and_then(|f| Self::gps_rational_values(&f.value));
         let lon_ref = exif_data
-            .get_field(Tag::GPSLongitudeRef, In::PRIMARY)
-            .or_else(|| exif_data.fields().find(|f| f.tag == Tag::GPSLongitudeRef))
+            .get_field(CaptureField::GPSLongitudeRef.exif(), In::PRIMARY)
+            .or_else(|| exif_data.fields().find(|f| f.tag == CaptureField::GPSLongitudeRef.exif()))
             .map(|f| f.display_value().to_string());
 
         let (gps_lat, gps_lon) = if let (Some(lat_v), Some(lat_r), Some(lon_v), Some(lon_r)) =
@@ -2961,8 +2990,8 @@ impl AFile {
         };
 
         let altitude = exif_data
-            .get_field(Tag::GPSAltitude, In::PRIMARY)
-            .or_else(|| exif_data.fields().find(|f| f.tag == Tag::GPSAltitude))
+            .get_field(CaptureField::GPSAltitude.exif(), In::PRIMARY)
+            .or_else(|| exif_data.fields().find(|f| f.tag == CaptureField::GPSAltitude.exif()))
             .and_then(|field| {
                 Self::gps_rational_values(&field.value).and_then(|values| values.first().copied())
             });
@@ -3143,16 +3172,19 @@ impl AFile {
         let conn = open_conn()?;
         let result = conn.execute(
             "INSERT INTO afiles (
-                folder_id, 
-                name, name_pinyin, size, file_type, format_label, created_at, modified_at, inode,
-                taken_date,
-                width, height, duration,
+                folder_id,
+                name, name_pinyin, size, file_type, format_label, created_at, modified_at, inode, taken_date,
+                width, height, duration, icc_profile, color_space, bit_depth,
                 is_favorite, rating, rotate, comments, has_tags,
-                e_make, e_model, e_date_time, e_software, e_artist, e_copyright, e_description, e_lens_make, e_lens_model, e_exposure_bias, e_exposure_time, e_f_number, e_focal_length, e_iso_speed, e_flash, e_orientation,
-                gps_latitude, gps_longitude, gps_altitude, geo_name, geo_admin1, geo_admin2, geo_cc,
-                last_scan_time, content_identifier, media_subtype, motion_photo_offset, cloud_only, metadata_pending, icc_profile, color_space, bit_depth
+                e_make, e_model, e_lens_make, e_lens_model,
+                e_date_time, e_exposure_bias, e_exposure_time, e_f_number, e_focal_length, e_iso_speed, e_flash, e_orientation,
+                e_title, e_headline, e_description, e_artist, e_copyright,
+                e_software,
+                gps_latitude, gps_longitude, gps_altitude,
+                geo_name, geo_admin1, geo_admin2, geo_cc,
+                last_scan_time, content_identifier, media_subtype, motion_photo_offset, cloud_only, metadata_pending
             )
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27, ?28, ?29, ?30, ?31, ?32, ?33, ?34, ?35, ?36, ?37, ?38, ?39, ?40, ?41, ?42, ?43, ?44, ?45, ?46, ?47, ?48, ?49, ?50)
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27, ?28, ?29, ?30, ?31, ?32, ?33, ?34, ?35, ?36, ?37, ?38, ?39, ?40, ?41, ?42, ?43, ?44, ?45, ?46, ?47, ?48, ?49, ?50, ?51, ?52)
             ON CONFLICT(folder_id, name) DO NOTHING",
             params![
                 self.folder_id,
@@ -3165,12 +3197,14 @@ impl AFile {
                 self.created_at,
                 self.modified_at,
                 self.inode,
-
                 self.taken_date,
 
                 self.width,
                 self.height,
                 self.duration,
+                self.icc_profile,
+                self.color_space,
+                self.bit_depth,
 
                 self.is_favorite,
                 self.rating,
@@ -3180,13 +3214,10 @@ impl AFile {
 
                 self.e_make,
                 self.e_model,
-                self.e_date_time,
-                self.e_software,
-                self.e_artist,
-                self.e_copyright,
-                self.e_description,
                 self.e_lens_make,
                 self.e_lens_model,
+
+                self.e_date_time,
                 self.e_exposure_bias,
                 self.e_exposure_time,
                 self.e_f_number,
@@ -3195,41 +3226,58 @@ impl AFile {
                 self.e_flash,
                 self.e_orientation,
 
+                self.e_title,
+                self.e_headline,
+                self.e_description,
+                self.e_artist,
+                self.e_copyright,
+
+                self.e_software,
+
                 self.gps_latitude,
                 self.gps_longitude,
                 self.gps_altitude,
+
                 self.geo_name,
                 self.geo_admin1,
                 self.geo_admin2,
                 self.geo_cc,
+
                 self.last_scan_time,
                 self.content_identifier,
                 self.media_subtype,
                 self.motion_photo_offset,
                 self.cloud_only,
                 self.metadata_pending,
-                self.icc_profile,
-                self.color_space,
-                self.bit_depth,
             ]
         ).map_err(|e| e.to_string())?;
         Ok(result)
     }
 
     /// update a file into db
-    pub fn update(file_id: i64, file: &Self) -> Result<usize, String> {
-        let conn = open_conn()?;
-        let result = conn.execute(
+    fn update(file_id: i64, file: &Self, import_xmp: bool) -> Result<usize, String> {
+        let mut conn = open_conn()?;
+        let tx = conn.transaction().map_err(|e| e.to_string())?;
+        let result = tx.execute(
             "UPDATE afiles SET
                 name = ?1, name_pinyin = ?2, size = ?3, file_type = ?4, format_label = ?5, created_at = ?6, modified_at = ?7, inode = ?8,
-                taken_date = ?9,
-                width = ?10, height = ?11, duration = ?12,
-                rating = ?13,
-                e_make = ?14, e_model = ?15, e_date_time = ?16, e_software = ?17, e_artist = ?18, e_copyright = ?19, e_description = ?20, e_lens_make = ?21, e_lens_model = ?22, e_exposure_bias = ?23, e_exposure_time = ?24, e_f_number = ?25, e_focal_length = ?26, e_iso_speed = ?27, e_flash = ?28, e_orientation = ?29,
-                gps_latitude = ?30, gps_longitude = ?31, gps_altitude = ?32, geo_name = ?33, geo_admin1 = ?34, geo_admin2 = ?35, geo_cc = ?36,
-                last_scan_time = ?37, content_identifier = ?38, media_subtype = ?39, motion_photo_offset = ?40,
-                icc_profile = ?41, color_space = ?42, bit_depth = ?43, metadata_pending = 0
-            WHERE id = ?44",
+                taken_date = CASE WHEN ?47 THEN taken_date ELSE ?9 END,
+                width = ?10, height = ?11, duration = ?12, icc_profile = ?13, color_space = ?14, bit_depth = ?15,
+                rating = ?16,
+                e_make = ?17, e_model = ?18, e_lens_make = ?19, e_lens_model = ?20,
+                e_date_time = CASE WHEN ?47 THEN e_date_time ELSE ?21 END,
+                e_exposure_bias = ?22, e_exposure_time = ?23, e_f_number = ?24, e_focal_length = ?25, e_iso_speed = ?26, e_flash = ?27, e_orientation = ?28,
+                e_title = ?29, e_headline = ?30, e_description = ?31, e_artist = ?32, e_copyright = ?33,
+                e_software = ?34,
+                gps_latitude = CASE WHEN ?47 THEN gps_latitude ELSE ?35 END,
+                gps_longitude = CASE WHEN ?47 THEN gps_longitude ELSE ?36 END,
+                gps_altitude = CASE WHEN ?47 THEN gps_altitude ELSE ?37 END,
+                geo_name = CASE WHEN ?47 THEN geo_name ELSE ?38 END,
+                geo_admin1 = CASE WHEN ?47 THEN geo_admin1 ELSE ?39 END,
+                geo_admin2 = CASE WHEN ?47 THEN geo_admin2 ELSE ?40 END,
+                geo_cc = CASE WHEN ?47 THEN geo_cc ELSE ?41 END,
+                last_scan_time = ?42, content_identifier = ?43, media_subtype = ?44, motion_photo_offset = ?45, metadata_pending = 0
+            WHERE id = ?46",
             params![
                 file.name,
                 file.name_pinyin,
@@ -3239,23 +3287,23 @@ impl AFile {
                 file.created_at,
                 file.modified_at,
                 file.inode,
-
                 file.taken_date,
 
                 file.width,
                 file.height,
                 file.duration,
+                file.icc_profile,
+                file.color_space,
+                file.bit_depth,
 
                 file.rating,
+
                 file.e_make,
                 file.e_model,
-                file.e_date_time,
-                file.e_software,
-                file.e_artist,
-                file.e_copyright,
-                file.e_description,
                 file.e_lens_make,
                 file.e_lens_model,
+
+                file.e_date_time,
                 file.e_exposure_bias,
                 file.e_exposure_time,
                 file.e_f_number,
@@ -3264,23 +3312,36 @@ impl AFile {
                 file.e_flash,
                 file.e_orientation,
 
+                file.e_title,
+                file.e_headline,
+                file.e_description,
+                file.e_artist,
+                file.e_copyright,
+
+                file.e_software,
+
                 file.gps_latitude,
                 file.gps_longitude,
                 file.gps_altitude,
+
                 file.geo_name,
                 file.geo_admin1,
                 file.geo_admin2,
                 file.geo_cc,
+
                 file.last_scan_time,
                 file.content_identifier,
                 file.media_subtype,
                 file.motion_photo_offset,
-                file.icc_profile,
-                file.color_space,
-                file.bit_depth,
                 file_id,
+                import_xmp,
             ]
         ).map_err(|e| e.to_string())?;
+        if !import_xmp {
+            tx.execute("UPDATE axmp_imports SET fingerprint=NULL WHERE file_id=?1 AND fingerprint IS NOT NULL", [file_id])
+                .map_err(|e| e.to_string())?;
+        }
+        tx.commit().map_err(|e| e.to_string())?;
         Ok(result)
     }
 
@@ -3410,26 +3471,39 @@ impl AFile {
     }
 
     fn live_photo_companion_exclusion_condition() -> String {
+        Self::companion_exclusion_condition(false)
+    }
+
+    fn companion_exclusion_condition(include_raw_companions: bool) -> String {
+        let subtype_filter = if include_raw_companions {
+            "AND primary_file.media_subtype IS NOT 'raw_jpeg_pair'"
+        } else {
+            ""
+        };
         format!("a.id NOT IN (SELECT primary_file.live_photo_video_id FROM afiles primary_file
-            WHERE primary_file.live_photo_video_id IS NOT NULL AND {})", Self::album_scan_predicate("primary_file"))
+            WHERE primary_file.live_photo_video_id IS NOT NULL {subtype_filter} AND {})",
+            Self::album_scan_predicate("primary_file"))
     }
 
     // build the base SQL query
     fn build_base_query() -> String {
         format!(
-            "SELECT a.id, a.folder_id, 
-                a.name, a.name_pinyin, a.size, a.file_type, a.format_label, a.created_at, a.modified_at, a.inode,
-                a.taken_date,
-                a.width, a.height, a.duration,
-                a.is_favorite, a.rating, a.culling_flag, a.rotate, a.comments, a.has_tags,
-                a.e_make, a.e_model, a.e_date_time, a.e_software, a.e_artist, a.e_copyright, a.e_description, a.e_lens_make, a.e_lens_model, a.e_exposure_bias, a.e_exposure_time, a.e_f_number, a.e_focal_length, a.e_iso_speed, a.e_flash, a.e_orientation,
-                a.gps_latitude, a.gps_longitude, a.gps_altitude, a.geo_name, a.geo_admin1, a.geo_admin2, a.geo_cc,
+            "SELECT a.id, a.folder_id,
+                a.name, a.name_pinyin, a.size, a.file_type, a.format_label, a.created_at, a.modified_at, a.inode, a.taken_date,
+                a.width, a.height, a.duration, a.icc_profile, a.color_space, a.bit_depth,
+                a.is_favorite, a.rating, a.culling_flag, a.rotate, a.comments, a.has_tags, a.has_faces,
+                a.e_make, a.e_model, a.e_lens_make, a.e_lens_model,
+                a.e_date_time, a.e_exposure_bias, a.e_exposure_time, a.e_f_number, a.e_focal_length, a.e_iso_speed, a.e_flash, a.e_orientation,
+                a.e_title, a.e_headline, a.e_description, a.e_artist, a.e_copyright,
+                a.e_software,
+                a.gps_latitude, a.gps_longitude, a.gps_altitude,
+                a.geo_name, a.geo_admin1, a.geo_admin2, a.geo_cc,
                 b.path,
-                c.id AS album_id, c.name AS album_name,
+                c.id AS album_id,
+                c.name AS album_name,
                 (SELECT 1 FROM athumbs t WHERE t.file_id = a.id LIMIT 1) AS has_thumbnail,
                 (SELECT 1 FROM acollections_files cf WHERE cf.file_id = a.id LIMIT 1) AS has_collections,
                 CASE WHEN a.embeds IS NOT NULL THEN 1 ELSE 0 END AS has_embedding,
-                a.has_faces,
                 a.last_scan_time,
                 a.content_identifier,
                 a.media_subtype,
@@ -3439,11 +3513,10 @@ impl AFile {
                     THEN lpf.path || '/' || lpv.name
                     ELSE NULL
                 END AS live_photo_video_path,
-                a.motion_photo_offset,
                 {} AS album_visible,
+                a.motion_photo_offset,
                 a.cloud_only,
-                a.metadata_pending,
-                a.icc_profile, a.color_space, a.bit_depth
+                a.metadata_pending
             FROM afiles a
             LEFT JOIN afolders b ON a.folder_id = b.id
             LEFT JOIN albums c ON b.album_id = c.id
@@ -3467,29 +3540,29 @@ impl AFile {
             created_at: row.get(7)?,
             modified_at: row.get(8)?,
             inode: row.get(9)?,
-
             taken_date: row.get(10)?,
 
             width: row.get(11)?,
             height: row.get(12)?,
             duration: row.get(13)?,
+            icc_profile: row.get(14)?,
+            color_space: row.get(15)?,
+            bit_depth: row.get(16)?,
 
-            is_favorite: row.get(14)?,
-            rating: row.get(15)?,
-            culling_flag: row.get(16)?,
-            rotate: row.get(17)?,
-            comments: row.get(18)?,
-            has_tags: row.get(19)?,
+            is_favorite: row.get(17)?,
+            rating: row.get(18)?,
+            culling_flag: row.get(19)?,
+            rotate: row.get(20)?,
+            comments: row.get(21)?,
+            has_tags: row.get(22)?,
+            has_faces: row.get::<_, Option<i32>>(23)?,
 
-            e_make: row.get(20)?,
-            e_model: row.get(21)?,
-            e_date_time: row.get(22)?,
-            e_software: row.get(23)?,
-            e_artist: row.get(24)?,
-            e_copyright: row.get(25)?,
-            e_description: row.get(26)?,
-            e_lens_make: row.get(27)?,
-            e_lens_model: row.get(28)?,
+            e_make: row.get(24)?,
+            e_model: row.get(25)?,
+            e_lens_make: row.get(26)?,
+            e_lens_model: row.get(27)?,
+
+            e_date_time: row.get(28)?,
             e_exposure_bias: row.get(29)?,
             e_exposure_time: row.get(30)?,
             e_f_number: row.get(31)?,
@@ -3498,37 +3571,42 @@ impl AFile {
             e_flash: row.get(34)?,
             e_orientation: row.get(35)?,
 
-            gps_latitude: row.get(36)?,
-            gps_longitude: row.get(37)?,
-            gps_altitude: row.get(38)?,
-            geo_name: row.get(39)?,
-            geo_admin1: row.get(40)?,
-            geo_admin2: row.get(41)?,
-            geo_cc: row.get(42)?,
+            e_title: row.get(36)?,
+            e_headline: row.get(37)?,
+            e_description: row.get(38)?,
+            e_artist: row.get(39)?,
+            e_copyright: row.get(40)?,
+
+            e_software: row.get(41)?,
+
+            gps_latitude: row.get(42)?,
+            gps_longitude: row.get(43)?,
+            gps_altitude: row.get(44)?,
+
+            geo_name: row.get(45)?,
+            geo_admin1: row.get(46)?,
+            geo_admin2: row.get(47)?,
+            geo_cc: row.get(48)?,
 
             file_path: Some(t_utils::get_file_path(
-                row.get::<_, String>(43)?.as_str(),
+                row.get::<_, String>(49)?.as_str(),
                 row.get::<_, String>(2)?.as_str(),
             )),
-            album_id: row.get(44)?,
-            album_name: row.get(45)?,
-            has_thumbnail: row.get::<_, Option<i64>>(46)?.map(|v| v == 1),
-            has_collections: row.get::<_, Option<i64>>(47)?.map(|v| v == 1),
-            has_embedding: row.get::<_, Option<i64>>(48)?.map(|v| v == 1),
-            has_faces: row.get::<_, Option<i32>>(49)?,
-            last_scan_time: row.get(50)?,
-            content_identifier: row.get(51)?,
-            media_subtype: row.get(52)?,
-            live_photo_video_id: row.get(53)?,
-            live_photo_video_path: row.get(54)?,
-            motion_photo_offset: row.get(55)?,
-            album_accessible: row.get::<_, Option<i64>>(44)?.is_none_or(t_utils::album_accessible),
-            album_visible: row.get(56)?,
-            cloud_only: row.get(57)?,
-            metadata_pending: row.get(58)?,
-            icc_profile: row.get(59)?,
-            color_space: row.get(60)?,
-            bit_depth: row.get(61)?,
+            album_id: row.get(50)?,
+            album_name: row.get(51)?,
+            has_thumbnail: row.get::<_, Option<i64>>(52)?.map(|v| v == 1),
+            has_collections: row.get::<_, Option<i64>>(53)?.map(|v| v == 1),
+            has_embedding: row.get::<_, Option<i64>>(54)?.map(|v| v == 1),
+            last_scan_time: row.get(55)?,
+            content_identifier: row.get(56)?,
+            media_subtype: row.get(57)?,
+            live_photo_video_id: row.get(58)?,
+            live_photo_video_path: row.get(59)?,
+            album_accessible: row.get::<_, Option<i64>>(50)?.is_none_or(t_utils::album_accessible),
+            album_visible: row.get(60)?,
+            motion_photo_offset: row.get(61)?,
+            cloud_only: row.get(62)?,
+            metadata_pending: row.get(63)?,
         })
     }
 
@@ -3832,6 +3910,15 @@ impl AFile {
         .map_err(|e| e.to_string())
     }
 
+    // Browser filters support All, Images (including RAW), RAW only and Videos.
+    // Other historical selections are treated as All without rewriting settings.
+    fn build_browser_file_type_condition(mask: i64) -> Option<String> {
+        match mask {
+            2 | 4 | 5 => Self::build_file_type_condition(mask),
+            _ => None,
+        }
+    }
+
     fn build_file_type_condition(mask: i64) -> Option<String> {
         if mask <= 0 {
             return None;
@@ -3966,7 +4053,7 @@ impl AFile {
         folder_id: i64, file_path: &str, file_type: i64, last_scan_time: i64,
         raw_info: Option<t_libraw::RawInfo>,
     ) -> Result<(Self, i32), String> {
-        let _xmp_scan = crate::t_xmp::sidecar_scan(last_scan_time);
+        let _xmp_scan = crate::metadata::xmp::sidecar_scan(last_scan_time);
         // Check if the file exists
         let existing_file = Self::fetch(folder_id, file_path)?;
         // Opening an online-only file downloads it: decide from its attributes first.
@@ -4090,13 +4177,13 @@ impl AFile {
                     {
                         if let Some(comment) = t_ai_png::extract_comment(file_path) {
                             if let Ok(conn) = open_conn() {
-                                if let Ok(true) = crate::t_xmp::import_scanned_description(file_id, comment, &conn) {
+                                if let Ok(true) = crate::metadata::xmp::import_scanned_description(file_id, comment, &conn) {
                                     if let Ok(Some(refreshed)) = Self::get_file_info(file_id) { file = refreshed; }
                                 }
                             }
                         }
                     }
-                    if Self::import_scanned_xmp(file_id, file_path, crate::t_xmp::XmpImportMode::RescanNonDestructive)? {
+                    if Self::import_scanned_xmp(file_id, file_path, crate::metadata::xmp::XmpImportMode::RescanNonDestructive, None)? {
                         if let Some(refreshed) = Self::get_file_info(file_id)? { file = refreshed; }
                     }
                 }
@@ -4120,7 +4207,10 @@ impl AFile {
         let new_file = Self::fetch(folder_id, file_path)?;
         if let Some(ref file) = new_file {
             if let Some(file_id) = file.id {
-                if Self::import_scanned_xmp(file_id, file_path, crate::t_xmp::XmpImportMode::InitialScan)? {
+                if Self::import_scanned_xmp(
+                    file_id, file_path, crate::metadata::xmp::XmpImportMode::InitialScan,
+                    Some(new_file_struct.e_software.as_deref()),
+                )? {
                     if let Some(refreshed) = Self::fetch(folder_id, file_path)? {
                         return Ok((refreshed, 1));
                     }
@@ -4178,10 +4268,15 @@ impl AFile {
         Ok(files)
     }
 
-    fn import_scanned_xmp(file_id: i64, file_path: &str, mode: crate::t_xmp::XmpImportMode) -> Result<bool, String> {
-        if !crate::t_xmp::is_xmp_import_enabled() { return Ok(false); }
+    fn import_scanned_xmp(
+        file_id: i64,
+        file_path: &str,
+        mode: crate::metadata::xmp::XmpImportMode,
+        extracted_software: Option<Option<&str>>,
+    ) -> Result<bool, String> {
+        if !crate::metadata::xmp::is_xmp_import_enabled() { return Ok(false); }
         let conn = open_conn()?;
-        match crate::t_xmp::import_xmp_for_file_with_conn(file_id, file_path, &conn, mode) {
+        match crate::metadata::xmp::import_with_system(file_id, file_path, &conn, mode, None, extracted_software, None) {
             Ok(changed) => Ok(changed),
             Err(error) => {
                 conn.execute("UPDATE afiles SET metadata_pending=1 WHERE id=?1", params![file_id])
@@ -4215,7 +4310,7 @@ impl AFile {
         let info = fs::metadata(path).map_err(|e| e.to_string())?;
         let skipped = !force_download && t_utils::is_cloud_only(&info);
         let checked = chrono::Utc::now().timestamp_millis();
-        let _scan = crate::t_xmp::sidecar_scan(checked);
+        let _scan = crate::metadata::xmp::sidecar_scan(checked);
         let version = metadata_failure_version(path);
         let failure_key = refresh_failure_key("metadata", file_id);
         if !force_metadata && old.metadata_pending {
@@ -4257,8 +4352,9 @@ impl AFile {
                 warning,
             });
         }
-        let import_needed =
-            crate::t_xmp::is_xmp_import_enabled() && old.metadata_needs_refresh()?;
+        let mut system_metadata = None;
+        let import_needed = crate::metadata::xmp::is_xmp_import_enabled()
+            && old.metadata_needs_refresh(&mut system_metadata)?;
         let source_changed = old.size != info.len() as i64
             || old.modified_at != t_utils::systemtime_to_timestamp(info.modified().ok());
         if !import_needed && (!skipped || !source_changed) {
@@ -4270,11 +4366,17 @@ impl AFile {
             });
         }
         let warning = if import_needed {
-            crate::t_xmp::import_xmp_for_file_with_mode(
-                file_id,
-                path,
-                crate::t_xmp::XmpImportMode::RefreshNonDestructive,
-            )
+            open_conn().and_then(|conn| {
+                crate::metadata::xmp::import_with_system(
+                    file_id,
+                    path,
+                    &conn,
+                    crate::metadata::xmp::XmpImportMode::RefreshNonDestructive,
+                    system_metadata,
+                    None,
+                    None,
+                )
+            })
             .err()
             .map(|e| format!("XMP import failed: {e}"))
         } else {
@@ -4311,8 +4413,12 @@ impl AFile {
             || self.modified_at != t_utils::systemtime_to_timestamp(info.modified().ok())
     }
 
-    /// Check timestamps and size without reading metadata or downloading originals.
-    pub(crate) fn metadata_needs_refresh(&self) -> Result<bool, String> {
+    /// Check source versions without parsing media or downloading originals.
+    /// Retain any system-attribute read for the import in this refresh request.
+    fn metadata_needs_refresh(
+        &self,
+        system_metadata: &mut Option<crate::metadata::system::SystemMetadata>,
+    ) -> Result<bool, String> {
         let old = self;
         let path = old.file_path.as_deref().ok_or("File path missing")?;
         let info = std::fs::metadata(path).map_err(|e| e.to_string())?;
@@ -4327,15 +4433,32 @@ impl AFile {
         {
             return Ok(true);
         }
-        if crate::t_xmp::is_xmp_import_enabled()
-            && let Some(sidecar) = crate::t_xmp::find_xmp_sidecar(Path::new(path))
-        {
+        let sidecar = crate::metadata::xmp::find_xmp_sidecar(Path::new(path));
+        if let Some(sidecar) = &sidecar {
             let modified = std::fs::metadata(sidecar)
                 .and_then(|info| info.modified())
                 .map_err(|e| e.to_string())?;
-            return Ok(
-                chrono::DateTime::<chrono::Utc>::from(modified).timestamp_millis() > scanned,
-            );
+            if chrono::DateTime::<chrono::Utc>::from(modified).timestamp_millis() > scanned {
+                return Ok(true);
+            }
+        }
+        if crate::metadata::xmp::is_xmp_import_enabled() && !t_utils::is_cloud_only(&info) {
+            let snapshot =
+                system_metadata.insert(crate::metadata::system::read_system(Path::new(path)));
+            let previous: Option<String> = open_conn()?
+                .query_row(
+                    "SELECT fingerprint FROM axmp_imports WHERE file_id=?1",
+                    [old.id],
+                    |row| row.get(0),
+                )
+                .optional()
+                .map_err(|error| error.to_string())?
+                .flatten();
+            return Ok(previous.is_none_or(|value| {
+                !value.starts_with(crate::metadata::schema::IMPORT_PREFIX)
+                    || !value.ends_with(&format!(":{}", snapshot.fingerprint))
+                    || (sidecar.is_none() && crate::metadata::xmp::fingerprint_has_capture_override(&value))
+            }));
         }
         Ok(false)
     }
@@ -4357,7 +4480,7 @@ impl AFile {
         file_path: &str,
         last_scan_time: i64,
     ) -> Result<(Option<Self>, Option<String>), String> {
-        let _xmp_scan = crate::t_xmp::sidecar_scan(last_scan_time);
+        let _xmp_scan = crate::metadata::xmp::sidecar_scan(last_scan_time);
         // get old file info
         let old_file_info =
             Self::get_file_info(file_id)?.ok_or_else(|| "File not found".to_string())?;
@@ -4400,17 +4523,35 @@ impl AFile {
         }
         new_file_info.last_scan_time = Some(last_scan_time);
 
+        // Source text is replaced atomically by the importer. Keep the last
+        // successful values if the sidecar cannot be imported after extraction.
+        let import_xmp = crate::metadata::xmp::is_xmp_import_enabled();
+        let mut extracted_software = None;
+        if import_xmp {
+            new_file_info.e_title = old_file_info.e_title.clone();
+            new_file_info.e_headline = old_file_info.e_headline.clone();
+            new_file_info.e_artist = old_file_info.e_artist.clone();
+            new_file_info.e_copyright = old_file_info.e_copyright.clone();
+            extracted_software = std::mem::replace(&mut new_file_info.e_software, old_file_info.e_software.clone());
+        }
+
         // update the file info
-        Self::update(file_id, &new_file_info)?;
+        Self::update(file_id, &new_file_info, import_xmp)?;
         Self::update_column(file_id, "cloud_only", &false)?;
 
         let mut import_error = None;
-        if crate::t_xmp::is_xmp_import_enabled() {
-            if let Err(error) = crate::t_xmp::import_xmp_for_file_with_mode(
-                file_id,
-                file_path,
-                crate::t_xmp::XmpImportMode::RefreshNonDestructive,
-            ) {
+        if import_xmp {
+            if let Err(error) = open_conn().and_then(|conn| {
+                crate::metadata::xmp::import_with_system(
+                    file_id,
+                    file_path,
+                    &conn,
+                    crate::metadata::xmp::XmpImportMode::RefreshNonDestructive,
+                    None,
+                    Some(extracted_software.as_deref()),
+                    Some(&new_file_info),
+                )
+            }) {
                 // Keep successful metadata, but make the failed import retryable.
                 Self::update_column(file_id, "metadata_pending", &true)?;
                 let message = format!("XMP import failed: {error}");
@@ -4885,7 +5026,7 @@ impl AFile {
             if !t_utils::content_readable(&file_path) {
                 continue;
             }
-            let identifier = crate::t_apple_sidecar::scan_apple_content_identifiers(&file_path)
+            let identifier = crate::metadata::apple_sidecar::scan_apple_content_identifiers(&file_path)
                 .into_iter()
                 .map(|identifier| identifier.to_ascii_lowercase())
                 .find(|identifier| video_identifiers.contains(identifier))
@@ -5203,18 +5344,28 @@ impl AFile {
     // Returns (joins_clause, where_clause, params)
     fn build_search_query_parts(params: &QueryParams) -> (String, String, Vec<Box<dyn ToSql>>) {
         let mut joins = Vec::new();
-        let mut conditions: Vec<String> =
-            vec![Self::live_photo_companion_exclusion_condition().to_string()];
+        let mut conditions = vec![Self::companion_exclusion_condition(params.include_raw_companions)];
         let mut sql_params: Vec<Box<dyn ToSql>> = Vec::new();
 
         if !params.search_file_name.is_empty() {
-            conditions.push("(a.name LIKE ? COLLATE NOCASE OR a.comments LIKE ? COLLATE NOCASE)".to_string());
+            let columns = [
+                "a.name",
+                "a.comments",
+                "a.e_title",
+                "a.e_headline",
+                "a.e_artist",
+                "a.e_copyright",
+                "a.e_software",
+            ];
+            let matches = columns.map(|column| format!("{column} LIKE ? COLLATE NOCASE"));
+            conditions.push(format!("({})", matches.join(" OR ")));
             let pattern = format!("%{}%", params.search_file_name);
-            sql_params.push(Box::new(pattern.clone()));
-            sql_params.push(Box::new(pattern));
+            for _ in columns {
+                sql_params.push(Box::new(pattern.clone()));
+            }
         }
 
-        if let Some(condition) = Self::build_file_type_condition(params.search_file_type) {
+        if let Some(condition) = Self::build_browser_file_type_condition(params.search_file_type) {
             conditions.push(condition);
         }
 
@@ -5916,6 +6067,15 @@ impl AFile {
         value: &JsonValue,
         sql_params: &mut Vec<Box<dyn ToSql>>,
     ) -> Result<String, String> {
+        // An empty string is a complete rule: contains matches everything,
+        // not_contains matches nothing. Only null or non-string values are errors.
+        if value.as_str().map(str::trim).is_some_and(str::is_empty) {
+            return Ok(match operator {
+                "contains" | "has" => "1 = 1".to_string(),
+                "not_contains" | "not_has" => "1 = 0".to_string(),
+                _ => return Err(format!("Unsupported name operator: {}", operator)),
+            });
+        }
         let name =
             Self::smart_rule_string(value).ok_or_else(|| "Name value required".to_string())?;
         let name = name.replace('\\', "\\\\").replace('%', "\\%").replace('_', "\\_");
@@ -6403,6 +6563,9 @@ impl AFile {
             )?);
         }
 
+        if let Some(condition) = Self::build_browser_file_type_condition(params.file_type) {
+            conditions.push(condition);
+        }
         if params.favorites_only {
             conditions.push("a.is_favorite = 1".to_string());
         }
@@ -7157,7 +7320,7 @@ impl AFile {
 
         query.push_str(&Self::album_filter_sql("a"));
 
-        if let Some(ft_condition) = Self::build_file_type_condition(params.file_type) {
+        if let Some(ft_condition) = Self::build_browser_file_type_condition(params.file_type) {
             query.push_str(" AND ");
             query.push_str(&ft_condition);
         }
@@ -7243,7 +7406,7 @@ impl AFile {
 pub struct AThumb {
     pub id: Option<i64>, // unique id (autoincrement by db)
     pub file_id: i64,    // file id (from files table)
-    pub error_code: i64, // error code (0: success, 1: error, 2: use original)
+    pub error_code: i64, // error code (0: success, 1: error, 2: legacy uncached image)
 
     #[serde(skip)]
     pub thumb_data: Option<Vec<u8>>, // thumbnail data (store into db as BLOB)
@@ -7269,50 +7432,41 @@ pub struct ThumbnailCacheCleanupResult {
 }
 
 impl AThumb {
-    const CACHE_EXTENSIONS: [&'static str; 2] = ["png", "jpg"];
+    const CACHE_EXTENSIONS: [&'static str; 6] = ["jpg", "png", "gif", "webp", "bmp", "avif"];
     // Cache files are written before their database row is updated. Keep recent
     // unreferenced files so maintenance cannot race thumbnail generation.
     const CLEANUP_MIN_FILE_AGE: Duration = Duration::from_secs(5 * 60);
 
-    fn should_use_original_image(file_id: i64, file_type: i64, thumbnail_size: u32) -> bool {
-        if file_type != 1 || thumbnail_size == 0 {
-            return false;
+    fn cache_extension(data: &[u8]) -> Option<&'static str> {
+        match crate::t_protocol::detect_image_mime(data) {
+            "image/jpeg" if data.ends_with(&[0xFF, 0xD9]) => Some("jpg"),
+            "image/png" => Some("png"),
+            "image/gif" => Some("gif"),
+            "image/webp" => Some("webp"),
+            "image/bmp" => Some("bmp"),
+            "image/avif" if !cfg!(target_os = "linux") => Some("avif"),
+            _ => None,
         }
-
-        AFile::get_file_info(file_id)
-            .ok()
-            .flatten()
-            .map(|file| {
-                #[cfg(target_os = "linux")]
-                if file
-                    .file_path
-                    .as_deref()
-                    .is_some_and(|path| path.to_ascii_lowercase().ends_with(".avif"))
-                {
-                    return false;
-                }
-
-                if file
-                    .file_path
-                    .as_deref()
-                    .is_some_and(t_image::is_ffmpeg_backed_image_path)
-                {
-                    return false;
-                }
-
-                let width = file.width.unwrap_or(0).max(0) as u32;
-                let height = file.height.unwrap_or(0).max(0) as u32;
-                width > 0 && height > 0 && width <= thumbnail_size && height <= thumbnail_size
-            })
-            .unwrap_or(false)
     }
 
-    fn is_png_bytes(data: &[u8]) -> bool {
-        data.starts_with(&[0x89, 0x50, 0x4E, 0x47])
-    }
-
-    fn is_complete_jpeg(data: &[u8]) -> bool {
-        data.starts_with(&[0xFF, 0xD8, 0xFF]) && data.ends_with(&[0xFF, 0xD9])
+    fn small_original_thumbnail(file_path: &str, orientation: i32, thumbnail_size: u32) -> Option<Vec<u8>> {
+        // Backend consumers expect cached pixels to have the source orientation applied.
+        if matches!(orientation, 2..=8) {
+            return None;
+        }
+        // Avoid reading unsupported originals twice before decoding them.
+        let extension = Path::new(file_path).extension()?.to_str()?.to_ascii_lowercase();
+        if !matches!(extension.as_str(), "jpg" | "jpeg" | "jpe" | "jfif" | "png" | "gif" | "webp" | "bmp" | "avif")
+            || (cfg!(target_os = "linux") && extension == "avif")
+        {
+            return None;
+        }
+        let (width, height) = t_image::get_image_dimensions(file_path).ok()?;
+        if !(1..=thumbnail_size).contains(&width) || !(1..=thumbnail_size).contains(&height) {
+            return None;
+        }
+        let data = fs::read(file_path).ok()?;
+        Self::cache_extension(&data).map(|_| data)
     }
 
     fn generation_lock_key(file_id: i64, _thumbnail_size: u32) -> String {
@@ -7452,23 +7606,17 @@ impl AThumb {
         preferred_extension: &str,
     ) -> Result<Option<Vec<u8>>, String> {
         let _cache_access = crate::t_cache_storage::access()?;
-        let extensions = if preferred_extension == "png" {
-            Self::CACHE_EXTENSIONS
-        } else {
-            ["jpg", "png"]
-        };
-        for extension in extensions {
+        for extension in std::iter::once(preferred_extension)
+            .chain(Self::CACHE_EXTENSIONS.into_iter().filter(|ext| *ext != preferred_extension))
+        {
             let path =
                 Self::get_thumb_cache_path_for_key(library_id, album_id, thumb_key, extension)?;
-            if !path.exists() {
-                continue;
-            }
-            let data = fs::read(path).map_err(|e| e.to_string())?;
-            if match extension {
-                "png" => Self::is_png_bytes(&data),
-                "jpg" => Self::is_complete_jpeg(&data),
-                _ => false,
-            } {
+            let data = match fs::read(path) {
+                Ok(data) => data,
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => continue,
+                Err(error) => return Err(error.to_string()),
+            };
+            if Self::cache_extension(&data) == Some(extension) {
                 return Ok(Some(data));
             }
         }
@@ -7482,13 +7630,7 @@ impl AThumb {
         data: &[u8],
     ) -> Result<PathBuf, String> {
         let _cache_access = crate::t_cache_storage::access()?;
-        let extension = if Self::is_png_bytes(data) {
-            "png"
-        } else if Self::is_complete_jpeg(data) {
-            "jpg"
-        } else {
-            return Err("Invalid thumbnail data".to_string());
-        };
+        let extension = Self::cache_extension(data).ok_or("Invalid thumbnail data")?;
         let path = Self::get_thumb_cache_path_for_key(library_id, album_id, thumb_key, extension)?;
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent).map_err(|e| e.to_string())?;
@@ -7514,6 +7656,9 @@ impl AThumb {
         #[cfg(not(windows))]
         let published = fs::rename(&temp_path, &path).map_err(|e| e.to_string());
         if let Err(error) = published { let _ = fs::remove_file(&temp_path); return Err(error); }
+        for other in Self::CACHE_EXTENSIONS.into_iter().filter(|other| *other != extension) {
+            let _ = fs::remove_file(path.with_extension(other));
+        }
         Ok(path)
     }
 
@@ -7534,7 +7679,7 @@ impl AThumb {
 
     /// Remove cache files no longer referenced by the target library's `athumbs`
     /// table. When `library_id` is None (or empty), falls back to the current
-    /// library. Only jpg/png files under that library's cache directory and
+    /// library. Only thumbnail files under that library's cache directory and
     /// older than `CLEANUP_MIN_FILE_AGE` are considered.
     pub fn clean_unused_cache(library_id: Option<&str>) -> Result<ThumbnailCacheCleanupResult, String> {
         // Resolve target library: explicit id (any library) or current (legacy behavior).
@@ -7586,7 +7731,8 @@ impl AThumb {
         };
         for entry in WalkDir::new(cache_root).into_iter().filter_map(|entry| entry.ok()) {
             if !entry.file_type().is_file()
-                || !matches!(entry.path().extension().and_then(|ext| ext.to_str()), Some("jpg" | "png"))
+                || !entry.path().extension().and_then(|ext| ext.to_str())
+                    .is_some_and(|ext| Self::CACHE_EXTENSIONS.contains(&ext))
             {
                 continue;
             }
@@ -7715,6 +7861,7 @@ impl AThumb {
         library_id: &str,
         known_duration: Option<u64>,
         seek_percent: Option<u8>,
+        force_jpeg: bool,
     ) -> Result<Option<Self>, String> {
         if !t_utils::content_readable(file_path) {
             return Self::fetch_for_library(file_id, library_id);
@@ -7724,7 +7871,7 @@ impl AThumb {
                 if let (Some(companion_id), Some(path)) = (companion.id, companion.file_path.as_deref()) {
                     if let Ok(Some(mut thumb)) = Self::new_for_library(
                         companion_id, path, 1, companion.e_orientation.unwrap_or(1) as i32,
-                        thumbnail_size, RawDisplayOptions::default(), library_id, None, None,
+                        thumbnail_size, RawDisplayOptions::default(), library_id, None, None, force_jpeg,
                     ) {
                         if thumb.error_code == 0 && thumb.thumb_data.is_some() {
                             thumb.file_id = file_id;
@@ -7740,7 +7887,12 @@ impl AThumb {
         let (thumb_data, error_code) = match file_type {
             1 => {
                 // image
-                if let Some(ext) = t_utils::get_file_extension(file_path) {
+                let original = (!force_jpeg)
+                    .then(|| Self::small_original_thumbnail(file_path, orientation, thumbnail_size))
+                    .flatten();
+                if let Some(data) = original {
+                    (Some(data), 0)
+                } else if let Some(ext) = t_utils::get_file_extension(file_path) {
                     match ext.to_lowercase().as_str() {
                         "heic" | "heif" | "hif" => {
                             // heic/heif/hif
@@ -7757,10 +7909,11 @@ impl AThumb {
                         }
                         _ => {
                             // other images
-                            match t_image::get_image_thumbnail(
+                            match t_image::get_image_thumbnail_with_encoding(
                                 file_path,
                                 orientation,
                                 thumbnail_size,
+                                force_jpeg,
                             ) {
                                 Ok(Some(data)) => (Some(data), 0),
                                 Ok(None) => (None, 1),
@@ -7887,6 +8040,8 @@ impl AThumb {
         thumb.thumb_data_base64 = thumb
             .thumb_data
             .as_ref()
+            // Other cache formats use the thumbnail protocol, which sends their MIME type.
+            .filter(|data| matches!(Self::cache_extension(data), Some("jpg" | "png")))
             .map(|data| general_purpose::STANDARD.encode(data));
         Ok(thumb)
     }
@@ -7980,9 +8135,6 @@ impl AThumb {
         library_id: &str,
         has_blob: bool,
     ) -> Result<bool, String> {
-        if self.error_code == 2 {
-            return Ok(true);
-        }
         if has_blob {
             return Ok(true);
         }
@@ -7990,16 +8142,7 @@ impl AThumb {
             return Ok(false);
         };
         let _access = crate::t_cache_storage::access()?;
-        let extensions = if file
-            .file_path
-            .as_deref()
-            .is_some_and(t_image::should_use_png_thumbnail)
-        {
-            ["png", "jpg"]
-        } else {
-            ["jpg", "png"]
-        };
-        for ext in extensions {
+        for ext in Self::CACHE_EXTENSIONS {
             let path = Self::get_thumb_cache_path_for_key(library_id, album, key, ext)?;
             if Self::cache_path_present(&path)? {
                 return Ok(true);
@@ -8044,14 +8187,11 @@ impl AThumb {
         let Some((thumb, has_blob)) = Self::fetch_record(id)? else {
             return Ok(true);
         };
-        if thumb.error_code == 1 {
+        if thumb.error_code != 0 {
             return Ok(true);
         }
         if thumb.is_stale(path) {
             return Ok(true);
-        }
-        if thumb.error_code == 2 {
-            return Ok(false);
         }
         if thumb.thumb_size != Some(size as i64) {
             return Ok(true);
@@ -8191,28 +8331,12 @@ impl AThumb {
         library_id: &str,
         known_duration: Option<u64>,
         seek_percent: Option<u8>,
-        require_cached_bytes: bool,
+        force_jpeg: bool,
     ) -> Result<Option<Self>, String> {
         // Reading an online-only original would download it; keep whatever is cached.
         if t_utils::is_cloud_only_path(file_path) {
             return Self::fetch_for_library(file_id, library_id);
         }
-        if !require_cached_bytes && Self::should_use_original_image(file_id, file_type, thumbnail_size) {
-            let athumb = Self {
-                id: None,
-                file_id,
-                error_code: 2,
-                thumb_data: None,
-                thumb_key: None,
-                thumb_mtime: Self::get_source_mtime(file_path),
-                thumb_size: Some(thumbnail_size as i64),
-                updated_at: Some(Self::now_ts()),
-                thumb_data_base64: None,
-            };
-            athumb.insert()?;
-            return Self::fetch_for_library(file_id, library_id);
-        }
-
         let source_version = Self::failure_version(file_id, file_path, thumbnail_size, orientation, prefer_embedded_raw_thumbnail);
         let mut athumb = match Self::new_for_library(
             file_id,
@@ -8224,6 +8348,7 @@ impl AThumb {
             library_id,
             known_duration,
             seek_percent,
+            force_jpeg,
         ) {
             Ok(Some(athumb)) => athumb,
             _ => Self {
@@ -8267,32 +8392,7 @@ impl AThumb {
         Self::fetch_for_library(file_id, library_id)
     }
 
-    fn create_cache_backed_thumb(
-        file_id: i64,
-        file_path: &str,
-        file_type: i64,
-        orientation: i32,
-        thumbnail_size: u32,
-        prefer_embedded_raw_thumbnail: RawDisplayOptions,
-        known_duration: Option<u64>,
-        seek_percent: Option<u8>,
-    ) -> Result<Option<Self>, String> {
-        let library_id = Self::get_current_library_id();
-        Self::create_cache_backed_thumb_for_library(
-            file_id,
-            file_path,
-            file_type,
-            orientation,
-            thumbnail_size,
-            prefer_embedded_raw_thumbnail,
-            &library_id,
-            known_duration,
-            seek_percent,
-            false,
-        )
-    }
-
-    /// Explicit download/index operation: always persist bytes, even for small images.
+    /// Persist a thumbnail after an explicit cloud download.
     pub fn cache_cloud_file_thumbnail(
         file_id: i64,
         file_path: &str,
@@ -8305,7 +8405,7 @@ impl AThumb {
         let _generation_guard = Self::acquire_generation_guard(file_id, thumbnail_size);
         Self::create_cache_backed_thumb_for_library(
             file_id, file_path, file_type, orientation, thumbnail_size, options,
-            &Self::get_current_library_id(), known_duration, None, true,
+            &Self::get_current_library_id(), known_duration, None, false,
         )
     }
 
@@ -8331,14 +8431,15 @@ impl AThumb {
         force_regenerate: bool,
         album_accessible: bool,
     ) -> Result<Option<Self>, String> {
+        // Legacy rows have no cache bytes. Let browsing refill them when the original is readable.
+        if thumbnail.error_code == 2 {
+            return Ok(None);
+        }
         if !album_accessible {
             return Ok(Some(thumbnail));
         }
         if t_utils::is_cloud_only_path(file_path) {
-            // A virtual thumbnail would read the online-only original.
-            return Ok(Some(if thumbnail.error_code == 2 {
-                Self { error_code: 1, ..thumbnail }
-            } else { thumbnail }));
+            return Ok(Some(thumbnail));
         }
         if force_regenerate {
             return Ok(if t_utils::content_readable(file_path) { None } else { Some(thumbnail) });
@@ -8389,6 +8490,7 @@ impl AThumb {
                         force_regenerate,
                         None,
                         seek_percent,
+                        false,
                     )?;
                     Ok((result, had_cache))
                 })
@@ -8433,6 +8535,7 @@ impl AThumb {
                     true,
                     file.duration.map(|d| d as u64),
                     None,
+                    false,
                 ) {
                     Ok(Some(thumb)) if thumb.error_code != 1 => {
                         refresh.file.has_thumbnail = Some(true);
@@ -8458,6 +8561,7 @@ impl AThumb {
         force_regenerate: bool,
         known_duration: Option<u64>,
         seek_percent: Option<u8>,
+        force_jpeg: bool,
     ) -> Result<Option<Self>, String> {
         let before = Self::fetch_record(file_id)?.and_then(|(t, _)| t.id);
         Self::with_generation_guard(file_id, thumbnail_size, || {
@@ -8473,6 +8577,7 @@ impl AThumb {
                 force_regenerate && before == current,
                 file.duration.map(|d| d as u64).or(known_duration),
                 seek_percent,
+                force_jpeg,
             )
         })
     }
@@ -8487,6 +8592,7 @@ impl AThumb {
         force: bool,
         duration: Option<u64>,
         seek: Option<u8>,
+        force_jpeg: bool,
     ) -> Result<Option<Self>, String> {
         let accessible = Self::get_file_album_id(file_id)?.is_none_or(t_utils::album_accessible);
         if !accessible || !t_utils::content_readable(file_path) {
@@ -8511,81 +8617,18 @@ impl AThumb {
                 return Ok(Some(thumb));
             }
         }
-        Self::create_cache_backed_thumb(
+        Self::create_cache_backed_thumb_for_library(
             file_id,
             file_path,
             file_type,
             orientation,
             thumbnail_size,
             options,
+            &Self::get_current_library_id(),
             duration,
             seek,
+            force_jpeg,
         )
-    }
-
-    /// fetch raw thumbnail bytes for protocol handler
-    pub fn fetch_raw_for_library(
-        file_id: i64,
-        library_id: &str,
-    ) -> Result<Option<Vec<u8>>, String> {
-        let thumb = Self::fetch_for_library(file_id, library_id)?;
-
-        // error_code 2: image is small enough to use the original file directly
-        if let Some(ref thumb) = thumb {
-            if thumb.error_code == 2 {
-                if let Ok(Some(file)) = AFile::get_file_info(file_id) {
-                    if let Some(ref file_path) = file.file_path {
-                        // A small image is shown from its original; an online-only one would download.
-                        if t_utils::content_readable(file_path)
-                            && let Ok(data) = std::fs::read(file_path)
-                        {
-                            return Ok(Some(data));
-                        }
-                    }
-                }
-            }
-        }
-
-        if let Some(thumb) = thumb.filter(|t| t.error_code == 0) {
-            if let Some(data) = thumb.thumb_data {
-                return Ok(Some(data));
-            }
-
-            let file = AFile::get_file_info(file_id)
-                .map_err(|e| e.to_string())?
-                .ok_or_else(|| format!("File not found for thumbnail: {}", file_id))?;
-            let file_path = file
-                .file_path
-                .ok_or_else(|| format!("File path not found for thumbnail: {}", file_id))?;
-            let file_type = file.file_type.unwrap_or(0);
-            let orientation = file.e_orientation.unwrap_or(1) as i32;
-            let thumbnail_size = thumb.thumb_size.unwrap_or(200).max(1) as u32;
-            let prefer_embedded_raw_thumbnail = thumb
-                .thumb_key
-                .as_deref()
-                .map(|key| RawDisplayOptions {
-                    mode: if key.starts_with('e') || key.starts_with('b') { crate::t_raw_display::RawPreviewMode::Embedded } else { crate::t_raw_display::RawPreviewMode::Rendered },
-                    auto_bright: key.starts_with('a') || key.starts_with('b'),
-                    prefer_pair: false,
-                })
-                .unwrap_or_default();
-
-            return Ok(Self::create_cache_backed_thumb_for_library(
-                file_id,
-                &file_path,
-                file_type,
-                orientation,
-                thumbnail_size,
-                prefer_embedded_raw_thumbnail,
-                library_id,
-                file.duration.map(|d| d as u64),
-                None,
-                true,
-            )?
-            .and_then(|thumb| thumb.thumb_data));
-        }
-
-        Ok(None)
     }
 
     /// delete a thumbnail from db
@@ -8615,7 +8658,7 @@ impl AThumb {
         conditions.push("a.folder_id = ?".to_string());
         params.push(&folder_id);
 
-        if let Some(condition) = AFile::build_file_type_condition(file_type) {
+        if let Some(condition) = AFile::build_browser_file_type_condition(file_type) {
             conditions.push(condition);
         }
 
@@ -10377,6 +10420,9 @@ fn create_db_internal() -> Result<(), String> {
             width INTEGER,
             height INTEGER,
             duration INTEGER,
+            icc_profile TEXT,
+            color_space TEXT,
+            bit_depth INTEGER,
             is_favorite INTEGER,
             rating INTEGER NOT NULL DEFAULT 0,
             culling_flag INTEGER NOT NULL DEFAULT 0,
@@ -10386,13 +10432,9 @@ fn create_db_internal() -> Result<(), String> {
             has_faces INTEGER DEFAULT 0,
             e_make TEXT,
             e_model TEXT,
-            e_date_time TEXT,
-            e_software TEXT,
-            e_artist TEXT,
-            e_copyright TEXT,
-            e_description TEXT,
             e_lens_make TEXT,
             e_lens_model TEXT,
+            e_date_time TEXT,
             e_exposure_bias TEXT,
             e_exposure_time TEXT,
             e_f_number TEXT,
@@ -10400,9 +10442,12 @@ fn create_db_internal() -> Result<(), String> {
             e_iso_speed TEXT,
             e_flash TEXT,
             e_orientation INTEGER,
-            icc_profile TEXT,
-            color_space TEXT,
-            bit_depth INTEGER,
+            e_title TEXT,
+            e_headline TEXT,
+            e_description TEXT,
+            e_artist TEXT,
+            e_copyright TEXT,
+            e_software TEXT,
             gps_latitude REAL,
             gps_longitude REAL,
             gps_altitude REAL,
@@ -10763,7 +10808,7 @@ fn create_db_internal() -> Result<(), String> {
 
     // Run schema migrations after base tables are ensured.
     crate::t_migration::check_and_migrate(&conn)?;
-    crate::t_xmp::initialize(&conn)?;
+    crate::metadata::xmp::initialize(&conn)?;
     conn.execute(
         "CREATE INDEX IF NOT EXISTS idx_afiles_content_identifier ON afiles(content_identifier)",
         [],
@@ -10809,6 +10854,17 @@ mod favorites_filter_tests {
         assert_eq!(params.rules.len(), 2);
         params.favorites_only = false;
         assert_eq!(ids(&params), vec![1, 2]);
+        conn.execute_batch("UPDATE afiles SET file_type=3 WHERE id=2;").unwrap();
+        for mode in ["any", "all"] {
+            params.r#match = mode.to_string();
+            params.file_type = 4;
+            assert_eq!(ids(&params), if mode == "any" { vec![2] } else { vec![] });
+            params.file_type = 2;
+            assert!(ids(&params).is_empty());
+            params.file_type = 0;
+            assert_eq!(ids(&params), if mode == "any" { vec![1, 2] } else { vec![] });
+        }
+        assert_eq!(params.rules.len(), 2);
     }
 }
 
@@ -10876,6 +10932,20 @@ mod tag_tree_query_tests {
 mod album_filter_tests {
     use super::*;
 
+    #[test]
+    fn browser_file_types_preserve_smart_album_masks() {
+        for mask in [0, 1, 3, 6, 7, -1, 8] {
+            assert_eq!(AFile::build_browser_file_type_condition(mask), None);
+        }
+        for mask in [2, 4, 5] {
+            assert_eq!(AFile::build_browser_file_type_condition(mask), AFile::build_file_type_condition(mask));
+            assert!(AFile::build_browser_file_type_condition(mask).is_some());
+        }
+        assert_eq!(AFile::build_file_type_condition(1).as_deref(), Some("(a.file_type = 1)"));
+        assert_eq!(AFile::build_file_type_condition(3).as_deref(), Some("(a.file_type = 1 OR a.file_type = 2)"));
+    }
+
+
     fn fixture() -> Connection {
         let conn = Connection::open_in_memory().unwrap();
         conn.execute_batch("CREATE TABLE albums(id INTEGER PRIMARY KEY, path TEXT, file_types INTEGER, small_image_filter INTEGER, excluded_folders TEXT);
@@ -10897,6 +10967,49 @@ mod album_filter_tests {
             ALTER TABLE afiles ADD COLUMN media_subtype TEXT;
             UPDATE afiles SET media_subtype='raw_jpeg_pair' WHERE id=13;").unwrap();
         conn
+    }
+
+    #[test]
+    fn text_search_matches_creator_copyright_and_software() {
+        let conn = fixture();
+        conn.execute_batch(
+            "ALTER TABLE afolders ADD COLUMN is_excluded_from_search INTEGER DEFAULT 0;
+             ALTER TABLE afiles ADD COLUMN name TEXT;
+             ALTER TABLE afiles ADD COLUMN comments TEXT;
+             ALTER TABLE afiles ADD COLUMN e_title TEXT;
+             ALTER TABLE afiles ADD COLUMN e_headline TEXT;
+             ALTER TABLE afiles ADD COLUMN e_artist TEXT;
+             ALTER TABLE afiles ADD COLUMN e_copyright TEXT;
+             ALTER TABLE afiles ADD COLUMN e_software TEXT;
+             UPDATE afiles SET e_artist = 'Morgan Rivera' WHERE id IN (6, 7);
+             UPDATE afiles SET e_copyright = 'Copyright Night Studio' WHERE id = 8;
+             UPDATE afiles SET e_software = 'Photo Editor 5' WHERE id = 10;
+             UPDATE afiles SET e_headline = 'Summer headline' WHERE id = 12;",
+        ).unwrap();
+        let mut params: QueryParams = serde_json::from_value(serde_json::json!({
+            "searchFileName":"","searchFileType":0,"sortType":0,"sortOrder":0,
+            "searchAllSubfolders":"","searchFolder":"","startDate":0,"endDate":0,
+            "calendarSort":0,"make":"","model":"","lensMake":"","lensModel":"",
+            "locationAdmin1":"","locationName":"","isFavorite":false,"rating":-1,
+            "tagId":0,"personId":0
+        })).unwrap();
+
+        for (term, expected) in [
+            ("RIVERA", vec![7]),
+            ("night studio", vec![8]),
+            ("editor 5", vec![10]),
+            ("headline", vec![12]),
+            ("unmatched", vec![]),
+        ] {
+            params.search_file_name = term.into();
+            let (joins, conditions, values) = AFile::build_search_query_parts(&params);
+            let mut stmt = conn.prepare(&format!(
+                "SELECT a.id FROM afiles a JOIN afolders b ON b.id=a.folder_id {joins}{conditions} ORDER BY a.id"
+            )).unwrap();
+            let ids = stmt.query_map(params_from_iter(values.iter()), |row| row.get::<_, i64>(0))
+                .unwrap().collect::<Result<Vec<_>, _>>().unwrap();
+            assert_eq!(ids, expected, "search term {term}");
+        }
     }
 
     #[test]
@@ -11090,6 +11203,55 @@ mod raw_display_cache_tests {
     use crate::t_raw_display::RawPreviewMode;
 
     #[test]
+    fn small_webp_is_cached_byte_for_byte_and_large_images_are_resized() {
+        let path = std::env::temp_dir().join(format!("lap-thumb-{}.webp", uuid::Uuid::new_v4()));
+        image::RgbImage::new(16, 8).save(&path).unwrap();
+        let original = fs::read(&path).unwrap();
+        let copied = AThumb::small_original_thumbnail(path.to_str().unwrap(), 1, 16);
+        let larger_than_limit = AThumb::small_original_thumbnail(path.to_str().unwrap(), 1, 15);
+        let rotated = AThumb::small_original_thumbnail(path.to_str().unwrap(), 6, 16);
+        fs::remove_file(path).unwrap();
+        assert!(rotated.is_none());
+        assert_eq!(AThumb::cache_extension(&original), Some("webp"));
+        assert_eq!(copied, Some(original));
+        assert!(larger_than_limit.is_none());
+    }
+
+    #[test]
+    fn small_tiff_uses_jpeg_thumbnail_encoding() {
+        let path = std::env::temp_dir().join(format!("lap-thumb-{}.tiff", uuid::Uuid::new_v4()));
+        image::RgbImage::new(16, 8).save(&path).unwrap();
+        let copied = AThumb::small_original_thumbnail(path.to_str().unwrap(), 1, 16);
+        let converted = t_image::get_image_thumbnail(path.to_str().unwrap(), 1, 16);
+        fs::remove_file(path).unwrap();
+        assert!(copied.is_none());
+        assert_eq!(AThumb::cache_extension(&converted.unwrap().unwrap()), Some("jpg"));
+    }
+
+    #[test]
+    fn jpeg_repair_encodes_png_pixels_with_source_orientation_applied() {
+        let path = std::env::temp_dir().join(format!("lap-thumb-{}.png", uuid::Uuid::new_v4()));
+        image::RgbImage::new(16, 8).save(&path).unwrap();
+        let repaired = t_image::get_image_thumbnail_with_encoding(path.to_str().unwrap(), 6, 16, true);
+        fs::remove_file(path).unwrap();
+        let data = repaired.unwrap().unwrap();
+        assert_eq!(AThumb::cache_extension(&data), Some("jpg"));
+        let decoded = image::load_from_memory(&data).unwrap();
+        assert_eq!((decoded.width(), decoded.height()), (8, 16));
+    }
+
+    #[test]
+    fn legacy_small_image_row_is_treated_as_a_cache_miss() {
+        let legacy = AThumb {
+            id: Some(1), file_id: 42, error_code: 2, thumb_data: None,
+            thumb_key: None, thumb_mtime: Some(123), thumb_size: Some(256),
+            updated_at: Some(123), thumb_data_base64: None,
+        };
+        assert!(AThumb::resolve_fetched_thumb_if_available(legacy, "small.jpg", false, true)
+            .unwrap().is_none());
+    }
+
+    #[test]
     fn unavailable_original_preserves_cached_thumbnail_even_during_forced_refresh() {
         let thumb = AThumb {
             id: Some(1),
@@ -11146,7 +11308,7 @@ mod raw_display_cache_tests {
             t, &path, false, true,
         ).unwrap();
         assert_eq!(resolve(thumb(0)).map(|t| t.error_code), Some(0), "a stale-dated cached thumbnail was dropped");
-        assert_eq!(resolve(thumb(2)).map(|t| t.error_code), Some(1), "a small image would be shown from its original");
+        assert_eq!(resolve(thumb(2)).map(|t| t.error_code), None, "a legacy small image has no cached bytes");
         assert!(crate::t_utils::is_cloud_only_path(&path));
     }
 
@@ -11291,6 +11453,29 @@ mod smart_folder_name_tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn empty_name_filters_match_all_or_none_instead_of_erroring() {
+        let conn = Connection::open_in_memory().unwrap();
+        conn.execute_batch("CREATE TABLE names(name TEXT);
+            INSERT INTO names VALUES ('Project_1'), ('Houses'), ('photo.jpg');").unwrap();
+        for (operator, expected) in [("contains", 3), ("not_contains", 0)] {
+            for value in [serde_json::json!(""), serde_json::json!("   ")] {
+                let mut params = Vec::new();
+                let condition = AFile::build_smart_name_condition(
+                    "name", operator, &value, &mut params,
+                ).unwrap();
+                assert_eq!(condition, if operator == "contains" { "1 = 1" } else { "1 = 0" });
+                let matches: usize = conn.prepare(&format!(
+                    "SELECT COUNT(*) FROM names WHERE {}", condition,
+                )).unwrap().query_row([], |row| row.get(0)).unwrap();
+                assert_eq!(matches, expected);
+            }
+        }
+        // Non-string values remain a hard error rather than silently matching all.
+        assert!(AFile::build_smart_name_condition("name", "contains", &serde_json::json!(null), &mut Vec::new()).is_err());
+        assert!(AFile::build_smart_name_condition("name", "contains", &serde_json::json!(5), &mut Vec::new()).is_err());
     }
 
 }

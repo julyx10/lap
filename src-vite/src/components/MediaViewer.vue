@@ -1373,7 +1373,7 @@ const isOverlayBackdropTarget = (event: PointerEvent) => {
   if (target === currentTarget) return true;
 
   if (target.closest(
-    'img, video, button, a, input, select, textarea, label, [role="button"], [data-image-navigator], .vjs-tech, .vjs-control-bar, .vjs-control, .vjs-big-play-button, .vjs-menu'
+    'img, video, button, a, input, select, textarea, label, [role="button"], [data-image-navigator], [data-video-play-overlay], .vjs-tech, .vjs-control-bar, .vjs-control, .vjs-big-play-button, .vjs-menu'
   )) {
     return false;
   }

@@ -329,6 +329,17 @@
                 <option value="raw">RAW</option>
               </select>
             </div>
+            <div v-if="config.settings.groupRawJpegPairs" class="flex items-center justify-between gap-3 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <label for="raw-pair-clipboard" class="min-w-0 flex flex-col gap-0.5 text-sm leading-5">
+                <span>{{ $t('menu.file.copy') }}</span>
+                <span class="text-xs text-base-content/30">{{ $t('settings.raw.clipboard_hint') }}</span>
+              </label>
+              <select id="raw-pair-clipboard" class="select select-bordered select-sm w-40 shrink-0 max-w-full" v-model="config.settings.rawPairClipboardMode">
+                <option value="both">{{ $t('settings.raw.clipboard_both') }}</option>
+                <option value="raw">{{ $t('settings.raw.clipboard_raw') }}</option>
+                <option value="jpeg">{{ $t('settings.raw.clipboard_jpeg') }}</option>
+              </select>
+            </div>
           </div>
           <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
             <div class="flex items-center gap-2 text-base-content/30">
@@ -392,8 +403,8 @@
                 ></progress>
                 <button
                   class="btn btn-ghost btn-xs h-6 min-h-0 w-6 p-0 text-base-content/30 hover:text-base-content"
-                  :title="$t('msgbox.cancel')"
-                  :aria-label="$t('msgbox.cancel')"
+                  :title="$t('image_viewer.toolbar.pause')"
+                  :aria-label="$t('image_viewer.toolbar.pause')"
                   @click="cancelMultilingualModelDownload"
                 >
                   <IconClose class="w-3.5 h-3.5" />
@@ -757,7 +768,8 @@ import {
   cancelMultilingualImageSearchModelDownload,
   listenImageSearchModelDownloadProgress,
 } from '@/common/api';
-import { formatFileSize, isLinux, isMac, setTheme, SCALE_VALUES } from '@/common/utils';
+import { formatFileSize, isLinux, isMac, SCALE_VALUES } from '@/common/utils';
+import { useAppearance } from '@/composables/useAppearance';
 import { getShortcutLabels, ShortcutActionId, ShortcutPlatform } from '@/common/shortcuts';
 import { useToast } from '@/common/toast';
 import { IconClose, IconRestore } from '@/common/icons';
@@ -847,6 +859,7 @@ const onRestoreDone = () => {
 
 const languages = [
   { label: 'English', value: 'en' },
+  { label: 'Česky', value: 'cs' },
   { label: 'Deutsch', value: 'de' },
   { label: 'Español', value: 'es' },
   { label: 'Français', value: 'fr' },
@@ -857,6 +870,7 @@ const languages = [
   { label: 'Português', value: 'pt' },
   { label: 'Русский', value: 'ru' },
   { label: 'Українська', value: 'uk' },
+  { label: 'Tiếng Việt', value: 'vi' },
   { label: '中文简体', value: 'zh' },
   { label: '中文繁體', value: 'zh-TW' },
   { label: '日本語', value: 'ja' },
@@ -871,9 +885,11 @@ const appearanceOptions = computed(() => {
   }));
 });
 
-// Define the theme options
+const appearance = useAppearance();
+
+// Show and edit the theme for the currently displayed appearance.
 const themeOptions = computed(() => {
-  const options = config.settings.appearance === 0 
+  const options = appearance.value === 0
     ? localeMsg.value.settings.general.theme_options_light 
     : localeMsg.value.settings.general.theme_options_dark;
 
@@ -886,10 +902,10 @@ const themeOptions = computed(() => {
 
 const currentTheme = computed({
   get() {
-    return config.settings.appearance === 0 ? config.settings.lightTheme : config.settings.darkTheme;
+    return appearance.value === 0 ? config.settings.lightTheme : config.settings.darkTheme;
   },
   set(value) {
-    config.settings.appearance === 0 ? config.settings.lightTheme = value : config.settings.darkTheme = value;
+    appearance.value === 0 ? config.settings.lightTheme = value : config.settings.darkTheme = value;
   }
 });
 
@@ -1224,6 +1240,7 @@ const shortcutDisplaySections: Array<{ key: string; items: ShortcutDisplayItem[]
       { actionId: 'file.moveTo', labelKey: 'move_within_library' },
       { actionId: 'file.moveToFolder', labelKey: 'move_to_folder' },
       { actionId: 'file.copy', labelKey: 'copy_file' },
+      { actionId: 'file.copyPath', labelKey: 'copy_file_path' },
       { actionId: 'file.paste', labelKey: 'paste_file' },
       { actionId: 'file.reveal', labelKey: 'reveal_in_file_manager' },
       { actionId: 'file.trash', labelKey: 'move_to_trash' },
@@ -1510,15 +1527,12 @@ watch(() => config.settings.tabIndex, (newValue) => {
   emit('settings-settingsTabIndex-changed', newValue);
 });
 watch(() => config.settings.appearance, (newValue) => {
-  setTheme(newValue, newValue === 0 ? config.settings.lightTheme : config.settings.darkTheme);
   emit('settings-appearance-changed', newValue);
 });
 watch(() => config.settings.lightTheme, (newValue) => {
-  setTheme(config.settings.appearance, newValue);
   emit('settings-lightTheme-changed', newValue);
 });
 watch(() => config.settings.darkTheme, (newValue) => {
-  setTheme(config.settings.appearance, newValue);
   emit('settings-darkTheme-changed', newValue);
 });
 watch(() => config.settings.scale, (newValue) => {
@@ -1557,6 +1571,10 @@ watch(() => config.settings.showSubfolderFiles, (newValue) => {
 });
 watch(() => config.settings.groupRawJpegPairs, (newValue) => {
   emit('settings-groupRawJpegPairs-changed', newValue);
+});
+
+watch(() => config.settings.rawPairClipboardMode, (newValue) => {
+  emit('settings-rawPairClipboardMode-changed', newValue);
 });
 
 watch(() => config.settings.rawPairDisplaySource, (newValue) => {

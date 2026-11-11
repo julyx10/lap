@@ -29,10 +29,14 @@ export function isFolderUnavailable(path: string): boolean {
   const target = key(path);
   return [...folders.keys()].some(folder => target === folder || target.startsWith(`${folder}/`) || target.startsWith(`${folder}\\`));
 }
+export function isOriginalStorageUnavailable(file: any): boolean {
+  if (!file) return false;
+  const album = getAlbumAccessibility(Number(file.album_id || 0)) ?? file.album_accessible;
+  return album === false || isFolderUnavailable(String(file.file_path || ''));
+}
 export function isOriginalUnavailable(file: any): boolean {
   if (!file) return false;
-  const album = albums.get(key(Number(file.album_id || 0))) ?? file.album_accessible;
-  return album === false || paths.get(key(String(file.file_path || ''))) === false || isFolderUnavailable(String(file.file_path || ''));
+  return isOriginalStorageUnavailable(file) || paths.get(key(String(file.file_path || ''))) === false;
 }
 export function resetFileAccessibility(rootPath?: string) {
   const root = rootPath ? key(rootPath.replace(/[\\/]+$/, '')) : null;
@@ -54,7 +58,7 @@ export function resetLibraryAccessibility() {
 }
 
 const originalActions = new Set([
-  'edit', 'print', 'rename', 'copy', 'move-within-library', 'move-to-folder',
+  'edit', 'print', 'rename', 'move-within-library', 'move-to-folder',
   'save-xmp', 'copy-to-folder', 'trash', 'reveal', 'refresh-file-info', 'set-desktop-wallpaper', 'create-montage',
 ]);
 export function requiresOriginalAction(action: string): boolean {

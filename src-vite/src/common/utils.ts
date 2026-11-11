@@ -1,5 +1,5 @@
 import { open as openDialog } from '@tauri-apps/plugin-dialog';
-import { convertFileSrc } from '@tauri-apps/api/core';
+import { convertFileSrc, invoke } from '@tauri-apps/api/core';
 import { useUIStore } from '@/stores/uiStore';
 import { config } from '@/common/config';
 import { appendRawDisplayParams, rawDisplayKey } from './rawDisplay';
@@ -363,6 +363,37 @@ export function formatCaptureSettings(focal_length: string, exposure_time: strin
   return result;
 }
 
+// Resolve a clipboard item without changing file-copy or move operations.
+export function getClipboardItemPaths(file: {
+  file_path?: string;
+  media_subtype?: string;
+  live_photo_video_path?: string | null;
+} | null | undefined, rawPairMode: string = 'both'): string[] {
+  if (!file?.file_path) return [];
+  if (file.media_subtype !== 'raw_jpeg_pair') return [file.file_path];
+  if (rawPairMode === 'raw') return [file.file_path];
+  if (!file.live_photo_video_path) throw new Error('RAW companion path is unavailable');
+  if (rawPairMode === 'jpeg') return [file.live_photo_video_path];
+  return [file.file_path, file.live_photo_video_path];
+}
+
+// A null policy copies exactly the file shown in File Info.
+export async function copyFilePaths(
+  files: Array<Parameters<typeof getClipboardItemPaths>[0]>,
+  rawPairMode: string | null = null,
+) {
+  const paths = new Set<string>();
+  for (const file of files) {
+    const itemPaths = rawPairMode === null
+      ? (file?.file_path ? [file.file_path] : [])
+      : getClipboardItemPaths(file, rawPairMode);
+    for (const path of itemPaths) paths.add(path);
+  }
+  if (!paths.size) return 0;
+  await invoke('copy_file_paths', { filePaths: [...paths] });
+  return paths.size;
+}
+
 /// get full path
 export function getFullPath(path: string, name: string): string {
   return path + separator + name;
@@ -613,18 +644,10 @@ export function getThumbnailDataUrl(
   placeholder = '',
   bustCache = false,
   thumbnailSize = 0,
-  filePath?: string | null,
   fileVersion = 0,
-  originalReadable = true,
 ): string {
   if (!thumb || thumb.file_id == null || thumb.file_id <= 0) {
     return placeholder;
-  }
-  if (thumb.error_code === 2) {
-    // A small image is shown from its original; reading an online-only one would download it.
-    if (!originalReadable) return placeholder;
-    if (filePath) return getAssetSrc(filePath, fileVersion);
-    return getThumbUrl(thumb.file_id, bustCache, thumbnailSize, fileVersion) || placeholder;
   }
   if (thumb.error_code !== 0) {
     return placeholder;

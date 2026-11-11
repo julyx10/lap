@@ -1,11 +1,12 @@
 /**
  * Config Store - Global application configuration
- */
+*/
 import { defineStore } from 'pinia';
 import { i18n, loadLanguage } from '@/common/i18n';
 let languageRequest = 0;
 let pendingUserLanguageRequest = 0;
 import { SIDEBAR, MAP_MARKER_SIZES } from '@/common/constants';
+import { defaultFileInfoFields } from '@/common/fileInfoFields';
 
 export const useConfigStore = defineStore('configStore', {
   state: () => ({
@@ -37,11 +38,14 @@ export const useConfigStore = defineStore('configStore', {
     },
 
     dedup: {
+      keepRules: { preferFormat: 'raw', preferredDate: 'modifiedEarliest', preferredSize: 'largestDimensions' },
       activeTab: 'duplicates',   // active dedup tab ('duplicates' | 'similar')
       duplicateSetsHeight: 50,   // duplicate sets section height as a percentage
     },
 
     infoPanel: {
+      fields: [...defaultFileInfoFields],
+      hideEmptyFields: false,
       showPreview: true,         // show preview thumbnail
       previewMode: 'thumbnail',  // preview section mode ('thumbnail' | 'histogram')
       previewScale: 1,           // preview thumbnail scale (1, 0.5, 0.25)
@@ -136,13 +140,14 @@ export const useConfigStore = defineStore('configStore', {
       language: 'en',             // default language
       languageInitialized: false, // match system language once, then preserve the saved choice
       dateTimeFormat: 0,          // date/time locale source (0: follow system region, 1: follow app language)
-      appearance: 1,              // appearance (0: light; 1: dark)
+      appearance: 1,              // appearance (0: light; 1: dark; 2: follow system)
       lightTheme: 0,              // light theme color index
       darkTheme: 0,               // dark theme color index
       scale: 1,                   // root font-size scale
       showToolTip: true,          // show button tooltip
       showStatusBar: true,        // show status bar
       autoCheckUpdates: true,      // automatically check for updates
+      deletePermanently: false,   // last confirmed file deletion choice
       debugMode: false,           // debug mode
 
       // navigation settings
@@ -158,6 +163,7 @@ export const useConfigStore = defineStore('configStore', {
 
       // RAW display settings
       groupRawJpegPairs: false,   // group matching RAW and JPEG/HEIC files
+      rawPairClipboardMode: 'both', // both | raw | jpeg; clipboard operations only
       rawPairDisplaySource: 'jpeg', // jpeg | raw (used when pairs are grouped)
       rawPreviewSource: 'embedded', // embedded | rendered
       rawRenderBrightness: 'original', // original | brightened
@@ -342,6 +348,9 @@ export const useConfigStore = defineStore('configStore', {
     setThumbnailSize(thumbnailSize) {
       this.settings.thumbnailSize = thumbnailSize;
     },
+    setRawPairClipboardMode(mode) {
+      this.settings.rawPairClipboardMode = ['both', 'raw', 'jpeg'].includes(mode) ? mode : 'both';
+    },
     setRawPairDisplaySource(source) {
       this.settings.rawPairDisplaySource = source === 'raw' ? 'raw' : 'jpeg';
     },
@@ -458,6 +467,8 @@ export const useConfigStore = defineStore('configStore', {
           settings.rawPreviewSource = settings.rawPreviewSource === 'rendered' ? 'rendered' : 'embedded';
           settings.rawRenderBrightness = settings.rawRenderBrightness === 'brightened' ? 'brightened' : 'original';
           settings.rawPairDisplaySource = settings.rawPairDisplaySource === 'raw' ? 'raw' : 'jpeg';
+          settings.rawPairClipboardMode = ['both', 'raw', 'jpeg'].includes(settings.rawPairClipboardMode)
+            ? settings.rawPairClipboardMode : 'both';
         }
         return state;
       },

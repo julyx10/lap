@@ -3,6 +3,8 @@
 // ======================
 export { default as IconArrowDown } from '@/assets/icons/arrow-down.svg';
 export { default as IconArrowUp } from '@/assets/icons/arrow-up.svg';
+export { default as IconChevronsLeft } from '@/assets/icons/chevrons-left.svg';
+export { default as IconChevronsRight } from '@/assets/icons/chevrons-right.svg';
 export { default as IconLeft } from '@/assets/icons/arrow-left.svg';
 export { default as IconNext } from '@/assets/icons/nav-next.svg';
 export { default as IconPrev } from '@/assets/icons/nav-prev.svg';
@@ -174,6 +176,8 @@ export { default as IconHeart } from '@/assets/icons/heart.svg';
 export { default as IconHeartFilled } from '@/assets/icons/heart-fill.svg';
 export { default as IconPin } from '@/assets/icons/pin-filled.svg';
 export { default as IconSelection } from '@/assets/icons/selection.svg';
+export { default as IconSelectAll } from '@/assets/icons/select-all.svg';
+export { default as IconDeselect } from '@/assets/icons/deselect.svg';
 export { default as IconStar } from '@/assets/icons/star.svg';
 export { default as IconStarFilled } from '@/assets/icons/star-filled.svg';
 export { default as IconUnChecked } from '@/assets/icons/checkbox-unchecked.svg';
@@ -216,5 +220,6 @@ export { default as IconVideoSlash } from '@/assets/icons/video-slash.svg';
 export { default as IconPause } from '@/assets/icons/pause.svg';
 export { default as IconPlay } from '@/assets/icons/play.svg';
 export { default as IconVideoFill } from '@/assets/icons/video-fill.svg';
+export { default as IconVideoPause } from '@/assets/icons/video-pause.svg';
 export { default as IconVideoPlay } from '@/assets/icons/video-play.svg';
 export { default as IconVideoReplay } from '@/assets/icons/video-replay.svg';
