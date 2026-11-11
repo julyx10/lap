@@ -234,6 +234,7 @@
     }
   },
   "offline": {
+    "badge": "Offline",
     "cloud_only": "Dostupné pouze online",
     "cloud_only_pending": "Dostupné pouze online – informace nejsou úplné",
     "original_unavailable": "Původní soubor není dostupný",
@@ -249,6 +250,7 @@
     "copy_failed": "Tento soubor se nepodařilo importovat."
   },
   "import_organize": {
+    "title": "Importovat složku",
     "section_folders": "Vybrat složku",
     "section_status": "Stav importu",
     "to_import": "K importu",
@@ -260,7 +262,7 @@
     "layout_day": "Podle dnů — YYYY/YYYY-MM-DD",
     "layout_month": "Podle měsíců — YYYY/YYYY-MM",
     "layout_year": "Podle let — YYYY",
-    "layout_none": "Jedna složka",
+    "layout_structure": "Zachovat strukturu složek",
     "import": "Importovat",
     "preparing": "Připravuje se import",
     "importing": "Importují se soubory",
@@ -551,6 +553,30 @@
     "more_actions": "Další akce",
     "tag_all": "Štítek",
     "dedup": {
+      "keep_rules": {
+        "title": "Pravidla pro zachování",
+        "priority_order": "Pořadí priorit",
+        "folders": "Preferované složky",
+        "subfolders": "Zahrnuje podsložky. Vyšší položka v seznamu vyhrává.",
+        "folders_skipped": "Nenastaveno, přeskočeno",
+        "add_folder": "Přidat složku",
+        "folder_already_added": "Již přidáno",
+        "format": "Preferovaný formát",
+        "similar_only": "Pouze podobné",
+        "raw_first": "Nejprve RAW",
+        "jpeg_heic_first": "Nejprve JPEG / HEIC",
+        "size": "Preferovaná velikost",
+        "largest_dimensions": "Nejvyšší rozlišení",
+        "smallest_dimensions": "Nejnižší rozlišení",
+        "largest_file_size": "Největší velikost souboru",
+        "smallest_file_size": "Nejmenší velikost souboru",
+        "ignore": "Ignorovat",
+        "time": "Preferované datum",
+        "created_earliest": "Vytvořeno nejdříve",
+        "created_latest": "Vytvořeno nejpozději",
+        "modified_earliest": "Upraveno nejdříve",
+        "modified_latest": "Upraveno nejpozději"
+      },
       "title": "Duplicity",
       "tabs": {
         "exact": "Duplicity",
@@ -708,6 +734,7 @@
     "album": {
       "add": "Nové album",
       "edit": "Upravit album…",
+      "import_folder": "Importovat složku…",
       "scan": "Prohledat album",
       "reorder": "Změnit pořadí",
       "pause_scan": "Pozastavit skenování",
@@ -848,7 +875,6 @@
       "hide": "Skrýt",
       "hidden": "Skryté",
       "remove": "Odebrat",
-      "reorder": "Změnit pořadí",
       "rename": "Přejmenovat",
       "switch_to": "Přepnout na",
       "add_new": "Nová knihovna",

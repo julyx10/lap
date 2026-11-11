@@ -241,7 +241,7 @@ test('field choices allow no fields and reject unknown fields', async () => {
   assert.deepEqual(module.normalizeFileInfoFields(['unknown', 'source.title', 'source.title']), ['source.title']);
   assert.deepEqual(module.normalizeFileInfoFields(undefined), module.normalizeFileInfoFields(module.defaultFileInfoFields));
   assert.equal(module.normalizeFileInfoFields(module.defaultFileInfoFields).length, module.defaultFileInfoFields.length);
-  for (const locale of ['en','zh-CN','zh-TW','de','es','fr','hu','it','ja','ko','nl','pl','pt','ru','uk']) {
+  for (const locale of ['en','cs','de','es','fr','hu','it','ja','ko','nl','pl','pt','ru','uk','vi','zh-CN','zh-TW']) {
     const messages = JSON.parse(await readFile(new URL(`../src/locales/${locale}.json`, import.meta.url), 'utf8'));
     for (const group of module.fileInfoFieldGroups) {
       for (const key of [group.label, ...group.fields.map(field => field.label)].filter(key => key !== 'GPS')) {

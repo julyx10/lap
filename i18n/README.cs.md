@@ -12,7 +12,7 @@
   </p>
 </div>
 
-[English](../README.md) | Česky | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | [Italiano](README.it.md) | [Magyar](README.hu.md) | [Nederlands](README.nl.md) | [Polski](README.pl.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [Українська](README.uk.md) | [中文简体](README.zh-CN.md) | [中文繁體](README.zh-TW.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
+[English](../README.md) | Česky | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | [Italiano](README.it.md) | [Magyar](README.hu.md) | [Nederlands](README.nl.md) | [Polski](README.pl.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [Українська](README.uk.md) | [Tiếng Việt](README.vi.md) | [中文简体](README.zh-CN.md) | [中文繁體](README.zh-TW.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
 Lap je open-source správce fotografií se zaměřením na lokální provoz. Umožňuje procházet rodinná alba, rychle vyhledávat staré fotografie a spravovat offline rozsáhlé osobní knihovny médií.
 Je to alternativa ke cloudovým fotografickým službám zaměřená na soukromí: bez povinného nahrávání, s lokálním vyhledáváním pomocí AI, pracovním postupem založeným na složkách a bezplatným používáním.
