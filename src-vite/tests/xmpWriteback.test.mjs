@@ -15,7 +15,8 @@ const deps = {
   config: { externalAppsFor: () => [], defaultExternalApp: () => null, main: { sidebarIndex: 0 }, settings: { face: { enabled: false } } },
   libConfig: { album: { id: 1 }, activePane: 'album' }, SIDEBAR: { ALBUM: 1 },
   DEFAULT_PLATFORM: 'mac', getShortcutLabel: () => '', isWin: false,
-  isOriginalUnavailable: file => !!file?.unavailable, requiresOriginalAction,
+  isOriginalUnavailable: file => !!file?.unavailable,
+  isOriginalStorageUnavailable: file => !!file?.unavailable, requiresOriginalAction,
 };
 const useFileMenuItems = new Function(...Object.keys(deps), menuCode + ';return useFileMenuItems;')(...Object.values(deps));
 
@@ -171,7 +172,8 @@ test('file info rename reports the backend reason without changing catalog field
   const messages = [];
   const isRenaming = ref(true);
   const values = {
-    isRenaming, props: { fileInfo: { id: 1, name: 'photo.jpg', file_path: '/source/photo.jpg' } },
+    isRenaming, canRenameGeneralFile: ref(true),
+    props: { fileInfo: { id: 1, name: 'photo.jpg', file_path: '/source/photo.jpg' } },
     renamingName: ref('renamed'), extractFileName: () => ({ ext: 'jpg' }), isValidFileName: () => true,
     combineFileName: (name, ext) => `${name}.${ext}`, renameFile: f.renameFile,
     cancelRename: () => { isRenaming.value = false; }, toast: { error: message => messages.push(message) }, t: key => key,

@@ -1,4 +1,4 @@
-import { createApp } from 'vue'
+import { createApp, watch } from 'vue'
 import { i18n, initializeLanguage, resolveSystemLanguage } from '@/common/i18n'
 import { locale as getSystemLanguage } from '@tauri-apps/plugin-os'
 import { createPinia } from 'pinia'
@@ -42,6 +42,13 @@ listen('image-editor-config-changed', (event) => {
   }
 })
 
+listen('dedup-config-changed', (event) => {
+  // Keep other windows current so their later writes preserve dedup keep rules.
+  if (currentWindowLabel !== 'main') {
+    Object.assign(config.dedup, event.payload)
+  }
+})
+
 listen('af-area-display-changed', (event) => {
   // All open windows keep the same preference so later store writes preserve it.
   if (typeof event.payload === 'boolean' && config.mediaViewer.showAfAreas !== event.payload) {
@@ -56,11 +63,15 @@ if (isMainWindow) {
   config.$subscribe((_mutation, state) => {
     void emit('config-settings-synced', JSON.parse(JSON.stringify(state.settings)))
   })
+  watch(() => config.dedup.keepRules, () => {
+    void emit('dedup-config-changed', JSON.parse(JSON.stringify(config.dedup)))
+  }, { deep: true })
 } else {
   listen('config-settings-synced', async (event) => {
     const request = ++settingsSyncRequest
     if (isSettingsWindow) {
-      // Settings receives application language updates without replacing unsaved fields.
+      // Keep main-window choices in sync while preserving edits in Settings.
+      config.settings.deletePermanently = event.payload.deletePermanently === true
       config.setLanguage(event.payload.language)
     } else {
       const { language, ...settings } = event.payload
@@ -144,6 +155,9 @@ if (isMainWindow) {
   })
   listen('settings-thumbnailSize-changed', (event) => {
     config.setThumbnailSize(event.payload)
+  })
+  listen('settings-rawPairClipboardMode-changed', (event) => {
+    config.setRawPairClipboardMode(event.payload)
   })
   listen('settings-rawPairDisplaySource-changed', (event) => {
     config.setRawPairDisplaySource(event.payload)

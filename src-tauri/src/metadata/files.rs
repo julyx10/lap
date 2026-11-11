@@ -587,7 +587,7 @@ impl Guard {
             move_new(&entry.temp, &entry.plan.new)?;
             entry.state = 2;
         }
-        crate::t_xmp::sidecars_changed(&guard.affected);
+        crate::metadata::xmp::sidecars_changed(&guard.affected);
         Ok(guard)
     }
     pub(crate) fn commit_with_cache(self, cache: &mut Cache) {
@@ -600,7 +600,7 @@ impl Guard {
     fn finish(mut self, mut cache: Option<&mut Cache>) {
         self.committed = true;
         if !self.cleanup_sources {
-            crate::t_xmp::sidecars_changed(&self.affected);
+            crate::metadata::xmp::sidecars_changed(&self.affected);
             return;
         }
         // When every original owner moved, a copied shared stem is now orphaned.
@@ -641,7 +641,7 @@ impl Guard {
         if let Some(cache) = cache {
             cache.update(&self.affected);
         }
-        crate::t_xmp::sidecars_changed(&self.affected);
+        crate::metadata::xmp::sidecars_changed(&self.affected);
     }
 }
 impl Drop for Guard {
@@ -679,7 +679,7 @@ impl Drop for Guard {
             }
         }
         if changed {
-            crate::t_xmp::sidecars_changed(&self.affected);
+            crate::metadata::xmp::sidecars_changed(&self.affected);
         }
     }
 }
@@ -743,7 +743,7 @@ pub(crate) fn delete_orphans<'a>(
             }
         }
     }
-    crate::t_xmp::sidecars_changed(&affected);
+    crate::metadata::xmp::sidecars_changed(&affected);
     if errors.is_empty() {
         Ok(())
     } else {
@@ -1195,29 +1195,29 @@ mod tests {
         fs::create_dir(f.path("target")).unwrap();
         let new = f.path("target/b.jpg");
         {
-            let _scan = crate::t_xmp::sidecar_scan(991);
-            assert!(crate::t_xmp::find_xmp_sidecar(&new).is_none());
+            let _scan = crate::metadata::xmp::sidecar_scan(991);
+            assert!(crate::metadata::xmp::find_xmp_sidecar(&new).is_none());
             let guard = Guard::new([(&*old, &*new)], Operation::Copy).unwrap();
             assert_eq!(
-                crate::t_xmp::find_xmp_sidecar(&new),
+                crate::metadata::xmp::find_xmp_sidecar(&new),
                 Some(f.path("target/b.xmp"))
             );
             drop(guard);
-            assert!(crate::t_xmp::find_xmp_sidecar(&new).is_none());
+            assert!(crate::metadata::xmp::find_xmp_sidecar(&new).is_none());
         }
-        let batch = crate::t_xmp::begin_refresh_batch("lifecycle-test".into()).unwrap();
+        let batch = crate::metadata::xmp::begin_refresh_batch("lifecycle-test".into()).unwrap();
         {
-            let _scope = crate::t_xmp::refresh_index_scope(Some(batch), "lifecycle-test").unwrap();
-            assert!(crate::t_xmp::find_xmp_sidecar(&new).is_none());
+            let _scope = crate::metadata::xmp::refresh_index_scope(Some(batch), "lifecycle-test").unwrap();
+            assert!(crate::metadata::xmp::find_xmp_sidecar(&new).is_none());
             let guard = Guard::new([(&*old, &*new)], Operation::Copy).unwrap();
             assert_eq!(
-                crate::t_xmp::find_xmp_sidecar(&new),
+                crate::metadata::xmp::find_xmp_sidecar(&new),
                 Some(f.path("target/b.xmp"))
             );
             drop(guard);
-            assert!(crate::t_xmp::find_xmp_sidecar(&new).is_none());
+            assert!(crate::metadata::xmp::find_xmp_sidecar(&new).is_none());
         }
-        crate::t_xmp::end_refresh_batch(batch);
+        crate::metadata::xmp::end_refresh_batch(batch);
     }
 
     #[test]
@@ -1231,14 +1231,14 @@ mod tests {
         let (ready, wait_ready) = std::sync::mpsc::channel();
         let (advance, wait_advance) = std::sync::mpsc::channel();
         let worker = std::thread::spawn(move || {
-            let _scan = crate::t_xmp::sidecar_scan(992);
-            assert!(crate::t_xmp::find_xmp_sidecar(&target).is_none());
+            let _scan = crate::metadata::xmp::sidecar_scan(992);
+            assert!(crate::metadata::xmp::find_xmp_sidecar(&target).is_none());
             ready.send(()).unwrap();
             wait_advance.recv().unwrap();
-            assert!(crate::t_xmp::find_xmp_sidecar(&target).is_some());
+            assert!(crate::metadata::xmp::find_xmp_sidecar(&target).is_some());
             ready.send(()).unwrap();
             wait_advance.recv().unwrap();
-            assert!(crate::t_xmp::find_xmp_sidecar(&target).is_none());
+            assert!(crate::metadata::xmp::find_xmp_sidecar(&target).is_none());
         });
         wait_ready.recv().unwrap();
         let guard = Guard::new([(&*old, &*new)], Operation::Copy).unwrap();
@@ -1254,11 +1254,11 @@ mod tests {
         let f = Fixture::new();
         let image = f.write("a.jpg", b"image");
         f.write("a.xmp", b"metadata");
-        let _scan = crate::t_xmp::sidecar_scan(993);
-        assert!(crate::t_xmp::find_xmp_sidecar(&image).is_some());
+        let _scan = crate::metadata::xmp::sidecar_scan(993);
+        assert!(crate::metadata::xmp::find_xmp_sidecar(&image).is_some());
         fs::remove_file(&image).unwrap();
         delete_orphans([image.as_path()], true).unwrap();
-        assert!(crate::t_xmp::find_xmp_sidecar(&image).is_none());
+        assert!(crate::metadata::xmp::find_xmp_sidecar(&image).is_none());
     }
 
     #[test]

@@ -84,7 +84,7 @@
       "name": "Name",
       "description": "Beschreibung",
       "description_placeholder": "Albumbeschreibung eingeben",
-      "images": "Fotos",
+      "images": "Bilder",
       "videos": "Videos",
       "section_general": "Allgemein",
       "section_scan": "Scanstatus",
@@ -109,7 +109,6 @@
       "last_scan_time": "Zuletzt gescannt",
       "tab_general": "Allgemein",
       "file_types": "Dateitypen ausschließen",
-      "photos": "Fotos",
       "raw": "RAW",
       "file_types_required": "Mindestens einen Dateityp eingeschlossen lassen.",
       "pixel_filter": "Kleine Bilder ausschließen",
@@ -148,6 +147,9 @@
       "add_rule": "Regel hinzufügen",
       "rules_count": "{count}/{max} Regeln",
       "remove_rule": "Regel entfernen",
+      "search_options": "Filter…",
+      "no_matches": "Keine Treffer",
+      "select_value": "Auswählen…",
       "group": "Gruppierung",
       "sort": "Sortierung",
       "order": "Reihenfolge",
@@ -232,6 +234,7 @@
     }
   },
   "offline": {
+    "badge": "Offline",
     "cloud_only": "Nur online verfügbar",
     "cloud_only_pending": "Nur online verfügbar — Dateiinformationen unvollständig",
     "original_unavailable": "Originaldatei nicht verfügbar",
@@ -247,6 +250,7 @@
     "copy_failed": "Diese Datei konnte nicht importiert werden."
   },
   "import_organize": {
+    "title": "Ordner importieren",
     "section_folders": "Ordner auswählen",
     "section_status": "Importstatus",
     "to_import": "Zu importieren",
@@ -258,7 +262,7 @@
     "layout_day": "Nach Tag — YYYY/YYYY-MM-DD",
     "layout_month": "Nach Monat — YYYY/YYYY-MM",
     "layout_year": "Nach Jahr — YYYY",
-    "layout_none": "Ein Ordner",
+    "layout_structure": "Ordnerstruktur beibehalten",
     "import": "Importieren",
     "preparing": "Import wird vorbereitet",
     "importing": "Dateien werden importiert",
@@ -284,7 +288,7 @@
   "search": {
     "title": "Suche",
     "similar_images": "Verwandte Fotos",
-    "image_search_placeholder": "Bilder, Dateinamen oder Beschreibungen suchen",
+    "image_search_placeholder": "Mediathek durchsuchen",
     "matches": "Treffer",
     "unknown_location": "Unbekannter Ort",
     "unknown_camera": "Unbekannte Kamera",
@@ -353,6 +357,8 @@
     "unreviewed": "Nicht geprüft"
   },
   "tag": {
+    "no_selected_tags": "Keine ausgewählten Tags",
+    "show_selected_only": "Nur ausgewählte Tags anzeigen",
     "title": "Tags",
     "delete_tag": "Tag löschen",
     "edit_tag": "Tags bearbeiten",
@@ -368,7 +374,7 @@
     "add_child": "Neues Untertag",
     "invalid_name": "Tag-Namen dürfen kein , ; oder {'|'} enthalten.",
     "invalid_move": "Ein Tag kann nicht unter sich selbst verschoben werden.",
-    "delete_tree": "Dieses Tag und seine Untertags werden gelöscht. Fotos bleiben erhalten."
+    "delete_tree": "Dieses Tag und seine Untertags werden gelöscht. Bilder bleiben erhalten."
   },
   "subject": {
     "title": "Motive",
@@ -488,8 +494,8 @@
       ],
       "file_type_options": [
         "Alle",
-        "Fotos",
-        "RAW-Dateien",
+        "Bilder",
+        "Nur RAW",
         "Videos"
       ],
       "file_type_other": "Andere"
@@ -534,8 +540,8 @@
       "move": "Verschieben"
     },
     "edit_disabled": "Wählen Sie ein einzelnes Foto zum Bearbeiten",
-    "type_image": "Foto",
-    "type_images": "Fotos",
+    "type_image": "Bild",
+    "type_images": "Bilder",
     "type_video": "Video",
     "type_videos": "Videos",
     "select_title": "Auswahl",
@@ -547,10 +553,34 @@
     "more_actions": "Weitere Aktionen",
     "tag_all": "Tag",
     "dedup": {
+      "keep_rules": {
+        "title": "Behalten-Regeln",
+        "priority_order": "Prioritätsreihenfolge",
+        "folders": "Bevorzugte Ordner",
+        "subfolders": "Unterordner sind eingeschlossen. Weiter oben hat Vorrang.",
+        "folders_skipped": "Keine ausgewählt, übersprungen",
+        "add_folder": "Ordner hinzufügen",
+        "folder_already_added": "Bereits hinzugefügt",
+        "format": "Bevorzugtes Format",
+        "similar_only": "Nur ähnliche Bilder",
+        "raw_first": "RAW zuerst",
+        "jpeg_heic_first": "JPEG / HEIC zuerst",
+        "size": "Bevorzugte Größe",
+        "largest_dimensions": "Höchste Auflösung",
+        "smallest_dimensions": "Niedrigste Auflösung",
+        "largest_file_size": "Größte Dateigröße",
+        "smallest_file_size": "Kleinste Dateigröße",
+        "ignore": "Ignorieren",
+        "time": "Bevorzugtes Datum",
+        "created_earliest": "Zuerst erstellt",
+        "created_latest": "Zuletzt erstellt",
+        "modified_earliest": "Zuerst geändert",
+        "modified_latest": "Zuletzt geändert"
+      },
       "title": "Duplikate",
       "tabs": {
         "exact": "Duplikate",
-        "similar": "Ähnliche Fotos"
+        "similar": "Ähnliche Bilder"
       },
       "scanning": "Duplikate werden gescannt...",
       "error_title": "Duplikate konnten nicht gescannt werden",
@@ -704,6 +734,7 @@
     "album": {
       "add": "Neues Album",
       "edit": "Album bearbeiten...",
+      "import_folder": "Ordner importieren…",
       "scan": "Album scannen",
       "reorder": "Neu anordnen",
       "pause_scan": "Scannen pausieren",
@@ -722,14 +753,14 @@
       "open_image_in_app": "Foto in {app} öffnen...",
       "open_video_in_app": "Video in {app} öffnen...",
       "open_selected_images_in_app": "Fotos in {app} öffnen...",
-      "compare_selected_images": "Vergleichen",
+      "compare_selected_images": "Vergleichen...",
       "open_selected_videos_in_app": "Videos in {app} öffnen...",
       "open_in_app": "In externer App öffnen...",
       "manage_app": "Apps verwalten...",
       "find_similar_images": "Verwandte Fotos finden",
       "find_person_images": "Diese Person finden",
       "print": "Drucken...",
-      "rename": "Umbenennen",
+      "rename": "Umbenennen...",
       "move_to": "Verschieben nach...",
       "copy_to": "Kopieren nach...",
       "move_copy": "Verschieben / Kopieren",
@@ -747,7 +778,7 @@
       "set_desktop_wallpaper": "Als Desktop-Hintergrund festlegen",
       "show_info": "Info anzeigen",
       "remove_from_collection": "Aus Sammlung entfernen",
-      "create_montage": "Collage erstellen",
+      "create_montage": "Collage erstellen...",
       "save_xmp": "Metadaten in XMP speichern",
       "xmp_save_success": "XMP-Metadaten für {count} Datei(en) gespeichert",
       "xmp_save_failed": "XMP konnte für {count} Datei(en) nicht gespeichert werden",
@@ -844,7 +875,6 @@
       "hide": "Ausblenden",
       "hidden": "Ausgeblendet",
       "remove": "Entfernen",
-      "reorder": "Ordnen",
       "rename": "Umbenennen",
       "switch_to": "Wechseln zu",
       "add_new": "Neue Bibliothek",
@@ -1008,6 +1038,7 @@
       "error": "Dateiauswahl fehlgeschlagen."
     },
     "file_refresh": {
+      "metadata_failed": "Metadatenimport fehlgeschlagen: {count}",
       "skipped": "Übersprungen: {count}",
       "status": "Aktualisierungsstatus",
       "running": "Wird aktualisiert…",
@@ -1016,7 +1047,6 @@
       "complete": "Abgeschlossen",
       "succeeded": "Aktualisiert: {count}",
       "failed": "Fehlgeschlagen: {count}",
-      "warnings": "Warnungen: {count}",
       "release_requested": "Freigabe angefordert: {count}",
       "kept_local": "Auf diesem Gerät behalten: {count}",
       "kept_local_hint": "Dateien, die immer auf diesem Gerät bleiben sollen oder für die Windows die Speicherplatzfreigabe durch Lap nicht zugelassen hat (überwachter Ordnerzugriff)."
@@ -1151,6 +1181,17 @@
     }
   },
   "file_info": {
+    "paths_copied": "{count} Dateipfad(e) in die Zwischenablage kopiert",
+    "copy_path": "Dateipfad kopieren",
+    "copy_path_failed": "Dateipfad konnte nicht kopiert werden",
+    "video_only": "(nur Videos)",
+    "field_preset": "Sichtbare Felder",
+    "fields_default": "Standard",
+    "fields_all": "Alle anzeigen",
+    "fields_custom": "Benutzerdefiniert",
+
+    "hide_empty_fields": "Leere Felder automatisch ausblenden",
+    "customize_fields": "Felder anpassen",
     "title": "Datei-Info",
     "preview": "Vorschau",
     "thumbnail": "Miniatur",
@@ -1210,10 +1251,10 @@
     "source_description": "Originalbeschreibung",
     "coordinates": "Koordinaten",
     "detail_fields": {
-      "title": "Originaltitel",
+      "title": "Titel",
+      "headline": "Überschrift",
       "creator": "Urheber",
       "copyright": "Copyright",
-      "description": "Originalbeschreibung",
       "credit": "Bildnachweis",
       "source": "Quelle",
       "usageTerms": "Nutzungsbedingungen",
@@ -1320,7 +1361,8 @@
       "appearance": "Erscheinungsbild",
       "appearance_options": [
         "Hell",
-        "Dunkel"
+        "Dunkel",
+        "System folgen"
       ],
       "theme": "Design",
       "theme_options_light": [
@@ -1383,6 +1425,10 @@
     "raw": {
       "title": "RAW",
       "section_pairs": "Gepaarte Dateien",
+      "clipboard_both": "Beide Dateien",
+      "clipboard_raw": "Nur RAW",
+      "clipboard_jpeg": "Nur JPEG/HEIC",
+      "clipboard_hint": "Gilt auch für Dateipfade. Kopieren oder Verschieben in Ordner bleibt unverändert.",
       "pair_source": "Standardanzeige für Paare",
       "pair_source_hint": "Wird für gepaarte Miniaturansichten und Vorschauen verwendet",
       "pair_jpeg": "JPEG / HEIC",
@@ -1541,7 +1587,7 @@
     },
     "image_search": {
       "title": "Suche",
-      "search_image": "Fotosuche",
+      "search_image": "Bildersuche",
       "search_model": "Modell auswählen",
       "default_model_hint": "Das Standardmodell unterstützt nur die Fotosuche auf Englisch",
       "multilingual_model_hint": "Suche in über 50 Sprachen",
@@ -1611,6 +1657,7 @@
         "open_new_window": "In neuem Fenster öffnen",
         "open_external_app": "In externer App öffnen",
         "edit_image": "Bearbeiten",
+        "copy_file_path": "Dateipfad kopieren",
         "copy_file": "In Zwischenablage kopieren",
         "paste_file": "Einfügen",
         "reveal_in_finder": "Im Finder anzeigen",

@@ -10,7 +10,7 @@
   >
     <template #title-actions
       ><button
-        class="t-button-default btn-outline gap-1.5"
+        class="t-button-default btn-outline gap-1.5 cursor-pointer"
         :disabled="!canEditTags"
         @click="edit()"
       >
@@ -25,7 +25,7 @@
         <input
           ref="tagSearchInputRef"
           v-model="tagSearch"
-          class="w-full px-2 py-1 bg-transparent text-sm focus:outline-none"
+          class="w-full min-w-0 px-2 py-1 bg-transparent text-sm focus:outline-none"
           :placeholder="$t('menu.tag.search')"
         />
         <button
@@ -35,13 +35,24 @@
         >
           <IconClose class="size-4" />
         </button>
+        <button type="button" class="p-1 mr-1 shrink-0 cursor-pointer"
+          :class="showSelectedOnly ? 'text-primary' : 'text-base-content/40 hover:text-base-content'"
+          :title="$t('tag.show_selected_only')" :aria-label="$t('tag.show_selected_only')"
+          :aria-pressed="showSelectedOnly" @click="showSelectedOnly = !showSelectedOnly">
+          <IconTag class="size-4" />
+        </button>
       </div>
       <div
-        class="min-h-48 max-h-[50vh] overflow-y-auto rounded-box p-2 bg-base-100/30 border border-base-content/10"
+        ref="tagListContainer"
+        class="relative rounded-box p-2 bg-base-100/30 border border-base-content/10"
+        :style="{ height: `min(50vh, max(192px, ${tagContentHeight + 18}px))` }"
         role="tree"
+        :aria-busy="isLoadingCatalog || isLoadingTags"
       >
+        <VirtualScroll ref="tagScroller" :items="filteredTags" :item-size="TAG_ROW_HEIGHT"
+          :geometry="tagGeometry" :content-height="tagContentHeight" :pinned-index="editorTagIndex">
+        <template #default="{ item: tag, index }">
         <div
-          v-for="(tag, index) in filteredTags"
           :key="tag.id"
           :id="`dialog-tag-${tag.id}`"
           role="treeitem"
@@ -49,17 +60,27 @@
           :aria-expanded="
             tag.hasChildren ? !collapsed.includes(tag.id) : undefined
           "
-          class="group flex items-center py-2 pr-1 rounded-box hover:bg-base-content/5 cursor-pointer"
+          class="group h-full flex items-center py-2 pl-1 pr-1 rounded-box hover:bg-base-content/5 cursor-pointer select-none"
           :class="{
             'text-primary': selectedTags.has(tag.id),
             'ring-2 ring-primary': focusedTagIndex === index,
           }"
-          :style="{ paddingLeft: `${4 + tag.depth * 16}px` }"
           @click="toggleTag(tag.id)"
         >
+          <input
+            type="checkbox"
+            class="checkbox checkbox-xs mx-1 shrink-0"
+            :class="{ 'checkbox-primary': selectedTags.has(tag.id) || intermediateTags.has(tag.id) }"
+            :disabled="!canEditTags || !!editor"
+            :checked="selectedTags.has(tag.id)"
+            :indeterminate="intermediateTags.has(tag.id)"
+            @click.stop
+            @change="toggleTag(tag.id)"
+          />
+          <div class="flex items-center flex-1 min-w-0" :style="{ paddingLeft: `${tag.depth * 16}px` }">
           <button
             v-if="tag.hasChildren"
-            class="size-5 shrink-0 flex items-center justify-center"
+            class="size-5 shrink-0 flex items-center justify-center cursor-pointer"
             @click.stop="toggleBranch(tag.id)"
           >
             <IconRight
@@ -68,37 +89,29 @@
             />
           </button>
           <span v-else class="size-5 shrink-0" aria-hidden="true" />
-          <input
-            type="checkbox"
-            class="checkbox checkbox-xs mx-1"
-            :class="{ 'checkbox-primary': selectedTags.has(tag.id) || intermediateTags.has(tag.id) }"
-            :disabled="!canEditTags || !!editor"
-            :checked="selectedTags.has(tag.id)"
-            :indeterminate="intermediateTags.has(tag.id)"
-            @click.stop
-            @change="toggleTag(tag.id)"
-          />
-          <IconTag class="size-5 p-0.5 shrink-0" />
           <TagNameInput
             v-if="editor && tag.id === (editor.id ?? -1)"
             :key="tag.id"
             :initial-name="editor.name"
             :saving="isCreatingTag"
             :error="error"
+            compact
+            class="select-text"
             @save="saveEditor"
             @cancel="cancelEditor"
             @clear-error="error = ''"
           />
           <span v-else class="min-w-0 flex-1 truncate">{{
-            tagSearch ? tag.path : tag.name
+            tagSearch && !showSelectedOnly ? tag.path : tag.name
           }}</span>
+          </div>
           <div
             v-if="!editor"
             class="hidden group-hover:flex shrink-0"
             @click.stop
           >
             <button
-              class="p-1 text-base-content/40 hover:text-primary"
+              class="p-1 text-base-content/40 hover:text-primary cursor-pointer"
               :disabled="!canEditTags"
               :title="$t('tag.add_child')"
               @click="edit(undefined, tag.id)"
@@ -106,7 +119,7 @@
               <IconTagAdd class="size-4" />
             </button>
             <button
-              class="p-1 text-base-content/40 hover:text-base-content"
+              class="p-1 text-base-content/40 hover:text-base-content cursor-pointer"
               :disabled="!canEditTags"
               :title="$t('menu.tag.rename')"
               @click="edit(tag)"
@@ -114,7 +127,7 @@
               <IconRename class="size-4" />
             </button>
             <button
-              class="p-1 text-base-content/40 hover:text-error"
+              class="p-1 text-base-content/40 hover:text-error cursor-pointer"
               :disabled="!canEditTags"
               :title="$t('tag.delete_tag')"
               @click="prepareDelete(tag)"
@@ -123,13 +136,19 @@
             </button>
           </div>
         </div>
+        </template>
+        </VirtualScroll>
+        <div v-if="isLoadingCatalog || isLoadingTags" class="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <span class="loading loading-spinner loading-sm" :aria-label="$t('tooltip.loading')" />
+        </div>
         <div
           v-if="!filteredTags.length && !isLoadingCatalog"
-          class="text-center py-10 text-base-content/40"
+          class="absolute inset-0 flex items-center justify-center text-base-content/40 pointer-events-none"
         >
-          {{ $t("tag.not_found") }}
+          {{ $t(showSelectedOnly ? "tag.no_selected_tags" : "tag.not_found") }}
         </div>
       </div>
+      <p v-if="editor && error" role="alert" class="text-xs text-error">{{ error }}</p>
       <p v-if="tagLoadFailed" class="text-sm text-error">
         {{ $t("tag.load_failed") }}
       </p>
@@ -206,6 +225,7 @@ import { useUIStore } from "@/stores/uiStore";
 import MessageBox from "./MessageBox.vue";
 import TagNameInput from "./TagNameInput.vue";
 import ModalDialog from "./ModalDialog.vue";
+import VirtualScroll from "./VirtualScroll.vue";
 
 const props = defineProps({
   fileIds: { type: Array as () => number[], default: () => [] },
@@ -217,6 +237,7 @@ const toast = useToast();
 const { t } = useI18n();
 const allTags = ref<LibraryTag[]>([]);
 const tagSearch = ref("");
+const showSelectedOnly = ref(false);
 const tagSearchInputRef = ref<HTMLInputElement | null>(null);
 const collapsed = ref<number[]>([]);
 const focusedTagIndex = ref(-1);
@@ -242,30 +263,70 @@ const intermediateTags = ref<Set<number>>(new Set());
 const initialSelectedTags = ref<Set<number>>(new Set());
 const initialIntermediateTags = ref<Set<number>>(new Set());
 const tagChanges = ref<Map<number, "add" | "remove">>(new Map());
-const filteredTags = computed(() =>
-  tagRows(
-    editor.value?.id === null
-      ? [
-          ...allTags.value,
-          {
-            id: -1,
-            name: editor.value.name,
-            parent_id: editor.value.parent,
-            path: editor.value.name,
-          },
-        ]
-      : allTags.value,
-    tagSearch.value,
-    collapsed.value,
-    0,
-    -1,
-  ),
-);
+const filteredTags = computed(() => {
+  let tags = editor.value?.id === null
+    ? [...allTags.value, { id: -1, name: editor.value.name, parent_id: editor.value.parent, path: editor.value.name }]
+    : allTags.value;
+  if (showSelectedOnly.value) {
+    const byId = new Map(tags.map(tag => [tag.id, tag]));
+    const included = new Set<number>();
+    const selected = new Set([...selectedTags.value, ...intermediateTags.value]);
+    if (editor.value) selected.add(editor.value.id ?? -1);
+    for (const id of selected) {
+      let tag = byId.get(id);
+      while (tag && !included.has(tag.id)) {
+        included.add(tag.id);
+        tag = tag.parent_id == null ? undefined : byId.get(tag.parent_id);
+      }
+    }
+    tags = tags.filter(tag => included.has(tag.id));
+  }
+  return tagRows(tags, tagSearch.value, collapsed.value, 0, -1);
+});
 const editor = ref<{
   id: number | null;
   name: string;
   parent: number | null;
 } | null>(null);
+const TAG_ROW_HEIGHT = 40;
+const tagListContainer = ref<HTMLElement | null>(null);
+const tagScroller = ref<InstanceType<typeof VirtualScroll> | null>(null);
+const tagListWidth = ref(0);
+const tagGeometry = computed(() => {
+  let y = 0;
+  return filteredTags.value.map(tag => {
+    const height = TAG_ROW_HEIGHT;
+    const box = { x: 0, y, width: tagListWidth.value, height };
+    y += height;
+    return box;
+  });
+});
+const tagContentHeight = computed(() => {
+  const last = tagGeometry.value.at(-1);
+  return last ? last.y + last.height : 0;
+});
+function scrollToTag(index: number) {
+  const box = tagGeometry.value[index];
+  const viewport = tagScroller.value?.$el as HTMLElement | undefined;
+  if (!box || !viewport) return;
+  if (box.y < viewport.scrollTop) tagScroller.value?.scrollToPosition(box.y);
+  else if (box.y + box.height > viewport.scrollTop + viewport.clientHeight)
+    tagScroller.value?.scrollToPosition(box.y + box.height - viewport.clientHeight);
+}
+const editorTagIndex = computed(() => editor.value
+  ? filteredTags.value.findIndex(tag => tag.id === (editor.value!.id ?? -1))
+  : -1);
+let tagListObserver: ResizeObserver | undefined;
+watch(filteredTags, async (rows, previous) => {
+  const focusedId = previous?.[focusedTagIndex.value]?.id;
+  focusedTagIndex.value = focusedId == null ? -1 : rows.findIndex(tag => tag.id === focusedId);
+  await nextTick();
+  if (editor.value) scrollToTag(editorTagIndex.value);
+  else {
+    const viewport = tagScroller.value?.$el as HTMLElement | undefined;
+    if (viewport) tagScroller.value?.scrollToPosition(Math.min(viewport.scrollTop, Math.max(0, tagContentHeight.value - viewport.clientHeight)));
+  }
+});
 const error = ref("");
 const deleteTarget = ref<
   (LibraryTag & { tag_count: number; file_count: number }) | null
@@ -353,9 +414,7 @@ async function saveEditor(value: string) {
     }
     await tauriEmit("tags-changed", { source: tagsChangeSource });
     await nextTick();
-    document
-      .getElementById(`dialog-tag-${id}`)
-      ?.scrollIntoView({ block: "nearest" });
+    scrollToTag(filteredTags.value.findIndex(tag => tag.id === id));
   } catch {
     error.value = t("tag.name_save_failed");
   } finally {
@@ -548,11 +607,7 @@ function handleKeyDown(event: KeyboardEvent) {
       ),
     );
     tagSearchInputRef.value?.blur();
-    document
-      .getElementById(
-        `dialog-tag-${filteredTags.value[focusedTagIndex.value]?.id}`,
-      )
-      ?.scrollIntoView({ block: "nearest" });
+    scrollToTag(focusedTagIndex.value);
   } else if (event.key === " " && focusedTagIndex.value >= 0) {
     event.preventDefault();
     const tag = filteredTags.value[focusedTagIndex.value];
@@ -576,6 +631,20 @@ function handleKeyDown(event: KeyboardEvent) {
 onMounted(async () => {
   uiStore.pushInputHandler("TaggingDialog");
   window.addEventListener("keydown", handleKeyDown);
+  tagListObserver = new ResizeObserver(() => {
+    tagListWidth.value = Math.max(0, (tagListContainer.value?.clientWidth ?? 0) - 16);
+  });
+  // ModalDialog renders its slot on the next tick, after it becomes visible.
+  void nextTick(() => {
+    if (disposed || !tagListContainer.value) return;
+    tagListWidth.value = Math.max(0, tagListContainer.value.clientWidth - 16);
+    tagListObserver?.observe(tagListContainer.value);
+  });
+  // Catalog and selection reads must not wait for event subscription.
+  void Promise.all([loadAllTags(), loadExistingTagsForFiles()]).then(async () => {
+    await nextTick();
+    if (!disposed) tagSearchInputRef.value?.focus();
+  });
   const stop = await listen<{ source?: string }>(
     "tags-changed",
     async (event) => {
@@ -589,12 +658,11 @@ onMounted(async () => {
     return;
   }
   unlisten = stop;
-  await Promise.all([loadAllTags(), loadExistingTagsForFiles()]);
-  await nextTick();
-  tagSearchInputRef.value?.focus();
+
 });
 onBeforeUnmount(() => {
   disposed = true;
+  tagListObserver?.disconnect();
   loadRequest++;
   selectionRequest++;
   unlisten?.();
@@ -602,7 +670,11 @@ onBeforeUnmount(() => {
   uiStore.removeInputHandler("TaggingDialog");
 });
 watch(() => libConfig._libraryId, clickCancel);
-watch(tagSearch, () => {
+watch(showSelectedOnly, enabled => {
+  if (enabled) collapsed.value = [];
+});
+watch([tagSearch, showSelectedOnly], () => {
   focusedTagIndex.value = -1;
+  tagScroller.value?.scrollToPosition(0);
 });
 </script>

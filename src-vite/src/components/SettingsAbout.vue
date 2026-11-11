@@ -13,7 +13,7 @@
     </div>
 
     <!-- package info -->
-    <div class="w-full max-w-lg rounded-box border border-base-content/5 bg-base-300/30 p-4 shadow-sm">
+    <div class="w-full rounded-box border border-base-content/5 bg-base-300/30 p-4 shadow-sm">
       <div class="space-y-3 text-left">
         <div class="grid grid-cols-[84px_1fr] items-start gap-3 text-sm">
           <div class="text-base-content/30">
@@ -79,7 +79,7 @@
     </div>
 
     <!-- updates -->
-    <div class="w-full max-w-lg rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+    <div class="w-full rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
       <div class="flex items-center gap-2 text-base-content/30">
         <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.about.section_updates') }}</span>
       </div>

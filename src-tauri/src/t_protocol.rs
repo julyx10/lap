@@ -14,7 +14,7 @@ fn text_response(status: http::StatusCode, body: &str) -> http::Response<Vec<u8>
         .unwrap()
 }
 
-fn detect_image_mime(data: &[u8]) -> &'static str {
+pub(crate) fn detect_image_mime(data: &[u8]) -> &'static str {
     if data.starts_with(&[0x89, 0x50, 0x4E, 0x47]) {
         "image/png"
     } else if data.starts_with(&[0xFF, 0xD8, 0xFF]) {
@@ -27,6 +27,8 @@ fn detect_image_mime(data: &[u8]) -> &'static str {
         || data.starts_with(&[0x49, 0x49, 0x2B, 0x00])
     {
         "image/tiff"
+    } else if data.starts_with(b"BM") {
+        "image/bmp"
     } else if data.starts_with(b"RIFF") && data.get(8..12) == Some(b"WEBP") {
         "image/webp"
     } else {
@@ -144,8 +146,6 @@ pub fn register_protocols(builder: Builder<Wry>) -> Builder<Wry> {
                             let path = file.file_path.as_deref().unwrap_or_default();
                             if let Some(thumb) = t_sqlite::AThumb::get_thumb_if_available(file_id, path, false, file.album_accessible)? {
                                 if let Some(data) = thumb.thumb_data { return Ok(Some((data, file.file_type == Some(3)))); }
-                                if thumb.error_code == 2 { return t_sqlite::AThumb::fetch_raw_for_library(file_id, &lookup_library)
-                                    .map(|data| data.map(|data| (data, false))); }
                             }
                             Ok(None)
                         })
@@ -163,8 +163,8 @@ pub fn register_protocols(builder: Builder<Wry>) -> Builder<Wry> {
                         let previous = t_sqlite::AThumb::fetch_record(file_id)?.and_then(|(thumb, _)| thumb.id);
                         let thumb = t_sqlite::AThumb::get_or_create_thumb(file_id, file.file_path.as_deref().unwrap_or_default(),
                             file.file_type.unwrap_or(0), file.e_orientation.unwrap_or(1) as i32,
-                            thumbnail_size, options, repair && t_sqlite::AThumb::auto_repair_allowed(&file, thumbnail_size, options), file.duration.map(|d| d as u64), None)?;
-                        if repair && thumb.as_ref().is_some_and(|thumb| ((thumb.error_code == 0 && thumb.thumb_data.is_some()) || thumb.error_code == 2)
+                            thumbnail_size, options, repair && t_sqlite::AThumb::auto_repair_allowed(&file, thumbnail_size, options), file.duration.map(|d| d as u64), None, repair)?;
+                        if repair && thumb.as_ref().is_some_and(|thumb| thumb.error_code == 0 && thumb.thumb_data.is_some()
                             && previous != thumb.id) {
                             use tauri::Emitter;
                             let _ = app.emit("thumbnail_ready", serde_json::json!({ "library_id": library_id, "album_id": file.album_id,
@@ -172,8 +172,6 @@ pub fn register_protocols(builder: Builder<Wry>) -> Builder<Wry> {
                         }
                         if let Some(thumb) = thumb {
                             if let Some(data) = thumb.thumb_data { return Ok(Some((data, file.file_type == Some(3)))); }
-                            if thumb.error_code == 2 { return t_sqlite::AThumb::fetch_raw_for_library(file_id, &library_id)
-                                .map(|data| data.map(|data| (data, false))); }
                         }
                         Ok(None)
                     })

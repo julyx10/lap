@@ -1,6 +1,6 @@
 //! Batch rename planning and rollback. Commands live in t_cmds.
 use crate::{
-    t_apple_sidecar::{build_apple_sidecar_rename_plan_cached, ImportAaeCache},
+    metadata::apple_sidecar::{build_apple_sidecar_rename_plan_cached, ImportAaeCache},
     t_sqlite::AFile,
     t_utils,
 };
@@ -158,7 +158,7 @@ fn plan_files(
         i64,
         &str,
         &str,
-    ) -> Result<Vec<crate::t_apple_sidecar::SidecarRenamePlan>, String>,
+    ) -> Result<Vec<crate::metadata::apple_sidecar::SidecarRenamePlan>, String>,
 ) -> Result<(RenamePreview, Vec<RenameMove>), String> {
     // A selected RAW/JPEG or Live Photo companion follows its primary, rather
     // than receiving a different sequence number and breaking the pair.
@@ -176,7 +176,7 @@ fn plan_files(
     };
     let mut moves = Vec::new();
     let mut parents = HashMap::new();
-    let mut xmp_cache = crate::t_xmp_files::Cache::default();
+    let mut xmp_cache = crate::metadata::files::Cache::default();
     for (index, id) in roots.iter().enumerate() {
         let file = &files[*id];
         let old_path = file
@@ -404,8 +404,8 @@ pub fn execute(
             })
         })
         .collect();
-    let xmp = crate::t_xmp_files::Guard::new(
-        moves.iter().map(|p| (p.old.as_path(), p.new.as_path())), crate::t_xmp_files::Operation::Move,
+    let xmp = crate::metadata::files::Guard::new(
+        moves.iter().map(|p| (p.old.as_path(), p.new.as_path())), crate::metadata::files::Operation::Move,
     )?;
     apply_moves(&moves, || AFile::batch_rename_names(&updates))?;
     xmp.commit();

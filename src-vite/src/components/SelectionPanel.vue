@@ -28,14 +28,14 @@
         </div>
         <div class="flex flex-wrap items-center gap-1">
           <PanelActionButton
-            :icon="IconChecked"
+            :icon="IconSelectAll"
             :disabled="fileCount === 0"
             @click="$emit('selectAll')"
           >
             {{ $t('menu.select.all') }}
           </PanelActionButton>
           <PanelActionButton
-            :icon="IconUnChecked"
+            :icon="IconDeselect"
             :disabled="selectedCount === 0"
             @click="$emit('selectNone')"
           >
@@ -115,7 +115,7 @@
             {{ $t('menu.meta.tag') }}
           </PanelActionButton>
           <PanelActionButton
-            :icon="IconStack"
+            :icon="IconCollection"
             :disabled="selectedCount === 0"
             @click="$emit('addToCollection')"
           >
@@ -168,7 +168,7 @@
             :disabled="selectedCount === 0 || originalsUnavailable"
             @click="$emit('rename')"
           >
-            {{ $t('msgbox.batch_rename.title') }}
+            {{ $t('menu.file.rename') }}
           </PanelActionButton>
           <PanelActionButton
             :icon="IconTrash"
@@ -199,7 +199,7 @@
           </PanelActionButton>
           <PanelActionButton
             v-if="querySource === 'collection'"
-            :icon="IconStack"
+            :icon="IconCollection"
             :disabled="selectedCount === 0"
             @click="$emit('removeFromCollection')"
           >
@@ -217,8 +217,8 @@ import { computed, type CSSProperties } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { formatFileSize, formatTimestamp, isMac } from '@/common/utils';
 import {
-  IconChecked,
-  IconUnChecked,
+  IconSelectAll,
+  IconDeselect,
   IconClose,
   IconComment,
   IconFileArrowRight,
@@ -226,7 +226,7 @@ import {
   IconTag,
   IconTrash,
   IconRename,
-  IconStack,
+  IconCollection,
 } from '@/common/icons';
 import TButton from '@/components/TButton.vue';
 import FavoriteRatingControl from '@/components/FavoriteRatingControl.vue';
@@ -361,7 +361,7 @@ const rotateDisplayLabel = computed(() => {
 });
 
 const visibleMoreActions = computed(() =>
-  props.moreActions.filter((item: any) => item?.label && !item.hidden && (item.action || item.children?.length))
+  props.moreActions.filter((item: any) => item?.label && !item.hidden && !item.hideInSelectionPanel && (item.action || item.children?.length))
 );
 
 // Items with a direct action fire immediately; submenu parents (e.g. "Open in

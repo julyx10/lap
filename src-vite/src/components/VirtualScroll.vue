@@ -33,6 +33,7 @@ const props = withDefaults(defineProps<{
   direction?: 'vertical' | 'horizontal';
   keyField?: string;
   buffer?: number;
+  pinnedIndex?: number; // Keep an inline editor mounted outside the viewport.
   emitUpdate?: boolean;
   geometry?: { x: number, y: number, width: number, height: number }[]; // Pre-calculated layout
   contentHeight?: number; // Total height for pre-calculated layout
@@ -41,6 +42,7 @@ const props = withDefaults(defineProps<{
   gridItems: 1,
   direction: 'vertical',
   keyField: 'id',
+  pinnedIndex: -1,
   buffer: 2, // Number of rows/cols to buffer
   emitUpdate: false,
   transition: false,
@@ -158,6 +160,11 @@ const visibleItems = computed(() => {
     }
   }
   
+  const pinned = props.pinnedIndex;
+  if (pinned >= 0 && pinned < props.items.length && !result.some(entry => entry.index === pinned)) {
+    result.push({ item: props.items[pinned], index: pinned });
+    result.sort((a, b) => a.index - b.index);
+  }
   return result;
 });
 

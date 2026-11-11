@@ -14,20 +14,20 @@ function fixture(smart = false) {
   const deps = { config, computed, isFixedAiResultView: ref(false), isSmartAlbumView: ref(smart),
     smartAlbumFileTypeMask: ref(0), tempViewMode: ref('none'), isScanStreamingMode: ref(false),
     rememberFocusedFileForPresentationRefresh() {}, getActiveCustomSmartAlbum: () => album,
-    fileTypeOptions: ref([{value:0,label:'All'},{value:1,label:'Photos'},{value:4,label:'RAW'},{value:2,label:'Video'}]) };
+    fileTypeOptions: ref([{value:0,label:'All'},{value:5,label:'Images'},{value:4,label:'RAW'},{value:2,label:'Video'}]) };
   const api = new Function(...Object.keys(deps), ts.transpile(functions, {target: ts.ScriptTarget.ES2022})
-    + ';return {toggleFavoritesFilter, handleFileTypeSelect, activeFavoritesOnly, fileTypeSummaryLabel};')(...Object.values(deps));
+    + ';return {toggleFavoritesFilter, handleFileTypeSelect, activeFavoritesOnly, fileTypeSelectedIndex};')(...Object.values(deps));
   return { ...deps, ...api, album };
 }
 
 test('Favorites only composes with media types, and All does not clear it', () => {
   const f = fixture();
-  f.handleFileTypeSelect([1, 4]);
+  f.handleFileTypeSelect(1);
   f.toggleFavoritesFilter();
   assert.equal(f.config.search.fileType, 5);
   assert.equal(f.activeFavoritesOnly.value, true);
-  assert.equal(f.fileTypeSummaryLabel.value, 'Photos + RAW');
-  f.handleFileTypeSelect([0]);
+  assert.equal(f.fileTypeSelectedIndex.value, 1);
+  f.handleFileTypeSelect(0);
   assert.equal(f.config.search.fileType, 0);
   assert.equal(f.activeFavoritesOnly.value, true);
   f.toggleFavoritesFilter();
@@ -75,4 +75,15 @@ test('ordinary and collection query snapshots include the independent Favorite c
   assert.equal(deps.currentQuerySource.value, 'collection');
   assert.equal(deps.currentQueryParams.value.isFavorite, true);
   assert.equal(deps.currentQueryParams.value.searchFileType, 5);
+});
+
+test('toolbar media filter does not rewrite smart album rules', () => {
+  const f = fixture(true);
+  f.album.query.rules.push({ field: 'file_type', operator: 'is_not', value: 4 });
+  const before = structuredClone(f.album);
+  f.handleFileTypeSelect(2);
+  assert.equal(f.config.search.fileType, 4);
+  assert.deepEqual(f.album, before);
+  f.handleFileTypeSelect(0);
+  assert.deepEqual(f.album, before);
 });

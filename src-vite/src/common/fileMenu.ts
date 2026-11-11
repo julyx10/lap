@@ -1,10 +1,11 @@
-import { isOriginalUnavailable, requiresOriginalAction } from '@/common/availability';
+import { isOriginalStorageUnavailable, isOriginalUnavailable, requiresOriginalAction } from '@/common/availability';
 import { computed, markRaw, Ref } from 'vue';
 import { config, libConfig } from '@/common/config';
 import { SIDEBAR } from '@/common/constants';
 import { DEFAULT_PLATFORM, getShortcutLabel, ShortcutActionId } from '@/common/shortcuts';
 import {
   IconMonitor,
+  IconBrackets,
   IconPrint,
   IconCloud,
   IconRefresh,
@@ -26,7 +27,7 @@ import {
   IconFlag,
   IconFlagFilled,
   IconFlagOff,
-  IconStack,
+  IconCollection,
   IconSplitOn,
   IconSplitOn4,
   IconCollage,
@@ -50,11 +51,25 @@ export const useFileMenuItems = (
     selectionMediaKind?: Ref<'image' | 'video' | 'mixed' | 'empty'>;
     selectionCount?: Ref<number>;
     selectionHasUnavailable?: Ref<boolean>;
+    selectionStorageUnavailable?: Ref<boolean>;
     selectionHasCloudOnly?: Ref<boolean>;
+    selectionInCollection?: Ref<boolean>;
+    selectionFirstFavorite?: Ref<boolean>;
   }
 ) => {
+  const requiresAvailableFile = (action: string) => action === 'copy' || requiresOriginalAction(action);
+  const actionUnavailable = (action: string, target: any) => {
+    if (options?.selectMode?.value) {
+      return action === 'copy'
+        ? (options.selectionStorageUnavailable?.value ?? options.selectionHasUnavailable?.value)
+        : options.selectionHasUnavailable?.value;
+    }
+    return action === 'copy'
+      ? isOriginalStorageUnavailable(target)
+      : isOriginalUnavailable(target);
+  };
   const createAction = (actionName: string) => Object.assign(() => {
-    if (requiresOriginalAction(actionName) && (options?.selectMode?.value ? options?.selectionHasUnavailable?.value : isOriginalUnavailable(file.value))) return;
+    if (requiresAvailableFile(actionName) && actionUnavailable(actionName, file.value)) return;
     onAction(actionName);
   }, { actionName });
   const shortcut = (actionId: ShortcutActionId) => getShortcutLabel(actionId, DEFAULT_PLATFORM);
@@ -90,22 +105,67 @@ export const useFileMenuItems = (
     const externalAppKind = kind === 'image' || kind === 'video' ? kind : undefined;
     const selectionCount = options?.selectionCount?.value ?? 0;
     const unavailable = options?.selectionHasUnavailable?.value === true;
+    const batchActions = new Set([
+      'tag', 'add-to-collection', 'comment', 'rotate', 'rename', 'copy', 'trash',
+    ]);
+    const batchLabels = new Set([
+      localeMsg.value.rating.title,
+      localeMsg.value.culling.title,
+      translate('menu.file.move_copy'),
+    ]);
+    const batchItems = buildSingleFileMenu({}).filter(item =>
+      batchActions.has(item.action?.actionName) || batchLabels.has(item.label)
+    ).map(item => ({
+      ...item,
+      disabled: selectionCount === 0
+        || (requiresAvailableFile(item.action?.actionName || '') && actionUnavailable(item.action.actionName, null))
+        || (unavailable && item.label === translate('menu.file.move_copy')),
+      hideInSelectionPanel: true,
+    }));
+
     return [
       {
-        label: String(localeMsg.value.menu.file.compare_selected_images || 'Compare selected images'),
+        label: String(localeMsg.value.menu.file.compare_selected_images || 'Compare selected images...'),
         icon: markRaw(selectionCount >= 3 ? IconSplitOn4 : IconSplitOn),
         disabled: kind !== 'image' || selectionCount < 2,
         action: createAction('compare-selected-images'),
       },
+      // A mixed image+video selection has no single external-app target, so
+      // disable the entry rather than showing an empty app list.
+      { ...externalAppMenu(externalAppKind), disabled: unavailable || kind === 'mixed' },
       {
-        label: String(localeMsg.value.menu.file.create_montage || 'Create montage'),
+        label: String(localeMsg.value.menu.file.create_montage || 'Create montage...'),
         icon: markRaw(IconCollage),
         disabled: unavailable || selectionCount < 2,
         action: createAction('create-montage'),
       },
-      // A mixed image+video selection has no single external-app target, so
-      // disable the entry rather than showing an empty app list.
-      { ...externalAppMenu(externalAppKind), disabled: unavailable || kind === 'mixed' },
+      { label: '-', action: null },
+      {
+        label: options?.selectionFirstFavorite?.value
+          ? localeMsg.value.menu.meta.unfavorite
+          : localeMsg.value.menu.meta.favorite,
+        icon: markRaw(options?.selectionFirstFavorite?.value ? IconHeartFilled : IconHeart),
+        shortcut: shortcut('meta.favorite'),
+        disabled: selectionCount === 0,
+        action: createAction(options?.selectionFirstFavorite?.value ? 'unfavorite-all' : 'favorite-all'),
+        hideInSelectionPanel: true,
+      },
+      ...batchItems.filter(item =>
+        !['rename', 'copy', 'trash'].includes(item.action?.actionName)
+        && item.label !== translate('menu.file.move_copy')
+      ),
+      { label: '-', action: null },
+      ...batchItems.filter(item => item.action?.actionName === 'rename'),
+      ...batchItems.filter(item => item.action?.actionName === 'copy'),
+      ...batchItems.filter(item => item.label === translate('menu.file.move_copy')),
+      {
+        label: localeMsg.value.menu.file.remove_from_collection,
+        hidden: !options?.selectionInCollection?.value,
+        disabled: selectionCount === 0,
+        action: createAction('remove-selected-from-collection'),
+        hideInSelectionPanel: true,
+      },
+      { label: '-', action: null },
       {
         label: localeMsg.value.menu.file.refresh_file_info,
         icon: markRaw(IconRefresh),
@@ -122,9 +182,12 @@ export const useFileMenuItems = (
       },
       {
         label: String(localeMsg.value.menu.file.save_xmp || 'Save Metadata to XMP'),
+        icon: markRaw(IconBrackets),
         disabled: unavailable || selectionCount === 0,
         action: createAction('save-xmp'),
       },
+      { label: '-', action: null },
+      ...batchItems.filter(item => item.action?.actionName === 'trash'),
     ];
   };
 
@@ -253,7 +316,7 @@ export const useFileMenuItems = (
       },
       {
         label: localeMsg.value.menu.meta.collection,
-        icon: markRaw(IconStack),
+        icon: markRaw(IconCollection),
         shortcut: shortcut('meta.collection'),
         action: createAction('add-to-collection'),
       },
@@ -331,6 +394,7 @@ export const useFileMenuItems = (
       },
       {
         label: String(localeMsg.value.menu.file.save_xmp || 'Save Metadata to XMP'),
+        icon: markRaw(IconBrackets),
         action: createAction('save-xmp'),
       },
       {
@@ -358,12 +422,15 @@ export const useFileMenuItems = (
       },
     ];
     const applyAvailability = (item: any): any => {
-      const requiresOriginal = requiresOriginalAction(item.action?.actionName || '')
-        || item.label === menuLabel(OPEN_IN_APP_LABELS.generic)
+      const action = item.action?.actionName || '';
+      const requiresAvailableGroup = item.label === menuLabel(OPEN_IN_APP_LABELS.generic)
         || item.label === translate('menu.file.move_copy');
       return {
         ...item,
-        disabled: !!item.disabled || (unavailable && requiresOriginal),
+        disabled: !!item.disabled
+          || (action === 'copy'
+            ? actionUnavailable(action, f)
+            : unavailable && (requiresOriginalAction(action) || requiresAvailableGroup)),
         children: item.children?.map(applyAvailability),
       };
     };

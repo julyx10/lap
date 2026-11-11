@@ -84,7 +84,7 @@
       "name": "Назва",
       "description": "Опис",
       "description_placeholder": "Введіть опис альбому",
-      "images": "Фотографії",
+      "images": "Зображення",
       "videos": "Відео",
       "section_general": "Загальні",
       "section_scan": "Стан сканування",
@@ -109,7 +109,6 @@
       "last_scan_time": "Востаннє проскановано",
       "tab_general": "Загальні",
       "file_types": "Виключити типи файлів",
-      "photos": "Фотографії",
       "raw": "RAW",
       "file_types_required": "Залиште принаймні один тип файлів увімкненим.",
       "pixel_filter": "Виключити малі зображення",
@@ -148,6 +147,9 @@
       "add_rule": "Додати правило",
       "rules_count": "{count}/{max} правил",
       "remove_rule": "Вилучити правило",
+      "search_options": "Фільтр…",
+      "no_matches": "Немає збігів",
+      "select_value": "Вибрати…",
       "group": "Група",
       "sort": "Сортування",
       "order": "Порядок",
@@ -232,6 +234,7 @@
     }
   },
   "offline": {
+    "badge": "Офлайн",
     "cloud_only": "Доступний лише в мережі",
     "cloud_only_pending": "Доступний лише в мережі — відомості про файл неповні",
     "original_unavailable": "Оригінальний файл недоступний",
@@ -247,6 +250,7 @@
     "copy_failed": "Не вдалося імпортувати цей файл."
   },
   "import_organize": {
+    "title": "Імпортувати папку",
     "section_folders": "Виберіть теку",
     "section_status": "Стан імпорту",
     "to_import": "До імпорту",
@@ -258,7 +262,7 @@
     "layout_day": "За днями — РРРР/РРРР-ММ-ДД",
     "layout_month": "За місяцями — РРРР/РРРР-ММ",
     "layout_year": "За роками — РРРР",
-    "layout_none": "Одна тека",
+    "layout_structure": "Зберегти структуру папок",
     "import": "Імпортувати",
     "preparing": "Підготовка імпорту",
     "importing": "Імпортування файлів",
@@ -284,7 +288,7 @@
   "search": {
     "title": "Пошук",
     "similar_images": "Схожі фотографії",
-    "image_search_placeholder": "Пошук зображень, назв файлів або описів",
+    "image_search_placeholder": "Пошук у бібліотеці",
     "matches": "Збіги",
     "unknown_location": "Невідоме місце",
     "unknown_camera": "Невідома камера",
@@ -353,6 +357,8 @@
     "unreviewed": "Не переглянуті"
   },
   "tag": {
+    "no_selected_tags": "Немає вибраних тегів",
+    "show_selected_only": "Показати лише вибрані теги",
     "title": "Теги",
     "delete_tag": "Видалити тег",
     "edit_tag": "Редагувати теги",
@@ -368,7 +374,7 @@
     "add_child": "Створити дочірній тег",
     "invalid_name": "Назви тегів не можуть містити , ; або {'|'}.",
     "invalid_move": "Не можна перемістити тег до його власного піддерева.",
-    "delete_tree": "Цей тег і його дочірні теги буде видалено. Фотографії залишаться."
+    "delete_tree": "Цей тег і його дочірні теги буде видалено. Зображення залишаться."
   },
   "subject": {
     "title": "Сюжети",
@@ -488,8 +494,8 @@
       ],
       "file_type_options": [
         "Усі",
-        "Фотографії",
-        "RAW-файли",
+        "Зображення",
+        "Лише RAW",
         "Відео"
       ],
       "file_type_other": "Інше"
@@ -534,8 +540,8 @@
       "move": "Перемістити"
     },
     "edit_disabled": "Виберіть одну фотографію для редагування",
-    "type_image": "Фотографія",
-    "type_images": "Фотографії",
+    "type_image": "Зображення",
+    "type_images": "Зображення",
     "type_video": "Відео",
     "type_videos": "Відео",
     "select_title": "Вибір",
@@ -547,10 +553,34 @@
     "more_actions": "Більше дій",
     "tag_all": "Тег",
     "dedup": {
+      "keep_rules": {
+        "title": "Правила збереження",
+        "priority_order": "Порядок пріоритетів",
+        "folders": "Пріоритетні папки",
+        "subfolders": "Включно з підпапками. Вищі позиції в списку мають пріоритет.",
+        "folders_skipped": "Не задано, правило пропущено",
+        "add_folder": "Додати папку",
+        "folder_already_added": "Уже додано",
+        "format": "Бажаний формат",
+        "similar_only": "Лише схожі зображення",
+        "raw_first": "Спочатку RAW",
+        "jpeg_heic_first": "Спочатку JPEG / HEIC",
+        "size": "Бажаний розмір",
+        "largest_dimensions": "Найвища роздільна здатність",
+        "smallest_dimensions": "Найнижча роздільна здатність",
+        "largest_file_size": "Найбільший розмір файлу",
+        "smallest_file_size": "Найменший розмір файлу",
+        "ignore": "Не враховувати",
+        "time": "Бажана дата",
+        "created_earliest": "Створено найраніше",
+        "created_latest": "Створено найпізніше",
+        "modified_earliest": "Змінено найраніше",
+        "modified_latest": "Змінено найпізніше"
+      },
       "title": "Дублікати",
       "tabs": {
         "exact": "Дублікати",
-        "similar": "Схожі фотографії"
+        "similar": "Схожі зображення"
       },
       "scanning": "Сканування дублікатів...",
       "error_title": "Не вдалося просканувати дублікати",
@@ -704,6 +734,7 @@
     "album": {
       "add": "Новий альбом",
       "edit": "Редагувати альбом...",
+      "import_folder": "Імпортувати папку…",
       "scan": "Сканувати альбом",
       "reorder": "Змінити порядок",
       "pause_scan": "Призупинити сканування",
@@ -722,14 +753,14 @@
       "open_image_in_app": "Відкрити фотографію в {app}...",
       "open_video_in_app": "Відкрити відео в {app}...",
       "open_selected_images_in_app": "Відкрити фотографії в {app}...",
-      "compare_selected_images": "Порівняти",
+      "compare_selected_images": "Порівняти...",
       "open_selected_videos_in_app": "Відкрити відео в {app}...",
       "open_in_app": "Відкрити у зовнішньому застосунку...",
       "manage_app": "Керувати застосунками...",
       "find_similar_images": "Знайти схожі фотографії",
       "find_person_images": "Знайти цю людину",
       "print": "Друк...",
-      "rename": "Перейменувати",
+      "rename": "Перейменувати...",
       "move_to": "Перемістити до...",
       "copy_to": "Копіювати до...",
       "move_copy": "Перемістити / Копіювати",
@@ -747,7 +778,7 @@
       "set_desktop_wallpaper": "Зробити шпалерами стільниці",
       "show_info": "Показати відомості",
       "remove_from_collection": "Вилучити з добірки",
-      "create_montage": "Створити колаж",
+      "create_montage": "Створити колаж...",
       "save_xmp": "Зберегти метадані в XMP",
       "xmp_save_success": "Метадані XMP збережено для {count} файлів",
       "xmp_save_failed": "Не вдалося зберегти XMP для {count} файлів",
@@ -844,7 +875,6 @@
       "hide": "Приховати",
       "hidden": "Прихована",
       "remove": "Вилучити",
-      "reorder": "Змінити порядок",
       "rename": "Перейменувати",
       "switch_to": "Перемкнутися на",
       "add_new": "Нова бібліотека",
@@ -1008,6 +1038,7 @@
       "error": "Не вдалося вибрати файл."
     },
     "file_refresh": {
+      "metadata_failed": "Помилки імпорту метаданих: {count}",
       "skipped": "Пропущено: {count}",
       "status": "Стан оновлення",
       "running": "Оновлення…",
@@ -1016,7 +1047,6 @@
       "complete": "Завершено",
       "succeeded": "Оновлено: {count}",
       "failed": "Не вдалося: {count}",
-      "warnings": "Попередження: {count}",
       "release_requested": "Запитано звільнення: {count}",
       "kept_local": "Залишено на цьому пристрої: {count}",
       "kept_local_hint": "Файли, які завжди зберігаються на цьому пристрої, або файли, для яких Windows не дозволила Lap звільнити місце (контрольований доступ до папок)."
@@ -1151,6 +1181,17 @@
     }
   },
   "file_info": {
+    "paths_copied": "Скопійовано шляхів до файлів у буфер обміну: {count}",
+    "copy_path": "Копіювати шлях до файлу",
+    "copy_path_failed": "Не вдалося скопіювати шлях",
+    "video_only": "(лише відео)",
+    "field_preset": "Видимі поля",
+    "fields_default": "Типові",
+    "fields_all": "Показати всі",
+    "fields_custom": "Власні",
+
+    "hide_empty_fields": "Автоматично приховувати порожні поля",
+    "customize_fields": "Налаштувати поля",
     "title": "Відомості",
     "preview": "Попередній перегляд",
     "thumbnail": "Мініатюра",
@@ -1210,10 +1251,10 @@
     "source_description": "Початковий опис",
     "coordinates": "Координати",
     "detail_fields": {
-      "title": "Початковий заголовок",
+      "title": "Назва",
+      "headline": "Заголовок матеріалу",
       "creator": "Автор",
       "copyright": "Авторські права",
-      "description": "Початковий опис",
       "credit": "Постачальник",
       "source": "Джерело",
       "usageTerms": "Умови використання",
@@ -1320,7 +1361,8 @@
       "appearance": "Колірний режим",
       "appearance_options": [
         "Світлий",
-        "Темний"
+        "Темний",
+        "Як у системі"
       ],
       "theme": "Тема",
       "theme_options_light": [
@@ -1383,6 +1425,10 @@
     "raw": {
       "title": "RAW",
       "section_pairs": "Парні файли",
+      "clipboard_both": "Обидва файли",
+      "clipboard_raw": "Лише RAW",
+      "clipboard_jpeg": "Лише JPEG/HEIC",
+      "clipboard_hint": "Також застосовується до шляхів. Не впливає на копіювання та переміщення до папок.",
       "pair_source": "Типове відображення для пар",
       "pair_source_hint": "Використовується для парних мініатюр і попередніх переглядів",
       "pair_jpeg": "JPEG / HEIC",
@@ -1541,7 +1587,7 @@
     },
     "image_search": {
       "title": "Пошук",
-      "search_image": "Пошук фотографій",
+      "search_image": "Пошук зображень",
       "search_model": "Виберіть модель",
       "default_model_hint": "Типова модель підтримує лише пошук фотографій англійською",
       "multilingual_model_hint": "Пошук понад 50 мовами",
@@ -1611,6 +1657,7 @@
         "open_new_window": "Переглянути в новому вікні",
         "open_external_app": "Відкрити у зовнішньому застосунку",
         "edit_image": "Редагувати",
+        "copy_file_path": "Копіювати шлях до файлу",
         "copy_file": "Копіювати до буфера обміну",
         "paste_file": "Вставити",
         "reveal_in_finder": "Показати у Finder",

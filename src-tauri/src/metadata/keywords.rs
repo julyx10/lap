@@ -1,88 +1,13 @@
 //! XMP keyword interoperability. Add formats here, not in scanners or DB code.
 //! Match namespace URIs, never user-chosen prefixes. Keep read/write capabilities
 //! explicit: importing a vendor field does not imply that Lap can rewrite it.
-use crate::t_xmp::{parse_xml, XmlNode, XmpMetadata, NS_DC, NS_RDF};
+use crate::metadata::xmp::{parse_xml, XmlNode, XmpMetadata, NS_RDF};
 use exiftool_rs::{Tag, Value};
 use std::collections::{BTreeMap, HashSet};
 
-pub const NS_LR: &str = "http://ns.adobe.com/lightroom/1.0/";
-pub const NS_DIGIKAM: &str = "http://www.digikam.org/ns/1.0/";
-pub const NS_ACDSEE: &str = "http://ns.acdsee.com/iptc/1.0/";
-
-#[derive(Clone, Copy)]
-enum Encoding {
-    Flat,
-    Path(char),
-    Categories,
-}
-
-#[derive(Clone, Copy, PartialEq)]
-enum WriteRule {
-    Always,
-    IfPresentOrPaths,
-    IfPresent,
-    Preserve,
-}
-
-struct Format {
-    uri: &'static str,
-    prefix: &'static str,
-    property: &'static str,
-    backend_name: &'static str,
-    encoding: Encoding,
-    container: &'static str,
-    write: WriteRule,
-}
-
-const FORMATS: &[Format] = &[
-    // A test-only schema proves that the parser/writer need no per-app changes.
-    #[cfg(test)]
-    Format {
-        uri: "urn:lap:test-keywords",
-        prefix: "testtags",
-        property: "paths",
-        backend_name: "TestPaths",
-        encoding: Encoding::Path('>'),
-        container: "Bag",
-        write: WriteRule::IfPresent,
-    },
-    Format {
-        uri: NS_DC,
-        prefix: "dc",
-        property: "subject",
-        backend_name: "Subject",
-        encoding: Encoding::Flat,
-        container: "Bag",
-        write: WriteRule::Always,
-    },
-    Format {
-        uri: NS_LR,
-        prefix: "lr",
-        property: "hierarchicalSubject",
-        backend_name: "HierarchicalSubject",
-        encoding: Encoding::Path('|'),
-        container: "Bag",
-        write: WriteRule::IfPresentOrPaths,
-    },
-    Format {
-        uri: NS_DIGIKAM,
-        prefix: "digiKam",
-        property: "TagsList",
-        backend_name: "TagsList",
-        encoding: Encoding::Path('/'),
-        container: "Seq",
-        write: WriteRule::IfPresent,
-    },
-    Format {
-        uri: NS_ACDSEE,
-        prefix: "acdsee",
-        property: "categories",
-        backend_name: "Categories",
-        encoding: Encoding::Categories,
-        container: "",
-        write: WriteRule::IfPresent,
-    },
-];
+#[cfg(test)]
+use super::schema::{NS_LR, NS_DIGIKAM, NS_ACDSEE};
+use super::schema::{Encoding, WriteRule, Format, FORMATS};
 
 fn format(uri: &str, name: &str) -> Option<(usize, &'static Format)> {
     FORMATS
@@ -373,7 +298,7 @@ mod tests {
         writer.observe(NS_LR, "hierarchicalSubject");
         let output = writer.render(&[], Some(&[]));
         assert!(output.contains("hierarchicalSubject"));
-        assert_eq!(crate::t_xmp::parse_xmp_str(&packet(&output)).unwrap().hierarchical_tags, Some(vec![]));
+        assert_eq!(crate::metadata::xmp::parse_xmp_str(&packet(&output)).unwrap().hierarchical_tags, Some(vec![]));
     }
 
     fn packet(body: &str) -> String {
@@ -387,10 +312,10 @@ mod tests {
             std::env::temp_dir().join(format!("lap-xmp-compat-{}.jpg", uuid::Uuid::new_v4()));
         std::fs::write(
             &file,
-            crate::t_metadata::tests::jpeg_with_xmp_packet(xml.as_bytes()),
+            crate::metadata::embedded::tests::jpeg_with_xmp_packet(xml.as_bytes()),
         )
         .unwrap();
-        let metadata = crate::t_metadata::read(&file).organization;
+        let metadata = crate::metadata::embedded::read(&file).organization;
         std::fs::remove_file(file).unwrap();
         metadata
     }
@@ -398,7 +323,7 @@ mod tests {
     #[test]
     fn registered_schema_uses_generic_import_and_export_with_any_prefix() {
         let xml = packet("<alias:paths xmlns:alias=\"urn:lap:test-keywords\"><rdf:Bag><rdf:li>Places&gt;Paris</rdf:li></rdf:Bag></alias:paths>");
-        let parsed = crate::t_xmp::parse_xmp_str(&xml).unwrap();
+        let parsed = crate::metadata::xmp::parse_xmp_str(&xml).unwrap();
         let paths = vec!["Places|Paris".into()];
         assert_eq!(parsed.hierarchical_tags, Some(paths.clone()));
         assert_eq!(embedded(&xml).hierarchical_tags, Some(paths.clone()));
@@ -407,7 +332,7 @@ mod tests {
         writer.observe("urn:lap:test-keywords", "paths");
         let output = writer.render(&["Paris".into()], Some(&paths));
         assert!(output.contains("Places&gt;Paris"));
-        let reread = crate::t_xmp::parse_xmp_str(&packet(&output)).unwrap();
+        let reread = crate::metadata::xmp::parse_xmp_str(&packet(&output)).unwrap();
         assert_eq!(reread.hierarchical_tags, Some(paths));
     }
 
@@ -419,11 +344,11 @@ mod tests {
 
     #[test]
     fn empty_missing_and_existing_category_writeback_remain_distinct() {
-        assert!(crate::t_xmp::parse_xmp_str(&packet(""))
+        assert!(crate::metadata::xmp::parse_xmp_str(&packet(""))
             .unwrap()
             .tags
             .is_none());
-        let empty = crate::t_xmp::parse_xmp_str(&packet(
+        let empty = crate::metadata::xmp::parse_xmp_str(&packet(
             "<a:paths xmlns:a=\"urn:lap:test-keywords\"><rdf:Bag/></a:paths>",
         ))
         .unwrap();
@@ -433,7 +358,7 @@ mod tests {
         let mut writer = TagWriter::default();
         assert!(!writer.render(&[], Some(&[])).contains("categories"));
         writer.observe(NS_ACDSEE, "categories");
-        let empty = crate::t_xmp::parse_xmp_str(&packet(&writer.render(&[], Some(&[])))).unwrap();
+        let empty = crate::metadata::xmp::parse_xmp_str(&packet(&writer.render(&[], Some(&[])))).unwrap();
         assert_eq!(empty.tags, Some(vec![]));
     }
 
@@ -472,7 +397,7 @@ mod tests {
             Some(&paths),
         );
         assert!(output.contains("Paris &amp;amp; France"));
-        let parsed = crate::t_xmp::parse_xmp_str(&packet(&output)).unwrap();
+        let parsed = crate::metadata::xmp::parse_xmp_str(&packet(&output)).unwrap();
         let mut actual = parsed.hierarchical_tags.unwrap();
         actual.sort();
         assert_eq!(actual, expected);
@@ -486,7 +411,7 @@ mod tests {
         let output = writer.render(&["Paris".into(), "Rome".into()], Some(&paths));
         assert!(output.contains("<rdf:li>Places/Rome</rdf:li>"));
         assert!(!output.contains("<rdf:li>Trips/2024/Paris</rdf:li>"));
-        let parsed = crate::t_xmp::parse_xmp_str(&packet(&output)).unwrap();
+        let parsed = crate::metadata::xmp::parse_xmp_str(&packet(&output)).unwrap();
         assert_eq!(parsed.hierarchical_tags, Some(paths));
     }
 }

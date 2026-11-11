@@ -22,6 +22,7 @@ export type ShortcutActionId =
   | 'file.openExternalApp'
   | 'file.editImage'
   | 'file.copy'
+  | 'file.copyPath'
   | 'file.paste'
   | 'file.selectAll'
   | 'file.selectNone'
@@ -188,10 +189,19 @@ export const SHORTCUTS: readonly ShortcutDefinition[] = [
     ],
   },
   {
+    id: 'file.copyPath',
+    contexts: ['content', 'image-viewer'],
+    defaultBindings: [
+      { code: 'KeyC', modifiers: ['meta', 'alt'], platforms: ['mac'], label: '⌥⌘C' },
+      { code: 'KeyC', modifiers: ['ctrl', 'shift'], platforms: ['windows', 'linux'], label: 'Ctrl+Shift+C' },
+    ],
+  },
+  {
     id: 'file.copy',
     contexts: ['content'],
     defaultBindings: [
-      { code: 'KeyC', modifiers: ['cmdOrCtrl'], allowShift: true, label: { mac: '⌘C', windows: 'Ctrl+C', linux: 'Ctrl+C' } },
+      { code: 'KeyC', modifiers: ['meta'], platforms: ['mac'], allowShift: true, label: '⌘C' },
+      { code: 'KeyC', modifiers: ['ctrl'], platforms: ['windows', 'linux'], label: 'Ctrl+C' },
     ],
   },
   {

@@ -84,7 +84,7 @@
       "name": "Név",
       "description": "Leírás",
       "description_placeholder": "Albumleírás megadása",
-      "images": "Fotók",
+      "images": "Képek",
       "videos": "Videók",
       "section_general": "Általános",
       "section_scan": "Beolvasás állapota",
@@ -109,7 +109,6 @@
       "last_scan_time": "Utolsó beolvasás",
       "tab_general": "Általános",
       "file_types": "Fájltípusok kizárása",
-      "photos": "Fotók",
       "raw": "RAW",
       "file_types_required": "Legalább egy fájltípust meg kell hagynia.",
       "pixel_filter": "Kis képek kizárása",
@@ -148,6 +147,9 @@
       "add_rule": "Szabály hozzáadása",
       "rules_count": "{count}/{max} szabály",
       "remove_rule": "Szabály eltávolítása",
+      "search_options": "Szűrés…",
+      "no_matches": "Nincs találat",
+      "select_value": "Kiválasztás…",
       "group": "Csoport",
       "sort": "Rendezés",
       "order": "Sorrend",
@@ -232,6 +234,7 @@
     }
   },
   "offline": {
+    "badge": "Offline",
     "cloud_only": "Csak online érhető el",
     "cloud_only_pending": "Csak online érhető el — hiányos fájlinformációk",
     "original_unavailable": "Az eredeti fájl nem érhető el",
@@ -247,6 +250,7 @@
     "copy_failed": "Nem sikerült importálni ezt a fájlt."
   },
   "import_organize": {
+    "title": "Mappa importálása",
     "section_folders": "Mappa kiválasztása",
     "section_status": "Importálás állapota",
     "to_import": "Importálandó",
@@ -258,7 +262,7 @@
     "layout_day": "Nap szerint — YYYY/YYYY-MM-DD",
     "layout_month": "Hónap szerint — YYYY/YYYY-MM",
     "layout_year": "Év szerint — YYYY",
-    "layout_none": "Egy mappa",
+    "layout_structure": "Mappaszerkezet megőrzése",
     "import": "Importálás",
     "preparing": "Importálás előkészítése",
     "importing": "Fájlok importálása",
@@ -284,7 +288,7 @@
   "search": {
     "title": "Keresés",
     "similar_images": "Kapcsolódó fotók",
-    "image_search_placeholder": "Képek, fájlnevek vagy leírások keresése",
+    "image_search_placeholder": "Keresés a könyvtárban",
     "matches": "Egyezések",
     "unknown_location": "Ismeretlen hely",
     "unknown_camera": "Ismeretlen kamera",
@@ -353,6 +357,8 @@
     "unreviewed": "Átnézendőek"
   },
   "tag": {
+    "no_selected_tags": "Nincsenek kijelölt címkék",
+    "show_selected_only": "Csak a kijelölt címkék megjelenítése",
     "title": "Címkék",
     "delete_tag": "Címke törlése",
     "edit_tag": "Címkék szerkesztése",
@@ -368,7 +374,7 @@
     "add_child": "Új gyermekcímke",
     "invalid_name": "A címkenév nem tartalmazhat , ; vagy {'|'} karaktert.",
     "invalid_move": "A címke nem helyezhető át a saját részfájába.",
-    "delete_tree": "A címke és az alcímkéi törlésre kerülnek. A fényképek megmaradnak."
+    "delete_tree": "A címke és az alcímkéi törlésre kerülnek. A képek megmaradnak."
   },
   "subject": {
     "title": "Témák",
@@ -488,8 +494,8 @@
       ],
       "file_type_options": [
         "Mind",
-        "Fotók",
-        "RAW-fájlok",
+        "Képek",
+        "Csak RAW",
         "Videók"
       ],
       "file_type_other": "Egyéb"
@@ -534,8 +540,8 @@
       "move": "Áthelyezés"
     },
     "edit_disabled": "Jelöljön ki egy fotót a szerkesztéshez",
-    "type_image": "Fotó",
-    "type_images": "Fotók",
+    "type_image": "Kép",
+    "type_images": "Képek",
     "type_video": "Videó",
     "type_videos": "Videók",
     "select_title": "Kijelölés",
@@ -547,10 +553,34 @@
     "more_actions": "További műveletek",
     "tag_all": "Címke",
     "dedup": {
+      "keep_rules": {
+        "title": "Megtartási szabályok",
+        "priority_order": "Prioritási sorrend",
+        "folders": "Előnyben részesített mappák",
+        "subfolders": "Az almappák is számítanak. A listán előrébb állók élveznek elsőbbséget.",
+        "folders_skipped": "Nincs kiválasztva, kihagyva",
+        "add_folder": "Mappa hozzáadása",
+        "folder_already_added": "Már hozzáadva",
+        "format": "Preferált formátum",
+        "similar_only": "Csak hasonló képek",
+        "raw_first": "RAW először",
+        "jpeg_heic_first": "JPEG / HEIC először",
+        "size": "Preferált méret",
+        "largest_dimensions": "Legnagyobb felbontás",
+        "smallest_dimensions": "Legkisebb felbontás",
+        "largest_file_size": "Legnagyobb fájlméret",
+        "smallest_file_size": "Legkisebb fájlméret",
+        "ignore": "Mellőzés",
+        "time": "Preferált dátum",
+        "created_earliest": "Legrégebben létrehozott",
+        "created_latest": "Legújabban létrehozott",
+        "modified_earliest": "Legrégebben módosított",
+        "modified_latest": "Legújabban módosított"
+      },
       "title": "Duplikátumok",
       "tabs": {
         "exact": "Duplikátumok",
-        "similar": "Hasonló fotók"
+        "similar": "Hasonló képek"
       },
       "scanning": "Duplikátumok keresése...",
       "error_title": "A duplikátumok nem kereshetők",
@@ -704,6 +734,7 @@
     "album": {
       "add": "Új album",
       "edit": "Album adatai...",
+      "import_folder": "Mappa importálása…",
       "scan": "Album beolvasása",
       "reorder": "Átrendezés",
       "pause_scan": "Beolvasás szüneteltetése",
@@ -722,14 +753,14 @@
       "open_image_in_app": "Fotó megnyitása itt: {app}...",
       "open_video_in_app": "Videó megnyitása itt: {app}...",
       "open_selected_images_in_app": "Fotók megnyitása itt: {app}...",
-      "compare_selected_images": "Összehasonlítás",
+      "compare_selected_images": "Összehasonlítás...",
       "open_selected_videos_in_app": "Videók megnyitása itt: {app}...",
       "open_in_app": "Megnyitás külső alkalmazásban...",
       "manage_app": "Alkalmazások kezelése...",
       "find_similar_images": "Kapcsolódó fotók keresése",
       "find_person_images": "Személy keresése",
       "print": "Nyomtatás...",
-      "rename": "Átnevezés",
+      "rename": "Átnevezés...",
       "move_to": "Áthelyezés...",
       "copy_to": "Másolás...",
       "move_copy": "Áthelyezés / másolás",
@@ -747,7 +778,7 @@
       "set_desktop_wallpaper": "Beállítás háttérképként",
       "show_info": "Adatok megjelenítése",
       "remove_from_collection": "Eltávolítás a gyűjteményből",
-      "create_montage": "Kollázs készítése",
+      "create_montage": "Kollázs készítése...",
       "save_xmp": "Metaadatok mentése XMP-be",
       "xmp_save_success": "XMP-metaadatok mentve {count} fájlhoz",
       "xmp_save_failed": "Az XMP mentése sikertelen {count} fájlnál",
@@ -844,7 +875,6 @@
       "hide": "Elrejtés",
       "hidden": "Rejtett",
       "remove": "Eltávolítás",
-      "reorder": "Átrendezés",
       "rename": "Átnevezés",
       "switch_to": "Váltás",
       "add_new": "Új könyvtár",
@@ -1008,6 +1038,7 @@
       "error": "Nem sikerült kiválasztani a fájlt."
     },
     "file_refresh": {
+      "metadata_failed": "Sikertelen metaadat-importálás: {count}",
       "skipped": "Kihagyva: {count}",
       "status": "Frissítés állapota",
       "running": "Frissítés…",
@@ -1016,7 +1047,6 @@
       "complete": "Kész",
       "succeeded": "Frissítve: {count}",
       "failed": "Sikertelen: {count}",
-      "warnings": "Figyelmeztetések: {count}",
       "release_requested": "Felszabadítás kérve: {count}",
       "kept_local": "Az eszközön megtartva: {count}",
       "kept_local_hint": "Az eszközön mindig megtartandó fájlok, illetve azok, amelyeknél a Windows nem engedte a Lap számára a tárhely felszabadítását (vezérelt mappahozzáférés)."
@@ -1151,6 +1181,17 @@
     }
   },
   "file_info": {
+    "paths_copied": "{count} fájlútvonal a vágólapra másolva",
+    "copy_path": "Fájlútvonal másolása",
+    "copy_path_failed": "Az útvonal másolása sikertelen",
+    "video_only": "(csak videók)",
+    "field_preset": "Látható mezők",
+    "fields_default": "Alapértelmezett",
+    "fields_all": "Összes megjelenítése",
+    "fields_custom": "Egyéni",
+
+    "hide_empty_fields": "Üres mezők automatikus elrejtése",
+    "customize_fields": "Mezők testreszabása",
     "title": "Adatok",
     "preview": "Előnézet",
     "thumbnail": "Bélyegkép",
@@ -1210,10 +1251,10 @@
     "source_description": "Eredeti leírás",
     "coordinates": "Koordináták",
     "detail_fields": {
-      "title": "Eredeti cím",
+      "title": "Cím",
+      "headline": "Főcím",
       "creator": "Szerző",
       "copyright": "Szerzői jog",
-      "description": "Eredeti leírás",
       "credit": "Készítő megjelölése",
       "source": "Forrás",
       "usageTerms": "Felhasználási feltételek",
@@ -1320,7 +1361,8 @@
       "appearance": "Színmód",
       "appearance_options": [
         "Világos",
-        "Sötét"
+        "Sötét",
+        "Rendszer követése"
       ],
       "theme": "Téma",
       "theme_options_light": [
@@ -1383,6 +1425,10 @@
     "raw": {
       "title": "RAW",
       "section_pairs": "Párosított fájlok",
+      "clipboard_both": "Mindkét fájl",
+      "clipboard_raw": "Csak RAW",
+      "clipboard_jpeg": "Csak JPEG/HEIC",
+      "clipboard_hint": "Az útvonalak másolására is érvényes. A mappákba másolást és áthelyezést nem érinti.",
       "pair_source": "A párok alapértelmezett megjelenítése",
       "pair_source_hint": "A párosított bélyegképek és előnézetek használják",
       "pair_jpeg": "JPEG / HEIC",
@@ -1541,7 +1587,7 @@
     },
     "image_search": {
       "title": "Keresés",
-      "search_image": "Fotókeresés",
+      "search_image": "Képkeresés",
       "search_model": "Modell kiválasztása",
       "default_model_hint": "Az alapértelmezett modell csak az angol fotókeresést támogatja",
       "multilingual_model_hint": "Keresés több mint 50 nyelven",
@@ -1611,6 +1657,7 @@
         "open_new_window": "Megtekintés új ablakban",
         "open_external_app": "Megnyitás külső alkalmazásban",
         "edit_image": "Szerkesztés",
+        "copy_file_path": "Fájlútvonal másolása",
         "copy_file": "Másolás a vágólapra",
         "paste_file": "Beillesztés",
         "reveal_in_finder": "Megjelenítés a Finderben",

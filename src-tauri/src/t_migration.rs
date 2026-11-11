@@ -173,6 +173,11 @@ fn get_migrations() -> Vec<Migration> {
             description: "Replace tag groups with hierarchical tags",
             sql: "",
         },
+        Migration {
+            version: 22,
+            description: "Stored metadata title and headline",
+            sql: "",
+        },
     ]
 }
 
@@ -526,6 +531,15 @@ pub fn check_and_migrate(conn: &Connection) -> Result<(), String> {
                 // Schema, pending markers and version advance together.
                 tx.pragma_update(None, "user_version", migration.version).map_err(|e| e.to_string())?;
                 tx.commit().map_err(|e| e.to_string())?;
+            } else if migration.version == 22 {
+                let tx = conn.unchecked_transaction().map_err(|e| e.to_string())?;
+                for column in ["e_title", "e_headline"] {
+                    if !table_has_column(&tx, "afiles", column)? {
+                        tx.execute(&format!("ALTER TABLE afiles ADD COLUMN {column} TEXT"), []).map_err(|e| e.to_string())?;
+                    }
+                }
+                tx.pragma_update(None, "user_version", migration.version).map_err(|e| e.to_string())?;
+                tx.commit().map_err(|e| e.to_string())?;
             } else if migration.version == 21 {
                 migrate_tag_tree(conn)?;
             } else if !migration.sql.trim().is_empty() {
@@ -618,7 +632,7 @@ mod album_filter_migration_tests {
         // Simulate migration completing before the version was persisted.
         conn.execute_batch("PRAGMA user_version=17;").unwrap();
         check_and_migrate(&conn).unwrap();
-        assert_eq!(conn.query_row("PRAGMA user_version", [], |row| row.get::<_, i64>(0)).unwrap(),21);
+        assert_eq!(conn.query_row("PRAGMA user_version", [], |row| row.get::<_, i64>(0)).unwrap(),22);
     }
 
     #[test]
@@ -633,7 +647,22 @@ mod album_filter_migration_tests {
         // Simulate migration completing before the version was persisted.
         conn.execute_batch("PRAGMA user_version=18;").unwrap();
         check_and_migrate(&conn).unwrap();
-        assert_eq!(conn.query_row("PRAGMA user_version", [], |row| row.get::<_, i64>(0)).unwrap(), 21);
+        assert_eq!(conn.query_row("PRAGMA user_version", [], |row| row.get::<_, i64>(0)).unwrap(), 22);
+    }
+
+    #[test]
+    fn title_migration_is_restartable_without_scheduling_thumbnail_work() {
+        let conn = Connection::open_in_memory().unwrap();
+        conn.execute_batch("CREATE TABLE afiles(id INTEGER PRIMARY KEY,metadata_pending INTEGER DEFAULT 0); INSERT INTO afiles(id) VALUES(1); PRAGMA user_version=21;").unwrap();
+        check_and_migrate(&conn).unwrap();
+        let values: (Option<String>,Option<String>,i32) = conn.query_row(
+            "SELECT e_title,e_headline,metadata_pending FROM afiles", [],
+            |r| Ok((r.get(0)?,r.get(1)?,r.get(2)?))).unwrap();
+        assert_eq!(values, (None,None,0));
+        conn.execute_batch("UPDATE afiles SET e_title='Existing'; PRAGMA user_version=21;").unwrap();
+        check_and_migrate(&conn).unwrap();
+        assert_eq!(conn.query_row("SELECT e_title FROM afiles", [], |r| r.get::<_,String>(0)).unwrap(), "Existing");
+        assert_eq!(conn.query_row("PRAGMA user_version", [], |r| r.get::<_,i32>(0)).unwrap(), 22);
     }
 }
 

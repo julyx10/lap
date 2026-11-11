@@ -128,3 +128,21 @@ test("modifier discipline is unchanged", () => {
     false,
   );
 });
+
+ test('copy path has distinct cross-platform bindings', () => {
+   for (const platform of ['mac', 'windows', 'linux']) {
+     const e = event({key:'c',code:'KeyC', ...(platform === 'mac' ? {metaKey:true,altKey:true} : {ctrlKey:true,shiftKey:true})});
+     assert.equal(matchesShortcut('file.copyPath',e,platform),true);
+     assert.equal(matchesShortcut('file.copy',e,platform),false);
+     assert.deepEqual(findShortcutMatches('content',e,platform),['file.copyPath']);
+   }
+ });
+
+test('macOS retains Shift-Cmd-C as copy while Windows and Linux reserve Ctrl-Shift-C for paths', () => {
+  assert.equal(matchesShortcut('file.copy', cmd('C', 'KeyC', {shiftKey: true}), 'mac'), true);
+  for (const platform of ['windows', 'linux']) {
+    const e = event({key:'C',code:'KeyC',ctrlKey:true,shiftKey:true});
+    assert.equal(matchesShortcut('file.copy',e,platform),false);
+    assert.equal(matchesShortcut('file.copyPath',e,platform),true);
+  }
+});

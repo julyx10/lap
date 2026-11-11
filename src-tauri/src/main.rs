@@ -13,9 +13,9 @@
 use tauri::Manager;
 use tauri_plugin_aptabase::EventTracker;
 
+mod metadata;
 mod t_ai;
 mod t_ai_png;
-mod t_apple_sidecar;
 mod t_batch_rename;
 mod t_cluster;
 mod t_cmds;
@@ -28,7 +28,6 @@ mod t_face;
 mod t_heif;
 mod t_http;
 mod t_image;
-mod t_metadata;
 mod t_af_area;
 mod t_jpeg;
 mod t_jxl;
@@ -49,9 +48,6 @@ mod t_cache_storage;
 mod t_startup;
 mod t_utils;
 mod t_video;
-mod t_xmp;
-mod t_xmp_compat;
-mod t_xmp_files;
 
 /// The main function is the entry point for the Tauri application.
 #[tokio::main]
@@ -324,6 +320,7 @@ async fn main() {
             t_cmds::render_montage,
             t_cmds::copy_edited_image,
             t_cmds::copy_images,
+            t_cmds::copy_file_paths,
             t_cmds::rename_file,
             t_cmds::preview_batch_rename,
             t_cmds::batch_rename_files,

@@ -84,7 +84,7 @@
       "name": "名称",
       "description": "描述",
       "description_placeholder": "输入相册描述",
-      "images": "照片",
+      "images": "图片",
       "videos": "视频",
       "section_general": "通用",
       "section_scan": "扫描状态",
@@ -109,7 +109,6 @@
       "last_scan_time": "最近扫描",
       "tab_general": "常规",
       "file_types": "排除文件类型",
-      "photos": "照片",
       "raw": "RAW",
       "file_types_required": "请至少保留一种文件类型。",
       "pixel_filter": "排除小尺寸图片",
@@ -148,6 +147,9 @@
       "add_rule": "添加规则",
       "rules_count": "{count}/{max} 条规则",
       "remove_rule": "移除规则",
+      "search_options": "筛选…",
+      "no_matches": "无匹配项",
+      "select_value": "选择…",
       "group": "分组",
       "sort": "排序",
       "order": "顺序",
@@ -232,6 +234,7 @@
     }
   },
   "offline": {
+    "badge": "离线",
     "cloud_only": "仅在线可用",
     "cloud_only_pending": "仅在线可用 — 文件信息待补全",
     "original_unavailable": "原文件暂时无法访问",
@@ -247,6 +250,7 @@
     "copy_failed": "无法导入此文件。"
   },
   "import_organize": {
+    "title": "导入文件夹",
     "section_folders": "选择文件夹",
     "section_status": "导入状态",
     "to_import": "待导入",
@@ -258,7 +262,7 @@
     "layout_day": "按天 — YYYY/YYYY-MM-DD",
     "layout_month": "按月 — YYYY/YYYY-MM",
     "layout_year": "按年 — YYYY",
-    "layout_none": "单个文件夹",
+    "layout_structure": "保留文件夹结构",
     "import": "导入",
     "preparing": "正在准备导入",
     "importing": "正在导入文件",
@@ -284,7 +288,7 @@
   "search": {
     "title": "搜索",
     "similar_images": "相关照片",
-    "image_search_placeholder": "搜索图片、文件名或描述",
+    "image_search_placeholder": "搜索图库",
     "matches": "匹配结果",
     "unknown_location": "未知位置",
     "unknown_camera": "未知相机",
@@ -353,6 +357,8 @@
     "unreviewed": "待筛选"
   },
   "tag": {
+    "no_selected_tags": "没有已选标签",
+    "show_selected_only": "仅显示已选标签",
     "title": "标签",
     "delete_tag": "删除标签",
     "edit_tag": "编辑标签",
@@ -368,7 +374,7 @@
     "add_child": "新建子标签",
     "invalid_name": "标签名称不能包含 , ; {'|'}。",
     "invalid_move": "不能将标签移动到自身或其子标签下。",
-    "delete_tree": "将删除此标签及其子标签，照片不受影响。"
+    "delete_tree": "将删除此标签及其子标签，图片不受影响。"
   },
   "subject": {
     "title": "主题",
@@ -488,8 +494,8 @@
       ],
       "file_type_options": [
         "全部",
-        "照片",
-        "RAW 文件",
+        "图片",
+        "仅 RAW",
         "视频"
       ],
       "file_type_other": "其他"
@@ -534,8 +540,8 @@
       "move": "移动"
     },
     "edit_disabled": "请选择单张照片进行编辑",
-    "type_image": "张照片",
-    "type_images": "张照片",
+    "type_image": "张图片",
+    "type_images": "张图片",
     "type_video": "个视频",
     "type_videos": "个视频",
     "select_title": "选择",
@@ -547,10 +553,34 @@
     "more_actions": "更多操作",
     "tag_all": "标签",
     "dedup": {
+      "keep_rules": {
+        "title": "保留规则",
+        "priority_order": "优先顺序",
+        "folders": "首选保留文件夹",
+        "subfolders": "包含子文件夹。列表中越靠前，优先级越高。",
+        "folders_skipped": "未设置，已跳过",
+        "add_folder": "添加文件夹",
+        "folder_already_added": "已添加",
+        "format": "首选格式",
+        "similar_only": "仅相似图片",
+        "raw_first": "RAW 优先",
+        "jpeg_heic_first": "JPEG / HEIC 优先",
+        "size": "首选大小",
+        "largest_dimensions": "最高分辨率",
+        "smallest_dimensions": "最低分辨率",
+        "largest_file_size": "最大文件大小",
+        "smallest_file_size": "最小文件大小",
+        "ignore": "不考虑",
+        "time": "首选日期",
+        "created_earliest": "最早创建",
+        "created_latest": "最新创建",
+        "modified_earliest": "最早修改",
+        "modified_latest": "最新修改"
+      },
       "title": "重复项",
       "tabs": {
         "exact": "重复项",
-        "similar": "相似照片"
+        "similar": "相似图片"
       },
       "scanning": "扫描重复项中...",
       "error_title": "无法扫描重复项",
@@ -704,6 +734,7 @@
     "album": {
       "add": "新建相册",
       "edit": "编辑相册...",
+      "import_folder": "导入文件夹…",
       "scan": "扫描相册",
       "reorder": "重新排序",
       "pause_scan": "暂停扫描",
@@ -722,14 +753,14 @@
       "open_image_in_app": "在 {app} 中打开照片...",
       "open_video_in_app": "在 {app} 中打开视频...",
       "open_selected_images_in_app": "在 {app} 中打开照片...",
-      "compare_selected_images": "对比",
+      "compare_selected_images": "对比...",
       "open_selected_videos_in_app": "在 {app} 中打开视频...",
       "open_in_app": "在外部应用中打开...",
       "manage_app": "管理应用...",
       "find_similar_images": "查找相关照片",
       "find_person_images": "查找此人物",
       "print": "打印...",
-      "rename": "重命名",
+      "rename": "重命名...",
       "move_to": "移动到...",
       "copy_to": "复制到...",
       "move_copy": "移动/复制",
@@ -747,7 +778,7 @@
       "set_desktop_wallpaper": "设为桌面壁纸",
       "show_info": "显示信息",
       "remove_from_collection": "从合集移除",
-      "create_montage": "创建拼图",
+      "create_montage": "创建拼图...",
       "save_xmp": "保存元数据到 XMP",
       "xmp_save_success": "已保存 {count} 个文件的 XMP 元数据",
       "xmp_save_failed": "{count} 个文件的 XMP 保存失败",
@@ -844,7 +875,6 @@
       "hide": "隐藏",
       "hidden": "已隐藏",
       "remove": "移除",
-      "reorder": "重新排序",
       "rename": "重命名",
       "switch_to": "切换到",
       "add_new": "新建库",
@@ -1008,6 +1038,7 @@
       "error": "选择文件失败。"
     },
     "file_refresh": {
+      "metadata_failed": "元数据导入失败：{count}",
       "skipped": "已跳过：{count}",
       "status": "刷新状态",
       "running": "正在刷新…",
@@ -1016,7 +1047,6 @@
       "complete": "已完成",
       "succeeded": "已更新：{count}",
       "failed": "失败：{count}",
-      "warnings": "警告：{count}",
       "release_requested": "已请求释放：{count}",
       "kept_local": "保留在此设备：{count}",
       "kept_local_hint": "始终保留在此设备上的文件，或 Windows 不允许 Lap 释放空间的文件（受控文件夹访问）。"
@@ -1151,6 +1181,17 @@
     }
   },
   "file_info": {
+    "paths_copied": "已复制 {count} 个文件路径到剪贴板",
+    "copy_path": "复制文件路径",
+    "copy_path_failed": "复制路径失败",
+    "video_only": "（仅视频）",
+    "field_preset": "显示字段",
+    "fields_default": "默认",
+    "fields_all": "全部显示",
+    "fields_custom": "自定义",
+
+    "hide_empty_fields": "自动隐藏空值字段",
+    "customize_fields": "自定义字段",
     "title": "信息",
     "preview": "预览",
     "thumbnail": "缩略图",
@@ -1210,10 +1251,10 @@
     "source_description": "原始描述",
     "coordinates": "坐标",
     "detail_fields": {
-      "title": "原始标题",
+      "title": "标题",
+      "headline": "内容标题",
       "creator": "作者",
       "copyright": "版权",
-      "description": "原始描述",
       "credit": "提供方",
       "source": "来源",
       "usageTerms": "使用条款",
@@ -1320,7 +1361,8 @@
       "appearance": "配色模式",
       "appearance_options": [
         "明亮",
-        "暗黑"
+        "暗黑",
+        "跟随系统"
       ],
       "theme": "主题",
       "theme_options_light": [
@@ -1383,6 +1425,10 @@
     "raw": {
       "title": "RAW",
       "section_pairs": "配对文件",
+      "clipboard_both": "两个文件",
+      "clipboard_raw": "仅 RAW",
+      "clipboard_jpeg": "仅 JPEG/HEIC",
+      "clipboard_hint": "同时影响复制文件路径，不影响复制或移动文件到文件夹。",
       "pair_source": "配对时默认显示",
       "pair_source_hint": "用于配对照片的缩略图和预览",
       "pair_jpeg": "JPEG / HEIC",
@@ -1541,7 +1587,7 @@
     },
     "image_search": {
       "title": "搜索",
-      "search_image": "照片搜索",
+      "search_image": "图片搜索",
       "search_model": "选择模型",
       "default_model_hint": "默认模型仅支持英文的照片搜索",
       "multilingual_model_hint": "支持 50+ 语言搜索",
@@ -1611,6 +1657,7 @@
         "open_new_window": "在新窗口中查看",
         "open_external_app": "在外部应用中打开",
         "edit_image": "编辑",
+        "copy_file_path": "复制文件路径",
         "copy_file": "复制到剪贴板",
         "paste_file": "粘贴",
         "reveal_in_finder": "在访达中显示",

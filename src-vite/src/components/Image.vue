@@ -712,7 +712,7 @@ async function getEffectiveThumbnailSrc() {
     fileId,
     config.settings.thumbnailSize,
     getFileThumbById(fileId, config.settings.thumbnailSize, false)
-      .then(thumb => getThumbnailDataUrl(thumb, '', false, config.settings.thumbnailSize, props.filePath, props.fileVersion))
+      .then(thumb => getThumbnailDataUrl(thumb, '', false, config.settings.thumbnailSize, props.fileVersion))
   ));
   if (props.fileId === fileId && !props.thumbnailSrc && dataUrl) {
     resolvedThumbnailSrc.value = dataUrl;

@@ -285,7 +285,7 @@ import { ref, toRefs, computed, onMounted, onUnmounted, watch, nextTick } from '
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/config';
-import { isWin, isLinux, setTheme, getFolderPath, getFullPath, combineFileName, getSelectOptions, getThumbUrl, isValidFileName, formatFileSize, formatDimensionText, formatTimestamp, formatCameraInfo, formatCaptureSettings } from '@/common/utils';
+import { isWin, isLinux, getFolderPath, getFullPath, combineFileName, getSelectOptions, getThumbUrl, isValidFileName, formatFileSize, formatDimensionText, formatTimestamp, formatCameraInfo, formatCaptureSettings } from '@/common/utils';
 import { getFileInfo, checkFileExists, renderMontage } from '@/common/api';
 import { computeMontageLayout, shuffled, type MontageItem } from '@/common/montageLayout';
 import { getAspectRatio } from '@/common/layout';
@@ -786,15 +786,6 @@ function handleWindowFocus() {
 
 watch(() => config.settings.language, (newLanguage) => {
   locale.value = newLanguage;
-});
-watch(() => config.settings.appearance, (newAppearance) => {
-  setTheme(newAppearance, newAppearance === 0 ? config.settings.lightTheme : config.settings.darkTheme);
-});
-watch(() => config.settings.lightTheme, (newLightTheme) => {
-  setTheme(config.settings.appearance, newLightTheme);
-});
-watch(() => config.settings.darkTheme, (newDarkTheme) => {
-  setTheme(config.settings.appearance, newDarkTheme);
 });
 
 onMounted(async () => {

@@ -1,6 +1,19 @@
 import { invoke } from '@tauri-apps/api/core';
 import { matchesShortcut, type ShortcutPlatform } from './shortcuts';
 
+export function handleVideoEscapeShortcut(event: KeyboardEvent, platform: ShortcutPlatform, closePreview: () => void) {
+  if (event.defaultPrevented || !matchesShortcut('view.close', event, platform)) return;
+  const target = event.target as HTMLElement | null;
+  // Only bypass video.js controls; leave other controls and dialogs to their owners.
+  if (!target?.closest?.('.video-js')
+    || target.closest('input, textarea, [contenteditable]:not([contenteditable="false"])')) return;
+  // The player's own fullscreen must exit before the surrounding preview closes.
+  if (document.fullscreenElement || target.closest('.vjs-fullscreen')) return;
+  if (!event.repeat) closePreview();
+  event.preventDefault();
+  event.stopPropagation();
+}
+
 export function handleVideoPlaybackShortcut(event: KeyboardEvent, platform: ShortcutPlatform, togglePlay: () => void) {
   if (!matchesShortcut('view.togglePlayback', event, platform)) return;
   const target = event.target as HTMLElement | null;

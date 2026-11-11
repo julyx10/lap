@@ -377,6 +377,10 @@ export async function getAllAlbumFolders() {
   return [];
 }
 
+export async function getAllAlbumFoldersIncludingExcluded() {
+  return await invoke('get_all_album_folders', { includeExcluded: true });
+}
+
 export async function listAlbums() {
   try {
     return await invoke('get_all_albums', { refreshAccessibility: false });
@@ -1106,7 +1110,7 @@ export async function refreshAlbumSubfolders(albumId, folderPath) {
 export async function getFolderThumbCount(folderId) {
   try {
     let count = await invoke('get_folder_thumb_count', { 
-      fileType: config.search.fileType,
+      fileType: 0,
       folderId, 
     });
     if(count) {
@@ -1989,8 +1993,8 @@ export async function listenIndexProgress(callback) {
 // deduplication
 
 // start deduplication scan
-export async function dedupStartScan(params = null, collectionId = null, fileIds = null) {
-  return await invoke('dedup_start_scan', { params, collectionId, fileIds });
+export async function dedupStartScan(params = null, collectionId = null, fileIds = null, keepRules = null) {
+  return await invoke('dedup_start_scan', { params, collectionId, fileIds, keepRules, groupRawPairs: Boolean(config.settings.groupRawJpegPairs) });
 }
 
 // get deduplication scan status
@@ -2035,19 +2039,25 @@ export async function dedupGetOverview() {
 
 // set keep file in duplicate group
 export async function dedupSetKeep(groupId, fileId) {
-  return await invoke('dedup_set_keep', { groupId, fileId });
+  return await invoke('dedup_set_keep', { groupId, fileId, groupRawPairs: Boolean(config.settings.groupRawJpegPairs) });
 }
 
 // Delete explicitly selected duplicates or every removable duplicate.
 export async function dedupDelete({
   groupIds = null,
   fileIds = null,
+  similarGroupId = null,
   deleteAll = false,
   permanently = false,
+  preview = false,
+  planToken = null,
 } = {}) {
   try {
     return await invoke('dedup_delete', {
-      request: { groupIds, fileIds, deleteAll, permanently },
+      request: {
+        groupIds, fileIds, similarGroupId, deleteAll, permanently, preview, planToken,
+        groupRawPairs: Boolean(config.settings.groupRawJpegPairs),
+      },
     });
   } catch (error) {
     console.error('dedupDelete error:', error);
@@ -2060,8 +2070,8 @@ export async function listenDedupScanProgress(callback) {
   return await listen('dedup-scan-progress', callback);
 }
 
-export async function similarStartScan(scopeKey, sourceVersion, similarityThreshold, params = null, collectionId = null, fileIds = null) {
-  return await invoke('similar_start_scan', { scopeKey, sourceVersion, similarityThreshold, params, collectionId, fileIds });
+export async function similarStartScan(scopeKey, sourceVersion, similarityThreshold, params = null, collectionId = null, fileIds = null, keepRules = null) {
+  return await invoke('similar_start_scan', { scopeKey, sourceVersion, similarityThreshold, params, collectionId, fileIds, keepRules });
 }
 
 export async function similarGetScanStatus() {

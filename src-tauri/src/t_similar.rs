@@ -204,6 +204,7 @@ pub fn start_scan(
     params: Option<QueryParams>,
     collection_id: Option<i64>,
     file_ids: Option<Vec<i64>>,
+    keep_rules: Option<t_dedup::KeepRules>,
 ) -> Result<(), String> {
     if state
         .is_scanning
@@ -236,6 +237,7 @@ pub fn start_scan(
             params,
             collection_id,
             file_ids,
+            keep_rules,
         );
         let mut current = status.lock().unwrap();
         current.state = if result.is_ok() && !cancel.load(Ordering::SeqCst) {
@@ -283,6 +285,7 @@ fn scan(
     params: Option<QueryParams>,
     collection_id: Option<i64>,
     file_ids: Option<Vec<i64>>,
+    keep_rules: Option<t_dedup::KeepRules>,
 ) -> Result<(), String> {
     let mut conn = get_db_conn()?;
     let vectors = load_vectors(&conn, resolve_scope(params, collection_id, file_ids)?)?;
@@ -434,6 +437,9 @@ fn scan(
             )
             .map_err(|e| e.to_string())?;
         }
+    }
+    if let Some(rules) = keep_rules {
+        t_dedup::apply_keep_rules_on(&tx, Some(scope_key), rules)?;
     }
     tx.commit().map_err(|e| e.to_string())?;
     let mut s = status.lock().unwrap();

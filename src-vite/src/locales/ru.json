@@ -84,7 +84,7 @@
       "name": "Имя",
       "description": "Описание",
       "description_placeholder": "Введите описание альбома",
-      "images": "Фотографии",
+      "images": "Изображения",
       "videos": "Видео",
       "section_general": "Общее",
       "section_scan": "Статус сканирования",
@@ -109,7 +109,6 @@
       "last_scan_time": "Последнее сканирование",
       "tab_general": "Общие",
       "file_types": "Исключать типы файлов",
-      "photos": "Фото",
       "raw": "RAW",
       "file_types_required": "Оставьте хотя бы один тип файлов включённым.",
       "pixel_filter": "Исключать маленькие изображения",
@@ -148,6 +147,9 @@
       "add_rule": "Добавить правило",
       "rules_count": "Правила: {count}/{max}",
       "remove_rule": "Удалить правило",
+      "search_options": "Фильтр…",
+      "no_matches": "Нет совпадений",
+      "select_value": "Выбрать…",
       "group": "Группировка",
       "sort": "Сортировка",
       "order": "Порядок",
@@ -232,6 +234,7 @@
     }
   },
   "offline": {
+    "badge": "Не в сети",
     "cloud_only": "Доступен только в сети",
     "cloud_only_pending": "Доступен только в сети — сведения о файле неполные",
     "original_unavailable": "Исходный файл недоступен",
@@ -247,6 +250,7 @@
     "copy_failed": "Не удалось импортировать этот файл."
   },
   "import_organize": {
+    "title": "Импортировать папку",
     "section_folders": "Выбор папки",
     "section_status": "Состояние импорта",
     "to_import": "К импорту",
@@ -258,7 +262,7 @@
     "layout_day": "По дням — YYYY/YYYY-MM-DD",
     "layout_month": "По месяцам — YYYY/YYYY-MM",
     "layout_year": "По годам — YYYY",
-    "layout_none": "Одна папка",
+    "layout_structure": "Сохранить структуру папок",
     "import": "Импортировать",
     "preparing": "Подготовка импорта",
     "importing": "Импорт файлов",
@@ -284,7 +288,7 @@
   "search": {
     "title": "Поиск",
     "similar_images": "Связанные фотографии",
-    "image_search_placeholder": "Поиск изображений, имён файлов или описаний",
+    "image_search_placeholder": "Поиск в библиотеке",
     "matches": "Совпадения",
     "unknown_location": "Неизвестное место",
     "unknown_camera": "Неизвестная камера",
@@ -353,6 +357,8 @@
     "unreviewed": "Непросмотренные"
   },
   "tag": {
+    "no_selected_tags": "Нет выбранных тегов",
+    "show_selected_only": "Показать только выбранные теги",
     "title": "Теги",
     "delete_tag": "Удалить тег",
     "edit_tag": "Изменить теги",
@@ -368,7 +374,7 @@
     "add_child": "Создать вложенный тег",
     "invalid_name": "Названия тегов не могут содержать , ; или {'|'}.",
     "invalid_move": "Нельзя переместить тег в его собственное поддерево.",
-    "delete_tree": "Этот тег и его дочерние теги будут удалены. Фотографии сохранятся."
+    "delete_tree": "Этот тег и его дочерние теги будут удалены. Изображения сохранятся."
   },
   "subject": {
     "title": "Сюжеты",
@@ -488,8 +494,8 @@
       ],
       "file_type_options": [
         "Все",
-        "Фотографии",
-        "RAW-файлы",
+        "Изображения",
+        "Только RAW",
         "Видео"
       ],
       "file_type_other": "Другое"
@@ -534,8 +540,8 @@
       "move": "Переместить"
     },
     "edit_disabled": "Выберите одно фото для редактирования",
-    "type_image": "Фото",
-    "type_images": "Фотографии",
+    "type_image": "Изображение",
+    "type_images": "Изображения",
     "type_video": "Видео",
     "type_videos": "Видео",
     "select_title": "Выбор",
@@ -547,10 +553,34 @@
     "more_actions": "Другие действия",
     "tag_all": "Тег",
     "dedup": {
+      "keep_rules": {
+        "title": "Правила сохранения",
+        "priority_order": "Порядок приоритета",
+        "folders": "Предпочтительные папки",
+        "subfolders": "Включая подпапки. Выше в списке — выше приоритет.",
+        "folders_skipped": "Не задано, правило пропущено",
+        "add_folder": "Добавить папку",
+        "folder_already_added": "Уже добавлена",
+        "format": "Предпочтительный формат",
+        "similar_only": "Только похожие изображения",
+        "raw_first": "Сначала RAW",
+        "jpeg_heic_first": "Сначала JPEG / HEIC",
+        "size": "Предпочтительный размер",
+        "largest_dimensions": "Наивысшее разрешение",
+        "smallest_dimensions": "Наименьшее разрешение",
+        "largest_file_size": "Наибольший размер файла",
+        "smallest_file_size": "Наименьший размер файла",
+        "ignore": "Не учитывать",
+        "time": "Предпочтительная дата",
+        "created_earliest": "Создан раньше всех",
+        "created_latest": "Создан позже всех",
+        "modified_earliest": "Изменён раньше всех",
+        "modified_latest": "Изменён позже всех"
+      },
       "title": "Дубликаты",
       "tabs": {
         "exact": "Дубликаты",
-        "similar": "Похожие фото"
+        "similar": "Похожие изображения"
       },
       "scanning": "Сканирование дубликатов...",
       "error_title": "Не удалось проверить дубликаты",
@@ -704,6 +734,7 @@
     "album": {
       "add": "Новый альбом",
       "edit": "Редактировать альбом...",
+      "import_folder": "Импортировать папку…",
       "scan": "Сканировать",
       "reorder": "Изменить порядок",
       "pause_scan": "Приостановить сканирование",
@@ -722,14 +753,14 @@
       "open_image_in_app": "Открыть фото в {app}...",
       "open_video_in_app": "Открыть видео в {app}...",
       "open_selected_images_in_app": "Открыть фотографии в {app}...",
-      "compare_selected_images": "Сравнить",
+      "compare_selected_images": "Сравнить...",
       "open_selected_videos_in_app": "Открыть видео в {app}...",
       "open_in_app": "Открыть во внешнем приложении...",
       "manage_app": "Управление приложениями...",
       "find_similar_images": "Найти связанные фотографии",
       "find_person_images": "Найти этого человека",
       "print": "Печать...",
-      "rename": "Переименовать",
+      "rename": "Переименовать...",
       "move_to": "Переместить в...",
       "copy_to": "Скопировать в...",
       "move_copy": "Переместить / скопировать",
@@ -747,7 +778,7 @@
       "set_desktop_wallpaper": "Сделать обоями рабочего стола",
       "show_info": "Показать информацию",
       "remove_from_collection": "Удалить из коллекции",
-      "create_montage": "Создать коллаж",
+      "create_montage": "Создать коллаж...",
       "save_xmp": "Сохранить метаданные в XMP",
       "xmp_save_success": "Метаданные XMP сохранены для {count} файлов",
       "xmp_save_failed": "Не удалось сохранить XMP для {count} файлов",
@@ -844,7 +875,6 @@
       "hide": "Скрыть",
       "hidden": "Скрыто",
       "remove": "Удалить",
-      "reorder": "Изменить порядок",
       "rename": "Переименовать",
       "switch_to": "Переключить на",
       "add_new": "Новая библиотека",
@@ -1008,6 +1038,7 @@
       "error": "Ошибка выбора файла."
     },
     "file_refresh": {
+      "metadata_failed": "Ошибки импорта метаданных: {count}",
       "skipped": "Пропущено: {count}",
       "status": "Состояние обновления",
       "running": "Обновление…",
@@ -1016,7 +1047,6 @@
       "complete": "Завершено",
       "succeeded": "Обновлено: {count}",
       "failed": "Ошибок: {count}",
-      "warnings": "Предупреждения: {count}",
       "release_requested": "Запрошено освобождение: {count}",
       "kept_local": "Оставлено на этом устройстве: {count}",
       "kept_local_hint": "Файлы, которые всегда хранятся на этом устройстве, или файлы, для которых Windows не разрешила Lap освободить место (контролируемый доступ к папкам)."
@@ -1151,6 +1181,17 @@
     }
   },
   "file_info": {
+    "paths_copied": "Скопировано путей к файлам в буфер обмена: {count}",
+    "copy_path": "Копировать путь к файлу",
+    "copy_path_failed": "Не удалось скопировать путь",
+    "video_only": "(только видео)",
+    "field_preset": "Видимые поля",
+    "fields_default": "По умолчанию",
+    "fields_all": "Показать все",
+    "fields_custom": "Настроить",
+
+    "hide_empty_fields": "Автоматически скрывать пустые поля",
+    "customize_fields": "Настроить поля",
     "title": "Информация",
     "preview": "Предпросмотр",
     "thumbnail": "Миниатюра",
@@ -1210,10 +1251,10 @@
     "source_description": "Исходное описание",
     "coordinates": "Координаты",
     "detail_fields": {
-      "title": "Исходный заголовок",
+      "title": "Название",
+      "headline": "Заголовок материала",
       "creator": "Автор",
       "copyright": "Авторские права",
-      "description": "Исходное описание",
       "credit": "Поставщик",
       "source": "Источник",
       "usageTerms": "Условия использования",
@@ -1320,7 +1361,8 @@
       "appearance": "Цветовой режим",
       "appearance_options": [
         "Светлый",
-        "Тёмный"
+        "Тёмный",
+        "Как в системе"
       ],
       "theme": "Тема",
       "theme_options_light": [
@@ -1383,6 +1425,10 @@
     "raw": {
       "title": "RAW",
       "section_pairs": "Парные файлы",
+      "clipboard_both": "Оба файла",
+      "clipboard_raw": "Только RAW",
+      "clipboard_jpeg": "Только JPEG/HEIC",
+      "clipboard_hint": "Применяется также к путям. Не влияет на копирование и перемещение в папки.",
       "pair_source": "Отображение пар по умолчанию",
       "pair_source_hint": "Используется для парных миниатюр и предпросмотров",
       "pair_jpeg": "JPEG / HEIC",
@@ -1541,7 +1587,7 @@
     },
     "image_search": {
       "title": "Поиск",
-      "search_image": "Поиск фотографий",
+      "search_image": "Поиск изображений",
       "search_model": "Выберите модель",
       "default_model_hint": "Модель по умолчанию поддерживает поиск фотографий только на английском языке",
       "multilingual_model_hint": "Поиск на более чем 50 языках",
@@ -1611,6 +1657,7 @@
         "open_new_window": "Показать в новом окне",
         "open_external_app": "Открыть во внешнем приложении",
         "edit_image": "Редактировать",
+        "copy_file_path": "Копировать путь к файлу",
         "copy_file": "Скопировать в буфер обмена",
         "paste_file": "Вставить",
         "reveal_in_finder": "Показать в Finder",

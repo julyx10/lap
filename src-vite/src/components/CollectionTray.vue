@@ -37,105 +37,113 @@
       leave-from-class="opacity-100 translate-y-0"
       leave-to-class="opacity-0 -translate-y-1"
     >
-      <div v-if="expanded" class="min-h-0 flex-1 overflow-y-auto pb-1">
-        <div v-if="collections.length > 10" class="mx-1 mb-2 px-1 shrink-0">
-          <div
-            :class="[
-              'h-8 flex items-center rounded-box transition-colors bg-base-100/40',
-              isSearchFocused ? 'border-2 border-primary' : 'border border-base-content/10 hover:border-base-content/30',
-            ]"
-          >
-            <IconSearch class="ml-2 w-4 h-4 shrink-0" :class="isSearchFocused ? 'text-primary/70' : 'text-base-content/30'" />
-            <input
-              v-model="searchQuery"
-              type="text"
-              :placeholder="$t('collection.search')"
-              class="w-full min-w-0 bg-transparent border-none focus:ring-0 px-2 text-sm placeholder-base-content/30 focus:outline-none"
-              @focus="isSearchFocused = true"
-              @blur="isSearchFocused = false"
-            />
-            <button
-              v-if="searchQuery"
-              type="button"
-              class="mr-1 p-1 rounded-box text-base-content/30 hover:text-base-content/70"
-              @click="searchQuery = ''"
-            >
-              <IconClose class="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-        <VueDraggable
-          v-model="collections"
-          class="px-1"
-          :animation="200"
-          handle=".collection-drag-handle"
-          :disabled="Boolean(searchQuery) || renamingId !== null || isItemDragging || reorderingCollectionId === null"
-          @start="onReorderStart"
-          @end="onReorderEnd"
-          @drop.stop
-        >
-          <div
-            v-for="collection in filteredCollections"
-            :key="collection.id"
-            :data-reordering-collection="isReorderingCollection(collection) ? 'true' : undefined"
-            :data-collection-drop-id="renamingId === collection.id ? undefined : collection.id"
-            :class="[
-              'sidebar-item group border-2 border-transparent',
-              selectedId === collection.id ? 'sidebar-item-selected' : 'sidebar-item-hover',
-            ]"
-            @click="selectCollection(collection)"
-          >
-          <IconDragHandle
-            v-if="isReorderingCollection(collection)"
-            class="collection-drag-handle p-1 w-6 h-6 shrink-0 cursor-move text-base-content/70 hover:text-base-content"
-            :title="$t('collection.reorder')"
-          />
-          <span v-else-if="reorderingCollectionId !== null" class="p-1 w-6 h-6 shrink-0"></span>
-          <IconStack class="pr-1 w-6 h-6 shrink-0" />
-          <input
-            v-if="renamingId === collection.id"
-            ref="renameInputRef"
-            v-model="renameValue"
-            class="input px-1 min-w-0 flex-1 text-base"
-            maxlength="64"
-            @click.stop
-            @mousedown.stop
-            @keydown.enter.prevent="commitRename(collection)"
-            @keydown.escape.prevent="cancelRename"
-            @blur="commitRename(collection)"
-          />
-          <span v-else class="sidebar-item-label">{{ collection.name }}</span>
-          <div class="ml-auto flex flex-row items-center text-base-content/30">
-            <span
-              v-if="renamingId !== collection.id && getCollectionDisplayCount(collection) > 0"
-              class="sidebar-item-count shrink-0"
-            >
-              {{ getCollectionDisplayCount(collection).toLocaleString() }}
-            </span>
+      <div v-if="expanded" class="flex min-h-0 flex-1 transform-gpu overflow-hidden">
+        <div class="min-h-0 flex-1 overflow-x-hidden overflow-y-auto pb-1">
+          <div v-if="collections.length > 10" class="mx-1 mb-2 px-1 shrink-0">
             <div
-              v-if="renamingId !== collection.id"
               :class="[
-                selectedId === collection.id ? '' : 'hidden group-hover:block',
+                'h-8 flex items-center rounded-box transition-colors bg-base-100/40',
+                isSearchFocused ? 'border-2 border-primary' : 'border border-base-content/10 hover:border-base-content/30',
               ]"
             >
-              <ContextMenu
-                :iconMenu="IconMore"
-                :menuItems="collectionMenuItems(collection)"
-                :smallIcon="true"
+              <IconSearch class="ml-2 w-4 h-4 shrink-0" :class="isSearchFocused ? 'text-primary/70' : 'text-base-content/30'" />
+              <input
+                v-model="searchQuery"
+                type="text"
+                :placeholder="$t('collection.search')"
+                class="w-full min-w-0 bg-transparent border-none focus:ring-0 px-2 text-sm placeholder-base-content/30 focus:outline-none"
+                @focus="isSearchFocused = true"
+                @blur="isSearchFocused = false"
               />
+              <button
+                v-if="searchQuery"
+                type="button"
+                class="mr-1 p-1 rounded-box text-base-content/30 hover:text-base-content/70"
+                @click="searchQuery = ''"
+              >
+                <IconClose class="w-4 h-4" />
+              </button>
             </div>
           </div>
+          <VueDraggable
+            v-model="collections"
+            class="px-1"
+            :animation="150"
+            handle=".collection-drag-handle"
+            direction="vertical"
+            :group="{ name: 'collection-tray', pull: false, put: false }"
+            :force-fallback="true"
+            ghost-class="sidebar-reorder-placeholder"
+            :revertOnSpill="true"
+            :bubble-scroll="false"
+            :disabled="Boolean(searchQuery) || renamingId !== null || isItemDragging || reorderingCollectionId === null"
+            @start="onReorderStart"
+            @end="onReorderEnd"
+            @drop.stop
+          >
+            <div
+              v-for="collection in filteredCollections"
+              :key="collection.id"
+              :data-reordering-collection="isReorderingCollection(collection) ? 'true' : undefined"
+              :data-collection-drop-id="renamingId === collection.id ? undefined : collection.id"
+              :class="[
+                'sidebar-item group border-2 border-transparent transition-colors',
+                selectedId === collection.id ? 'sidebar-item-selected' : 'sidebar-item-hover',
+              ]"
+              @click="selectCollection(collection)"
+            >
+            <IconDragHandle
+              v-if="isReorderingCollection(collection)"
+              class="collection-drag-handle p-1 w-6 h-6 shrink-0 cursor-grab text-base-content/30"
+              :title="$t('collection.reorder')"
+            />
+            <span v-else-if="reorderingCollectionId !== null" class="p-1 w-6 h-6 shrink-0"></span>
+            <IconCollection class="pr-1 w-6 h-6 shrink-0" />
+            <input
+              v-if="renamingId === collection.id"
+              ref="renameInputRef"
+              v-model="renameValue"
+              class="input px-1 min-w-0 flex-1 text-base"
+              maxlength="64"
+              @click.stop
+              @mousedown.stop
+              @keydown.enter.prevent="commitRename(collection)"
+              @keydown.escape.prevent="cancelRename"
+              @blur="commitRename(collection)"
+            />
+            <span v-else class="sidebar-item-label">{{ collection.name }}</span>
+            <div class="ml-auto flex flex-row items-center text-base-content/30">
+              <span
+                v-if="renamingId !== collection.id && getCollectionDisplayCount(collection) > 0"
+                class="sidebar-item-count shrink-0"
+              >
+                {{ getCollectionDisplayCount(collection).toLocaleString() }}
+              </span>
+              <div
+                v-if="renamingId !== collection.id"
+                :class="[
+                  selectedId === collection.id ? '' : 'hidden group-hover:block',
+                ]"
+              >
+                <ContextMenu
+                  :iconMenu="IconMore"
+                  :menuItems="collectionMenuItems(collection)"
+                  :smallIcon="true"
+                />
+              </div>
+            </div>
+            </div>
+          </VueDraggable>
+          <div v-if="collections.length > 0 && filteredCollections.length === 0" class="sidebar-empty text-sm">
+            <span class="text-center">{{ $t('collection.not_found') }}</span>
           </div>
-        </VueDraggable>
-        <div v-if="collections.length > 0 && filteredCollections.length === 0" class="sidebar-empty text-sm">
-          <span class="text-center">{{ $t('collection.not_found') }}</span>
-        </div>
-        <div
-          v-if="!isLoadingCollections && collections.length === 0 && !renamingId"
-          class="mt-2 px-3 py-3 flex flex-col items-center gap-1 text-center text-base-content/30"
-        >
-          <span class="text-sm">{{ $t('collection.empty_content') }}</span>
-          <span class="text-xs">{{ $t('collection.drop_here') }}</span>
+          <div
+            v-if="!isLoadingCollections && collections.length === 0 && !renamingId"
+            class="mt-2 px-3 py-3 flex flex-col items-center gap-1 text-center text-base-content/30"
+          >
+            <span class="text-sm">{{ $t('collection.empty_content') }}</span>
+            <span class="text-xs">{{ $t('collection.drop_here') }}</span>
+          </div>
         </div>
       </div>
     </transition>
@@ -169,8 +177,8 @@ import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
 import { config, libConfig } from '@/common/config';
 import { clearCollection, createCollection, deleteCollection as deleteCollectionApi, getCollectionCounts, listCollections, renameCollection, reorderCollections } from '@/common/api';
-import { IconAdd, IconRight, IconRename, IconMore, IconStack, IconRemove, IconTrash, IconClose, IconSearch, IconDragHandle, IconOrder } from '@/common/icons';
-import { VueDraggable } from 'vue-draggable-plus';
+import { IconAdd, IconRight, IconRename, IconMore, IconCollection, IconRemove, IconTrash, IconClose, IconSearch, IconDragHandle, IconOrder } from '@/common/icons';
+import { VueDraggable, type DraggableEvent } from 'vue-draggable-plus';
 import ContextMenu from '@/components/ContextMenu.vue';
 import MessageBox from '@/components/MessageBox.vue';
 import TButton from '@/components/TButton.vue';
@@ -417,8 +425,9 @@ function onReorderStart() {
   uiStore.pushInputHandler('CollectionTrayDrag');
 }
 
-async function onReorderEnd() {
+async function onReorderEnd({ oldIndex, newIndex }: DraggableEvent) {
   setTimeout(() => uiStore.removeInputHandler('CollectionTrayDrag'), 0);
+  if (oldIndex === newIndex) return;
   try {
     await reorderCollections(collections.value.map((collection, sortOrder) => ({ id: collection.id, sortOrder })));
   } catch (error) {
