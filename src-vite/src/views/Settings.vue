@@ -859,6 +859,7 @@ const onRestoreDone = () => {
 
 const languages = [
   { label: 'English', value: 'en' },
+  { label: 'Česky', value: 'cs' },
   { label: 'Deutsch', value: 'de' },
   { label: 'Español', value: 'es' },
   { label: 'Français', value: 'fr' },
