@@ -68,6 +68,7 @@ export { default as IconMapOff } from '@/assets/icons/map-off.svg';
 export { default as IconMapSatellite } from '@/assets/icons/map-satellite.svg';
 export { default as IconMonitor } from '@/assets/icons/monitor.svg';
 export { default as IconRestoreScreen } from '@/assets/icons/full-screen-min.svg';
+export { default as IconShield } from '@/assets/icons/shield.svg';
 export { default as IconSideBarOff } from '@/assets/icons/sidebar-off.svg';
 export { default as IconSideBarOn } from '@/assets/icons/sidebar-on.svg';
 export { default as IconSplitOff } from '@/assets/icons/layout-split-off.svg';

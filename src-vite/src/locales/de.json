@@ -976,7 +976,6 @@
       "file_content": "Die Datei '{file}' wird in den Papierkorb verschoben.",
       "files_content": "{count} ausgewählte Dateien werden in den Papierkorb verschoben.",
       "removable_files_content": "Alle {count} entfernbaren Dateien werden in den Papierkorb verschoben.",
-      "raw_jpeg_companions_content": "{count} RAW- und JPEG-Begleitdatei(en) werden ebenfalls gelöscht.",
       "folder_content": "Der Ordner '{folder}' wird in den Papierkorb verschoben.",
       "ok": "In Papierkorb",
       "file_success": "Die Datei '{file}' wurde in den Papierkorb verschoben.",
@@ -1425,10 +1424,6 @@
     "raw": {
       "title": "RAW",
       "section_pairs": "Gepaarte Dateien",
-      "clipboard_both": "Beide Dateien",
-      "clipboard_raw": "Nur RAW",
-      "clipboard_jpeg": "Nur JPEG/HEIC",
-      "clipboard_hint": "Gilt auch für Dateipfade. Kopieren oder Verschieben in Ordner bleibt unverändert.",
       "pair_source": "Standardanzeige für Paare",
       "pair_source_hint": "Wird für gepaarte Miniaturansichten und Vorschauen verwendet",
       "pair_jpeg": "JPEG / HEIC",

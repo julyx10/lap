@@ -3381,12 +3381,20 @@ impl AFile {
     }
 
     pub fn update_moved_file_group(
-        file_id: i64,
-        component_file_ids: &[i64],
+        moved_files: &[(i64, &str)],
         replaced_file_ids: &[i64],
         new_folder_id: i64,
     ) -> Result<usize, String> {
         let mut conn = open_conn()?;
+        Self::update_moved_file_group_on(&mut conn, moved_files, replaced_file_ids, new_folder_id)
+    }
+
+    fn update_moved_file_group_on(
+        conn: &mut Connection,
+        moved_files: &[(i64, &str)],
+        replaced_file_ids: &[i64],
+        new_folder_id: i64,
+    ) -> Result<usize, String> {
         let tx = conn.transaction().map_err(|e| e.to_string())?;
         let mut updated = 0usize;
 
@@ -3409,14 +3417,12 @@ impl AFile {
 
         {
             let mut update_stmt = tx
-                .prepare_cached("UPDATE afiles SET folder_id = ?1 WHERE id = ?2")
+                .prepare_cached("UPDATE afiles SET folder_id = ?1, name = ?2, name_pinyin = ?3 WHERE id = ?4")
                 .map_err(|e| e.to_string())?;
-            updated += update_stmt
-                .execute(params![new_folder_id, file_id])
-                .map_err(|e| e.to_string())?;
-            for component_file_id in component_file_ids {
+            for (file_id, path) in moved_files {
+                let name = t_utils::get_file_name(path);
                 updated += update_stmt
-                    .execute(params![new_folder_id, component_file_id])
+                    .execute(params![new_folder_id, name, t_utils::natural_sort_key(&name.to_lowercase()), file_id])
                     .map_err(|e| e.to_string())?;
             }
         }
@@ -5167,13 +5173,46 @@ impl AFile {
     }
 
     pub fn live_photo_component_files(file_id: i64) -> Result<Vec<Self>, String> {
+        Self::grouped_component_files(file_id, true)
+    }
+
+    pub(crate) fn grouped_component_files(file_id: i64, group_raw_pairs: bool) -> Result<Vec<Self>, String> {
         let Some(file) = Self::get_file_info(file_id)? else {
             return Ok(Vec::new());
         };
+        if file.media_subtype.as_deref() == Some("raw_jpeg_pair") && !group_raw_pairs {
+            return Ok(Vec::new());
+        }
         let Some(video_id) = file.live_photo_video_id.filter(|id| *id > 0) else {
             return Ok(Vec::new());
         };
-        Self::get_files_by_ids(&[video_id])
+        let mut components = Self::get_files_by_ids(&[video_id])?;
+        if file.media_subtype.as_deref() == Some("raw_jpeg_pair") {
+            components.retain(|component| component.media_subtype.as_deref() != Some("live_photo"));
+        }
+        Ok(components)
+    }
+
+    pub(crate) fn reconcile_raw_jpeg_pairs(enabled: bool) -> Result<(), String> {
+        if !enabled {
+            open_conn()?.execute(
+                "UPDATE afiles SET media_subtype = NULL, live_photo_video_id = NULL
+                 WHERE media_subtype = 'raw_jpeg_pair'",
+                [],
+            ).map_err(|error| error.to_string())?;
+            return Ok(());
+        }
+        // Visit every folder so pairs whose companion disappeared are cleared,
+        // not only the folders that still have both file types.
+        let folders = AFolder::get_all()?
+            .into_iter()
+            .filter(|folder| folder.album_id > 0)
+            .filter_map(|folder| folder.id)
+            .collect::<Vec<_>>();
+        for folder_id in folders {
+            Self::pair_raw_jpeg_in_folder(folder_id)?;
+        }
+        Ok(())
     }
 
     pub fn pair_raw_jpeg_in_folder(folder_id: i64) -> Result<usize, String> {
@@ -5189,7 +5228,9 @@ impl AFile {
         let mut raws = HashMap::<String, usize>::new();
         for file in &files {
             if !file.album_visible { continue; }
-            if matches!(ext(&file.name).as_str(), "jpg" | "jpeg" | "heic" | "heif" | "hif") {
+            if file.media_subtype.as_deref() != Some("live_photo")
+                && matches!(ext(&file.name).as_str(), "jpg" | "jpeg" | "heic" | "heif" | "hif")
+            {
                 if let (Some(id), Some(file_stem)) = (file.id, stem(&file.name)) { companions.entry(file_stem).or_default().push(id); }
             }
             if t_common::RAW_IMGS.iter().any(|raw| raw.eq_ignore_ascii_case(&ext(&file.name))) {
@@ -11335,6 +11376,49 @@ mod raw_display_cache_tests {
         assert_ne!(key(RawPreviewMode::Embedded, 1), key(RawPreviewMode::Rendered, 1));
         assert_eq!(key(RawPreviewMode::Embedded, 0), key(RawPreviewMode::Embedded, 1));
         assert_ne!(key(RawPreviewMode::Embedded, 6), key(RawPreviewMode::Embedded, 1));
+    }
+}
+
+#[cfg(test)]
+mod file_move_tests {
+    use super::*;
+
+    #[test]
+    fn moving_a_pair_uses_its_final_names_and_keeps_unreplaced_files() {
+        let mut conn = Connection::open_in_memory().unwrap();
+        conn.execute_batch(
+            "CREATE TABLE afiles(
+                 id INTEGER PRIMARY KEY, folder_id INTEGER, name TEXT, name_pinyin TEXT,
+                 UNIQUE(folder_id, name)
+             );
+             CREATE TABLE athumbs(file_id INTEGER);
+             INSERT INTO afiles VALUES
+                 (1,1,'A.NEF','old'), (2,1,'A.JPG','old'),
+                 (3,2,'A.NEF','existing'), (4,2,'A.JPG','existing'),
+                 (5,2,'A(1).NEF','replaced');
+             INSERT INTO athumbs VALUES (1), (4), (5);",
+        ).unwrap();
+        let moved = [(1, "/destination/A(1).NEF"), (2, "/destination/A(1).JPG")];
+        assert_eq!(AFile::update_moved_file_group_on(&mut conn, &moved, &[5], 2).unwrap(), 2);
+
+        for (id, name) in [(1, "A(1).NEF"), (2, "A(1).JPG")] {
+            let actual = conn.query_row(
+                "SELECT folder_id, name, name_pinyin FROM afiles WHERE id=?1",
+                [id],
+                |row| Ok((row.get::<_, i64>(0)?, row.get::<_, String>(1)?, row.get::<_, String>(2)?)),
+            ).unwrap();
+            assert_eq!(actual, (2, name.to_owned(), t_utils::natural_sort_key(&name.to_lowercase())));
+        }
+        let remaining = conn.query_row(
+            "SELECT COUNT(*) FROM afiles WHERE id IN (3,4)",
+            [],
+            |row| row.get::<_, i64>(0),
+        ).unwrap();
+        assert_eq!(remaining, 2);
+        let thumbs = conn.prepare("SELECT file_id FROM athumbs ORDER BY file_id").unwrap()
+            .query_map([], |row| row.get::<_, i64>(0)).unwrap()
+            .collect::<Result<Vec<_>, _>>().unwrap();
+        assert_eq!(thumbs, [1, 4]);
     }
 }
 

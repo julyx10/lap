@@ -976,7 +976,6 @@
       "file_content": "Plik „{file}” zostanie przeniesiony do kosza.",
       "files_content": "{count} zaznaczonych plików zostanie przeniesionych do kosza.",
       "removable_files_content": "Wszystkie {count} plików możliwych do usunięcia zostanie przeniesionych do kosza.",
-      "raw_jpeg_companions_content": "{count} towarzyszących plik(ów) RAW+JPEG również zostanie usuniętych.",
       "folder_content": "Folder „{folder}” zostanie przeniesiony do kosza.",
       "ok": "Przenieś do kosza",
       "file_success": "Plik „{file}” został przeniesiony do kosza.",
@@ -1425,10 +1424,6 @@
     "raw": {
       "title": "RAW",
       "section_pairs": "Pliki w parach",
-      "clipboard_both": "Oba pliki",
-      "clipboard_raw": "Tylko RAW",
-      "clipboard_jpeg": "Tylko JPEG/HEIC",
-      "clipboard_hint": "Dotyczy też ścieżek. Nie wpływa na kopiowanie i przenoszenie do folderów.",
       "pair_source": "Domyślne wyświetlanie par",
       "pair_source_hint": "Używane dla sparowanych miniatur i podglądów",
       "pair_jpeg": "JPEG / HEIC",

@@ -976,7 +976,6 @@
       "file_content": "Soubor „{file}“ bude přesunut do koše.",
       "files_content": "Vybrané soubory ({count}) budou přesunuty do koše.",
       "removable_files_content": "Všech {count} odstranitelných souborů bude přesunuto do koše.",
-      "raw_jpeg_companions_content": "Budou odstraněny také doprovodné soubory RAW+JPEG: {count}.",
       "folder_content": "Složka „{folder}“ bude přesunuta do koše.",
       "ok": "Koš",
       "file_success": "Soubor „{file}“ byl přesunut do koše.",
@@ -1424,10 +1423,6 @@
     "raw": {
       "title": "RAW",
       "section_pairs": "Spárované soubory",
-      "clipboard_both": "Oba soubory",
-      "clipboard_raw": "Jen RAW",
-      "clipboard_jpeg": "Jen JPEG/HEIC",
-      "clipboard_hint": "Platí i pro kopírování cest k souborům. Nemá vliv na kopírování nebo přesouvání souborů do složek.",
       "pair_source": "Výchozí zobrazení dvojic",
       "pair_source_hint": "Používá se pro miniatury a náhledy spárovaných souborů",
       "pair_jpeg": "JPEG / HEIC",

@@ -976,7 +976,6 @@
       "file_content": "'{file}'을(를) 휴지통으로 이동합니다.",
       "files_content": "{count}개의 파일을 휴지통으로 이동합니다.",
       "removable_files_content": "삭제 가능한 {count}개의 모든 파일을 휴지통으로 이동합니다.",
-      "raw_jpeg_companions_content": "RAW+JPEG 연결 파일 {count}개도 함께 삭제됩니다.",
       "folder_content": "'{folder}'을(를) 휴지통으로 이동합니다.",
       "ok": "이동",
       "file_success": "'{file}'을(를) 휴지통으로 이동했습니다.",
@@ -1425,10 +1424,6 @@
     "raw": {
       "title": "RAW",
       "section_pairs": "쌍을 이룬 파일",
-      "clipboard_both": "두 파일 모두",
-      "clipboard_raw": "RAW만",
-      "clipboard_jpeg": "JPEG/HEIC만",
-      "clipboard_hint": "파일 경로 복사에도 적용됩니다. 폴더로 복사하거나 이동하는 작업에는 영향을 주지 않습니다.",
       "pair_source": "쌍의 기본 표시",
       "pair_source_hint": "쌍을 이룬 썸네일과 미리보기에 사용됩니다",
       "pair_jpeg": "JPEG / HEIC",

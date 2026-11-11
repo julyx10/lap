@@ -976,7 +976,6 @@
       "file_content": "檔案「{file}」將被移到垃圾桶。",
       "files_content": "已選的 {count} 個檔案將被移到垃圾桶。",
       "removable_files_content": "全部 {count} 個可移除檔案將被移到垃圾桶。",
-      "raw_jpeg_companions_content": "另將刪除 {count} 個 RAW+JPEG 相伴随檔案。",
       "folder_content": "資料夾「{folder}」將被移到垃圾桶。",
       "ok": "移到垃圾桶",
       "file_success": "已將檔案「{file}」移到垃圾桶。",
@@ -1425,10 +1424,6 @@
     "raw": {
       "title": "RAW",
       "section_pairs": "配對檔案",
-      "clipboard_both": "兩個檔案",
-      "clipboard_raw": "僅 RAW",
-      "clipboard_jpeg": "僅 JPEG/HEIC",
-      "clipboard_hint": "同時影響複製檔案路徑，不影響複製或移動檔案至資料夾。",
       "pair_source": "配對的預設顯示",
       "pair_source_hint": "用於配對的縮圖與預覽",
       "pair_jpeg": "JPEG / HEIC",

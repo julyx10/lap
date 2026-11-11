@@ -186,18 +186,18 @@
                 @keydown.space.self.prevent="handleSimilarSelection(item.file_id)"
               >
                 <div class="flex items-center gap-2">
-                  <label v-if="item.is_keep !== 1" class="flex items-center shrink-0" :class="isOriginalUnavailable(item.file) ? 'cursor-not-allowed' : 'cursor-pointer'" @click.stop @dblclick.stop>
+                  <label v-if="item.is_keep !== 1" class="flex items-center shrink-0" :class="!canSelectForDeletion(item) ? 'cursor-not-allowed' : 'cursor-pointer'" @click.stop @dblclick.stop>
                     <input
                       type="checkbox"
                       class="checkbox checkbox-xs disabled:cursor-not-allowed"
-                      :class="isOriginalUnavailable(item.file) ? 'opacity-30' : 'checkbox-primary opacity-70'"
+                      :class="!canSelectForDeletion(item) ? 'opacity-30' : 'checkbox-primary opacity-70'"
                       :checked="isSimilarSelected(activeSimilarGroup.id, item.file_id)"
-                      :disabled="isOriginalUnavailable(item.file)"
+                      :disabled="!canSelectForDeletion(item)"
                       @change="toggleSimilarSelected(activeSimilarGroup.id, item.file_id)"
                     />
                   </label>
                   <div v-else class="w-4 shrink-0 flex items-center justify-center">
-                  <IconLock class="w-3.5 h-3.5 text-base-content/40" aria-hidden="true" />
+                  <IconShield class="w-3.5 h-3.5 text-base-content/40" aria-hidden="true" />
                 </div>
                   <div class="w-10 h-10 rounded-box overflow-hidden shrink-0">
                     <img v-if="item.file?.thumbnail" :src="item.file.thumbnail" class="w-full h-full object-cover" />
@@ -206,6 +206,10 @@
                   <div class="min-w-0 flex-1">
                     <div class="flex items-center gap-1 text-xs font-semibold text-base-content/70">
                       <span class="truncate">{{ item.file?.name }}</span>
+                      <span
+                        v-if="config.settings.groupRawJpegPairs && item.file?.media_subtype === 'raw_jpeg_pair'"
+                        class="shrink-0 rounded bg-base-content/10 px-1 text-[9px] font-medium text-base-content/60"
+                      >{{ formatRawPairBadge(item.file.live_photo_video_path) }}</span>
                       <IconExclamation v-if="isOriginalUnavailable(item.file)" class="w-3.5 h-3.5 shrink-0 text-warning" />
                     </div>
                     <div
@@ -434,18 +438,18 @@
               @keydown.space.self.prevent="handleDuplicateSelection(item.file_id)"
             >
               <div class="flex items-center gap-2">
-                <label v-if="item.is_keep !== 1" class="flex items-center shrink-0" :class="isOriginalUnavailable(item.file) ? 'cursor-not-allowed' : 'cursor-pointer'" @click.stop @dblclick.stop>
+                <label v-if="item.is_keep !== 1" class="flex items-center shrink-0" :class="!canSelectForDeletion(item) ? 'cursor-not-allowed' : 'cursor-pointer'" @click.stop @dblclick.stop>
                   <input
                     type="checkbox"
                     class="checkbox checkbox-xs disabled:cursor-not-allowed"
-                    :class="isOriginalUnavailable(item.file) ? 'opacity-30' : 'checkbox-primary opacity-70'"
+                    :class="!canSelectForDeletion(item) ? 'opacity-30' : 'checkbox-primary opacity-70'"
                     :checked="isDupSelected(activeGroup.id, item.file_id)"
-                    :disabled="isOriginalUnavailable(item.file)"
+                    :disabled="!canSelectForDeletion(item)"
                     @change="toggleDupSelected(activeGroup.id, item.file_id)"
                   />
                 </label>
                 <div v-else class="w-4 shrink-0 flex items-center justify-center">
-                  <IconLock class="w-3.5 h-3.5 text-base-content/40" aria-hidden="true" />
+                  <IconShield class="w-3.5 h-3.5 text-base-content/40" aria-hidden="true" />
                 </div>
                 <div class="w-10 h-10 rounded-box overflow-hidden shrink-0">
                   <img v-if="item.file?.thumbnail" :src="item.file.thumbnail" class="w-full h-full object-cover" />
@@ -454,6 +458,10 @@
                 <div class="min-w-0 flex-1">
                   <div class="flex items-center gap-1 text-xs font-semibold text-base-content/70">
                     <span class="truncate">{{ item.file?.name }}</span>
+                    <span
+                      v-if="config.settings.groupRawJpegPairs && item.file?.media_subtype === 'raw_jpeg_pair'"
+                      class="shrink-0 rounded bg-base-content/10 px-1 text-[9px] font-medium text-base-content/60"
+                    >{{ formatRawPairBadge(item.file.live_photo_video_path) }}</span>
                     <IconExclamation v-if="isOriginalUnavailable(item.file)" class="w-3.5 h-3.5 shrink-0 text-warning" />
                   </div>
                   <div
@@ -469,7 +477,7 @@
                 <div class="shrink-0 w-16 min-h-10 flex items-center justify-center">
                   <span v-if="item.is_keep === 1" class="thumb-badge">KEEP</span>
                   <PanelActionButton
-                    v-else-if="!config.settings.groupRawJpegPairs || item.can_set_keep !== false"
+                    v-else-if="item.can_set_keep !== false"
                     size="small"
                     class="transition-opacity"
                     :class="keepActionClass(item.file_id)"
@@ -506,6 +514,7 @@ import { listen } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import {
   formatFileSize,
+  formatRawPairBadge,
   getFolderName,
   getFolderPath,
   formatFolderBreadcrumb,
@@ -518,7 +527,7 @@ import DedupSettings from './DedupSettings.vue';
 import TButton from '@/components/TButton.vue';
 import PanelActionButton from '@/components/PanelActionButton.vue';
 import MessageBox from '@/components/MessageBox.vue';
-import { IconAdjustments, IconChecked, IconExclamation, IconUnChecked, IconClose, IconFlag, IconFlagFilled, IconFlagOff, IconLock, IconRefresh, IconSplitOn, IconSplitOn4, IconTrash } from '@/common/icons';
+import { IconAdjustments, IconChecked, IconExclamation, IconUnChecked, IconClose, IconFlag, IconFlagFilled, IconFlagOff, IconShield, IconRefresh, IconSplitOn, IconSplitOn4, IconTrash } from '@/common/icons';
 import {
   dedupStartScan,
   dedupCancelScan,
@@ -527,6 +536,7 @@ import {
   listenDedupScanProgress,
   dedupListGroups,
   dedupSetKeep,
+  dedupGetGroupItems,
   getAlbum,
   getFileThumb,
   checkFileAccessibility,
@@ -682,8 +692,11 @@ const similarProgressLabel = computed(() => ({
 const visibleDuplicateGroups = computed(() => duplicateGroups.value.slice(0, loadedDuplicateGroupCount.value));
 const visibleSimilarGroups = computed(() => similarGroups.value);
 
+const pairMatchIds = ref<number[]>([]);
+
 function emitDedupStatuses() {
   const statuses: Record<number, 'keep' | 'dup'> = {};
+  for (const fileId of pairMatchIds.value) statuses[fileId] = 'dup';
   for (const group of rawGroups.value) {
     for (const item of group.items || []) {
       statuses[Number(item.file_id)] = item.is_keep === 1 ? 'keep' : 'dup';
@@ -727,13 +740,17 @@ function getDupSelectedSet(groupId: number): Set<number> {
   return set;
 }
 
-const duplicateFilesById = computed(() => new Map<number, any>(rawGroups.value.flatMap((group: any) =>
-  (group.items || []).map((item: any) => [Number(item.file_id), item.file] as [number, any]))));
-const similarFilesById = computed(() => new Map<number, any>(similarGroups.value.flatMap((group: any) =>
-  (group.items || []).map((item: any) => [Number(item.file_id), item.file] as [number, any]))));
+const duplicateItemsById = computed(() => new Map<number, any>(rawGroups.value.flatMap((group: any) =>
+  (group.items || []).map((item: any) => [Number(item.file_id), item] as [number, any]))));
+const similarItemsById = computed(() => new Map<number, any>(similarGroups.value.flatMap((group: any) =>
+  (group.items || []).map((item: any) => [Number(item.file_id), item] as [number, any]))));
+
+function canSelectForDeletion(item: any): boolean {
+  return item?.can_delete === true && !isOriginalUnavailable(item.file);
+}
 
 function isDupSelected(groupId: number, fileId: number) {
-  return !isOriginalUnavailable(duplicateFilesById.value.get(Number(fileId)))
+  return canSelectForDeletion(duplicateItemsById.value.get(Number(fileId)))
     && getDupSelectedSet(groupId).has(fileId);
 }
 
@@ -746,7 +763,7 @@ function getSimilarSelectedSet(groupId: number): Set<number> {
 }
 
 function isSimilarSelected(groupId: number, fileId: number) {
-  return !isOriginalUnavailable(similarFilesById.value.get(Number(fileId)))
+  return canSelectForDeletion(similarItemsById.value.get(Number(fileId)))
     && getSimilarSelectedSet(groupId).has(fileId);
 }
 
@@ -757,7 +774,7 @@ function selectSimilarDuplicatesByDefault(group: any) {
     groupId,
     new Set(
       (group.items || [])
-        .filter((item: any) => item.is_keep !== 1 && !isOriginalUnavailable(item.file))
+        .filter((item: any) => item.is_keep !== 1 && canSelectForDeletion(item))
         .map((item: any) => Number(item.file_id)),
     ),
   );
@@ -789,7 +806,7 @@ async function setSimilarCullingFlag(item: any, cullingFlag: number) {
 }
 
 function toggleSimilarSelected(groupId: number, fileId: number) {
-  if (isOriginalUnavailable(similarFilesById.value.get(Number(fileId)))) return;
+  if (!canSelectForDeletion(similarItemsById.value.get(Number(fileId)))) return;
   const selected = getSimilarSelectedSet(groupId);
   if (selected.has(fileId)) selected.delete(fileId);
   else selected.add(fileId);
@@ -797,7 +814,7 @@ function toggleSimilarSelected(groupId: number, fileId: number) {
 
 function isAllSimilarItemsSelected(groupId: number) {
   if (!activeSimilarGroup.value?.items?.length || activeSimilarGroup.value.id !== groupId) return false;
-  const unkeptItems = activeSimilarGroup.value.items.filter((item: any) => item.is_keep !== 1 && !isOriginalUnavailable(item.file));
+  const unkeptItems = activeSimilarGroup.value.items.filter((item: any) => item.is_keep !== 1 && canSelectForDeletion(item));
   if (unkeptItems.length === 0) return false;
   const selected = getSimilarSelectedSet(groupId);
   return unkeptItems.every((item: any) => selected.has(Number(item.file_id)));
@@ -813,7 +830,7 @@ function selectAllSimilarItems(group: any) {
   }
   selected.clear();
   for (const item of group.items || []) {
-    if (item.is_keep !== 1 && !isOriginalUnavailable(item.file)) selected.add(Number(item.file_id));
+    if (item.is_keep !== 1 && canSelectForDeletion(item)) selected.add(Number(item.file_id));
   }
 }
 
@@ -860,7 +877,7 @@ function getDedupItemClass(fileId: number, isDuplicateSelected = false) {
 }
 
 function toggleDupSelected(groupId: number, fileId: number) {
-  if (isOriginalUnavailable(duplicateFilesById.value.get(Number(fileId)))) return;
+  if (!canSelectForDeletion(duplicateItemsById.value.get(Number(fileId)))) return;
   const set = getDupSelectedSet(groupId);
   if (set.has(fileId)) set.delete(fileId);
   else set.add(fileId);
@@ -881,7 +898,7 @@ function handleSimilarSelection(fileId: number, preview = false) {
 let unlistenAlbumAccessChanged: (() => void) | undefined;
 const duplicateAccessPending = ref(false);
 const hasUnavailableDuplicates = computed(() => rawGroups.value.some((group: any) =>
-  (group.items || []).some((item: any) => item.is_keep !== 1 && isOriginalUnavailable(item.file))));
+  (group.items || []).some((item: any) => item.is_keep !== 1 && item.can_delete && isOriginalUnavailable(item.file))));
 
 async function refreshFileAccess(files: any[]) {
   const libraryId = libConfig._libraryId;
@@ -1190,12 +1207,26 @@ async function setKeep(groupId: number, fileId: number) {
   const previousKeepId = Number(
     (group.items || []).find((item: any) => Number(item.is_keep) === 1)?.file_id || 0,
   );
-  const items = (group.items || []).map((item: any) => ({
-    ...item,
-    is_keep: Number(item.file_id) === fileId ? 1 : 0,
-  }));
+  const previousFiles = new Map((group.items || []).map((item: any) => [item.file_id, item.file]));
+  let items;
+  try {
+    const detail = await dedupGetGroupItems(groupId);
+    items = detail.map((item: any) => ({
+      ...item,
+      file: previousFiles.get(item.file_id) || item.file,
+    }));
+  } catch (error) {
+    // The KEEP change already succeeded; fall back to the local state rather
+    // than showing a failure, and let the next group reload refresh permissions.
+    console.error('Failed to refresh dedup group:', error);
+    items = (group.items || []).map((item: any) => ({
+      ...item,
+      is_keep: Number(item.file_id) === fileId ? 1 : 0,
+    }));
+  }
   rawGroups.value[groupIndex] = { ...group, items };
   emitDedupStatuses();
+  void refreshOverview();
 
   // The new keep replaces the old one; the old keep becomes deletable again.
   const selectedIds = getDupSelectedSet(groupId);
@@ -1205,7 +1236,10 @@ async function setKeep(groupId: number, fileId: number) {
 }
 
 async function setSimilarKeep(groupId: number, fileId: number) {
-  await similarSetKeep(groupId, fileId, props.similarScanKey);
+  const scopeKey = props.similarScanKey;
+  await similarSetKeep(groupId, fileId, scopeKey);
+  const detail = await similarGetGroup(groupId, scopeKey);
+  if (scopeKey !== props.similarScanKey) return;
   const groupIndex = similarGroups.value.findIndex((group: any) => Number(group.id) === groupId);
   if (groupIndex < 0) return;
 
@@ -1213,14 +1247,16 @@ async function setSimilarKeep(groupId: number, fileId: number) {
   const previousKeepId = Number(
     (group.items || []).find((item: any) => Number(item.is_keep) === 1)?.file_id || 0,
   );
-  const items = (group.items || []).map((item: any) => ({
+  const previousFiles = new Map((group.items || []).map((item: any) => [item.file_id, item.file]));
+  const items = (detail.items || []).map((item: any) => ({
     ...item,
-    is_keep: Number(item.file_id) === fileId ? 1 : 0,
+    file: previousFiles.get(item.file_id) || item.file,
   }));
   similarGroups.value[groupIndex] = {
     ...group,
+    ...detail,
     representative: items.find((item: any) => item.is_keep === 1)?.file || group.representative,
-    items: items.sort((a: any, b: any) => Number(b.is_keep) - Number(a.is_keep)),
+    items,
   };
   // The new keep replaces the old one; the old keep becomes deletable again.
   const selected = getSimilarSelectedSet(groupId);
@@ -1234,7 +1270,7 @@ function selectGroupDuplicates(groupId: number, keepFileId: number) {
   if (!group) return;
 
   const set = getDupSelectedSet(groupId);
-  const duplicateIds = group.duplicateItems.filter((item: any) => !isOriginalUnavailable(item.file)).map((item: any) => item.file_id);
+  const duplicateIds = group.duplicateItems.filter(canSelectForDeletion).map((item: any) => item.file_id);
   const allSelected = duplicateIds.length > 0 && duplicateIds.every((id: number) => set.has(id));
 
   if (allSelected) {
@@ -1252,7 +1288,7 @@ function isAllGroupDuplicatesSelected(groupId: number) {
   const group = duplicateGroups.value.find(g => g.id === groupId);
   if (!group || group.duplicateItems.length === 0) return false;
   const set = getDupSelectedSet(groupId);
-  const available = group.duplicateItems.filter((item: any) => !isOriginalUnavailable(item.file));
+  const available = group.duplicateItems.filter(canSelectForDeletion);
   return available.length > 0 && available.every((item: any) => set.has(item.file_id));
 }
 
@@ -1287,22 +1323,6 @@ function applyDeletedFiles(groupId: number, deletedFileIds: number[]) {
   if (remainingItems.length === oldItems.length) return;
 
   const fileSize = Number(group.file_size || 0);
-  const oldFileCount = oldItems.length;
-  const newFileCount = remainingItems.length > 1 ? remainingItems.length : 0;
-  const oldDuplicateCount = Math.max(0, oldFileCount - 1);
-  const newDuplicateCount = Math.max(0, newFileCount - 1);
-  const oldReclaimableBytes = Math.max(0, (oldFileCount - 1) * fileSize);
-  const newReclaimableBytes = Math.max(0, (newFileCount - 1) * fileSize);
-
-  totalDuplicateFileCount.value = Math.max(
-    0,
-    totalDuplicateFileCount.value + newDuplicateCount - oldDuplicateCount
-  );
-  totalReclaimableBytes.value = Math.max(
-    0,
-    totalReclaimableBytes.value + newReclaimableBytes - oldReclaimableBytes
-  );
-
   const selectedIds = selectedDupIdsByGroup.value.get(groupId);
   for (const fileId of deletedIds) {
     selectedIds?.delete(fileId);
@@ -1311,7 +1331,7 @@ function applyDeletedFiles(groupId: number, deletedFileIds: number[]) {
   if (remainingItems.length <= 1) {
     rawGroups.value.splice(groupIndex, 1);
     selectedDupIdsByGroup.value.delete(groupId);
-    totalGroupCount.value = Math.max(0, totalGroupCount.value - 1);
+    void refreshOverview();
 
     if (selectedGroupId.value === groupId) {
       const nextGroup = rawGroups.value[groupIndex] || rawGroups.value[groupIndex - 1];
@@ -1327,6 +1347,7 @@ function applyDeletedFiles(groupId: number, deletedFileIds: number[]) {
     file_count: remainingItems.length,
     total_size: remainingItems.length * fileSize,
   };
+  void refreshOverview();
   emitDedupStatuses();
 }
 
@@ -1442,13 +1463,21 @@ function resolveDedupThumbnail(file: any, thumb: Parameters<typeof getThumbnailD
   return getThumbnailDataUrl(thumb, thumbnailPlaceholder, false, size, version);
 }
 
+let overviewRequestId = 0;
+
 async function refreshOverview() {
+  const request = ++overviewRequestId;
+  const libraryId = libConfig._libraryId;
+  const scopeKey = props.dedupScanKey;
   try {
     const overview = await dedupGetOverview();
-    if (!overview) return;
+    if (!overview || request !== overviewRequestId || libraryId !== libConfig._libraryId
+      || scopeKey !== props.dedupScanKey) return;
     totalGroupCount.value = Number(overview.total_groups || 0);
     totalDuplicateFileCount.value = Number(overview.total_files || 0);
     totalReclaimableBytes.value = Number(overview.total_reclaimable_bytes || 0);
+    pairMatchIds.value = overview.pair_match_ids || [];
+    emitDedupStatuses();
   } catch (error) {
     console.error('refreshOverview error:', error);
   }
@@ -1488,7 +1517,7 @@ async function fetchGroups(preferredGroupId: number | null = null) {
       if (!selectedDupIdsByGroup.value.has(groupId)) {
         const set = new Set<number>();
         for (const item of (group.items || [])) {
-          if (item.is_keep !== 1 && !isOriginalUnavailable(item.file)) {
+          if (item.is_keep !== 1 && canSelectForDeletion(item)) {
             set.add(Number(item.file_id));
           }
         }

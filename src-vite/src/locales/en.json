@@ -976,7 +976,6 @@
       "file_content": "The file '{file}' will be trashed.",
       "files_content": "{count} selected files will be trashed.",
       "removable_files_content": "All {count} removable files will be trashed.",
-      "raw_jpeg_companions_content": "{count} RAW+JPEG companion file(s) will also be deleted.",
       "folder_content": "The folder '{folder}' will be trashed.",
       "ok": "Trash",
       "file_success": "The file '{file}' has been trashed.",
@@ -1425,10 +1424,6 @@
     "raw": {
       "title": "RAW",
       "section_pairs": "Paired files",
-      "clipboard_both": "Both files",
-      "clipboard_raw": "RAW only",
-      "clipboard_jpeg": "JPEG/HEIC only",
-      "clipboard_hint": "Also applies to copying file paths. Does not affect copying or moving files to folders.",
       "pair_source": "Default display for pairs",
       "pair_source_hint": "Used for paired thumbnails and previews",
       "pair_jpeg": "JPEG / HEIC",

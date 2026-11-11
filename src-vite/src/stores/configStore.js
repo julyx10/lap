@@ -163,7 +163,6 @@ export const useConfigStore = defineStore('configStore', {
 
       // RAW display settings
       groupRawJpegPairs: false,   // group matching RAW and JPEG/HEIC files
-      rawPairClipboardMode: 'both', // both | raw | jpeg; clipboard operations only
       rawPairDisplaySource: 'jpeg', // jpeg | raw (used when pairs are grouped)
       rawPreviewSource: 'embedded', // embedded | rendered
       rawRenderBrightness: 'original', // original | brightened
@@ -348,9 +347,6 @@ export const useConfigStore = defineStore('configStore', {
     setThumbnailSize(thumbnailSize) {
       this.settings.thumbnailSize = thumbnailSize;
     },
-    setRawPairClipboardMode(mode) {
-      this.settings.rawPairClipboardMode = ['both', 'raw', 'jpeg'].includes(mode) ? mode : 'both';
-    },
     setRawPairDisplaySource(source) {
       this.settings.rawPairDisplaySource = source === 'raw' ? 'raw' : 'jpeg';
     },
@@ -467,8 +463,7 @@ export const useConfigStore = defineStore('configStore', {
           settings.rawPreviewSource = settings.rawPreviewSource === 'rendered' ? 'rendered' : 'embedded';
           settings.rawRenderBrightness = settings.rawRenderBrightness === 'brightened' ? 'brightened' : 'original';
           settings.rawPairDisplaySource = settings.rawPairDisplaySource === 'raw' ? 'raw' : 'jpeg';
-          settings.rawPairClipboardMode = ['both', 'raw', 'jpeg'].includes(settings.rawPairClipboardMode)
-            ? settings.rawPairClipboardMode : 'both';
+          delete settings.rawPairClipboardMode;
         }
         return state;
       },

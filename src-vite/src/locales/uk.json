@@ -976,7 +976,6 @@
       "file_content": "Файл '{file}' буде переміщено до кошика.",
       "files_content": "Вибраних файлів буде переміщено до кошика: {count}.",
       "removable_files_content": "Усіх файлів, які можна вилучити, буде переміщено до кошика: {count}.",
-      "raw_jpeg_companions_content": "Також буде видалено супутніх файлів RAW+JPEG: {count}.",
       "folder_content": "Теку '{folder}' буде переміщено до кошика.",
       "ok": "До кошика",
       "file_success": "Файл '{file}' переміщено до кошика.",
@@ -1425,10 +1424,6 @@
     "raw": {
       "title": "RAW",
       "section_pairs": "Парні файли",
-      "clipboard_both": "Обидва файли",
-      "clipboard_raw": "Лише RAW",
-      "clipboard_jpeg": "Лише JPEG/HEIC",
-      "clipboard_hint": "Також застосовується до шляхів. Не впливає на копіювання та переміщення до папок.",
       "pair_source": "Типове відображення для пар",
       "pair_source_hint": "Використовується для парних мініатюр і попередніх переглядів",
       "pair_jpeg": "JPEG / HEIC",

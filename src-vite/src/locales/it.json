@@ -976,7 +976,6 @@
       "file_content": "Il file '{file}' verrà spostato nel cestino.",
       "files_content": "{count} file selezionati verranno spostati nel cestino.",
       "removable_files_content": "Tutti i {count} file rimovibili verranno spostati nel cestino.",
-      "raw_jpeg_companions_content": "Verranno eliminati anche {count} file complementari RAW+JPEG.",
       "folder_content": "La cartella '{folder}' verrà spostata nel cestino.",
       "ok": "Cestino",
       "file_success": "Il file '{file}' è stato spostato nel cestino.",
@@ -1425,10 +1424,6 @@
     "raw": {
       "title": "RAW",
       "section_pairs": "File accoppiati",
-      "clipboard_both": "Entrambi i file",
-      "clipboard_raw": "Solo RAW",
-      "clipboard_jpeg": "Solo JPEG/HEIC",
-      "clipboard_hint": "Si applica anche ai percorsi. Non influisce sulla copia o sullo spostamento nelle cartelle.",
       "pair_source": "Visualizzazione predefinita per le coppie",
       "pair_source_hint": "Usata per miniature e anteprime accoppiate",
       "pair_jpeg": "JPEG / HEIC",

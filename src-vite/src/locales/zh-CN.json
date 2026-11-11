@@ -976,7 +976,6 @@
       "file_content": "文件 '{file}' 将被移到废纸篓。",
       "files_content": "{count} 个选择的文件将被移到废纸篓。",
       "removable_files_content": "全部 {count} 个可删除文件将被移到废纸篓。",
-      "raw_jpeg_companions_content": "还将删除 {count} 个 RAW+JPEG 配对文件。",
       "folder_content": "文件夹 '{folder}' 将被移到废纸篓。",
       "ok": "移到废纸篓",
       "file_success": "文件 '{file}' 已移到废纸篓。",
@@ -1425,10 +1424,6 @@
     "raw": {
       "title": "RAW",
       "section_pairs": "配对文件",
-      "clipboard_both": "两个文件",
-      "clipboard_raw": "仅 RAW",
-      "clipboard_jpeg": "仅 JPEG/HEIC",
-      "clipboard_hint": "同时影响复制文件路径，不影响复制或移动文件到文件夹。",
       "pair_source": "配对时默认显示",
       "pair_source_hint": "用于配对照片的缩略图和预览",
       "pair_jpeg": "JPEG / HEIC",

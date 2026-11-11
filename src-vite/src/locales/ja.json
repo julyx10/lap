@@ -976,7 +976,6 @@
       "file_content": "ファイル '{file}' をゴミ箱に入れます。",
       "files_content": "{count} 個のファイルをゴミ箱に入れます。",
       "removable_files_content": "削除可能な {count} 件すべてのファイルをゴミ箱に入れます。",
-      "raw_jpeg_companions_content": "RAW+JPEG の関連ファイルも {count} 件削除されます。",
       "folder_content": "フォルダ '{folder}' をゴミ箱に入れます。",
       "ok": "入れる",
       "file_success": "ファイル '{file}' をゴミ箱に入れました。",
@@ -1425,10 +1424,6 @@
     "raw": {
       "title": "RAW",
       "section_pairs": "ペアファイル",
-      "clipboard_both": "両方のファイル",
-      "clipboard_raw": "RAW のみ",
-      "clipboard_jpeg": "JPEG/HEIC のみ",
-      "clipboard_hint": "パスのコピーにも適用します。フォルダーへのコピーや移動には影響しません。",
       "pair_source": "ペアの既定の表示",
       "pair_source_hint": "ペアのサムネイルとプレビューに使用します",
       "pair_jpeg": "JPEG / HEIC",

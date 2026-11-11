@@ -1346,29 +1346,31 @@ pub fn import_file(source_path: &str, dest_folder: &str) -> Option<String> {
     let source = Path::new(source_path);
     let mut destination = PathBuf::from(dest_folder);
     destination.push(source.file_name()?);
-    // Reserve the destination atomically; concurrent imports must never overwrite it.
-    let mut input = fs::File::open(source).ok()?;
-    let permissions = input.metadata().ok()?.permissions();
     loop {
         let candidate = get_unique_path(destination.clone());
-        let mut output = match fs::OpenOptions::new().write(true).create_new(true).open(&candidate) {
-            Ok(file) => file,
+        match copy_import_file_to(source, &candidate) {
+            Ok(()) => return candidate.to_str().map(str::to_owned),
             Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => continue,
             Err(error) => {
-                eprintln!("Failed to create imported file: {}", error);
+                eprintln!("Failed to import file: {}", error);
                 return None;
             }
-        };
-        let result = std::io::copy(&mut input, &mut output)
-            .and_then(|_| output.set_permissions(permissions.clone()));
-        if let Err(error) = result {
-            drop(output);
-            let _ = fs::remove_file(&candidate);
-            eprintln!("Failed to import file: {}", error);
-            return None;
         }
-        return candidate.to_str().map(|path| path.to_string());
     }
+}
+
+pub(crate) fn copy_import_file_to(source: &Path, destination: &Path) -> std::io::Result<()> {
+    let mut input = fs::File::open(source)?;
+    let permissions = input.metadata()?.permissions();
+    // Reserve the destination atomically so concurrent imports cannot overwrite it.
+    let mut output = fs::OpenOptions::new().write(true).create_new(true).open(destination)?;
+    let result = std::io::copy(&mut input, &mut output)
+        .and_then(|_| output.set_permissions(permissions));
+    if result.is_err() {
+        drop(output);
+        let _ = fs::remove_file(destination);
+    }
+    result
 }
 
 // Compare in fixed-size chunks; unreadable files must never be treated as duplicates.
@@ -2828,11 +2830,29 @@ fn pair_live_photos_after_album_index(album_id: i64) -> Result<(), String> {
 /// Photo pairing.  Doing this after an album scan covers files which already
 /// existed before grouping was enabled and folders not touched by an
 /// incremental mtime sync.
+static RAW_PAIR_GROUPING: Mutex<Option<bool>> = Mutex::new(None);
+
+pub(crate) fn reconcile_raw_pair_grouping(enabled: bool) -> Result<(), String> {
+    let mut grouping = RAW_PAIR_GROUPING.lock().map_err(|error| error.to_string())?;
+    *grouping = Some(enabled);
+    AFile::reconcile_raw_jpeg_pairs(enabled)
+}
+
+pub(crate) fn reconcile_raw_pairs_in_folder(folder_id: i64, fallback: bool) -> Result<usize, String> {
+    let grouping = RAW_PAIR_GROUPING.lock().map_err(|error| error.to_string())?;
+    if grouping.unwrap_or(fallback) {
+        AFile::pair_raw_jpeg_in_folder(folder_id)
+    } else {
+        AFile::clear_raw_jpeg_pairs_in_folder(folder_id)
+    }
+}
+
 fn reconcile_raw_jpeg_pairs_after_album_index(
     album_id: i64,
     group_raw_jpeg_pairs: bool,
 ) -> Result<(), String> {
-    if !group_raw_jpeg_pairs {
+    let grouping = RAW_PAIR_GROUPING.lock().map_err(|error| error.to_string())?;
+    if !grouping.unwrap_or(group_raw_jpeg_pairs) {
         AFile::clear_raw_jpeg_pairs_in_album(album_id)?;
         return Ok(());
     }
@@ -2931,13 +2951,7 @@ pub fn sync_single_folder(
     };
     if info.modified == folder.modified_at && !needs_live_photo_reindex && !needs_cloud_indexing {
         // An unchanged mtime-driven sync still reconciles the existing pair state.
-        // This is intentionally the only incremental path that receives the
-        // setting; changing Settings alone does not mutate the database.
-        let raw_pairing_changed = if group_raw_jpeg_pairs {
-            AFile::pair_raw_jpeg_in_folder(resolved_folder_id)? > 0
-        } else {
-            AFile::clear_raw_jpeg_pairs_in_folder(resolved_folder_id)? > 0
-        };
+        let raw_pairing_changed = reconcile_raw_pairs_in_folder(resolved_folder_id, group_raw_jpeg_pairs)? > 0;
         let folder_layout_changed = new_folder_count > 0 || child_scan.deleted_folder_count > 0;
         let _ = FolderSubfolderState::update_after_scan(album_id, &[FolderSubfolderState {
             path: folder_path.to_string(),
@@ -2968,11 +2982,7 @@ pub fn sync_single_folder(
         0,
         needs_live_photo_reindex,
     )?; // 0 = foreground, never cancel
-    if group_raw_jpeg_pairs {
-        AFile::pair_raw_jpeg_in_folder(resolved_folder_id)?;
-    } else {
-        AFile::clear_raw_jpeg_pairs_in_folder(resolved_folder_id)?;
-    }
+    reconcile_raw_pairs_in_folder(resolved_folder_id, group_raw_jpeg_pairs)?;
     for task in outcome.tasks {
         schedule_synced_file_processing(app_handle.clone(), task);
     }

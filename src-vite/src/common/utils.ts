@@ -85,6 +85,11 @@ export function getFileExtension(fileName: string): string {
   return fileName.split('.').pop() || '';
 }
 
+export function formatRawPairBadge(companionPath?: string | null): string {
+  const extension = getFileExtension(companionPath || '').toLowerCase();
+  return ['heic', 'heif', 'hif'].includes(extension) ? 'RAW+HEIC' : 'RAW+JPEG';
+}
+
 /// get the seconds of slide show interval
 export function getSlideShowInterval(interval: number): number {
   return [1, 3, 5, 10, 15, 30][interval] || 1;
@@ -363,30 +368,30 @@ export function formatCaptureSettings(focal_length: string, exposure_time: strin
   return result;
 }
 
-// Resolve a clipboard item without changing file-copy or move operations.
+// Resolve the physical files represented by a selected clipboard item.
 export function getClipboardItemPaths(file: {
   file_path?: string;
   media_subtype?: string;
   live_photo_video_path?: string | null;
-} | null | undefined, rawPairMode: string = 'both'): string[] {
+} | null | undefined, groupRawPairs: boolean): string[] {
   if (!file?.file_path) return [];
-  if (file.media_subtype !== 'raw_jpeg_pair') return [file.file_path];
-  if (rawPairMode === 'raw') return [file.file_path];
-  if (!file.live_photo_video_path) throw new Error('RAW companion path is unavailable');
-  if (rawPairMode === 'jpeg') return [file.live_photo_video_path];
+  const grouped = file.media_subtype === 'live_photo'
+    || (groupRawPairs && file.media_subtype === 'raw_jpeg_pair');
+  if (!grouped) return [file.file_path];
+  if (!file.live_photo_video_path) throw new Error('Companion path is unavailable');
   return [file.file_path, file.live_photo_video_path];
 }
 
-// A null policy copies exactly the file shown in File Info.
+// With no grouping argument, File Info copies exactly the file it shows.
 export async function copyFilePaths(
   files: Array<Parameters<typeof getClipboardItemPaths>[0]>,
-  rawPairMode: string | null = null,
+  groupRawPairs?: boolean,
 ) {
   const paths = new Set<string>();
   for (const file of files) {
-    const itemPaths = rawPairMode === null
+    const itemPaths = groupRawPairs === undefined
       ? (file?.file_path ? [file.file_path] : [])
-      : getClipboardItemPaths(file, rawPairMode);
+      : getClipboardItemPaths(file, groupRawPairs);
     for (const path of itemPaths) paths.add(path);
   }
   if (!paths.size) return 0;

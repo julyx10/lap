@@ -610,7 +610,7 @@ onUnmounted(() => {
 
 async function copyActiveFilePath() {
   try {
-    const count = await copyFilePaths([getFileInfoByPane(getActivePane())], config.settings.rawPairClipboardMode);
+    const count = await copyFilePaths([getFileInfoByPane(getActivePane())], config.settings.groupRawJpegPairs);
     if (count > 0) toast.success(t('file_info.paths_copied', { count }));
   } catch (error) {
     console.error('Failed to copy file path:', error);
@@ -626,14 +626,14 @@ async function copyActiveFiles(pane = getActiveFilePane()) {
       toast.warning(t('offline.requires_original'));
       return;
     }
-    const paths = getClipboardItemPaths(file, config.settings.rawPairClipboardMode);
+    const paths = getClipboardItemPaths(file, config.settings.groupRawJpegPairs);
     if (!paths.length) return;
     const available = await Promise.all(paths.map(path => checkFileAccessibility(path)));
     if (available.some(value => !value)) {
       toast.warning(t('offline.requires_original'));
       return;
     }
-    const count = await copyImages(paths);
+    const count = await copyImages(paths, paths.length === 2);
     if (count > 0) {
       toast.success(t('tooltip.copy_image.success', { count: count.toLocaleString() }));
       return;

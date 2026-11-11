@@ -976,7 +976,6 @@
       "file_content": "Het bestand '{file}' wordt naar de prullenbak verplaatst.",
       "files_content": "{count} geselecteerde bestanden worden naar de prullenbak verplaatst.",
       "removable_files_content": "Alle {count} verwijderbare bestanden worden naar de prullenbak verplaatst.",
-      "raw_jpeg_companions_content": "{count} bijbehorende RAW+JPEG-bestand(en) worden ook verwijderd.",
       "folder_content": "De map '{folder}' wordt naar de prullenbak verplaatst.",
       "ok": "Naar prullenbak",
       "file_success": "Het bestand '{file}' is naar de prullenbak verplaatst.",
@@ -1425,10 +1424,6 @@
     "raw": {
       "title": "RAW",
       "section_pairs": "Gekoppelde bestanden",
-      "clipboard_both": "Beide bestanden",
-      "clipboard_raw": "Alleen RAW",
-      "clipboard_jpeg": "Alleen JPEG/HEIC",
-      "clipboard_hint": "Geldt ook voor bestandspaden. Kopiëren of verplaatsen naar mappen blijft ongewijzigd.",
       "pair_source": "Standaardweergave voor paren",
       "pair_source_hint": "Gebruikt voor miniaturen en voorbeelden van gekoppelde bestanden",
       "pair_jpeg": "JPEG / HEIC",

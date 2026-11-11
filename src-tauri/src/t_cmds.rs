@@ -1740,6 +1740,16 @@ pub async fn sync_album_folder_mtimes(
     Ok(result)
 }
 
+/// Reconcile RAW pairs from files already indexed in the current library.
+#[tauri::command]
+pub async fn reconcile_raw_jpeg_pairs(library_id: String, enabled: bool) -> Result<(), String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        with_current_library(&library_id, || t_utils::reconcile_raw_pair_grouping(enabled))
+    })
+    .await
+    .map_err(|error| format!("RAW pair update task failed ({error})"))?
+}
+
 /// Refresh the subfolder tree below a folder without scanning its files.
 #[tauri::command]
 pub async fn refresh_album_subfolders(
@@ -1792,8 +1802,9 @@ pub async fn copy_edited_image(params: t_image::EditParams) -> Result<bool, Stri
 pub async fn copy_images(
     app_handle: tauri::AppHandle,
     file_paths: Vec<String>,
+    files_only: bool,
 ) -> Result<usize, String> {
-    t_image::copy_files_to_clipboard(&app_handle, file_paths).await
+    t_image::copy_files_to_clipboard(&app_handle, file_paths, files_only).await
 }
 
 /// Copy recorded paths as plain text, including paths to offline originals.
@@ -1921,9 +1932,10 @@ pub fn move_file(
     new_folder_path: &str,
     conflict_policy: &str,
     batch_id: Option<u64>,
+    group_raw_pairs: bool,
 ) -> Result<String, String> {
     crate::metadata::files::with_transfer_cache(batch_id, |xmp_cache| {
-        move_file_with_cache(file_id, file_path, new_folder_id, new_folder_path, conflict_policy, xmp_cache)
+        move_file_with_cache(file_id, file_path, new_folder_id, new_folder_path, conflict_policy, group_raw_pairs, xmp_cache)
     })
 }
 
@@ -1933,6 +1945,7 @@ fn move_file_with_cache(
     new_folder_id: i64,
     new_folder_path: &str,
     conflict_policy: &str,
+    group_raw_pairs: bool,
     xmp_cache: &mut crate::metadata::files::Cache,
 ) -> Result<String, String> {
     let old_file_info = AFile::get_file_info(file_id).ok().flatten();
@@ -1943,7 +1956,7 @@ fn move_file_with_cache(
         .map(|folder| folder.album_id);
     let policy = t_utils::FileConflictPolicy::from_str(conflict_policy);
     let (primary_target, sidecar_plans) =
-        resolve_group_primary_target(Some(file_id), file_path, new_folder_path, policy, xmp_cache)?;
+        resolve_group_primary_target(Some(file_id), file_path, new_folder_path, policy, group_raw_pairs, xmp_cache)?;
     let xmp = crate::metadata::files::Guard::with_cache(
         std::iter::once((Path::new(file_path), primary_target.as_path()))
             .chain(sidecar_plans.iter().map(|p| (p.old_path.as_path(), p.new_path.as_path()))),
@@ -1962,6 +1975,7 @@ fn move_file_with_cache(
             std::iter::once(&primary_target).chain(sidecar_plans.iter().map(|plan| &plan.new_path)),
             &source_file_ids,
             &mut replaced_file_ids,
+            group_raw_pairs,
         );
     }
 
@@ -1992,13 +2006,13 @@ fn move_file_with_cache(
         }
     };
 
-    let component_file_ids = component_transfers
-        .iter()
-        .filter_map(|(component_id, _, _)| *component_id)
+    let moved_files = std::iter::once((file_id, transfer.path.as_str()))
+        .chain(component_transfers.iter().filter_map(|(id, _, transfer)| {
+            Some(((*id)?, transfer.path.as_str()))
+        }))
         .collect::<Vec<_>>();
     if let Err(error) = AFile::update_moved_file_group(
-        file_id,
-        &component_file_ids,
+        &moved_files,
         &replaced_file_ids,
         new_folder_id,
     ) {
@@ -2051,9 +2065,10 @@ pub fn move_file_outside_library(
     new_folder_path: &str,
     conflict_policy: &str,
     batch_id: Option<u64>,
+    group_raw_pairs: bool,
 ) -> Result<String, String> {
     crate::metadata::files::with_transfer_cache(batch_id, |xmp_cache| {
-        move_file_outside_library_with_cache(file_id, file_path, new_folder_path, conflict_policy, xmp_cache)
+        move_file_outside_library_with_cache(file_id, file_path, new_folder_path, conflict_policy, group_raw_pairs, xmp_cache)
     })
 }
 
@@ -2062,11 +2077,12 @@ fn move_file_outside_library_with_cache(
     file_path: &str,
     new_folder_path: &str,
     conflict_policy: &str,
+    group_raw_pairs: bool,
     xmp_cache: &mut crate::metadata::files::Cache,
 ) -> Result<String, String> {
     let policy = t_utils::FileConflictPolicy::from_str(conflict_policy);
     let (primary_target, sidecar_plans) =
-        resolve_group_primary_target(Some(file_id), file_path, new_folder_path, policy, xmp_cache)?;
+        resolve_group_primary_target(Some(file_id), file_path, new_folder_path, policy, group_raw_pairs, xmp_cache)?;
     let xmp = crate::metadata::files::Guard::with_cache(
         std::iter::once((Path::new(file_path), primary_target.as_path()))
             .chain(sidecar_plans.iter().map(|p| (p.old_path.as_path(), p.new_path.as_path()))),
@@ -2134,9 +2150,10 @@ pub fn copy_file(
     new_folder_path: &str,
     conflict_policy: &str,
     batch_id: Option<u64>,
+    group_raw_pairs: bool,
 ) -> Result<String, String> {
     crate::metadata::files::with_transfer_cache(batch_id, |xmp_cache| {
-        copy_file_with_cache(file_path, new_folder_path, conflict_policy, xmp_cache)
+        copy_file_with_cache(file_path, new_folder_path, conflict_policy, group_raw_pairs, xmp_cache)
     })
 }
 
@@ -2144,11 +2161,12 @@ fn copy_file_with_cache(
     file_path: &str,
     new_folder_path: &str,
     conflict_policy: &str,
+    group_raw_pairs: bool,
     xmp_cache: &mut crate::metadata::files::Cache,
 ) -> Result<String, String> {
     let policy = t_utils::FileConflictPolicy::from_str(conflict_policy);
     let (primary_target, sidecar_plans) =
-        resolve_group_primary_target(None, file_path, new_folder_path, policy, xmp_cache)?;
+        resolve_group_primary_target(None, file_path, new_folder_path, policy, group_raw_pairs, xmp_cache)?;
     let xmp = crate::metadata::files::Guard::with_cache(
         std::iter::once((Path::new(file_path), primary_target.as_path()))
             .chain(sidecar_plans.iter().map(|p| (p.old_path.as_path(), p.new_path.as_path()))),
@@ -2483,17 +2501,303 @@ fn import_clipboard_file(
         .ok_or_else(|| format!("Unsupported file type: {}", file_path.display()))?;
     let new_path = t_utils::import_file(source, folder_path)
         .ok_or_else(|| format!("Failed to copy file: {}", file_path.display()))?;
-    let file_type = t_utils::get_file_type(&new_path).ok_or_else(|| {
-        let _ = std::fs::remove_file(&new_path);
+    index_clipboard_file(&new_path, folder_id)
+}
+
+fn index_clipboard_file(new_path: &str, folder_id: i64) -> Result<AFile, String> {
+    let file_type = t_utils::get_file_type(new_path).ok_or_else(|| {
+        let _ = std::fs::remove_file(new_path);
         format!("Unsupported file type after copy: {}", new_path)
     })?;
     let now = chrono::Utc::now().timestamp_millis();
-    match AFile::add_to_db(folder_id, &new_path, file_type, now) {
+    match AFile::add_to_db(folder_id, new_path, file_type, now) {
         Ok((file, _)) => Ok(file),
         Err(error) => {
-            let _ = std::fs::remove_file(&new_path);
+            let _ = std::fs::remove_file(new_path);
             Err(error)
         }
+    }
+}
+
+fn clipboard_pairs(paths: &[&Path], group_raw_jpeg_pairs: bool) -> HashMap<usize, usize> {
+    use crate::metadata::apple_sidecar::{file_record_for_path, scan_apple_content_identifiers};
+    if paths.len() < 2 {
+        return HashMap::new();
+    }
+    let extension = |path: &Path| path.extension().and_then(|ext| ext.to_str())
+        .unwrap_or_default().to_ascii_lowercase();
+    let stem = |path: &Path| path.file_stem().and_then(|stem| stem.to_str())
+        .unwrap_or_default().to_ascii_lowercase();
+    let is_still = |path: &Path| matches!(extension(path).as_str(), "jpg" | "jpeg" | "heic" | "heif" | "hif");
+    let is_raw = |path: &Path| path.to_str().and_then(t_utils::get_file_type) == Some(3);
+    let mut pairs = HashMap::new();
+    let mut used = HashSet::new();
+
+    for (index, path) in paths.iter().enumerate() {
+        if used.contains(&index) || !(is_still(path) || (group_raw_jpeg_pairs && is_raw(path))) {
+            continue;
+        }
+        let Some(file) = path.to_str().and_then(|path| file_record_for_path(path).ok().flatten()) else {
+            continue;
+        };
+        if file.media_subtype.as_deref() != Some("live_photo")
+            && !(group_raw_jpeg_pairs && file.media_subtype.as_deref() == Some("raw_jpeg_pair"))
+        {
+            continue;
+        }
+        let Some(companion) = file.live_photo_video_path else { continue };
+        if let Some(other) = paths.iter().position(|path| *path == Path::new(&companion))
+            && other != index && !used.contains(&other)
+        {
+            pairs.insert(index, other);
+            used.extend([index, other]);
+        }
+    }
+
+    for live in [true, false] {
+        if !live && !group_raw_jpeg_pairs { continue; }
+        for (index, path) in paths.iter().enumerate() {
+            if used.contains(&index) || !(if live { is_still(path) } else { is_raw(path) }) {
+                continue;
+            }
+            let mut candidates = paths.iter().enumerate().filter(|(other, candidate)| {
+                !used.contains(other) && candidate.parent() == path.parent()
+                    && if live {
+                        let video_stem = stem(candidate);
+                        extension(candidate) == "mov"
+                            && (video_stem == stem(path) || video_stem.strip_suffix("_hevc") == Some(stem(path).as_str()))
+                    } else {
+                        is_still(candidate) && stem(candidate) == stem(path)
+                    }
+            });
+            let Some((other, companion)) = candidates.next() else { continue };
+            if candidates.next().is_some() { continue; }
+            if live {
+                let Some(identifier) = companion.to_str()
+                    .and_then(|path| crate::t_video::get_video_metadata(path).ok()?.content_identifier)
+                else { continue };
+                if !path.to_str().is_some_and(|path| scan_apple_content_identifiers(path).iter()
+                    .any(|value| value.eq_ignore_ascii_case(&identifier)))
+                {
+                    continue;
+                }
+            } else if paths.iter().enumerate().any(|(other, candidate)| {
+                other != index && !used.contains(&other) && is_raw(candidate)
+                    && candidate.parent() == path.parent() && stem(candidate) == stem(path)
+            }) {
+                continue;
+            }
+            pairs.insert(index, other);
+            used.extend([index, other]);
+        }
+    }
+    pairs
+}
+
+fn clipboard_destination_stems(folder: &Path) -> Result<HashSet<String>, String> {
+    fs::read_dir(folder).map_err(|error| error.to_string())?
+        .map(|entry| entry.map(|entry| entry.path().file_stem()
+            .map(|stem| stem.to_string_lossy().to_ascii_lowercase())))
+        .collect::<std::io::Result<Vec<_>>>().map(|stems| stems.into_iter().flatten().collect())
+        .map_err(|error| error.to_string())
+}
+
+fn copy_clipboard_pair(
+    primary: &Path,
+    companion: &Path,
+    folder: &Path,
+    occupied_stems: &mut HashSet<String>,
+) -> Result<[PathBuf; 2], String> {
+    use crate::metadata::apple_sidecar::sibling_candidate_path;
+    let base = folder.join(primary.file_name().ok_or("Invalid clipboard file name")?);
+    let companion_extension = companion.extension().ok_or("Invalid clipboard companion extension")?;
+    for index in 0..10_000 {
+        let target = sibling_candidate_path(&base, index);
+        let stem = target.file_stem().ok_or("Invalid clipboard target name")?
+            .to_string_lossy().to_ascii_lowercase();
+        if occupied_stems.contains(&stem) { continue; }
+        let companion_target = target.with_extension(companion_extension);
+        match t_utils::copy_import_file_to(primary, &target) {
+            Ok(()) => {}
+            Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => continue,
+            Err(error) => return Err(error.to_string()),
+        }
+        match t_utils::copy_import_file_to(companion, &companion_target) {
+            Ok(()) => {
+                occupied_stems.insert(stem);
+                return Ok([target, companion_target]);
+            }
+
+            Err(error) => {
+                fs::remove_file(&target).map_err(|cleanup| format!("{error}. Cleanup failed ({cleanup})"))?;
+                if error.kind() != std::io::ErrorKind::AlreadyExists {
+                    return Err(error.to_string());
+                }
+            }
+        }
+    }
+    Err("Failed to reserve a shared filename for the clipboard pair".into())
+}
+
+fn import_clipboard_pair(
+    primary: &Path,
+    companion: &Path,
+    folder_id: i64,
+    folder_path: &str,
+    occupied_stems: &mut HashSet<String>,
+) -> Result<Vec<AFile>, String> {
+    let paths = copy_clipboard_pair(primary, companion, Path::new(folder_path), occupied_stems)?;
+    let mut files: Vec<AFile> = Vec::with_capacity(2);
+    for path in &paths {
+        match index_clipboard_file(&path.to_string_lossy(), folder_id) {
+            Ok(file) => files.push(file),
+            Err(error) => {
+                for file in files {
+                    if let Some(id) = file.id && let Err(cleanup) = AFile::delete(id) {
+                        eprintln!("Failed to roll back clipboard file record {id}: {cleanup}");
+                    }
+                }
+                for path in &paths {
+                    if let Err(cleanup) = fs::remove_file(path)
+                        && cleanup.kind() != std::io::ErrorKind::NotFound
+                    {
+                        eprintln!("Failed to roll back clipboard file {}: {cleanup}", path.display());
+                    }
+                }
+                return Err(error);
+            }
+        }
+    }
+    Ok(files)
+}
+
+fn import_clipboard_paths(
+    paths: impl IntoIterator<Item = impl AsRef<Path>>,
+    folder_id: i64,
+    folder_path: &str,
+    group_raw_jpeg_pairs: bool,
+) -> Result<Vec<AFile>, String> {
+    let mut seen = HashSet::new();
+    let paths = paths.into_iter().filter_map(|path| {
+        let path = path.as_ref();
+        path.to_str().and_then(t_utils::get_file_type)?;
+        seen.insert(path.to_path_buf()).then(|| path.to_path_buf())
+    }).collect::<Vec<_>>();
+    let paths = paths.iter().map(PathBuf::as_path).collect::<Vec<_>>();
+    let pairs = clipboard_pairs(&paths, group_raw_jpeg_pairs);
+    let companions = pairs.values().copied().collect::<HashSet<_>>();
+    let mut occupied_stems = if pairs.is_empty() {
+        HashSet::new()
+    } else {
+        clipboard_destination_stems(Path::new(folder_path))?
+    };
+    let mut imported = Vec::new();
+    let mut file_error = None;
+    let mut pair_error = None;
+    for (index, path) in paths.iter().enumerate() {
+        if companions.contains(&index) { continue; }
+        if let Some(other) = pairs.get(&index) {
+            match import_clipboard_pair(path, paths[*other], folder_id, folder_path, &mut occupied_stems) {
+                Ok(files) => imported.extend(files),
+                Err(error) => { pair_error.get_or_insert(error); }
+            }
+        } else if path.is_file() {
+            match import_clipboard_file(path, folder_id, folder_path) {
+                Ok(file) => {
+                    if let Some(stem) = Path::new(&file.name).file_stem() {
+                        occupied_stems.insert(stem.to_string_lossy().to_ascii_lowercase());
+                    }
+                    imported.push(file);
+                }
+                Err(error) => { file_error.get_or_insert(error); }
+            }
+        }
+    }
+    if !imported.is_empty() {
+        pair_imported_clipboard_files(folder_id, &imported, group_raw_jpeg_pairs)?;
+    }
+    if let Some(error) = pair_error {
+        return Err(format!("clipboard_pair_failed: {error}"));
+    }
+    if imported.is_empty() {
+        return file_error.map_or_else(|| Ok(Vec::new()), Err);
+    }
+    Ok(imported)
+}
+
+fn pair_imported_clipboard_files(
+    folder_id: i64,
+    files: &[AFile],
+    group_raw_jpeg_pairs: bool,
+) -> Result<(), String> {
+    let affected_names = files.iter().map(|file| file.name.clone()).collect();
+    AFile::pair_live_photos_in_folder(folder_id, &affected_names, false)?;
+    t_utils::reconcile_raw_pairs_in_folder(folder_id, group_raw_jpeg_pairs)?;
+    Ok(())
+}
+
+#[cfg(test)]
+mod clipboard_pair_tests {
+    use super::*;
+
+    #[test]
+    fn clipboard_pair_detection_handles_order_ambiguity_and_disabled_grouping() {
+        let root = std::env::temp_dir().join(format!("lap-clipboard-detect-{}", uuid::Uuid::new_v4()));
+        let first = root.join("first");
+        let second = root.join("second");
+        fs::create_dir_all(&first).unwrap();
+        fs::create_dir_all(&second).unwrap();
+        let raw = first.join("A.NEF");
+        let jpeg = first.join("A.JPG");
+        fs::write(&raw, b"raw").unwrap();
+        fs::write(&jpeg, b"jpeg").unwrap();
+
+        let forward = [raw.as_path(), jpeg.as_path()];
+        let backward = [jpeg.as_path(), raw.as_path()];
+        assert_eq!(clipboard_pairs(&forward, true), HashMap::from([(0, 1)]));
+        assert_eq!(clipboard_pairs(&backward, true), HashMap::from([(1, 0)]));
+        assert!(clipboard_pairs(&forward, false).is_empty());
+
+        let ambiguous_raw = first.join("B.NEF");
+        let ambiguous_dng = first.join("B.DNG");
+        let ambiguous_jpeg = first.join("B.JPG");
+        for path in [&ambiguous_raw, &ambiguous_dng, &ambiguous_jpeg] {
+            fs::write(path, b"file").unwrap();
+        }
+        assert!(clipboard_pairs(
+            &[ambiguous_raw.as_path(), ambiguous_dng.as_path(), ambiguous_jpeg.as_path()],
+            true,
+        ).is_empty());
+
+        let other_jpeg = second.join("A.JPG");
+        fs::write(&other_jpeg, b"jpeg").unwrap();
+        assert!(clipboard_pairs(&[raw.as_path(), other_jpeg.as_path()], true).is_empty());
+
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn clipboard_pair_keeps_a_shared_stem_and_rolls_back_a_failed_copy() {
+        let root = std::env::temp_dir().join(format!("lap-clipboard-pair-{}", uuid::Uuid::new_v4()));
+        let target = root.join("target");
+        fs::create_dir_all(&target).unwrap();
+        let primary = root.join("A.NEF");
+        let companion = root.join("A.JPG");
+        fs::write(&primary, b"raw").unwrap();
+        fs::write(&companion, b"jpeg").unwrap();
+        fs::write(target.join("A.NEF"), b"existing raw").unwrap();
+
+        let mut occupied_stems = clipboard_destination_stems(&target).unwrap();
+        let [raw, jpeg] = copy_clipboard_pair(&primary, &companion, &target, &mut occupied_stems).unwrap();
+        assert_eq!(raw, target.join("A(1).NEF"));
+        assert_eq!(jpeg, target.join("A(1).JPG"));
+        assert_eq!(fs::read(target.join("A.NEF")).unwrap(), b"existing raw");
+        assert_eq!(fs::read(jpeg).unwrap(), b"jpeg");
+
+        fs::remove_file(&companion).unwrap();
+        assert!(copy_clipboard_pair(&primary, &companion, &target, &mut occupied_stems).is_err());
+        assert_eq!(fs::read_dir(&target).unwrap().count(), 3);
+        fs::remove_dir_all(root).unwrap();
     }
 }
 
@@ -2541,33 +2845,20 @@ pub async fn import_clipboard(
     _app_handle: tauri::AppHandle,
     folder_id: i64,
     folder_path: &str,
+    group_raw_jpeg_pairs: bool,
 ) -> Result<Vec<AFile>, String> {
     #[cfg(target_os = "linux")]
     {
         let clipboard_data = crate::t_pasteboard::get_clipboard_import_data(&_app_handle).await?;
-        let mut file_error = None;
         if !clipboard_data.file_paths.is_empty() {
-            let mut imported = Vec::new();
-            for path in clipboard_data
-                .file_paths
-                .iter()
-                .map(std::path::Path::new)
-                .filter(|path| path.is_file())
-            {
-                let supported = path.to_str().and_then(t_utils::get_file_type).is_some();
-                if !supported {
-                    continue;
+            match import_clipboard_paths(
+                &clipboard_data.file_paths, folder_id, folder_path, group_raw_jpeg_pairs,
+            ) {
+                Ok(files) if !files.is_empty() || clipboard_data.png.is_none() => return Ok(files),
+                Err(error) if clipboard_data.png.is_none() || error.starts_with("clipboard_pair_failed:") => {
+                    return Err(error);
                 }
-                match import_clipboard_file(path, folder_id, folder_path) {
-                    Ok(file) => imported.push(file),
-                    Err(error) => {
-                        eprintln!("Failed to import clipboard file {}: {}", path.display(), error);
-                        file_error.get_or_insert(error);
-                    }
-                }
-            }
-            if !imported.is_empty() {
-                return Ok(imported);
+                _ => {}
             }
         }
 
@@ -2588,34 +2879,13 @@ pub async fn import_clipboard(
             };
         }
 
-        if !clipboard_data.file_paths.is_empty() {
-            return file_error.map_or_else(|| Ok(Vec::new()), Err);
-        }
     }
 
     let mut clipboard =
         arboard::Clipboard::new().map_err(|e| format!("Failed to open clipboard: {}", e))?;
     if let Ok(file_paths) = clipboard.get().file_list() {
         if !file_paths.is_empty() {
-            let mut file_error = None;
-            let mut imported = Vec::new();
-            for path in file_paths.iter().filter(|path| path.is_file()) {
-                let supported = path.to_str().and_then(t_utils::get_file_type).is_some();
-                if !supported {
-                    continue;
-                }
-                match import_clipboard_file(path, folder_id, folder_path) {
-                    Ok(file) => imported.push(file),
-                    Err(error) => {
-                        eprintln!("Failed to import clipboard file {}: {}", path.display(), error);
-                        file_error.get_or_insert(error);
-                    }
-                }
-            }
-            if !imported.is_empty() {
-                return Ok(imported);
-            }
-            return file_error.map_or_else(|| Ok(Vec::new()), Err);
+            return import_clipboard_paths(file_paths, folder_id, folder_path, group_raw_jpeg_pairs);
         }
     }
 
@@ -2653,8 +2923,8 @@ pub async fn import_clipboard(
 
 /// delete a file
 #[tauri::command]
-pub fn delete_file(file_id: i64, file_path: &str) -> Result<BatchDeleteResult, String> {
-    delete_file_group(file_id, file_path, false)
+pub fn delete_file(file_id: i64, file_path: &str, group_raw_pairs: bool) -> Result<BatchDeleteResult, String> {
+    delete_file_group(file_id, file_path, false, group_raw_pairs)
 }
 
 /// delete a file permanently
@@ -2662,16 +2932,25 @@ pub fn delete_file(file_id: i64, file_path: &str) -> Result<BatchDeleteResult, S
 pub fn delete_file_permanently(
     file_id: i64,
     file_path: &str,
+    group_raw_pairs: bool,
 ) -> Result<BatchDeleteResult, String> {
-    delete_file_group(file_id, file_path, true)
+    delete_file_group(file_id, file_path, true, group_raw_pairs)
 }
 
 fn delete_file_group(
     file_id: i64,
     file_path: &str,
     permanently: bool,
+    group_raw_pairs: bool,
 ) -> Result<BatchDeleteResult, String> {
-    let component_files = AFile::live_photo_component_files(file_id)?;
+    let component_files = AFile::grouped_component_files(file_id, group_raw_pairs)?;
+    for component in &component_files {
+        if let Some(path) = component.file_path.as_deref()
+            && !t_utils::file_accessible(path)
+        {
+            return Err(format!("original_unavailable: {path}"));
+        }
+    }
     let mut deleted_file_ids = Vec::with_capacity(component_files.len() + 1);
     let mut delete_errors = Vec::new();
 
@@ -2762,8 +3041,9 @@ pub struct BatchDeleteResult {
 pub async fn batch_delete_files(
     files: Vec<BatchDeleteFile>,
     permanently: bool,
+    group_raw_pairs: bool,
 ) -> Result<BatchDeleteResult, String> {
-    tauri::async_runtime::spawn_blocking(move || delete_files_grouped(files, permanently))
+    tauri::async_runtime::spawn_blocking(move || delete_files_grouped(files, permanently, group_raw_pairs))
         .await
         .map_err(|e| format!("Failed to run batch delete: {}", e))?
 }
@@ -2773,13 +3053,15 @@ pub async fn batch_delete_files(
 pub(crate) fn delete_files_grouped(
     files: Vec<BatchDeleteFile>,
     permanently: bool,
+    group_raw_pairs: bool,
 ) -> Result<BatchDeleteResult, String> {
-    delete_files_with_components(files, permanently, None)
+    delete_files_with_components(files, permanently, group_raw_pairs, None)
 }
 
 pub(crate) fn delete_files_with_components(
     files: Vec<BatchDeleteFile>,
     permanently: bool,
+    group_raw_pairs: bool,
     mut resolved_components: Option<HashMap<i64, Vec<(i64, String)>>>,
 ) -> Result<BatchDeleteResult, String> {
     struct DeleteGroup {
@@ -2803,7 +3085,7 @@ pub(crate) fn delete_files_with_components(
         let components = if let Some(resolved) = &mut resolved_components {
             resolved.remove(&file.file_id).unwrap_or_default()
         } else {
-            AFile::live_photo_component_files(file.file_id)?
+            AFile::grouped_component_files(file.file_id, group_raw_pairs)?
                 .into_iter()
                 .filter_map(|component| Some((component.id?, component.file_path?)))
                 .collect()
@@ -3864,6 +4146,7 @@ pub fn similar_start_scan(
     params: Option<QueryParams>,
     collection_id: Option<i64>,
     file_ids: Option<Vec<i64>>,
+    group_raw_pairs: bool,
     keep_rules: Option<crate::t_dedup::KeepRules>,
 ) -> Result<(), String> {
     t_similar::start_scan(
@@ -3875,6 +4158,7 @@ pub fn similar_start_scan(
         params,
         collection_id,
         file_ids,
+        group_raw_pairs,
         keep_rules,
     )
 }
@@ -3896,8 +4180,9 @@ pub fn similar_get_eligible_count(
     params: Option<QueryParams>,
     collection_id: Option<i64>,
     file_ids: Option<Vec<i64>>,
+    group_raw_pairs: bool,
 ) -> Result<u64, String> {
-    t_similar::eligible_count(params, collection_id, file_ids)
+    t_similar::eligible_count(params, collection_id, file_ids, group_raw_pairs)
 }
 
 #[tauri::command]
@@ -3911,8 +4196,8 @@ pub fn similar_get_overview(scope_key: String) -> Result<serde_json::Value, Stri
 }
 
 #[tauri::command]
-pub fn similar_get_group(group_id: i64, scope_key: String) -> Result<serde_json::Value, String> {
-    t_similar::get_group(group_id, &scope_key)
+pub fn similar_get_group(group_id: i64, scope_key: String, group_raw_pairs: bool) -> Result<serde_json::Value, String> {
+    t_similar::get_group(group_id, &scope_key, group_raw_pairs)
 }
 
 #[tauri::command]
@@ -4071,18 +4356,31 @@ pub fn dedup_list_groups(
     page_size: u32,
     sort_by: String, // E.g., "size_desc", "count_desc"
     filter: String,  // E.g., "all", "unreviewed"
+    group_raw_pairs: bool,
 ) -> Result<Vec<crate::t_dedup::DedupGroup>, String> {
-    crate::t_dedup::list_groups(page, page_size, &sort_by, &filter)
+    crate::t_dedup::list_groups(page, page_size, &sort_by, &filter, group_raw_pairs)
 }
 
 #[tauri::command]
-pub fn dedup_get_overview() -> Result<crate::t_dedup::DedupOverview, String> {
-    crate::t_dedup::get_overview()
+pub async fn dedup_get_overview(library_id: String, group_raw_pairs: bool) -> Result<crate::t_dedup::DedupOverview, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        with_current_library(&library_id, || crate::t_dedup::get_overview(group_raw_pairs))
+    })
+    .await
+    .map_err(|error| format!("Failed to load dedup overview ({error})"))?
 }
 
 #[tauri::command]
 pub fn dedup_set_keep(group_id: i64, file_id: i64, group_raw_pairs: Option<bool>) -> Result<(), String> {
     crate::t_dedup::set_keep(group_id, file_id, group_raw_pairs.unwrap_or(false))
+}
+
+#[tauri::command]
+pub fn dedup_get_group_items(
+    group_id: i64,
+    group_raw_pairs: bool,
+) -> Result<Vec<crate::t_dedup::DedupGroupItem>, String> {
+    crate::t_dedup::group_items(group_id, group_raw_pairs)
 }
 
 #[tauri::command]

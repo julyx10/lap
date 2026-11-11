@@ -976,7 +976,6 @@
       "file_content": "El archivo '{file}' se moverá a la papelera.",
       "files_content": "{count} archivos seleccionados se moverán a la papelera.",
       "removable_files_content": "Se moverán todos los {count} archivos eliminables a la papelera.",
-      "raw_jpeg_companions_content": "También se eliminarán {count} archivos complementarios RAW+JPEG.",
       "folder_content": "La carpeta '{folder}' se moverá a la papelera.",
       "ok": "Mover",
       "file_success": "El archivo '{file}' se movió a la papelera.",
@@ -1425,10 +1424,6 @@
     "raw": {
       "title": "RAW",
       "section_pairs": "Archivos emparejados",
-      "clipboard_both": "Ambos archivos",
-      "clipboard_raw": "Solo RAW",
-      "clipboard_jpeg": "Solo JPEG/HEIC",
-      "clipboard_hint": "También se aplica a las rutas. No afecta a copiar o mover archivos a carpetas.",
       "pair_source": "Visualización predeterminada de los pares",
       "pair_source_hint": "Se usa para las miniaturas y vistas previas emparejadas",
       "pair_jpeg": "JPEG / HEIC",

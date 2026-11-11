@@ -976,7 +976,6 @@
       "file_content": "Le fichier '{file}' sera mis à la corbeille.",
       "files_content": "{count} fichiers sélectionnés seront mis à la corbeille.",
       "removable_files_content": "Les {count} fichiers supprimables seront tous mis à la corbeille.",
-      "raw_jpeg_companions_content": "{count} fichier(s) associé(s) RAW+JPEG seront également supprimés.",
       "folder_content": "Le dossier '{folder}' sera mis à la corbeille.",
       "ok": "Mettre",
       "file_success": "Le fichier '{file}' a été mis à la corbeille.",
@@ -1425,10 +1424,6 @@
     "raw": {
       "title": "RAW",
       "section_pairs": "Fichiers appariés",
-      "clipboard_both": "Les deux fichiers",
-      "clipboard_raw": "RAW uniquement",
-      "clipboard_jpeg": "JPEG/HEIC uniquement",
-      "clipboard_hint": "S’applique aussi aux chemins. Sans effet sur la copie ou le déplacement vers un dossier.",
       "pair_source": "Affichage par défaut des paires",
       "pair_source_hint": "Utilisé pour les miniatures et aperçus appariés",
       "pair_jpeg": "JPEG / HEIC",

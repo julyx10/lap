@@ -976,7 +976,6 @@
       "file_content": "Tệp “{file}” sẽ được chuyển vào thùng rác.",
       "files_content": "{count} tệp đã chọn sẽ được chuyển vào thùng rác.",
       "removable_files_content": "Tất cả {count} tệp có thể gỡ bỏ sẽ được chuyển vào thùng rác.",
-      "raw_jpeg_companions_content": "{count} tệp đi kèm RAW+JPEG cũng sẽ bị xóa.",
       "folder_content": "Thư mục “{folder}” sẽ được chuyển vào thùng rác.",
       "ok": "Chuyển vào thùng rác",
       "file_success": "Đã chuyển tệp “{file}” vào thùng rác.",
@@ -1424,10 +1423,6 @@
     "raw": {
       "title": "RAW",
       "section_pairs": "Tệp ghép cặp",
-      "clipboard_both": "Cả hai tệp",
-      "clipboard_raw": "Chỉ RAW",
-      "clipboard_jpeg": "Chỉ JPEG/HEIC",
-      "clipboard_hint": "Cũng áp dụng khi sao chép đường dẫn tệp. Không ảnh hưởng đến việc sao chép hoặc di chuyển tệp vào thư mục.",
       "pair_source": "Hiển thị mặc định cho cặp tệp",
       "pair_source_hint": "Dùng cho ảnh thu nhỏ và bản xem trước của cặp tệp",
       "pair_jpeg": "JPEG / HEIC",

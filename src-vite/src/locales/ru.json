@@ -976,7 +976,6 @@
       "file_content": "Файл '{file}' будет перемещён в Корзину.",
       "files_content": "Выбранные файлы ({count} шт.) будут перемещены в Корзину.",
       "removable_files_content": "Все удаляемые файлы ({count} шт.) будут перемещены в Корзину.",
-      "raw_jpeg_companions_content": "Также будут удалены парные файлы RAW+JPEG ({count} шт.).",
       "folder_content": "Папка '{folder}' будет перемещена в Корзину.",
       "ok": "Переместить",
       "file_success": "Файл '{file}' перемещён в Корзину.",
@@ -1425,10 +1424,6 @@
     "raw": {
       "title": "RAW",
       "section_pairs": "Парные файлы",
-      "clipboard_both": "Оба файла",
-      "clipboard_raw": "Только RAW",
-      "clipboard_jpeg": "Только JPEG/HEIC",
-      "clipboard_hint": "Применяется также к путям. Не влияет на копирование и перемещение в папки.",
       "pair_source": "Отображение пар по умолчанию",
       "pair_source_hint": "Используется для парных миниатюр и предпросмотров",
       "pair_jpeg": "JPEG / HEIC",

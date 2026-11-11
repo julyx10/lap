@@ -16,7 +16,7 @@
 
     <!-- Loading overlay -->
     <transition name="fade">
-      <div v-if="isProcessing" class="absolute inset-0 bg-base-100/50 flex items-center justify-center z-50 rounded-box">
+      <div v-if="isProcessing || isUpdatingRawGrouping" class="absolute inset-0 bg-base-100/50 flex items-center justify-center z-50 rounded-box">
         <span class="loading loading-dots text-primary"></span>
       </div>
     </transition>
@@ -789,7 +789,7 @@ import { PREVIEW_WINDOW_FOCUS_RESTORED } from '@/common/previewWindow';
 import { useI18n } from 'vue-i18n';
 import { useToast } from '@/common/toast';
 import { useUIStore } from '@/stores/uiStore';
-import { getAlbum, getAllAlbums, recountAlbum, getQueryCountAndSum, getQueryTimeLine, getQueryFiles, getFilesByIds, getGroupedQueryRows, getGroupedFilePosition, getGroupFileIds, getQueryFileIds, syncAlbumFolderMtimes,
+import { getAlbum, getAllAlbums, recountAlbum, getQueryCountAndSum, getQueryTimeLine, getQueryFiles, getFilesByIds, getGroupedQueryRows, getGroupedFilePosition, getGroupFileIds, getQueryFileIds, syncAlbumFolderMtimes, reconcileRawJpegPairs,
          getSmartQueryCountAndSum, getSmartQueryTimeLine, getSmartQueryFiles, getSmartGroupedQueryRows, getSmartGroupFileIds, getSmartQueryFileIds, getSmartQueryFilePosition,
          copyImages, renameFile, moveFile, moveFileOutsideLibrary, copyFile, withFileTransferBatch, deleteFile, deleteFilePermanently, batchDeleteFiles, editFileComment, getFileThumb, getFileThumbs, getFileInfo,
          setFileRotate, setFileFavorite, setFileRating, setFileCullingFlag, batchUpdateFileMetadata, getTagsForFile, searchSimilarImages, generateEmbedding,
@@ -2210,7 +2210,7 @@ const dedupReclaimBytes = ref(0);
 const dedupTrashGroupKey = ref('');
 const dedupDeleteFileIds = ref<number[]>([]);
 const dedupBulkFileCount = ref(0);
-type DedupDeletePreview = { token: string; itemCount: number; rawCompanionCount: number; bytes: number };
+type DedupDeletePreview = { token: string; itemCount: number; bytes: number };
 const dedupDeletePreview = ref<DedupDeletePreview | null>(null);
 const pendingDedupRetryPreview = ref<DedupDeletePreview | null>(null);
 let dedupDeletePreviewContext: { libraryId: string; scanKey: string } | null = null;
@@ -2526,14 +2526,6 @@ const closeTrashMsgbox = () => {
 
 const isDedupBulkTrash = computed(() => dedupBulkFileCount.value > 0);
 const isDedupTrash = computed(() => dedupDeleteFileIds.value.length > 0 || isDedupBulkTrash.value);
-const rawJpegCompanionDeleteCount = computed(() => {
-  if (dedupDeletePreview.value) return dedupDeletePreview.value.rawCompanionCount;
-  if (!config.settings.groupRawJpegPairs) return 0;
-  const items = selectMode.value
-      ? getActionableSelectedItems()
-      : [fileList.value[selectedItemIndex.value]].filter(Boolean);
-  return items.filter((file: any) => file.media_subtype === 'raw_jpeg_pair').length;
-});
 
 const trashMsgboxTitle = computed(() => {
   if (deletePermanently.value) {
@@ -2565,11 +2557,8 @@ const trashMsgboxMessage = computed(() => {
     : ((isDedupTrash.value || selectMode.value)
         ? localeMsg.value.msgbox.move_to_trash.files_content.replace('{count}', deleteCount.toLocaleString())
         : localeMsg.value.msgbox.move_to_trash.file_content.replace('{file}', fileList.value[selectedItemIndex.value]?.name || ''));
-  const companionNotice = rawJpegCompanionDeleteCount.value > 0
-    ? `\n${localeMsg.value.msgbox.move_to_trash.raw_jpeg_companions_content.replace('{count}', rawJpegCompanionDeleteCount.value.toLocaleString())}`
-    : '';
-  if (dedupReclaimBytes.value <= 0 || !(isDedupTrash.value || selectMode.value)) return `${base}${companionNotice}`;
-  return `${base}${companionNotice}\n${localeMsg.value.info_panel.dedup.reclaimable_size}: ${formatFileSize(dedupReclaimBytes.value)}`;
+  if (dedupReclaimBytes.value <= 0 || !(isDedupTrash.value || selectMode.value)) return base;
+  return `${base}\n${localeMsg.value.info_panel.dedup.reclaimable_size}: ${formatFileSize(dedupReclaimBytes.value)}`;
 });
 
 const trashFailedMsgboxMessage = computed(() => {
@@ -2577,11 +2566,7 @@ const trashFailedMsgboxMessage = computed(() => {
     ? pendingTrashFailedItems.value.length
     : (isDedupTrash.value ? dedupDeleteFileIds.value.length : selectedCount.value);
   if (deleteCount > 1 || isDedupTrash.value || selectMode.value) {
-    const base = localeMsg.value.msgbox.trash_failed.files_content.replace('{count}', deleteCount.toLocaleString());
-    const companions = pendingDedupRetryPreview.value?.rawCompanionCount || 0;
-    return companions > 0
-      ? `${base}\n${localeMsg.value.msgbox.move_to_trash.raw_jpeg_companions_content.replace('{count}', companions.toLocaleString())}`
-      : base;
+    return localeMsg.value.msgbox.trash_failed.files_content.replace('{count}', deleteCount.toLocaleString());
   }
   return localeMsg.value.msgbox.trash_failed.file_content.replace(
     '{file}',
@@ -2971,6 +2956,10 @@ async function pasteClipboardImage(target?: { albumId: number; folderPath?: stri
     if (!destination || !await isDirectoryAccessible(destination.folderPath)) {
       toast.warning(t('import_files.destination_unavailable'));
     } else {
+      if (String(error).startsWith('clipboard_pair_failed:')) {
+        await refreshImportedFiles(destination.albumId, destination.folderPath)
+          .catch(refreshError => console.error('Failed to refresh pasted files:', refreshError));
+      }
       toast.error(t('import_files.copy_failed'));
     }
   } finally {
@@ -3628,6 +3617,7 @@ function notifyViewerFilesLeftView(fileIds: number[]) {
 }
 
 const isProcessing = ref(false);  // show processing status
+const isUpdatingRawGrouping = ref(false);
 const isLoading = ref(false);     // show loading status in GridView (for empty file list)
 const imageSearchError = ref(false);
 const imageSearchLanguageUnsupported = ref(false);
@@ -4003,7 +3993,7 @@ const similarViewVersion = ref(0);
 const similarScanKey = ref('');
 watch([dedupScanKey, similarPhotoGroupingThreshold], ([key, threshold]) => {
   similarScanKey.value = key
-    ? `${key}|threshold:${threshold}|similar-view:${++similarViewVersion.value}`
+    ? `${key}|pair-scope:1|threshold:${threshold}|similar-view:${++similarViewVersion.value}`
     : '';
 }, { immediate: true });
 
@@ -4166,6 +4156,20 @@ async function refreshImportedAlbumContent(albumId: number) {
       : { searchFolder: folderPath },
     requestId,
   );
+}
+
+async function handleImportFilesAdded(event: any) {
+  const albumId = Number(event.payload?.albumId || 0);
+  const libraryId = libConfig._libraryId;
+  if (config.settings.groupRawJpegPairs && libraryId) {
+    try {
+      await reconcileRawJpegPairs(libraryId, true);
+    } catch (error) {
+      console.error('Failed to reconcile RAW pairs after import:', error);
+    }
+    if (libraryId !== libConfig._libraryId) return;
+  }
+  await refreshImportedAlbumContent(albumId);
 }
 
 // New event handlers for GridView
@@ -4638,7 +4642,7 @@ async function clickSetDesktopWallpaper() {
 }
 
 function handleItemAction(payload: { action: string, index: number }) {
-  if (isSlideShow.value) return;
+  if (isSlideShow.value || isUpdatingRawGrouping.value) return;
 
   const { action, index } = payload;
   if (index >= 0) selectedItemIndex.value = index; // Panel actions have no thumbnail index.
@@ -4922,7 +4926,7 @@ const keyActions = {
 
 // Local keydown handler for navigation (prevents default browser behavior)
 function handleLocalKeyDown(event: KeyboardEvent) {
-  if (event.defaultPrevented) return;
+  if (event.defaultPrevented || isUpdatingRawGrouping.value) return;
 
   // Do not intercept editing shortcuts while typing.
   const target = event.target as HTMLElement;
@@ -5348,6 +5352,7 @@ function isTextInputFocused() {
 
 // Global keydown handler (from Tauri)
 const handleKeyDown = (e: any) => {
+  if (isUpdatingRawGrouping.value) return;
   if (uiStore.activePane === 'left-sidebar') {
     return;
   }
@@ -5955,7 +5960,7 @@ onMounted( async() => {
     }
   });
   unlistenImportFilesAdded = await listen('import-files-added', (event: any) => {
-    void refreshImportedAlbumContent(Number(event.payload?.albumId || 0));
+    void handleImportFilesAdded(event);
   });
   unlistenImportFilesToFolder = await listen('import-files-to-folder', (event: any) => {
     const albumId = Number(event.payload?.albumId || 0);
@@ -6523,6 +6528,34 @@ onBeforeUnmount(() => {
   if (domDrop) document.removeEventListener('drop', domDrop);
   removeDragGhost();
 });
+
+let rawGroupingUpdate = Promise.resolve();
+let rawGroupingRequest = 0;
+watch(() => [config.settings.groupRawJpegPairs, libConfig._libraryId] as const, ([enabled, libraryId]) => {
+  const request = ++rawGroupingRequest;
+  if (!libraryId) {
+    isUpdatingRawGrouping.value = false;
+    return;
+  }
+  isUpdatingRawGrouping.value = true;
+  const isCurrent = () => request === rawGroupingRequest && libraryId === libConfig._libraryId;
+  rawGroupingUpdate = rawGroupingUpdate.then(async () => {
+    try {
+      if (!isCurrent()) return;
+      await reconcileRawJpegPairs(libraryId, Boolean(enabled));
+      if (!isCurrent()) return;
+      await updateContent(true, false);
+      if (isCurrent()) await refreshLibraryTotalCount();
+    } catch (error) {
+      if (isCurrent()) {
+        console.error('Failed to update RAW grouping:', error);
+        toast.error(t('info_panel.selection_load_failed'));
+      }
+    } finally {
+      if (request === rawGroupingRequest) isUpdatingRawGrouping.value = false;
+    }
+  });
+}, { flush: 'sync' });
 
 /// watch appearance
 watch(
@@ -8872,18 +8905,20 @@ const onFileSaved = async (success: boolean, payload: SavedFilePayload = {}) => 
 const getClipboardFilePaths = (files: any[], limit = 10) => {
   const paths: string[] = [];
   const seenPaths = new Set<string>();
+  let filesOnly = false;
 
   for (const file of files) {
-    const groupPaths = getClipboardItemPaths(file, config.settings.rawPairClipboardMode);
+    const groupPaths = getClipboardItemPaths(file, config.settings.groupRawJpegPairs);
     const uniqueGroupPaths = groupPaths.filter(path => !seenPaths.has(path));
     if (paths.length + uniqueGroupPaths.length > limit) continue;
+    if (groupPaths.length === 2) filesOnly = true;
     for (const path of uniqueGroupPaths) {
       seenPaths.add(path);
       paths.push(path);
     }
   }
 
-  return paths;
+  return { paths, filesOnly };
 };
 
 async function clickCopyFilePaths() {
@@ -8892,7 +8927,7 @@ async function clickCopyFilePaths() {
       ? await getActionableSelectedItemsForAction()
       : [fileList.value[selectedItemIndex.value]];
     if (!files) return;
-    const count = await copyFilePaths(files, config.settings.rawPairClipboardMode);
+    const count = await copyFilePaths(files, config.settings.groupRawJpegPairs);
     if (count > 0) {
       toast.success(t('file_info.paths_copied', { count }));
     }
@@ -8910,6 +8945,7 @@ const clickCopyImages = async (fallbackFile?: any) => {
   let requestedCount = 0;
   let cancelled = false;
   let filePaths: string[] = [];
+  let filesOnly = false;
   try {
     if (selectMode.value && selectedCount.value > 0) {
       requestedCount = selectedCount.value;
@@ -8923,14 +8959,14 @@ const clickCopyImages = async (fallbackFile?: any) => {
         toast.warning(t('offline.requires_original'));
         return;
       }
-      filePaths = getClipboardFilePaths(selectedItems, CLIPBOARD_SELECTION_LIMIT * 2);
+      ({ paths: filePaths, filesOnly } = getClipboardFilePaths(selectedItems, CLIPBOARD_SELECTION_LIMIT * 2));
     } else if (fallbackFile) {
       if (isOriginalStorageUnavailable(fallbackFile)) {
         cancelled = true;
         toast.warning(t('offline.requires_original'));
         return;
       }
-      filePaths = getClipboardFilePaths([fallbackFile]);
+      ({ paths: filePaths, filesOnly } = getClipboardFilePaths([fallbackFile]));
       requestedCount = filePaths.length;
     }
     if (filePaths.length === 0) {
@@ -8943,7 +8979,7 @@ const clickCopyImages = async (fallbackFile?: any) => {
       toast.warning(t('offline.requires_original'));
       return;
     }
-    copiedCount = Number(await copyImages(filePaths)) || 0;
+    copiedCount = Number(await copyImages(filePaths, filesOnly)) || 0;
   } catch (error) {
     console.error('Failed to copy files to clipboard:', error);
   } finally {

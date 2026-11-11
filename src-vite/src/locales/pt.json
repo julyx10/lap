@@ -976,7 +976,6 @@
       "file_content": "O arquivo '{file}' será movido para o lixo.",
       "files_content": "{count} arquivos selecionados serão movidos para o lixo.",
       "removable_files_content": "Todos os {count} arquivos removíveis serão movidos para o lixo.",
-      "raw_jpeg_companions_content": "{count} arquivo(s) complementar(es) RAW+JPEG também serão excluídos.",
       "folder_content": "A pasta '{folder}' será movida para o lixo.",
       "ok": "Mover",
       "file_success": "O arquivo '{file}' foi movido para o lixo.",
@@ -1425,10 +1424,6 @@
     "raw": {
       "title": "RAW",
       "section_pairs": "Arquivos pareados",
-      "clipboard_both": "Ambos os arquivos",
-      "clipboard_raw": "Apenas RAW",
-      "clipboard_jpeg": "Apenas JPEG/HEIC",
-      "clipboard_hint": "Também se aplica aos caminhos. Não afeta copiar ou mover arquivos para pastas.",
       "pair_source": "Exibição padrão para pares",
       "pair_source_hint": "Usado para miniaturas e pré-visualizações pareadas",
       "pair_jpeg": "JPEG / HEIC",

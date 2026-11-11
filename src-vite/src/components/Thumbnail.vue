@@ -240,7 +240,7 @@ import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
 import { config } from '@/common/config';
 import { THUMBNAIL_BADGE } from '@/common/constants';
-import { isMac, shortenFilename, formatFileSize, formatDimensionText, formatDuration, formatTimestamp, formatCaptureSettings, formatCaptureSettingValue, formatCameraInfo, getAssetSrc, getThumbUrl, getFileExtension } from '@/common/utils';
+import { isMac, shortenFilename, formatFileSize, formatDimensionText, formatDuration, formatTimestamp, formatCaptureSettings, formatCaptureSettingValue, formatCameraInfo, getAssetSrc, getThumbUrl, getFileExtension, formatRawPairBadge } from '@/common/utils';
 import { isWebViewVideoPlaybackDisabled, getGStreamerAvailability } from '@/common/video';
 import { claimHoverPreview, releaseHoverPreview } from '@/common/hoverPreview';
 import ContextMenu from '@/components/ContextMenu.vue';
@@ -324,10 +324,7 @@ const isVideoFile = computed(() => props.file?.file_type === 2);
 const isLivePhoto = computed(() => props.file?.media_subtype === 'live_photo' && !!props.file?.live_photo_video_path);
 const isMotionPhoto = computed(() => props.file?.media_subtype === 'motion_photo');
 const isRawJpegPair = computed(() => props.file?.media_subtype === 'raw_jpeg_pair');
-const rawJpegPairBadge = computed(() => {
-  const extension = getFileExtension(props.file?.live_photo_video_path || '').toLowerCase();
-  return ['heic', 'heif', 'hif'].includes(extension) ? 'RAW+HEIC' : 'RAW+JPEG';
-});
+const rawJpegPairBadge = computed(() => formatRawPairBadge(props.file?.live_photo_video_path));
 const previewVideoPath = computed(() => isLivePhoto.value ? props.file.live_photo_video_path : props.file?.file_path);
 const canPreviewVideo = computed(() => (
   !originalUnavailable.value && (isVideoFile.value || isLivePhoto.value)

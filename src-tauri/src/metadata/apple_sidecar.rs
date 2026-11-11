@@ -365,7 +365,7 @@ pub(crate) fn copy_apple_aae_paths_for_import(
 // Transfer (move / copy) helpers
 // ---------------------------------------------------------------------------
 
-fn file_record_for_path(file_path: &str) -> Result<Option<AFile>, String> {
+pub(crate) fn file_record_for_path(file_path: &str) -> Result<Option<AFile>, String> {
     let path = Path::new(file_path);
     let parent = path
         .parent()
@@ -380,26 +380,27 @@ fn file_record_for_path(file_path: &str) -> Result<Option<AFile>, String> {
     AFile::fetch(folder_id, file_path)
 }
 
-fn live_photo_component_files_for_path(file_path: &str) -> Result<Vec<AFile>, String> {
+fn live_photo_component_files_for_path(file_path: &str, group_raw_pairs: bool) -> Result<Vec<AFile>, String> {
     let Some(file) = file_record_for_path(file_path)? else {
         return Ok(Vec::new());
     };
     let Some(file_id) = file.id else {
         return Ok(Vec::new());
     };
-    AFile::live_photo_component_files(file_id)
+    AFile::grouped_component_files(file_id, group_raw_pairs)
 }
 
 fn resolve_apple_sidecar_transfer_sources(
     file_id: Option<i64>,
     file_path: &str,
+    group_raw_pairs: bool,
 ) -> Result<Vec<SidecarTransferSource>, String> {
     let mut seen_paths = HashSet::new();
 
     let component_files = if let Some(file_id) = file_id {
-        AFile::live_photo_component_files(file_id)?
+        AFile::grouped_component_files(file_id, group_raw_pairs)?
     } else {
-        live_photo_component_files_for_path(file_path)?
+        live_photo_component_files_for_path(file_path, group_raw_pairs)?
     };
 
     let mut sources = Vec::new();
@@ -502,7 +503,7 @@ fn group_target_conflicts(primary_target: &Path, sidecar_plans: &[SidecarTransfe
     primary_target.exists() || sidecar_plans.iter().any(|plan| plan.new_path.exists())
 }
 
-fn sibling_candidate_path(base: &Path, index: usize) -> PathBuf {
+pub(crate) fn sibling_candidate_path(base: &Path, index: usize) -> PathBuf {
     if index == 0 {
         return base.to_path_buf();
     }
@@ -526,11 +527,12 @@ pub(crate) fn resolve_group_primary_target(
     file_path: &str,
     new_folder_path: &str,
     policy: t_utils::FileConflictPolicy,
+    group_raw_pairs: bool,
     xmp_cache: &mut crate::metadata::files::Cache,
 ) -> Result<(PathBuf, Vec<SidecarTransferPlan>), String> {
     let base_target =
         t_utils::resolve_file_transfer_destination(file_path, new_folder_path, policy)?;
-    let sidecar_sources = resolve_apple_sidecar_transfer_sources(file_id, file_path)?;
+    let sidecar_sources = resolve_apple_sidecar_transfer_sources(file_id, file_path, group_raw_pairs)?;
     if policy == t_utils::FileConflictPolicy::Replace {
         let sidecar_plans = build_apple_sidecar_transfer_plan_from_sources(
             file_path,
@@ -580,6 +582,7 @@ pub(crate) fn collect_replaced_file_ids_for_targets<'a, I>(
     targets: I,
     source_file_ids: &HashSet<i64>,
     replaced_file_ids: &mut Vec<i64>,
+    group_raw_pairs: bool,
 ) where
     I: IntoIterator<Item = &'a PathBuf>,
 {
@@ -595,7 +598,9 @@ pub(crate) fn collect_replaced_file_ids_for_targets<'a, I>(
         };
 
         push_replaced_file_id(replaced_file_id, source_file_ids, replaced_file_ids);
-        if let Ok(components) = AFile::live_photo_component_files(replaced_file_id) {
+        // A replaced Live Photo or RAW pair must lose its whole catalog group,
+        // including the companion that is not itself a transfer target.
+        if let Ok(components) = AFile::grouped_component_files(replaced_file_id, group_raw_pairs) {
             for component in components {
                 if let Some(component_id) = component.id {
                     push_replaced_file_id(component_id, source_file_ids, replaced_file_ids);

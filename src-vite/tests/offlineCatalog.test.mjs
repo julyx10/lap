@@ -13,7 +13,7 @@ const clipboardUtils = fs.readFileSync(new URL('../src/common/utils.ts', import.
 const getClipboardItemPaths = new Function(
   ts.transpile(clipboardUtils.slice(
     clipboardUtils.indexOf('export function getClipboardItemPaths'),
-    clipboardUtils.indexOf('// A null policy copies exactly the file shown in File Info.'),
+    clipboardUtils.indexOf('// With no grouping argument, File Info copies exactly the file it shows.'),
   ).replace('export function', 'function'), { target: ts.ScriptTarget.ES2022 })
     + '; return getClipboardItemPaths;'
 )();
@@ -238,6 +238,49 @@ function extractFunction(source, name, next) {
   return ts.transpile(source.slice(source.indexOf(name), source.indexOf(next, source.indexOf(name))), { target: ts.ScriptTarget.ES2022 });
 }
 
+test('RAW grouping reconciles catalog pairs before refreshing the current view', async () => {
+  const calls = [];
+  let toggle;
+  const pending = ref(false);
+  const deps = {
+    watch: (_source, callback) => { toggle = callback; },
+    config: { settings: { groupRawJpegPairs: false } },
+    libConfig,
+    isUpdatingRawGrouping: pending,
+    reconcileRawJpegPairs: async (libraryId, enabled) => { calls.push(['pairs', libraryId, enabled]); },
+    updateContent: async (...args) => { calls.push(['refresh', ...args]); },
+    refreshLibraryTotalCount: async () => { calls.push(['count']); },
+  };
+  const wait = new Function(...Object.keys(deps),
+    extractFunction(contentSource, 'let rawGroupingUpdate =', '/// watch appearance')
+    + '; return () => rawGroupingUpdate;'
+  )(...Object.values(deps));
+  for (const enabled of [true, false]) {
+    toggle([enabled, libConfig._libraryId]);
+    assert.equal(pending.value, true);
+    await wait();
+    assert.deepEqual(calls.splice(0), [
+      ['pairs', libConfig._libraryId, enabled], ['refresh', true, false], ['count'],
+    ]);
+    assert.equal(pending.value, false);
+  }
+});
+
+test('complete RAW pairs use the file clipboard format without a single-image preview', () => {
+  const config = { settings: { groupRawJpegPairs: true } };
+  const resolve = new Function('config', 'getClipboardItemPaths',
+    extractFunction(contentSource, 'const getClipboardFilePaths =', 'async function clickCopyFilePaths')
+    + '; return getClipboardFilePaths;'
+  )(config, getClipboardItemPaths);
+  const pair = { file_path: '/photos/a.nef', media_subtype: 'raw_jpeg_pair', live_photo_video_path: '/photos/a.jpg' };
+  assert.deepEqual(resolve([pair]), { paths: ['/photos/a.nef', '/photos/a.jpg'], filesOnly: true });
+  assert.deepEqual(resolve([pair], 1), { paths: [], filesOnly: false });
+  config.settings.groupRawJpegPairs = false;
+  assert.deepEqual(resolve([pair]), { paths: ['/photos/a.nef'], filesOnly: false });
+  const live = { file_path: '/photos/live.heic', media_subtype: 'live_photo', live_photo_video_path: '/photos/live.mov' };
+  assert.deepEqual(resolve([live]), { paths: ['/photos/live.heic', '/photos/live.mov'], filesOnly: true });
+});
+
 test('clipboard selection checks and hydrates only the items it can copy', async () => {
   const files = Array.from({ length: 11 }, (_, index) => ({ id: index + 1, offline: index === 10 }));
   const selectedFiles = ref(files);
@@ -289,7 +332,7 @@ test('selection context menu resolves unloaded clipboard candidates before displ
   assert.equal((await items.value())[0].disabled, true);
 });
 
-test('image viewer copy action sends the active RAW pair path selected by policy', async () => {
+test('image viewer copy action follows RAW grouping for the active file', async () => {
   const viewer = fs.readFileSync(new URL('../src/views/ImageViewer.vue', import.meta.url), 'utf8');
   const calls = [];
   const file = { file_path: '/photos/active.nef', live_photo_video_path: '/photos/active.jpg', media_subtype: 'raw_jpeg_pair' };
@@ -297,7 +340,7 @@ test('image viewer copy action sends the active RAW pair path selected by policy
     getActiveFilePane: () => 'right',
     getFileInfoByPane: pane => { assert.equal(pane, 'right'); return file; },
     isOriginalStorageUnavailable: () => false, getClipboardItemPaths,
-    config: { settings: { rawPairClipboardMode: 'jpeg' } },
+    config: { settings: { groupRawJpegPairs: false } },
     checkFileAccessibility: async path => { calls.push(['check', path]); return true; },
     copyImages: async paths => { calls.push(['copy', paths]); return paths.length; },
     toast: { success: () => {}, warning: () => {}, error: () => {} },
@@ -309,7 +352,7 @@ test('image viewer copy action sends the active RAW pair path selected by policy
     + '; return handleItemAction;'
   )(...Object.values(deps));
   await handle({ action: 'copy' });
-  assert.deepEqual(calls, [['check', '/photos/active.jpg'], ['copy', ['/photos/active.jpg']]]);
+  assert.deepEqual(calls, [['check', '/photos/active.nef'], ['copy', ['/photos/active.nef']]]);
 });
 
 test('clipboard paste distinguishes an unavailable destination from an empty clipboard', async () => {

@@ -976,7 +976,6 @@
       "file_content": "A(z) \"{file}\" fájl a kukába kerül.",
       "files_content": "{count} kiválasztott fájl a kukába kerül.",
       "removable_files_content": "Az összes {count} eltávolítható fájl a kukába kerül.",
-      "raw_jpeg_companions_content": "{count} RAW+JPEG kísérőfájl is törlődik.",
       "folder_content": "A(z) \"{folder}\" mappa a kukába kerül.",
       "ok": "Kukába",
       "file_success": "A(z) \"{file}\" fájl a kukába került.",
@@ -1425,10 +1424,6 @@
     "raw": {
       "title": "RAW",
       "section_pairs": "Párosított fájlok",
-      "clipboard_both": "Mindkét fájl",
-      "clipboard_raw": "Csak RAW",
-      "clipboard_jpeg": "Csak JPEG/HEIC",
-      "clipboard_hint": "Az útvonalak másolására is érvényes. A mappákba másolást és áthelyezést nem érinti.",
       "pair_source": "A párok alapértelmezett megjelenítése",
       "pair_source_hint": "A párosított bélyegképek és előnézetek használják",
       "pair_jpeg": "JPEG / HEIC",

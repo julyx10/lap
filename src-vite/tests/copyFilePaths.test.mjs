@@ -14,29 +14,29 @@ test('copy paths keeps offline and Windows paths intact, deduplicates and skips 
  assert.equal(calls.length,1);
 });
 
-test('shortcuts copy both RAW pair paths, Live Photos stay image-only, and info copies its current file', async () => {
+test('shortcuts copy grouped RAW and Live Photo paths, and File Info copies its current file', async () => {
   const calls = [];
   const copy = new Function('invoke', ts.transpile(functionSource, {target: ts.ScriptTarget.ES2022}) + ';return copyFilePaths;')(async (...args) => calls.push(args));
   const raw = {file_path:'/a.raw', media_subtype:'raw_jpeg_pair', live_photo_video_path:'/a.jpg'};
   const live = {file_path:'/b.heic', media_subtype:'live_photo', live_photo_video_path:'/b.mov'};
-  assert.equal(await copy([raw, live, {file_path: '/a.jpg'}], 'both'), 3);
-  assert.deepEqual(calls[0][1].filePaths, ['/a.raw','/a.jpg','/b.heic']);
+  assert.equal(await copy([raw, live, {file_path: '/a.jpg'}], true), 4);
+  assert.deepEqual(calls[0][1].filePaths, ['/a.raw','/a.jpg','/b.heic','/b.mov']);
   assert.equal(await copy([{file_path:'/a.jpg'}]), 1);
   assert.deepEqual(calls[1][1].filePaths, ['/a.jpg']);
   assert.equal(await copy([raw]), 1);
   assert.deepEqual(calls[2][1].filePaths, ['/a.raw']);
 });
 
-test('RAW clipboard policies select both, RAW or JPEG without affecting ordinary files', async () => {
+test('RAW clipboard paths follow the grouping switch', async () => {
   const calls = [];
   const copy = new Function('invoke', ts.transpile(functionSource, {target: ts.ScriptTarget.ES2022}) + ';return copyFilePaths;')(async (...args) => calls.push(args));
   const raw = {file_path:'/a.raw',media_subtype:'raw_jpeg_pair',live_photo_video_path:'/a.jpg'};
-  for (const [mode, expected] of [['both',['/a.raw','/a.jpg']],['raw',['/a.raw']],['jpeg',['/a.jpg']]]) {
+  for (const [mode, expected] of [[true,['/a.raw','/a.jpg']],[false,['/a.raw']]]) {
     assert.equal(await copy([raw], mode), expected.length);
     assert.deepEqual(calls.at(-1)[1].filePaths, expected);
   }
-  await assert.rejects(copy([{file_path:'/missing.raw',media_subtype:'raw_jpeg_pair'}], 'jpeg'));
-  assert.equal(await copy([{file_path:'/standalone.raw'}], 'jpeg'), 1);
+  await assert.rejects(copy([{file_path:'/missing.raw',media_subtype:'raw_jpeg_pair'}], true));
+  assert.equal(await copy([{file_path:'/standalone.raw'}], false), 1);
 });
 
 test('clipboard copy reaches policy validation even when the RAW primary is unavailable', () => {

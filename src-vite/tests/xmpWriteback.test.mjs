@@ -80,9 +80,10 @@ function transferFixture(options = {}) {
     if (options.commandError) throw options.commandError;
     return '/target/photo.jpg';
   };
-  const api = new Function('invoke', 'console', transferCode +
+  const api = new Function('invoke', 'console', 'config', transferCode +
     '; return { withFileTransferBatch, moveFile, copyFile, moveFileOutsideLibrary, renameFile };')(
-      invoke, { error: (...args) => errors.push(args), log() {} });
+      invoke, { error: (...args) => errors.push(args), log() {} },
+      { settings: { groupRawJpegPairs: false } });
   return { ...api, calls, errors };
 }
 
