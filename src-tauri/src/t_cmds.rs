@@ -3864,6 +3864,7 @@ pub fn similar_start_scan(
     params: Option<QueryParams>,
     collection_id: Option<i64>,
     file_ids: Option<Vec<i64>>,
+    group_raw_pairs: bool,
     keep_rules: Option<crate::t_dedup::KeepRules>,
 ) -> Result<(), String> {
     t_similar::start_scan(
@@ -3875,6 +3876,7 @@ pub fn similar_start_scan(
         params,
         collection_id,
         file_ids,
+        group_raw_pairs,
         keep_rules,
     )
 }
@@ -3896,8 +3898,9 @@ pub fn similar_get_eligible_count(
     params: Option<QueryParams>,
     collection_id: Option<i64>,
     file_ids: Option<Vec<i64>>,
+    group_raw_pairs: bool,
 ) -> Result<u64, String> {
-    t_similar::eligible_count(params, collection_id, file_ids)
+    t_similar::eligible_count(params, collection_id, file_ids, group_raw_pairs)
 }
 
 #[tauri::command]
@@ -3906,13 +3909,13 @@ pub fn similar_list_groups(scope_key: String, limit: i64, offset: i64) -> Result
 }
 
 #[tauri::command]
-pub fn similar_get_overview(scope_key: String) -> Result<serde_json::Value, String> {
-    t_similar::get_overview(&scope_key)
+pub fn similar_get_overview(scope_key: String, group_raw_pairs: bool) -> Result<serde_json::Value, String> {
+    t_similar::get_overview(&scope_key, group_raw_pairs)
 }
 
 #[tauri::command]
-pub fn similar_get_group(group_id: i64, scope_key: String) -> Result<serde_json::Value, String> {
-    t_similar::get_group(group_id, &scope_key)
+pub fn similar_get_group(group_id: i64, scope_key: String, group_raw_pairs: bool) -> Result<serde_json::Value, String> {
+    t_similar::get_group(group_id, &scope_key, group_raw_pairs)
 }
 
 #[tauri::command]
@@ -4071,13 +4074,21 @@ pub fn dedup_list_groups(
     page_size: u32,
     sort_by: String, // E.g., "size_desc", "count_desc"
     filter: String,  // E.g., "all", "unreviewed"
+    group_raw_pairs: bool,
 ) -> Result<Vec<crate::t_dedup::DedupGroup>, String> {
-    crate::t_dedup::list_groups(page, page_size, &sort_by, &filter)
+    crate::t_dedup::list_groups(page, page_size, &sort_by, &filter, group_raw_pairs)
 }
 
 #[tauri::command]
-pub fn dedup_get_overview() -> Result<crate::t_dedup::DedupOverview, String> {
-    crate::t_dedup::get_overview()
+pub async fn dedup_get_overview(
+    library_id: String,
+    group_raw_pairs: bool,
+) -> Result<crate::t_dedup::DedupOverview, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        with_current_library(&library_id, || crate::t_dedup::get_overview(group_raw_pairs))
+    })
+    .await
+    .map_err(|error| format!("Failed to load dedup overview: {error}"))?
 }
 
 #[tauri::command]

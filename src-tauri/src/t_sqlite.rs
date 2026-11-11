@@ -2120,6 +2120,8 @@ pub struct ATimeLine {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct QueryParams {
+    #[serde(skip)]
+    pub(crate) include_raw_companions: bool,
     pub search_file_name: String, // filename and metadata text search
     pub search_file_type: i64,
     pub sort_type: i64,
@@ -3469,8 +3471,18 @@ impl AFile {
     }
 
     fn live_photo_companion_exclusion_condition() -> String {
+        Self::companion_exclusion_condition(false)
+    }
+
+    fn companion_exclusion_condition(include_raw_companions: bool) -> String {
+        let subtype_filter = if include_raw_companions {
+            "AND primary_file.media_subtype IS NOT 'raw_jpeg_pair'"
+        } else {
+            ""
+        };
         format!("a.id NOT IN (SELECT primary_file.live_photo_video_id FROM afiles primary_file
-            WHERE primary_file.live_photo_video_id IS NOT NULL AND {})", Self::album_scan_predicate("primary_file"))
+            WHERE primary_file.live_photo_video_id IS NOT NULL {subtype_filter} AND {})",
+            Self::album_scan_predicate("primary_file"))
     }
 
     // build the base SQL query
@@ -5332,8 +5344,7 @@ impl AFile {
     // Returns (joins_clause, where_clause, params)
     fn build_search_query_parts(params: &QueryParams) -> (String, String, Vec<Box<dyn ToSql>>) {
         let mut joins = Vec::new();
-        let mut conditions: Vec<String> =
-            vec![Self::live_photo_companion_exclusion_condition().to_string()];
+        let mut conditions = vec![Self::companion_exclusion_condition(params.include_raw_companions)];
         let mut sql_params: Vec<Box<dyn ToSql>> = Vec::new();
 
         if !params.search_file_name.is_empty() {

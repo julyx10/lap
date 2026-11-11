@@ -62,16 +62,58 @@ fn resolve_scope(
     params: Option<QueryParams>,
     collection_id: Option<i64>,
     file_ids: Option<Vec<i64>>,
+    group_raw_pairs: bool,
 ) -> Result<Vec<AFile>, String> {
     if file_ids.is_some() && (params.is_some() || collection_id.is_some()) {
         return Err("File ID scope cannot be combined with query or collection scope.".into());
     }
-    if let Some(ids) = file_ids {
+    let params = params.map(|mut params| {
+        params.include_raw_companions = !group_raw_pairs;
+        params
+    });
+    let files = if let Some(ids) = file_ids {
         AFile::get_files_by_ids(&ids)
     } else if let Some(id) = collection_id {
         t_dedup::get_files_by_collection(id, params.as_ref())
     } else {
         t_dedup::get_files_by_query(params.as_ref().ok_or("Query required")?)
+    }?;
+    Ok(group_raw_pair_candidates(files, group_raw_pairs))
+}
+
+fn group_raw_pair_candidates(mut files: Vec<AFile>, group_raw_pairs: bool) -> Vec<AFile> {
+    if group_raw_pairs {
+        let companions: HashSet<_> = files.iter()
+            .filter(|file| file.media_subtype.as_deref() == Some("raw_jpeg_pair"))
+            .filter_map(|file| file.live_photo_video_id)
+            .collect();
+        files.retain(|file| file.id.is_none_or(|id| !companions.contains(&id)));
+    }
+    files
+}
+
+#[cfg(test)]
+mod raw_pair_tests {
+    use super::*;
+
+    #[test]
+    fn raw_companion_is_only_hidden_when_its_primary_is_in_the_grouped_scope() {
+        let candidates = |grouped, include_primary| {
+            let mut files = vec![AFile { id: Some(2), ..Default::default() }];
+            if include_primary {
+                files.push(AFile {
+                    id: Some(1),
+                    media_subtype: Some("raw_jpeg_pair".into()),
+                    live_photo_video_id: Some(2),
+                    ..Default::default()
+                });
+            }
+            group_raw_pair_candidates(files, grouped)
+                .into_iter().filter_map(|file| file.id).collect::<Vec<_>>()
+        };
+        assert_eq!(candidates(true, true), [1]);
+        assert_eq!(candidates(false, true), [2, 1]);
+        assert_eq!(candidates(true, false), [2]);
     }
 }
 
@@ -185,10 +227,11 @@ pub fn eligible_count(
     params: Option<QueryParams>,
     collection_id: Option<i64>,
     file_ids: Option<Vec<i64>>,
+    group_raw_pairs: bool,
 ) -> Result<u64, String> {
     let conn = get_db_conn()?;
     let duplicate_ids = exact_duplicate_file_ids(&conn)?;
-    let files = resolve_scope(params, collection_id, file_ids)?
+    let files = resolve_scope(params, collection_id, file_ids, group_raw_pairs)?
         .into_iter()
         .filter(|file| file.id.is_none_or(|id| !duplicate_ids.contains(&id)))
         .collect();
@@ -204,6 +247,7 @@ pub fn start_scan(
     params: Option<QueryParams>,
     collection_id: Option<i64>,
     file_ids: Option<Vec<i64>>,
+    group_raw_pairs: bool,
     keep_rules: Option<t_dedup::KeepRules>,
 ) -> Result<(), String> {
     if state
@@ -237,6 +281,7 @@ pub fn start_scan(
             params,
             collection_id,
             file_ids,
+            group_raw_pairs,
             keep_rules,
         );
         let mut current = status.lock().unwrap();
@@ -285,10 +330,11 @@ fn scan(
     params: Option<QueryParams>,
     collection_id: Option<i64>,
     file_ids: Option<Vec<i64>>,
+    group_raw_pairs: bool,
     keep_rules: Option<t_dedup::KeepRules>,
 ) -> Result<(), String> {
     let mut conn = get_db_conn()?;
-    let vectors = load_vectors(&conn, resolve_scope(params, collection_id, file_ids)?)?;
+    let vectors = load_vectors(&conn, resolve_scope(params, collection_id, file_ids, group_raw_pairs)?)?;
     {
         let mut s = status.lock().unwrap();
         s.total = vectors.len() as u64;
@@ -495,20 +541,22 @@ pub fn list_groups(scope_key: &str, limit: i64, offset: i64) -> Result<serde_jso
     Ok(serde_json::json!({"items": out, "total": total}))
 }
 
-pub fn get_overview(scope_key: &str) -> Result<serde_json::Value, String> {
+pub fn get_overview(scope_key: &str, group_raw_pairs: bool) -> Result<serde_json::Value, String> {
     let conn = get_db_conn()?;
     let (total_files, total_size) = conn
         .query_row(
             "SELECT
                 COUNT(*),
-                COALESCE(SUM(a.size), 0)
+                COALESCE(SUM(a.size + COALESCE(companion.size, 0)), 0)
              FROM similarity_group_items i
              JOIN similarity_groups g ON g.id = i.group_id
              JOIN similarity_scans s ON s.id = g.scan_id
              JOIN afiles a ON a.id = i.file_id
+             LEFT JOIN afiles companion
+               ON ?2 AND a.media_subtype = 'raw_jpeg_pair' AND companion.id = a.live_photo_video_id
              WHERE s.scope_key = ?1
                AND (SELECT COUNT(*) FROM similarity_group_items WHERE group_id = i.group_id) > 1",
-            params![scope_key],
+            params![scope_key, group_raw_pairs],
             |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?)),
         )
         .map_err(|e| e.to_string())?;
@@ -518,7 +566,7 @@ pub fn get_overview(scope_key: &str) -> Result<serde_json::Value, String> {
     }))
 }
 
-pub fn get_group(group_id: i64, scope_key: &str) -> Result<serde_json::Value, String> {
+pub fn get_group(group_id: i64, scope_key: &str, group_raw_pairs: bool) -> Result<serde_json::Value, String> {
     let conn = get_db_conn()?;
     let exists: bool = conn
         .query_row(
@@ -532,11 +580,31 @@ pub fn get_group(group_id: i64, scope_key: &str) -> Result<serde_json::Value, St
     }
     let mut stmt = conn
         .prepare(
-            "SELECT file_id, score, is_keep FROM similarity_group_items WHERE group_id=?1 ORDER BY is_keep DESC, score DESC, file_id ASC",
+            "SELECT i.file_id, i.score, i.is_keep, COALESCE(companion.size, 0)
+             FROM similarity_group_items i
+             JOIN afiles a ON a.id = i.file_id
+             LEFT JOIN afiles companion ON a.media_subtype = 'raw_jpeg_pair'
+                                       AND companion.id = a.live_photo_video_id
+             WHERE i.group_id=?1 ORDER BY i.is_keep DESC, i.score DESC, i.file_id ASC",
         )
         .map_err(|e| e.to_string())?;
-    let items = stmt.query_map(params![group_id], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, f32>(1)?, row.get::<_, i64>(2)?))).map_err(|e| e.to_string())?
-        .map(|item| { let (file_id, score, is_keep) = item.map_err(|e| e.to_string())?; Ok(serde_json::json!({"file_id": file_id, "score": score, "is_keep": is_keep, "file": AFile::get_file_info(file_id)?})) }).collect::<Result<Vec<_>, String>>()?;
+    let rows = stmt.query_map(params![group_id], |row| {
+        Ok((row.get::<_, i64>(0)?, row.get::<_, f32>(1)?, row.get::<_, i64>(2)?, row.get::<_, i64>(3)?))
+    }).map_err(|error| error.to_string())?.collect::<Result<Vec<_>, _>>()
+        .map_err(|error| error.to_string())?;
+    let ids = rows.iter().filter(|row| row.2 == 0).map(|row| row.0).collect::<Vec<_>>();
+    let mut candidates = t_dedup::similar_delete_candidates(&conn, group_id, &ids, group_raw_pairs)?;
+    if group_raw_pairs {
+        candidates = t_dedup::filter_raw_pair_delete_candidates(&conn, candidates, false)?;
+    }
+    let deletable: HashSet<_> = candidates.into_iter().map(|file| file.file_id).collect();
+    let items = rows.into_iter().map(|(file_id, score, is_keep, companion_size)| {
+        let file = AFile::get_file_info(file_id)?;
+        Ok(serde_json::json!({
+            "file_id": file_id, "score": score, "is_keep": is_keep,
+            "companion_size": companion_size, "can_delete": deletable.contains(&file_id), "file": file
+        }))
+    }).collect::<Result<Vec<_>, String>>()?;
     Ok(serde_json::json!({"id": group_id, "items": items}))
 }
 

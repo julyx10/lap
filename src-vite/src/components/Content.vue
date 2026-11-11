@@ -4003,7 +4003,7 @@ const similarViewVersion = ref(0);
 const similarScanKey = ref('');
 watch([dedupScanKey, similarPhotoGroupingThreshold], ([key, threshold]) => {
   similarScanKey.value = key
-    ? `${key}|threshold:${threshold}|similar-view:${++similarViewVersion.value}`
+    ? `${key}|raw-pair-scope:1|threshold:${threshold}|similar-view:${++similarViewVersion.value}`
     : '';
 }, { immediate: true });
 

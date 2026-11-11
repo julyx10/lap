@@ -178,6 +178,12 @@ fn get_migrations() -> Vec<Migration> {
             description: "Stored metadata title and headline",
             sql: "",
         },
+        Migration {
+            version: 23,
+            description: "Index search exclusions by album",
+            sql: "CREATE INDEX IF NOT EXISTS idx_afolders_excluded_album
+                  ON afolders(album_id) WHERE is_excluded_from_search = 1;",
+        },
     ]
 }
 
@@ -604,11 +610,42 @@ mod album_filter_migration_tests {
     use super::*;
 
     #[test]
+    fn exclusion_index_restricts_the_search_to_excluded_folders_in_the_same_album() {
+        let conn = Connection::open_in_memory().unwrap();
+        conn.execute_batch(
+            "CREATE TABLE afolders(id INTEGER PRIMARY KEY, album_id INTEGER, inode INTEGER,
+                                   path TEXT, is_excluded_from_search INTEGER);
+             CREATE INDEX idx_afolders_album_inode ON afolders(album_id, inode);
+             CREATE INDEX idx_afolders_is_excluded_from_search ON afolders(is_excluded_from_search);
+             INSERT INTO afolders VALUES
+                 (1, 1, 1, '/photos/skip', 1), (2, 1, 2, '/photos/skip/child', 0),
+                 (3, 1, 3, '/photos/skip-neighbor', 0), (4, 2, 4, '/photos/skip/child', 0);
+             PRAGMA user_version=22;",
+        ).unwrap();
+        let query = "SELECT b.id FROM afolders b WHERE NOT EXISTS (
+            SELECT 1 FROM afolders xf
+            WHERE xf.is_excluded_from_search = 1 AND xf.album_id = b.album_id
+              AND (xf.path = b.path OR instr(b.path, xf.path || '/') = 1)
+        ) ORDER BY b.id";
+        let visible = || conn.prepare(query).unwrap().query_map([], |row| row.get::<_, i64>(0))
+            .unwrap().collect::<Result<Vec<_>, _>>().unwrap();
+        assert_eq!(visible(), [3, 4]);
+        check_and_migrate(&conn).unwrap();
+        assert_eq!(visible(), [3, 4]);
+        let plan = format!("EXPLAIN QUERY PLAN {query}");
+        let details = conn.prepare(&plan).unwrap().query_map([], |row| row.get::<_, String>(3))
+            .unwrap().collect::<Result<Vec<_>, _>>().unwrap();
+        assert!(details.iter().any(|line| line.contains("idx_afolders_excluded_album")
+            && line.contains("album_id=?")), "{details:?}");
+    }
+
+    #[test]
     fn image_properties_schedule_one_backfill_without_clearing_other_pending_work() {
         let conn = Connection::open_in_memory().unwrap();
         conn.execute_batch("CREATE TABLE atags(id INTEGER PRIMARY KEY,name TEXT NOT NULL UNIQUE);").unwrap();
         conn.execute_batch("CREATE TABLE afiles(id INTEGER PRIMARY KEY, file_type INTEGER, metadata_pending INTEGER NOT NULL DEFAULT 0);
             INSERT INTO afiles VALUES(1,1,0),(2,3,0),(3,2,0),(4,2,1);
+            CREATE TABLE afolders(id INTEGER PRIMARY KEY, album_id INTEGER, is_excluded_from_search INTEGER);
             PRAGMA user_version=19;").unwrap();
         check_and_migrate(&conn).unwrap();
         let pending: Vec<i64> = conn.prepare("SELECT metadata_pending FROM afiles ORDER BY id").unwrap()
@@ -623,7 +660,7 @@ mod album_filter_migration_tests {
     fn album_filter_migration_is_restartable_and_defaults_to_off() {
         let conn = Connection::open_in_memory().unwrap();
         conn.execute_batch("CREATE TABLE atags(id INTEGER PRIMARY KEY,name TEXT NOT NULL UNIQUE);").unwrap();
-        conn.execute_batch("CREATE TABLE albums(id INTEGER PRIMARY KEY); CREATE TABLE afiles(id INTEGER PRIMARY KEY, file_type INTEGER); INSERT INTO albums VALUES(1); PRAGMA user_version=17;").unwrap();
+        conn.execute_batch("CREATE TABLE albums(id INTEGER PRIMARY KEY); CREATE TABLE afiles(id INTEGER PRIMARY KEY, file_type INTEGER); INSERT INTO albums VALUES(1); CREATE TABLE afolders(id INTEGER PRIMARY KEY, album_id INTEGER, is_excluded_from_search INTEGER); PRAGMA user_version=17;").unwrap();
         check_and_migrate(&conn).unwrap();
         let settings: (i64, Option<i64>, String) = conn.query_row(
             "SELECT file_types,small_image_filter,excluded_folders FROM albums", [],
@@ -632,14 +669,14 @@ mod album_filter_migration_tests {
         // Simulate migration completing before the version was persisted.
         conn.execute_batch("PRAGMA user_version=17;").unwrap();
         check_and_migrate(&conn).unwrap();
-        assert_eq!(conn.query_row("PRAGMA user_version", [], |row| row.get::<_, i64>(0)).unwrap(),22);
+        assert_eq!(conn.query_row("PRAGMA user_version", [], |row| row.get::<_, i64>(0)).unwrap(),23);
     }
 
     #[test]
     fn cloud_state_migration_is_restartable_and_defaults_to_local() {
         let conn = Connection::open_in_memory().unwrap();
         conn.execute_batch("CREATE TABLE atags(id INTEGER PRIMARY KEY,name TEXT NOT NULL UNIQUE);").unwrap();
-        conn.execute_batch("CREATE TABLE afiles(id INTEGER PRIMARY KEY, file_type INTEGER); INSERT INTO afiles(id) VALUES(1); PRAGMA user_version=18;").unwrap();
+        conn.execute_batch("CREATE TABLE afiles(id INTEGER PRIMARY KEY, file_type INTEGER); INSERT INTO afiles(id) VALUES(1); CREATE TABLE afolders(id INTEGER PRIMARY KEY, album_id INTEGER, is_excluded_from_search INTEGER); PRAGMA user_version=18;").unwrap();
         check_and_migrate(&conn).unwrap();
         let state: (i64, i64) = conn.query_row("SELECT cloud_only, metadata_pending FROM afiles", [],
             |row| Ok((row.get(0)?, row.get(1)?))).unwrap();
@@ -647,13 +684,13 @@ mod album_filter_migration_tests {
         // Simulate migration completing before the version was persisted.
         conn.execute_batch("PRAGMA user_version=18;").unwrap();
         check_and_migrate(&conn).unwrap();
-        assert_eq!(conn.query_row("PRAGMA user_version", [], |row| row.get::<_, i64>(0)).unwrap(), 22);
+        assert_eq!(conn.query_row("PRAGMA user_version", [], |row| row.get::<_, i64>(0)).unwrap(), 23);
     }
 
     #[test]
     fn title_migration_is_restartable_without_scheduling_thumbnail_work() {
         let conn = Connection::open_in_memory().unwrap();
-        conn.execute_batch("CREATE TABLE afiles(id INTEGER PRIMARY KEY,metadata_pending INTEGER DEFAULT 0); INSERT INTO afiles(id) VALUES(1); PRAGMA user_version=21;").unwrap();
+        conn.execute_batch("CREATE TABLE afiles(id INTEGER PRIMARY KEY,metadata_pending INTEGER DEFAULT 0); INSERT INTO afiles(id) VALUES(1); CREATE TABLE afolders(id INTEGER PRIMARY KEY, album_id INTEGER, is_excluded_from_search INTEGER); PRAGMA user_version=21;").unwrap();
         check_and_migrate(&conn).unwrap();
         let values: (Option<String>,Option<String>,i32) = conn.query_row(
             "SELECT e_title,e_headline,metadata_pending FROM afiles", [],
@@ -662,7 +699,7 @@ mod album_filter_migration_tests {
         conn.execute_batch("UPDATE afiles SET e_title='Existing'; PRAGMA user_version=21;").unwrap();
         check_and_migrate(&conn).unwrap();
         assert_eq!(conn.query_row("SELECT e_title FROM afiles", [], |r| r.get::<_,String>(0)).unwrap(), "Existing");
-        assert_eq!(conn.query_row("PRAGMA user_version", [], |r| r.get::<_,i32>(0)).unwrap(), 22);
+        assert_eq!(conn.query_row("PRAGMA user_version", [], |r| r.get::<_,i32>(0)).unwrap(), 23);
     }
 }
 

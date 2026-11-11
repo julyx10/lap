@@ -2020,7 +2020,7 @@ export async function dedupCancelScan() {
 // list deduplication groups
 export async function dedupListGroups(page = 1, pageSize = 0, sortBy = 'size_desc', filter = 'all') {
   try {
-    const groups = await invoke('dedup_list_groups', { page, pageSize, sortBy, filter });
+    const groups = await invoke('dedup_list_groups', { page, pageSize, sortBy, filter, groupRawPairs: Boolean(config.settings.groupRawJpegPairs) });
     return groups;
   } catch (error) {
     console.error('dedupListGroups error:', error);
@@ -2030,7 +2030,10 @@ export async function dedupListGroups(page = 1, pageSize = 0, sortBy = 'size_des
 // get deduplication overview
 export async function dedupGetOverview() {
   try {
-    const overview = await invoke('dedup_get_overview');
+    const overview = await invoke('dedup_get_overview', {
+      libraryId: libConfig._libraryId,
+      groupRawPairs: Boolean(config.settings.groupRawJpegPairs),
+    });
     return overview;
   } catch (error) {
     console.error('dedupGetOverview error:', error);
@@ -2071,7 +2074,7 @@ export async function listenDedupScanProgress(callback) {
 }
 
 export async function similarStartScan(scopeKey, sourceVersion, similarityThreshold, params = null, collectionId = null, fileIds = null, keepRules = null) {
-  return await invoke('similar_start_scan', { scopeKey, sourceVersion, similarityThreshold, params, collectionId, fileIds, keepRules });
+  return await invoke('similar_start_scan', { scopeKey, sourceVersion, similarityThreshold, params, collectionId, fileIds, keepRules, groupRawPairs: Boolean(config.settings.groupRawJpegPairs) });
 }
 
 export async function similarGetScanStatus() {
@@ -2083,14 +2086,14 @@ export async function similarCancelScan() {
 }
 
 export async function similarGetEligibleCount(params = null, collectionId = null, fileIds = null) {
-  return await invoke('similar_get_eligible_count', { params, collectionId, fileIds });
+  return await invoke('similar_get_eligible_count', { params, collectionId, fileIds, groupRawPairs: Boolean(config.settings.groupRawJpegPairs) });
 }
 
 export async function similarListGroups(scopeKey, limit = 100, offset = 0) {
   return await invoke('similar_list_groups', { scopeKey, limit, offset });
 }
-export async function similarGetOverview(scopeKey) { return await invoke('similar_get_overview', { scopeKey }); }
-export async function similarGetGroup(groupId, scopeKey) { return await invoke('similar_get_group', { groupId, scopeKey }); }
+export async function similarGetOverview(scopeKey) { return await invoke('similar_get_overview', { scopeKey, groupRawPairs: Boolean(config.settings.groupRawJpegPairs) }); }
+export async function similarGetGroup(groupId, scopeKey) { return await invoke('similar_get_group', { groupId, scopeKey, groupRawPairs: Boolean(config.settings.groupRawJpegPairs) }); }
 export async function similarSetKeep(groupId, fileId, scopeKey) { return await invoke('similar_set_keep', { groupId, fileId, scopeKey }); }
 export async function similarHasScan(scopeKey) { return await invoke('similar_has_scan', { scopeKey }); }
 

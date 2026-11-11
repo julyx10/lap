@@ -182,6 +182,10 @@ fn scan_and_hash_files(
     let mut conn = get_db_conn()?;
     let has_scope = collection_id.is_some() || file_ids.is_some() || query_params.is_some();
 
+    let query_params = query_params.map(|mut params| {
+        params.include_raw_companions = !group_raw_pairs;
+        params
+    });
     let mut files_to_check = if let Some(file_ids) = file_ids {
         AFile::get_files_by_ids(&file_ids)?
     } else if let Some(collection_id) = collection_id {
@@ -823,6 +827,8 @@ pub struct DedupGroupItem {
     pub is_selected: i32,
     pub score: f64,
     pub can_set_keep: bool,
+    pub can_delete: bool,
+    pub companion_size: i64,
     pub file: Option<AFile>,
 }
 
@@ -833,30 +839,31 @@ pub struct DedupOverview {
     pub total_reclaimable_bytes: i64,
 }
 
-pub fn get_overview() -> Result<DedupOverview, String> {
+pub fn get_overview(group_raw_pairs: bool) -> Result<DedupOverview, String> {
     let conn = get_db_conn()?;
-    let (total_groups, total_files, total_reclaimable_bytes) = conn
-        .query_row(
-            "SELECT 
-                COALESCE(COUNT(*), 0),
-                COALESCE(SUM(current_file_count - 1), 0),
-                COALESCE(SUM((current_file_count - 1) * file_size), 0)
-             FROM (
-                SELECT file_size,
-                       (SELECT COUNT(*)
-                        FROM duplicate_group_items
-                        WHERE group_id = duplicate_groups.id) AS current_file_count
-                FROM duplicate_groups
-             )
-             WHERE current_file_count > 1",
-            [],
-            |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
-        )
-        .map_err(|e| e.to_string())?;
+    get_overview_on(&conn, group_raw_pairs)
+}
+
+fn get_overview_on(conn: &Connection, group_raw_pairs: bool) -> Result<DedupOverview, String> {
+    let tx = conn.unchecked_transaction().map_err(|e| e.to_string())?;
+    let total_groups = tx.query_row(
+        "SELECT COUNT(*) FROM (
+            SELECT group_id FROM duplicate_group_items GROUP BY group_id HAVING COUNT(*) > 1
+        )",
+        [],
+        |row| row.get(0),
+    ).map_err(|e| e.to_string())?;
+    let mut files = bulk_duplicate_candidates(&tx)?;
+    normalize_delete_candidates(&mut files);
+    if group_raw_pairs {
+        files = filter_raw_pair_delete_candidates(&tx, files, true)?;
+    }
+    let total_reclaimable_bytes = walk_delete_candidates(&tx, &files, group_raw_pairs, |_, _, _| {})?;
+    tx.commit().map_err(|e| e.to_string())?;
 
     Ok(DedupOverview {
         total_groups,
-        total_files,
+        total_files: files.len() as i64,
         total_reclaimable_bytes,
     })
 }
@@ -866,6 +873,7 @@ pub fn list_groups(
     page_size: u32,
     sort_by: &str,
     filter: &str,
+    group_raw_pairs: bool,
 ) -> Result<Vec<DedupGroup>, String> {
     let conn = get_db_conn()?;
     let offset = (page.saturating_sub(1)) * page_size;
@@ -925,11 +933,16 @@ pub fn list_groups(
         })
         .map_err(|e| e.to_string())?;
 
+    let protected_ids = if group_raw_pairs {
+        raw_pair_protected_delete_ids(&conn)?
+    } else {
+        HashSet::new()
+    };
     let mut groups = Vec::new();
     for g in groups_iter {
         if let Ok(mut group) = g {
             // Fetch items
-            group.items = get_group_items(&conn, group.id)?;
+            group.items = get_group_items(&conn, group.id, group_raw_pairs, &protected_ids)?;
             groups.push(group);
         }
     }
@@ -937,14 +950,21 @@ pub fn list_groups(
     Ok(groups)
 }
 
-fn get_group_items(conn: &Connection, group_id: i64) -> Result<Vec<DedupGroupItem>, String> {
+fn get_group_items(
+    conn: &Connection,
+    group_id: i64,
+    group_raw_pairs: bool,
+    protected_ids: &HashSet<i64>,
+) -> Result<Vec<DedupGroupItem>, String> {
     let keep_locked = pair_keep_locked(conn, group_id)?;
     let mut stmt = conn
         .prepare(
-            "SELECT group_id, file_id, is_keep, is_selected, score
-         FROM duplicate_group_items
-         WHERE group_id = ?1
-         ORDER BY is_keep DESC, score DESC",
+            "SELECT i.group_id, i.file_id, i.is_keep, i.is_selected, i.score, COALESCE(companion.size, 0)
+         FROM duplicate_group_items i
+         LEFT JOIN afiles raw ON raw.id = i.file_id AND raw.media_subtype = 'raw_jpeg_pair'
+         LEFT JOIN afiles companion ON companion.id = raw.live_photo_video_id
+         WHERE i.group_id = ?1
+         ORDER BY i.is_keep DESC, i.score DESC",
         )
         .map_err(|e| e.to_string())?;
 
@@ -957,6 +977,8 @@ fn get_group_items(conn: &Connection, group_id: i64) -> Result<Vec<DedupGroupIte
                 is_selected: row.get(3)?,
                 score: row.get(4)?,
                 can_set_keep: !keep_locked,
+                can_delete: false,
+                companion_size: row.get(5)?,
                 file: None, // Will populate shortly
             })
         })
@@ -966,6 +988,12 @@ fn get_group_items(conn: &Connection, group_id: i64) -> Result<Vec<DedupGroupIte
     for it in iter {
         if let Ok(mut item) = it {
             if let Ok(Some(file_info)) = AFile::get_file_info(item.file_id) {
+                item.can_delete = !group_raw_pairs || raw_pair_can_delete(
+                    conn,
+                    item.file_id,
+                    file_info.media_subtype.as_deref() == Some("raw_jpeg_pair"),
+                    protected_ids,
+                )?;
                 item.file = Some(file_info);
             }
             items.push(item);
@@ -1330,49 +1358,149 @@ fn raw_pair_has_exact_keep(conn: &Connection, file_id: i64) -> Result<bool, Stri
     stmt.query_row([file_id], |row| row.get(0)).map_err(|e| e.to_string())
 }
 
+fn bulk_duplicate_candidates(conn: &Connection) -> Result<Vec<crate::t_cmds::BatchDeleteFile>, String> {
+    // A group without a keeper cannot authorize bulk deletion.
+    let mut stmt = conn.prepare(
+        "SELECT a.id, f.path || '/' || a.name
+         FROM duplicate_group_items dgi
+         JOIN afiles a ON dgi.file_id = a.id
+         JOIN afolders f ON a.folder_id = f.id
+         WHERE dgi.is_keep = 0
+           AND EXISTS (SELECT 1 FROM duplicate_group_items k
+                       WHERE k.group_id = dgi.group_id AND k.is_keep = 1)",
+    ).map_err(|e| e.to_string())?;
+    let rows = stmt.query_map([], |row| Ok(crate::t_cmds::BatchDeleteFile {
+        file_id: row.get(0)?,
+        file_path: row.get(1)?,
+    })).map_err(|e| e.to_string())?;
+    rows.collect::<Result<Vec<_>, _>>().map_err(|e| e.to_string())
+}
+
+fn normalize_delete_candidates(files: &mut Vec<crate::t_cmds::BatchDeleteFile>) {
+    files.sort_unstable_by_key(|file| file.file_id);
+    files.dedup_by_key(|file| file.file_id);
+}
+
+pub(crate) fn filter_raw_pair_delete_candidates(
+    conn: &Connection,
+    files: Vec<crate::t_cmds::BatchDeleteFile>,
+    require_exact_keep: bool,
+) -> Result<Vec<crate::t_cmds::BatchDeleteFile>, String> {
+    let protected_ids = raw_pair_protected_delete_ids(conn)?;
+    let mut raw_primaries = HashSet::new();
+    if require_exact_keep {
+        let mut stmt = conn.prepare(
+            "SELECT a.id FROM json_each(?1) candidate
+             JOIN afiles a ON a.id = candidate.value
+             WHERE a.media_subtype = 'raw_jpeg_pair'",
+        ).map_err(|error| error.to_string())?;
+        for chunk in files.chunks(2048) {
+            let ids = chunk.iter().map(|file| file.file_id).collect::<Vec<_>>();
+            let ids = serde_json::to_string(&ids).map_err(|error| error.to_string())?;
+            let rows = stmt.query_map([ids], |row| row.get::<_, i64>(0))
+                .map_err(|error| error.to_string())?;
+            for row in rows {
+                raw_primaries.insert(row.map_err(|error| error.to_string())?);
+            }
+        }
+    }
+    let mut safe_files = Vec::with_capacity(files.len());
+    for file in files {
+        if raw_pair_can_delete(conn, file.file_id, raw_primaries.contains(&file.file_id), &protected_ids)? {
+            safe_files.push(file);
+        }
+    }
+    Ok(safe_files)
+}
+
+fn raw_pair_can_delete(
+    conn: &Connection,
+    file_id: i64,
+    require_exact_keep: bool,
+    protected_ids: &HashSet<i64>,
+) -> Result<bool, String> {
+    Ok(!protected_ids.contains(&file_id)
+        && (!require_exact_keep || raw_pair_has_exact_keep(conn, file_id)?))
+}
+
+struct DeleteCompanion {
+    id: i64,
+    path: String,
+    size: i64,
+    is_raw_pair: bool,
+}
+
+fn walk_delete_candidates(
+    conn: &Connection,
+    files: &[crate::t_cmds::BatchDeleteFile],
+    group_raw_pairs: bool,
+    mut visit: impl FnMut(&crate::t_cmds::BatchDeleteFile, i64, Option<DeleteCompanion>),
+) -> Result<i64, String> {
+    let mut stmt = conn.prepare(
+        "SELECT a.size, a.media_subtype, c.id, f.path || '/' || c.name, c.size
+         FROM json_each(?1) AS candidate
+         LEFT JOIN afiles a ON a.id = candidate.value
+         LEFT JOIN afiles c ON c.id = a.live_photo_video_id
+         LEFT JOIN afolders f ON f.id = c.folder_id
+         ORDER BY candidate.key",
+    ).map_err(|e| e.to_string())?;
+    let primary_ids: HashSet<_> = files.iter().map(|file| file.file_id).collect();
+    let mut seen_components = HashSet::new();
+    let mut bytes = 0i64;
+    for chunk in files.chunks(2048) {
+        let ids = chunk.iter().map(|file| file.file_id).collect::<Vec<_>>();
+        let ids = serde_json::to_string(&ids).map_err(|error| error.to_string())?;
+        let mut rows = stmt.query([ids]).map_err(|error| error.to_string())?;
+        for file in chunk {
+            let row = rows.next().map_err(|error| error.to_string())?
+                .ok_or("Missing dedup candidate metadata")?;
+            let size: i64 = row.get(0).map_err(|error| error.to_string())?;
+            let subtype: Option<String> = row.get(1).map_err(|error| error.to_string())?;
+            let id: Option<i64> = row.get(2).map_err(|error| error.to_string())?;
+            let path: Option<String> = row.get(3).map_err(|error| error.to_string())?;
+            let companion_size: Option<i64> = row.get(4).map_err(|error| error.to_string())?;
+            bytes = bytes.saturating_add(size);
+
+            let is_raw_pair = subtype.as_deref() == Some("raw_jpeg_pair");
+            let companion = match (id, path) {
+                (Some(id), Some(path)) if (!is_raw_pair || group_raw_pairs)
+                    && !primary_ids.contains(&id) && seen_components.insert(id) =>
+                {
+                    let size = companion_size.unwrap_or(0);
+                    bytes = bytes.saturating_add(size);
+                    Some(DeleteCompanion { id, path, size, is_raw_pair })
+                }
+                _ => None,
+            };
+            visit(file, size, companion);
+        }
+    }
+    Ok(bytes)
+}
+
 fn delete_preview(
     conn: &Connection,
     files: &[crate::t_cmds::BatchDeleteFile],
     group_raw_pairs: bool,
 ) -> Result<(DedupDeletePreview, HashMap<i64, Vec<(i64, String)>>), String> {
-    let mut stmt = conn.prepare(
-        "SELECT a.size, a.media_subtype, c.id, f.path || '/' || c.name, c.size
-         FROM afiles a
-         LEFT JOIN afiles c ON c.id = a.live_photo_video_id
-         LEFT JOIN afolders f ON f.id = c.folder_id
-         WHERE a.id = ?1",
-    ).map_err(|e| e.to_string())?;
     let mut components = HashMap::new();
-    let mut bytes = 0i64;
     let mut raw_companion_count = 0;
     let mut hasher = blake3::Hasher::new();
     hasher.update(&[u8::from(group_raw_pairs)]);
-    let primary_ids: HashSet<_> = files.iter().map(|file| file.file_id).collect();
-    let mut seen_components = HashSet::new();
-    for file in files {
-        let (size, subtype, id, path, companion_size) = stmt.query_row([file.file_id], |row| {
-            Ok((row.get::<_, i64>(0)?, row.get::<_, Option<String>>(1)?,
-                row.get::<_, Option<i64>>(2)?, row.get::<_, Option<String>>(3)?,
-                row.get::<_, Option<i64>>(4)?))
-        }).map_err(|e| e.to_string())?;
-        bytes = bytes.saturating_add(size);
+    let bytes = walk_delete_candidates(conn, files, group_raw_pairs, |file, size, companion| {
         hasher.update(&[0]);
         hasher.update(&file.file_id.to_le_bytes());
         hasher.update(&size.to_le_bytes());
         hasher.update(blake3::hash(file.file_path.as_bytes()).as_bytes());
-        let is_raw_pair = subtype.as_deref() == Some("raw_jpeg_pair");
-        if let (Some(id), Some(path)) = (id, path) {
-            if (!is_raw_pair || group_raw_pairs) && !primary_ids.contains(&id) && seen_components.insert(id) {
-                hasher.update(&[1]);
-                hasher.update(&id.to_le_bytes());
-                hasher.update(&companion_size.unwrap_or(0).to_le_bytes());
-                hasher.update(blake3::hash(path.as_bytes()).as_bytes());
-                bytes = bytes.saturating_add(companion_size.unwrap_or(0));
-                raw_companion_count += usize::from(is_raw_pair);
-                components.insert(file.file_id, vec![(id, path)]);
-            }
+        if let Some(companion) = companion {
+            hasher.update(&[1]);
+            hasher.update(&companion.id.to_le_bytes());
+            hasher.update(&companion.size.to_le_bytes());
+            hasher.update(blake3::hash(companion.path.as_bytes()).as_bytes());
+            raw_companion_count += usize::from(companion.is_raw_pair);
+            components.insert(file.file_id, vec![(companion.id, companion.path)]);
         }
-    }
+    })?;
     Ok((DedupDeletePreview {
         token: hasher.finalize().to_hex().to_string(),
         item_count: files.len(),
@@ -1381,7 +1509,7 @@ fn delete_preview(
     }, components))
 }
 
-fn similar_delete_candidates(
+pub(crate) fn similar_delete_candidates(
     conn: &Connection,
     group_id: i64,
     ids: &[i64],
@@ -1440,26 +1568,7 @@ pub fn delete(request: DedupDeleteRequest) -> Result<DedupDeleteResult, String> 
         similar_requested_count = Some(ids.iter().collect::<HashSet<_>>().len());
         files_to_delete = similar_delete_candidates(&tx, group_id, ids, request.group_raw_pairs)?;
     } else if request.delete_all {
-        // Guard against a corrupted group where every item has is_keep = 0:
-        // only delete non-keep items from groups that still have a keep item.
-        let mut stmt = tx
-            .prepare(
-                "SELECT a.id, f.path || '/' || a.name
-                 FROM duplicate_group_items dgi
-                 JOIN afiles a ON dgi.file_id = a.id
-                 JOIN afolders f ON a.folder_id = f.id
-                 WHERE dgi.is_keep = 0
-                   AND EXISTS (SELECT 1 FROM duplicate_group_items k
-                               WHERE k.group_id = dgi.group_id AND k.is_keep = 1)",
-            )
-            .map_err(|e| e.to_string())?;
-        let mut iter = stmt
-            .query_map([], |row| Ok((row.get(0)?, row.get(1)?)))
-            .map_err(|e| e.to_string())?;
-        for row in &mut iter {
-            let (file_id, file_path) = row.map_err(|e| e.to_string())?;
-            files_to_delete.push(crate::t_cmds::BatchDeleteFile { file_id, file_path });
-        }
+        files_to_delete = bulk_duplicate_candidates(&tx)?;
     } else if let Some(ids) = request.file_ids {
         let mut stmt = tx
             .prepare(
@@ -1520,20 +1629,12 @@ pub fn delete(request: DedupDeleteRequest) -> Result<DedupDeleteResult, String> 
         }
     }
 
-    files_to_delete.sort_unstable_by_key(|file| file.file_id);
-    files_to_delete.dedup_by_key(|file| file.file_id);
+    normalize_delete_candidates(&mut files_to_delete);
     let requested_count = similar_requested_count.unwrap_or(files_to_delete.len());
     if request.group_raw_pairs {
-        let protected_ids = raw_pair_protected_delete_ids(&tx)?;
-        let mut safe_files = Vec::new();
-        for file in files_to_delete {
-            if !protected_ids.contains(&file.file_id)
-                && (request.similar_group_id.is_some() || raw_pair_has_exact_keep(&tx, file.file_id)?)
-            {
-                safe_files.push(file);
-            }
-        }
-        files_to_delete = safe_files;
+        files_to_delete = filter_raw_pair_delete_candidates(
+            &tx, files_to_delete, request.similar_group_id.is_none(),
+        )?;
     }
     let skipped_count = requested_count - files_to_delete.len();
     let (preview, components) = delete_preview(&tx, &files_to_delete, request.group_raw_pairs)?;
@@ -1711,6 +1812,12 @@ mod keep_rules_tests {
         assert_eq!(disabled.bytes, 100);
         assert!(components.is_empty());
         assert_ne!(enabled.token, disabled.token);
+
+        let overview = get_overview_on(&conn, true).unwrap();
+        assert_eq!((overview.total_files, overview.total_reclaimable_bytes), (4, 360));
+        conn.execute("UPDATE file_hashes SET hash='changed' WHERE file_id=6", []).unwrap();
+        let overview = get_overview_on(&conn, true).unwrap();
+        assert_eq!((overview.total_files, overview.total_reclaimable_bytes), (3, 240));
     }
 
     #[test]
