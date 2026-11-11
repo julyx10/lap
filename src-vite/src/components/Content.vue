@@ -9076,6 +9076,8 @@ function rebuildSelectionAfterListMutation(selectedIds: Set<number>) {
   let remainingSize = 0;
   selectedFileIds.clear();
   for (const file of fileList.value) {
+    // Rows that are not loaded yet are null slots.
+    if (!file) continue;
     const selected = isRealFileItem(file) && selectedIds.has(Number(file.id));
     file.isSelected = selected;
     if (selected) {
