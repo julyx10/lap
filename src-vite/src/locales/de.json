@@ -711,7 +711,8 @@
     "album_nested": "Dieser Ordner überschneidet sich mit einem anderen Album"
   },
   "statusbar": {
-    "files_summary": "{count} Dateien ({size})"
+    "files_summary": "{count} Dateien ({size})",
+    "items_summary": "{count} Elemente ({size})"
   },
   "menu": {
     "select": {

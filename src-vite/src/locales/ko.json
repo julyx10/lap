@@ -711,7 +711,8 @@
     "album_nested": "이 폴더는 다른 앨범과 겹칩니다"
   },
   "statusbar": {
-    "files_summary": "{count} 파일 ({size})"
+    "files_summary": "{count} 파일 ({size})",
+    "items_summary": "{count}개 항목 ({size})"
   },
   "menu": {
     "select": {

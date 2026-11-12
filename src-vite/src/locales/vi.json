@@ -711,7 +711,8 @@
     "album_nested": "Thư mục này chồng lấn với một album khác"
   },
   "statusbar": {
-    "files_summary": "{count} tệp ({size})"
+    "files_summary": "{count} tệp ({size})",
+    "items_summary": "{count} mục ({size})"
   },
   "menu": {
     "select": {

@@ -358,6 +358,7 @@ fn get_files_by_sizes(conn: &Connection) -> Result<Vec<AFile>, String> {
                 name: row.get(2)?,
                 name_pinyin: row.get(3)?,
                 size: row.get(4)?,
+                companion_size: 0,
                 file_type: row.get(5)?,
                 format_label: row.get(6)?,
                 created_at: row.get(7)?,
@@ -692,56 +693,52 @@ fn rebuild_duplicate_groups(
              JOIN afiles a ON a.id = member.file_id WHERE {pair_sql}
          )",
     ), []).map_err(|error| error.to_string())?;
-    if group_raw_pairs {
-        split_raw_pair_groups(&tx)?;
-    }
+    let pair_types = if group_raw_pairs { "'live_photo', 'raw_jpeg_pair'" } else { "'live_photo'" };
+    split_pair_groups(&tx, pair_types)?;
     if let Some(rules) = keep_rules {
         apply_keep_rules(&tx, None, rules, group_raw_pairs)?;
     }
-    if group_raw_pairs {
-        retain_jpeg_group_keeper(&tx)?;
-    }
+    retain_companion_group_keeper(&tx, pair_types)?;
     tx.commit().map_err(|e| e.to_string())?;
     Ok(())
 }
 
-/// RAW matches with different (or unverified) companion content are separate
-/// sets. A standalone RAW can be removed through any of those sets.
-fn split_raw_pair_groups(conn: &Connection) -> Result<(), String> {
-    let mut stmt = conn.prepare(
-        "SELECT i.group_id, i.file_id, companion.id, h.hash
+/// Split primary-file matches by the type and verified content of their companions.
+fn split_pair_groups(conn: &Connection, pair_types: &str) -> Result<(), String> {
+    let mut stmt = conn.prepare(&format!(
+        "SELECT i.group_id, i.file_id, companion.id, h.hash, a.media_subtype
          FROM duplicate_group_items i
          JOIN afiles a ON a.id = i.file_id
-         LEFT JOIN afiles companion ON a.media_subtype = 'raw_jpeg_pair'
+         LEFT JOIN afiles companion ON a.media_subtype IN ({pair_types})
              AND companion.id = a.live_photo_video_id
          LEFT JOIN file_hashes h ON h.file_id = companion.id
              AND h.file_size = companion.size AND h.mtime = COALESCE(companion.modified_at, 0)
          WHERE EXISTS (
              SELECT 1 FROM duplicate_group_items p JOIN afiles raw ON raw.id = p.file_id
-             WHERE p.group_id = i.group_id AND raw.media_subtype = 'raw_jpeg_pair'
+             WHERE p.group_id = i.group_id AND raw.media_subtype IN ({pair_types})
          )
          ORDER BY i.group_id, i.score DESC",
-    ).map_err(|e| e.to_string())?;
+    )).map_err(|e| e.to_string())?;
     let mut groups = std::collections::BTreeMap::<i64, Vec<_>>::new();
     let rows = stmt.query_map([], |row| Ok((
         row.get::<_, i64>(0)?, row.get::<_, i64>(1)?,
-        row.get::<_, Option<i64>>(2)?, row.get::<_, Option<String>>(3)?,
+        row.get::<_, Option<i64>>(2)?, row.get::<_, Option<String>>(3)?, row.get::<_, Option<String>>(4)?,
     ))).map_err(|e| e.to_string())?;
     for row in rows {
-        let (group, file, companion, hash) = row.map_err(|e| e.to_string())?;
-        groups.entry(group).or_default().push((file, companion, hash));
+        let (group, file, companion, hash, subtype) = row.map_err(|e| e.to_string())?;
+        groups.entry(group).or_default().push((file, companion, hash, subtype));
     }
     for (group, members) in groups {
         let mut partitions = Vec::<Vec<i64>>::new();
         let mut by_hash = HashMap::new();
         let mut standalone = Vec::new();
-        for (file, companion, hash) in members {
+        for (file, companion, hash, subtype) in members {
             if companion.is_none() {
                 standalone.push(file);
                 continue;
             }
             let index = match hash {
-                Some(hash) => *by_hash.entry(hash).or_insert(partitions.len()),
+                Some(hash) => *by_hash.entry((subtype, hash)).or_insert(partitions.len()),
                 None => partitions.len(),
             };
             if index == partitions.len() {
@@ -775,28 +772,27 @@ fn split_raw_pair_groups(conn: &Connection) -> Result<(), String> {
     Ok(())
 }
 
-/// A JPEG match can protect a full pair, but never authorizes its removal.
-/// Keep one surviving companion in each JPEG group and show standalone copies.
-fn retain_jpeg_group_keeper(conn: &Connection) -> Result<(), String> {
-    conn.execute_batch(
-        "DROP TABLE IF EXISTS temp_dedup_jpeg_keepers;
-         CREATE TEMP TABLE temp_dedup_jpeg_keepers AS
+/// Keep one surviving companion as a reference for independently removable copies.
+fn retain_companion_group_keeper(conn: &Connection, pair_types: &str) -> Result<(), String> {
+    conn.execute_batch(&format!(
+        "DROP TABLE IF EXISTS temp_dedup_companion_keepers;
+         CREATE TEMP TABLE temp_dedup_companion_keepers AS
          SELECT group_id, file_id FROM (
              SELECT i.group_id, i.file_id,
                  ROW_NUMBER() OVER (PARTITION BY i.group_id ORDER BY i.is_keep DESC, i.score DESC, i.file_id) AS rank
              FROM duplicate_group_items i
-             JOIN afiles raw ON raw.live_photo_video_id = i.file_id AND raw.media_subtype = 'raw_jpeg_pair'
+             JOIN afiles raw ON raw.live_photo_video_id = i.file_id AND raw.media_subtype IN ({pair_types})
              WHERE NOT EXISTS (SELECT 1 FROM duplicate_group_items r WHERE r.file_id = raw.id AND r.is_keep = 0)
          ) WHERE rank = 1;
          DELETE FROM duplicate_group_items AS i
          WHERE EXISTS (SELECT 1 FROM afiles raw WHERE raw.live_photo_video_id = i.file_id
-                       AND raw.media_subtype = 'raw_jpeg_pair')
-           AND NOT EXISTS (SELECT 1 FROM temp_dedup_jpeg_keepers k
+                       AND raw.media_subtype IN ({pair_types}))
+           AND NOT EXISTS (SELECT 1 FROM temp_dedup_companion_keepers k
                            WHERE k.group_id = i.group_id AND k.file_id = i.file_id);
          UPDATE duplicate_group_items AS i
-         SET is_keep = EXISTS (SELECT 1 FROM temp_dedup_jpeg_keepers k
+         SET is_keep = EXISTS (SELECT 1 FROM temp_dedup_companion_keepers k
                                WHERE k.group_id = i.group_id AND k.file_id = i.file_id)
-         WHERE EXISTS (SELECT 1 FROM temp_dedup_jpeg_keepers k WHERE k.group_id = i.group_id);
+         WHERE EXISTS (SELECT 1 FROM temp_dedup_companion_keepers k WHERE k.group_id = i.group_id);
          UPDATE duplicate_group_items
          SET is_keep = 1 WHERE (group_id, file_id) IN (
              SELECT group_id, MIN(file_id) FROM duplicate_group_items
@@ -806,8 +802,8 @@ fn retain_jpeg_group_keeper(conn: &Connection) -> Result<(), String> {
              SELECT group_id FROM duplicate_group_items GROUP BY group_id HAVING COUNT(*) = 1
          );
          DELETE FROM duplicate_groups WHERE id NOT IN (SELECT group_id FROM duplicate_group_items);
-         DROP TABLE temp_dedup_jpeg_keepers;",
-    ).map_err(|e| e.to_string())
+         DROP TABLE temp_dedup_companion_keepers;",
+    )).map_err(|e| e.to_string())
 }
 
 fn compare_best_quality(a: &KeepCandidate, b: &KeepCandidate) -> std::cmp::Ordering {
@@ -843,6 +839,7 @@ pub struct DedupGroupItem {
     pub score: f64,
     pub can_set_keep: bool,
     pub can_delete: bool,
+    pub is_live_photo_companion: bool,
     pub file: Option<AFile>,
 }
 
@@ -1014,8 +1011,10 @@ fn get_group_items(
     let keep_locked = pair_keep_locked(conn, group_id, group_raw_pairs)?;
     let mut stmt = conn
         .prepare(
-            "SELECT group_id, file_id, is_keep, is_selected, score
-         FROM duplicate_group_items
+            "SELECT group_id, file_id, is_keep, is_selected, score,
+                    EXISTS (SELECT 1 FROM afiles still WHERE still.media_subtype = 'live_photo'
+                            AND still.live_photo_video_id = item.file_id)
+         FROM duplicate_group_items item
          WHERE group_id = ?1
          ORDER BY is_keep DESC, score DESC",
         )
@@ -1031,6 +1030,7 @@ fn get_group_items(
                 score: row.get(4)?,
                 can_set_keep: !keep_locked,
                 can_delete: false,
+                is_live_photo_companion: row.get(5)?,
                 file: None, // Will populate shortly
             })
         })
@@ -1777,6 +1777,32 @@ mod keep_rules_tests {
         assert_eq!(files.len(), 1);
         assert_eq!(files[0].file_id, 3);
         assert!(similar_delete_candidates(&conn, 30, &[3], true).unwrap().is_empty());
+    }
+
+    #[test]
+    fn live_photo_duplicate_sets_require_matching_movies_even_without_raw_grouping() {
+        let conn = Connection::open_in_memory().unwrap();
+        conn.execute_batch(
+            "CREATE TABLE afiles(id INTEGER PRIMARY KEY, media_subtype TEXT,
+                                  live_photo_video_id INTEGER, size INTEGER, modified_at INTEGER);
+             INSERT INTO afiles VALUES
+                (1,'live_photo',2,100,1),(2,NULL,NULL,200,1),
+                (3,'live_photo',4,100,1),(4,NULL,NULL,200,1),
+                (5,'live_photo',6,100,1),(6,NULL,NULL,200,1);
+             CREATE TABLE duplicate_groups(id INTEGER PRIMARY KEY, hash TEXT, file_size INTEGER,
+                                          file_count INTEGER, total_size INTEGER, updated_at INTEGER);
+             INSERT INTO duplicate_groups VALUES (1,'still',100,3,300,0),(2,'movie',200,2,400,0);
+             CREATE TABLE duplicate_group_items(group_id INTEGER, file_id INTEGER, is_keep INTEGER, score REAL);
+             INSERT INTO duplicate_group_items VALUES (1,1,1,3),(1,3,0,2),(1,5,0,1),(2,2,1,1),(2,4,0,0);
+             CREATE TABLE file_hashes(file_id INTEGER, hash TEXT, file_size INTEGER, mtime INTEGER);
+             INSERT INTO file_hashes VALUES (2,'movie',200,1),(4,'movie',200,1),(6,'different',200,1);",
+        ).unwrap();
+        split_pair_groups(&conn, "'live_photo'").unwrap();
+        retain_companion_group_keeper(&conn, "'live_photo'").unwrap();
+        let mut stmt = conn.prepare("SELECT file_id FROM duplicate_group_items ORDER BY file_id").unwrap();
+        let files = stmt.query_map([], |row| row.get::<_, i64>(0)).unwrap()
+            .collect::<Result<Vec<_>, _>>().unwrap();
+        assert_eq!(files, [1, 3]);
     }
 
     #[test]

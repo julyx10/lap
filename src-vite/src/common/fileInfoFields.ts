@@ -5,7 +5,7 @@ const fields = (section: string, keys: string[], details = false) => keys.map(ke
 }));
 export const fileInfoFieldGroups = [
   { key: 'file', label: 'file_info.file', fields: [
-    ...fields('file', ['name', 'folder', 'album_name', 'size', 'dimension', 'duration']),
+    ...fields('file', ['name', 'folder', 'album_name', 'size', 'dimension']),
     ...fields('file', ['iccProfile', 'colorSpace', 'bitDepth'], true),
     ...fields('file', ['created_at', 'modified_at', 'last_scan_time']),
   ] },
@@ -24,7 +24,7 @@ export const fileInfoFieldGroups = [
 ];
 export const allFileInfoFields = fileInfoFieldGroups.flatMap(group => group.fields.map(field => field.key));
 export const defaultFileInfoFields = [
-  'file.name', 'file.folder', 'file.size', 'file.dimension', 'file.duration',
+  'file.name', 'file.folder', 'file.size', 'file.dimension',
   'capture.taken_at', 'capture.camera', 'capture.lens', 'capture.capture_settings',
   'location.geo_location', 'location.gps', 'location.map',
 ];

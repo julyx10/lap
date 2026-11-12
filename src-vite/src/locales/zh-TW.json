@@ -711,7 +711,8 @@
     "album_nested": "此資料夾與另一個相簿重疊"
   },
   "statusbar": {
-    "files_summary": "{count} 個檔案（{size}）"
+    "files_summary": "{count} 個檔案（{size}）",
+    "items_summary": "{count} 個項目（{size}）"
   },
   "menu": {
     "select": {

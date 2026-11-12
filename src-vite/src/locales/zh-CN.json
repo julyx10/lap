@@ -711,7 +711,8 @@
     "album_nested": "该文件夹与其他相册重叠"
   },
   "statusbar": {
-    "files_summary": "{count} 个文件 ({size})"
+    "files_summary": "{count} 个文件 ({size})",
+    "items_summary": "{count} 项 ({size})"
   },
   "menu": {
     "select": {

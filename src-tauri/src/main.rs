@@ -329,6 +329,7 @@ async fn main() {
             t_cmds::move_file_outside_library,
             t_cmds::copy_file,
             t_cmds::import_file,
+            t_cmds::import_files,
             t_cmds::import_and_organize,
             t_cmds::cancel_import_and_organize,
             t_cmds::import_url,

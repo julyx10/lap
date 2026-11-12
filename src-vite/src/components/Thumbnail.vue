@@ -240,7 +240,7 @@ import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
 import { config } from '@/common/config';
 import { THUMBNAIL_BADGE } from '@/common/constants';
-import { isMac, shortenFilename, formatFileSize, formatDimensionText, formatDuration, formatTimestamp, formatCaptureSettings, formatCaptureSettingValue, formatCameraInfo, getAssetSrc, getThumbUrl, getFileExtension, formatRawPairBadge } from '@/common/utils';
+import { isMac, shortenFilename, formatFileSize, getMediaItemSize, formatDimensionText, formatVideoDurationBadge, formatTimestamp, formatCaptureSettings, formatCaptureSettingValue, formatCameraInfo, getAssetSrc, getThumbUrl, getFileExtension, formatRawPairBadge } from '@/common/utils';
 import { isWebViewVideoPlaybackDisabled, getGStreamerAvailability } from '@/common/video';
 import { claimHoverPreview, releaseHoverPreview } from '@/common/hoverPreview';
 import ContextMenu from '@/components/ContextMenu.vue';
@@ -631,7 +631,7 @@ const getGridLabelText = (file: any, option: number) => {
   switch (option) {
     case 0: return '';
     case 1: return shortenFilename(file.name) || ' ';
-    case 2: return formatFileSize(file.size) || ' ';
+    case 2: return formatFileSize(getMediaItemSize(file)) || ' ';
     case 3: return formatDimensionText(file.width, file.height) || ' ';
     case 4: return formatTimestamp(file.taken_date, 'date_time') || ' ';
     case 5: return file.geo_name || ' ';
@@ -668,15 +668,7 @@ const normalizedRotate = computed(() => {
   return rotate < 0 ? rotate + 360 : rotate;
 });
 
-const videoDurationBadge = computed(() => {
-  if (props.file?.file_type !== 2) return '';
-
-  const duration = Number(props.file?.duration);
-  if (!Number.isFinite(duration) || duration <= 0) return '';
-
-  const formattedDuration = formatDuration(duration);
-  return formattedDuration;
-});
+const videoDurationBadge = computed(() => formatVideoDurationBadge(props.file));
 
 const thumbnailBadge = computed(() => {
   const summary = Number(config.settings.grid.thumbnailBadge || 0);

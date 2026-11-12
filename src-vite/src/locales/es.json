@@ -711,7 +711,8 @@
     "album_nested": "Esta carpeta se solapa con otro álbum"
   },
   "statusbar": {
-    "files_summary": "{count} archivos ({size})"
+    "files_summary": "{count} archivos ({size})",
+    "items_summary": "{count} elementos ({size})"
   },
   "menu": {
     "select": {

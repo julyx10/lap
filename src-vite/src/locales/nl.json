@@ -711,7 +711,8 @@
     "album_nested": "Deze map overlapt met een ander album"
   },
   "statusbar": {
-    "files_summary": "{count} bestanden ({size})"
+    "files_summary": "{count} bestanden ({size})",
+    "items_summary": "{count} items ({size})"
   },
   "menu": {
     "select": {

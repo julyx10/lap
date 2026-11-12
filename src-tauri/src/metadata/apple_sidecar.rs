@@ -682,6 +682,22 @@ fn build_aae_rename_plan(
 // Content identifier helpers (Apple Live Photo pairing)
 // ---------------------------------------------------------------------------
 
+/// Rank a MOV against an image stem: base name first, then the `_HEVC` variant.
+pub(crate) fn live_photo_video_stem_rank(image: &Path, video: &Path) -> Option<u8> {
+    if !video.extension()?.eq_ignore_ascii_case("mov") {
+        return None;
+    }
+    let image_stem = image.file_stem()?.to_str()?.to_ascii_lowercase();
+    let video_stem = video.file_stem()?.to_str()?.to_ascii_lowercase();
+    if image_stem == video_stem {
+        Some(0)
+    } else if video_stem.strip_suffix("_hevc") == Some(image_stem.as_str()) {
+        Some(1)
+    } else {
+        None
+    }
+}
+
 /// Read the XMP area of a filename-matched image candidate. Apple Photos can
 /// place HEIF XMP metadata beyond the small header used for regular EXIF work.
 pub(crate) fn scan_apple_content_identifiers(file_path: &str) -> Vec<String> {

@@ -711,7 +711,8 @@
     "album_nested": "Tato složka se překrývá s jiným albem"
   },
   "statusbar": {
-    "files_summary": "{count} souborů ({size})"
+    "files_summary": "{count} souborů ({size})",
+    "items_summary": "{count} položek ({size})"
   },
   "menu": {
     "select": {

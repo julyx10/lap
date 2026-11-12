@@ -135,6 +135,7 @@ test('select all preserves the existing panel for both flat and grouped lists', 
       const f = {...fixture(options), groupedModeActive:ref(grouped), selectedFileIds:new Set(),
         getCurrentQueryFileIds:async()=>[1,2,3], groupMetaMap:new Map(), selectedCount:ref(0), selectedSize:ref(0),
         totalFileCount:ref(3), totalFileSize:ref(0), syncSelectionVersions(){}, isPendingFileItem:()=>false,
+        getMediaItemSize: file => Number(file?.size ?? 0) + Number(file?.companion_size ?? 0),
         recomputeLoadedGroupSelectedCounts(){}};
       const select = new Function(...Object.keys(f), `${code}; return selectAllInCurrentList;`)(...Object.values(f));
       await select();

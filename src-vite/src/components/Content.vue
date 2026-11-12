@@ -159,7 +159,7 @@
           <IconSeparator class="t-icon-size text-base-content/15" />
           <!-- toggle select mode -->
           <TButton
-            :icon="IconSelection"
+            :icon="IconMultiSelect"
             :tooltip="$t(selectionPanelOpen ? 'toolbar.filter.exit_select_mode' : 'toolbar.filter.select_mode')"
             :selected="selectionPanelOpen"
             :disabled="isScanStreamingMode || isMapVisible"
@@ -794,7 +794,7 @@ import { getAlbum, getAllAlbums, recountAlbum, getQueryCountAndSum, getQueryTime
          copyImages, renameFile, moveFile, moveFileOutsideLibrary, copyFile, withFileTransferBatch, deleteFile, deleteFilePermanently, batchDeleteFiles, editFileComment, getFileThumb, getFileThumbs, getFileInfo,
          setFileRotate, setFileFavorite, setFileRating, setFileCullingFlag, batchUpdateFileMetadata, getTagsForFile, searchSimilarImages, generateEmbedding,
          revealPath, getTagName, indexAlbum, listenIndexProgress, listenIndexFinished, setAlbumCover, setDesktopWallpaper,
-         updateFileInfo, refreshFileInfo, changeVideoThumbnail, getSupportedFormatExtensions, importFile, importUrl, importFileBytes, getDragPayload, importClipboard, addFileToDb, checkFileExists, checkFileAccessibility, cancelIndexing as cancelIndexingApi, selectFolder, getFacesForFile, listenFaceIndexProgress,
+         updateFileInfo, refreshFileInfo, changeVideoThumbnail, getSupportedFormatExtensions, importFiles, importUrl, importFileBytes, getDragPayload, importClipboard, addFileToDb, checkFileExists, checkFileAccessibility, cancelIndexing as cancelIndexingApi, selectFolder, getFacesForFile, listenFaceIndexProgress,
          openFilesWithApp, getAppConfig, getIndexRecoveryInfo, clearIndexRecoveryInfo, setLastSelectedItemIndex,
          dedupDelete, getQueryFilePosition, getFolderSearchExcluded,
          listCollections, createCollection, addFilesToCollection, removeFilesFromCollection, getFileCollections, getCollectionCountAndSum, getCollectionFiles, getCollectionGroupedQueryRows, getCollectionGroupFileIds, getCollectionQueryFileIds, fetchFolder, isDirectoryAccessible, checkAlbumAccessibility, addTagToFile, saveXmpMetadata } from '@/common/api';
@@ -818,7 +818,7 @@ import { isWin, isMac, isLinux, separator,
          getCachedThumbnailDataUrl,
          clearCachedThumbnailDataUrl,
          extractFileName, combineFileName, getFolderPath, getFolderName, getSelectOptions, 
-         shortenFilename, getSlideShowInterval, copyFilePaths, getClipboardItemPaths, getFullPath, normalizePathForCompare, isWithinRootPath, shouldUseBackendPreview } from '@/common/utils';
+         getMediaItemSize, shortenFilename, getSlideShowInterval, copyFilePaths, getClipboardItemPaths, getFullPath, normalizePathForCompare, isWithinRootPath, shouldUseBackendPreview } from '@/common/utils';
 
 import DropDownSelect from '@/components/DropDownSelect.vue';
 import ProgressBar from '@/components/ProgressBar.vue';
@@ -868,7 +868,7 @@ import {
   IconJustified,
   IconFilmstrip,
   IconMapDefault,
-  IconSelection,
+  IconMultiSelect,
   IconClose,
   IconInformation,
   IconSearch,
@@ -1379,7 +1379,7 @@ function captureSelectionForFileListRefresh() {
   for (const file of fileList.value) {
     const fileId = Number(file?.id || 0);
     if (fileId > 0 && selectedFileIds.has(fileId)) {
-      selectedSizes.set(fileId, Number(file?.size || 0));
+      selectedSizes.set(fileId, getMediaItemSize(file));
     }
   }
   const activeFileId = Number(fileList.value[selectedItemIndex.value]?.id || 0);
@@ -1860,7 +1860,7 @@ function syncSelectionVersions() {
 function applySelectionDelta(file: any, delta: number) {
   if (!isRealFileItem(file) || delta === 0) return;
   selectedCount.value = Math.max(0, selectedCount.value + delta);
-  selectedSize.value = Math.max(0, selectedSize.value + delta * Number(file.size || 0));
+  selectedSize.value = Math.max(0, selectedSize.value + delta * getMediaItemSize(file));
   updateGroupSelectedCountForFile(file, delta);
   syncSelectionVersions();
 }
@@ -1876,7 +1876,7 @@ function updateGroupSelectedCountForFile(file: any, delta: number) {
   updateGroupSelectedCount(groupId, Math.min(maxCount, Math.max(0, current + delta)));
 
   const currentSize = Number(groupSelectedSizeMap.value[groupId] || 0);
-  const fileSize = Number(file?.size || 0);
+  const fileSize = getMediaItemSize(file);
   const maxSize = Number(meta?.size || Number.MAX_SAFE_INTEGER);
   updateGroupSelectedSize(groupId, Math.min(maxSize, Math.max(0, currentSize + delta * fileSize)));
 }
@@ -1905,7 +1905,7 @@ function recomputeLoadedGroupSelectedCounts() {
       const maxCount = Number(groupMetaMap.get(groupId)?.count || Number.MAX_SAFE_INTEGER);
       next[groupId] = Math.min(maxCount, Number(next[groupId] || 0) + 1);
       const maxSize = Number(groupMetaMap.get(groupId)?.size || Number.MAX_SAFE_INTEGER);
-      nextSize[groupId] = Math.min(maxSize, Number(nextSize[groupId] || 0) + Number(file.size || 0));
+      nextSize[groupId] = Math.min(maxSize, Number(nextSize[groupId] || 0) + getMediaItemSize(file));
     }
   }
 
@@ -2440,7 +2440,7 @@ async function removeFileFromCurrentCollection(index: number) {
   } else {
     fileList.value.splice(index, 1);
     totalFileCount.value = fileList.value.length;
-    totalFileSize.value -= file.size || 0;
+    totalFileSize.value -= getMediaItemSize(file);
     if (selectedItemIndex.value >= fileList.value.length) {
       selectedItemIndex.value = fileList.value.length - 1;
     }
@@ -2461,10 +2461,10 @@ async function removeSelectedFromCollection() {
     const removedIdSet = new Set(fileIds);
     fileList.value = fileList.value.filter(f => !removedIdSet.has(f.id));
     totalFileCount.value = fileList.value.length;
-    totalFileSize.value = fileList.value.reduce((total, file) => total + file.size, 0);
+    totalFileSize.value = fileList.value.reduce((total, file) => total + getMediaItemSize(file), 0);
     selectedItemIndex.value = fileList.value.length > 0 ? Math.min(selectedItemIndex.value, fileList.value.length - 1) : -1;
     selectedCount.value = Math.max(0, selectedCount.value - fileIds.length);
-    selectedSize.value = Math.max(0, selectedSize.value - selectedItems.reduce((total, item) => total + Number(item.size || 0), 0));
+    selectedSize.value = Math.max(0, selectedSize.value - selectedItems.reduce((total, item) => total + getMediaItemSize(item), 0));
   }
   void tauriEmit('collection-files-dropped', { collectionId: currentCollectionId.value });
   toast.success(t('collection.removed_toast', { count: fileIds.length }));
@@ -2844,6 +2844,18 @@ async function resolveCurrentAlbumImportDestination() {
   return resolveAlbumImportDestination(albumId, folderPath);
 }
 
+async function importDroppedFiles(filePaths: string[], folderId: number, folderPath: string) {
+  const paths = [...new Set(filePaths)];
+  if (!paths.length) return 0;
+  try {
+    const errors = await importFiles(paths, folderId, folderPath, libConfig._libraryId);
+    return Math.max(0, paths.length - errors.length);
+  } catch (error) {
+    console.error('Failed to import dropped files:', error);
+    return 0;
+  }
+}
+
 async function refreshImportedFiles(albumId: number, folderPath: string) {
   await refreshFolderSidebarCounts([folderPath]);
   await refreshAffectedAlbums([albumId]);
@@ -2889,19 +2901,14 @@ async function importFilesToFolder(target: { albumId: number; folderPath: string
     fileImportErrors.value = [];
     fileImportVisible.value = false;
     progressTimer = setTimeout(() => { fileImportVisible.value = true; }, 700);
-    for (const path of paths) {
-      if (!isCurrent()) return;
-      try {
-        const file = await importFile(path, destination.folderId, destination.folderPath, true, libraryId);
-        if (!file) throw new Error(t('import_files.copy_failed'));
-        fileImportSuccess.value++;
-      } catch (error) {
-        fileImportErrors.value.push(`${path}\n${String(error)}`);
-      }
-      fileImportProcessed.value++;
-    }
+    const errors = await importFiles(paths, destination.folderId, destination.folderPath, libraryId, (processed: number) => {
+      if (isCurrent()) fileImportProcessed.value = processed;
+    });
     clearTimeout(progressTimer);
     if (!isCurrent()) return;
+    fileImportProcessed.value = paths.length;
+    fileImportErrors.value = errors.map(([path, error]: [string, string]) => `${path}\n${error}`);
+    fileImportSuccess.value = paths.length - errors.length;
     if (fileImportSuccess.value > 0) {
       await refreshFolderSidebarCounts([destination.folderPath]);
       if (!isCurrent()) return;
@@ -2919,7 +2926,10 @@ async function importFilesToFolder(target: { albumId: number; folderPath: string
       toast.success(t('msgbox.drop_import.success', { count: fileImportSuccess.value }));
     }
   } catch (error) {
-    if (isCurrent()) toast.error(String(error));
+    if (isCurrent()) {
+      fileImportVisible.value = false;
+      toast.error(String(error));
+    }
   } finally {
     clearTimeout(progressTimer);
     isImportingFiles.value = false;
@@ -3522,7 +3532,7 @@ async function reconcileDraggedFileMovesInner(
   const selectedIds = new Set(Array.from(selectedFileIds).filter(id => availableIds.has(id)));
   const remainingSelectedSize = Math.max(0, selectedSize.value - dragFiles.reduce(
     (size, file) => size + (removedIds.has(Number(file.id)) && selectedFileIds.has(Number(file.id))
-      ? Number(file.size || 0) : 0), 0,
+      ? getMediaItemSize(file) : 0), 0,
   ));
   const retainedFiles = new Map<number, any>();
   for (const file of fileList.value) {
@@ -3562,7 +3572,7 @@ async function reconcileDraggedFileMovesInner(
     fileList.value = orderedIds.map(id => retainedFiles.get(Number(id)) ?? null);
     totalFileCount.value = orderedIds.length;
     totalFileSize.value = currentTotals ? Number(currentTotals[1] || 0) : Math.max(0, totalFileSize.value - dragFiles.reduce(
-      (size, file) => size + (removedIds.has(Number(file.id)) ? Number(file.size || 0) : 0), 0,
+      (size, file) => size + (removedIds.has(Number(file.id)) ? getMediaItemSize(file) : 0), 0,
     ));
     const position = orderedIds.findIndex(id => Number(id) === focusFileId);
     if (position >= 0) focusIndex = position;
@@ -6069,15 +6079,10 @@ onMounted( async() => {
     const nativeDragPayload = await nativeDragPayloadPromise;
     const { albumId, folderId, folderPath } = destination;
 
-    let imported = 0;
-    const filePaths = [
+    let imported = await importDroppedFiles([
       ...getExternalFileDropPaths(droppedUris),
       ...(nativeDragPayload?.filePaths || []),
-    ];
-    for (const filePath of [...new Set(filePaths)]) {
-      const file = await importFile(filePath, folderId, folderPath);
-      if (file) imported++;
-    }
+    ], folderId, folderPath);
     if (imported > 0) {
       await refreshImportedFiles(albumId, folderPath);
       toast.success(t('msgbox.drop_import.success', { count: imported }));
@@ -6361,7 +6366,7 @@ onMounted( async() => {
       await Promise.all(loadedFiles.map(async (file: any) => {
         const refreshed = await getFileInfo(Number(file.id));
         if (refreshed && eventLibrary === libConfig._libraryId && fileList.value.includes(file)) {
-          sizeDelta += Number(refreshed.size || 0) - Number(file.size || 0);
+          sizeDelta += getMediaItemSize(refreshed) - getMediaItemSize(file);
           Object.assign(file, refreshed);
         }
       }));
@@ -6435,7 +6440,7 @@ onMounted( async() => {
     if (!removedAny) return;
 
     totalFileCount.value = fileList.value.length;
-    totalFileSize.value = fileList.value.reduce((total, file) => total + file.size, 0);
+    totalFileSize.value = fileList.value.reduce((total, file) => total + getMediaItemSize(file), 0);
     if (fileList.value.length === 0) {
       selectedItemIndex.value = -1;
     } else {
@@ -6951,7 +6956,7 @@ async function getSearchSidebarCountAndSum() {
   for (const file of visualResult) {
     if (passesAlbumFilters(file)) files.set(Number(file.id), file);
   }
-  return [files.size, [...files.values()].reduce((sum, file) => sum + Number(file.size || 0), 0)];
+  return [files.size, [...files.values()].reduce((sum, file) => sum + getMediaItemSize(file), 0)];
 }
 
 async function refreshRequestedSidebarCount() {
@@ -6972,7 +6977,7 @@ const getCurrentQueryCountAndSum = () => {
   if (currentQuerySource.value === 'search') {
     return Promise.resolve([
       currentSearchFileIds.value.length,
-      fileList.value.reduce((total, file) => total + Number(file?.size || 0), 0),
+      fileList.value.reduce((total, file) => total + getMediaItemSize(file), 0),
     ]);
   }
   if (currentQuerySource.value === 'collection' && currentCollectionId.value) {
@@ -7143,7 +7148,7 @@ async function fetchDataRange(start: number, end: number, reverse = false) {
               // In scan streaming mode, total size starts at 0 and should grow
               // as placeholders are upgraded to real files.
               if (isScanStreamingMode.value) {
-                totalFileSize.value += Number(newFiles[j]?.size || 0);
+                totalFileSize.value += getMediaItemSize(newFiles[j]);
               }
               filesToFetch.push(fileList.value[chunkStart + j]);
 
@@ -7794,7 +7799,7 @@ async function getMapSearchClusterFileList(fileIds: number[], gpsParams: Record<
       .map((file: any) => Number(file.id))
       .filter((id: number) => Number.isFinite(id) && id > 0);
     totalFileCount.value = inCluster.length;
-    totalFileSize.value = inCluster.reduce((total: number, file: any) => total + Number(file.size || 0), 0);
+    totalFileSize.value = inCluster.reduce((total: number, file: any) => total + getMediaItemSize(file), 0);
     timelineData.value = [];
     markDedupSourceUpdated(requestId);
     restoreInitialSelectionIfNeeded();
@@ -8043,7 +8048,7 @@ async function getImageSearchFileList(
         .map(file => Number(file.id))
         .filter(id => Number.isFinite(id) && id > 0);
       totalFileCount.value = fileList.value.length;
-      totalFileSize.value = fileList.value.reduce((total, file) => total + file.size, 0);
+      totalFileSize.value = fileList.value.reduce((total, file) => total + getMediaItemSize(file), 0);
       markDedupSourceUpdated(requestId);
       restoreInitialSelectionIfNeeded();
       openImageViewer(0, false, true);
@@ -8160,7 +8165,7 @@ async function getUnifiedSearchFileList(searchText: string, requestId: number) {
       .map(file => Number(file.id))
       .filter(id => Number.isFinite(id) && id > 0);
     totalFileCount.value = fileList.value.length;
-    totalFileSize.value = fileList.value.reduce((total, file) => total + Number(file.size || 0), 0);
+    totalFileSize.value = fileList.value.reduce((total, file) => total + getMediaItemSize(file), 0);
 
     const groups = isFilmstripView.value ? [] : [
       textMatches.length > 0
@@ -8186,7 +8191,7 @@ async function getUnifiedSearchFileList(searchText: string, requestId: number) {
     let fileIndex = 0;
     for (const group of groups) {
       const rowIndex = groupedRows.value.length;
-      const size = group.files.reduce((total, file) => total + Number(file.size || 0), 0);
+      const size = group.files.reduce((total, file) => total + getMediaItemSize(file), 0);
       groupedRows.value.push({
         type: 'group',
         id: `group-row-${group.id}`,
@@ -9117,7 +9122,7 @@ function rebuildSelectionAfterListMutation(selectedIds: Set<number>) {
     if (selected) {
       selectedFileIds.add(Number(file.id));
       remainingCount++;
-      remainingSize += Number(file.size || 0);
+      remainingSize += getMediaItemSize(file);
     }
   }
   recomputeLoadedGroupSelectedCounts();
@@ -9189,7 +9194,7 @@ const onMoveTo = async () => {
       );
       fileList.value = fileList.value.filter((f) => !successIdSet.has(f.id));
       totalFileCount.value = fileList.value.length;
-      totalFileSize.value = fileList.value.reduce((total, file) => total + file.size, 0);
+      totalFileSize.value = fileList.value.reduce((total, file) => total + getMediaItemSize(file), 0);
       selectedItemIndex.value = fileList.value.length > 0 ? Math.min(selectedItemIndex.value, fileList.value.length - 1) : -1;
       rebuildSelectionAfterListMutation(remainingSelectedIds);
       toast.success(t('msgbox.move_to.success', { source: sourceLabel, dest: destLabel }));
@@ -9376,7 +9381,7 @@ const onMoveToFolder = async () => {
     );
     fileList.value = fileList.value.filter(file => !successIdSet.has(file.id));
     totalFileCount.value = fileList.value.length;
-    totalFileSize.value = fileList.value.reduce((total, file) => total + file.size, 0);
+    totalFileSize.value = fileList.value.reduce((total, file) => total + getMediaItemSize(file), 0);
     selectedItemIndex.value = fileList.value.length > 0
       ? Math.min(selectedItemIndex.value, fileList.value.length - 1)
       : -1;
@@ -9672,7 +9677,7 @@ const onTrashFile = async (retryItemsOverride: any[] = [], retryToken?: string) 
       const deletedIdSet = new Set(deletedFileIds);
       fileList.value = fileList.value.filter((f) => !deletedIdSet.has(Number(f?.id)));
       totalFileCount.value = fileList.value.length;
-      totalFileSize.value = fileList.value.reduce((total, file) => total + Number(file?.size || 0), 0);
+      totalFileSize.value = fileList.value.reduce((total, file) => total + getMediaItemSize(file), 0);
       selectedItemIndex.value = fileList.value.length > 0 ? Math.min(selectedItemIndex.value, fileList.value.length - 1) : -1;
     }
     else if (selectMode.value && selectedCount.value > 0) {     // multi-select mode
@@ -9709,7 +9714,7 @@ const onTrashFile = async (retryItemsOverride: any[] = [], retryToken?: string) 
       );
       fileList.value = fileList.value.filter((f) => !deletedIdSet.has(Number(f?.id)));
       totalFileCount.value = fileList.value.length;
-      totalFileSize.value = fileList.value.reduce((total, file) => total + Number(file?.size || 0), 0);
+      totalFileSize.value = fileList.value.reduce((total, file) => total + getMediaItemSize(file), 0);
       selectedItemIndex.value = fileList.value.length > 0 ? Math.min(selectedItemIndex.value, fileList.value.length - 1) : -1;
       rebuildSelectionAfterListMutation(remainingSelectedIds);
       if (!permanently && trashFailedIdSet.size > 0) {
@@ -9856,7 +9861,7 @@ function removeFromFileList(index: number = 0) {
   
   // update total file count and size
   totalFileCount.value = fileList.value.length;
-  totalFileSize.value = fileList.value.reduce((total, file) => total + Number(file?.size || 0), 0);
+  totalFileSize.value = fileList.value.reduce((total, file) => total + getMediaItemSize(file), 0);
   
   // update selected item index (ensure it's always a valid number)
   if (fileList.value.length > 0) {
@@ -10044,9 +10049,9 @@ const insertIndexedFileIntoList = async (indexedFile: any) => {
   });
 
   if (existingIndex >= 0) {
-    const previousSize = Number(fileList.value[existingIndex]?.size || 0);
+    const previousSize = getMediaItemSize(fileList.value[existingIndex]);
     fileList.value.splice(existingIndex, 1, nextFile);
-    totalFileSize.value += Number(nextFile.size || 0) - previousSize;
+    totalFileSize.value += getMediaItemSize(nextFile) - previousSize;
     selectedItemIndex.value = existingIndex;
     markDedupSourceUpdated(currentContentRequestId);
 
@@ -10062,7 +10067,7 @@ const insertIndexedFileIntoList = async (indexedFile: any) => {
   }
 
   totalFileCount.value += 1;
-  totalFileSize.value += nextFile.size || 0;
+  totalFileSize.value += getMediaItemSize(nextFile);
   fileList.value.splice(position, 0, nextFile);
   selectedItemIndex.value = position;
   markDedupSourceUpdated(currentContentRequestId);
@@ -10495,7 +10500,7 @@ const selectAllInCurrentList = async () => {
     if (isRealFileItem(file)) {
       file.isSelected = true;
       selectedFileIds.add(Number(file.id));
-      nextSize += Number(file.size || 0);
+      nextSize += getMediaItemSize(file);
     } else {
       file.isSelected = false;
     }
@@ -10530,7 +10535,7 @@ const invertSelectionInCurrentList = async () => {
     if (file.isSelected) {
       selectedFileIds.add(Number(file.id));
       nextCount++;
-      nextSize += Number(file.size || 0);
+      nextSize += getMediaItemSize(file);
     }
   }
   recomputeLoadedGroupSelectedCounts();
@@ -11048,7 +11053,7 @@ async function handleCollectionsAdded({ fileIds = [], results, removedCollection
     } else {
       fileList.value = fileList.value.filter(file => !removedIds.has(Number(file.id)));
       totalFileCount.value = fileList.value.length;
-      totalFileSize.value = fileList.value.reduce((total, file) => total + Number(file.size || 0), 0);
+      totalFileSize.value = fileList.value.reduce((total, file) => total + getMediaItemSize(file), 0);
       selectedItemIndex.value = fileList.value.length > 0 ? Math.min(selectedItemIndex.value, fileList.value.length - 1) : -1;
     }
     void tauriEmit('collection-files-dropped', { collectionId: currentCollectionId.value });

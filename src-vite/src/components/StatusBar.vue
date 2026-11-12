@@ -4,16 +4,20 @@
       v-if="hasData"
       class="flex gap-4 items-center flex-1 min-w-0 overflow-hidden whitespace-nowrap text-base-content/70"
     >
-      <div class="flex items-center shink-0">
+      <div class="flex items-center shrink-0">
         <IconList class="t-icon-size-xs mr-1" />
-        <span v-if="selectedItemIndex >= 0">{{ (selectedItemIndex + 1).toLocaleString() + '/' }}</span>
-        <span>{{ $t('statusbar.files_summary', { count: totalFileCount.toLocaleString(), size: formatFileSize(totalFileSize) }) }}</span>
+        <span>{{ $t('statusbar.items_summary', { count: itemPosition, size: formatFileSize(totalFileSize) }) }}</span>
       </div>
 
       <template v-if="selectedItemIndex >= 0 && hasRealSelectedFile">
-        <div class="flex items-center gap-1 shink-0">
+        <div class="flex items-center gap-1 min-w-0 shrink-0">
           <component :is="currentFile?.file_type === 1 || currentFile?.file_type === 3 ? IconPhoto : IconVideo" class="t-icon-size-xs" />
-          <span> {{ shortenFilename(currentFile?.name, 32) + ' (' + formatFileSize(currentFile?.size || 0) + ')' }} </span>
+          <span>{{ shortenFilename(currentFile?.name, 32) }}</span>
+          <span v-if="isLivePhoto || rawPairBadge" class="inline-flex shrink-0 items-center gap-0.5 rounded bg-base-content/10 px-1 text-[10px] font-medium">
+            <IconLivePhoto v-if="isLivePhoto" class="h-3 w-3 shrink-0" aria-hidden="true" />
+            {{ isLivePhoto ? $t('image_viewer.live') : rawPairBadge }}
+          </span>
+          <span>({{ formatFileSize(getMediaItemSize(currentFile)) }})</span>
         </div>
 
         <div class="flex items-center gap-1 shink-0">
@@ -68,6 +72,8 @@
 import { computed } from 'vue';
 import {
   formatFileSize,
+  formatRawPairBadge,
+  getMediaItemSize,
   shortenFilename,
   formatDimensionText,
   formatCaptureSettings,
@@ -81,6 +87,7 @@ import {
   IconCameraAperture,
   IconLocation,
   IconList,
+  IconLivePhoto,
   IconZoomIn,
   IconZoomOut,
   IconUpdate,
@@ -160,6 +167,16 @@ const currentFile = computed(() => {
   if (props.selectedFile) return props.selectedFile;
   return props.fileList[props.selectedItemIndex];
 });
+const itemPosition = computed(() => {
+  const total = props.totalFileCount.toLocaleString();
+  return props.selectedItemIndex < 0 ? total : `${(props.selectedItemIndex + 1).toLocaleString()} / ${total}`;
+});
+const isLivePhoto = computed(() =>
+  currentFile.value?.media_subtype === 'live_photo' && !!currentFile.value?.live_photo_video_path
+);
+const rawPairBadge = computed(() => currentFile.value?.media_subtype === 'raw_jpeg_pair'
+  ? formatRawPairBadge(currentFile.value.live_photo_video_path)
+  : '');
 const hasRealSelectedFile = computed(() => {
   const file = currentFile.value;
   return !!file && !file.isPlaceholder;

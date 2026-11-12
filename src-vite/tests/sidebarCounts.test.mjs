@@ -27,6 +27,7 @@ test('search sidebar count queries All and deduplicates text and visual matches'
   const text = { searchFileType: 2, searchFileName: 'cat' };
   const image = { fileType: 2, searchText: 'cat' };
   const deps = { currentQueryParams: {value: text}, currentImageSearchParams: {value: image},
+    getMediaItemSize: file => Number(file?.size ?? 0) + Number(file?.companion_size ?? 0),
     imageSearchLanguageUnsupported: {value: false}, passesAlbumFilters: f => f.id !== 4,
     getQueryFiles: async p => { assert.equal(p.searchFileType, 0); return [{id:1,size:10},{id:2,size:20}]; },
     searchSimilarImages: async p => { assert.equal(p.fileType, 0); return [{id:2,size:20},{id:3,size:30},{id:4,size:40}]; } };

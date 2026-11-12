@@ -1587,7 +1587,9 @@ pub struct AFile {
     // file basic info
     pub name: String,                 // file name
     pub name_pinyin: Option<String>,  // file name pinyin(for sort)
-    pub size: i64,                    // file size
+    pub size: i64,                    // physical file size
+    #[serde(default)]
+    pub companion_size: i64,
     pub file_type: Option<i64>,       // file type (0: all, 1: image, 2: video, 3: audio, 4: other)
     pub format_label: Option<String>, // normalized file format label (from file content)
     pub created_at: Option<i64>,      // file create timestamp
@@ -2800,6 +2802,7 @@ impl AFile {
                 &file_info.file_name.to_lowercase(),
             )), // natural sort key (case-insensitive, pinyin + zero-padded numbers)
             size: file_info.file_size,
+            companion_size: 0,
             file_type: Some(file_type),
             format_label,
             created_at: file_info.created,
@@ -3464,14 +3467,21 @@ impl AFile {
     //     Ok(files)
     // }
 
+    const ITEM_SIZE_SQL: &'static str =
+        "a.size + COALESCE((SELECT size FROM afiles WHERE id = a.live_photo_video_id), 0)";
+
+    fn item_size(file: &Self) -> i64 {
+        file.size + file.companion_size
+    }
+
     // Helper function to build the count SQL query
     fn build_count_query() -> String {
-        let base_query = "SELECT COUNT(*), SUM(a.size)
-            FROM afiles a 
+        "SELECT COUNT(*), SUM(a.size + COALESCE(lpv_size.size, 0))
+            FROM afiles a
+            LEFT JOIN afiles lpv_size ON lpv_size.id = a.live_photo_video_id
             LEFT JOIN afolders b ON a.folder_id = b.id
-            LEFT JOIN albums c ON b.album_id = c.id";
-
-        base_query.to_string()
+            LEFT JOIN albums c ON b.album_id = c.id"
+            .to_string()
     }
 
     fn live_photo_companion_exclusion_condition() -> String {
@@ -3510,7 +3520,8 @@ impl AFile {
                 {} AS album_visible,
                 a.motion_photo_offset,
                 a.cloud_only,
-                a.metadata_pending
+                a.metadata_pending,
+                COALESCE(lpv.size, 0)
             FROM afiles a
             LEFT JOIN afolders b ON a.folder_id = b.id
             LEFT JOIN albums c ON b.album_id = c.id
@@ -3529,6 +3540,7 @@ impl AFile {
             name: row.get(2)?,
             name_pinyin: row.get(3)?,
             size: row.get(4)?,
+            companion_size: row.get(64)?,
             file_type: row.get(5)?,
             format_label: row.get(6)?,
             created_at: row.get(7)?,
@@ -3673,11 +3685,12 @@ impl AFile {
 
         let sql = if params.person_id > 0 {
             format!(
-                "SELECT COUNT(*), SUM(size) FROM (SELECT a.id, a.size FROM afiles a
+                "SELECT COUNT(*), SUM(size) FROM (SELECT a.id, {item_size} AS size FROM afiles a
                 LEFT JOIN afolders b ON a.folder_id = b.id
                 LEFT JOIN albums c ON b.album_id = c.id
                 {}{}{} GROUP BY a.id)",
-                collection_join, joins, where_clause
+                collection_join, joins, where_clause,
+                item_size = Self::ITEM_SIZE_SQL
             )
         } else {
             format!(
@@ -3736,7 +3749,7 @@ impl AFile {
         let sql = format!(
             "SELECT group_id, group_id AS label, COUNT(*), COALESCE(SUM(size), 0)
              FROM (
-                SELECT DISTINCT a.id, a.size, {group_id_expr} AS group_id, {sort_expr} AS group_sort
+                SELECT DISTINCT a.id, {item_size} AS size, {group_id_expr} AS group_id, {sort_expr} AS group_sort
                 FROM afiles a
                 LEFT JOIN afolders b ON a.folder_id = b.id
                 LEFT JOIN albums c ON b.album_id = c.id
@@ -3745,7 +3758,8 @@ impl AFile {
              )
              GROUP BY group_id
              ORDER BY {}",
-            Self::group_order_clause(params)
+            Self::group_order_clause(params),
+            item_size = Self::ITEM_SIZE_SQL
         );
         let mut final_params: Vec<&dyn ToSql> = sql_params.iter().map(|p| p.as_ref()).collect();
         final_params.push(&collection_id);
@@ -4340,7 +4354,7 @@ impl AFile {
             }
             let file = updated.ok_or("File disappeared during refresh")?;
             return Ok(MetadataRefresh {
-                size_delta: file.size - old.size,
+                size_delta: Self::item_size(&file) - Self::item_size(&old),
                 file,
                 skipped: false,
                 warning,
@@ -4392,7 +4406,7 @@ impl AFile {
         Self::update_column(file_id, "last_scan_time", &checked)?;
         let file = Self::get_file_info(file_id)?.ok_or("File disappeared during refresh")?;
         Ok(MetadataRefresh {
-            size_delta: file.size - old.size,
+            size_delta: Self::item_size(&file) - Self::item_size(&old),
             file,
             skipped,
             warning,
@@ -5535,11 +5549,12 @@ impl AFile {
         let sql = if params.person_id > 0 {
             // Use subquery with GROUP BY to handle potential duplicate rows when joining faces
             format!(
-                "SELECT COUNT(*), SUM(size) FROM (SELECT a.id, a.size FROM afiles a
+                "SELECT COUNT(*), SUM(size) FROM (SELECT a.id, {item_size} AS size FROM afiles a
                 LEFT JOIN afolders b ON a.folder_id = b.id
                 LEFT JOIN albums c ON b.album_id = c.id
                 {}{} GROUP BY a.id)",
-                joins, where_clause
+                joins, where_clause,
+                item_size = Self::ITEM_SIZE_SQL
             )
         } else {
             format!("{}{}{}", Self::build_count_query(), joins, where_clause)
@@ -5707,7 +5722,7 @@ impl AFile {
         let sql = format!(
             "SELECT group_id, group_id AS label, COUNT(*), COALESCE(SUM(size), 0)
              FROM (
-                SELECT DISTINCT a.id, a.size, {group_id_expr} AS group_id, {sort_expr} AS group_sort
+                SELECT DISTINCT a.id, {item_size} AS size, {group_id_expr} AS group_id, {sort_expr} AS group_sort
                 FROM afiles a
                 LEFT JOIN afolders b ON a.folder_id = b.id
                 LEFT JOIN albums c ON b.album_id = c.id
@@ -5715,7 +5730,8 @@ impl AFile {
              )
              GROUP BY group_id
              ORDER BY {}",
-            Self::group_order_clause(params)
+            Self::group_order_clause(params),
+            item_size = Self::ITEM_SIZE_SQL
         );
         let final_params: Vec<&dyn ToSql> = sql_params.iter().map(|p| p.as_ref()).collect();
         let conn = open_conn()?;
@@ -6006,7 +6022,7 @@ impl AFile {
             1 => format!("a.created_at {}, a.id {}", dir, dir),
             2 => format!("a.modified_at {}, a.id {}", dir, dir),
             3 => format!("a.name_pinyin {}, a.id {}", dir, dir),
-            4 => format!("a.size {}, a.id {}", dir, dir),
+            4 => format!("{} {}, a.id {}", Self::ITEM_SIZE_SQL, dir, dir),
             5 => format!("a.width {}, a.height {}, a.id {}", dir, dir, dir),
             6 => format!("a.duration {}, a.id {}", dir, dir),
             // A seed makes random order stable for every request in one virtualized
@@ -6407,7 +6423,7 @@ impl AFile {
             }
             "size" => {
                 let mut conditions = Vec::new();
-                Self::push_numeric_rule(&mut conditions, sql_params, "a.size", operator, value)?;
+                Self::push_numeric_rule(&mut conditions, sql_params, Self::ITEM_SIZE_SQL, operator, value)?;
                 Ok(conditions.pop().unwrap_or_else(|| "1 = 1".to_string()))
             }
             "width" => {
@@ -6655,11 +6671,12 @@ impl AFile {
         let (joins, where_clause, sql_params, needs_group) = Self::build_smart_query_parts(params)?;
         let sql = if needs_group {
             format!(
-                "SELECT COUNT(*), SUM(size) FROM (SELECT a.id, a.size FROM afiles a
+                "SELECT COUNT(*), SUM(size) FROM (SELECT a.id, {item_size} AS size FROM afiles a
                 LEFT JOIN afolders b ON a.folder_id = b.id
                 LEFT JOIN albums c ON b.album_id = c.id
                 {}{} GROUP BY a.id)",
-                joins, where_clause
+                joins, where_clause,
+                item_size = Self::ITEM_SIZE_SQL
             )
         } else {
             format!("{}{}{}", Self::build_count_query(), joins, where_clause)
@@ -6703,7 +6720,7 @@ impl AFile {
         let sql = format!(
             "SELECT group_id, group_id AS label, COUNT(*), COALESCE(SUM(size), 0)
              FROM (
-                SELECT DISTINCT a.id, a.size, {group_id_expr} AS group_id, {sort_expr} AS group_sort
+                SELECT DISTINCT a.id, {item_size} AS size, {group_id_expr} AS group_id, {sort_expr} AS group_sort
                 FROM afiles a
                 LEFT JOIN afolders b ON a.folder_id = b.id
                 LEFT JOIN albums c ON b.album_id = c.id
@@ -6711,7 +6728,8 @@ impl AFile {
              )
              GROUP BY group_id
              ORDER BY {}",
-            Self::smart_group_order_clause(params)
+            Self::smart_group_order_clause(params),
+            item_size = Self::ITEM_SIZE_SQL
         );
         let final_params: Vec<&dyn ToSql> = sql_params.iter().map(|p| p.as_ref()).collect();
         let conn = open_conn()?;
@@ -11175,6 +11193,29 @@ mod album_filter_tests {
         assert!(ids.contains(&15)); // Small video stays visible.
         conn.execute("UPDATE albums SET file_types=5 WHERE id=1", []).unwrap();
         assert!(!visible(&conn).contains(&15)); // Video type exclusion still applies.
+    }
+
+    #[test]
+    fn paired_item_sizes_sum_components_without_changing_physical_sizes() {
+        let conn = Connection::open_in_memory().unwrap();
+        conn.execute_batch(
+            "CREATE TABLE afiles(id INTEGER PRIMARY KEY, size INTEGER, live_photo_video_id INTEGER);
+             INSERT INTO afiles VALUES (1,100,2),(2,200,NULL),(3,400,4),(4,50,NULL),(5,25,NULL);",
+        ).unwrap();
+        let query = format!(
+            "SELECT a.size, {} FROM afiles a WHERE a.id IN (1,3,5) ORDER BY a.id",
+            AFile::ITEM_SIZE_SQL,
+        );
+        let mut stmt = conn.prepare(&query).unwrap();
+        let sizes = stmt.query_map([], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?)))
+            .unwrap().collect::<Result<Vec<_>, _>>().unwrap();
+        assert_eq!(sizes, [(100, 300), (400, 450), (25, 25)]);
+        conn.execute("UPDATE afiles SET live_photo_video_id = NULL WHERE id = 3", []).unwrap();
+        let size: i64 = conn.query_row(
+            &format!("SELECT {} FROM afiles a WHERE id = 3", AFile::ITEM_SIZE_SQL),
+            [], |row| row.get(0),
+        ).unwrap();
+        assert_eq!(size, 400);
     }
 
     #[test]

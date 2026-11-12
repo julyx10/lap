@@ -711,7 +711,8 @@
     "album_nested": "Ce dossier chevauche un autre album"
   },
   "statusbar": {
-    "files_summary": "{count} fichiers ({size})"
+    "files_summary": "{count} fichiers ({size})",
+    "items_summary": "{count} éléments ({size})"
   },
   "menu": {
     "select": {

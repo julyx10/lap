@@ -26,7 +26,7 @@ function hostHandler(viewer, mode, toggle, overrides = {}) {
   const start = source.indexOf(viewer ? 'function handleKeyDown(event:' : 'function handleLocalKeyDown(event:');
   const end = source.indexOf(viewer ? "  if (matchesShortcut('meta.favorite'" : "  if (getActivePreviewMode() !== 'none' && matchesShortcut('view.zoomFit'", start);
   const deps = { HTMLElement: HTMLElementStub, matchesShortcut, shortcutPlatform: 'mac', uiStore: { inputStack: [], activePane: 'content' },
-    isSlideShow: { value: false }, splitCount: { value: 2 }, isMapVisible: { value: false },
+    isUpdatingRawGrouping: { value: false }, isSlideShow: { value: false }, splitCount: { value: 2 }, isMapVisible: { value: false },
     selectedItemIndex: { value: 0 }, fileList: { value: [{ file_type: 1 }] }, selectMode: { value: false },
     showQuickView: { value: mode === 'quick-view' }, getActivePreviewMode: () => mode,
     getActivePreviewMediaRef: () => ({ toggleAfAreas: toggle }),

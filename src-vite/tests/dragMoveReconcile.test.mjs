@@ -17,6 +17,7 @@ function load(files, ids, overrides = {}) {
   const flag = { value: false };
   const state = {
     currentContentRequestId: 7,
+    getMediaItemSize: file => Number(file?.size ?? 0) + Number(file?.companion_size ?? 0),
     fileList: { value: files },
     getCurrentQueryFileIds: async () => ids,
     getFolderName: path => path.split('/').pop(),

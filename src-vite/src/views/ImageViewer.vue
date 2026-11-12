@@ -170,7 +170,7 @@
         :selected-file="activeFileInfo"
         :selected-item-index="getFileIndexByPane(statusPane)"
         :total-file-count="fileCount"
-        :total-file-size="activeFileInfo?.size || 0"
+        :total-file-size="getMediaItemSize(activeFileInfo)"
         :image-scale="getPaneScale(statusPane).display"
         :show-scale="true"
         :is-embedded="true"
@@ -220,7 +220,7 @@ import { useI18n } from 'vue-i18n';
 import { useToast } from '@/common/toast';
 import { useUIStore } from '@/stores/uiStore';
 import { config, libConfig } from '@/common/config';
-import { isWin, isMac, isLinux, copyFilePaths, getClipboardItemPaths, getSlideShowInterval, SCALE_VALUES } from '@/common/utils';
+import { isWin, isMac, isLinux, copyFilePaths, getClipboardItemPaths, getMediaItemSize, getSlideShowInterval, SCALE_VALUES } from '@/common/utils';
 import { matchesShortcut, ShortcutActionId, ShortcutPlatform, VIEW_BACKGROUND_SHORTCUTS } from '@/common/shortcuts';
 import { handleVideoPlaybackShortcut, handleVideoEscapeShortcut } from '@/common/video';
 import {

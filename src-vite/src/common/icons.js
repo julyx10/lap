@@ -175,6 +175,7 @@ export { default as IconFlagFilled } from '@/assets/icons/flag-fill.svg';
 export { default as IconFlagOff } from '@/assets/icons/flag-off.svg';
 export { default as IconHeart } from '@/assets/icons/heart.svg';
 export { default as IconHeartFilled } from '@/assets/icons/heart-fill.svg';
+export { default as IconMultiSelect } from '@/assets/icons/multi-select.svg';
 export { default as IconPin } from '@/assets/icons/pin-filled.svg';
 export { default as IconSelection } from '@/assets/icons/selection.svg';
 export { default as IconSelectAll } from '@/assets/icons/select-all.svg';

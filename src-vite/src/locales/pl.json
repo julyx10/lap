@@ -711,7 +711,8 @@
     "album_nested": "Ten folder nakłada się na inny album"
   },
   "statusbar": {
-    "files_summary": "{count} plików ({size})"
+    "files_summary": "{count} plików ({size})",
+    "items_summary": "{count} elementów ({size})"
   },
   "menu": {
     "select": {

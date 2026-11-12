@@ -711,7 +711,8 @@
     "album_nested": "A mappa átfed egy másik albumot"
   },
   "statusbar": {
-    "files_summary": "{count} fájl ({size})"
+    "files_summary": "{count} fájl ({size})",
+    "items_summary": "{count} elem ({size})"
   },
   "menu": {
     "select": {

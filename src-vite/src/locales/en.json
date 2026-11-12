@@ -711,7 +711,8 @@
     "album_nested": "This folder overlaps another album"
   },
   "statusbar": {
-    "files_summary": "{count} files ({size})"
+    "files_summary": "{count} files ({size})",
+    "items_summary": "{count} items ({size})"
   },
   "menu": {
     "select": {

@@ -1424,12 +1424,39 @@ fn import_structure_folder(source: &Path, root_name: &std::ffi::OsStr, file: &Pa
 }
 
 /// Copy supported media into an album, organized by date or by source folder structure.
+fn same_import_extension(left: &Path, right: &Path) -> bool {
+    match (left.extension().and_then(|ext| ext.to_str()), right.extension().and_then(|ext| ext.to_str())) {
+        (Some(left), Some(right)) => left.eq_ignore_ascii_case(right),
+        _ => false,
+    }
+}
+
+fn import_media_with_sidecars_equal(
+    source: &Path,
+    destination: &Path,
+    aae_cache: &mut apple_sidecar::ImportAaeCache,
+    xmp_cache: &mut crate::metadata::files::Cache,
+    is_cancelled: &impl Fn() -> bool,
+) -> Result<bool, String> {
+    let equal = |left: &Path, right: &Path| import_files_equal(left, right, is_cancelled).unwrap_or(false);
+    if !equal(source, destination) { return Ok(false); }
+    let left = aae_cache.paths(source);
+    let right = aae_cache.paths(destination);
+    if left.len() != right.len() || !left.iter().zip(&right).all(|(a, b)| equal(a, b)) {
+        return Ok(false);
+    }
+    let left = xmp_cache.import_sidecars(source)?;
+    let right = xmp_cache.import_sidecars(destination)?;
+    Ok(left.len() == right.len() && left.iter().zip(&right).all(|(a, b)| equal(a, b)))
+}
+
 pub fn import_and_organize<F, C>(
     album_id: i64,
     source_path: &str,
     destination_path: &str,
     layout: &str,
     completed_paths: HashSet<String>,
+    group_raw_jpeg_pairs: bool,
     mut report_progress: F,
     is_cancelled: C,
 ) -> Result<ImportOrganizeResult, String>
@@ -1481,6 +1508,7 @@ where
     // Resume only files successfully imported by this dialog, including renamed collisions.
     let mut completed_paths = completed_paths;
     let mut last_progress = Instant::now();
+    let mut source_files = Vec::new();
     let mut files = Vec::new();
     let mut failed = 0;
     let mut total_size: u64 = 0;
@@ -1490,35 +1518,55 @@ where
     {
         if last_progress.elapsed() >= Duration::from_millis(100) {
             report_progress(ImportOrganizeProgress {
-                phase: "preparing".to_string(), processed: files.len() + failed,
-                total: files.len() + failed, total_size, imported: 0, skipped: 0, failed, cancelled: false,
+                phase: "preparing".to_string(), processed: source_files.len() + failed,
+                total: source_files.len() + failed, total_size, imported: 0, skipped: 0, failed, cancelled: false,
             });
             last_progress = Instant::now();
         }
         if is_cancelled() {
             report_progress(ImportOrganizeProgress {
-                phase: "preparing".to_string(), processed: files.len() + failed, total: files.len() + failed, total_size,
+                phase: "preparing".to_string(), processed: source_files.len() + failed, total: source_files.len() + failed, total_size,
                 imported: 0, skipped: 0, failed, cancelled: true,
             });
-            return Ok(ImportOrganizeResult { completed_paths: completed_paths.into_iter().collect(), total: files.len() + failed, imported: 0, skipped: 0, failed, cancelled: true });
+            return Ok(ImportOrganizeResult { completed_paths: completed_paths.into_iter().collect(), total: source_files.len() + failed, imported: 0, skipped: 0, failed, cancelled: true });
         }
         let Ok(entry) = entry else { continue; };
         if !entry.file_type().is_file() { continue; }
         let path = entry.into_path();
-        let Some(file_type) = get_file_type(&path.to_string_lossy()) else { continue; };
-        let file_size = path.metadata().map(|m| m.len()).unwrap_or(0);
-        let path_string = path.to_string_lossy().to_string();
-        if completed_paths.contains(&path_string) { continue; }
-        total_size += file_size;
-        let raw_info = if file_type == 3 && structure_root.is_none() {
+        if get_file_type(&path.to_string_lossy()).is_some() {
+            total_size += path.metadata().map(|metadata| metadata.len()).unwrap_or(0);
+            source_files.push(path);
+        }
+    }
+    let source_paths = source_files.iter().map(PathBuf::as_path).collect::<Vec<_>>();
+    let groups = crate::t_cmds::group_media_paths(&source_paths, group_raw_jpeg_pairs, true);
+    total_size = 0;
+    for (path, companion) in groups {
+        if is_cancelled() {
+            return Ok(ImportOrganizeResult {
+                completed_paths: completed_paths.into_iter().collect(),
+                total: source_files.len(), imported: 0, skipped: 0, failed, cancelled: true,
+            });
+        }
+        let path_string = path.to_string_lossy();
+        if std::iter::once(path).chain(companion)
+            .all(|component| completed_paths.contains(component.to_string_lossy().as_ref()))
+        {
+            continue;
+        }
+        total_size += std::iter::once(path).chain(companion)
+            .map(|component| component.metadata().map(|metadata| metadata.len()).unwrap_or(0))
+            .sum::<u64>();
+        let file_type = get_file_type(&path_string).expect("supported import file");
+        let raw_info = if companion.is_none() && file_type == 3 && structure_root.is_none() {
             crate::t_libraw::get_raw_info(&path_string).ok()
         } else { None };
         let relative_folder = match (|| -> Result<PathBuf, String> {
             if let Some(root_name) = structure_root {
-                return import_structure_folder(&source, root_name, &path);
+                return import_structure_folder(&source, root_name, path);
             }
             let sidecar_timestamp = if crate::metadata::xmp::is_xmp_import_enabled() {
-                let sidecars = xmp_cache.import_sidecars(&path).unwrap_or_default();
+                let sidecars = xmp_cache.import_sidecars(path).unwrap_or_default();
                 sidecars.first()
                     .and_then(|sidecar| crate::metadata::xmp::read_sidecar_capture_timestamp(sidecar))
             } else {
@@ -1543,7 +1591,7 @@ where
                 continue;
             }
         };
-        files.push((path, file_type, relative_folder, raw_info));
+        files.push((path, companion, file_type, relative_folder, raw_info));
     }
     eprintln!("Import preparation: {:?}, files: {}", started.elapsed(), files.len() + failed);
     let import_started = Instant::now();
@@ -1561,12 +1609,14 @@ where
         total, total_size, imported, skipped, failed, cancelled: false,
     });
 
-    for (path, file_type, relative_folder, raw_info) in files {
+    let mut occupied_stems = HashMap::new();
+    let mut pending_pairs = HashMap::<i64, Vec<_>>::new();
+    let mut imported_singles = HashMap::<i64, Vec<AFile>>::new();
+    let mut cancelled = false;
+    for (path, companion, file_type, relative_folder, raw_info) in files {
         if is_cancelled() {
-            report_progress(ImportOrganizeProgress {
-                phase: "importing".to_string(), processed, total, total_size, imported, skipped, failed, cancelled: true,
-            });
-            return Ok(ImportOrganizeResult { completed_paths: completed_paths.into_iter().collect(), total, imported, skipped, failed, cancelled: true });
+            cancelled = true;
+            break;
         }
 
         let path_string = path.to_string_lossy().to_string();
@@ -1618,22 +1668,75 @@ where
                 folder_ids.insert(target_folder.clone(), id);
                 id
             };
+            if let Some(companion) = companion {
+                let companion_size = companion.metadata().map_err(|error| error.to_string())?.len();
+                let by_size = &candidates[&target_folder];
+                for candidate in by_size.get(&size).into_iter().flatten() {
+                    if is_cancelled() { return Err("Import cancelled".into()); }
+                    if !import_media_with_sidecars_equal(path, candidate, &mut aae_cache, &mut xmp_cache, &is_cancelled)? {
+                        continue;
+                    }
+                    for other in by_size.get(&companion_size).into_iter().flatten() {
+                        let same_pair_name = if companion.extension().is_some_and(|ext| ext.eq_ignore_ascii_case("mov")) {
+                            apple_sidecar::live_photo_video_stem_rank(candidate, other).is_some()
+                        } else {
+                            candidate.file_stem() == other.file_stem()
+                        };
+                        if candidate == other || !same_pair_name
+                            || !same_import_extension(path, candidate) || !same_import_extension(companion, other)
+                        {
+                            continue;
+                        }
+                        if import_media_with_sidecars_equal(companion, other, &mut aae_cache, &mut xmp_cache, &is_cancelled)? {
+                            let mut indexed = Vec::new();
+                            for component in [candidate, other] {
+                                let destination = component.to_string_lossy();
+                                let file_type = get_file_type(&destination).ok_or("Unsupported import candidate")?;
+                                let (file, _) = AFile::add_to_db(folder_id, &destination, file_type, chrono::Utc::now().timestamp_millis())?;
+                                indexed.push(file);
+                            }
+                            crate::t_cmds::reconcile_imported_media_pairs(folder_id, &indexed, group_raw_jpeg_pairs)?;
+                            return Ok(true);
+                        }
+                    }
+                }
+                if is_cancelled() { return Err("Import cancelled".into()); }
+                if !occupied_stems.contains_key(&target_folder) {
+                    occupied_stems.insert(target_folder.clone(), crate::t_cmds::media_destination_stems(&target_folder)?);
+                }
+                let pair = crate::t_cmds::import_media_pair(
+                    path, companion, folder_id, &target_folder.to_string_lossy(),
+                    occupied_stems.get_mut(&target_folder).unwrap(), true,
+                )?;
+                let mut aae_paths = Vec::new();
+                let result = (|| {
+                    let mut seen_sidecars = HashSet::new();
+                    for (source, destination) in [path, companion].into_iter().zip(&pair.paths) {
+                        let sidecars = aae_cache.paths(source).into_iter()
+                            .filter(|sidecar| seen_sidecars.insert(sidecar.clone())).collect();
+                        aae_paths.extend(apple_sidecar::copy_apple_aae_paths_for_import(
+                            &source.to_string_lossy(), &destination.to_string_lossy(), sidecars,
+                        )?);
+                    }
+                    Ok::<_, String>(())
+                })();
+                if let Err(error) = result {
+                    pair.rollback();
+                    for sidecar in aae_paths { let _ = fs::remove_file(sidecar); }
+                    return Err(error);
+                }
+                aae_cache.record(&aae_paths);
+                for (bytes, destination) in [size, companion_size].into_iter().zip(&pair.paths) {
+                    candidates.get_mut(&target_folder).unwrap().entry(bytes).or_default().push(destination.clone());
+                }
+                pending_pairs.entry(folder_id).or_default().push((path, companion, pair, aae_paths));
+                return Ok(false);
+            }
             if let Some(matches) = candidates[&target_folder].get(&size) {
                 for candidate in matches {
                     if is_cancelled() { return Err("Import cancelled".to_string()); }
                     let compare_started = Instant::now();
-                    let duplicate = import_files_equal(&path, candidate, &is_cancelled).unwrap_or(false)
-                        && {
-                            let left = aae_cache.paths(&path);
-                            let right = aae_cache.paths(candidate);
-                            left.len() == right.len() && left.iter().zip(&right)
-                                .all(|(a, b)| import_files_equal(a, b, &is_cancelled).unwrap_or(false))
-                        } && {
-                            let left = xmp_cache.import_sidecars(&path)?;
-                            let right = xmp_cache.import_sidecars(candidate)?;
-                            left.len() == right.len() && left.iter().zip(&right)
-                                .all(|(a, b)| import_files_equal(a, b, &is_cancelled).unwrap_or(false))
-                        };
+                    let duplicate = import_media_with_sidecars_equal(path, candidate, &mut aae_cache, &mut xmp_cache, &is_cancelled)?;
                     compare_time += compare_started.elapsed();
                     if duplicate {
                         let database_started = Instant::now();
@@ -1657,7 +1760,7 @@ where
             // before checking for outside changes in the cached sidecar index.
             xmp_cache.record(Path::new(&destination), &[]);
             let xmp = match crate::metadata::files::Guard::with_cache(
-                [(path.as_path(), Path::new(&destination))], crate::metadata::files::Operation::Copy, &mut xmp_cache,
+                [(path, Path::new(&destination))], crate::metadata::files::Operation::Copy, &mut xmp_cache,
             ) {
                 Ok(guard) => guard,
                 Err(error) => { let _ = fs::remove_file(&destination); return Err(error); }
@@ -1675,32 +1778,43 @@ where
             };
             copy_time += copy_started.elapsed();
             let database_started = Instant::now();
-            if let Err(error) = AFile::add_to_db_with_raw_info(folder_id, &destination, file_type, chrono::Utc::now().timestamp_millis(), raw_info) {
-                let _ = fs::remove_file(&destination);
-                for sidecar in copied_sidecars {
-                    let _ = fs::remove_file(sidecar);
+            let (file, _) = match AFile::add_to_db_with_raw_info(
+                folder_id, &destination, file_type, chrono::Utc::now().timestamp_millis(), raw_info,
+            ) {
+                Ok(file) => file,
+                Err(error) => {
+                    let _ = fs::remove_file(&destination);
+                    for sidecar in copied_sidecars {
+                        let _ = fs::remove_file(sidecar);
+                    }
+                    return Err(error);
                 }
-                return Err(error);
-            }
+            };
+            imported_singles.entry(folder_id).or_default().push(file);
             database_time += database_started.elapsed();
             xmp_cache.record(Path::new(&destination), &xmp.paths());
             xmp.commit();
             aae_cache.record(&copied_sidecars);
             candidates.get_mut(&target_folder).unwrap().entry(size).or_default()
                 .push(PathBuf::from(&destination));
+            if let Some(stems) = occupied_stems.get_mut(&target_folder)
+                && let Some(stem) = Path::new(&destination).file_stem()
+            {
+                stems.insert(stem.to_string_lossy().to_ascii_lowercase());
+            }
             Ok(false)
         })();
         if result.is_err() && is_cancelled() {
-            report_progress(ImportOrganizeProgress {
-                phase: "importing".to_string(), processed,
-                total, total_size, imported, skipped, failed, cancelled: true,
-            });
-            return Ok(ImportOrganizeResult { completed_paths: completed_paths.into_iter().collect(), total, imported, skipped, failed, cancelled: true });
+            cancelled = true;
+            break;
         }
         match result {
             Ok(duplicate) => {
                 if duplicate { skipped += 1; } else { imported += 1; }
                 completed_paths.insert(path_string);
+                if let Some(companion) = companion {
+                    completed_paths.insert(companion.to_string_lossy().into_owned());
+                }
             }
             Err(error) => {
                 eprintln!("Failed to import '{}': {}", path_string, error);
@@ -1713,9 +1827,36 @@ where
         });
     }
 
+    let folders = pending_pairs.keys().chain(imported_singles.keys()).copied().collect::<HashSet<_>>();
+    for folder_id in folders {
+        let pairs = pending_pairs.remove(&folder_id).unwrap_or_default();
+        let singles = imported_singles.remove(&folder_id).unwrap_or_default();
+        let result = crate::t_cmds::reconcile_imported_media_pairs(
+            folder_id,
+            singles.iter().chain(pairs.iter().flat_map(|(_, _, pair, _)| pair.files.iter())),
+            group_raw_jpeg_pairs,
+        );
+        for (primary, companion, pair, sidecars) in pairs {
+            if let Err(error) = &result {
+                eprintln!("Failed to pair imported media '{}': {error}", primary.display());
+                pair.rollback();
+                for sidecar in sidecars { let _ = fs::remove_file(sidecar); }
+                completed_paths.remove(primary.to_string_lossy().as_ref());
+                completed_paths.remove(companion.to_string_lossy().as_ref());
+                imported -= 1;
+                failed += 1;
+            } else {
+                pair.commit();
+            }
+        }
+    }
+    report_progress(ImportOrganizeProgress {
+        phase: "importing".to_string(), processed, total, total_size, imported, skipped, failed, cancelled,
+    });
+
     eprintln!("Import successful steps: comparison {:?}, copy/sidecars {:?}, file database {:?}", compare_time, copy_time, database_time);
     eprintln!("Import processing: {:?}, imported: {}, skipped: {}, failed: {}", import_started.elapsed(), imported, skipped, failed);
-    Ok(ImportOrganizeResult { completed_paths: completed_paths.into_iter().collect(), total, imported, skipped, failed, cancelled: false })
+    Ok(ImportOrganizeResult { completed_paths: completed_paths.into_iter().collect(), total, imported, skipped, failed, cancelled })
 }
 
 /// Map an image MIME type to the canonical file extension.
@@ -4772,6 +4913,163 @@ mod album_accessibility_cache_tests {
 mod import_file_concurrency_tests {
     use super::{import_file, import_structure_folder};
     use std::{ffi::OsStr, fs, path::Path, sync::{Arc, Barrier}, thread};
+
+    #[test]
+    #[ignore = "requires real media samples and an isolated test process"]
+    fn external_folder_import_pairs() {
+        use super::{ImportOrganizeProgress, import_and_organize};
+        use crate::{t_config, t_sqlite::{self, AFile}};
+        use std::{cell::Cell, collections::HashSet, path::PathBuf};
+
+        struct Fixture(PathBuf);
+        impl Drop for Fixture {
+            fn drop(&mut self) { let _ = fs::remove_dir_all(&self.0); }
+        }
+
+        let fixture = Fixture(std::env::temp_dir().join(format!("lap-folder-pairs-{}", uuid::Uuid::new_v4())));
+        let root = &fixture.0;
+        let samples = PathBuf::from(std::env::var_os("LAP_MEDIA_PAIR_SAMPLES").unwrap());
+        let runtime = tokio::runtime::Builder::new_multi_thread().enable_all().build().unwrap();
+        let _runtime = runtime.enter();
+        t_config::set_app_identifier(root.join("profile").to_str().unwrap());
+        assert!(t_config::get_app_data_dir().unwrap().starts_with(root));
+
+        let source = root.join("source");
+        let album = root.join("album");
+        let target = album.join("source");
+        fs::create_dir_all(&source).unwrap();
+        fs::create_dir_all(&target).unwrap();
+        t_sqlite::create_db().unwrap();
+        let conn = t_sqlite::open_conn().unwrap();
+        conn.execute("INSERT INTO albums(name,path) VALUES('fixture',?1)", [album.to_str().unwrap()]).unwrap();
+        let album_id = conn.last_insert_rowid();
+        drop(conn);
+
+        let names = ["IMG_0841.HEIC", "IMG_0841.mov"];
+        for name in names {
+            fs::copy(samples.join(name), source.join(name)).unwrap();
+        }
+        fs::copy(source.join(names[0]), target.join(names[0])).unwrap();
+        fs::copy(source.join(names[1]), target.join("IMG_0841_HEVC.MOV")).unwrap();
+        let run = |completed, progress: &mut dyn FnMut(ImportOrganizeProgress), cancelled: &dyn Fn() -> bool| {
+            import_and_organize(
+                album_id, source.to_str().unwrap(), album.to_str().unwrap(),
+                "structure", completed, true, progress, cancelled,
+            ).unwrap()
+        };
+        let duplicate = run(HashSet::new(), &mut |_| {}, &|| false);
+        assert_eq!((duplicate.total, duplicate.skipped, duplicate.failed), (1, 1, 0));
+        assert_eq!(duplicate.completed_paths.len(), 2);
+        assert_eq!(fs::read_dir(&target).unwrap().count(), 2);
+
+        let raw_source = source.join("raw");
+        let live_source = source.join("live");
+        fs::create_dir(&raw_source).unwrap();
+        fs::create_dir(&live_source).unwrap();
+        for name in ["Photodesk 39.NEF", "Photodesk 39.jpg"] {
+            fs::copy(samples.join(name), raw_source.join(name)).unwrap();
+        }
+        for name in names {
+            fs::copy(samples.join(name), live_source.join(name)).unwrap();
+        }
+
+        let cancel = Cell::new(false);
+        let interrupted = run(duplicate.completed_paths.into_iter().collect(), &mut |progress| {
+            if progress.imported == 1 { cancel.set(true); }
+        }, &|| cancel.get());
+        assert!(interrupted.cancelled);
+        assert_eq!((interrupted.total, interrupted.imported, interrupted.failed), (2, 1, 0));
+        assert_eq!(interrupted.completed_paths.len(), 4);
+
+        let resumed = run(interrupted.completed_paths.into_iter().collect(), &mut |_| {}, &|| false);
+        assert!(!resumed.cancelled);
+        assert_eq!((resumed.total, resumed.imported, resumed.failed), (1, 1, 0));
+        let repeated = run(resumed.completed_paths.into_iter().collect(), &mut |_| {}, &|| false);
+        assert_eq!(repeated.total, 0);
+
+        // Exercise the file-list paste path with both pairs in one clipboard payload.
+        let clipboard_paths = [
+            raw_source.join("Photodesk 39.NEF"),
+            raw_source.join("Photodesk 39.jpg"),
+            live_source.join(names[0]),
+            live_source.join(names[1]),
+        ];
+        for enabled in [false, true] {
+            let folder = album.join(if enabled { "paste-enabled" } else { "paste-disabled" });
+            fs::create_dir(&folder).unwrap();
+            let folder = folder.canonicalize().unwrap();
+            let folder_path = folder.to_str().unwrap();
+            let folder_id = crate::t_sqlite::AFolder::add_to_db(album_id, folder_path).unwrap().id.unwrap();
+            fs::write(folder.join(names[0]), b"existing").unwrap();
+            let imported = crate::t_cmds::import_clipboard_paths(
+                &clipboard_paths, folder_id, folder_path, enabled,
+            ).unwrap();
+            assert_eq!(imported.len(), 4);
+            assert_eq!(fs::read_dir(&folder).unwrap().count(), 5);
+            assert_eq!(fs::read(folder.join(names[0])).unwrap(), b"existing");
+            let files = AFile::get_files_by_folder_id(folder_id).unwrap();
+            let live = files.iter().find(|file| file.media_subtype.as_deref() == Some("live_photo")).unwrap();
+            assert_eq!(live.name, "IMG_0841(1).HEIC");
+            let movie = files.iter().find(|file| file.id == live.live_photo_video_id).unwrap();
+            assert_eq!(movie.name, "IMG_0841(1).mov");
+            assert_eq!(live.companion_size, movie.size);
+            assert_eq!(
+                files.iter().filter(|file| file.media_subtype.as_deref() == Some("raw_jpeg_pair")).count(),
+                usize::from(enabled),
+            );
+        }
+
+        for (folder, subtype) in [(target.join("raw"), "raw_jpeg_pair"), (target.join("live"), "live_photo")] {
+            assert_eq!(fs::read_dir(&folder).unwrap().count(), 2);
+            let conn = t_sqlite::open_conn().unwrap();
+            let id = conn.query_row(
+                "SELECT a.id FROM afiles a JOIN afolders f ON a.folder_id=f.id
+                 WHERE f.path=?1 AND a.media_subtype=?2",
+                [folder.canonicalize().unwrap().to_str().unwrap(), subtype], |row| row.get(0),
+            ).unwrap_or_else(|error| panic!("Missing {subtype} in {}: {error}", folder.display()));
+            let primary = AFile::get_file_info(id).unwrap().unwrap();
+            let companion = AFile::get_file_info(primary.live_photo_video_id.unwrap()).unwrap().unwrap();
+            assert_eq!(primary.companion_size, companion.size);
+            assert!(companion.size > 0);
+            if subtype == "live_photo" {
+                let primary_path = primary.file_path.as_deref().unwrap();
+                let companion_path = companion.file_path.as_deref().unwrap();
+                let companion_xmp = format!("{companion_path}.xmp");
+                fs::write(&companion_xmp, b"companion metadata").unwrap();
+                let first_failure = crate::t_cmds::delete_file_group_with(
+                    id, primary_path, false, true, |path| {
+                        assert_eq!(path, primary_path);
+                        Err("simulated trash failure".into())
+                    },
+                ).unwrap();
+                assert_eq!(first_failure.failed_count, 1);
+                assert_eq!(first_failure.trash_failed_file_ids, [id]);
+                assert!(first_failure.deleted_file_ids.is_empty());
+                assert!(Path::new(primary_path).exists());
+                assert!(Path::new(companion_path).exists());
+                let result = crate::t_cmds::delete_file_group_with(id, primary_path, true, true, |path| {
+                    if path == companion_path {
+                        Err("simulated companion delete failure".into())
+                    } else {
+                        fs::remove_file(path).map_err(|error| error.to_string())
+                    }
+                }).unwrap();
+                assert_eq!(result.failed_count, 1);
+                assert_eq!(result.deleted_file_ids, [id]);
+                assert!(!Path::new(primary_path).exists());
+                assert!(Path::new(companion_path).exists());
+                assert_eq!(fs::read(&companion_xmp).unwrap(), b"companion metadata");
+                assert!(AFile::get_file_info(companion.id.unwrap()).unwrap().is_some());
+                let companion_id = companion.id.unwrap();
+                let retried = crate::t_cmds::delete_file_permanently(companion_id, companion_path, true).unwrap();
+                assert_eq!(retried.failed_count, 0);
+                assert_eq!(retried.deleted_file_ids, [companion_id]);
+                assert!(!Path::new(companion_path).exists());
+                assert!(!Path::new(&companion_xmp).exists());
+                assert!(AFile::get_file_info(companion_id).unwrap().is_none());
+            }
+        }
+    }
 
     #[test]
     fn import_structure_keeps_source_name_and_nested_folders() {

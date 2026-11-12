@@ -711,7 +711,8 @@
     "album_nested": "Questa cartella si sovrappone a un altro album"
   },
   "statusbar": {
-    "files_summary": "{count} file ({size})"
+    "files_summary": "{count} file ({size})",
+    "items_summary": "{count} elementi ({size})"
   },
   "menu": {
     "select": {

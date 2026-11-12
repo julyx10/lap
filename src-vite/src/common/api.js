@@ -1372,6 +1372,14 @@ export async function refreshFileInfo(libraryId, fileId) {
   return null;
 }
 
+export function importFiles(filePaths, folderId, folderPath, libraryId, onProgress) {
+  const channel = new Channel(typeof onProgress === 'function' ? onProgress : () => {});
+  return invoke('import_files', {
+    filePaths, folderId, folderPath, libraryId, onProgress: channel,
+    groupRawJpegPairs: Boolean(config.settings.groupRawJpegPairs),
+  });
+}
+
 export async function importFile(filePath, folderId, folderPath, throwOnError = false, libraryId = libConfig._libraryId) {
   try {
     const result = await invoke('import_file', { filePath, folderId, folderPath, libraryId });
@@ -1384,7 +1392,10 @@ export async function importFile(filePath, folderId, folderPath, throwOnError = 
 }
 
 export async function importAndOrganize(albumId, sourcePath, destinationPath, layout, completedPaths = []) {
-  return await invoke('import_and_organize', { albumId, sourcePath, destinationPath, layout, completedPaths });
+  return await invoke('import_and_organize', {
+    albumId, sourcePath, destinationPath, layout, completedPaths,
+    groupRawJpegPairs: Boolean(config.settings.groupRawJpegPairs),
+  });
 }
 
 export async function cancelImportAndOrganize() {

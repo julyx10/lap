@@ -711,7 +711,8 @@
     "album_nested": "Эта папка пересекается с другим альбомом"
   },
   "statusbar": {
-    "files_summary": "Файлов: {count} ({size})"
+    "files_summary": "Файлов: {count} ({size})",
+    "items_summary": "Элементов: {count} ({size})"
   },
   "menu": {
     "select": {

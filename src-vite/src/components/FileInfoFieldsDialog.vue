@@ -23,7 +23,7 @@
             <input type="checkbox" class="checkbox checkbox-primary checkbox-sm shrink-0"
               :checked="selected.includes(field.key)"
               @change="toggle(field.key, ($event.target as HTMLInputElement).checked)" />
-            <span>{{ field.label === 'GPS' ? 'GPS' : $t(field.label) }}<span v-if="field.key === 'file.duration'" class="text-base-content/50"> {{ $t('file_info.video_only') }}</span></span>
+            <span>{{ field.label === 'GPS' ? 'GPS' : $t(field.label) }}</span>
           </label>
         </div>
       </section>

@@ -544,21 +544,26 @@ pub fn get_group(group_id: i64, scope_key: &str, group_raw_pairs: bool) -> Resul
     }
     let mut stmt = conn
         .prepare(
-            "SELECT file_id, score, is_keep FROM similarity_group_items WHERE group_id=?1 ORDER BY is_keep DESC, score DESC, file_id ASC",
+            "SELECT file_id, score, is_keep,
+                    EXISTS (SELECT 1 FROM afiles still WHERE still.media_subtype = 'live_photo'
+                            AND still.live_photo_video_id = item.file_id)
+             FROM similarity_group_items item WHERE group_id=?1
+             ORDER BY is_keep DESC, score DESC, file_id ASC",
         )
         .map_err(|e| e.to_string())?;
     let rows = stmt.query_map(params![group_id], |row| {
-        Ok((row.get::<_, i64>(0)?, row.get::<_, f32>(1)?, row.get::<_, i64>(2)?))
+        Ok((row.get::<_, i64>(0)?, row.get::<_, f32>(1)?, row.get::<_, i64>(2)?, row.get::<_, bool>(3)?))
     }).map_err(|error| error.to_string())?.collect::<Result<Vec<_>, _>>()
         .map_err(|error| error.to_string())?;
     let ids = rows.iter().filter(|row| row.2 == 0).map(|row| row.0).collect::<Vec<_>>();
     let candidates = t_dedup::similar_delete_candidates(&conn, group_id, &ids, group_raw_pairs)?;
     let deletable = t_dedup::safe_dedup_delete_candidates(&conn, candidates, group_raw_pairs, true)?
         .into_iter().map(|file| file.file_id).collect::<HashSet<_>>();
-    let items = rows.into_iter().map(|(file_id, score, is_keep)| {
+    let items = rows.into_iter().map(|(file_id, score, is_keep, is_live_photo_companion)| {
         Ok(serde_json::json!({
             "file_id": file_id, "score": score, "is_keep": is_keep,
-            "can_delete": deletable.contains(&file_id), "file": AFile::get_file_info(file_id)?
+            "can_delete": deletable.contains(&file_id), "is_live_photo_companion": is_live_photo_companion,
+            "file": AFile::get_file_info(file_id)?
         }))
     }).collect::<Result<Vec<_>, String>>()?;
     Ok(serde_json::json!({"id": group_id, "items": items}))

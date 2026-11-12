@@ -711,7 +711,8 @@
     "album_nested": "Esta pasta sobrepõe-se a outro álbum"
   },
   "statusbar": {
-    "files_summary": "{count} arquivos ({size})"
+    "files_summary": "{count} arquivos ({size})",
+    "items_summary": "{count} itens ({size})"
   },
   "menu": {
     "select": {

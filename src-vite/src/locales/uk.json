@@ -711,7 +711,8 @@
     "album_nested": "Ця тека перекривається з іншим альбомом"
   },
   "statusbar": {
-    "files_summary": "{count} файлів ({size})"
+    "files_summary": "{count} файлів ({size})",
+    "items_summary": "{count} елементів ({size})"
   },
   "menu": {
     "select": {

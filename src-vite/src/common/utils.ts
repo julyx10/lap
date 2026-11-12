@@ -220,6 +220,11 @@ export function getCalendarDateRange(year: number, month: number, date: number) 
   return [startDate, endDate];
 }
 
+/// Total size of a displayed item, including a paired companion.
+export function getMediaItemSize(file: { size?: number | null; companion_size?: number | null } | null | undefined): number {
+  return Number(file?.size ?? 0) + Number(file?.companion_size ?? 0);
+}
+
 /// format file size to string
 export function formatFileSize(bytes: number): string {
   if (bytes == null) return '';
@@ -295,6 +300,14 @@ function formatAspectRatio(width: number, height: number): string | null {
   }
 
   return `${actualRatio.toFixed(2)}:1`;
+}
+
+/// Duration badge text for video items.
+export function formatVideoDurationBadge(file?: { file_type?: number | null; duration?: number | null } | null): string {
+  const duration = Number(file?.duration);
+  return file?.file_type === 2 && Number.isFinite(duration) && duration > 0
+    ? formatDuration(duration)
+    : '';
 }
 
 /// format duration to string

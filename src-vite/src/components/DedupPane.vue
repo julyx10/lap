@@ -154,7 +154,7 @@
             </div>
             <div class="flex flex-wrap gap-1">
               <PanelActionButton
-                :icon="isAllSimilarItemsSelected(activeSimilarGroup.id) ? IconUnChecked : IconChecked"
+                :icon="isAllSimilarItemsSelected(activeSimilarGroup.id) ? IconDeselect : IconSelectAll"
                 @click="selectAllSimilarItems(activeSimilarGroup)"
               >
                 {{ isAllSimilarItemsSelected(activeSimilarGroup.id) ? $t('menu.select.none') : $t('menu.select.all') }}
@@ -207,9 +207,12 @@
                     <div class="flex items-center gap-1 text-xs font-semibold text-base-content/70">
                       <span class="truncate">{{ item.file?.name }}</span>
                       <span
-                        v-if="config.settings.groupRawJpegPairs && item.file?.media_subtype === 'raw_jpeg_pair'"
-                        class="shrink-0 rounded bg-base-content/10 px-1 text-[9px] font-medium text-base-content/60"
-                      >{{ formatRawPairBadge(item.file.live_photo_video_path) }}</span>
+                        v-if="dedupPairBadge(item)"
+                        class="inline-flex shrink-0 items-center gap-0.5 rounded bg-base-content/10 px-1 text-[9px] font-medium text-base-content/60"
+                      >
+                        <IconLivePhoto v-if="isDedupLivePhoto(item)" class="h-3 w-3 shrink-0" aria-hidden="true" />
+                        {{ dedupPairBadge(item) }}
+                      </span>
                       <IconExclamation v-if="isOriginalUnavailable(item.file)" class="w-3.5 h-3.5 shrink-0 text-warning" />
                     </div>
                     <div
@@ -223,7 +226,7 @@
                         {{ item.file.width }} × {{ item.file.height }}
                       </template>
                       <template v-else>—</template>
-                      · {{ formatFileSize(Number(item.file?.size || 0)) }}
+                      · {{ formatFileSize(getMediaItemSize(item.file)) }}
                     </div>
                     <div v-else-if="item.file?.[preferredDateField] > 0" class="text-[11px] text-base-content/30">
                       {{ $t(`file_info.${preferredDateField}`) }}: {{ formatTimestamp(item.file[preferredDateField], 'date_time') }}
@@ -404,7 +407,7 @@
 
           <div class="flex flex-wrap gap-1">
             <PanelActionButton
-              :icon="isAllGroupDuplicatesSelected(activeGroup.id) ? IconUnChecked : IconChecked"
+              :icon="isAllGroupDuplicatesSelected(activeGroup.id) ? IconDeselect : IconSelectAll"
               @click="selectGroupDuplicates(activeGroup.id, activeGroup.keepItem?.file_id || 0)"
             >
               {{ isAllGroupDuplicatesSelected(activeGroup.id) ? $t('menu.select.none') : $t('menu.select.all') }}
@@ -459,9 +462,12 @@
                   <div class="flex items-center gap-1 text-xs font-semibold text-base-content/70">
                     <span class="truncate">{{ item.file?.name }}</span>
                     <span
-                      v-if="config.settings.groupRawJpegPairs && item.file?.media_subtype === 'raw_jpeg_pair'"
-                      class="shrink-0 rounded bg-base-content/10 px-1 text-[9px] font-medium text-base-content/60"
-                    >{{ formatRawPairBadge(item.file.live_photo_video_path) }}</span>
+                      v-if="dedupPairBadge(item)"
+                      class="inline-flex shrink-0 items-center gap-0.5 rounded bg-base-content/10 px-1 text-[9px] font-medium text-base-content/60"
+                    >
+                      <IconLivePhoto v-if="isDedupLivePhoto(item)" class="h-3 w-3 shrink-0" aria-hidden="true" />
+                      {{ dedupPairBadge(item) }}
+                    </span>
                     <IconExclamation v-if="isOriginalUnavailable(item.file)" class="w-3.5 h-3.5 shrink-0 text-warning" />
                   </div>
                   <div
@@ -522,12 +528,13 @@ import {
   getThumbUrl,
   isMac,
   formatTimestamp,
+  getMediaItemSize,
 } from '@/common/utils';
 import DedupSettings from './DedupSettings.vue';
 import TButton from '@/components/TButton.vue';
 import PanelActionButton from '@/components/PanelActionButton.vue';
 import MessageBox from '@/components/MessageBox.vue';
-import { IconAdjustments, IconChecked, IconExclamation, IconUnChecked, IconClose, IconFlag, IconFlagFilled, IconFlagOff, IconShield, IconRefresh, IconSplitOn, IconSplitOn4, IconTrash } from '@/common/icons';
+import { IconAdjustments, IconSelectAll, IconExclamation, IconDeselect, IconClose, IconFlag, IconFlagFilled, IconFlagOff, IconLivePhoto, IconShield, IconRefresh, IconSplitOn, IconSplitOn4, IconTrash } from '@/common/icons';
 import {
   dedupStartScan,
   dedupCancelScan,
@@ -713,7 +720,7 @@ const selectedDeleteCount = computed(() => {
 const selectedDeleteBytes = computed(() => {
   if (!activeGroup.value) return 0;
   return activeGroup.value.duplicateItems.reduce((sum: number, item: any) => {
-    return isDupSelected(activeGroup.value.id, item.file_id) ? sum + Number(item.file?.size || 0) : sum;
+    return isDupSelected(activeGroup.value.id, item.file_id) ? sum + getMediaItemSize(item.file) : sum;
   }, 0);
 });
 
@@ -728,7 +735,7 @@ const selectedSimilarBytes = computed(() => {
   if (!activeSimilarGroup.value) return 0;
   return activeSimilarGroup.value.items.reduce((sum: number, item: any) =>
     item.is_keep !== 1 && isSimilarSelected(activeSimilarGroup.value.id, item.file_id)
-      ? sum + Number(item.file?.size || 0)
+      ? sum + getMediaItemSize(item.file)
       : sum, 0);
 });
 
@@ -1372,6 +1379,20 @@ function applyDeletedSimilarFiles(groupId: number, deletedFileIds: number[]) {
     return;
   }
   similarGroups.value[index] = { ...group, items, file_count: items.length };
+}
+
+function isDedupLivePhoto(item: any): boolean {
+  return item.is_live_photo_companion === true || item.file?.media_subtype === 'live_photo';
+}
+
+function dedupPairBadge(item: any): string {
+  if (isDedupLivePhoto(item)) {
+    return t('image_viewer.live');
+  }
+  if (config.settings.groupRawJpegPairs && item.file?.media_subtype === 'raw_jpeg_pair') {
+    return formatRawPairBadge(item.file.live_photo_video_path);
+  }
+  return '';
 }
 
 function formatDedupFolderPath(file: any): string {
