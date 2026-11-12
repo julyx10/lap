@@ -37,14 +37,14 @@
     "drop_action": "Hozzáadás",
     "drop_title_hint": "Húzza ide a hozzáadáshoz",
     "empty_drop_hint": "Húzza az elemeket a fenti gyűjteményre.",
-    "added_toast": "{count} fájl hozzáadva",
-    "add_failed_toast": "A fájlok nem adhatók {count} gyűjteményhez",
-    "already_exists_toast": "{count} fájl már a gyűjteményben van",
+    "added_toast": "{count} elem hozzáadva a gyűjteményhez",
+    "add_failed_toast": "Nem sikerült elemeket hozzáadni {count} gyűjteményhez",
+    "already_exists_toast": "{count} elem már a gyűjteményben van",
     "clear": "Gyűjtemény ürítése",
     "clear_confirm_title": "Gyűjtemény ürítése",
     "clear_confirm_message": "Eltávolít minden fájlt innen: „{name}”? A fájlok megmaradnak.",
     "clear_confirm_ok": "Ürítés",
-    "removed_toast": "{count} fájl eltávolítva"
+    "removed_toast": "{count} elem eltávolítva a gyűjteményből"
   },
   "library": {
     "all_files": "Minden fájl",
@@ -254,7 +254,7 @@
     "section_folders": "Mappa kiválasztása",
     "section_status": "Importálás állapota",
     "to_import": "Importálandó",
-    "files_progress": "{processed} / {total} fájl ({size})",
+    "files_progress": "{processed} / {total} elem ({size})",
     "source": "Forrás",
     "source_placeholder": "Forrásmappa kiválasztása",
     "destination": "Cél",
@@ -265,7 +265,7 @@
     "layout_structure": "Mappaszerkezet megőrzése",
     "import": "Importálás",
     "preparing": "Importálás előkészítése",
-    "importing": "Fájlok importálása",
+    "importing": "Elemek importálása",
     "complete": "Importálás kész",
     "cancelled": "Importálás megszakítva",
     "continue": "Folytatás",
@@ -458,7 +458,7 @@
     "filter": {
       "favorites_only": "Csak kedvencek",
       "select_mode": "Többszörös kijelölés",
-      "select_files": "Fájlok kijelölése",
+      "select_files": "Elemek kijelölése",
       "show_selection_panel": "Többszörös kijelölési panel megnyitása",
       "hide_selection_panel": "Többszörös kijelölési panel összecsukása",
       "exit_select_mode": "Kilépés a többszörös kijelölésből",
@@ -525,14 +525,14 @@
       "Korrekció"
     ],
     "empty_title": "A lista üres",
-    "empty_desc": "Adjon hozzá fájlokat, vagy módosítsa a szűrőt az elemek megjelenítéséhez.",
-    "select_hint": "Nincs kijelölt fájl",
+    "empty_desc": "Adjon hozzá elemeket, vagy módosítsa a szűrőt az elemek megjelenítéséhez.",
+    "select_hint": "Nincs kijelölt elem",
     "deselect": "Kijelölés törlése",
     "select_mode_entered": "Többszörös kijelölés bekapcsolva",
-    "selection_load_failed": "Nem tölthető be minden fájl a kijelöléshez. Próbálja újra.",
+    "selection_load_failed": "Nem tölthető be minden elem a kijelöléshez. Próbálja újra.",
     "large_batch": {
       "title": "Tömeges művelet megerősítése",
-      "content": "A művelet {count} fájlt dolgoz fel, és időbe telhet. Folytatja?",
+      "content": "A művelet {count} elemet dolgoz fel, és időbe telhet. Folytatja?",
       "ok": "Folytatás"
     },
     "drag_action": {
@@ -624,10 +624,10 @@
       "delete_selected": "Kijelöltek törlése",
       "delete_all": "Összes törlése",
       "move_selected_to_trash": "Kukába helyezés ({count} kijelölve · {size})",
-      "no_removable_files": "Nincs kukába helyezhető fájl",
+      "no_removable_files": "Nincs kukába helyezhető eltávolítható elem",
       "set_keep": "Megtartás",
       "removable_copies_summary": "{count} törölhető példány · {size}",
-      "similar_photos_summary": "{count} hasonló fotó · {size}"
+      "similar_items_summary": "{count} hasonló elem · {size}"
     }
   },
   "tooltip": {
@@ -975,36 +975,36 @@
     "move_to_trash": {
       "title": "Kukába helyezés",
       "file_content": "A(z) \"{file}\" fájl a kukába kerül.",
-      "files_content": "{count} kiválasztott fájl a kukába kerül.",
-      "removable_files_content": "Az összes {count} eltávolítható fájl a kukába kerül.",
+      "files_content": "{count} kiválasztott elem a kukába kerül.",
+      "removable_files_content": "Az összes {count} eltávolítható elem a kukába kerül.",
       "folder_content": "A(z) \"{folder}\" mappa a kukába kerül.",
       "ok": "Kukába",
       "file_success": "A(z) \"{file}\" fájl a kukába került.",
-      "files_success": "{count} kiválasztott fájl a kukába került.",
+      "files_success": "{count} kiválasztott elem a kukába került.",
       "folder_success": "A(z) \"{folder}\" mappa a kukába került.",
       "file_error": "Nem sikerült áthelyezni a fájlt a kukába.",
-      "files_error": "Nem sikerült a kiválasztott fájlokat a kukába helyezni.",
+      "files_error": "Nem sikerült a kiválasztott elemeket a kukába helyezni.",
       "folder_error": "Nem sikerült a mappát a kukába helyezni."
     },
     "permanent_delete": {
       "title": "Végleges törlés",
       "file_content": "A(z) \"{file}\" fájl véglegesen törlődik.",
-      "files_content": "{count} kiválasztott fájl véglegesen törlődik.",
-      "removable_files_content": "Az összes {count} eltávolítható fájl véglegesen törlődik.",
+      "files_content": "{count} kiválasztott elem véglegesen törlődik.",
+      "removable_files_content": "Az összes {count} eltávolítható elem véglegesen törlődik.",
       "folder_content": "A(z) \"{folder}\" mappa véglegesen törlődik.",
       "checkbox": "Végleges törlés (nem vonható vissza)",
       "ok": "Törlés",
       "file_success": "A(z) \"{file}\" fájl véglegesen törölve lett.",
-      "files_success": "{count} kiválasztott fájl véglegesen törölve lett.",
+      "files_success": "{count} kiválasztott elem véglegesen törölve lett.",
       "folder_success": "A(z) \"{folder}\" mappa véglegesen törölve lett.",
       "file_error": "Nem sikerült véglegesen törölni a fájlt.",
-      "files_error": "Nem sikerült véglegesen törölni a kiválasztott fájlokat.",
+      "files_error": "Nem sikerült véglegesen törölni a kiválasztott elemeket.",
       "folder_error": "Nem sikerült véglegesen törölni a mappát."
     },
     "trash_failed": {
       "title": "Sikertelen kukába helyezés",
       "file_content": "A(z) \"{file}\" fájl nem helyezhető át a kukába.\n\nEhelyett véglegesen törölni szeretné?",
-      "files_content": "{count} kiválasztott fájlt nem sikerült a kukába helyezni.\n\nEhelyett véglegesen törölni szeretné őket?",
+      "files_content": "{count} kiválasztott elemet nem sikerült a kukába helyezni.\n\nEhelyett véglegesen törölni szeretné őket?",
       "folder_content": "A(z) \"{folder}\" mappa nem helyezhető át a kukába.\n\nEhelyett véglegesen törölni szeretné?\n\nEz a művelet nem vonható vissza a rendszer Lomtárából.",
       "folder_partial_warning": "Az előző kísérlet során a tartalom egy része a Lomtárba kerülhetett. A végleges törlés ezt a mappát és a megmaradt tartalmát törli.",
       "ok": "Végleges törlés"

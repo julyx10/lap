@@ -37,14 +37,14 @@
     "drop_action": "Aggiungi",
     "drop_title_hint": "Trascina per aggiungere",
     "empty_drop_hint": "Trascina gli elementi sulla raccolta qui sopra per aggiungerli.",
-    "added_toast": "{count} file aggiunti alla raccolta",
-    "add_failed_toast": "Impossibile aggiungere file a {count} raccolte",
-    "already_exists_toast": "{count} file già presenti nella raccolta",
+    "added_toast": "{count} elementi aggiunti alla raccolta",
+    "add_failed_toast": "Impossibile aggiungere elementi a {count} raccolte",
+    "already_exists_toast": "{count} elementi già presenti nella raccolta",
     "clear": "Svuota raccolta",
     "clear_confirm_title": "Svuota raccolta",
     "clear_confirm_message": "Rimuovere tutti i file da \"{name}\"? I file non verranno eliminati.",
     "clear_confirm_ok": "Svuota",
-    "removed_toast": "{count} file rimossi dalla raccolta"
+    "removed_toast": "{count} elementi rimossi dalla raccolta"
   },
   "library": {
     "all_files": "Tutti i file",
@@ -254,7 +254,7 @@
     "section_folders": "Seleziona cartella",
     "section_status": "Stato importazione",
     "to_import": "Da importare",
-    "files_progress": "{processed} / {total} file ({size})",
+    "files_progress": "{processed} / {total} elementi ({size})",
     "source": "Origine",
     "source_placeholder": "Seleziona una cartella di origine",
     "destination": "Destinazione",
@@ -265,7 +265,7 @@
     "layout_structure": "Mantieni la struttura delle cartelle",
     "import": "Importa",
     "preparing": "Preparazione importazione",
-    "importing": "Importazione dei file",
+    "importing": "Importazione elementi",
     "complete": "Importazione completata",
     "cancelled": "Importazione annullata",
     "continue": "Continua",
@@ -458,7 +458,7 @@
     "filter": {
       "favorites_only": "Solo preferiti",
       "select_mode": "Selezione multipla",
-      "select_files": "Seleziona file",
+      "select_files": "Seleziona elementi",
       "show_selection_panel": "Apri il pannello di selezione multipla",
       "hide_selection_panel": "Comprimi il pannello di selezione multipla",
       "exit_select_mode": "Esci dalla selezione multipla",
@@ -525,14 +525,14 @@
       "Regola"
     ],
     "empty_title": "Questo elenco è vuoto",
-    "empty_desc": "Aggiungi file o aggiorna il filtro corrente per mostrare qui gli elementi.",
-    "select_hint": "Nessun file selezionato",
+    "empty_desc": "Aggiungi elementi o aggiorna il filtro corrente per mostrarli qui.",
+    "select_hint": "Nessun elemento selezionato",
     "deselect": "Deseleziona",
     "select_mode_entered": "La modalità selezione multipla è attiva",
-    "selection_load_failed": "Impossibile caricare tutti i file per la selezione. Riprova.",
+    "selection_load_failed": "Impossibile caricare tutti gli elementi per la selezione. Riprova.",
     "large_batch": {
       "title": "Conferma operazione in blocco",
-      "content": "Questa operazione elaborerà {count} file e potrebbe richiedere del tempo. Continuare?",
+      "content": "Questa operazione elaborerà {count} elementi e potrebbe richiedere del tempo. Continuare?",
       "ok": "Continua"
     },
     "drag_action": {
@@ -624,10 +624,10 @@
       "delete_selected": "Elimina selezionati",
       "delete_all": "Elimina tutti",
       "move_selected_to_trash": "Sposta nel cestino ({count} selezionati · {size})",
-      "no_removable_files": "Nessun file rimovibile da spostare nel cestino",
+      "no_removable_files": "Nessun elemento rimovibile da spostare nel cestino",
       "set_keep": "Mantieni",
       "removable_copies_summary": "{count} copie rimovibili · {size}",
-      "similar_photos_summary": "{count} foto simili · {size}"
+      "similar_items_summary": "{count} elementi simili · {size}"
     }
   },
   "tooltip": {
@@ -975,36 +975,36 @@
     "move_to_trash": {
       "title": "Sposta nel cestino",
       "file_content": "Il file '{file}' verrà spostato nel cestino.",
-      "files_content": "{count} file selezionati verranno spostati nel cestino.",
-      "removable_files_content": "Tutti i {count} file rimovibili verranno spostati nel cestino.",
+      "files_content": "{count} elementi selezionati verranno spostati nel cestino.",
+      "removable_files_content": "Tutti i {count} elementi rimovibili verranno spostati nel cestino.",
       "folder_content": "La cartella '{folder}' verrà spostata nel cestino.",
       "ok": "Cestino",
       "file_success": "Il file '{file}' è stato spostato nel cestino.",
-      "files_success": "{count} file selezionati sono stati spostati nel cestino.",
+      "files_success": "{count} elementi selezionati sono stati spostati nel cestino.",
       "folder_success": "La cartella '{folder}' è stata spostata nel cestino.",
       "file_error": "Impossibile spostare il file nel cestino.",
-      "files_error": "Impossibile spostare i file selezionati nel cestino.",
+      "files_error": "Impossibile spostare gli elementi selezionati nel cestino.",
       "folder_error": "Impossibile spostare la cartella nel cestino."
     },
     "permanent_delete": {
       "title": "Elimina definitivamente",
       "file_content": "Il file '{file}' verrà eliminato definitivamente.",
-      "files_content": "{count} file selezionati verranno eliminati definitivamente.",
-      "removable_files_content": "Tutti i {count} file rimovibili verranno eliminati definitivamente.",
+      "files_content": "{count} elementi selezionati verranno eliminati definitivamente.",
+      "removable_files_content": "Tutti i {count} elementi rimovibili verranno eliminati definitivamente.",
       "folder_content": "La cartella '{folder}' verrà eliminata definitivamente.",
       "checkbox": "Elimina definitivamente (operazione non annullabile)",
       "ok": "Elimina",
       "file_success": "Il file '{file}' è stato eliminato definitivamente.",
-      "files_success": "{count} file selezionati sono stati eliminati definitivamente.",
+      "files_success": "{count} elementi selezionati sono stati eliminati definitivamente.",
       "folder_success": "La cartella '{folder}' è stata eliminata definitivamente.",
       "file_error": "Impossibile eliminare definitivamente il file.",
-      "files_error": "Impossibile eliminare definitivamente i file selezionati.",
+      "files_error": "Impossibile eliminare definitivamente gli elementi selezionati.",
       "folder_error": "Impossibile eliminare definitivamente la cartella."
     },
     "trash_failed": {
       "title": "Spostamento nel cestino non riuscito",
       "file_content": "Impossibile spostare nel cestino il file '{file}'.\n\nVuoi eliminarlo definitivamente?",
-      "files_content": "Impossibile spostare nel cestino {count} file selezionati.\n\nVuoi eliminarli definitivamente?",
+      "files_content": "Impossibile spostare nel cestino {count} elementi selezionati.\n\nVuoi eliminarli definitivamente?",
       "folder_content": "Impossibile spostare nel cestino la cartella '{folder}'.\n\nVuoi eliminarla definitivamente?\n\nQuesta operazione non può essere annullata tramite il cestino di sistema.",
       "folder_partial_warning": "Il tentativo precedente potrebbe aver spostato parte del contenuto nel cestino. L’eliminazione permanente rimuoverà questa cartella e il contenuto rimanente.",
       "ok": "Elimina definitivamente"

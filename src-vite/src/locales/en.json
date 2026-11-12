@@ -37,14 +37,14 @@
     "drop_action": "Add",
     "drop_title_hint": "Drop to add",
     "empty_drop_hint": "Drag items onto the collection above to add them.",
-    "added_toast": "{count} file(s) added to collection",
-    "add_failed_toast": "Could not add files to {count} collection(s)",
-    "already_exists_toast": "{count} file(s) already in collection",
+    "added_toast": "{count} item(s) added to collection",
+    "add_failed_toast": "Could not add items to {count} collection(s)",
+    "already_exists_toast": "{count} item(s) already in collection",
     "clear": "Empty Collection",
     "clear_confirm_title": "Clear collection",
     "clear_confirm_message": "Remove all files from \"{name}\"? Files themselves will not be deleted.",
     "clear_confirm_ok": "Clear",
-    "removed_toast": "{count} file(s) removed from collection"
+    "removed_toast": "{count} item(s) removed from collection"
   },
   "library": {
     "all_files": "All files",
@@ -254,7 +254,7 @@
     "section_folders": "Select folder",
     "section_status": "Import status",
     "to_import": "To import",
-    "files_progress": "{processed} / {total} files ({size})",
+    "files_progress": "{processed} / {total} items ({size})",
     "source": "Source",
     "source_placeholder": "Select a source folder",
     "destination": "Destination",
@@ -265,7 +265,7 @@
     "layout_structure": "Keep folder structure",
     "import": "Import",
     "preparing": "Preparing import",
-    "importing": "Importing files",
+    "importing": "Importing items",
     "complete": "Import complete",
     "cancelled": "Import cancelled",
     "continue": "Continue",
@@ -458,7 +458,7 @@
     "filter": {
       "favorites_only": "Favorites only",
       "select_mode": "Multi-select",
-      "select_files": "Select files",
+      "select_files": "Select items",
       "show_selection_panel": "Open multi-select panel",
       "hide_selection_panel": "Hide multi-select panel",
       "exit_select_mode": "Exit multi-select",
@@ -525,14 +525,14 @@
       "Adjust"
     ],
     "empty_title": "This list is empty",
-    "empty_desc": "Add files or update the current filter to show items here.",
-    "select_hint": "No files selected",
+    "empty_desc": "Add items or update the current filter to show them here.",
+    "select_hint": "No items selected",
     "deselect": "Deselect",
     "select_mode_entered": "Multi-select mode is on",
-    "selection_load_failed": "Could not load all files for selection. Try again.",
+    "selection_load_failed": "Could not load all items for selection. Try again.",
     "large_batch": {
       "title": "Confirm bulk operation",
-      "content": "This operation will process {count} files and may take some time. Continue?",
+      "content": "This operation will process {count} items and may take some time. Continue?",
       "ok": "Continue"
     },
     "drag_action": {
@@ -624,10 +624,10 @@
       "delete_selected": "Delete Selected",
       "delete_all": "Delete all",
       "move_selected_to_trash": "Move to trash ({count} selected · {size})",
-      "no_removable_files": "No removable files to move to Trash",
+      "no_removable_files": "No removable items to move to Trash",
       "set_keep": "Keep",
       "removable_copies_summary": "{count} removable copies · {size}",
-      "similar_photos_summary": "{count} similar photos · {size}"
+      "similar_items_summary": "{count} similar items · {size}"
     }
   },
   "tooltip": {
@@ -975,36 +975,36 @@
     "move_to_trash": {
       "title": "Move to trash",
       "file_content": "The file '{file}' will be trashed.",
-      "files_content": "{count} selected files will be trashed.",
-      "removable_files_content": "All {count} removable files will be trashed.",
+      "files_content": "{count} selected items will be trashed.",
+      "removable_files_content": "All {count} removable items will be trashed.",
       "folder_content": "The folder '{folder}' will be trashed.",
       "ok": "Trash",
       "file_success": "The file '{file}' has been trashed.",
-      "files_success": "{count} selected files have been trashed.",
+      "files_success": "{count} selected items have been trashed.",
       "folder_success": "The folder '{folder}' has been trashed.",
       "file_error": "Failed to move the file to trash.",
-      "files_error": "Failed to move selected files to trash.",
+      "files_error": "Failed to move selected items to trash.",
       "folder_error": "Failed to move the folder to trash."
     },
     "permanent_delete": {
       "title": "Delete permanently",
       "file_content": "The file '{file}' will be permanently deleted.",
-      "files_content": "{count} selected files will be permanently deleted.",
-      "removable_files_content": "All {count} removable files will be permanently deleted.",
+      "files_content": "{count} selected items will be permanently deleted.",
+      "removable_files_content": "All {count} removable items will be permanently deleted.",
       "folder_content": "The folder '{folder}' will be permanently deleted.",
       "checkbox": "Delete permanently (cannot be undone)",
       "ok": "Delete",
       "file_success": "The file '{file}' has been permanently deleted.",
-      "files_success": "{count} selected files have been permanently deleted.",
+      "files_success": "{count} selected items have been permanently deleted.",
       "folder_success": "The folder '{folder}' has been permanently deleted.",
       "file_error": "Failed to permanently delete the file.",
-      "files_error": "Failed to permanently delete selected files.",
+      "files_error": "Failed to permanently delete selected items.",
       "folder_error": "Failed to permanently delete the folder."
     },
     "trash_failed": {
       "title": "Trash failed",
       "file_content": "The file '{file}' could not be moved to trash.\n\nDo you want to permanently delete it instead?",
-      "files_content": "{count} selected files could not be moved to trash.\n\nDo you want to permanently delete them instead?",
+      "files_content": "{count} selected items could not be moved to trash.\n\nDo you want to permanently delete them instead?",
       "folder_content": "The folder '{folder}' could not be moved to trash.\n\nDo you want to permanently delete it instead?\n\nThis cannot be undone through the system Trash.",
       "folder_partial_warning": "The previous attempt may have moved some contents to Trash. Permanent deletion will remove this folder and its remaining contents.",
       "ok": "Delete permanently"

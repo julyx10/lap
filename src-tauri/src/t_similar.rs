@@ -507,20 +507,22 @@ pub fn list_groups(scope_key: &str, limit: i64, offset: i64) -> Result<serde_jso
     Ok(serde_json::json!({"items": out, "total": total}))
 }
 
-pub fn get_overview(scope_key: &str) -> Result<serde_json::Value, String> {
+pub fn get_overview(scope_key: &str, group_raw_pairs: bool) -> Result<serde_json::Value, String> {
     let conn = get_db_conn()?;
     let (total_files, total_size) = conn
         .query_row(
             "SELECT
                 COUNT(*),
-                COALESCE(SUM(a.size), 0)
+                COALESCE(SUM(a.size + COALESCE(companion.size, 0)), 0)
              FROM similarity_group_items i
              JOIN similarity_groups g ON g.id = i.group_id
              JOIN similarity_scans s ON s.id = g.scan_id
              JOIN afiles a ON a.id = i.file_id
+             LEFT JOIN afiles companion ON companion.id = a.live_photo_video_id
+               AND (a.media_subtype = 'live_photo' OR (?2 AND a.media_subtype = 'raw_jpeg_pair'))
              WHERE s.scope_key = ?1
                AND (SELECT COUNT(*) FROM similarity_group_items WHERE group_id = i.group_id) > 1",
-            params![scope_key],
+            params![scope_key, group_raw_pairs],
             |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?)),
         )
         .map_err(|e| e.to_string())?;

@@ -37,14 +37,14 @@
     "drop_action": "Hinzufügen",
     "drop_title_hint": "Zum Hinzufügen ablegen",
     "empty_drop_hint": "Ziehen Sie Elemente in die Sammlung, um sie hinzuzufügen.",
-    "added_toast": "{count} Datei(en) zur Sammlung hinzugefügt",
-    "add_failed_toast": "Dateien konnten nicht zu {count} Sammlung(en) hinzugefügt werden",
-    "already_exists_toast": "{count} Datei(en) bereits in der Sammlung",
+    "added_toast": "{count} Element(e) zur Sammlung hinzugefügt",
+    "add_failed_toast": "Elemente konnten nicht zu {count} Sammlung(en) hinzugefügt werden",
+    "already_exists_toast": "{count} Element(e) bereits in der Sammlung",
     "clear": "Sammlung leeren",
     "clear_confirm_title": "Sammlung leeren",
     "clear_confirm_message": "Alle Dateien aus \"{name}\" entfernen? Die Dateien selbst werden nicht gelöscht.",
     "clear_confirm_ok": "Leeren",
-    "removed_toast": "{count} Datei(en) aus Sammlung entfernt"
+    "removed_toast": "{count} Element(e) aus Sammlung entfernt"
   },
   "library": {
     "all_files": "Alle Dateien",
@@ -254,7 +254,7 @@
     "section_folders": "Ordner auswählen",
     "section_status": "Importstatus",
     "to_import": "Zu importieren",
-    "files_progress": "{processed} / {total} Dateien ({size})",
+    "files_progress": "{processed} / {total} Elemente ({size})",
     "source": "Quelle",
     "source_placeholder": "Quellordner wählen",
     "destination": "Ziel",
@@ -265,7 +265,7 @@
     "layout_structure": "Ordnerstruktur beibehalten",
     "import": "Importieren",
     "preparing": "Import wird vorbereitet",
-    "importing": "Dateien werden importiert",
+    "importing": "Elemente werden importiert",
     "complete": "Import abgeschlossen",
     "cancelled": "Import abgebrochen",
     "continue": "Fortsetzen",
@@ -458,7 +458,7 @@
     "filter": {
       "favorites_only": "Nur Favoriten",
       "select_mode": "Mehrfachauswahl",
-      "select_files": "Dateien auswählen",
+      "select_files": "Elemente auswählen",
       "show_selection_panel": "Mehrfachauswahl-Bereich öffnen",
       "hide_selection_panel": "Mehrfachauswahl-Bereich einklappen",
       "exit_select_mode": "Mehrfachauswahl beenden",
@@ -525,14 +525,14 @@
       "Anpassen"
     ],
     "empty_title": "Diese Liste ist leer",
-    "empty_desc": "Fügen Sie Dateien hinzu oder aktualisieren Sie den aktuellen Filter, damit hier Inhalte angezeigt werden.",
-    "select_hint": "Keine Dateien ausgewählt",
+    "empty_desc": "Fügen Sie Elemente hinzu oder aktualisieren Sie den aktuellen Filter, um sie hier anzuzeigen.",
+    "select_hint": "Keine Elemente ausgewählt",
     "deselect": "Abwählen",
     "select_mode_entered": "Mehrfachauswahl ist aktiviert",
-    "selection_load_failed": "Nicht alle Dateien konnten für die Auswahl geladen werden. Versuchen Sie es erneut.",
+    "selection_load_failed": "Nicht alle Elemente konnten für die Auswahl geladen werden. Versuchen Sie es erneut.",
     "large_batch": {
       "title": "Massenvorgang bestätigen",
-      "content": "Dieser Vorgang verarbeitet {count} Dateien und kann einige Zeit dauern. Fortfahren?",
+      "content": "Dieser Vorgang verarbeitet {count} Elemente und kann einige Zeit dauern. Fortfahren?",
       "ok": "Fortfahren"
     },
     "drag_action": {
@@ -624,10 +624,10 @@
       "delete_selected": "Auswahl löschen",
       "delete_all": "Alle löschen",
       "move_selected_to_trash": "In Papierkorb ({count} ausgewählt · {size})",
-      "no_removable_files": "Keine entfernbaren Dateien zum Verschieben in den Papierkorb",
+      "no_removable_files": "Keine entfernbaren Elemente zum Verschieben in den Papierkorb",
       "set_keep": "Behalten",
       "removable_copies_summary": "{count} entfernbare Kopien · {size}",
-      "similar_photos_summary": "{count} ähnliche Fotos · {size}"
+      "similar_items_summary": "{count} ähnliche Elemente · {size}"
     }
   },
   "tooltip": {
@@ -975,36 +975,36 @@
     "move_to_trash": {
       "title": "In Papierkorb verschieben",
       "file_content": "Die Datei '{file}' wird in den Papierkorb verschoben.",
-      "files_content": "{count} ausgewählte Dateien werden in den Papierkorb verschoben.",
-      "removable_files_content": "Alle {count} entfernbaren Dateien werden in den Papierkorb verschoben.",
+      "files_content": "{count} ausgewählte Elemente werden in den Papierkorb verschoben.",
+      "removable_files_content": "Alle {count} entfernbaren Elemente werden in den Papierkorb verschoben.",
       "folder_content": "Der Ordner '{folder}' wird in den Papierkorb verschoben.",
       "ok": "In Papierkorb",
       "file_success": "Die Datei '{file}' wurde in den Papierkorb verschoben.",
-      "files_success": "{count} ausgewählte Dateien wurden in den Papierkorb verschoben.",
+      "files_success": "{count} ausgewählte Elemente wurden in den Papierkorb verschoben.",
       "folder_success": "Der Ordner '{folder}' wurde in den Papierkorb verschoben.",
       "file_error": "Datei konnte nicht in den Papierkorb verschoben werden.",
-      "files_error": "Ausgewählte Dateien konnten nicht in den Papierkorb verschoben werden.",
+      "files_error": "Ausgewählte Elemente konnten nicht in den Papierkorb verschoben werden.",
       "folder_error": "Ordner konnte nicht in den Papierkorb verschoben werden."
     },
     "permanent_delete": {
       "title": "Endgültig löschen",
       "file_content": "Die Datei '{file}' wird endgültig gelöscht.",
-      "files_content": "{count} ausgewählte Dateien werden endgültig gelöscht.",
-      "removable_files_content": "Alle {count} entfernbaren Dateien werden endgültig gelöscht.",
+      "files_content": "{count} ausgewählte Elemente werden endgültig gelöscht.",
+      "removable_files_content": "Alle {count} entfernbaren Elemente werden endgültig gelöscht.",
       "folder_content": "Der Ordner '{folder}' wird endgültig gelöscht.",
       "checkbox": "Endgültig löschen (kann nicht rückgängig gemacht werden)",
       "ok": "Löschen",
       "file_success": "Die Datei '{file}' wurde endgültig gelöscht.",
-      "files_success": "{count} ausgewählte Dateien wurden endgültig gelöscht.",
+      "files_success": "{count} ausgewählte Elemente wurden endgültig gelöscht.",
       "folder_success": "Der Ordner '{folder}' wurde endgültig gelöscht.",
       "file_error": "Datei konnte nicht endgültig gelöscht werden.",
-      "files_error": "Ausgewählte Dateien konnten nicht endgültig gelöscht werden.",
+      "files_error": "Ausgewählte Elemente konnten nicht endgültig gelöscht werden.",
       "folder_error": "Ordner konnte nicht endgültig gelöscht werden."
     },
     "trash_failed": {
       "title": "Verschieben in den Papierkorb fehlgeschlagen",
       "file_content": "Die Datei '{file}' konnte nicht in den Papierkorb verschoben werden.\n\nMöchtest du sie stattdessen endgültig löschen?",
-      "files_content": "{count} ausgewählte Dateien konnten nicht in den Papierkorb verschoben werden.\n\nMöchtest du sie stattdessen endgültig löschen?",
+      "files_content": "{count} ausgewählte Elemente konnten nicht in den Papierkorb verschoben werden.\n\nMöchtest du sie stattdessen endgültig löschen?",
       "folder_content": "Der Ordner '{folder}' konnte nicht in den Papierkorb verschoben werden.\n\nMöchtest du ihn stattdessen endgültig löschen?\n\nDieser Vorgang kann nicht über den Papierkorb rückgängig gemacht werden.",
       "folder_partial_warning": "Beim vorherigen Versuch wurden möglicherweise einige Inhalte in den Papierkorb verschoben. Das endgültige Löschen entfernt diesen Ordner und seine verbleibenden Inhalte.",
       "ok": "Endgültig löschen"

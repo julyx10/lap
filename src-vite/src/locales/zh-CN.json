@@ -37,14 +37,14 @@
     "drop_action": "添加",
     "drop_title_hint": "拖放以添加",
     "empty_drop_hint": "将文件拖到合集中以添加。",
-    "added_toast": "已添加 {count} 个文件到合集",
-    "add_failed_toast": "无法将文件添加到 {count} 个合集",
-    "already_exists_toast": "{count} 个文件已在合集中",
+    "added_toast": "已添加 {count} 个项目到合集",
+    "add_failed_toast": "无法将项目添加到 {count} 个合集",
+    "already_exists_toast": "{count} 个项目已在合集中",
     "clear": "清空合集",
     "clear_confirm_title": "清空合集",
     "clear_confirm_message": "移除 \"{name}\" 中的所有文件？文件本身不会被删除。",
     "clear_confirm_ok": "清空",
-    "removed_toast": "已从合集移除 {count} 个文件"
+    "removed_toast": "已从合集移除 {count} 个项目"
   },
   "library": {
     "all_files": "所有文件",
@@ -254,7 +254,7 @@
     "section_folders": "选择文件夹",
     "section_status": "导入状态",
     "to_import": "待导入",
-    "files_progress": "{processed} / {total} 个文件（{size}）",
+    "files_progress": "{processed} / {total} 个项目（{size}）",
     "source": "来源",
     "source_placeholder": "选择来源文件夹",
     "destination": "目标",
@@ -265,7 +265,7 @@
     "layout_structure": "保留文件夹结构",
     "import": "导入",
     "preparing": "正在准备导入",
-    "importing": "正在导入文件",
+    "importing": "正在导入项目",
     "complete": "导入完成",
     "cancelled": "已取消导入",
     "continue": "继续导入",
@@ -458,7 +458,7 @@
     "filter": {
       "favorites_only": "仅收藏",
       "select_mode": "多选",
-      "select_files": "选择文件",
+      "select_files": "选择项目",
       "show_selection_panel": "打开多选面板",
       "hide_selection_panel": "收起多选面板",
       "exit_select_mode": "退出多选",
@@ -525,14 +525,14 @@
       "调整"
     ],
     "empty_title": "当前列表为空",
-    "empty_desc": "请添加文件，或更新当前筛选范围以在此显示内容。",
-    "select_hint": "未选择文件",
+    "empty_desc": "请添加项目，或更新当前筛选范围以在此显示内容。",
+    "select_hint": "未选择项目",
     "deselect": "取消选择",
     "select_mode_entered": "已进入多选模式",
-    "selection_load_failed": "无法加载全部文件进行选择，请重试。",
+    "selection_load_failed": "无法加载全部项目进行选择，请重试。",
     "large_batch": {
       "title": "确认批量操作",
-      "content": "此操作将处理 {count} 个文件，可能需要一些时间。是否继续？",
+      "content": "此操作将处理 {count} 个项目，可能需要一些时间。是否继续？",
       "ok": "继续"
     },
     "drag_action": {
@@ -624,10 +624,10 @@
       "delete_selected": "删除所选项",
       "delete_all": "删除全部",
       "move_selected_to_trash": "移到废纸篓（已选 {count} 项 · {size}）",
-      "no_removable_files": "没有可移至废纸篓的可删除文件",
+      "no_removable_files": "没有可移至废纸篓的可删除项目",
       "set_keep": "保留",
       "removable_copies_summary": "{count} 个可删除副本 · {size}",
-      "similar_photos_summary": "{count} 张相似照片 · {size}"
+      "similar_items_summary": "{count} 个相似项 · {size}"
     }
   },
   "tooltip": {
@@ -975,36 +975,36 @@
     "move_to_trash": {
       "title": "移到废纸篓",
       "file_content": "文件 '{file}' 将被移到废纸篓。",
-      "files_content": "{count} 个选择的文件将被移到废纸篓。",
-      "removable_files_content": "全部 {count} 个可删除文件将被移到废纸篓。",
+      "files_content": "{count} 个所选项目将被移到废纸篓。",
+      "removable_files_content": "全部 {count} 个可删除项目将被移到废纸篓。",
       "folder_content": "文件夹 '{folder}' 将被移到废纸篓。",
       "ok": "移到废纸篓",
       "file_success": "文件 '{file}' 已移到废纸篓。",
-      "files_success": "{count} 个选择的文件已移到废纸篓。",
+      "files_success": "{count} 个所选项目已移到废纸篓。",
       "folder_success": "文件夹 '{folder}' 已移到废纸篓。",
       "file_error": "将文件移到废纸篓失败。",
-      "files_error": "将所选文件移到废纸篓失败。",
+      "files_error": "将所选项目移到废纸篓失败。",
       "folder_error": "将文件夹移到废纸篓失败。"
     },
     "permanent_delete": {
       "title": "永久删除",
       "file_content": "文件 '{file}' 将被永久删除。",
-      "files_content": "{count} 个选择的文件将被永久删除。",
-      "removable_files_content": "全部 {count} 个可删除文件将被永久删除。",
+      "files_content": "{count} 个所选项目将被永久删除。",
+      "removable_files_content": "全部 {count} 个可删除项目将被永久删除。",
       "folder_content": "文件夹 '{folder}' 将被永久删除。",
       "checkbox": "永久删除（无法撤销）",
       "ok": "删除",
       "file_success": "文件 '{file}' 已永久删除。",
-      "files_success": "{count} 个选择的文件已永久删除。",
+      "files_success": "{count} 个所选项目已永久删除。",
       "folder_success": "文件夹 '{folder}' 已永久删除。",
       "file_error": "永久删除文件失败。",
-      "files_error": "永久删除所选文件失败。",
+      "files_error": "永久删除所选项目失败。",
       "folder_error": "永久删除文件夹失败。"
     },
     "trash_failed": {
       "title": "移到废纸篓失败",
       "file_content": "文件 '{file}' 无法移到废纸篓。\n\n是否改为永久删除？",
-      "files_content": "所选 {count} 个文件无法移到废纸篓。\n\n是否改为永久删除？",
+      "files_content": "所选 {count} 个项目无法移到废纸篓。\n\n是否改为永久删除？",
       "folder_content": "文件夹 '{folder}' 无法移到废纸篓。\n\n是否改为永久删除？\n\n此操作无法通过系统回收站撤销。",
       "folder_partial_warning": "上一次操作可能已将部分内容移入回收站。永久删除将删除此文件夹及其剩余内容。",
       "ok": "永久删除"

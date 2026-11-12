@@ -37,14 +37,14 @@
     "drop_action": "Thêm",
     "drop_title_hint": "Thả để thêm",
     "empty_drop_hint": "Kéo các mục vào bộ sưu tập ở trên để thêm.",
-    "added_toast": "Đã thêm {count} tệp vào bộ sưu tập",
-    "add_failed_toast": "Không thể thêm tệp vào {count} bộ sưu tập",
-    "already_exists_toast": "{count} tệp đã có trong bộ sưu tập",
+    "added_toast": "Đã thêm {count} mục vào bộ sưu tập",
+    "add_failed_toast": "Không thể thêm mục vào {count} bộ sưu tập",
+    "already_exists_toast": "{count} mục đã có trong bộ sưu tập",
     "clear": "Làm trống bộ sưu tập",
     "clear_confirm_title": "Làm trống bộ sưu tập",
     "clear_confirm_message": "Gỡ bỏ tất cả tệp khỏi “{name}”? Tệp gốc sẽ không bị xóa.",
     "clear_confirm_ok": "Làm trống",
-    "removed_toast": "Đã gỡ bỏ {count} tệp khỏi bộ sưu tập"
+    "removed_toast": "Đã gỡ bỏ {count} mục khỏi bộ sưu tập"
   },
   "library": {
     "all_files": "Tất cả tệp",
@@ -254,7 +254,7 @@
     "section_folders": "Chọn thư mục",
     "section_status": "Trạng thái nhập",
     "to_import": "Cần nhập",
-    "files_progress": "{processed} / {total} tệp ({size})",
+    "files_progress": "{processed} / {total} mục ({size})",
     "source": "Nguồn",
     "source_placeholder": "Chọn thư mục nguồn",
     "destination": "Đích",
@@ -265,7 +265,7 @@
     "layout_structure": "Giữ cấu trúc thư mục",
     "import": "Nhập",
     "preparing": "Đang chuẩn bị nhập",
-    "importing": "Đang nhập tệp",
+    "importing": "Đang nhập mục",
     "complete": "Đã nhập xong",
     "cancelled": "Đã hủy nhập",
     "continue": "Tiếp tục",
@@ -458,7 +458,7 @@
     "filter": {
       "favorites_only": "Chỉ hiện mục yêu thích",
       "select_mode": "Chọn nhiều",
-      "select_files": "Chọn tệp",
+      "select_files": "Chọn mục",
       "show_selection_panel": "Mở bảng chọn nhiều",
       "hide_selection_panel": "Ẩn bảng chọn nhiều",
       "exit_select_mode": "Thoát chế độ chọn nhiều",
@@ -525,14 +525,14 @@
       "Điều chỉnh"
     ],
     "empty_title": "Danh sách này trống",
-    "empty_desc": "Thêm tệp hoặc thay đổi bộ lọc hiện tại để hiển thị các mục ở đây.",
-    "select_hint": "Chưa chọn tệp nào",
+    "empty_desc": "Thêm mục hoặc cập nhật bộ lọc hiện tại để hiển thị chúng ở đây.",
+    "select_hint": "Chưa chọn mục nào",
     "deselect": "Bỏ chọn",
     "select_mode_entered": "Đã bật chế độ chọn nhiều",
-    "selection_load_failed": "Không thể tải tất cả tệp để chọn. Hãy thử lại.",
+    "selection_load_failed": "Không thể tải tất cả mục để chọn. Hãy thử lại.",
     "large_batch": {
       "title": "Xác nhận thao tác hàng loạt",
-      "content": "Thao tác này sẽ xử lý {count} tệp và có thể mất một lúc. Tiếp tục?",
+      "content": "Thao tác này sẽ xử lý {count} mục và có thể mất một lúc. Tiếp tục?",
       "ok": "Tiếp tục"
     },
     "drag_action": {
@@ -624,10 +624,10 @@
       "delete_selected": "Xóa mục đã chọn",
       "delete_all": "Xóa tất cả",
       "move_selected_to_trash": "Chuyển vào thùng rác (đã chọn {count} · {size})",
-      "no_removable_files": "Không có tệp nào có thể chuyển vào thùng rác",
+      "no_removable_files": "Không có mục nào có thể chuyển vào thùng rác",
       "set_keep": "Giữ lại",
       "removable_copies_summary": "{count} bản sao có thể gỡ bỏ · {size}",
-      "similar_photos_summary": "{count} ảnh tương tự · {size}"
+      "similar_items_summary": "{count} mục tương tự · {size}"
     }
   },
   "tooltip": {
@@ -975,36 +975,36 @@
     "move_to_trash": {
       "title": "Chuyển vào thùng rác",
       "file_content": "Tệp “{file}” sẽ được chuyển vào thùng rác.",
-      "files_content": "{count} tệp đã chọn sẽ được chuyển vào thùng rác.",
-      "removable_files_content": "Tất cả {count} tệp có thể gỡ bỏ sẽ được chuyển vào thùng rác.",
+      "files_content": "{count} mục đã chọn sẽ được chuyển vào thùng rác.",
+      "removable_files_content": "Tất cả {count} mục có thể gỡ bỏ sẽ được chuyển vào thùng rác.",
       "folder_content": "Thư mục “{folder}” sẽ được chuyển vào thùng rác.",
       "ok": "Chuyển vào thùng rác",
       "file_success": "Đã chuyển tệp “{file}” vào thùng rác.",
-      "files_success": "Đã chuyển {count} tệp đã chọn vào thùng rác.",
+      "files_success": "Đã chuyển {count} mục đã chọn vào thùng rác.",
       "folder_success": "Đã chuyển thư mục “{folder}” vào thùng rác.",
       "file_error": "Không thể chuyển tệp vào thùng rác.",
-      "files_error": "Không thể chuyển các tệp đã chọn vào thùng rác.",
+      "files_error": "Không thể chuyển các mục đã chọn vào thùng rác.",
       "folder_error": "Không thể chuyển thư mục vào thùng rác."
     },
     "permanent_delete": {
       "title": "Xóa vĩnh viễn",
       "file_content": "Tệp “{file}” sẽ bị xóa vĩnh viễn.",
-      "files_content": "{count} tệp đã chọn sẽ bị xóa vĩnh viễn.",
-      "removable_files_content": "Tất cả {count} tệp có thể gỡ bỏ sẽ bị xóa vĩnh viễn.",
+      "files_content": "{count} mục đã chọn sẽ bị xóa vĩnh viễn.",
+      "removable_files_content": "Tất cả {count} mục có thể gỡ bỏ sẽ bị xóa vĩnh viễn.",
       "folder_content": "Thư mục “{folder}” sẽ bị xóa vĩnh viễn.",
       "checkbox": "Xóa vĩnh viễn (không thể hoàn tác)",
       "ok": "Xóa",
       "file_success": "Đã xóa vĩnh viễn tệp “{file}”.",
-      "files_success": "Đã xóa vĩnh viễn {count} tệp đã chọn.",
+      "files_success": "Đã xóa vĩnh viễn {count} mục đã chọn.",
       "folder_success": "Đã xóa vĩnh viễn thư mục “{folder}”.",
       "file_error": "Không thể xóa vĩnh viễn tệp.",
-      "files_error": "Không thể xóa vĩnh viễn các tệp đã chọn.",
+      "files_error": "Không thể xóa vĩnh viễn các mục đã chọn.",
       "folder_error": "Không thể xóa vĩnh viễn thư mục."
     },
     "trash_failed": {
       "title": "Không thể chuyển vào thùng rác",
       "file_content": "Không thể chuyển tệp “{file}” vào thùng rác.\n\nBạn có muốn xóa vĩnh viễn tệp này không?",
-      "files_content": "Không thể chuyển {count} tệp đã chọn vào thùng rác.\n\nBạn có muốn xóa vĩnh viễn các tệp này không?",
+      "files_content": "Không thể chuyển {count} mục đã chọn vào thùng rác.\n\nBạn có muốn xóa vĩnh viễn các mục này không?",
       "folder_content": "Không thể chuyển thư mục “{folder}” vào thùng rác.\n\nBạn có muốn xóa vĩnh viễn thư mục này không?\n\nKhông thể hoàn tác thao tác này qua Thùng rác của hệ thống.",
       "folder_partial_warning": "Lần thử trước có thể đã chuyển một phần nội dung vào Thùng rác. Xóa vĩnh viễn sẽ xóa thư mục này cùng phần nội dung còn lại.",
       "ok": "Xóa vĩnh viễn"

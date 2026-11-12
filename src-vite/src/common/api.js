@@ -2115,7 +2115,7 @@ export async function similarGetEligibleCount(params = null, collectionId = null
 export async function similarListGroups(scopeKey, limit = 100, offset = 0) {
   return await invoke('similar_list_groups', { scopeKey, limit, offset });
 }
-export async function similarGetOverview(scopeKey) { return await invoke('similar_get_overview', { scopeKey }); }
+export async function similarGetOverview(scopeKey) { return await invoke('similar_get_overview', { scopeKey, groupRawPairs: Boolean(config.settings.groupRawJpegPairs) }); }
 export async function similarGetGroup(groupId, scopeKey) { return await invoke('similar_get_group', { groupId, scopeKey, groupRawPairs: Boolean(config.settings.groupRawJpegPairs) }); }
 export async function similarSetKeep(groupId, fileId, scopeKey) { return await invoke('similar_set_keep', { groupId, fileId, scopeKey }); }
 export async function similarHasScan(scopeKey) { return await invoke('similar_has_scan', { scopeKey }); }

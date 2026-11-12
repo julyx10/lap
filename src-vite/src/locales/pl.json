@@ -37,14 +37,14 @@
     "drop_action": "Dodaj",
     "drop_title_hint": "Upuść, aby dodać",
     "empty_drop_hint": "Przeciągnij elementy na kolekcję powyżej, aby je dodać.",
-    "added_toast": "Dodano {count} plik(ów) do kolekcji",
-    "add_failed_toast": "Nie udało się dodać plików do {count} kolekcji",
-    "already_exists_toast": "{count} plik(ów) znajduje się już w kolekcji",
+    "added_toast": "Dodano {count} element(ów) do kolekcji",
+    "add_failed_toast": "Nie udało się dodać elementów do {count} kolekcji",
+    "already_exists_toast": "{count} element(ów) znajduje się już w kolekcji",
     "clear": "Opróżnij kolekcję",
     "clear_confirm_title": "Opróżnij kolekcję",
     "clear_confirm_message": "Usunąć wszystkie pliki z „{name}”? Same pliki nie zostaną usunięte.",
     "clear_confirm_ok": "Opróżnij",
-    "removed_toast": "Usunięto {count} plik(ów) z kolekcji"
+    "removed_toast": "Usunięto {count} element(ów) z kolekcji"
   },
   "library": {
     "all_files": "Wszystkie pliki",
@@ -254,7 +254,7 @@
     "section_folders": "Wybierz folder",
     "section_status": "Stan importu",
     "to_import": "Do zaimportowania",
-    "files_progress": "{processed} / {total} plików ({size})",
+    "files_progress": "{processed} / {total} elementów ({size})",
     "source": "Źródło",
     "source_placeholder": "Wybierz folder źródłowy",
     "destination": "Cel",
@@ -265,7 +265,7 @@
     "layout_structure": "Zachowaj strukturę folderów",
     "import": "Importuj",
     "preparing": "Przygotowywanie importu",
-    "importing": "Importowanie plików",
+    "importing": "Importowanie elementów",
     "complete": "Import zakończony",
     "cancelled": "Import anulowany",
     "continue": "Kontynuuj",
@@ -458,7 +458,7 @@
     "filter": {
       "favorites_only": "Tylko ulubione",
       "select_mode": "Wielokrotny wybór",
-      "select_files": "Wybierz pliki",
+      "select_files": "Wybierz elementy",
       "show_selection_panel": "Otwórz panel wielokrotnego wyboru",
       "hide_selection_panel": "Zwiń panel wielokrotnego wyboru",
       "exit_select_mode": "Wyjdź z trybu wielokrotnego wyboru",
@@ -525,14 +525,14 @@
       "Edycja"
     ],
     "empty_title": "Ta lista jest pusta",
-    "empty_desc": "Dodaj pliki lub zmień bieżący filtr, aby wyświetlić tutaj elementy.",
-    "select_hint": "Nie wybrano plików",
+    "empty_desc": "Dodaj elementy lub zmień bieżący filtr, aby wyświetlić je tutaj.",
+    "select_hint": "Nie wybrano elementów",
     "deselect": "Anuluj zaznaczenie",
     "select_mode_entered": "Tryb wielokrotnego wyboru jest włączony",
-    "selection_load_failed": "Nie udało się wczytać wszystkich plików dla zaznaczenia. Spróbuj ponownie.",
+    "selection_load_failed": "Nie udało się wczytać wszystkich elementów dla zaznaczenia. Spróbuj ponownie.",
     "large_batch": {
       "title": "Potwierdź operację masową",
-      "content": "Ta operacja przetworzy {count} plików i może chwilę potrwać. Kontynuować?",
+      "content": "Ta operacja przetworzy {count} elementów i może chwilę potrwać. Kontynuować?",
       "ok": "Kontynuuj"
     },
     "drag_action": {
@@ -624,10 +624,10 @@
       "delete_selected": "Usuń zaznaczone",
       "delete_all": "Usuń wszystkie",
       "move_selected_to_trash": "Przenieś do kosza ({count} zaznaczonych · {size})",
-      "no_removable_files": "Brak plików do przeniesienia do kosza",
+      "no_removable_files": "Brak elementów do przeniesienia do kosza",
       "set_keep": "Zachowaj",
       "removable_copies_summary": "{count} kopii do usunięcia · {size}",
-      "similar_photos_summary": "{count} podobnych zdjęć · {size}"
+      "similar_items_summary": "{count} podobnych elementów · {size}"
     }
   },
   "tooltip": {
@@ -975,36 +975,36 @@
     "move_to_trash": {
       "title": "Przenieś do kosza",
       "file_content": "Plik „{file}” zostanie przeniesiony do kosza.",
-      "files_content": "{count} zaznaczonych plików zostanie przeniesionych do kosza.",
-      "removable_files_content": "Wszystkie {count} plików możliwych do usunięcia zostanie przeniesionych do kosza.",
+      "files_content": "{count} zaznaczonych elementów zostanie przeniesionych do kosza.",
+      "removable_files_content": "Wszystkie {count} elementy możliwe do usunięcia zostaną przeniesione do kosza.",
       "folder_content": "Folder „{folder}” zostanie przeniesiony do kosza.",
       "ok": "Przenieś do kosza",
       "file_success": "Plik „{file}” został przeniesiony do kosza.",
-      "files_success": "{count} zaznaczonych plików zostało przeniesionych do kosza.",
+      "files_success": "{count} zaznaczonych elementów zostało przeniesionych do kosza.",
       "folder_success": "Folder „{folder}” został przeniesiony do kosza.",
       "file_error": "Nie udało się przenieść pliku do kosza.",
-      "files_error": "Nie udało się przenieść zaznaczonych plików do kosza.",
+      "files_error": "Nie udało się przenieść zaznaczonych elementów do kosza.",
       "folder_error": "Nie udało się przenieść folderu do kosza."
     },
     "permanent_delete": {
       "title": "Usuń trwale",
       "file_content": "Plik „{file}” zostanie trwale usunięty.",
-      "files_content": "{count} zaznaczonych plików zostanie trwale usuniętych.",
-      "removable_files_content": "Wszystkie {count} plików możliwych do usunięcia zostanie trwale usuniętych.",
+      "files_content": "{count} zaznaczonych elementów zostanie trwale usuniętych.",
+      "removable_files_content": "Wszystkie {count} elementy możliwe do usunięcia zostaną trwale usunięte.",
       "folder_content": "Folder „{folder}” zostanie trwale usunięty.",
       "checkbox": "Usuń trwale (nie można cofnąć)",
       "ok": "Usuń",
       "file_success": "Plik „{file}” został trwale usunięty.",
-      "files_success": "{count} zaznaczonych plików zostało trwale usuniętych.",
+      "files_success": "{count} zaznaczonych elementów zostało trwale usuniętych.",
       "folder_success": "Folder „{folder}” został trwale usunięty.",
       "file_error": "Nie udało się trwale usunąć pliku.",
-      "files_error": "Nie udało się trwale usunąć zaznaczonych plików.",
+      "files_error": "Nie udało się trwale usunąć zaznaczonych elementów.",
       "folder_error": "Nie udało się trwale usunąć folderu."
     },
     "trash_failed": {
       "title": "Przeniesienie do kosza nie powiodło się",
       "file_content": "Nie udało się przenieść pliku „{file}” do kosza.\n\nCzy chcesz zamiast tego trwale go usunąć?",
-      "files_content": "Nie udało się przenieść {count} zaznaczonych plików do kosza.\n\nCzy chcesz zamiast tego trwale je usunąć?",
+      "files_content": "Nie udało się przenieść {count} zaznaczonych elementów do kosza.\n\nCzy chcesz zamiast tego trwale je usunąć?",
       "folder_content": "Nie udało się przenieść folderu „{folder}” do kosza.\n\nCzy chcesz zamiast tego trwale go usunąć?\n\nTej operacji nie można cofnąć za pomocą kosza systemowego.",
       "folder_partial_warning": "Poprzednia próba mogła przenieść część zawartości do kosza. Trwałe usunięcie skasuje ten folder i jego pozostałą zawartość.",
       "ok": "Usuń trwale"

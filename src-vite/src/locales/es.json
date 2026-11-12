@@ -37,14 +37,14 @@
     "drop_action": "Añadir",
     "drop_title_hint": "Soltar para añadir",
     "empty_drop_hint": "Arrastra elementos a la colección para añadirlos.",
-    "added_toast": "{count} archivo(s) añadido(s) a la colección",
-    "add_failed_toast": "No se pudieron añadir los archivos a {count} colección(es)",
-    "already_exists_toast": "{count} archivo(s) ya en la colección",
+    "added_toast": "{count} elemento(s) añadido(s) a la colección",
+    "add_failed_toast": "No se pudieron añadir los elementos a {count} colección(es)",
+    "already_exists_toast": "{count} elemento(s) ya en la colección",
     "clear": "Vaciar colección",
     "clear_confirm_title": "Vaciar colección",
     "clear_confirm_message": "¿Eliminar todos los archivos de \"{name}\"? Los archivos en sí no se eliminarán.",
     "clear_confirm_ok": "Vaciar",
-    "removed_toast": "{count} archivo(s) quitado(s) de la colección"
+    "removed_toast": "{count} elemento(s) quitado(s) de la colección"
   },
   "library": {
     "all_files": "Todos los archivos",
@@ -254,7 +254,7 @@
     "section_folders": "Seleccionar carpeta",
     "section_status": "Estado de importación",
     "to_import": "Por importar",
-    "files_progress": "{processed} / {total} archivos ({size})",
+    "files_progress": "{processed} / {total} elementos ({size})",
     "source": "Origen",
     "source_placeholder": "Seleccionar carpeta de origen",
     "destination": "Destino",
@@ -265,7 +265,7 @@
     "layout_structure": "Conservar la estructura de carpetas",
     "import": "Importar",
     "preparing": "Preparando la importación",
-    "importing": "Importando archivos",
+    "importing": "Importando elementos",
     "complete": "Importación completada",
     "cancelled": "Importación cancelada",
     "continue": "Continuar",
@@ -458,7 +458,7 @@
     "filter": {
       "favorites_only": "Solo favoritos",
       "select_mode": "Selección múltiple",
-      "select_files": "Seleccionar archivos",
+      "select_files": "Seleccionar elementos",
       "show_selection_panel": "Abrir panel de selección múltiple",
       "hide_selection_panel": "Contraer panel de selección múltiple",
       "exit_select_mode": "Salir de la selección múltiple",
@@ -525,14 +525,14 @@
       "Ajustar"
     ],
     "empty_title": "Esta lista está vacía",
-    "empty_desc": "Agrega archivos o actualiza el filtro actual para mostrar elementos aquí.",
-    "select_hint": "No hay archivos seleccionados",
+    "empty_desc": "Agrega elementos o actualiza el filtro actual para mostrarlos aquí.",
+    "select_hint": "No hay elementos seleccionados",
     "deselect": "Desmarcar",
     "select_mode_entered": "El modo de selección múltiple está activado",
-    "selection_load_failed": "No se pudieron cargar todos los archivos para seleccionarlos. Inténtalo de nuevo.",
+    "selection_load_failed": "No se pudieron cargar todos los elementos para seleccionarlos. Inténtalo de nuevo.",
     "large_batch": {
       "title": "Confirmar operación masiva",
-      "content": "Esta operación procesará {count} archivos y puede tardar. ¿Continuar?",
+      "content": "Esta operación procesará {count} elementos y puede tardar. ¿Continuar?",
       "ok": "Continuar"
     },
     "drag_action": {
@@ -624,10 +624,10 @@
       "delete_selected": "Eliminar seleccionados",
       "delete_all": "Eliminar todo",
       "move_selected_to_trash": "Mover a papelera ({count} seleccionados · {size})",
-      "no_removable_files": "No hay archivos eliminables para mover a la papelera",
+      "no_removable_files": "No hay elementos eliminables para mover a la papelera",
       "set_keep": "Conservar",
       "removable_copies_summary": "{count} copias eliminables · {size}",
-      "similar_photos_summary": "{count} fotos similares · {size}"
+      "similar_items_summary": "{count} elementos similares · {size}"
     }
   },
   "tooltip": {
@@ -975,36 +975,36 @@
     "move_to_trash": {
       "title": "Mover a la papelera",
       "file_content": "El archivo '{file}' se moverá a la papelera.",
-      "files_content": "{count} archivos seleccionados se moverán a la papelera.",
-      "removable_files_content": "Se moverán todos los {count} archivos eliminables a la papelera.",
+      "files_content": "{count} elementos seleccionados se moverán a la papelera.",
+      "removable_files_content": "Se moverán todos los {count} elementos eliminables a la papelera.",
       "folder_content": "La carpeta '{folder}' se moverá a la papelera.",
       "ok": "Mover",
       "file_success": "El archivo '{file}' se movió a la papelera.",
-      "files_success": "{count} archivos seleccionados se movieron a la papelera.",
+      "files_success": "{count} elementos seleccionados se movieron a la papelera.",
       "folder_success": "La carpeta '{folder}' se movió a la papelera.",
       "file_error": "No se pudo mover el archivo a la papelera.",
-      "files_error": "No se pudieron mover los archivos seleccionados a la papelera.",
+      "files_error": "No se pudieron mover los elementos seleccionados a la papelera.",
       "folder_error": "No se pudo mover la carpeta a la papelera."
     },
     "permanent_delete": {
       "title": "Eliminar permanentemente",
       "file_content": "El archivo '{file}' se eliminará permanentemente.",
-      "files_content": "{count} archivos seleccionados se eliminarán permanentemente.",
-      "removable_files_content": "Se eliminarán permanentemente todos los {count} archivos eliminables.",
+      "files_content": "{count} elementos seleccionados se eliminarán permanentemente.",
+      "removable_files_content": "Se eliminarán permanentemente todos los {count} elementos eliminables.",
       "folder_content": "La carpeta '{folder}' se eliminará permanentemente.",
       "checkbox": "Eliminar permanentemente (no se puede deshacer)",
       "ok": "Eliminar",
       "file_success": "El archivo '{file}' se eliminó permanentemente.",
-      "files_success": "{count} archivos seleccionados se eliminaron permanentemente.",
+      "files_success": "{count} elementos seleccionados se eliminaron permanentemente.",
       "folder_success": "La carpeta '{folder}' se eliminó permanentemente.",
       "file_error": "No se pudo eliminar permanentemente el archivo.",
-      "files_error": "No se pudieron eliminar permanentemente los archivos seleccionados.",
+      "files_error": "No se pudieron eliminar permanentemente los elementos seleccionados.",
       "folder_error": "No se pudo eliminar permanentemente la carpeta."
     },
     "trash_failed": {
       "title": "No se pudo mover a la papelera",
       "file_content": "El archivo '{file}' no se pudo mover a la papelera.\n\n¿Quieres eliminarlo permanentemente en su lugar?",
-      "files_content": "{count} archivos seleccionados no se pudieron mover a la papelera.\n\n¿Quieres eliminarlos permanentemente en su lugar?",
+      "files_content": "{count} elementos seleccionados no se pudieron mover a la papelera.\n\n¿Quieres eliminarlos permanentemente en su lugar?",
       "folder_content": "La carpeta '{folder}' no se pudo mover a la papelera.\n\n¿Quieres eliminarla permanentemente en su lugar?\n\nEsta acción no se puede deshacer desde la papelera del sistema.",
       "folder_partial_warning": "Es posible que el intento anterior haya movido parte del contenido a la papelera. La eliminación permanente borrará esta carpeta y su contenido restante.",
       "ok": "Eliminar permanentemente"

@@ -37,14 +37,14 @@
     "drop_action": "Přidat",
     "drop_title_hint": "Přidejte přetažením",
     "empty_drop_hint": "Přetáhněte položky do výše uvedené kolekce a přidejte je.",
-    "added_toast": "Do kolekce přidáno: {count} souborů",
-    "add_failed_toast": "Nepodařilo se přidat: {count} souborů do kolekcí:",
-    "already_exists_toast": "V kolekci se nachází: {count} souborů",
+    "added_toast": "Do kolekce přidáno: {count} položek",
+    "add_failed_toast": "Nepodařilo se přidat položky do kolekcí: {count}",
+    "already_exists_toast": "V kolekci se nachází: {count} položek",
     "clear": "Vyprázdnit kolekci",
     "clear_confirm_title": "Vyprázdnit kolekci",
     "clear_confirm_message": "Odebrat všechny soubory z „{name}“? Samotné soubory nebudou odstraněny.",
     "clear_confirm_ok": "Vyprázdnit",
-    "removed_toast": "Z kolekce odebráno: {count} souborů"
+    "removed_toast": "Z kolekce odebráno: {count} položek"
   },
   "library": {
     "all_files": "Všechny soubory",
@@ -254,7 +254,7 @@
     "section_folders": "Vybrat složku",
     "section_status": "Stav importu",
     "to_import": "K importu",
-    "files_progress": "{processed} / {total} souborů ({size})",
+    "files_progress": "{processed} / {total} položek ({size})",
     "source": "Zdroj",
     "source_placeholder": "Vyberte zdrojovou složku",
     "destination": "Cíl",
@@ -265,7 +265,7 @@
     "layout_structure": "Zachovat strukturu složek",
     "import": "Importovat",
     "preparing": "Připravuje se import",
-    "importing": "Importují se soubory",
+    "importing": "Importuji položky",
     "complete": "Import dokončen",
     "cancelled": "Import zrušen",
     "continue": "Pokračovat",
@@ -458,7 +458,7 @@
     "filter": {
       "favorites_only": "Jen oblíbené",
       "select_mode": "Vícenásobný výběr",
-      "select_files": "Vybrat soubory",
+      "select_files": "Vybrat položky",
       "show_selection_panel": "Otevřít panel vícenásobného výběru",
       "hide_selection_panel": "Skrýt panel vícenásobného výběru",
       "exit_select_mode": "Ukončit vícenásobný výběr",
@@ -525,14 +525,14 @@
       "Úpravy"
     ],
     "empty_title": "Tento seznam je prázdný",
-    "empty_desc": "Přidejte soubory nebo upravte aktuální filtr, aby se zde zobrazily položky.",
-    "select_hint": "Nejsou vybrány žádné soubory",
+    "empty_desc": "Přidejte položky nebo upravte aktuální filtr, aby se zde zobrazily.",
+    "select_hint": "Nejsou vybrány žádné položky",
     "deselect": "Zrušit výběr",
     "select_mode_entered": "Je zapnutý režim vícenásobného výběru",
-    "selection_load_failed": "Nepodařilo se načíst všechny soubory z výběru. Zkuste to znovu.",
+    "selection_load_failed": "Nepodařilo se načíst všechny položky z výběru. Zkuste to znovu.",
     "large_batch": {
       "title": "Potvrdit hromadnou operaci",
-      "content": "Tato operace zpracuje {count} souborů a může chvíli trvat. Chcete pokračovat?",
+      "content": "Tato operace zpracuje {count} položek a může chvíli trvat. Chcete pokračovat?",
       "ok": "Pokračovat"
     },
     "drag_action": {
@@ -624,10 +624,10 @@
       "delete_selected": "Odstranit vybrané",
       "delete_all": "Odstranit vše",
       "move_selected_to_trash": "Přesunout do koše ({count} vybraných · {size})",
-      "no_removable_files": "Nejsou zde žádné soubory k přesunutí do koše",
+      "no_removable_files": "Nejsou zde žádné odstranitelné položky k přesunutí do koše",
       "set_keep": "Ponechat",
       "removable_copies_summary": "K odstranění {count} · {size} kopií",
-      "similar_photos_summary": "Podobných {count} · {size} fotografií"
+      "similar_items_summary": "Podobných {count} · {size} položek"
     }
   },
   "tooltip": {
@@ -975,36 +975,36 @@
     "move_to_trash": {
       "title": "Přesunout do koše",
       "file_content": "Soubor „{file}“ bude přesunut do koše.",
-      "files_content": "Vybrané soubory ({count}) budou přesunuty do koše.",
-      "removable_files_content": "Všech {count} odstranitelných souborů bude přesunuto do koše.",
+      "files_content": "Vybrané položky ({count}) budou přesunuty do koše.",
+      "removable_files_content": "Všech {count} odstranitelných položek bude přesunuto do koše.",
       "folder_content": "Složka „{folder}“ bude přesunuta do koše.",
       "ok": "Koš",
       "file_success": "Soubor „{file}“ byl přesunut do koše.",
-      "files_success": "Vybrané soubory ({count}) byly přesunuty do koše.",
+      "files_success": "Vybrané položky ({count}) byly přesunuty do koše.",
       "folder_success": "Složka „{folder}“ byla přesunuta do koše.",
       "file_error": "Soubor se nepodařilo přesunout do koše.",
-      "files_error": "Vybrané soubory se nepodařilo přesunout do koše.",
+      "files_error": "Vybrané položky se nepodařilo přesunout do koše.",
       "folder_error": "Složku se nepodařilo přesunout do koše."
     },
     "permanent_delete": {
       "title": "Odstranit trvale",
       "file_content": "Soubor „{file}“ bude trvale odstraněn.",
-      "files_content": "Vybrané soubory ({count}) budou trvale odstraněny.",
-      "removable_files_content": "Všech {count} odstranitelných souborů bude trvale smazáno.",
+      "files_content": "Vybrané položky ({count}) budou trvale odstraněny.",
+      "removable_files_content": "Všech {count} odstranitelných položek bude trvale smazáno.",
       "folder_content": "Složka „{folder}“ bude trvale odstraněna.",
       "checkbox": "Trvale odstranit (nelze vrátit zpět)",
       "ok": "Odstranit",
       "file_success": "Soubor „{file}“ byl trvale odstraněn.",
-      "files_success": "Vybrané soubory ({count}) byly trvale odstraněny.",
+      "files_success": "Vybrané položky ({count}) byly trvale odstraněny.",
       "folder_success": "Složka „{folder}“ byla trvale odstraněna.",
       "file_error": "Soubor se nepodařilo trvale odstranit.",
-      "files_error": "Vybrané soubory se nepodařilo trvale odstranit.",
+      "files_error": "Vybrané položky se nepodařilo trvale odstranit.",
       "folder_error": "Složku se nepodařilo trvale odstranit."
     },
     "trash_failed": {
       "title": "Přesunutí do koše se nezdařilo",
       "file_content": "Soubor „{file}“ se nepodařilo přesunout do koše.\n\nChcete jej místo toho trvale odstranit?",
-      "files_content": "Vybrané soubory ({count}) se nepodařilo přesunout do koše.\n\nChcete je místo toho trvale odstranit?",
+      "files_content": "Vybrané položky ({count}) se nepodařilo přesunout do koše.\n\nChcete je místo toho trvale odstranit?",
       "folder_content": "Složku „{folder}“ se nepodařilo přesunout do koše.\n\nChcete ji místo toho trvale odstranit?\n\nTuto akci nelze vrátit zpět přes systémový koš.",
       "folder_partial_warning": "Předchozí pokus mohl část obsahu přesunout do koše. Trvalé odstranění smaže tuto složku i její zbývající obsah.",
       "ok": "Odstranit trvale"

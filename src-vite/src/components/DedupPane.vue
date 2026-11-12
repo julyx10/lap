@@ -97,7 +97,7 @@
                 {{ $t('info_panel.dedup.similar.results') }}
               </div>
               <div class="text-xs text-base-content/60">
-                {{ $t('info_panel.dedup.similar_photos_summary', {
+                {{ $t('info_panel.dedup.similar_items_summary', {
                   count: similarPhotoCount.toLocaleString(),
                   size: formatFileSize(similarPhotoBytes),
                 }) }}
@@ -379,7 +379,7 @@
                   class="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 to-transparent px-1.5 pb-1 pt-4 text-left text-[10px] leading-tight text-white/90 opacity-0 transition-opacity group-hover/thumb:opacity-100"
                   :class="{ 'opacity-100': selectedGroupId === group.id }"
                 >
-                  <div>{{ formatFileSize(group.file_size) }}</div>
+                  <div>{{ formatFileSize(group.keepItem ? getMediaItemSize(group.keepItem.file) : group.file_size) }}</div>
                   <div v-if="group.keepItem?.file?.width && group.keepItem?.file?.height" class="text-white/70">
                     {{ group.keepItem.file.width }} x {{ group.keepItem.file.height }}
                   </div>
@@ -680,7 +680,7 @@ const duplicateGroups = computed(() =>
       items: keepItem ? [keepItem, ...duplicateItems] : sourceItems,
       keepItem,
       duplicateItems,
-      reclaimableBytes: Math.max(0, Number(group.total_size || 0) - Number(group.file_size || 0)),
+      reclaimableBytes: duplicateItems.reduce((sum: number, item: any) => sum + getMediaItemSize(item.file), 0),
     };
   })
 );
@@ -1311,7 +1311,7 @@ async function trashAllDuplicates() {
   duplicateAccessPending.value = true;
   try {
     await refreshFileAccess(rawGroups.value.flatMap((group: any) => (group.items || [])
-      .filter((item: any) => item.is_keep !== 1).map((item: any) => item.file)));
+      .filter((item: any) => item.is_keep !== 1 && item.can_delete).map((item: any) => item.file)));
     if (libraryId !== libConfig._libraryId || hasUnavailableDuplicates.value) return;
     emit('trash-all-duplicates');
   } finally {

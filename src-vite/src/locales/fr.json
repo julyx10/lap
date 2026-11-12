@@ -37,14 +37,14 @@
     "drop_action": "Ajouter",
     "drop_title_hint": "Déposer pour ajouter",
     "empty_drop_hint": "Faites glisser les éléments dans la collection pour les ajouter.",
-    "added_toast": "{count} fichier(s) ajouté(s) à la collection",
-    "add_failed_toast": "Impossible d’ajouter les fichiers à {count} collection(s)",
-    "already_exists_toast": "{count} fichier(s) déjà dans la collection",
+    "added_toast": "{count} élément(s) ajouté(s) à la collection",
+    "add_failed_toast": "Impossible d’ajouter les éléments à {count} collection(s)",
+    "already_exists_toast": "{count} élément(s) déjà dans la collection",
     "clear": "Vider la collection",
     "clear_confirm_title": "Vider la collection",
     "clear_confirm_message": "Supprimer tous les fichiers de \"{name}\" ? Les fichiers eux-mêmes ne seront pas supprimés.",
     "clear_confirm_ok": "Vider",
-    "removed_toast": "{count} fichier(s) retiré(s) de la collection"
+    "removed_toast": "{count} élément(s) retiré(s) de la collection"
   },
   "library": {
     "all_files": "Tous les fichiers",
@@ -254,7 +254,7 @@
     "section_folders": "Sélectionner un dossier",
     "section_status": "État de l’importation",
     "to_import": "À importer",
-    "files_progress": "{processed} / {total} fichiers ({size})",
+    "files_progress": "{processed} / {total} éléments ({size})",
     "source": "Source",
     "source_placeholder": "Choisir dossier source",
     "destination": "Destination",
@@ -265,7 +265,7 @@
     "layout_structure": "Conserver la structure des dossiers",
     "import": "Importer",
     "preparing": "Préparation de l’importation",
-    "importing": "Importation des fichiers",
+    "importing": "Importation des éléments",
     "complete": "Importation terminée",
     "cancelled": "Importation annulée",
     "continue": "Continuer",
@@ -458,7 +458,7 @@
     "filter": {
       "favorites_only": "Favoris uniquement",
       "select_mode": "Sélection multiple",
-      "select_files": "Sélectionner des fichiers",
+      "select_files": "Sélectionner des éléments",
       "show_selection_panel": "Ouvrir le panneau de sélection multiple",
       "hide_selection_panel": "Replier le panneau de sélection multiple",
       "exit_select_mode": "Quitter la sélection multiple",
@@ -525,14 +525,14 @@
       "Ajuster"
     ],
     "empty_title": "Cette liste est vide",
-    "empty_desc": "Ajoutez des fichiers ou mettez à jour le filtre actuel pour afficher des éléments ici.",
-    "select_hint": "Aucun fichier sélectionné",
+    "empty_desc": "Ajoutez des éléments ou mettez à jour le filtre actuel pour les afficher ici.",
+    "select_hint": "Aucun élément sélectionné",
     "deselect": "Décocher",
     "select_mode_entered": "Le mode de sélection multiple est activé",
-    "selection_load_failed": "Impossible de charger tous les fichiers pour la sélection. Réessayez.",
+    "selection_load_failed": "Impossible de charger tous les éléments pour la sélection. Réessayez.",
     "large_batch": {
       "title": "Confirmer l’opération groupée",
-      "content": "Cette opération traitera {count} fichiers et peut prendre du temps. Continuer ?",
+      "content": "Cette opération traitera {count} éléments et peut prendre du temps. Continuer ?",
       "ok": "Continuer"
     },
     "drag_action": {
@@ -624,10 +624,10 @@
       "delete_selected": "Supprimer les éléments sélectionnés",
       "delete_all": "Tout supprimer",
       "move_selected_to_trash": "Mettre à la corbeille ({count} sélectionnés · {size})",
-      "no_removable_files": "Aucun fichier supprimable à mettre à la corbeille",
+      "no_removable_files": "Aucun élément supprimable à mettre à la corbeille",
       "set_keep": "Conserver",
       "removable_copies_summary": "{count} copies supprimables · {size}",
-      "similar_photos_summary": "{count} photos similaires · {size}"
+      "similar_items_summary": "{count} éléments similaires · {size}"
     }
   },
   "tooltip": {
@@ -975,36 +975,36 @@
     "move_to_trash": {
       "title": "Mettre à la corbeille",
       "file_content": "Le fichier '{file}' sera mis à la corbeille.",
-      "files_content": "{count} fichiers sélectionnés seront mis à la corbeille.",
-      "removable_files_content": "Les {count} fichiers supprimables seront tous mis à la corbeille.",
+      "files_content": "{count} éléments sélectionnés seront mis à la corbeille.",
+      "removable_files_content": "Les {count} éléments supprimables seront tous mis à la corbeille.",
       "folder_content": "Le dossier '{folder}' sera mis à la corbeille.",
       "ok": "Mettre",
       "file_success": "Le fichier '{file}' a été mis à la corbeille.",
-      "files_success": "{count} fichiers sélectionnés ont été mis à la corbeille.",
+      "files_success": "{count} éléments sélectionnés ont été mis à la corbeille.",
       "folder_success": "Le dossier '{folder}' a été mis à la corbeille.",
       "file_error": "Impossible de mettre le fichier à la corbeille.",
-      "files_error": "Impossible de mettre les fichiers sélectionnés à la corbeille.",
+      "files_error": "Impossible de mettre les éléments sélectionnés à la corbeille.",
       "folder_error": "Impossible de mettre le dossier à la corbeille."
     },
     "permanent_delete": {
       "title": "Supprimer définitivement",
       "file_content": "Le fichier '{file}' sera supprimé définitivement.",
-      "files_content": "{count} fichiers sélectionnés seront supprimés définitivement.",
-      "removable_files_content": "Les {count} fichiers supprimables seront tous supprimés définitivement.",
+      "files_content": "{count} éléments sélectionnés seront supprimés définitivement.",
+      "removable_files_content": "Les {count} éléments supprimables seront tous supprimés définitivement.",
       "folder_content": "Le dossier '{folder}' sera supprimé définitivement.",
       "checkbox": "Supprimer définitivement (action irréversible)",
       "ok": "Supprimer",
       "file_success": "Le fichier '{file}' a été supprimé définitivement.",
-      "files_success": "{count} fichiers sélectionnés ont été supprimés définitivement.",
+      "files_success": "{count} éléments sélectionnés ont été supprimés définitivement.",
       "folder_success": "Le dossier '{folder}' a été supprimé définitivement.",
       "file_error": "Impossible de supprimer définitivement le fichier.",
-      "files_error": "Impossible de supprimer définitivement les fichiers sélectionnés.",
+      "files_error": "Impossible de supprimer définitivement les éléments sélectionnés.",
       "folder_error": "Impossible de supprimer définitivement le dossier."
     },
     "trash_failed": {
       "title": "Échec du déplacement vers la Corbeille",
       "file_content": "Le fichier '{file}' n’a pas pu être déplacé vers la Corbeille.\n\nVoulez-vous le supprimer définitivement à la place ?",
-      "files_content": "{count} fichiers sélectionnés n’ont pas pu être déplacés vers la Corbeille.\n\nVoulez-vous les supprimer définitivement à la place ?",
+      "files_content": "{count} éléments sélectionnés n’ont pas pu être déplacés vers la Corbeille.\n\nVoulez-vous les supprimer définitivement à la place ?",
       "folder_content": "Le dossier '{folder}' n’a pas pu être déplacé vers la Corbeille.\n\nVoulez-vous le supprimer définitivement à la place ?\n\nCette action ne peut pas être annulée via la corbeille du système.",
       "folder_partial_warning": "La tentative précédente a peut-être déplacé une partie du contenu vers la corbeille. La suppression définitive effacera ce dossier et son contenu restant.",
       "ok": "Supprimer définitivement"

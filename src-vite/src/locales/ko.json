@@ -37,14 +37,14 @@
     "drop_action": "추가",
     "drop_title_hint": "추가하려면 드롭",
     "empty_drop_hint": "항목을 컬렉션으로 드래그하여 추가하세요.",
-    "added_toast": "{count}개 파일을 컬렉션에 추가했습니다",
-    "add_failed_toast": "{count}개 컬렉션에 파일을 추가할 수 없습니다",
-    "already_exists_toast": "{count}개 파일이 이미 컬렉션에 있습니다",
+    "added_toast": "{count}개 항목을 컬렉션에 추가했습니다",
+    "add_failed_toast": "{count}개 컬렉션에 항목을 추가할 수 없습니다",
+    "already_exists_toast": "{count}개 항목이 이미 컬렉션에 있습니다",
     "clear": "컬렉션 비우기",
     "clear_confirm_title": "컬렉션 비우기",
     "clear_confirm_message": "\"{name}\"에서 모든 파일을 제거하시겠습니까? 파일 자체는 삭제되지 않습니다.",
     "clear_confirm_ok": "비우기",
-    "removed_toast": "{count}개 파일을 컬렉션에서 제거했습니다"
+    "removed_toast": "{count}개 항목을 컬렉션에서 제거했습니다"
   },
   "library": {
     "all_files": "모든 파일",
@@ -254,7 +254,7 @@
     "section_folders": "폴더 선택",
     "section_status": "가져오기 상태",
     "to_import": "가져올 파일",
-    "files_progress": "{processed} / {total}개 파일 ({size})",
+    "files_progress": "{processed} / {total}개 항목 ({size})",
     "source": "원본",
     "source_placeholder": "원본 폴더 선택",
     "destination": "대상",
@@ -265,7 +265,7 @@
     "layout_structure": "폴더 구조 유지",
     "import": "가져오기",
     "preparing": "가져오기 준비 중",
-    "importing": "파일 가져오는 중",
+    "importing": "항목 가져오는 중",
     "complete": "가져오기 완료",
     "cancelled": "가져오기가 취소됨",
     "continue": "계속",
@@ -458,7 +458,7 @@
     "filter": {
       "favorites_only": "즐겨찾기만",
       "select_mode": "다중 선택",
-      "select_files": "파일 선택",
+      "select_files": "항목 선택",
       "show_selection_panel": "다중 선택 패널 열기",
       "hide_selection_panel": "다중 선택 패널 접기",
       "exit_select_mode": "다중 선택 모드 종료",
@@ -525,14 +525,14 @@
       "조정"
     ],
     "empty_title": "현재 목록이 비어 있습니다",
-    "empty_desc": "파일을 추가하거나 현재 필터를 업데이트해 여기에 항목을 표시하세요.",
-    "select_hint": "선택한 파일이 없습니다",
+    "empty_desc": "항목을 추가하거나 현재 필터를 업데이트해 여기에 표시하세요.",
+    "select_hint": "선택한 항목이 없습니다",
     "deselect": "선택 해제",
     "select_mode_entered": "다중 선택 모드가 켜졌습니다",
-    "selection_load_failed": "선택할 모든 파일을 불러오지 못했습니다. 다시 시도하세요.",
+    "selection_load_failed": "선택할 모든 항목을 불러오지 못했습니다. 다시 시도하세요.",
     "large_batch": {
       "title": "일괄 작업 확인",
-      "content": "이 작업은 {count}개 파일을 처리하며 시간이 걸릴 수 있습니다. 계속하시겠습니까?",
+      "content": "이 작업은 {count}개 항목을 처리하며 시간이 걸릴 수 있습니다. 계속하시겠습니까?",
       "ok": "계속"
     },
     "drag_action": {
@@ -624,10 +624,10 @@
       "delete_selected": "선택 항목 삭제",
       "delete_all": "모두 삭제",
       "move_selected_to_trash": "휴지통으로 이동 ({count}개 선택 · {size})",
-      "no_removable_files": "휴지통으로 이동할 삭제 가능한 파일이 없습니다",
+      "no_removable_files": "휴지통으로 이동할 삭제 가능한 항목이 없습니다",
       "set_keep": "유지",
       "removable_copies_summary": "삭제 가능한 사본 {count}개 · {size}",
-      "similar_photos_summary": "유사 사진 {count}장 · {size}"
+      "similar_items_summary": "유사 항목 {count}개 · {size}"
     }
   },
   "tooltip": {
@@ -975,36 +975,36 @@
     "move_to_trash": {
       "title": "휴지통으로 이동",
       "file_content": "'{file}'을(를) 휴지통으로 이동합니다.",
-      "files_content": "{count}개의 파일을 휴지통으로 이동합니다.",
-      "removable_files_content": "삭제 가능한 {count}개의 모든 파일을 휴지통으로 이동합니다.",
+      "files_content": "선택한 {count}개 항목을 휴지통으로 이동합니다.",
+      "removable_files_content": "삭제 가능한 {count}개 항목을 모두 휴지통으로 이동합니다.",
       "folder_content": "'{folder}'을(를) 휴지통으로 이동합니다.",
       "ok": "이동",
       "file_success": "'{file}'을(를) 휴지통으로 이동했습니다.",
-      "files_success": "{count}개의 파일을 휴지통으로 이동했습니다.",
+      "files_success": "선택한 {count}개 항목을 휴지통으로 이동했습니다.",
       "folder_success": "'{folder}'을(를) 휴지통으로 이동했습니다.",
       "file_error": "파일을 휴지통으로 이동하지 못했습니다.",
-      "files_error": "선택한 파일을 휴지통으로 이동하지 못했습니다.",
+      "files_error": "선택한 항목을 휴지통으로 이동하지 못했습니다.",
       "folder_error": "폴더를 휴지통으로 이동하지 못했습니다."
     },
     "permanent_delete": {
       "title": "영구 삭제",
       "file_content": "'{file}' 파일을 영구 삭제합니다.",
-      "files_content": "선택한 {count}개 파일을 영구 삭제합니다.",
-      "removable_files_content": "삭제 가능한 {count}개의 모든 파일을 영구 삭제합니다.",
+      "files_content": "선택한 {count}개 항목을 영구 삭제합니다.",
+      "removable_files_content": "삭제 가능한 {count}개 항목을 모두 영구 삭제합니다.",
       "folder_content": "'{folder}' 폴더를 영구 삭제합니다.",
       "checkbox": "영구 삭제(되돌릴 수 없음)",
       "ok": "삭제",
       "file_success": "'{file}' 파일을 영구 삭제했습니다.",
-      "files_success": "선택한 {count}개 파일을 영구 삭제했습니다.",
+      "files_success": "선택한 {count}개 항목을 영구 삭제했습니다.",
       "folder_success": "'{folder}' 폴더를 영구 삭제했습니다.",
       "file_error": "파일을 영구 삭제하지 못했습니다.",
-      "files_error": "선택한 파일을 영구 삭제하지 못했습니다.",
+      "files_error": "선택한 항목을 영구 삭제하지 못했습니다.",
       "folder_error": "폴더를 영구 삭제하지 못했습니다."
     },
     "trash_failed": {
       "title": "휴지통으로 이동하지 못했습니다",
       "file_content": "파일 '{file}'을(를) 휴지통으로 이동할 수 없습니다.\n\n대신 영구적으로 삭제하시겠습니까?",
-      "files_content": "선택한 {count}개 파일을 휴지통으로 이동할 수 없습니다.\n\n대신 영구적으로 삭제하시겠습니까?",
+      "files_content": "선택한 {count}개 항목을 휴지통으로 이동할 수 없습니다.\n\n대신 영구적으로 삭제하시겠습니까?",
       "folder_content": "폴더 '{folder}'을(를) 휴지통으로 이동할 수 없습니다.\n\n대신 영구적으로 삭제하시겠습니까?\n\n이 작업은 시스템 휴지통을 통해 되돌릴 수 없습니다.",
       "folder_partial_warning": "이전 시도로 일부 내용이 휴지통으로 이동했을 수 있습니다. 영구 삭제하면 이 폴더와 남아 있는 내용이 삭제됩니다.",
       "ok": "영구 삭제"

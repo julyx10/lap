@@ -37,14 +37,14 @@
     "drop_action": "Toevoegen",
     "drop_title_hint": "Loslaten om toe te voegen",
     "empty_drop_hint": "Sleep items naar de collectie hierboven om ze toe te voegen.",
-    "added_toast": "{count} bestand(en) toegevoegd aan collectie",
-    "add_failed_toast": "Kan bestanden niet toevoegen aan {count} collectie(s)",
-    "already_exists_toast": "{count} bestand(en) al in collectie",
+    "added_toast": "{count} item(s) toegevoegd aan collectie",
+    "add_failed_toast": "Kan items niet toevoegen aan {count} collectie(s)",
+    "already_exists_toast": "{count} item(s) al in collectie",
     "clear": "Collectie leegmaken",
     "clear_confirm_title": "Collectie leegmaken",
     "clear_confirm_message": "Alle bestanden uit \"{name}\" halen? De bestanden zelf worden niet verwijderd.",
     "clear_confirm_ok": "Leegmaken",
-    "removed_toast": "{count} bestand(en) uit collectie gehaald"
+    "removed_toast": "{count} item(s) uit collectie gehaald"
   },
   "library": {
     "all_files": "Alle bestanden",
@@ -254,7 +254,7 @@
     "section_folders": "Kies map",
     "section_status": "Importstatus",
     "to_import": "Te importeren",
-    "files_progress": "{processed} / {total} bestanden ({size})",
+    "files_progress": "{processed} / {total} items ({size})",
     "source": "Bron",
     "source_placeholder": "Kies een bronmap",
     "destination": "Bestemming",
@@ -265,7 +265,7 @@
     "layout_structure": "Mapstructuur behouden",
     "import": "Importeren",
     "preparing": "Import voorbereiden",
-    "importing": "Bestanden importeren",
+    "importing": "Items importeren",
     "complete": "Import voltooid",
     "cancelled": "Import geannuleerd",
     "continue": "Doorgaan",
@@ -458,7 +458,7 @@
     "filter": {
       "favorites_only": "Alleen favorieten",
       "select_mode": "Meervoudige selectie",
-      "select_files": "Bestanden selecteren",
+      "select_files": "Items selecteren",
       "show_selection_panel": "Paneel voor meervoudige selectie openen",
       "hide_selection_panel": "Paneel voor meervoudige selectie inklappen",
       "exit_select_mode": "Meervoudige selectie beëindigen",
@@ -525,14 +525,14 @@
       "Aanpassen"
     ],
     "empty_title": "Deze lijst is leeg",
-    "empty_desc": "Voeg bestanden toe of pas het huidige filter aan om hier items te zien.",
-    "select_hint": "Geen bestanden geselecteerd",
+    "empty_desc": "Voeg items toe of pas het huidige filter aan om ze hier te zien.",
+    "select_hint": "Geen items geselecteerd",
     "deselect": "Deselecteren",
     "select_mode_entered": "Meervoudige selectie staat aan",
-    "selection_load_failed": "Kan niet alle bestanden laden voor de selectie. Probeer het opnieuw.",
+    "selection_load_failed": "Kan niet alle items laden voor de selectie. Probeer het opnieuw.",
     "large_batch": {
       "title": "Bulkbewerking bevestigen",
-      "content": "Deze bewerking verwerkt {count} bestanden en kan even duren. Doorgaan?",
+      "content": "Deze bewerking verwerkt {count} items en kan even duren. Doorgaan?",
       "ok": "Doorgaan"
     },
     "drag_action": {
@@ -624,10 +624,10 @@
       "delete_selected": "Selectie verwijderen",
       "delete_all": "Alles verwijderen",
       "move_selected_to_trash": "Naar prullenbak ({count} geselecteerd · {size})",
-      "no_removable_files": "Geen verwijderbare bestanden om naar de prullenbak te verplaatsen",
+      "no_removable_files": "Geen verwijderbare items om naar de prullenbak te verplaatsen",
       "set_keep": "Behouden",
       "removable_copies_summary": "{count} verwijderbare kopieën · {size}",
-      "similar_photos_summary": "{count} vergelijkbare foto's · {size}"
+      "similar_items_summary": "{count} vergelijkbare items · {size}"
     }
   },
   "tooltip": {
@@ -975,36 +975,36 @@
     "move_to_trash": {
       "title": "Naar prullenbak",
       "file_content": "Het bestand '{file}' wordt naar de prullenbak verplaatst.",
-      "files_content": "{count} geselecteerde bestanden worden naar de prullenbak verplaatst.",
-      "removable_files_content": "Alle {count} verwijderbare bestanden worden naar de prullenbak verplaatst.",
+      "files_content": "{count} geselecteerde items worden naar de prullenbak verplaatst.",
+      "removable_files_content": "Alle {count} verwijderbare items worden naar de prullenbak verplaatst.",
       "folder_content": "De map '{folder}' wordt naar de prullenbak verplaatst.",
       "ok": "Naar prullenbak",
       "file_success": "Het bestand '{file}' is naar de prullenbak verplaatst.",
-      "files_success": "{count} geselecteerde bestanden zijn naar de prullenbak verplaatst.",
+      "files_success": "{count} geselecteerde items zijn naar de prullenbak verplaatst.",
       "folder_success": "De map '{folder}' is naar de prullenbak verplaatst.",
       "file_error": "Kan het bestand niet naar de prullenbak verplaatsen.",
-      "files_error": "Kan de geselecteerde bestanden niet naar de prullenbak verplaatsen.",
+      "files_error": "Kan de geselecteerde items niet naar de prullenbak verplaatsen.",
       "folder_error": "Kan de map niet naar de prullenbak verplaatsen."
     },
     "permanent_delete": {
       "title": "Definitief verwijderen",
       "file_content": "Het bestand '{file}' wordt definitief verwijderd.",
-      "files_content": "{count} geselecteerde bestanden worden definitief verwijderd.",
-      "removable_files_content": "Alle {count} verwijderbare bestanden worden definitief verwijderd.",
+      "files_content": "{count} geselecteerde items worden definitief verwijderd.",
+      "removable_files_content": "Alle {count} verwijderbare items worden definitief verwijderd.",
       "folder_content": "De map '{folder}' wordt definitief verwijderd.",
       "checkbox": "Definitief verwijderen (kan niet ongedaan worden gemaakt)",
       "ok": "Verwijderen",
       "file_success": "Het bestand '{file}' is definitief verwijderd.",
-      "files_success": "{count} geselecteerde bestanden zijn definitief verwijderd.",
+      "files_success": "{count} geselecteerde items zijn definitief verwijderd.",
       "folder_success": "De map '{folder}' is definitief verwijderd.",
       "file_error": "Kan het bestand niet definitief verwijderen.",
-      "files_error": "Kan de geselecteerde bestanden niet definitief verwijderen.",
+      "files_error": "Kan de geselecteerde items niet definitief verwijderen.",
       "folder_error": "Kan de map niet definitief verwijderen."
     },
     "trash_failed": {
       "title": "Naar prullenbak mislukt",
       "file_content": "Het bestand '{file}' kon niet naar de prullenbak worden verplaatst.\n\nWil je het in plaats daarvan definitief verwijderen?",
-      "files_content": "{count} geselecteerde bestanden konden niet naar de prullenbak worden verplaatst.\n\nWil je ze in plaats daarvan definitief verwijderen?",
+      "files_content": "{count} geselecteerde items konden niet naar de prullenbak worden verplaatst.\n\nWil je ze in plaats daarvan definitief verwijderen?",
       "folder_content": "De map '{folder}' kon niet naar de prullenbak worden verplaatst.\n\nWil je deze in plaats daarvan definitief verwijderen?\n\nDeze actie kan niet via de prullenbak van het systeem ongedaan worden gemaakt.",
       "folder_partial_warning": "Bij de vorige poging is mogelijk een deel van de inhoud naar de prullenbak verplaatst. Permanent verwijderen wist deze map en de resterende inhoud.",
       "ok": "Definitief verwijderen"

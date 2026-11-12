@@ -37,14 +37,14 @@
     "drop_action": "追加",
     "drop_title_hint": "ドロップして追加",
     "empty_drop_hint": "アイテムをコレクションにドラッグして追加します。",
-    "added_toast": "{count} 件のファイルをコレクションに追加しました",
-    "add_failed_toast": "{count} 件のコレクションにファイルを追加できませんでした",
-    "already_exists_toast": "{count} 件のファイルはすでにコレクションにあります",
+    "added_toast": "{count} 件の項目をコレクションに追加しました",
+    "add_failed_toast": "{count} 件のコレクションに項目を追加できませんでした",
+    "already_exists_toast": "{count} 件の項目はすでにコレクションにあります",
     "clear": "コレクションを空にする",
     "clear_confirm_title": "コレクションをクリア",
     "clear_confirm_message": "\"{name}\" からすべてのファイルを削除しますか？ファイル自体は削除されません。",
     "clear_confirm_ok": "クリア",
-    "removed_toast": "{count} 件のファイルをコレクションから削除しました"
+    "removed_toast": "{count} 件の項目をコレクションから削除しました"
   },
   "library": {
     "all_files": "すべてのファイル",
@@ -254,7 +254,7 @@
     "section_folders": "フォルダーを選択",
     "section_status": "インポート状況",
     "to_import": "インポート予定",
-    "files_progress": "{processed} / {total} ファイル（{size}）",
+    "files_progress": "{processed} / {total} 個の項目（{size}）",
     "source": "読み込み元",
     "source_placeholder": "読み込み元フォルダーを選択",
     "destination": "保存先",
@@ -265,7 +265,7 @@
     "layout_structure": "フォルダー構造を保持",
     "import": "読み込む",
     "preparing": "読み込みを準備中",
-    "importing": "ファイルを読み込み中",
+    "importing": "項目をインポート中",
     "complete": "読み込み完了",
     "cancelled": "読み込みをキャンセルしました",
     "continue": "続行",
@@ -458,7 +458,7 @@
     "filter": {
       "favorites_only": "お気に入りのみ",
       "select_mode": "複数選択",
-      "select_files": "ファイルを選択",
+      "select_files": "項目を選択",
       "show_selection_panel": "複数選択パネルを開く",
       "hide_selection_panel": "複数選択パネルを折りたたむ",
       "exit_select_mode": "複数選択モードを終了",
@@ -525,14 +525,14 @@
       "調整"
     ],
     "empty_title": "このリストは空です",
-    "empty_desc": "ファイルを追加するか、現在の絞り込み条件を更新してここに項目を表示してください。",
-    "select_hint": "ファイルが選択されていません",
+    "empty_desc": "項目を追加するか、現在の絞り込み条件を更新してここに表示してください。",
+    "select_hint": "項目が選択されていません",
     "deselect": "選択解除",
     "select_mode_entered": "複数選択モードがオンになりました",
-    "selection_load_failed": "選択するすべてのファイルを読み込めませんでした。再試行してください。",
+    "selection_load_failed": "選択するすべての項目を読み込めませんでした。再試行してください。",
     "large_batch": {
       "title": "一括操作の確認",
-      "content": "{count} 個のファイルを処理します。時間がかかる場合があります。続行しますか？",
+      "content": "{count} 個の項目を処理します。時間がかかる場合があります。続行しますか？",
       "ok": "続行"
     },
     "drag_action": {
@@ -624,10 +624,10 @@
       "delete_selected": "選択項目を削除",
       "delete_all": "すべて削除",
       "move_selected_to_trash": "ゴミ箱に入れる（{count}件を選択 · {size}）",
-      "no_removable_files": "ゴミ箱に移動できる削除可能なファイルはありません",
+      "no_removable_files": "ゴミ箱に移動できる削除可能な項目はありません",
       "set_keep": "保持",
       "removable_copies_summary": "削除可能なコピー {count} 件・{size}",
-      "similar_photos_summary": "{count} 枚の類似写真・{size}"
+      "similar_items_summary": "{count} 件の類似項目・{size}"
     }
   },
   "tooltip": {
@@ -975,36 +975,36 @@
     "move_to_trash": {
       "title": "ゴミ箱に入れる",
       "file_content": "ファイル '{file}' をゴミ箱に入れます。",
-      "files_content": "{count} 個のファイルをゴミ箱に入れます。",
-      "removable_files_content": "削除可能な {count} 件すべてのファイルをゴミ箱に入れます。",
+      "files_content": "選択した {count} 個の項目をゴミ箱に入れます。",
+      "removable_files_content": "削除可能な {count} 件すべての項目をゴミ箱に入れます。",
       "folder_content": "フォルダ '{folder}' をゴミ箱に入れます。",
       "ok": "入れる",
       "file_success": "ファイル '{file}' をゴミ箱に入れました。",
-      "files_success": "{count} 個のファイルをゴミ箱に入れました。",
+      "files_success": "選択した {count} 個の項目をゴミ箱に入れました。",
       "folder_success": "フォルダ '{folder}' をゴミ箱に入れました。",
       "file_error": "ファイルをゴミ箱に入れられませんでした。",
-      "files_error": "選択したファイルをゴミ箱に入れられませんでした。",
+      "files_error": "選択した項目をゴミ箱に入れられませんでした。",
       "folder_error": "フォルダをゴミ箱に入れられませんでした。"
     },
     "permanent_delete": {
       "title": "完全に削除",
       "file_content": "ファイル '{file}' を完全に削除します。",
-      "files_content": "選択した {count} 個のファイルを完全に削除します。",
-      "removable_files_content": "削除可能な {count} 件すべてのファイルを完全に削除します。",
+      "files_content": "選択した {count} 個の項目を完全に削除します。",
+      "removable_files_content": "削除可能な {count} 件すべての項目を完全に削除します。",
       "folder_content": "フォルダ '{folder}' を完全に削除します。",
       "checkbox": "完全に削除する（元に戻せません）",
       "ok": "削除",
       "file_success": "ファイル '{file}' を完全に削除しました。",
-      "files_success": "選択した {count} 個のファイルを完全に削除しました。",
+      "files_success": "選択した {count} 個の項目を完全に削除しました。",
       "folder_success": "フォルダ '{folder}' を完全に削除しました。",
       "file_error": "ファイルを完全に削除できませんでした。",
-      "files_error": "選択したファイルを完全に削除できませんでした。",
+      "files_error": "選択した項目を完全に削除できませんでした。",
       "folder_error": "フォルダを完全に削除できませんでした。"
     },
     "trash_failed": {
       "title": "ゴミ箱への移動に失敗しました",
       "file_content": "ファイル '{file}' をゴミ箱に移動できませんでした。\n\n代わりに完全に削除しますか？",
-      "files_content": "選択した {count} 個のファイルをゴミ箱に移動できませんでした。\n\n代わりに完全に削除しますか？",
+      "files_content": "選択した {count} 個の項目をゴミ箱に移動できませんでした。\n\n代わりに完全に削除しますか？",
       "folder_content": "フォルダ '{folder}' をゴミ箱に移動できませんでした。\n\n代わりに完全に削除しますか？\n\nこの操作はシステムのゴミ箱から元に戻すことはできません。",
       "folder_partial_warning": "前の操作で一部の内容がゴミ箱に移動された可能性があります。完全に削除すると、このフォルダーと残りの内容が削除されます。",
       "ok": "完全に削除"

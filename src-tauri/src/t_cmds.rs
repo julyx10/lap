@@ -4500,8 +4500,8 @@ pub fn similar_list_groups(scope_key: String, limit: i64, offset: i64) -> Result
 }
 
 #[tauri::command]
-pub fn similar_get_overview(scope_key: String) -> Result<serde_json::Value, String> {
-    t_similar::get_overview(&scope_key)
+pub fn similar_get_overview(scope_key: String, group_raw_pairs: bool) -> Result<serde_json::Value, String> {
+    t_similar::get_overview(&scope_key, group_raw_pairs)
 }
 
 #[tauri::command]
