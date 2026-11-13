@@ -1,5 +1,5 @@
 <template>
-  <ModalDialog :title="$t(freeSpace ? 'menu.file.index_cloud_files' : 'menu.file.refresh_file_info')" :width="440" @cancel="closeOrCancel">
+  <ModalDialog :title="$t('menu.file.refresh_file_info')" :width="440" @cancel="closeOrCancel">
     <section class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
       <div class="font-bold uppercase text-[10px] tracking-widest text-base-content/30">{{ $t('msgbox.file_refresh.status') }}</div>
       <div class="space-y-2 px-1 text-xs" role="status" aria-live="polite">
@@ -13,10 +13,6 @@
           <span v-if="warned" class="text-warning">{{ $t('msgbox.file_refresh.metadata_failed', { count: warned.toLocaleString() }) }}</span>
           <span v-if="skipped">{{ $t('msgbox.file_refresh.skipped', { count: skipped.toLocaleString() }) }}</span>
           <span :class="{ 'text-error/70': failed > 0 }">{{ $t('msgbox.file_refresh.failed', { count: failed.toLocaleString() }) }}</span>
-        </div>
-        <div v-if="freeSpace" class="flex gap-3 text-base-content/60">
-          <span>{{ $t('msgbox.file_refresh.release_requested', { count: releaseRequested.toLocaleString() }) }}</span>
-          <span :title="$t('msgbox.file_refresh.kept_local_hint')">{{ $t('msgbox.file_refresh.kept_local', { count: keptLocal.toLocaleString() }) }}</span>
         </div>
       </div>
     </section>
@@ -36,8 +32,8 @@ import { getRawDisplayOptions } from '@/common/rawDisplay';
 import { useUIStore } from '@/stores/uiStore';
 import ModalDialog from '@/components/ModalDialog.vue';
 
-type FileRefreshResult = { file: any; size_delta: number; skipped: boolean; release_requested: boolean; warning?: string | null; error?: string | null };
-const props = defineProps<{ fileIds: number[]; libraryId: string; freeSpace?: boolean; finishRefresh: (results: FileRefreshResult[]) => Promise<void> }>();
+type FileRefreshResult = { file: any; size_delta: number; skipped: boolean; warning?: string | null; error?: string | null };
+const props = defineProps<{ fileIds: number[]; libraryId: string; finishRefresh: (results: FileRefreshResult[]) => Promise<void> }>();
 const emit = defineEmits(['close']);
 const uiStore = useUIStore();
 const selectionIds = [...new Set(props.fileIds)];
@@ -48,8 +44,6 @@ const succeeded = ref(0);
 const skipped = ref(0);
 const failed = ref(0);
 const warned = ref(0);
-const releaseRequested = ref(0);
-const keptLocal = ref(0);
 let disposed = false;
 
 function closeOrCancel() {
@@ -86,13 +80,7 @@ async function runRefresh() {
         break;
       }
       try {
-        const result = props.freeSpace
-          ? await invoke<FileRefreshResult | null>('index_cloud_file', {
-              libraryId: props.libraryId, fileId, batchId,
-              thumbnailSize: config.settings.thumbnailSize, rawDisplayOptions: getRawDisplayOptions(),
-            })
-          : await invoke<FileRefreshResult | null>('refresh_selected_file_info', { libraryId: props.libraryId, fileId, batchId, thumbnailSize: config.settings.thumbnailSize, rawDisplayOptions: getRawDisplayOptions() });
-        if (result && props.freeSpace) result.release_requested ? releaseRequested.value++ : keptLocal.value++;
+        const result = await invoke<FileRefreshResult | null>('refresh_selected_file_info', { libraryId: props.libraryId, fileId, batchId, thumbnailSize: config.settings.thumbnailSize, rawDisplayOptions: getRawDisplayOptions() });
         if (result) {
           results.push(result);
           if (result.warning) warned.value++;

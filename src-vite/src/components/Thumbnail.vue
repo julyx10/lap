@@ -501,11 +501,10 @@ function startAnimatedImagePreview() {
 
   const request = ++animatedImagePreviewRequest;
   const filePath = props.file?.file_path || '';
-  animatedImagePreviewTimer = setTimeout(async () => {
+  animatedImagePreviewTimer = setTimeout(() => {
     animatedImagePreviewTimer = null;
     if (!canPreviewAnimatedImage.value) return;
     // The catalog flag can be stale; loading an online-only image would download it.
-    if (await isCloudOnlyFile(filePath)) return;
     if (request !== animatedImagePreviewRequest || props.file?.file_path !== filePath
       || !canPreviewAnimatedImage.value) return;
     isAnimatedImagePreviewReady.value = false;

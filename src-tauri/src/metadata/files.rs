@@ -450,7 +450,7 @@ fn plan<'a>(
 }
 
 fn copy_new(old: &Path, new: &Path) -> Result<(), String> {
-    let mut input = fs::File::open(old).map_err(|e| e.to_string())?;
+    let mut input = crate::t_utils::open_local_content(old).map_err(|e| e.to_string())?;
     let info = input.metadata().map_err(|e| e.to_string())?;
     let mut output = fs::OpenOptions::new()
         .write(true)

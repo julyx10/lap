@@ -309,7 +309,16 @@
                 >
                   <span class="min-w-0 break-all">{{ generalFileInfo?.name }}</span>
                   <span
-                    v-if="generalFileUnavailable"
+                    v-if="generalFileInfo?.cloud_only"
+                    class="shrink-0 text-base-content/50"
+                    :title="t('offline.cloud_only')"
+                    :aria-label="t('offline.cloud_only')"
+                    role="img"
+                  >
+                    <IconCloud class="size-3.5" aria-hidden="true" />
+                  </span>
+                  <span
+                    v-else-if="generalFileUnavailable"
                     class="shrink-0 text-warning/70"
                     :title="t('offline.original_unavailable')"
                     :aria-label="t('offline.original_unavailable')"
@@ -564,6 +573,7 @@ import {
 import {
   IconCopy,
   IconClose,
+  IconCloud,
   IconRefresh,
   IconAdjustments,
   IconRight,

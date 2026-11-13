@@ -235,6 +235,7 @@
   },
   "offline": {
     "badge": "Offline",
+    "download_to_open": "Download this photo in your cloud storage app before opening it.",
     "cloud_only": "Available online only",
     "cloud_only_pending": "Available online only — information incomplete",
     "original_unavailable": "Original file is unavailable",
@@ -767,7 +768,6 @@
       "reveal_in_finder": "Reveal in Finder...",
       "reveal_in_file_explorer": "Reveal in File Explorer...",
       "refresh_file_info": "Refresh file info",
-      "index_cloud_files": "Download, index, then free up space",
       "set_album_cover": "Set as album cover",
       "set_as": "Set as",
       "set_desktop_wallpaper": "Set as desktop wallpaper",
@@ -1040,10 +1040,7 @@
       "cancelled": "Cancelled",
       "complete": "Complete",
       "succeeded": "Updated: {count}",
-      "failed": "Failed: {count}",
-      "release_requested": "Release requested: {count}",
-      "kept_local": "Kept on this device: {count}",
-      "kept_local_hint": "Files you keep on this device, or that Windows did not let Lap free up (Controlled folder access)."
+      "failed": "Failed: {count}"
     },
     "image_editor": {
       "title": "Edit",

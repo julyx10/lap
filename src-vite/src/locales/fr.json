@@ -235,6 +235,7 @@
   },
   "offline": {
     "badge": "Hors ligne",
+    "download_to_open": "Téléchargez cette photo dans votre application de stockage cloud avant de l’ouvrir.",
     "cloud_only": "Disponible uniquement en ligne",
     "cloud_only_pending": "Disponible uniquement en ligne — informations incomplètes",
     "original_unavailable": "Le fichier original est indisponible",
@@ -767,7 +768,6 @@
       "reveal_in_finder": "Afficher dans le Finder...",
       "reveal_in_file_explorer": "Afficher dans l'Explorateur...",
       "refresh_file_info": "Actualiser les informations du fichier",
-      "index_cloud_files": "Télécharger, indexer puis libérer de l'espace",
       "set_album_cover": "Définir comme couverture",
       "set_as": "Définir comme",
       "set_desktop_wallpaper": "Définir comme fond d'écran",
@@ -1040,10 +1040,7 @@
       "cancelled": "Annulé",
       "complete": "Terminé",
       "succeeded": "Actualisés : {count}",
-      "failed": "Échecs : {count}",
-      "release_requested": "Libération demandée : {count}",
-      "kept_local": "Restés sur cet appareil : {count}",
-      "kept_local_hint": "Fichiers que vous gardez sur cet appareil, ou que Windows n'a pas laissé Lap libérer (Accès contrôlé aux dossiers)."
+      "failed": "Échecs : {count}"
     },
     "image_editor": {
       "title": "Modifier",

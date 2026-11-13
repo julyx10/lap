@@ -1231,6 +1231,7 @@ pub async fn set_desktop_wallpaper(
     if !Path::new(&source_path).is_file() {
         return Err("Wallpaper source file does not exist".to_string());
     }
+    t_utils::require_local_content(Path::new(&source_path)).map_err(|error| error.to_string())?;
 
     #[cfg(target_os = "macos")]
     {
@@ -1375,6 +1376,10 @@ pub fn open_files_with_app(file_paths: Vec<String>, app_path: &str) -> Result<()
 
     if file_paths.is_empty() || app_path.is_empty() {
         return Err("Missing file path or app path".to_string());
+    }
+
+    for path in &file_paths {
+        t_utils::require_local_content(Path::new(path)).map_err(|error| error.to_string())?;
     }
 
     #[cfg(target_os = "macos")]
@@ -2213,6 +2218,7 @@ pub async fn import_file(
 }
 
 fn import_single_file(file_path: &str, folder_id: i64, folder_path: &str) -> Result<AFile, String> {
+    t_utils::require_local_content(Path::new(file_path)).map_err(|error| error.to_string())?;
     // Validate the source is a supported type *before* copying.
     t_utils::get_file_type(file_path)
         .ok_or_else(|| format!("Unsupported file type: {}", file_path))?;
@@ -3757,6 +3763,7 @@ pub fn prepare_motion_photo_video(file_id: i64) -> Result<String, String> {
         .motion_photo_offset
         .filter(|o| *o > 0)
         .ok_or_else(|| "File is not a Motion Photo".to_string())?;
+    t_utils::require_local_content(Path::new(file_path)).map_err(|error| error.to_string())?;
 
     let metadata = fs::metadata(file_path).map_err(|e| format!("Failed to stat file: {}", e))?;
     let mtime_secs = metadata
@@ -3778,6 +3785,8 @@ pub fn prepare_motion_photo_video(file_id: i64) -> Result<String, String> {
     if stored_cache.exists() {
         return Ok(stored_cache.to_string_lossy().into_owned());
     }
+
+    t_utils::require_local_content(Path::new(file_path)).map_err(|error| error.to_string())?;
 
     // Cache miss: re-evaluate at playback time so files indexed before an
     // improved detector use the authoritative XMP offset without a rescan.
@@ -3831,6 +3840,7 @@ fn evict_stale_motion_videos(cache_dir: &Path, file_id: i64, keep: &Path) {
 
 fn extract_embedded_mp4(source: &str, offset: u64, dest: &Path) -> Result<(), String> {
     use std::io::{Read, Seek, SeekFrom, Write};
+    t_utils::require_local_content(Path::new(source)).map_err(|error| error.to_string())?;
     let mut src = fs::File::open(source).map_err(|e| format!("Failed to open source: {}", e))?;
     src.seek(SeekFrom::Start(offset))
         .map_err(|e| format!("Failed to seek to video offset: {}", e))?;
@@ -3879,24 +3889,10 @@ pub struct FileRefreshResult {
     size_delta: i64,
     /// True when the file was left unread because it is an unchanged cloud-only file.
     skipped: bool,
-    /// The provider accepted an asynchronous release request.
-    release_requested: bool,
     /// Organization metadata could not be imported; the file metadata is retained.
     warning: Option<String>,
     /// A required later stage failed after metadata was already updated.
     error: Option<String>,
-}
-
-/// Refresh metadata without reopening unchanged originals.
-fn refresh_file(file_id: i64, force: bool) -> Result<Option<FileRefreshResult>, String> {
-    let refresh = AFile::refresh_metadata(file_id, force, true)?;
-    Ok(Some(FileRefreshResult {
-        file: refresh.file,
-        size_delta: refresh.size_delta,
-        skipped: refresh.skipped,
-        warning: refresh.warning,
-        ..Default::default()
-    }))
 }
 
 #[tauri::command]
@@ -3966,60 +3962,6 @@ pub async fn refresh_selected_file_info(
     })
     .await
     .map_err(|e| format!("File refresh task failed: {e}"))?
-}
-
-/// "Download, index, then free up space": index an online-only file in full,
-/// store its thumbnail, then ask OneDrive to free it again. Local files are
-/// refreshed and stay local.
-#[tauri::command]
-pub async fn index_cloud_file(
-    library_id: String,
-    batch_id: Option<u64>,
-    file_id: i64,
-    thumbnail_size: u32,
-    raw_display_options: RawDisplayOptions,
-) -> Result<Option<FileRefreshResult>, String> {
-    tauri::async_runtime::spawn_blocking(move || {
-        let _guard = FILE_REFRESH_LIBRARY_LOCK.read().map_err(|e| e.to_string())?;
-        if t_config::current_library_id()? != library_id {
-            return Err("Library changed".to_string());
-        }
-        let _index = crate::metadata::xmp::refresh_index_scope(batch_id, &library_id)?;
-        let path = AFile::get_file_info(file_id)?.and_then(|file| file.file_path).ok_or("File not found")?;
-        let was_cloud_only = t_utils::is_cloud_only_path(&path);
-        let Some(mut result) = refresh_file(file_id, true)? else { return Ok(None) };
-        if !was_cloud_only || result.error.is_some() || result.warning.is_some() {
-            return Ok(Some(result));
-        }
-        // Keep the refreshed file even if thumbnail generation or release fails.
-        let release = (|| -> Result<bool, String> {
-            let file = &result.file;
-            let thumb = AThumb::cache_cloud_file_thumbnail(
-                file_id, &path, file.file_type.unwrap_or(0), file.e_orientation.unwrap_or(1) as i32,
-                thumbnail_size, raw_display_options, file.duration.map(|d| d as u64),
-            )?;
-            if !matches!(thumb, Some(ref thumb) if thumb.error_code == 0 && thumb.thumb_data.is_some()) {
-                return Err("Thumbnail could not be cached; the file was kept on this device".to_string());
-            }
-            // Attribute changes request asynchronous dehydration, not completion.
-            t_utils::release_cloud_file(&path)
-        })();
-        match release {
-            Ok(requested) => result.release_requested = requested,
-            Err(error) => result.error = Some(error),
-        }
-        let cloud_only = t_utils::is_cloud_only_path(&path);
-        result.file.cloud_only = cloud_only;
-        if let Err(error) = AFile::update_column(file_id, "cloud_only", &cloud_only) {
-            result.error.get_or_insert(error);
-        }
-        match AFile::get_file_info(file_id) {
-            Ok(Some(file)) => result.file = file,
-            Ok(None) => { result.error.get_or_insert("File no longer exists in the catalog".to_string()); }
-            Err(error) => { result.error.get_or_insert(error); }
-        }
-        Ok(Some(result))
-    }).await.map_err(|e| format!("Cloud file indexing task failed: {e}"))?
 }
 
 /// add or refresh a file in db and return the indexed file info

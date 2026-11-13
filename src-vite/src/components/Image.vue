@@ -45,8 +45,8 @@
     <transition name="fade">
       <div v-if="loadError" class="absolute inset-0 bg-base-100/50 flex items-center justify-center z-50 rounded-box">
         <div class="h-full flex flex-col items-center justify-center text-base-content/30">
-          <IconError class="w-8 h-8 mb-2" />
-          <span>{{ $t(offlinePreview ? 'tooltip.not_found.files' : 'image_viewer.failed') }}</span>
+          <component :is="cloudLoadError ? IconCloud : IconError" class="w-8 h-8 mb-2" />
+          <span>{{ $t(cloudLoadError ? 'offline.download_to_open' : offlinePreview ? 'tooltip.not_found.files' : 'image_viewer.failed') }}</span>
         </div>
       </div>
     </transition>
@@ -219,7 +219,7 @@ import { createDragPreview, isWindowDragEdge, startNativeFileDrag } from '@/comm
 
 import { checkFileAccessibility, isCloudOnlyFile } from '@/common/api';
 import { setFileAccessibility } from '@/common/availability';
-import { IconError, IconBrightness, IconBrightnessUp, IconEmbedded } from '@/common/icons';
+import { IconCloud, IconError, IconBrightness, IconBrightnessUp, IconEmbedded } from '@/common/icons';
 import ImageNavigator from '@/components/ImageNavigator.vue';
 
 const { t } = useI18n();
@@ -465,6 +465,7 @@ const getImageStyle = (index: number) => ({
 // loading and error overlays
 const isLoading = ref(false);
 const loadError = ref(false);
+const cloudLoadError = ref(false);
 const offlinePreview = ref(false);
 let loadingTimeout: NodeJS.Timeout | null = null;
 
@@ -874,12 +875,10 @@ function warmImage(filePath?: string) {
     warmImageTimeout = null;
     if (props.nextFilePath !== filePath || filePath === props.filePath) return;
 
-    const runWarmup = async () => {
+    const runWarmup = () => {
       warmImageIdleId = null;
       if (props.nextFilePath !== filePath || filePath === props.filePath) return;
 
-      // Preloading is not an explicit request to download the next original.
-      if (await isCloudOnlyFile(filePath)) return;
       if (request !== warmImageRequest || props.nextFilePath !== filePath || filePath === props.filePath) return;
       void loadImageResource(filePath).catch(() => {
         // Ignore preload failures and let the main load path surface errors.
@@ -1295,6 +1294,7 @@ watch([
   }
 
   loadError.value = false; // Reset error state
+  cloudLoadError.value = false;
   offlinePreview.value = false;
   maxScale.value = 10;
 
@@ -1321,6 +1321,17 @@ watch([
   try {
     const usesRealtimePreview = (await ffmpegExtensionsPromise).has(getFileExtension(newFilePath).toLowerCase());
     if (loadingId !== currentLoadingId.value) return;
+    const cloudOnly = await isCloudOnlyFile(newFilePath);
+    if (loadingId !== currentLoadingId.value) return;
+    if (cloudOnly) {
+      clearTimeout(loadingTimeout);
+      loadingTimeout = null;
+      isLoading.value = false;
+      rawRequestPending.value = false;
+      cloudLoadError.value = true;
+      loadError.value = true;
+      return;
+    }
     const imageResultPromise = loadImageResource(newFilePath)
       .then((loaded) => ({ kind: 'image' as const, loaded }));
     const keepCurrentRaw = isRawPreview && newFilePath === oldFilePath && !!rawSource.value;
@@ -1457,6 +1468,13 @@ watch([
     }
     isLoading.value = false;
     rawRequestPending.value = false;
+    const cloudOnly = await isCloudOnlyFile(newFilePath);
+    if (loadingId !== currentLoadingId.value) return;
+    if (cloudOnly) {
+      cloudLoadError.value = true;
+      loadError.value = true;
+      return;
+    }
     try {
       if (!await checkFileAccessibility(String(newFilePath))) {
         if (loadingId !== currentLoadingId.value) return;

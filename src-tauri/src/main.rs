@@ -358,7 +358,6 @@ async fn main() {
             t_cmds::end_file_refresh_batch,
             t_cmds::refresh_selected_file_info,
             t_cmds::change_video_thumbnail,
-            t_cmds::index_cloud_file,
             t_cmds::is_cloud_only_file,
             t_cmds::prepare_motion_photo_video,
             t_cmds::add_file_to_db,

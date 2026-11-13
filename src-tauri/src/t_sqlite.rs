@@ -4302,7 +4302,6 @@ impl AFile {
     /// Called under the file's generation guard by scan/refresh/viewport work.
     pub(crate) fn refresh_metadata(
         file_id: i64,
-        force_download: bool,
         force_metadata: bool,
     ) -> Result<MetadataRefresh, String> {
         let old = Self::get_file_info(file_id)?.ok_or("File not found")?;
@@ -4316,7 +4315,7 @@ impl AFile {
             });
         }
         let info = fs::metadata(path).map_err(|e| e.to_string())?;
-        let skipped = !force_download && t_utils::is_cloud_only(&info);
+        let skipped = t_utils::is_cloud_only(&info);
         let checked = chrono::Utc::now().timestamp_millis();
         let _scan = crate::metadata::xmp::sidecar_scan(checked);
         let version = metadata_failure_version(path);
@@ -4334,7 +4333,7 @@ impl AFile {
                 return Err(message);
             }
         }
-        if !skipped && (force_download || force_metadata || old.needs_extraction(&info)) {
+        if !skipped && (force_metadata || old.needs_extraction(&info)) {
             let (updated, warning) =
                 match Self::update_file_info_with_xmp_error(file_id, path, checked) {
                     Ok(result) => result,
@@ -8440,23 +8439,6 @@ impl AThumb {
         Self::fetch_for_library(file_id, library_id)
     }
 
-    /// Persist a thumbnail after an explicit cloud download.
-    pub fn cache_cloud_file_thumbnail(
-        file_id: i64,
-        file_path: &str,
-        file_type: i64,
-        orientation: i32,
-        thumbnail_size: u32,
-        options: RawDisplayOptions,
-        known_duration: Option<u64>,
-    ) -> Result<Option<Self>, String> {
-        let _generation_guard = Self::acquire_generation_guard(file_id, thumbnail_size);
-        Self::create_cache_backed_thumb_for_library(
-            file_id, file_path, file_type, orientation, thumbnail_size, options,
-            &Self::get_current_library_id(), known_duration, None, false,
-        )
-    }
-
     /// Browsing only fills missing cache entries. Source changes and explicit
     /// invalidation markers are consumed by scan/refresh, never by cache reads.
     pub fn get_thumb_if_available(
@@ -8563,7 +8545,7 @@ impl AThumb {
         force_metadata: bool,
     ) -> Result<(MetadataRefresh, Option<String>), String> {
         Self::with_generation_guard(file_id, size, || {
-            let mut refresh = AFile::refresh_metadata(file_id, false, force_metadata)?;
+            let mut refresh = AFile::refresh_metadata(file_id, force_metadata)?;
             if refresh.skipped {
                 return Ok((refresh, None));
             }
@@ -11719,9 +11701,9 @@ mod file_refresh_policy_tests {
             file.comments = Some("Keep this comment".into());
             file.insert().unwrap();
             let id = AFile::fetch(folder, path).unwrap().unwrap().id.unwrap();
-            let background = AFile::refresh_metadata(id, false, false).unwrap();
+            let background = AFile::refresh_metadata(id, false).unwrap();
             assert!(background.file.e_lens_model.is_none());
-            let refreshed = AFile::refresh_metadata(id, false, true).unwrap();
+            let refreshed = AFile::refresh_metadata(id, true).unwrap();
             assert!(!refreshed.skipped);
             assert_eq!(refreshed.size_delta, 0);
             assert_eq!(refreshed.file.e_lens_model.as_deref(), Some(expected_lens.as_str()));

@@ -235,6 +235,7 @@
   },
   "offline": {
     "badge": "Ngoại tuyến",
+    "download_to_open": "Hãy tải ảnh này xuống trong ứng dụng lưu trữ đám mây trước khi mở.",
     "cloud_only": "Chỉ có trực tuyến",
     "cloud_only_pending": "Chỉ có trực tuyến — thông tin chưa đầy đủ",
     "original_unavailable": "Tệp gốc không khả dụng",
@@ -767,7 +768,6 @@
       "reveal_in_finder": "Hiện trong Finder...",
       "reveal_in_file_explorer": "Hiện trong File Explorer...",
       "refresh_file_info": "Làm mới thông tin tệp",
-      "index_cloud_files": "Tải xuống, lập chỉ mục rồi giải phóng dung lượng",
       "set_album_cover": "Đặt làm ảnh bìa album",
       "set_as": "Đặt làm",
       "set_desktop_wallpaper": "Đặt làm hình nền màn hình",
@@ -1040,10 +1040,7 @@
       "cancelled": "Đã hủy",
       "complete": "Hoàn tất",
       "succeeded": "Đã cập nhật: {count}",
-      "failed": "Thất bại: {count}",
-      "release_requested": "Đã yêu cầu giải phóng: {count}",
-      "kept_local": "Giữ trên thiết bị này: {count}",
-      "kept_local_hint": "Các tệp bạn giữ trên thiết bị này, hoặc Windows không cho phép Lap giải phóng (Controlled folder access)."
+      "failed": "Thất bại: {count}"
     },
     "image_editor": {
       "title": "Chỉnh sửa",

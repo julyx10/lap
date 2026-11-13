@@ -235,6 +235,7 @@
   },
   "offline": {
     "badge": "Offline",
+    "download_to_open": "Scarica questa foto nell’app del servizio di archiviazione cloud prima di aprirla.",
     "cloud_only": "Disponibile solo online",
     "cloud_only_pending": "Disponibile solo online — informazioni incomplete",
     "original_unavailable": "Il file originale non è disponibile",
@@ -767,7 +768,6 @@
       "reveal_in_finder": "Mostra nel Finder...",
       "reveal_in_file_explorer": "Mostra in Esplora file...",
       "refresh_file_info": "Aggiorna informazioni file",
-      "index_cloud_files": "Scarica, indicizza e libera spazio",
       "set_album_cover": "Imposta come copertina album",
       "set_as": "Imposta come",
       "set_desktop_wallpaper": "Imposta come sfondo del desktop",
@@ -1040,10 +1040,7 @@
       "cancelled": "Annullato",
       "complete": "Completato",
       "succeeded": "Aggiornati: {count}",
-      "failed": "Non riusciti: {count}",
-      "release_requested": "Liberazione richiesta: {count}",
-      "kept_local": "Mantenuti su questo dispositivo: {count}",
-      "kept_local_hint": "File da mantenere sempre su questo dispositivo o per i quali Windows non ha consentito a Lap di liberare spazio (accesso alle cartelle controllato)."
+      "failed": "Non riusciti: {count}"
     },
     "image_editor": {
       "title": "Modifica",

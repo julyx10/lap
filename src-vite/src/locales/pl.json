@@ -235,6 +235,7 @@
   },
   "offline": {
     "badge": "Offline",
+    "download_to_open": "Przed otwarciem pobierz to zdjęcie w aplikacji dysku w chmurze.",
     "cloud_only": "Dostępny tylko online",
     "cloud_only_pending": "Dostępny tylko online — niepełne informacje o pliku",
     "original_unavailable": "Oryginalny plik jest niedostępny",
@@ -767,7 +768,6 @@
       "reveal_in_finder": "Pokaż w Finderze...",
       "reveal_in_file_explorer": "Pokaż w Eksploratorze plików...",
       "refresh_file_info": "Odśwież informacje o pliku",
-      "index_cloud_files": "Pobierz, zindeksuj i zwolnij miejsce",
       "set_album_cover": "Ustaw jako okładkę albumu",
       "set_as": "Ustaw jako",
       "set_desktop_wallpaper": "Ustaw jako tapetę pulpitu",
@@ -1040,10 +1040,7 @@
       "cancelled": "Anulowano",
       "complete": "Ukończono",
       "succeeded": "Zaktualizowano: {count}",
-      "failed": "Błędy: {count}",
-      "release_requested": "Zażądano zwolnienia miejsca: {count}",
-      "kept_local": "Zachowano na tym urządzeniu: {count}",
-      "kept_local_hint": "Pliki, które mają zawsze pozostawać na tym urządzeniu lub dla których Windows nie zezwolił aplikacji Lap na zwolnienie miejsca (kontrolowany dostęp do folderów)."
+      "failed": "Błędy: {count}"
     },
     "image_editor": {
       "title": "Edycja",

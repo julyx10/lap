@@ -235,6 +235,7 @@
   },
   "offline": {
     "badge": "Offline",
+    "download_to_open": "Před otevřením stáhněte tuto fotografii v aplikaci cloudového úložiště.",
     "cloud_only": "Dostupné pouze online",
     "cloud_only_pending": "Dostupné pouze online – informace nejsou úplné",
     "original_unavailable": "Původní soubor není dostupný",
@@ -767,7 +768,6 @@
       "reveal_in_finder": "Zobrazit ve Vyhledávači…",
       "reveal_in_file_explorer": "Zobrazit v Průzkumníku souborů…",
       "refresh_file_info": "Aktualizovat informace o souboru",
-      "index_cloud_files": "Stáhnout, zaindexovat a poté uvolnit místo",
       "set_album_cover": "Nastavit jako obálku alba",
       "set_as": "Nastavit jako",
       "set_desktop_wallpaper": "Nastavit jako tapetu plochy",
@@ -1040,10 +1040,7 @@
       "cancelled": "Zrušeno",
       "complete": "Dokončeno",
       "succeeded": "Aktualizováno: {count}",
-      "failed": "Chyby: {count}",
-      "release_requested": "Požadováno uvolnění místa: {count}",
-      "kept_local": "Ponecháno v tomto zařízení: {count}",
-      "kept_local_hint": "Soubory, které ponecháte v tomto zařízení nebo které Windows nedovolil aplikaci Lap uvolnit (Řízený přístup ke složkám)."
+      "failed": "Chyby: {count}"
     },
     "image_editor": {
       "title": "Upravit",

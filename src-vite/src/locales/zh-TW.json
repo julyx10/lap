@@ -235,6 +235,7 @@
   },
   "offline": {
     "badge": "離線",
+    "download_to_open": "請先在雲端硬碟應用程式中下載此照片，再開啟。",
     "cloud_only": "僅線上可用",
     "cloud_only_pending": "僅線上可用 — 檔案資訊待補齊",
     "original_unavailable": "原始檔案暫時無法存取",
@@ -767,7 +768,6 @@
       "reveal_in_finder": "在 Finder 中顯示...",
       "reveal_in_file_explorer": "在檔案總管中顯示...",
       "refresh_file_info": "重新整理檔案資訊",
-      "index_cloud_files": "下載、建立索引並釋放空間",
       "set_album_cover": "設為相簿封面",
       "set_as": "設為",
       "set_desktop_wallpaper": "設為桌面桌布",
@@ -1040,10 +1040,7 @@
       "cancelled": "已取消",
       "complete": "完成",
       "succeeded": "已更新：{count}",
-      "failed": "失敗：{count}",
-      "release_requested": "已要求釋放：{count}",
-      "kept_local": "保留在此裝置：{count}",
-      "kept_local_hint": "一律保留在此裝置上的檔案，或 Windows 不允許 Lap 釋放空間的檔案（受控資料夾存取）。"
+      "failed": "失敗：{count}"
     },
     "image_editor": {
       "title": "編輯",

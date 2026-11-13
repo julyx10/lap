@@ -37,7 +37,8 @@
               </div>
             </transition>
 
-            <template v-if="imageSrc">
+            <p v-if="originalUnavailable" class="p-4 text-sm text-base-content/70">{{ t('offline.requires_original') }}</p>
+            <template v-else-if="imageSrc">
               <figure
                 v-if="showDiffPreview && canShowDiffPreview"
                 class="diff absolute inset-0 z-20 h-full w-full"
@@ -552,7 +553,7 @@ import { useUIStore } from '@/stores/uiStore';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/config';
 import { isWin, isLinux, SCALE_VALUES, getFolderPath, getFileExtension, shortenFilename, getFullPath, combineFileName, getSelectOptions, getAssetSrc, getPreviewUrl, getThumbUrl, shouldUseBackendPreview } from '@/common/utils';
-import { editImage, checkFileExists, getFileInfo } from '@/common/api';
+import { editImage, checkFileExists, getFileInfo, isCloudOnlyFile } from '@/common/api';
 import { getMaxInscribedRect, clampCenterInRotatedRect, maxResizeT } from '@/common/geometry';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { emit as tauriEmit, listen } from '@tauri-apps/api/event';
@@ -591,7 +592,7 @@ const router = useRouter();
 const fileInfo = ref<any>(null);
 const initialImageSrc = ref('');
 
-const { locale, messages } = useI18n();
+const { locale, messages, t } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value] as any);
 
 const uiStore = useUIStore();
@@ -661,6 +662,7 @@ const imageRef = ref<HTMLImageElement | null>(null);
 const imageRect = ref<DOMRect | null>(null);
 const imageRectOriginal = ref<DOMRect | null>(null);
 const imageSrc = ref('');
+const originalUnavailable = ref(false);
 const imageWidth = ref(0);
 const imageHeight = ref(0);
 const isRawFile = computed(() => Number(fileInfo.value?.file_type || 0) === 3);
@@ -1396,6 +1398,7 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
+  initEditImageLoadingId.value++;
   window.removeEventListener('keydown', handleKeyDown);
   uiStore.removeInputHandler('EditImage');
   if (containerResizeObserver) {
@@ -1433,6 +1436,17 @@ const initEditImageLoadingId = ref(0);
 const initEditImage = async () => {
   initEditImageLoadingId.value++;
   const loadingId = initEditImageLoadingId.value;
+  const filePath = fileInfo.value.file_path;
+  originalUnavailable.value = false;
+  const cloudOnly = await isCloudOnlyFile(filePath);
+  if (loadingId !== initEditImageLoadingId.value) return;
+  if (cloudOnly) {
+    originalUnavailable.value = true;
+    imageSrc.value = '';
+    imageReady.value = false;
+    isProcessing.value = false;
+    return;
+  }
 
   if (usesBackendPreview.value) {
     if (initialImageSrc.value) {
@@ -1457,7 +1471,7 @@ const initEditImage = async () => {
       }
     })();
   } else {
-    imageSrc.value = getAssetSrc(fileInfo.value.file_path);
+    imageSrc.value = getAssetSrc(filePath);
   }
 
   imageWidth.value = fileInfo.value.width;

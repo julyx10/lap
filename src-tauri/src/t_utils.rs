@@ -482,8 +482,15 @@ fn has_hidden_attribute(_metadata: &std::fs::Metadata) -> bool {
 #[cfg(target_os = "windows")]
 pub fn is_cloud_only(metadata: &std::fs::Metadata) -> bool {
     use std::os::windows::fs::MetadataExt;
-    const FILE_ATTRIBUTE_RECALL_ON_DATA_ACCESS: u32 = 0x40_0000;
-    (metadata.file_attributes() & FILE_ATTRIBUTE_RECALL_ON_DATA_ACCESS) != 0
+    windows_content_is_offline(metadata.file_attributes())
+}
+
+#[cfg(any(target_os = "windows", test))]
+fn windows_content_is_offline(attributes: u32) -> bool {
+    const OFFLINE: u32 = 0x1000;
+    const RECALL_ON_OPEN: u32 = 0x4_0000;
+    const RECALL_ON_DATA_ACCESS: u32 = 0x40_0000;
+    attributes & (OFFLINE | RECALL_ON_OPEN | RECALL_ON_DATA_ACCESS) != 0
 }
 
 #[cfg(target_os = "macos")]
@@ -510,39 +517,20 @@ pub fn is_cloud_only_path(path: &str) -> bool {
     std::fs::metadata(path).is_ok_and(|m| is_cloud_only(&m))
 }
 
-#[cfg(target_os = "windows")]
-const FILE_ATTRIBUTE_PINNED: u32 = 0x8_0000;
-#[cfg(target_os = "windows")]
-const FILE_ATTRIBUTE_UNPINNED: u32 = 0x10_0000;
-
-/// Attributes that ask OneDrive to free the local copy, like `attrib +U -P`.
-/// Keeps only the bits SetFileAttributesW accepts.
-#[cfg(target_os = "windows")]
-fn unpinned_attributes(attributes: u32) -> u32 {
-    // READONLY, HIDDEN, SYSTEM, ARCHIVE, NORMAL, TEMPORARY, OFFLINE, NOT_CONTENT_INDEXED, NO_SCRUB_DATA
-    const SETTABLE: u32 = 0x1 | 0x2 | 0x4 | 0x20 | 0x80 | 0x100 | 0x1000 | 0x2000 | 0x2_0000;
-    (attributes & SETTABLE) | FILE_ATTRIBUTE_UNPINNED
+pub(crate) fn online_only_message(path: &Path) -> String {
+    format!("File is online-only. Download it in your cloud storage app first: {}", path.display())
 }
 
-/// Ask OneDrive to free the local copy. A file the user keeps on this device stays local.
-#[cfg(target_os = "windows")]
-pub fn release_cloud_file(path: &str) -> Result<bool, String> {
-    use std::os::windows::ffi::OsStrExt;
-    use std::os::windows::fs::MetadataExt;
-    let attributes = std::fs::metadata(path).map_err(|e| e.to_string())?.file_attributes();
-    if attributes & FILE_ATTRIBUTE_PINNED != 0 {
-        return Ok(false);
+pub(crate) fn require_local_content(path: &Path) -> std::io::Result<()> {
+    if is_cloud_only(&fs::metadata(path)?) {
+        return Err(std::io::Error::other(online_only_message(path)));
     }
-    let wide: Vec<u16> = std::ffi::OsStr::new(path).encode_wide().chain(std::iter::once(0)).collect();
-    if unsafe { win32_imports::SetFileAttributesW(wide.as_ptr(), unpinned_attributes(attributes)) } == 0 {
-        return Err(std::io::Error::last_os_error().to_string());
-    }
-    Ok(true)
+    Ok(())
 }
 
-#[cfg(not(target_os = "windows"))]
-pub fn release_cloud_file(_path: &str) -> Result<bool, String> {
-    Err("Freeing up space is only supported on Windows".to_string())
+pub(crate) fn open_local_content(path: &Path) -> std::io::Result<fs::File> {
+    require_local_content(path)?;
+    fs::File::open(path)
 }
 
 pub fn is_hidden(entry: &walkdir::DirEntry) -> bool {
@@ -721,7 +709,6 @@ mod win32_imports {
 
         pub fn CloseHandle(hObject: HANDLE) -> i32;
 
-        pub fn SetFileAttributesW(lpFileName: *const u16, dwFileAttributes: u32) -> i32;
     }
 }
 
@@ -1209,8 +1196,9 @@ fn copy_folder_to(src: &Path, dst: &Path) -> Result<(), std::io::Error> {
         let destination_path = dst.join(entry.file_name());
         if source_path.is_dir() {
             copy_folder_to(&source_path, &destination_path)?;
-        } else if let Err(error) = fs::copy(&source_path, &destination_path) {
-            return Err(error);
+        } else {
+            require_local_content(&source_path)?;
+            fs::copy(&source_path, &destination_path)?;
         }
     }
     Ok(())
@@ -1254,6 +1242,7 @@ pub fn copy_folder_with_policy(
 }
 
 fn copy_file_to_path(source: &Path, destination: &Path) -> Result<(), std::io::Error> {
+    require_local_content(source)?;
     if let Err(error) = fs::copy(source, destination) {
         let _ = fs::remove_file(destination);
         return Err(error);
@@ -1360,7 +1349,7 @@ pub fn import_file(source_path: &str, dest_folder: &str) -> Option<String> {
 }
 
 pub(crate) fn copy_import_file_to(source: &Path, destination: &Path) -> std::io::Result<()> {
-    let mut input = fs::File::open(source)?;
+    let mut input = open_local_content(source)?;
     let permissions = input.metadata()?.permissions();
     // Reserve the destination atomically so concurrent imports cannot overwrite it.
     let mut output = fs::OpenOptions::new().write(true).create_new(true).open(destination)?;
@@ -1375,6 +1364,8 @@ pub(crate) fn copy_import_file_to(source: &Path, destination: &Path) -> std::io:
 
 // Compare in fixed-size chunks; unreadable files must never be treated as duplicates.
 fn import_files_equal(left: &Path, right: &Path, cancelled: &impl Fn() -> bool) -> std::io::Result<bool> {
+    require_local_content(left)?;
+    require_local_content(right)?;
     let mut left = fs::File::open(left)?;
     let mut right = fs::File::open(right)?;
     let size = left.metadata()?.len();
@@ -1554,6 +1545,13 @@ where
         {
             continue;
         }
+        if !content_readable(&path_string)
+            || companion.as_deref().is_some_and(|component| !content_readable(&component.to_string_lossy()))
+        {
+            eprintln!("Skipping online-only import source: {}", path_string);
+            failed += 1;
+            continue;
+        }
         total_size += std::iter::once(path).chain(companion)
             .map(|component| component.metadata().map(|metadata| metadata.len()).unwrap_or(0))
             .sum::<u64>();
@@ -1568,6 +1566,7 @@ where
             let sidecar_timestamp = if crate::metadata::xmp::is_xmp_import_enabled() {
                 let sidecars = xmp_cache.import_sidecars(path).unwrap_or_default();
                 sidecars.first()
+                    .filter(|sidecar| content_readable(&sidecar.to_string_lossy()))
                     .and_then(|sidecar| crate::metadata::xmp::read_sidecar_capture_timestamp(sidecar))
             } else {
                 None
@@ -4819,6 +4818,14 @@ mod album_scan_filter_tests {
 
 #[cfg(test)]
 mod cloud_only_tests {
+    #[test]
+    fn windows_cloud_only_attributes_cover_offline_and_recall() {
+        for attributes in [0x1000, 0x4_0000, 0x40_0000] {
+            assert!(super::windows_content_is_offline(attributes | 0x400));
+        }
+        assert!(!super::windows_content_is_offline(0x10_0000 | 0x400));
+    }
+
     use super::*;
 
     #[test]
@@ -4853,30 +4860,6 @@ mod cloud_only_tests {
         assert!(is_cloud_only(&fs::metadata(&path).unwrap()), "an accessibility or metadata check downloaded the file");
     }
 
-    #[cfg(target_os = "windows")]
-    #[test]
-    fn unpinned_attributes_keeps_only_settable_bits() {
-        // archive + pinned + recall-on-data-access + reparse point
-        assert_eq!(unpinned_attributes(0x20 | 0x8_0000 | 0x40_0000 | 0x400), 0x20 | 0x10_0000);
-    }
-
-    /// Set LAP_CLOUD_ROUNDTRIP_FILE to an online-only OneDrive file the test may download and free again.
-    /// With Windows "Controlled folder access" on, run the test binary from a path the user allowed.
-    #[cfg(target_os = "windows")]
-    #[test]
-    fn cloud_file_roundtrip_downloads_then_frees() {
-        let Ok(path) = std::env::var("LAP_CLOUD_ROUNDTRIP_FILE") else { return };
-        assert!(is_cloud_only(&fs::metadata(&path).unwrap()), "start from an online-only file");
-        fs::read(&path).unwrap();
-        assert!(content_readable(&path));
-        assert_eq!(release_cloud_file(&path), Ok(true));
-        // OneDrive frees the local copy asynchronously.
-        let freed = (0..60).any(|_| {
-            std::thread::sleep(std::time::Duration::from_millis(500));
-            is_cloud_only(&fs::metadata(&path).unwrap())
-        });
-        assert!(freed, "OneDrive did not free the file within 30 s");
-    }
 }
 
 #[cfg(test)]

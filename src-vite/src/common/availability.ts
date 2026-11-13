@@ -64,3 +64,12 @@ const originalActions = new Set([
 export function requiresOriginalAction(action: string): boolean {
   return originalActions.has(action) || action.startsWith('open-external-app');
 }
+
+const localContentActions = new Set([
+  'open', 'edit', 'print', 'copy-to-folder', 'save-xmp',
+  'set-desktop-wallpaper', 'create-montage', 'compare-selected-images',
+]);
+
+export function requiresLocalContent(action: string): boolean {
+  return localContentActions.has(action) || action.startsWith('open-external-app');
+}

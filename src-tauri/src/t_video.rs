@@ -76,6 +76,7 @@ fn platform_video_url(file_path: &str) -> Result<String, String> {
 /// Resolve the original video's platform transport without compatibility processing.
 #[tauri::command]
 pub fn get_video_stream_url(file_path: String) -> Result<String, String> {
+    crate::t_utils::require_local_content(std::path::Path::new(&file_path)).map_err(|e| e.to_string())?;
     platform_video_url(&file_path)
 }
 
@@ -533,6 +534,8 @@ pub async fn get_video_thumbnail(
     known_duration: Option<u64>,
     seek_percent: Option<u8>,
 ) -> Result<Option<Vec<u8>>, String> {
+    crate::t_utils::require_local_content(std::path::Path::new(file_path))
+        .map_err(|error| error.to_string())?;
     let probe = probe_json_async(file_path).await.ok();
     let stream_map = if crate::t_image::is_heic_path(file_path) {
         heif_primary_image(probe.as_ref().ok_or("Cannot probe HEIF primary image")?)?.0
@@ -685,6 +688,7 @@ fn video_dimensions(video: &Value) -> (u32, u32) {
 }
 
 pub async fn get_video_metadata_async(file_path: &str) -> Result<VideoMetadata, String> {
+    crate::t_utils::require_local_content(std::path::Path::new(file_path)).map_err(|e| e.to_string())?;
     let json = probe_json_with_timeout(file_path, INDEX_PROBE_TIMEOUT_SECS).await?;
 
     if crate::t_image::is_heic_path(file_path) {
@@ -1151,6 +1155,7 @@ pub async fn prepare_video(
     force: Option<String>,
     request_id: Option<u64>,
 ) -> Result<VideoPrepareResult, String> {
+    crate::t_utils::require_local_content(std::path::Path::new(&file_path)).map_err(|e| e.to_string())?;
     if is_mpeg_program_stream(&file_path) {
         return Err(EXTERNAL_PLAYER_REQUIRED_ERROR.to_string());
     }

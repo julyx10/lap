@@ -235,6 +235,7 @@
   },
   "offline": {
     "badge": "Offline",
+    "download_to_open": "Laden Sie dieses Foto vor dem Öffnen in Ihrer Cloud-Speicher-App herunter.",
     "cloud_only": "Nur online verfügbar",
     "cloud_only_pending": "Nur online verfügbar — Dateiinformationen unvollständig",
     "original_unavailable": "Originaldatei nicht verfügbar",
@@ -767,7 +768,6 @@
       "reveal_in_finder": "Im Finder anzeigen...",
       "reveal_in_file_explorer": "Im Explorer anzeigen...",
       "refresh_file_info": "Dateiinformationen aktualisieren",
-      "index_cloud_files": "Herunterladen, indexieren und Speicherplatz freigeben",
       "set_album_cover": "Als Albumcover setzen",
       "set_as": "Festlegen als",
       "set_desktop_wallpaper": "Als Desktop-Hintergrund festlegen",
@@ -1040,10 +1040,7 @@
       "cancelled": "Abgebrochen",
       "complete": "Abgeschlossen",
       "succeeded": "Aktualisiert: {count}",
-      "failed": "Fehlgeschlagen: {count}",
-      "release_requested": "Freigabe angefordert: {count}",
-      "kept_local": "Auf diesem Gerät behalten: {count}",
-      "kept_local_hint": "Dateien, die immer auf diesem Gerät bleiben sollen oder für die Windows die Speicherplatzfreigabe durch Lap nicht zugelassen hat (überwachter Ordnerzugriff)."
+      "failed": "Fehlgeschlagen: {count}"
     },
     "image_editor": {
       "title": "Bearbeiten",

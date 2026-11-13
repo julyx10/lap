@@ -349,7 +349,7 @@ pub(crate) fn copy_apple_aae_paths_for_import(
             }
             return Err(format!("Destination sidecar already exists: {}", target.display()));
         }
-        if let Err(error) = fs::copy(&sidecar, &target) {
+        if let Err(error) = crate::t_utils::require_local_content(&sidecar).and_then(|()| fs::copy(&sidecar, &target)) {
             for copied_path in copied {
                 let _ = fs::remove_file(copied_path);
             }
@@ -701,6 +701,9 @@ pub(crate) fn live_photo_video_stem_rank(image: &Path, video: &Path) -> Option<u
 /// Read the XMP area of a filename-matched image candidate. Apple Photos can
 /// place HEIF XMP metadata beyond the small header used for regular EXIF work.
 pub(crate) fn scan_apple_content_identifiers(file_path: &str) -> Vec<String> {
+    if !crate::t_utils::content_readable(file_path) {
+        return Vec::new();
+    }
     let Ok(mut file) = fs::File::open(file_path) else {
         return Vec::new();
     };

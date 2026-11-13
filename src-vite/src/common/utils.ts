@@ -786,7 +786,7 @@ export function getAssetSrc(filePath: string, fileVersion = 0): string {
   }
   const uiStore = useUIStore();
   const localVersion = uiStore.getFileVersion(filePath);
-  const assetUrl = convertFileSrc(filePath);
+  const assetUrl = convertFileSrc(filePath, 'original');
   const params = new URLSearchParams();
   if (fileVersion > 0) params.set('v', String(fileVersion));
   if (localVersion > 0) params.set('u', String(localVersion));

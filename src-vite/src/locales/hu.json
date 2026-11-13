@@ -235,6 +235,7 @@
   },
   "offline": {
     "badge": "Offline",
+    "download_to_open": "A megnyitás előtt töltse le ezt a fényképet a felhőtárhely alkalmazásában.",
     "cloud_only": "Csak online érhető el",
     "cloud_only_pending": "Csak online érhető el — hiányos fájlinformációk",
     "original_unavailable": "Az eredeti fájl nem érhető el",
@@ -767,7 +768,6 @@
       "reveal_in_finder": "Megjelenítés a Finderben...",
       "reveal_in_file_explorer": "Megjelenítés a Fájlkezelőben...",
       "refresh_file_info": "Fájladatok frissítése",
-      "index_cloud_files": "Letöltés, indexelés, majd tárhely felszabadítása",
       "set_album_cover": "Beállítás albumborítóként",
       "set_as": "Beállítás mint",
       "set_desktop_wallpaper": "Beállítás háttérképként",
@@ -1040,10 +1040,7 @@
       "cancelled": "Megszakítva",
       "complete": "Kész",
       "succeeded": "Frissítve: {count}",
-      "failed": "Sikertelen: {count}",
-      "release_requested": "Felszabadítás kérve: {count}",
-      "kept_local": "Az eszközön megtartva: {count}",
-      "kept_local_hint": "Az eszközön mindig megtartandó fájlok, illetve azok, amelyeknél a Windows nem engedte a Lap számára a tárhely felszabadítását (vezérelt mappahozzáférés)."
+      "failed": "Sikertelen: {count}"
     },
     "image_editor": {
       "title": "Szerkesztés",

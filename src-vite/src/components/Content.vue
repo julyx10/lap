@@ -596,7 +596,6 @@
     v-if="fileRefreshSelection"
     :file-ids="fileRefreshSelection.ids"
     :library-id="fileRefreshSelection.libraryId"
-    :free-space="fileRefreshSelection.freeSpace"
     :finish-refresh="finishSelectedFileRefresh"
     @close="fileRefreshSelection = null"
   />
@@ -794,7 +793,7 @@ import { getAlbum, getAllAlbums, recountAlbum, getQueryCountAndSum, getQueryTime
          copyImages, renameFile, moveFile, moveFileOutsideLibrary, copyFile, withFileTransferBatch, deleteFile, deleteFilePermanently, batchDeleteFiles, editFileComment, getFileThumb, getFileThumbs, getFileInfo,
          setFileRotate, setFileFavorite, setFileRating, setFileCullingFlag, batchUpdateFileMetadata, getTagsForFile, searchSimilarImages, generateEmbedding,
          revealPath, getTagName, indexAlbum, listenIndexProgress, listenIndexFinished, setAlbumCover, setDesktopWallpaper,
-         updateFileInfo, refreshFileInfo, changeVideoThumbnail, getSupportedFormatExtensions, importFiles, importUrl, importFileBytes, getDragPayload, importClipboard, addFileToDb, checkFileExists, checkFileAccessibility, cancelIndexing as cancelIndexingApi, selectFolder, getFacesForFile, listenFaceIndexProgress,
+         updateFileInfo, refreshFileInfo, changeVideoThumbnail, getSupportedFormatExtensions, importFiles, importUrl, importFileBytes, getDragPayload, importClipboard, addFileToDb, checkFileExists, checkFileAccessibility, isCloudOnlyFile, cancelIndexing as cancelIndexingApi, selectFolder, getFacesForFile, listenFaceIndexProgress,
          openFilesWithApp, getAppConfig, getIndexRecoveryInfo, clearIndexRecoveryInfo, setLastSelectedItemIndex,
          dedupDelete, getQueryFilePosition, getFolderSearchExcluded,
          listCollections, createCollection, addFilesToCollection, removeFilesFromCollection, getFileCollections, getCollectionCountAndSum, getCollectionFiles, getCollectionGroupedQueryRows, getCollectionGroupFileIds, getCollectionQueryFileIds, fetchFolder, isDirectoryAccessible, checkAlbumAccessibility, addTagToFile, saveXmpMetadata } from '@/common/api';
@@ -1169,11 +1168,11 @@ function removeDeletedFilesFromImageViewerSession(fileIds: number[]) {
   return files.length;
 }
 
-const fileRefreshSelection = ref<{ ids: number[]; libraryId: string; requestId: number; groupSizes: Map<string, number>; freeSpace: boolean } | null>(null);
-function startSelectedFileRefresh(freeSpace = false) {
+const fileRefreshSelection = ref<{ ids: number[]; libraryId: string; requestId: number; groupSizes: Map<string, number> } | null>(null);
+function startSelectedFileRefresh() {
   if (fileRefreshSelection.value || selectedFileIds.size === 0) return;
   fileRefreshSelection.value = {
-    ids: Array.from(selectedFileIds), libraryId: libConfig._libraryId, requestId: currentContentRequestId, freeSpace,
+    ids: Array.from(selectedFileIds), libraryId: libConfig._libraryId, requestId: currentContentRequestId,
     groupSizes: new Map(Array.from(groupMetaMap, ([id, meta]) => [id, meta.size])),
   };
 }
@@ -1236,6 +1235,9 @@ const selectionAccessPending = ref(false);
 const selectionHasUnavailable = computed(() => selectionAccessPending.value
   || selectionAccessFiles.value.some(isOriginalUnavailable)
   || getActionableSelectedItems().some(isOriginalUnavailable));
+const selectionHasCloudOnly = computed(() => selectionAccessPending.value
+  || selectionAccessFiles.value.some(file => file.cloud_only)
+  || getActionableSelectedItems().some(file => file.cloud_only));
 const CLIPBOARD_SELECTION_LIMIT = 10;
 const clipboardSelection = computed(() => {
   const files = selectedFiles.value.slice(0, CLIPBOARD_SELECTION_LIMIT);
@@ -1249,7 +1251,6 @@ const clipboardSelection = computed(() => {
 });
 const selectionStorageUnavailable = computed(() =>
   clipboardSelection.value.files.some(isOriginalStorageUnavailable));
-const selectionHasCloudOnly = computed(() => getActionableSelectedItems().some(file => file.cloud_only));
 let selectionAccessRequest = 0;
 let selectionAccessTimer: ReturnType<typeof setTimeout> | null = null;
 watch([selectMode, selectedFilesVersion, () => libConfig._libraryId], () => {
@@ -1269,7 +1270,7 @@ watch([selectMode, selectedFilesVersion, () => libConfig._libraryId], () => {
         selectionAccessPending.value = false;
         return;
       }
-      for (const file of files) states.push({ album_id: file.album_id, album_accessible: file.album_accessible, file_path: file.file_path });
+      for (const file of files) states.push({ album_id: file.album_id, album_accessible: file.album_accessible, file_path: file.file_path, cloud_only: file.cloud_only });
     }
     selectionAccessFiles.value = states;
     selectionAccessPending.value = false;
@@ -4721,7 +4722,6 @@ function handleItemAction(payload: { action: string, index: number }) {
     },
     'reveal': () => revealPath(fileList.value[selectedItemIndex.value].file_path),
     'refresh-file-info': () => selectMode.value ? startSelectedFileRefresh() : void updateFile(fileList.value[selectedItemIndex.value], true),
-    'index-cloud-files': () => startSelectedFileRefresh(true),
     'save-xmp': async () => {
       const ids = selectMode.value
         ? Array.from(selectedFileIds)
@@ -9010,7 +9010,7 @@ const launchInExternalApp = async (paths: string[], appPath: string) => {
     await openFilesWithApp(paths, appPath);
   } catch (error) {
     console.error('Failed to open external app:', error);
-    toast.error(t('tooltip.open_external.failed'));
+    toast.error(String(error).includes('File is online-only') ? t('offline.requires_original') : t('tooltip.open_external.failed'));
   }
 };
 
@@ -9915,7 +9915,7 @@ const refreshFileInfoFromPanel = async (file: any) => {
 
 // update the file info from the file; isRefresh = "Refresh file info" menu action
 const updateFile = async (file: any, isRefresh = false) => {
-  if (!await requireOriginalFiles([file])) return;
+  if (!file || (!isRefresh && !await requireOriginalFiles([file]))) return;
   try {
     // The refresh command leaves an unchanged cloud-only file unread, so skip
     // the forced thumbnail and image reload that would download it.
@@ -11505,6 +11505,11 @@ const printImageView = ref<InstanceType<typeof PrintImage> | null>(null);
 async function printImage(index: number) {
   const selectedFile = fileList.value[index];
   if (!selectedFile?.file_path || !await requireOriginalFiles([selectedFile])) return;
+
+  if (await isCloudOnlyFile(selectedFile.file_path)) {
+    toast.warning(t('offline.requires_original'));
+    return;
+  }
 
   const fileId = Number(selectedFile.id || 0);
   const fileType = Number(selectedFile.file_type || 1);

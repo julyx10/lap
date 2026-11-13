@@ -235,6 +235,7 @@
   },
   "offline": {
     "badge": "オフライン",
+    "download_to_open": "この写真を開くには、先にクラウドストレージアプリでダウンロードしてください。",
     "cloud_only": "オンラインでのみ利用可能",
     "cloud_only_pending": "オンラインでのみ利用可能 — ファイル情報が未取得です",
     "original_unavailable": "元のファイルにアクセスできません",
@@ -767,7 +768,6 @@
       "reveal_in_finder": "Finderで表示...",
       "reveal_in_file_explorer": "エクスプローラーで表示...",
       "refresh_file_info": "ファイル情報を更新",
-      "index_cloud_files": "ダウンロードしてインデックスを作成後、空き領域を増やす",
       "set_album_cover": "アルバムの表紙に設定",
       "set_as": "設定",
       "set_desktop_wallpaper": "デスクトップの壁紙に設定",
@@ -1040,10 +1040,7 @@
       "cancelled": "キャンセル済み",
       "complete": "完了",
       "succeeded": "更新済み：{count}",
-      "failed": "失敗：{count}",
-      "release_requested": "解放を要求済み: {count}",
-      "kept_local": "このデバイスに保持: {count}",
-      "kept_local_hint": "このデバイスに常に保持するファイル、または Windows が Lap による領域の解放を許可しなかったファイル（コントロールされたフォルダーアクセス）。"
+      "failed": "失敗：{count}"
     },
     "image_editor": {
       "title": "編集",

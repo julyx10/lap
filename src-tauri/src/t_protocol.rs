@@ -1,4 +1,5 @@
-use tauri::{Builder, Wry};
+use tauri::{Builder, Manager, Wry};
+use std::io::{Read, Seek, SeekFrom};
 
 use crate::{t_image, t_sqlite};
 use crate::t_raw_display::{RawDisplayOptions, RawPreviewMode};
@@ -112,8 +113,86 @@ fn raw_preview_response(data: Vec<u8>, source: &'static str, unavailable: bool, 
     response
 }
 
+fn decode_original_path(uri_path: &str) -> Result<std::path::PathBuf, Box<dyn std::error::Error>> {
+    let encoded = uri_path.strip_prefix('/').unwrap_or(uri_path);
+    let decoded = percent_encoding::percent_decode_str(encoded).decode_utf8()?;
+    Ok(std::path::PathBuf::from(decoded.as_ref()))
+}
+
+fn original_response(
+    request: http::Request<Vec<u8>>,
+    scope: tauri::scope::fs::Scope,
+) -> Result<http::Response<Vec<u8>>, Box<dyn std::error::Error>> {
+    use http::{header, Method, StatusCode};
+
+    let path = decode_original_path(request.uri().path())?;
+    let path = tauri::path::SafePathBuf::new(path)?;
+    let path = path.as_ref();
+    if !scope.is_allowed(path) {
+        return Ok(text_response(StatusCode::FORBIDDEN, "Path outside asset scope"));
+    }
+    if request.method() == Method::OPTIONS {
+        return Ok(http::Response::builder()
+            .status(StatusCode::NO_CONTENT)
+            .header(header::ACCESS_CONTROL_ALLOW_ORIGIN, "*")
+            .header(header::ACCESS_CONTROL_ALLOW_METHODS, "GET, HEAD, OPTIONS")
+            .header(header::ACCESS_CONTROL_ALLOW_HEADERS, "Range")
+            .header(header::ACCESS_CONTROL_EXPOSE_HEADERS, "Content-Range")
+            .body(Vec::new())?);
+    }
+    if request.method() != Method::GET && request.method() != Method::HEAD {
+        return Ok(text_response(StatusCode::METHOD_NOT_ALLOWED, ""));
+    }
+    let mut file = match crate::t_utils::open_local_content(path) {
+        Ok(file) => file,
+        Err(error) => return Ok(text_response(StatusCode::FORBIDDEN, &error.to_string())),
+    };
+    let len = file.metadata()?.len();
+    let mut prefix = Vec::new();
+    (&mut file).take(8192).read_to_end(&mut prefix)?;
+    let mime = tauri_utils::mime_type::MimeType::parse(&prefix, &path.to_string_lossy());
+    let mut response = http::Response::builder()
+        .header(header::CONTENT_TYPE, mime)
+        .header(header::ACCEPT_RANGES, "bytes")
+        .header(header::ACCESS_CONTROL_ALLOW_ORIGIN, "*")
+        .header(header::ACCESS_CONTROL_EXPOSE_HEADERS, "Content-Range")
+        .header(header::ACCESS_CONTROL_ALLOW_HEADERS, "Range")
+        .header(header::ACCESS_CONTROL_ALLOW_METHODS, "GET, HEAD, OPTIONS");
+    let (start, count) = if let Some(range) = request.headers().get(header::RANGE) {
+        let ranges = range.to_str().ok().and_then(|value| http_range::HttpRange::parse(value, len).ok());
+        let Some(range) = ranges.as_deref().and_then(|ranges| ranges.first()).filter(|range| range.length > 0) else {
+            return Ok(response.status(StatusCode::RANGE_NOT_SATISFIABLE)
+                .header(header::CONTENT_RANGE, format!("bytes */{len}")).body(Vec::new())?);
+        };
+        // Match Tauri's asset protocol: cap each range response so a client
+        // asking for the whole large video cannot force a full-file allocation.
+        let count = range.length.min(1000 * 1024);
+        response = response.status(StatusCode::PARTIAL_CONTENT).header(
+            header::CONTENT_RANGE, format!("bytes {}-{}/{len}", range.start, range.start + count - 1),
+        );
+        (range.start, count)
+    } else {
+        (0, len)
+    };
+    let mut body = Vec::new();
+    if request.method() != Method::HEAD {
+        file.seek(SeekFrom::Start(start))?;
+        file.take(count).read_to_end(&mut body)?;
+    }
+    Ok(response.header(header::CONTENT_LENGTH, count).body(body)?)
+}
+
 pub fn register_protocols(builder: Builder<Wry>) -> Builder<Wry> {
     builder
+        .register_asynchronous_uri_scheme_protocol("original", |ctx, request, responder| {
+            let scope = ctx.app_handle().asset_protocol_scope();
+            tauri::async_runtime::spawn_blocking(move || {
+                let response = original_response(request, scope).unwrap_or_else(|error| {
+                    text_response(http::StatusCode::INTERNAL_SERVER_ERROR, &error.to_string())
+                });
+                responder.respond(response);
+            });
+        })
         .register_asynchronous_uri_scheme_protocol("thumb", |_ctx, request, responder| {
             // URL format: thumb://localhost/{library_id}/{file_id}
             // library_id is also used for cache namespace isolation.
@@ -297,6 +376,13 @@ pub fn register_protocols(builder: Builder<Wry>) -> Builder<Wry> {
 #[cfg(test)]
 mod raw_display_tests {
     use super::*;
+
+    #[test]
+    fn original_protocol_paths_remove_exactly_one_leading_slash() {
+        assert_eq!(decode_original_path("/%2FUsers%2Fme%2Fphoto.jpg").unwrap(), std::path::PathBuf::from("/Users/me/photo.jpg"));
+        assert_eq!(decode_original_path("//Users/me/photo.jpg").unwrap(), std::path::PathBuf::from("/Users/me/photo.jpg"));
+        assert_eq!(decode_original_path("%2FUsers%2Fme%2Fphoto.jpg").unwrap(), std::path::PathBuf::from("/Users/me/photo.jpg"));
+    }
 
     #[test]
     fn raw_display_protocol_parses_modes_and_pair_policy() {

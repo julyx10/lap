@@ -235,6 +235,7 @@
   },
   "offline": {
     "badge": "오프라인",
+    "download_to_open": "이 사진을 열려면 먼저 클라우드 저장소 앱에서 다운로드하세요.",
     "cloud_only": "온라인에서만 사용 가능",
     "cloud_only_pending": "온라인에서만 사용 가능 — 파일 정보 미완성",
     "original_unavailable": "원본 파일에 접근할 수 없습니다",
@@ -767,7 +768,6 @@
       "reveal_in_finder": "Finder에서 보기...",
       "reveal_in_file_explorer": "탐색기에서 보기...",
       "refresh_file_info": "파일 정보 새로 고침",
-      "index_cloud_files": "다운로드 및 색인 생성 후 공간 확보",
       "set_album_cover": "앨범 커버로 설정",
       "set_as": "다음으로 설정",
       "set_desktop_wallpaper": "바탕 화면 배경으로 설정",
@@ -1040,10 +1040,7 @@
       "cancelled": "취소됨",
       "complete": "완료",
       "succeeded": "업데이트됨: {count}",
-      "failed": "실패: {count}",
-      "release_requested": "공간 확보 요청: {count}",
-      "kept_local": "이 장치에 유지: {count}",
-      "kept_local_hint": "이 장치에 항상 유지하는 파일 또는 Windows가 Lap의 공간 확보를 허용하지 않은 파일입니다(제어된 폴더 액세스)."
+      "failed": "실패: {count}"
     },
     "image_editor": {
       "title": "편집",
