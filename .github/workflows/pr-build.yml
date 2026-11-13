@@ -335,6 +335,8 @@ jobs:
       - name: Build and Sign (Windows ${{ matrix.arch }})
         uses: tauri-apps/tauri-action@v0.5
         env:
+          # Work around ort-sys 2.0.0-rc.10 copy-dylibs breaking with Cargo's build-dir layout v2.
+          __CARGO_TEMPORARY_BUILD_DIR_NEW_LAYOUT_OPT_OUT: "1"
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           APTABASE_KEY: ${{ secrets.APTABASE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
