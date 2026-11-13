@@ -21,7 +21,7 @@ pub(super) fn apply_with_state(
     mode: XmpImportMode,
     fingerprint: Option<&str>,
 ) -> Result<bool, String> {
-    apply_with_source_text(file_id, meta, conn, mode, fingerprint, None, None)
+    apply_with_source_text(file_id, meta, conn, mode, fingerprint, None, None, |_| "xmp_sidecar")
 }
 
 pub(super) fn apply_with_source_text(
@@ -32,6 +32,7 @@ pub(super) fn apply_with_source_text(
     fingerprint: Option<&str>,
     source: Option<&super::model::SourceText>,
     capture: Option<super::model::SourceCapture>,
+    tag_source: impl Fn(&str) -> &'static str,
 ) -> Result<bool, String> {
     let tx = conn.unchecked_transaction().map_err(|e| e.to_string())?;
     let dirty: i32 = tx
@@ -41,7 +42,7 @@ pub(super) fn apply_with_source_text(
             |r| r.get(0),
         )
         .unwrap_or(0);
-    let result = apply_fields(file_id, meta, &tx, mode, dirty)?;
+    let result = apply_fields(file_id, meta, &tx, mode, dirty, tag_source)?;
     tx.execute("INSERT INTO axmp_imports(file_id, fingerprint, dirty) VALUES(?1, ?2, ?3)
         ON CONFLICT(file_id) DO UPDATE SET fingerprint = COALESCE(excluded.fingerprint, fingerprint), dirty = excluded.dirty",
         params![file_id, fingerprint, dirty]).map_err(|e| e.to_string())?;
@@ -75,6 +76,7 @@ fn apply_fields(
     conn: &Connection,
     mode: XmpImportMode,
     dirty: i32,
+    tag_source: impl Fn(&str) -> &'static str,
 ) -> Result<bool, String> {
     let (db_rating, db_culling_flag, db_comments, db_favorite): (i32, i32, Option<String>, bool) = conn.query_row(
         "SELECT COALESCE(rating, 0), COALESCE(culling_flag, 0), comments, COALESCE(is_favorite, 0) FROM afiles WHERE id = ?1", [file_id],
@@ -217,7 +219,7 @@ fn apply_fields(
                     .filter(|tag| !represented(tag))
                     .map(|tag| (tag, false)),
             ) {
-                let Some(tag_id) = crate::t_tags::import_path(conn, value.0, value.1)? else {
+                let Some(tag_id) = crate::t_tags::import_path(conn, value.0, value.1, tag_source(value.0))? else {
                     continue;
                 };
                 conn.execute(

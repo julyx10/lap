@@ -147,6 +147,7 @@ pub fn import_path(
     conn: &Connection,
     value: &str,
     hierarchical: bool,
+    tag_source: &str,
 ) -> Result<Option<i64>, String> {
     if value.len() > 16384 || (hierarchical && value.split('|').count() > 128) {
         return Err("Tag hierarchy exceeds the supported size".into());
@@ -203,8 +204,8 @@ pub fn import_path(
                 Some(id) => id,
                 None => {
                     conn.execute(
-                        "INSERT INTO atags(name,parent_id) VALUES(?1,?2)",
-                        params![part, parent],
+                        "INSERT INTO atags(name,parent_id,source) VALUES(?1,?2,?3)",
+                        params![part, parent, tag_source],
                     )
                     .map_err(|e| e.to_string())?;
                     conn.last_insert_rowid()
@@ -275,7 +276,7 @@ mod tests {
     fn fixture() -> Connection {
         let conn = Connection::open_in_memory().unwrap();
         conn.execute_batch("PRAGMA foreign_keys=ON;
-            CREATE TABLE atags(id INTEGER PRIMARY KEY,name TEXT NOT NULL,parent_id INTEGER REFERENCES atags(id) ON DELETE CASCADE);
+            CREATE TABLE atags(id INTEGER PRIMARY KEY,name TEXT NOT NULL,source TEXT,parent_id INTEGER REFERENCES atags(id) ON DELETE CASCADE);
             CREATE TABLE afiles(id INTEGER PRIMARY KEY,name TEXT,rating INTEGER,culling_flag INTEGER,comments TEXT,is_favorite INTEGER,has_tags INTEGER);
             INSERT INTO afiles VALUES(1,'test.jpg',0,0,NULL,0,0),(2,'other.jpg',0,0,NULL,0,0);
             CREATE TABLE afile_tags(file_id INTEGER REFERENCES afiles(id) ON DELETE CASCADE,tag_id INTEGER REFERENCES atags(id) ON DELETE CASCADE,PRIMARY KEY(file_id,tag_id));").unwrap();
@@ -290,21 +291,28 @@ mod tests {
         initialize(&conn).unwrap();
         initialize(&conn).unwrap();
         assert_eq!(conn.query_row("SELECT COUNT(*) FROM sqlite_master WHERE name='idx_atags_name'", [], |r| r.get::<_, i64>(0)).unwrap(), 0);
-        assert_eq!(import_path(&conn, "bad\0name", false).unwrap(), None);
-        assert_eq!(import_path(&conn, "Places|bad\0child", true).unwrap(), None);
+        assert_eq!(import_path(&conn, "bad\0name", false, "xmp_sidecar").unwrap(), None);
+        assert_eq!(import_path(&conn, "Places|bad\0child", true, "xmp_sidecar").unwrap(), None);
         assert_eq!(conn.query_row("SELECT COUNT(*) FROM atags", [], |r| r.get::<_, i64>(0)).unwrap(), 0);
     }
 
     #[test]
     fn hierarchy_identity_siblings_cycles_and_collisions() {
         let conn = fixture();
-        let paris = import_path(&conn, "Places|France|Paris", true)
+        let paris = import_path(&conn, "Places|France|Paris", true, "xmp_sidecar")
             .unwrap()
             .unwrap();
-        let other = import_path(&conn, "Clients|Paris", true).unwrap().unwrap();
+        let source = |id| {
+            conn.query_row("SELECT source FROM atags WHERE id=?1", [id], |row| row.get::<_, Option<String>>(0)).unwrap()
+        };
+        assert_eq!(source(paris).as_deref(), Some("xmp_sidecar"));
+        conn.execute("INSERT INTO atags(name) VALUES('Clients')", []).unwrap();
+        let other = import_path(&conn, "Clients|Paris", true, "xmp_sidecar").unwrap().unwrap();
+        assert_eq!(source(find(&conn, "Clients", None).unwrap().unwrap()), None);
+        assert_eq!(source(other).as_deref(), Some("xmp_sidecar"));
         assert_ne!(paris, other);
         assert_eq!(
-            import_path(&conn, "places|france|PARIS", true).unwrap(),
+            import_path(&conn, "places|france|PARIS", true, "xmp_sidecar").unwrap(),
             Some(paris)
         );
         assert!(conn
@@ -322,7 +330,7 @@ mod tests {
     #[test]
     fn aliases_follow_ancestor_edits_new_children_and_deletions() {
         let conn = fixture();
-        let city = import_path(&conn, "Places|France|Paris", true)
+        let city = import_path(&conn, "Places|France|Paris", true, "xmp_sidecar")
             .unwrap()
             .unwrap();
         conn.execute("INSERT INTO afile_tags VALUES(1,?1)", [city])
@@ -358,10 +366,10 @@ mod tests {
             8
         );
         assert_eq!(
-            import_path(&conn, "Places|France|Paris", true).unwrap(),
+            import_path(&conn, "Places|France|Paris", true, "xmp_sidecar").unwrap(),
             Some(city)
         );
-        let lyon = import_path(&conn, "Places|France|Lyon", true)
+        let lyon = import_path(&conn, "Places|France|Lyon", true, "xmp_sidecar")
             .unwrap()
             .unwrap();
         assert_eq!(path(&conn, lyon).unwrap(), "Places|French places|Lyon");
@@ -371,11 +379,11 @@ mod tests {
         conn.execute("DELETE FROM atags WHERE id=?1", [country])
             .unwrap();
         assert_eq!(
-            import_path(&conn, "Places|France|Paris", true).unwrap(),
+            import_path(&conn, "Places|France|Paris", true, "xmp_sidecar").unwrap(),
             None
         );
         assert_eq!(
-            import_path(&conn, "Places|France|New city", true).unwrap(),
+            import_path(&conn, "Places|France|New city", true, "xmp_sidecar").unwrap(),
             None
         );
         assert_eq!(
@@ -389,7 +397,7 @@ mod tests {
     #[test]
     fn flat_pipe_text_remains_flat_and_export_does_not_invent_its_hierarchy() {
         let conn = fixture();
-        let flat = import_path(&conn, "literal|word", false).unwrap().unwrap();
+        let flat = import_path(&conn, "literal|word", false, "xmp_sidecar").unwrap().unwrap();
         conn.execute("INSERT INTO afile_tags VALUES(1,?1)", [flat])
             .unwrap();
         assert_eq!(find(&conn, "literal", None).unwrap(), None);
@@ -398,6 +406,6 @@ mod tests {
             (vec!["literal|word".into()], vec![])
         );
         assert!(validate_name("bad|name").is_err());
-        assert!(import_path(&conn, &"a|".repeat(129), true).is_err());
+        assert!(import_path(&conn, &"a|".repeat(129), true, "xmp_sidecar").is_err());
     }
 }

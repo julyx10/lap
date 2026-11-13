@@ -4,6 +4,7 @@ export interface LibraryTag {
   parent_id: number | null;
   path: string;
   count?: number;
+  source?: string | null;
 }
 export interface TagRow extends LibraryTag {
   depth: number;

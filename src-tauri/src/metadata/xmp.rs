@@ -644,9 +644,11 @@ fn import_sources(
         software: embedded.software,
     };
     let mut meta = embedded.organization;
+    let embedded_tags = meta.tags.clone().unwrap_or_default();
     super::merge::merge_system(&mut meta, snapshot.metadata);
     let mut sidecar_gps = None;
     let mut sidecar_date = None;
+    let mut tag_source = "embedded_metadata";
     if let Some(path) = sidecar_path {
         let (sidecar, text, gps, date) = parse_xmp_with_source_text(&read_xmp_content(&path)?)?;
         sidecar_gps = gps;
@@ -656,6 +658,9 @@ fn import_sources(
         source.creator = text.creator.or(source.creator);
         source.copyright = text.copyright.or(source.copyright);
         source.software = text.software.or(source.software);
+        if sidecar.tags.is_some() {
+            tag_source = "xmp_sidecar";
+        }
         super::merge::merge_sidecar(&mut meta, sidecar);
     }
     // Explicit refresh provides freshly extracted values. On a sidecar-only
@@ -747,7 +752,15 @@ fn import_sources(
         format!("{}{gps_marker}{date_marker}{source_version}", schema::IMPORT_PREFIX)
     };
     let capture = super::model::SourceCapture { gps, date };
-    super::merge::apply_with_source_text(file_id, &meta, conn, mode, Some(&fingerprint), Some(&source), Some(capture))
+    super::merge::apply_with_source_text(file_id, &meta, conn, mode, Some(&fingerprint), Some(&source), Some(capture), |tag| {
+        if tag_source == "embedded_metadata" && !embedded_tags.iter().any(|value| value.trim().eq_ignore_ascii_case(tag.trim()))
+            && !meta.hierarchical_tags.as_ref().is_some_and(|paths| paths.iter().any(|path| path == tag))
+        {
+            "system_metadata"
+        } else {
+            tag_source
+        }
+    })
 }
 
 /// Scanner-derived descriptions preserve local edits and explicit clears.
@@ -1751,6 +1764,7 @@ mod import_tests {
             CREATE TABLE atags (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
+                source TEXT,
                 parent_id INTEGER REFERENCES atags(id) ON DELETE CASCADE
             );
             CREATE TABLE afile_tags (
@@ -2528,7 +2542,7 @@ mod export_tests {
         let conn = Connection::open_in_memory().unwrap();
         conn.execute_batch("CREATE TABLE afolders(id INTEGER PRIMARY KEY,path TEXT); INSERT INTO afolders(id) VALUES(1);
             CREATE TABLE afiles(id INTEGER PRIMARY KEY,folder_id INTEGER DEFAULT 1,name TEXT DEFAULT 'photo.jpg',e_title TEXT,e_headline TEXT,e_artist TEXT,e_copyright TEXT,e_software TEXT,is_favorite INTEGER DEFAULT 0,rating INTEGER DEFAULT 0,culling_flag INTEGER DEFAULT 0,comments TEXT,has_tags INTEGER DEFAULT 0);
-            CREATE TABLE atags(id INTEGER PRIMARY KEY,name TEXT,parent_id INTEGER REFERENCES atags(id) ON DELETE CASCADE);CREATE TABLE afile_tags(file_id INTEGER,tag_id INTEGER,UNIQUE(file_id,tag_id));
+            CREATE TABLE atags(id INTEGER PRIMARY KEY,name TEXT,source TEXT,parent_id INTEGER REFERENCES atags(id) ON DELETE CASCADE);CREATE TABLE afile_tags(file_id INTEGER,tag_id INTEGER,UNIQUE(file_id,tag_id));
             INSERT INTO afiles(id,rating,comments) VALUES(1,4,'local caption'); INSERT INTO atags(id,name) VALUES(1,'旅行, travel & <test>');INSERT INTO afile_tags VALUES(1,1);").unwrap();
         conn.execute(
             "UPDATE afolders SET path=?1 WHERE id=1",

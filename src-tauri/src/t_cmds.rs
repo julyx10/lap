@@ -2217,27 +2217,36 @@ fn import_single_file(file_path: &str, folder_id: i64, folder_path: &str) -> Res
     t_utils::get_file_type(file_path)
         .ok_or_else(|| format!("Unsupported file type: {}", file_path))?;
 
-    let new_path = t_utils::import_file(file_path, folder_path)
-        .ok_or_else(|| format!("Failed to copy file: {}", file_path))?;
-    let file_type = t_utils::get_file_type(&new_path).ok_or_else(|| {
-        // The renamed file should have a valid extension; if not, remove
-        // the orphan so the album folder stays clean.
-        let _ = std::fs::remove_file(&new_path);
-        format!("Unsupported file type after copy: {}", new_path)
-    })?;
-    let xmp = match crate::metadata::files::Guard::new(
-        [(Path::new(file_path), Path::new(&new_path))], crate::metadata::files::Operation::Copy,
-    ) {
-        Ok(guard) => guard,
-        Err(error) => { let _ = fs::remove_file(&new_path); return Err(error); }
-    };
-    let now = chrono::Utc::now().timestamp_millis();
-    let (file, _) = match AFile::add_to_db(folder_id, &new_path, file_type, now) {
-        Ok(file) => file,
-        Err(error) => { let _ = fs::remove_file(&new_path); return Err(error); }
-    };
-    xmp.commit();
-    Ok(file)
+    let source = Path::new(file_path);
+    let base = Path::new(folder_path).join(source.file_name().ok_or("Missing import file name")?);
+    let mut cache = crate::metadata::files::Cache::default();
+    for index in 0..10_000 {
+        let destination = crate::metadata::apple_sidecar::sibling_candidate_path(&base, index);
+        let new_path = destination.to_str().ok_or("Invalid import destination path")?;
+        let mappings = [(source, destination.as_path())];
+        if !cache.conflicts(mappings)?.is_empty() {
+            continue;
+        }
+        match t_utils::copy_import_file_to(source, &destination) {
+            Ok(()) => {}
+            Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => continue,
+            Err(error) => return Err(format!("Failed to copy file: {error}")),
+        }
+        cache.record(&destination, &[]);
+        let xmp = match crate::metadata::files::Guard::with_cache(
+            mappings, crate::metadata::files::Operation::Copy, &mut cache,
+        ) {
+            Ok(guard) => guard,
+            Err(error) => {
+                let _ = fs::remove_file(&destination);
+                return Err(error);
+            }
+        };
+        let file = index_clipboard_file(new_path, folder_id)?;
+        xmp.commit();
+        return Ok(file);
+    }
+    Err(format!("No available destination for {file_path}"))
 }
 
 #[tauri::command]
@@ -2269,7 +2278,7 @@ pub async fn import_files(
             for (primary, companion) in groups {
                 if let Some(companion) = companion {
                     let sources = [primary, companion];
-                    match import_media_pair(primary, companion, folder_id, &folder_path, &mut occupied_stems, true) {
+                    match import_media_pair(primary, companion, folder_id, &folder_path, &mut occupied_stems) {
                         Ok(pair) => pending.push((sources, pair)),
                         Err(error) => record_import_errors(&mut errors, sources, &error),
                     }
@@ -2559,21 +2568,6 @@ pub async fn import_file_bytes(
     .map_err(|e| format!("Failed to save file: {}", e))?
 }
 
-fn import_clipboard_file(
-    file_path: &Path,
-    folder_id: i64,
-    folder_path: &str,
-) -> Result<AFile, String> {
-    let source = file_path
-        .to_str()
-        .ok_or_else(|| format!("Invalid clipboard file path: {}", file_path.display()))?;
-    t_utils::get_file_type(source)
-        .ok_or_else(|| format!("Unsupported file type: {}", file_path.display()))?;
-    let new_path = t_utils::import_file(source, folder_path)
-        .ok_or_else(|| format!("Failed to copy file: {}", file_path.display()))?;
-    index_clipboard_file(&new_path, folder_id)
-}
-
 fn index_clipboard_file(new_path: &str, folder_id: i64) -> Result<AFile, String> {
     let file_type = t_utils::get_file_type(new_path).ok_or_else(|| {
         let _ = std::fs::remove_file(new_path);
@@ -2758,6 +2752,7 @@ fn copy_media_pair(
     companion: &Path,
     folder: &Path,
     occupied_stems: &mut HashSet<String>,
+    xmp_cache: &mut crate::metadata::files::Cache,
 ) -> Result<[PathBuf; 2], String> {
     use crate::metadata::apple_sidecar::sibling_candidate_path;
     let base = folder.join(primary.file_name().ok_or("Invalid clipboard file name")?);
@@ -2768,6 +2763,12 @@ fn copy_media_pair(
             .to_string_lossy().to_ascii_lowercase();
         if occupied_stems.contains(&stem) { continue; }
         let companion_target = target.with_extension(companion_extension);
+        if !xmp_cache.conflicts([
+            (primary, target.as_path()),
+            (companion, companion_target.as_path()),
+        ])?.is_empty() {
+            continue;
+        }
         match t_utils::copy_import_file_to(primary, &target) {
             Ok(()) => {}
             Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => continue,
@@ -2775,6 +2776,8 @@ fn copy_media_pair(
         }
         match t_utils::copy_import_file_to(companion, &companion_target) {
             Ok(()) => {
+                xmp_cache.record(&target, &[]);
+                xmp_cache.record(&companion_target, &[]);
                 occupied_stems.insert(stem);
                 return Ok([target, companion_target]);
             }
@@ -2831,24 +2834,21 @@ pub(crate) fn import_media_pair(
     folder_id: i64,
     folder_path: &str,
     occupied_stems: &mut HashSet<String>,
-    preserve_xmp: bool,
 ) -> Result<ImportedMediaPair, String> {
-    let paths = copy_media_pair(primary, companion, Path::new(folder_path), occupied_stems)?;
-    let xmp = if preserve_xmp {
-        match crate::metadata::files::Guard::new(
-            [primary, companion].into_iter().zip(paths.iter().map(PathBuf::as_path)),
-            crate::metadata::files::Operation::Copy,
-        ) {
-            Ok(guard) => Some(guard),
-            Err(error) => {
-                for path in &paths {
-                    let _ = fs::remove_file(path);
-                }
-                return Err(error);
+    let mut xmp_cache = crate::metadata::files::Cache::default();
+    let paths = copy_media_pair(primary, companion, Path::new(folder_path), occupied_stems, &mut xmp_cache)?;
+    let xmp = match crate::metadata::files::Guard::with_cache(
+        [primary, companion].into_iter().zip(paths.iter().map(PathBuf::as_path)),
+        crate::metadata::files::Operation::Copy,
+        &mut xmp_cache,
+    ) {
+        Ok(guard) => Some(guard),
+        Err(error) => {
+            for path in &paths {
+                let _ = fs::remove_file(path);
             }
+            return Err(error);
         }
-    } else {
-        None
     };
     let mut pair = ImportedMediaPair { paths, files: Vec::with_capacity(2), xmp };
     for path in &pair.paths {
@@ -2887,12 +2887,12 @@ pub(crate) fn import_clipboard_paths(
     let mut pair_error = None;
     for (path, companion) in groups {
         if let Some(companion) = companion {
-            match import_media_pair(path, companion, folder_id, folder_path, &mut occupied_stems, false) {
+            match import_media_pair(path, companion, folder_id, folder_path, &mut occupied_stems) {
                 Ok(pair) => imported.extend(pair.commit()),
                 Err(error) => { pair_error.get_or_insert(error); }
             }
         } else if path.is_file() {
-            match import_clipboard_file(path, folder_id, folder_path) {
+            match import_single_file(&path.to_string_lossy(), folder_id, folder_path) {
                 Ok(file) => {
                     remember_destination_stem(&file, &mut occupied_stems);
                     imported.push(file);
@@ -2963,8 +2963,9 @@ mod clipboard_pair_tests {
                     .with_extension(companion.extension().unwrap());
                 fs::write(&conflict, b"existing file").unwrap();
                 let mut stems = media_destination_stems(&target).unwrap();
+                let mut xmp_cache = crate::metadata::files::Cache::default();
                 let [copied_primary, copied_companion] =
-                    copy_media_pair(primary, companion, &target, &mut stems).unwrap();
+                    copy_media_pair(primary, companion, &target, &mut stems, &mut xmp_cache).unwrap();
                 assert_eq!(copied_primary.file_stem(), copied_companion.file_stem(), "{}", case.name);
                 assert_eq!(fs::read(&conflict).unwrap(), b"existing file", "{}", case.name);
                 assert_eq!(fs::read(copied_primary).unwrap(), fs::read(primary).unwrap(), "{}", case.name);
@@ -3091,17 +3092,18 @@ mod clipboard_pair_tests {
         let companion = root.join("A.JPG");
         fs::write(&primary, b"raw").unwrap();
         fs::write(&companion, b"jpeg").unwrap();
-        fs::write(target.join("A.NEF"), b"existing raw").unwrap();
+        fs::write(target.join("A.NEF.xmp"), b"existing XMP").unwrap();
 
         let mut occupied_stems = media_destination_stems(&target).unwrap();
-        let [raw, jpeg] = copy_media_pair(&primary, &companion, &target, &mut occupied_stems).unwrap();
+        let mut xmp_cache = crate::metadata::files::Cache::default();
+        let [raw, jpeg] = copy_media_pair(&primary, &companion, &target, &mut occupied_stems, &mut xmp_cache).unwrap();
         assert_eq!(raw, target.join("A(1).NEF"));
         assert_eq!(jpeg, target.join("A(1).JPG"));
-        assert_eq!(fs::read(target.join("A.NEF")).unwrap(), b"existing raw");
+        assert_eq!(fs::read(target.join("A.NEF.xmp")).unwrap(), b"existing XMP");
         assert_eq!(fs::read(jpeg).unwrap(), b"jpeg");
 
         fs::remove_file(&companion).unwrap();
-        assert!(copy_media_pair(&primary, &companion, &target, &mut occupied_stems).is_err());
+        assert!(copy_media_pair(&primary, &companion, &target, &mut occupied_stems, &mut xmp_cache).is_err());
         assert_eq!(fs::read_dir(&target).unwrap().count(), 3);
         fs::remove_dir_all(root).unwrap();
     }

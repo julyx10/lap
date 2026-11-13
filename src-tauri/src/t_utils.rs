@@ -1706,7 +1706,7 @@ where
                 }
                 let pair = crate::t_cmds::import_media_pair(
                     path, companion, folder_id, &target_folder.to_string_lossy(),
-                    occupied_stems.get_mut(&target_folder).unwrap(), true,
+                    occupied_stems.get_mut(&target_folder).unwrap(),
                 )?;
                 let mut aae_paths = Vec::new();
                 let result = (|| {
@@ -4988,7 +4988,10 @@ mod import_file_concurrency_tests {
         assert_eq!(repeated.total, 0);
 
         // Exercise the file-list paste path with both pairs in one clipboard payload.
+        let raw_xmp = raw_source.join("Photodesk 39.NEF.xmp");
+        fs::write(&raw_xmp, b"RAW sidecar").unwrap();
         let clipboard_paths = [
+            raw_xmp,
             raw_source.join("Photodesk 39.NEF"),
             raw_source.join("Photodesk 39.jpg"),
             live_source.join(names[0]),
@@ -5005,7 +5008,8 @@ mod import_file_concurrency_tests {
                 &clipboard_paths, folder_id, folder_path, enabled,
             ).unwrap();
             assert_eq!(imported.len(), 4);
-            assert_eq!(fs::read_dir(&folder).unwrap().count(), 5);
+            assert_eq!(fs::read_dir(&folder).unwrap().count(), 6);
+            assert_eq!(fs::read(folder.join("Photodesk 39.NEF.xmp")).unwrap(), b"RAW sidecar");
             assert_eq!(fs::read(folder.join(names[0])).unwrap(), b"existing");
             let files = AFile::get_files_by_folder_id(folder_id).unwrap();
             let live = files.iter().find(|file| file.media_subtype.as_deref() == Some("live_photo")).unwrap();

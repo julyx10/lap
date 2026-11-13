@@ -8733,6 +8733,8 @@ pub struct ATag {
     pub count: Option<i64>,
     pub parent_id: Option<i64>,
     pub path: String,
+    #[serde(default)]
+    pub source: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -8756,6 +8758,7 @@ impl ATag {
             count: row.get(2)?,
             parent_id: row.get(3)?,
             path: row.get(4)?,
+            source: row.get(5)?,
         })
     }
 
@@ -8781,6 +8784,7 @@ impl ATag {
             parent_id,
             path,
             count: Some(0),
+            source: None,
         })
     }
 
@@ -8795,7 +8799,7 @@ impl ATag {
             1 => "atags.name COLLATE NOCASE DESC",
             _ => "atags.name COLLATE NOCASE ASC",
         };
-        let query = format!("{} SELECT atags.id,atags.name,0,atags.parent_id,paths.path FROM atags JOIN paths ON paths.id=atags.id ORDER BY {order_clause},atags.id", crate::t_tags::PATHS);
+        let query = format!("{} SELECT atags.id,atags.name,0,atags.parent_id,paths.path,atags.source FROM atags JOIN paths ON paths.id=atags.id ORDER BY {order_clause},atags.id", crate::t_tags::PATHS);
         let mut stmt = conn.prepare(query.as_str()).map_err(|e| e.to_string())?;
 
         let tags_iter = stmt
@@ -8844,7 +8848,7 @@ impl ATag {
     /// Get all tags for a specific file
     pub fn get_tags_for_file(file_id: i64) -> Result<Vec<Self>, String> {
         let conn = open_conn()?;
-        let query = format!("{} SELECT id,name,0,parent_id,path FROM paths WHERE ancestor_id IS NULL ORDER BY path COLLATE NOCASE,id", crate::t_tags::FILE_PATHS);
+        let query = format!("{} SELECT paths.id,paths.name,0,paths.parent_id,paths.path,atags.source FROM paths JOIN atags ON atags.id=paths.id WHERE paths.ancestor_id IS NULL ORDER BY paths.path COLLATE NOCASE,paths.id", crate::t_tags::FILE_PATHS);
         let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
 
         let tags_iter = stmt
