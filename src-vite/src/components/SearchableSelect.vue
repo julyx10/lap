@@ -47,11 +47,11 @@
             :data-index="index"
             class="flex cursor-pointer items-center gap-2 rounded-box px-2 py-1 text-xs"
             :class="index === activeIndex ? 'bg-base-100 text-base-content' : 'text-base-content/70'"
-            @mouseenter="activeIndex = index"
+            @mouseenter="onOptionHover($event, index, option.label)"
             @mousedown.prevent
             @click="select(option)"
           >
-            <span class="min-w-0 flex-1 truncate">
+            <span data-option-label class="min-w-0 flex-1 truncate">
               <span
                 v-for="(part, partIndex) in highlight(option.label)"
                 :key="partIndex"
@@ -81,6 +81,13 @@ import {
 } from '@/common/searchableSelectState.js';
 
 type SelectValue = string | number;
+
+function onOptionHover(event: MouseEvent, index: number, label: string) {
+  activeIndex.value = index;
+  const row = event.currentTarget as HTMLElement;
+  const text = row.querySelector<HTMLElement>('[data-option-label]');
+  row.title = text && text.scrollWidth > text.clientWidth ? label : '';
+}
 
 interface SelectOption {
   value: SelectValue;
