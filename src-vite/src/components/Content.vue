@@ -2460,7 +2460,7 @@ async function removeSelectedFromCollection() {
     await updateContent(true);
   } else {
     const removedIdSet = new Set(fileIds);
-    fileList.value = fileList.value.filter(f => !removedIdSet.has(f.id));
+    fileList.value = fileList.value.filter(f => !removedIdSet.has(Number(f?.id)));
     totalFileCount.value = fileList.value.length;
     totalFileSize.value = fileList.value.reduce((total, file) => total + getMediaItemSize(file), 0);
     selectedItemIndex.value = fileList.value.length > 0 ? Math.min(selectedItemIndex.value, fileList.value.length - 1) : -1;
@@ -9194,7 +9194,7 @@ const onMoveTo = async () => {
           .filter(item => !successIdSet.has(item.id))
           .map(item => Number(item.id)),
       );
-      fileList.value = fileList.value.filter((f) => !successIdSet.has(f.id));
+      fileList.value = fileList.value.filter((f) => !successIdSet.has(Number(f?.id)));
       totalFileCount.value = fileList.value.length;
       totalFileSize.value = fileList.value.reduce((total, file) => total + getMediaItemSize(file), 0);
       selectedItemIndex.value = fileList.value.length > 0 ? Math.min(selectedItemIndex.value, fileList.value.length - 1) : -1;
@@ -9381,7 +9381,7 @@ const onMoveToFolder = async () => {
         .filter(file => !successIdSet.has(file.id))
         .map(file => Number(file.id)),
     );
-    fileList.value = fileList.value.filter(file => !successIdSet.has(file.id));
+    fileList.value = fileList.value.filter(file => !successIdSet.has(Number(file?.id)));
     totalFileCount.value = fileList.value.length;
     totalFileSize.value = fileList.value.reduce((total, file) => total + getMediaItemSize(file), 0);
     selectedItemIndex.value = fileList.value.length > 0
@@ -11053,7 +11053,7 @@ async function handleCollectionsAdded({ fileIds = [], results, removedCollection
     if (groupedModeActive.value) {
       void updateContent(true);
     } else {
-      fileList.value = fileList.value.filter(file => !removedIds.has(Number(file.id)));
+      fileList.value = fileList.value.filter(file => !removedIds.has(Number(file?.id)));
       totalFileCount.value = fileList.value.length;
       totalFileSize.value = fileList.value.reduce((total, file) => total + getMediaItemSize(file), 0);
       selectedItemIndex.value = fileList.value.length > 0 ? Math.min(selectedItemIndex.value, fileList.value.length - 1) : -1;
