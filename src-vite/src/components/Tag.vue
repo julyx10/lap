@@ -165,6 +165,7 @@ import { emit as emitEvent, listen } from "@tauri-apps/api/event";
 import { useI18n } from "vue-i18n";
 import { useToast } from "@/common/toast";
 import { useUIStore } from "@/stores/uiStore";
+import { useLibraryChangeRefresh } from "@/composables/useLibraryChangeRefresh";
 import { config, libConfig } from "@/common/config";
 import { SIDEBAR } from "@/common/constants";
 import {
@@ -519,6 +520,7 @@ async function load() {
     if (current === request) loading.value = false;
   }
 }
+useLibraryChangeRefresh(load);
 onMounted(async () => {
   const stop = await listen<{ source?: string }>(
     "tags-changed",

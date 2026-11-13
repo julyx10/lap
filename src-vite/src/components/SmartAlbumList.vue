@@ -142,6 +142,7 @@ import { config, libConfig } from '@/common/config';
 import { useUIStore } from '@/stores/uiStore';
 import { getThumbUrl, getThumbnailDataUrl, getThumbnailDataUrlInflight, isWin, setThumbnailDataUrlInflight } from '@/common/utils';
 import { getFileThumbById, getSmartQueryCountAndSum } from '@/common/api';
+import { useLibraryChangeRefresh } from '@/composables/useLibraryChangeRefresh';
 import { IconAdd, IconClose, IconDragHandle, IconEdit, IconMore, IconError, IconOrder, IconSearch, IconTrash } from '@/common/icons';
 import TButton from '@/components/TButton.vue';
 import ContextMenu from '@/components/ContextMenu.vue';
@@ -220,6 +221,7 @@ async function refreshSmartAlbumCounts() {
     count: countMap[String(album.id)] ?? 0,
   }));
 }
+useLibraryChangeRefresh(refreshSmartAlbumCounts);
 
 watch(
   () => [smartAlbumCountSignature.value, libConfig._libraryId],

@@ -9536,6 +9536,7 @@ const onTrashAllDuplicates = async () => {
     if (deletedCount > 0) {
       await refreshFolderSidebarCounts(result?.affectedFolderPaths || []);
       await updateContent(true);
+      await refreshLibraryTotalCount();
       await dedupPaneRef.value?.refreshGroups();
       toast.success(getDeleteFilesSuccessMessage(deletedCount, permanently));
     }

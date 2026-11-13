@@ -97,6 +97,7 @@ import { useI18n } from 'vue-i18n';
 import { fileInfoRevision } from '@/common/fileInfoRefresh';
 import { config, libConfig } from '@/common/config';
 import { getLocationInfo } from '@/common/api';
+import { useLibraryChangeRefresh } from '@/composables/useLibraryChangeRefresh';
 import { SIDEBAR } from '@/common/constants';
 import { getCountryName } from '@/common/utils';
 import { IconLocation, IconRight, IconSearch, IconClose } from '@/common/icons';
@@ -183,6 +184,7 @@ onMounted(async () => {
 watch(fileInfoRevision, async () => {
   if (libConfig.activePane === 'main' && config.main.sidebarIndex === SIDEBAR.LOCATION) await getLocations(true);
 });
+useLibraryChangeRefresh(() => getLocations(true));
 
 // Only refresh the active view. Inactive panel data is refreshed on re-entry.
 watch(() => [config.settings.locationSort], async () => {

@@ -320,6 +320,7 @@ import { getAllAlbums, getAlbumVisibleCounts, getAllAlbumFolders, reorderAlbums,
          getAlbum, checkAlbumAccessibility, cancelIndexing as cancelIndexingApi, listenIndexProgress, listenIndexFinished, recountAlbum } from '@/common/api';
 import { Album, Folder } from '@/common/types';
 import { useAlbumSelectionProvider, SelectionSource } from '@/composables/useAlbumSelection';
+import { useLibraryChangeRefresh } from '@/composables/useLibraryChangeRefresh';
 
 import AlbumFolder from '@/components/AlbumFolder.vue';
 import AlbumEdit from '@/components/AlbumEdit.vue';
@@ -398,6 +399,7 @@ async function refreshAlbumVisibleCounts() {
   ) return;
   libConfig.album.counts = counts;
 }
+useLibraryChangeRefresh(refreshAlbumVisibleCounts);
 
 // Computed to check if we're in main album pane
 const isMainPane = computed(() => props.selectionSource === 'album');

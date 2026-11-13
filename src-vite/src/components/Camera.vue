@@ -108,6 +108,7 @@ import { useI18n } from 'vue-i18n';
 import { fileInfoRevision } from '@/common/fileInfoRefresh';
 import { config, libConfig } from '@/common/config';
 import { getCameraInfo, getLensInfo } from '@/common/api';
+import { useLibraryChangeRefresh } from '@/composables/useLibraryChangeRefresh';
 import { SIDEBAR } from '@/common/constants';
 import { IconCamera, IconCameraAperture, IconRight, IconSearch, IconClose } from '@/common/icons';
 import SortMenuButton from './SortMenuButton.vue';
@@ -193,6 +194,7 @@ onMounted(async () => {
 watch(fileInfoRevision, async () => {
   if (libConfig.activePane === 'main' && config.main.sidebarIndex === SIDEBAR.CAMERA) await loadCameraInfo(true);
 });
+useLibraryChangeRefresh(() => loadCameraInfo(true));
 
 // Only refresh the active view. Inactive panel data is refreshed on re-entry.
 watch(() => [config.settings.cameraSort], async () => {

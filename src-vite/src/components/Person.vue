@@ -209,6 +209,7 @@ import { ref, onMounted, onUnmounted, computed, nextTick, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { config, libConfig } from '@/common/config';
 import { getPersonsPage, renamePerson, deletePerson, indexFaces, cancelFaceIndex, isFaceIndexing, listenFaceIndexProgress, listenFaceIndexFinished, listenClusterProgress, resetFaces, getFaceStats } from '@/common/api';
+import { useLibraryChangeRefresh } from '@/composables/useLibraryChangeRefresh';
 import { SIDEBAR, PERSON_PAGE_SIZE } from '@/common/constants';
 import { 
   IconPerson, 
@@ -605,6 +606,11 @@ async function checkFaceStats() {
     incompleteCount.value = stats.unprocessed;
   }
 }
+
+useLibraryChangeRefresh(() => {
+  void loadPersons(true, true);
+  void checkFaceStats();
+});
 
 // Only refresh the active view. Inactive panel data is refreshed on re-entry.
 

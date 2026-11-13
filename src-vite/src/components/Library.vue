@@ -175,8 +175,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, watch } from 'vue';
-import { listen } from '@tauri-apps/api/event';
+import { computed, onMounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { config, libConfig } from '@/common/config';
 import { useUIStore } from '@/stores/uiStore';
@@ -186,6 +185,7 @@ import { CULLING, LIB_ITEM, RATE, SIDEBAR, type LibItem } from '@/common/constan
 import { IconFiles, IconHeartFilled, IconRight, IconBolt, IconFlag, IconFlagFilled, IconFlagOff, IconStar, IconStarFilled, IconHistory } from '@/common/icons';
 import { SMART_TAG_CATEGORIES } from '@/common/smartTags';
 import { getLibraryVisibleCounts } from '@/common/api';
+import { useLibraryChangeRefresh } from '@/composables/useLibraryChangeRefresh';
 
 const props = defineProps({
   titlebar: {
@@ -223,20 +223,8 @@ async function refreshLibraryCounts() {
     culling: { [CULLING.PICK]: counts.pick, [CULLING.REJECT]: counts.reject, [CULLING.UNREVIEWED]: counts.unreviewed },
   };
 }
-// Deletes, moves and album changes emit this once the catalog has changed.
-let disposed = false;
-let unlistenLibraryTotalRefreshed: (() => void) | null = null;
-onMounted(async () => {
-  void refreshLibraryCounts();
-  const unlisten = await listen('library-total-refreshed', () => { void refreshLibraryCounts(); });
-  if (disposed) unlisten();
-  else unlistenLibraryTotalRefreshed = unlisten;
-});
-onBeforeUnmount(() => {
-  disposed = true;
-  unlistenLibraryTotalRefreshed?.();
-  unlistenLibraryTotalRefreshed = null;
-});
+onMounted(() => { void refreshLibraryCounts(); });
+useLibraryChangeRefresh(refreshLibraryCounts);
 const isActiveLibraryView = () => libConfig.activePane === 'main' && config.main.sidebarIndex === SIDEBAR.LIBRARY;
 watch(() => [config.main.sidebarIndex, libConfig.activePane], () => {
   if (isActiveLibraryView()) void refreshLibraryCounts();

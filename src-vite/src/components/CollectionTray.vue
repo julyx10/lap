@@ -177,6 +177,7 @@ import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
 import { config, libConfig } from '@/common/config';
 import { clearCollection, createCollection, deleteCollection as deleteCollectionApi, getCollectionCounts, listCollections, renameCollection, reorderCollections } from '@/common/api';
+import { useLibraryChangeRefresh } from '@/composables/useLibraryChangeRefresh';
 import { IconAdd, IconRight, IconRename, IconMore, IconCollection, IconRemove, IconTrash, IconClose, IconSearch, IconDragHandle, IconOrder } from '@/common/icons';
 import { VueDraggable, type DraggableEvent } from 'vue-draggable-plus';
 import ContextMenu from '@/components/ContextMenu.vue';
@@ -232,7 +233,18 @@ let unlistenCollectionsChanged: (() => void) | null = null;
 let unlistenContentItemsDragState: (() => void) | null = null;
 let unlistenLibrarySwitched: (() => void) | null = null;
 let collectionCountRequest = 0;
+let collectionListRequest = 0;
 let isCollectionTrayMounted = true;
+
+async function refreshCollectionCounts() {
+  const request = ++collectionCountRequest;
+  const libraryId = libConfig._libraryId;
+  const counts = await getCollectionCounts();
+  if (isCollectionTrayMounted && request === collectionCountRequest && counts && libraryId === libConfig._libraryId) {
+    libConfig.collection.counts = counts;
+  }
+}
+useLibraryChangeRefresh(refreshCollectionCounts);
 
 onMounted(async () => {
   document.addEventListener('pointerdown', handleReorderOutsidePointerDown, true);
@@ -276,19 +288,18 @@ onBeforeUnmount(() => {
 });
 
 async function loadCollections(preferredId?: number) {
-  const request = ++collectionCountRequest;
+  const request = ++collectionListRequest;
   const libraryId = libConfig._libraryId;
-  const [result, counts] = await Promise.all([
+  const [result] = await Promise.all([
     listCollections(),
-    getCollectionCounts(),
+    refreshCollectionCounts(),
   ]);
   if (
     !isCollectionTrayMounted
-    || request !== collectionCountRequest
+    || request !== collectionListRequest
     || libraryId !== libConfig._libraryId
   ) return;
-  const countMap = counts || {};
-  libConfig.collection.counts = countMap;
+  const countMap = libConfig.collection.counts || {};
   collections.value = Array.isArray(result)
     ? result.map((item: any) => ({
       id: Number(item.id),
