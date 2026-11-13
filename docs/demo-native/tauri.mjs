@@ -786,10 +786,22 @@ export async function invoke(command, args = {}) {
     return args.fileIds.map(photo).filter(Boolean).map(nativeFile);
   if (
     command === "get_file_info" ||
-    command === "update_file_info" ||
-    command === "refresh_file_info"
+    command === "update_file_info"
   )
     return nativeFile(p);
+  if (command === "is_cloud_only_file") return false;
+  if (command === "begin_file_refresh_batch") return 1;
+  if (command === "end_file_refresh_batch") return null;
+  if (command === "refresh_selected_file_info") {
+    return p ? { file: nativeFile(p), size_delta: 0, skipped: false } : null;
+  }
+  if (command === "save_xmp_metadata") {
+    const failures = (args.fileIds || []).map(fileId => ({
+      fileId,
+      error: "XMP writeback is available in the desktop app.",
+    }));
+    return { savedIds: [], failures };
+  }
   if (command === "get_file_thumb" || command === "get_file_thumb_by_id")
     return {
       file_id: Number(args.fileId),

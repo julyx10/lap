@@ -15,7 +15,7 @@ This version compiles the current Lap frontend into a static browser application
 
 The build only adds accessibility labels and `data-demo-component` attributes for browser QA, redirects native thumbnail/preview protocols to local sample assets, and makes the Settings window use the browser window adapter. App templates and business interaction logic otherwise come directly from the repository.
 
-`source-manifest.json` records hashes of 19 key source files so changes to the app can be detected before the next demo release.
+`source-manifest.json` records hashes of key source files so changes to the app can be detected before the next demo release.
 
 ## Build and embed
 
@@ -47,7 +47,7 @@ Keep the complete `assets/` and `thumbnails/` directories with `index.html`. Ser
 - There are 20 fixture records with two exact duplicate pairs, a sample album with two folders, two collections, two custom smart albums, tags, capture dates, camera/lens/location metadata and a predefined face cluster.
 - Folder, collection, metadata, selection, favorites, ratings, culling, tags, comments, rename, duplicate cleanup and configuration are simulated in browser memory/localStorage. **Reset samples** restores the fixture data.
 - The original settings form is retained, including all options, conditional controls and disabled states. Presentation preferences affect the original frontend directly. Native window changes and desktop-only maintenance operations are simulated.
-- File/directory chooser actions use explicit sample paths. They do not read the user's filesystem, upload files, scan disks, launch applications or install models. Native operations display a simulation notice.
+- File/directory chooser actions use explicit sample paths. They do not read the user's filesystem, upload files, scan disks, launch applications or install models. Native operations display a simulation notice. File Info refresh returns the current fixture data. Saving metadata to XMP shows a desktop-only message.
 - Similarity/search results use predefined sample metadata; exact duplicates use seeded matching hashes and thumbnail data. Face clustering is predefined. No AI model runs online.
 - RAW previews use a JPEG fixture; decoding, video/Live Photo playback, actual system copying, printing and real library backup/restore are not provided by the browser adapter.
 - File info uses fictional metadata. The original histogram component computes from the sample image pixels. The original map uses fictional sample coordinates and the app's selected map provider.
