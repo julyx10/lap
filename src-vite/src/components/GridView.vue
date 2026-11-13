@@ -55,14 +55,14 @@
                 @change="(event) => $emit('group-select-toggled', item, (event.target as HTMLInputElement).checked)"
               />
             </div>
-            <component :is="getGroupIcon(item)" class="w-4 h-4 shrink-0 text-base-content/30" />
+            <component :is="getGroupIcon(item)" class="w-4 h-4 shrink-0 text-base-content/70" />
             <Breadcrumb
               v-if="isFolderPathGroup()"
               :items="getFolderGroupBreadcrumbItems(item)"
               disabled
               class="min-w-0 flex-1 overflow-hidden"
             />
-            <span v-else class="min-w-0 truncate text-sm text-base-content/30">{{ item.label }}</span>
+            <span v-else class="min-w-0 truncate text-sm text-base-content/70">{{ item.label }}</span>
           </div>
           <span class="ml-auto badge badge-xs shrink-0 text-xs text-base-content/30">
             {{ item.countLabel || Number(item.count || 0).toLocaleString() }}

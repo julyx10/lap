@@ -5,13 +5,13 @@
       v-if="icon"
       :class="[
         'w-3.5 h-3.5 shrink-0',
-        disabled ? 'text-base-content/30' : 'text-base-content/70'
+        disabled ? 'text-base-content/70' : 'text-base-content/70'
       ]"
     />
     <div ref="containerRef" class="grid min-w-0 flex-1 overflow-hidden">
       <div
         class="col-start-1 row-start-1 flex min-w-0 items-center whitespace-nowrap"
-        :class="[sizeClass, disabled ? 'text-base-content/30' : (highlight ? 'text-primary' : 'text-base-content/70')]"
+        :class="[sizeClass, disabled ? 'text-base-content/70' : (highlight ? 'text-primary' : 'text-base-content/70')]"
       >
         <template v-if="startIndex > 0">
           <span class="shrink-0">…</span>
