@@ -175,7 +175,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, watch } from 'vue';
+import { listen } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { config, libConfig } from '@/common/config';
 import { useUIStore } from '@/stores/uiStore';
@@ -222,7 +223,20 @@ async function refreshLibraryCounts() {
     culling: { [CULLING.PICK]: counts.pick, [CULLING.REJECT]: counts.reject, [CULLING.UNREVIEWED]: counts.unreviewed },
   };
 }
-onMounted(() => { void refreshLibraryCounts(); });
+// Deletes, moves and album changes emit this once the catalog has changed.
+let disposed = false;
+let unlistenLibraryTotalRefreshed: (() => void) | null = null;
+onMounted(async () => {
+  void refreshLibraryCounts();
+  const unlisten = await listen('library-total-refreshed', () => { void refreshLibraryCounts(); });
+  if (disposed) unlisten();
+  else unlistenLibraryTotalRefreshed = unlisten;
+});
+onBeforeUnmount(() => {
+  disposed = true;
+  unlistenLibraryTotalRefreshed?.();
+  unlistenLibraryTotalRefreshed = null;
+});
 const isActiveLibraryView = () => libConfig.activePane === 'main' && config.main.sidebarIndex === SIDEBAR.LIBRARY;
 watch(() => [config.main.sidebarIndex, libConfig.activePane], () => {
   if (isActiveLibraryView()) void refreshLibraryCounts();
