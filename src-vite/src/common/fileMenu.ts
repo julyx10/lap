@@ -5,7 +5,7 @@ import { SIDEBAR } from '@/common/constants';
 import { DEFAULT_PLATFORM, getShortcutLabel, ShortcutActionId } from '@/common/shortcuts';
 import {
   IconMonitor,
-  IconBrackets,
+  IconSave,
   IconPrint,
   IconCloud,
   IconRefresh,
@@ -182,7 +182,7 @@ export const useFileMenuItems = (
       },
       {
         label: String(localeMsg.value.menu.file.save_xmp || 'Save Metadata to XMP'),
-        icon: markRaw(IconBrackets),
+        icon: markRaw(IconSave),
         disabled: unavailable || selectionCount === 0,
         action: createAction('save-xmp'),
       },
@@ -394,7 +394,7 @@ export const useFileMenuItems = (
       },
       {
         label: String(localeMsg.value.menu.file.save_xmp || 'Save Metadata to XMP'),
-        icon: markRaw(IconBrackets),
+        icon: markRaw(IconSave),
         action: createAction('save-xmp'),
       },
       {

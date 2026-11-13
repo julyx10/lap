@@ -457,11 +457,8 @@
     },
     "filter": {
       "favorites_only": "즐겨찾기만",
-      "select_mode": "다중 선택",
-      "select_files": "항목 선택",
-      "show_selection_panel": "다중 선택 패널 열기",
-      "hide_selection_panel": "다중 선택 패널 접기",
-      "exit_select_mode": "다중 선택 모드 종료",
+      "show_selection_panel": "선택 패널 열기",
+      "exit_selection_mode": "선택 모드 종료",
       "select_count": "{count}개 선택됨",
       "group_type_options": [
         "없음",
@@ -503,9 +500,7 @@
     "tooltip": {
       "restore": "복원",
       "refresh": "새로고침",
-      "show_info": "정보 보기",
-      "hide_info": "정보 숨기기",
-      "open_dedup": "중복 및 유사 사진 찾기",
+      "info": "정보",
       "clear_history": "기록 지우기",
       "index_faces": "얼굴 인덱싱",
       "sort": "정렬",
@@ -528,7 +523,6 @@
     "empty_desc": "항목을 추가하거나 현재 필터를 업데이트해 여기에 표시하세요.",
     "select_hint": "선택한 항목이 없습니다",
     "deselect": "선택 해제",
-    "select_mode_entered": "다중 선택 모드가 켜졌습니다",
     "selection_load_failed": "선택할 모든 항목을 불러오지 못했습니다. 다시 시도하세요.",
     "large_batch": {
       "title": "일괄 작업 확인",

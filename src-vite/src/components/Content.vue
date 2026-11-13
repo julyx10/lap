@@ -160,7 +160,7 @@
           <!-- toggle select mode -->
           <TButton
             :icon="IconMultiSelect"
-            :tooltip="$t(selectionPanelOpen ? 'toolbar.filter.exit_select_mode' : 'toolbar.filter.select_mode')"
+            :tooltip="$t('info_panel.select_title')"
             :selected="selectionPanelOpen"
             :disabled="isScanStreamingMode || isMapVisible"
             @click="toggleSelectMode"
@@ -169,7 +169,7 @@
           <!-- toggle dedup panel -->
           <TButton
             :icon="IconSimilar"
-            :tooltip="$t('toolbar.tooltip.open_dedup')"
+            :tooltip="$t('info_panel.dedup.title')"
             :selected="isDedupPanelOpen"
             :disabled="isScanStreamingMode"
             @click="toggleDedupPanel"
@@ -178,7 +178,7 @@
           <!-- toggle info panel -->
           <TButton
             :icon="IconInformation"
-            :tooltip="isInfoPanelOpen ? $t('toolbar.tooltip.hide_info') : $t('toolbar.tooltip.show_info')"
+            :tooltip="$t('toolbar.tooltip.info')"
             :shortcut="shortcut('meta.info')"
             :selected="isInfoPanelOpen"
             @click="toggleInfoPanel"
@@ -228,11 +228,11 @@
               :aria-label="$t('toolbar.filter.show_selection_panel')"
               :title="$t('toolbar.filter.show_selection_panel')" @click="openSelectionPanel"
             >
-              {{ selectedCount > 0 ? $t('toolbar.filter.select_count', { count: selectedCount.toLocaleString() }) : $t('toolbar.filter.select_files') }}
+              {{ selectedCount > 0 ? $t('toolbar.filter.select_count', { count: selectedCount.toLocaleString() }) : $t('info_panel.select_hint') }}
               <IconChevronsRight class="size-4" />
             </button>
-            <button class="btn btn-ghost btn-xs btn-square" :aria-label="$t('toolbar.filter.exit_select_mode')"
-              :title="`${$t('toolbar.filter.exit_select_mode')} (Esc)`" @click="handleSelectMode(false)"
+            <button class="btn btn-ghost btn-xs btn-square" :aria-label="$t('toolbar.filter.exit_selection_mode')"
+              :title="`${$t('toolbar.filter.exit_selection_mode')} (Esc)`" @click="handleSelectMode(false)"
             ><IconClose class="size-4" /></button>
           </div>
           </Transition>

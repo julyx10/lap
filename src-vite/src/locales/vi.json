@@ -457,11 +457,8 @@
     },
     "filter": {
       "favorites_only": "Chỉ hiện mục yêu thích",
-      "select_mode": "Chọn nhiều",
-      "select_files": "Chọn mục",
-      "show_selection_panel": "Mở bảng chọn nhiều",
-      "hide_selection_panel": "Ẩn bảng chọn nhiều",
-      "exit_select_mode": "Thoát chế độ chọn nhiều",
+      "show_selection_panel": "Mở bảng chọn",
+      "exit_selection_mode": "Thoát chế độ chọn",
       "select_count": "Đã chọn {count}",
       "group_type_options": [
         "Không",
@@ -503,9 +500,7 @@
     "tooltip": {
       "restore": "Khôi phục",
       "refresh": "Làm mới",
-      "show_info": "Hiện thông tin",
-      "hide_info": "Ẩn thông tin",
-      "open_dedup": "Tìm ảnh trùng lặp và tương tự",
+      "info": "Thông tin",
       "clear_history": "Xóa lịch sử tìm kiếm",
       "index_faces": "Lập chỉ mục khuôn mặt",
       "sort": "Sắp xếp",
@@ -528,7 +523,6 @@
     "empty_desc": "Thêm mục hoặc cập nhật bộ lọc hiện tại để hiển thị chúng ở đây.",
     "select_hint": "Chưa chọn mục nào",
     "deselect": "Bỏ chọn",
-    "select_mode_entered": "Đã bật chế độ chọn nhiều",
     "selection_load_failed": "Không thể tải tất cả mục để chọn. Hãy thử lại.",
     "large_batch": {
       "title": "Xác nhận thao tác hàng loạt",

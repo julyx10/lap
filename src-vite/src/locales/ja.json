@@ -457,11 +457,8 @@
     },
     "filter": {
       "favorites_only": "お気に入りのみ",
-      "select_mode": "複数選択",
-      "select_files": "項目を選択",
-      "show_selection_panel": "複数選択パネルを開く",
-      "hide_selection_panel": "複数選択パネルを折りたたむ",
-      "exit_select_mode": "複数選択モードを終了",
+      "show_selection_panel": "選択パネルを開く",
+      "exit_selection_mode": "選択モードを終了",
       "select_count": "{count} 個選択中",
       "group_type_options": [
         "なし",
@@ -503,9 +500,7 @@
     "tooltip": {
       "restore": "復元",
       "refresh": "更新",
-      "show_info": "情報を表示",
-      "hide_info": "情報を隠す",
-      "open_dedup": "重複・類似写真を検索",
+      "info": "情報",
       "clear_history": "履歴を消去",
       "index_faces": "顔をインデックス",
       "sort": "並べ替え",
@@ -528,7 +523,6 @@
     "empty_desc": "項目を追加するか、現在の絞り込み条件を更新してここに表示してください。",
     "select_hint": "項目が選択されていません",
     "deselect": "選択解除",
-    "select_mode_entered": "複数選択モードがオンになりました",
     "selection_load_failed": "選択するすべての項目を読み込めませんでした。再試行してください。",
     "large_batch": {
       "title": "一括操作の確認",

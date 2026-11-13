@@ -457,11 +457,8 @@
     },
     "filter": {
       "favorites_only": "Jen oblíbené",
-      "select_mode": "Vícenásobný výběr",
-      "select_files": "Vybrat položky",
-      "show_selection_panel": "Otevřít panel vícenásobného výběru",
-      "hide_selection_panel": "Skrýt panel vícenásobného výběru",
-      "exit_select_mode": "Ukončit vícenásobný výběr",
+      "show_selection_panel": "Otevřít panel výběru",
+      "exit_selection_mode": "Ukončit režim výběru",
       "select_count": "Vybráno: {count}",
       "group_type_options": [
         "Žádné",
@@ -503,9 +500,7 @@
     "tooltip": {
       "restore": "Obnovit",
       "refresh": "Obnovit",
-      "show_info": "Zobrazit informace",
-      "hide_info": "Skrýt informace",
-      "open_dedup": "Najít duplicity a podobné fotografie",
+      "info": "Informace",
       "clear_history": "Vymazat historii hledání",
       "index_faces": "Indexovat tváře",
       "sort": "Řadit",
@@ -528,7 +523,6 @@
     "empty_desc": "Přidejte položky nebo upravte aktuální filtr, aby se zde zobrazily.",
     "select_hint": "Nejsou vybrány žádné položky",
     "deselect": "Zrušit výběr",
-    "select_mode_entered": "Je zapnutý režim vícenásobného výběru",
     "selection_load_failed": "Nepodařilo se načíst všechny položky z výběru. Zkuste to znovu.",
     "large_batch": {
       "title": "Potvrdit hromadnou operaci",

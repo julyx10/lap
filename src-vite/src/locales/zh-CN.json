@@ -457,11 +457,8 @@
     },
     "filter": {
       "favorites_only": "仅收藏",
-      "select_mode": "多选",
-      "select_files": "选择项目",
-      "show_selection_panel": "打开多选面板",
-      "hide_selection_panel": "收起多选面板",
-      "exit_select_mode": "退出多选",
+      "show_selection_panel": "打开选择面板",
+      "exit_selection_mode": "退出选择模式",
       "select_count": "已选择 {count}",
       "group_type_options": [
         "不分组",
@@ -503,9 +500,7 @@
     "tooltip": {
       "restore": "恢复",
       "refresh": "刷新",
-      "show_info": "显示信息",
-      "hide_info": "隐藏信息",
-      "open_dedup": "查找重复和相似照片",
+      "info": "信息",
       "clear_history": "清空搜索历史",
       "index_faces": "索引人脸",
       "sort": "排序",
@@ -528,7 +523,6 @@
     "empty_desc": "请添加项目，或更新当前筛选范围以在此显示内容。",
     "select_hint": "未选择项目",
     "deselect": "取消选择",
-    "select_mode_entered": "已进入多选模式",
     "selection_load_failed": "无法加载全部项目进行选择，请重试。",
     "large_batch": {
       "title": "确认批量操作",

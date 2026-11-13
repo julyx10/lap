@@ -457,11 +457,8 @@
     },
     "filter": {
       "favorites_only": "Favoris uniquement",
-      "select_mode": "Sélection multiple",
-      "select_files": "Sélectionner des éléments",
-      "show_selection_panel": "Ouvrir le panneau de sélection multiple",
-      "hide_selection_panel": "Replier le panneau de sélection multiple",
-      "exit_select_mode": "Quitter la sélection multiple",
+      "show_selection_panel": "Ouvrir le panneau de sélection",
+      "exit_selection_mode": "Quitter le mode sélection",
       "select_count": "{count} sélectionnés",
       "group_type_options": [
         "Aucun",
@@ -503,9 +500,7 @@
     "tooltip": {
       "restore": "Restaurer",
       "refresh": "Actualiser",
-      "show_info": "Afficher info",
-      "hide_info": "Masquer info",
-      "open_dedup": "Trouver les doublons et photos similaires",
+      "info": "Infos",
       "clear_history": "Effacer historique",
       "index_faces": "Indexer visages",
       "sort": "Trier",
@@ -528,7 +523,6 @@
     "empty_desc": "Ajoutez des éléments ou mettez à jour le filtre actuel pour les afficher ici.",
     "select_hint": "Aucun élément sélectionné",
     "deselect": "Décocher",
-    "select_mode_entered": "Le mode de sélection multiple est activé",
     "selection_load_failed": "Impossible de charger tous les éléments pour la sélection. Réessayez.",
     "large_batch": {
       "title": "Confirmer l’opération groupée",

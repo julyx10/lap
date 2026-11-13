@@ -3,7 +3,7 @@
     <div class="my-2 px-2 flex items-center w-full shrink-0">
       <div class="min-w-0 pl-1">
         <span class="text-sm font-semibold text-primary/70">
-          {{ $t('toolbar.filter.select_mode') }}
+          {{ $t('info_panel.select_title') }}
         </span>
       </div>
       <span class="ml-auto min-w-0 truncate pl-2 text-xs text-base-content/70" :title="selectionSummaryText" aria-live="polite">
@@ -21,11 +21,6 @@
 
     <div class="mb-2 px-2 flex-1 overflow-y-auto overflow-x-hidden flex flex-col">
       <div class="border-t border-base-content/5 px-1 py-3 space-y-3">
-        <div class="flex items-center gap-2">
-          <span class="text-[10px] uppercase tracking-widest font-bold text-base-content/30">
-            {{ $t('info_panel.select_title') }}
-          </span>
-        </div>
         <div class="flex flex-wrap items-center gap-1">
           <PanelActionButton
             :icon="IconSelectAll"

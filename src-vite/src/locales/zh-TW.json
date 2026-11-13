@@ -457,11 +457,8 @@
     },
     "filter": {
       "favorites_only": "僅收藏",
-      "select_mode": "多選",
-      "select_files": "選擇項目",
-      "show_selection_panel": "開啟多選面板",
-      "hide_selection_panel": "收起多選面板",
-      "exit_select_mode": "退出多選",
+      "show_selection_panel": "開啟選取面板",
+      "exit_selection_mode": "退出選取模式",
       "select_count": "已選 {count}",
       "group_type_options": [
         "無",
@@ -503,9 +500,7 @@
     "tooltip": {
       "restore": "還原",
       "refresh": "重新整理",
-      "show_info": "顯示資訊",
-      "hide_info": "隱藏資訊",
-      "open_dedup": "尋找重複與相似",
+      "info": "資訊",
       "clear_history": "清除搜尋紀錄",
       "index_faces": "建立人臉索引",
       "sort": "排序",
@@ -528,7 +523,6 @@
     "empty_desc": "新增項目或更新目前篩選以在此顯示。",
     "select_hint": "未選取項目",
     "deselect": "取消選取",
-    "select_mode_entered": "已開啟多選模式",
     "selection_load_failed": "無法載入所有選取項目。請再試一次。",
     "large_batch": {
       "title": "確認大量操作",

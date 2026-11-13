@@ -457,11 +457,8 @@
     },
     "filter": {
       "favorites_only": "Nur Favoriten",
-      "select_mode": "Mehrfachauswahl",
-      "select_files": "Elemente auswählen",
-      "show_selection_panel": "Mehrfachauswahl-Bereich öffnen",
-      "hide_selection_panel": "Mehrfachauswahl-Bereich einklappen",
-      "exit_select_mode": "Mehrfachauswahl beenden",
+      "show_selection_panel": "Auswahlbereich öffnen",
+      "exit_selection_mode": "Auswahlmodus beenden",
       "select_count": "{count} ausgewählt",
       "group_type_options": [
         "Keine",
@@ -503,9 +500,7 @@
     "tooltip": {
       "restore": "Wiederherstellen",
       "refresh": "Aktualisieren",
-      "show_info": "Info anzeigen",
-      "hide_info": "Info ausblenden",
-      "open_dedup": "Duplikate und ähnliche Fotos finden",
+      "info": "Info",
       "clear_history": "Verlauf löschen",
       "index_faces": "Gesichter indexieren",
       "sort": "Sortieren",
@@ -528,7 +523,6 @@
     "empty_desc": "Fügen Sie Elemente hinzu oder aktualisieren Sie den aktuellen Filter, um sie hier anzuzeigen.",
     "select_hint": "Keine Elemente ausgewählt",
     "deselect": "Abwählen",
-    "select_mode_entered": "Mehrfachauswahl ist aktiviert",
     "selection_load_failed": "Nicht alle Elemente konnten für die Auswahl geladen werden. Versuchen Sie es erneut.",
     "large_batch": {
       "title": "Massenvorgang bestätigen",

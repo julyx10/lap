@@ -457,11 +457,8 @@
     },
     "filter": {
       "favorites_only": "Csak kedvencek",
-      "select_mode": "Többszörös kijelölés",
-      "select_files": "Elemek kijelölése",
-      "show_selection_panel": "Többszörös kijelölési panel megnyitása",
-      "hide_selection_panel": "Többszörös kijelölési panel összecsukása",
-      "exit_select_mode": "Kilépés a többszörös kijelölésből",
+      "show_selection_panel": "Kijelölési panel megnyitása",
+      "exit_selection_mode": "Kilépés a kijelölési módból",
       "select_count": "{count} kijelölve",
       "group_type_options": [
         "Nincs",
@@ -503,9 +500,7 @@
     "tooltip": {
       "restore": "Visszaállítás",
       "refresh": "Frissítés",
-      "show_info": "Adatok megjelenítése",
-      "hide_info": "Adatok elrejtése",
-      "open_dedup": "Duplikátumok és hasonlók keresése",
+      "info": "Információk",
       "clear_history": "Keresési előzmények törlése",
       "index_faces": "Arcok indexelése",
       "sort": "Rendezés",
@@ -528,7 +523,6 @@
     "empty_desc": "Adjon hozzá elemeket, vagy módosítsa a szűrőt az elemek megjelenítéséhez.",
     "select_hint": "Nincs kijelölt elem",
     "deselect": "Kijelölés törlése",
-    "select_mode_entered": "Többszörös kijelölés bekapcsolva",
     "selection_load_failed": "Nem tölthető be minden elem a kijelöléshez. Próbálja újra.",
     "large_batch": {
       "title": "Tömeges művelet megerősítése",

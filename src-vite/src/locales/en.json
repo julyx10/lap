@@ -457,11 +457,8 @@
     },
     "filter": {
       "favorites_only": "Favorites only",
-      "select_mode": "Multi-select",
-      "select_files": "Select items",
-      "show_selection_panel": "Open multi-select panel",
-      "hide_selection_panel": "Hide multi-select panel",
-      "exit_select_mode": "Exit multi-select",
+      "show_selection_panel": "Open selection panel",
+      "exit_selection_mode": "Exit selection mode",
       "select_count": "{count} selected",
       "group_type_options": [
         "None",
@@ -503,9 +500,7 @@
     "tooltip": {
       "restore": "Restore",
       "refresh": "Refresh",
-      "show_info": "Show info",
-      "hide_info": "Hide info",
-      "open_dedup": "Find Duplicates & Similar",
+      "info": "Info",
       "clear_history": "Clear search history",
       "index_faces": "Index faces",
       "sort": "Sort",
@@ -528,7 +523,6 @@
     "empty_desc": "Add items or update the current filter to show them here.",
     "select_hint": "No items selected",
     "deselect": "Deselect",
-    "select_mode_entered": "Multi-select mode is on",
     "selection_load_failed": "Could not load all items for selection. Try again.",
     "large_batch": {
       "title": "Confirm bulk operation",

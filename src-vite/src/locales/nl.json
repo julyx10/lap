@@ -457,11 +457,8 @@
     },
     "filter": {
       "favorites_only": "Alleen favorieten",
-      "select_mode": "Meervoudige selectie",
-      "select_files": "Items selecteren",
-      "show_selection_panel": "Paneel voor meervoudige selectie openen",
-      "hide_selection_panel": "Paneel voor meervoudige selectie inklappen",
-      "exit_select_mode": "Meervoudige selectie beëindigen",
+      "show_selection_panel": "Selectiepaneel openen",
+      "exit_selection_mode": "Selectiemodus beëindigen",
       "select_count": "{count} geselecteerd",
       "group_type_options": [
         "Geen",
@@ -503,9 +500,7 @@
     "tooltip": {
       "restore": "Herstellen",
       "refresh": "Vernieuwen",
-      "show_info": "Info tonen",
-      "hide_info": "Info verbergen",
-      "open_dedup": "Duplicaten en vergelijkbare foto's zoeken",
+      "info": "Info",
       "clear_history": "Zoekgeschiedenis wissen",
       "index_faces": "Gezichten indexeren",
       "sort": "Sorteren",
@@ -528,7 +523,6 @@
     "empty_desc": "Voeg items toe of pas het huidige filter aan om ze hier te zien.",
     "select_hint": "Geen items geselecteerd",
     "deselect": "Deselecteren",
-    "select_mode_entered": "Meervoudige selectie staat aan",
     "selection_load_failed": "Kan niet alle items laden voor de selectie. Probeer het opnieuw.",
     "large_batch": {
       "title": "Bulkbewerking bevestigen",

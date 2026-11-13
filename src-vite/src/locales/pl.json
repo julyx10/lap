@@ -457,11 +457,8 @@
     },
     "filter": {
       "favorites_only": "Tylko ulubione",
-      "select_mode": "Wielokrotny wybór",
-      "select_files": "Wybierz elementy",
-      "show_selection_panel": "Otwórz panel wielokrotnego wyboru",
-      "hide_selection_panel": "Zwiń panel wielokrotnego wyboru",
-      "exit_select_mode": "Wyjdź z trybu wielokrotnego wyboru",
+      "show_selection_panel": "Otwórz panel wyboru",
+      "exit_selection_mode": "Wyjdź z trybu wyboru",
       "select_count": "Zaznaczono: {count}",
       "group_type_options": [
         "Brak",
@@ -503,9 +500,7 @@
     "tooltip": {
       "restore": "Przywróć",
       "refresh": "Odśwież",
-      "show_info": "Pokaż informacje",
-      "hide_info": "Ukryj informacje",
-      "open_dedup": "Znajdź duplikaty i podobne",
+      "info": "Informacje",
       "clear_history": "Wyczyść historię wyszukiwania",
       "index_faces": "Indeksuj twarze",
       "sort": "Sortuj",
@@ -528,7 +523,6 @@
     "empty_desc": "Dodaj elementy lub zmień bieżący filtr, aby wyświetlić je tutaj.",
     "select_hint": "Nie wybrano elementów",
     "deselect": "Anuluj zaznaczenie",
-    "select_mode_entered": "Tryb wielokrotnego wyboru jest włączony",
     "selection_load_failed": "Nie udało się wczytać wszystkich elementów dla zaznaczenia. Spróbuj ponownie.",
     "large_batch": {
       "title": "Potwierdź operację masową",
