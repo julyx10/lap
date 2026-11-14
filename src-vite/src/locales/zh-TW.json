@@ -1238,7 +1238,7 @@
     "organization": "整理",
     "file": "檔案",
     "capture": "拍攝資訊",
-    "source_metadata": "來源檔案中繼資料",
+    "source_metadata": "中繼資料",
     "source_description": "原始描述",
     "coordinates": "座標",
     "detail_fields": {

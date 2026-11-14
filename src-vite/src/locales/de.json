@@ -1238,7 +1238,7 @@
     "organization": "Organisation",
     "file": "Datei",
     "capture": "Aufnahme",
-    "source_metadata": "Quelldatei-Metadaten",
+    "source_metadata": "Metadaten",
     "source_description": "Originalbeschreibung",
     "coordinates": "Koordinaten",
     "detail_fields": {

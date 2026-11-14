@@ -45,7 +45,7 @@ async function render(key, overrides = {}) {
   return renderToString(app);
 }
 
-test('organization keeps catalog controls on the companion tab and hides empty descriptions', async () => {
+test('organization keeps catalog controls on the companion tab without descriptions', async () => {
   const html = await render('organization');
   assert.doesNotMatch(html, /file_info.marks/);
   assert.doesNotMatch(html, /file_info.comment/);
@@ -54,8 +54,8 @@ test('organization keeps catalog controls on the companion tab and hides empty d
   assert.doesNotMatch(html, /<button[^>]*text-left/);
   assert.doesNotMatch(html, /ORIGINAL SOURCE TEXT/);
   const filled = await render('organization', { fileInfo: { comments: 'USER DESCRIPTION' } });
-  assert.match(filled, /file_info.comment/);
-  assert.match(filled, /USER DESCRIPTION/);
+  assert.doesNotMatch(filled, /file_info.comment/);
+  assert.doesNotMatch(filled, /USER DESCRIPTION/);
 });
 
 test('source metadata is hidden until expanded and displays source software', async () => {
@@ -80,10 +80,10 @@ test('location accepts zero coordinates and rejects missing or invalid coordinat
 test('section visibility follows field choices even when values are empty', () => {
   const start = source.indexOf('const hasCaptureInfo = computed(');
   const end = source.indexOf('const showBasicInfoPanel', start);
-  const evaluate = selected => new Function('computed', 'hasVisibleFields', 'hideEmptyFields',
+  const evaluate = selected => new Function('computed', 'hasVisibleFields', 'hideEmptyFields', 'sourceDetailRows',
     `${source.slice(start, end)}; return [hasCaptureInfo.value, hasLocationInfo.value, hasSourceMetadata.value];`
-  )(computed, section => selected.includes(section), { value: false });
-  assert.deepEqual(evaluate([]), [false, false, false]);
+  )(computed, section => selected.includes(section), { value: false }, { value: [{ key: 'description' }] });
+  assert.deepEqual(evaluate([]), [false, false, true]);
   assert.deepEqual(evaluate(['capture', 'source']), [true, false, true]);
 });
 
@@ -237,8 +237,9 @@ test('field choices allow no fields and reject unknown fields', async () => {
   const registry = await readFile(new URL('../src/common/fileInfoFields.ts', import.meta.url), 'utf8');
   const module = await import(`data:text/javascript;base64,${Buffer.from(ts.transpile(registry, {target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext})).toString('base64')}`);
   assert.deepEqual(module.normalizeFileInfoFields([]), []);
-  assert.equal(module.allFileInfoFields.includes('source.description'), false);
+  assert.equal(module.allFileInfoFields.includes('source.description'), true);
   assert.deepEqual(module.normalizeFileInfoFields(['unknown', 'source.title', 'source.title']), ['source.title']);
+  assert.ok(module.normalizeFileInfoFields(undefined).includes('source.description'));
   assert.deepEqual(module.normalizeFileInfoFields(undefined), module.normalizeFileInfoFields(module.defaultFileInfoFields));
   assert.equal(module.normalizeFileInfoFields(module.defaultFileInfoFields).length, module.defaultFileInfoFields.length);
   for (const locale of ['en','cs','de','es','fr','hu','it','ja','ko','nl','pl','pt','ru','uk','vi','zh-CN','zh-TW']) {

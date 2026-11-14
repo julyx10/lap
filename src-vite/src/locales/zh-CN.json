@@ -1238,7 +1238,7 @@
     "organization": "整理",
     "file": "文件",
     "capture": "拍摄信息",
-    "source_metadata": "源文件元数据",
+    "source_metadata": "元数据",
     "source_description": "原始描述",
     "coordinates": "坐标",
     "detail_fields": {

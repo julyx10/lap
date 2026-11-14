@@ -197,28 +197,6 @@
               </div>
             </template>
 
-            <!-- Editable description -->
-            <template v-if="fileInfo?.comments?.trim()">
-              <div class="flex items-center text-[11px] text-base-content/30 py-1.5">{{ $t('file_info.comment') }}</div>
-              <div class="group/field flex items-center gap-1">
-                <button type="button" class="text-left text-[12px] leading-5 text-base-content/70 wrap-break-word whitespace-pre-wrap flex-1 min-w-0 cursor-pointer hover:text-base-content" @click.stop="emit('quickEditComment')">{{ fileInfo?.comments ?? '' }}</button>
-              </div>
-            </template>
-
-            <!-- Rotate Display -->
-            <template v-if="fileInfo?.rotate && fileInfo?.rotate !== 0">
-              <div class="flex items-center text-[11px] text-base-content/30 h-6">{{ $t('menu.meta.rotate') }}</div>
-              <div class="flex items-center gap-2 min-h-6">
-                <span class="text-[12px] text-base-content/70">{{ normalizedRotate }}°</span>
-                <TButton
-                  :icon="IconRotate"
-                  :tooltip="$t('menu.meta.rotate')"
-                  :buttonSize="'small'"
-                  @click.stop="emit('rotate')"
-                />
-              </div>
-            </template>
-
             <!-- People -->
             <template v-if="config.settings.face.enabled && filePersons.length">
               <div class="flex items-center text-[11px] text-base-content/30 min-h-6 py-1.5">{{ $t('sidebar.people') }}</div>
@@ -368,7 +346,7 @@
             <template v-if="displayField('file.dimension', generalFileInfo?.width && generalFileInfo?.height ? 'dimension' : '')">
             <!-- Dimension -->
             <div class="flex items-center text-[11px] text-base-content/30 h-6">{{ $t('file_info.dimension') }}</div>
-            <div class="flex items-center text-[12px] text-base-content/70">{{ generalFileInfo?.width && generalFileInfo?.height ? formatDimensionText(generalFileInfo.width, generalFileInfo.height, true) : '' }}</div>
+            <div class="flex items-center text-[12px] text-base-content/70">{{ generalFileInfo?.width && generalFileInfo?.height ? formatDimensionText(generalFileInfo.width, generalFileInfo.height, true) : '' }}<span v-if="generalFileInfo?.width && generalFileInfo?.height && normalizedRotate" class="ml-1">· {{ normalizedRotate }}°</span></div>
             </template>
 
             <template v-for="row in imageDetailRows" :key="row.key">
@@ -513,7 +491,8 @@
         <div v-if="showSourceMetadataPanel" class="pt-3 pl-4 grid grid-cols-[84px_minmax(0,1fr)] gap-y-1.5 gap-x-4 text-xs">
             <template v-for="row in sourceDetailRows" :key="row.key">
               <div class="text-[11px] text-base-content/30 min-h-6 py-1">{{ row.label }}</div>
-              <div class="text-[12px] text-base-content/70 whitespace-pre-wrap wrap-break-word py-1">{{ row.value }}</div>
+              <button v-if="row.key === 'description'" type="button" class="py-1 text-left text-[12px] text-base-content/70 whitespace-pre-wrap wrap-break-word cursor-pointer hover:text-base-content" @click.stop="emit('quickEditComment')">{{ row.value.trim() ? row.value : $t('msgbox.edit_comment.title') }}</button>
+              <div v-else class="text-[12px] text-base-content/70 whitespace-pre-wrap wrap-break-word py-1">{{ row.value }}</div>
             </template>
 
         </div>
@@ -581,7 +560,6 @@ import {
   IconExclamation,
   IconFolder,
   IconPhoto,
-  IconRotate,
   IconVideo,
   IconZoomIn,
   IconZoomOut,
@@ -737,7 +715,15 @@ function detailRows(section: DetailSection, keys = detailKeys[section]) {
     return { key, value: value == null ? '' : String(value), label: t(`file_info.detail_fields.${key}`) };
   }).filter(row => displayField(`${section}.${row.key}`, row.value));
 }
-const sourceDetailRows = computed(() => detailRows('source'));
+const sourceDetailRows = computed(() => {
+  const rows = detailRows('source');
+  if (!fieldVisible('source.description')) return rows;
+  const firstOtherField = rows.findIndex(row => row.key !== 'title' && row.key !== 'headline');
+  rows.splice(firstOtherField < 0 ? rows.length : firstOtherField, 0, {
+    key: 'description', label: t('file_info.comment'), value: props.fileInfo?.comments ?? '',
+  });
+  return rows;
+});
 const captureDetailRows = computed(() => detailRows('capture'));
 const imageDetailRows = computed(() => [
   { key: 'iccProfile', value: generalFileInfo.value?.icc_profile },
@@ -915,7 +901,7 @@ const hasLocationInfo = computed(() => hideEmptyFields.value
   ? displayField('location.geo_location', formatGeoLocation()) || displayField('location.gps', hasCoordinates.value || hasAltitude.value ? 'gps' : '')
     || (fieldVisible('location.map') && hasCoordinates.value) || locationDetailRows.value.length > 0
   : hasVisibleFields('location'));
-const hasSourceMetadata = computed(() => hideEmptyFields.value ? sourceDetailRows.value.length > 0 : hasVisibleFields('source'));
+const hasSourceMetadata = computed(() => sourceDetailRows.value.length > 0 || (!hideEmptyFields.value && hasVisibleFields('source')));
 const showBasicInfoPanel = computed(() => config.infoPanel.showBasicInfo);
 const showMetadataPanel = computed(() => config.infoPanel.showMetadata);
 const showMapPanel = computed(() => config.infoPanel.showMap);

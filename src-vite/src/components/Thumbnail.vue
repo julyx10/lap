@@ -258,7 +258,6 @@ import {
   IconTag,
   IconCollection,
   IconRotate,
-  IconComment,
   IconStarFilled,
   IconFlagFilled,
   IconFlagOff,
@@ -744,7 +743,6 @@ const statusBadges = computed<ThumbnailBadge[]>(() => {
   
   if (props.file.has_tags) metaIcons.push({ icon: IconTag });
   if (props.file.has_collections) metaIcons.push({ icon: IconCollection });
-  if (props.file.comments?.length > 0) metaIcons.push({ icon: IconComment });
   if (normalizedRotate.value > 0) {
     metaIcons.push({
       icon: IconRotate,

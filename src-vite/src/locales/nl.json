@@ -1238,7 +1238,7 @@
     "organization": "Organisatie",
     "file": "Bestand",
     "capture": "Opname",
-    "source_metadata": "Bronmetadata",
+    "source_metadata": "Metadata",
     "source_description": "Oorspronkelijke beschrijving",
     "coordinates": "Coördinaten",
     "detail_fields": {

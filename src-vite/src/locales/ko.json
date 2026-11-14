@@ -1238,7 +1238,7 @@
     "organization": "정리",
     "file": "파일",
     "capture": "촬영 정보",
-    "source_metadata": "원본 파일 메타데이터",
+    "source_metadata": "메타데이터",
     "source_description": "원본 설명",
     "coordinates": "좌표",
     "detail_fields": {

@@ -1238,7 +1238,7 @@
     "organization": "Organization",
     "file": "File",
     "capture": "Capture",
-    "source_metadata": "Source metadata",
+    "source_metadata": "Metadata",
     "source_description": "Original description",
     "coordinates": "Coordinates",
     "detail_fields": {

@@ -17,7 +17,6 @@ import {
   IconRename,
   IconFileArrowRight,
   IconTrash,
-  IconComment,
   IconPhotoSearch,
   IconPersonSearch,
   IconImageEdit,
@@ -106,7 +105,7 @@ export const useFileMenuItems = (
     const selectionCount = options?.selectionCount?.value ?? 0;
     const unavailable = options?.selectionHasUnavailable?.value === true;
     const batchActions = new Set([
-      'tag', 'add-to-collection', 'comment', 'rotate', 'rename', 'copy', 'trash',
+      'tag', 'add-to-collection', 'rotate', 'rename', 'copy', 'trash',
     ]);
     const batchLabels = new Set([
       localeMsg.value.rating.title,
@@ -311,11 +310,6 @@ export const useFileMenuItems = (
         icon: markRaw(IconCollection),
         shortcut: shortcut('meta.collection'),
         action: createAction('add-to-collection'),
-      },
-      {
-        label: localeMsg.value.menu.meta.comment,
-        icon: markRaw(IconComment),
-        action: createAction('comment')
       },
       {
         label: localeMsg.value.menu.meta.rotate,

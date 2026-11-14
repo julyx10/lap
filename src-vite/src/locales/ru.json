@@ -1238,7 +1238,7 @@
     "organization": "Организация",
     "file": "Файл",
     "capture": "Съёмка",
-    "source_metadata": "Метаданные исходного файла",
+    "source_metadata": "Метаданные",
     "source_description": "Исходное описание",
     "coordinates": "Координаты",
     "detail_fields": {

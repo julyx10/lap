@@ -1238,7 +1238,7 @@
     "organization": "整理",
     "file": "ファイル",
     "capture": "撮影情報",
-    "source_metadata": "元ファイルのメタデータ",
+    "source_metadata": "メタデータ",
     "source_description": "元の説明",
     "coordinates": "座標",
     "detail_fields": {

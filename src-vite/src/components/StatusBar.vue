@@ -22,7 +22,9 @@
 
         <div class="flex items-center gap-1 shink-0">
           <IconAspectRatio class="t-icon-size-xs" />
-          <span>{{ formatDimensionText(currentFile?.width, currentFile?.height, true) }}</span>
+          <span>
+            {{ formatDimensionText(currentFile?.width, currentFile?.height, true) }}<span v-if="currentFile?.width && currentFile?.height && normalizedRotate"> · {{ normalizedRotate }}°</span>
+          </span>
         </div>
 
         <div class="flex items-center gap-1 shink-0">
@@ -167,6 +169,7 @@ const currentFile = computed(() => {
   if (props.selectedFile) return props.selectedFile;
   return props.fileList[props.selectedItemIndex];
 });
+const normalizedRotate = computed(() => ((Number(currentFile.value?.rotate || 0) % 360) + 360) % 360);
 const itemPosition = computed(() => {
   const total = props.totalFileCount.toLocaleString();
   return props.selectedItemIndex < 0 ? total : `${(props.selectedItemIndex + 1).toLocaleString()} / ${total}`;

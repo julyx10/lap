@@ -19,14 +19,18 @@ export const fileInfoFieldGroups = [
     ...fields('location', ['direction', 'directionRef'], true),
     { key: 'location.map', label: 'file_info.map' },
   ] },
-  { key: 'source', label: 'file_info.source_metadata', fields: fields('source',
-    ['title', 'headline', 'creator', 'copyright', 'software', 'credit', 'source', 'usageTerms', 'rightsUrl'], true) },
+  { key: 'source', label: 'file_info.source_metadata', fields: [
+    ...fields('source', ['title', 'headline'], true),
+    { key: 'source.description', label: 'file_info.comment' },
+    ...fields('source', ['creator', 'copyright', 'software', 'credit', 'source', 'usageTerms', 'rightsUrl'], true),
+  ] },
 ];
 export const allFileInfoFields = fileInfoFieldGroups.flatMap(group => group.fields.map(field => field.key));
 export const defaultFileInfoFields = [
   'file.name', 'file.folder', 'file.size', 'file.dimension',
   'capture.taken_at', 'capture.camera', 'capture.lens', 'capture.capture_settings',
   'location.geo_location', 'location.gps', 'location.map',
+  'source.description',
 ];
 export function normalizeFileInfoFields(value: unknown): string[] {
   const selected = new Set(Array.isArray(value) ? value : defaultFileInfoFields);
