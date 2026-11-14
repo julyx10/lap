@@ -334,7 +334,7 @@ pub fn register_protocols(builder: Builder<Wry>) -> Builder<Wry> {
                     // Use exactly the same pixels (including decoder fallbacks)
                     // that get_edited_image applies the crop and adjustments to.
                     let result = tauri::async_runtime::spawn_blocking(move || {
-                        tauri::async_runtime::block_on(t_image::get_generated_preview_bytes(&file_path))
+                        tauri::async_runtime::block_on(t_image::get_editable_preview_bytes(&file_path))
                     }).await;
                     responder.respond(match result {
                         Ok(Ok(Some(data))) => image_response(data),

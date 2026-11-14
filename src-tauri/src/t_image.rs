@@ -122,6 +122,10 @@ pub fn get_image_dimensions(file_path: &str) -> Result<(u32, u32), String> {
     if t_utils::is_cloud_only_path(file_path) {
         return Err(t_utils::online_only_message(Path::new(file_path)));
     }
+    if crate::t_affinity::is_affinity_path(file_path) {
+        // The embedded preview dimensions do not describe the document canvas.
+        return Ok((0, 0));
+    }
     if t_jxl::is_jxl_path(file_path) {
         return t_jxl::get_jxl_dimensions(file_path);
     }
@@ -483,6 +487,9 @@ fn resize_rgba_image_to_png(
 }
 
 pub(crate) fn should_use_png_thumbnail(file_path: &str) -> bool {
+    if crate::t_affinity::is_affinity_path(file_path) {
+        return true;
+    }
     Path::new(file_path)
         .extension()
         .and_then(|ext| ext.to_str())
@@ -644,6 +651,17 @@ pub(crate) fn get_image_thumbnail_with_encoding(
     force_jpeg: bool,
 ) -> Result<Option<Vec<u8>>, String> {
     t_utils::require_local_content(Path::new(file_path)).map_err(|e| e.to_string())?;
+    if crate::t_affinity::is_affinity_path(file_path) {
+        return crate::t_affinity::decode_preview(file_path)
+            .map(|img| {
+                if force_jpeg {
+                    resize_dynamic_image_to_jpeg(img, 1, thumbnail_size)
+                } else {
+                    resize_rgba_image_to_png(img.to_rgba8(), thumbnail_size)
+                }
+            })
+            .transpose();
+    }
     if t_jxl::is_jxl_path(file_path) {
         return t_jxl::get_jxl_thumbnail(file_path, thumbnail_size);
     }
@@ -1262,21 +1280,44 @@ pub(crate) fn is_ffmpeg_backed_image_path(file_path: &str) -> bool {
     })
 }
 
+fn is_preview_only_document(file_path: &str) -> bool {
+    crate::t_affinity::is_affinity_path(file_path)
+        || Path::new(file_path)
+            .extension()
+            .and_then(|ext| ext.to_str())
+            .is_some_and(|ext| ext.eq_ignore_ascii_case("psd"))
+}
+
 fn should_generate_preview_for_file(file_path: &str, file_type: i64) -> bool {
     file_type == 3
         || crate::t_libraw::is_tiff_path(file_path)
         || t_jxl::is_jxl_path(file_path)
+        || crate::t_affinity::is_affinity_path(file_path)
         || is_heic_path(file_path)
         || is_ffmpeg_backed_image_path(file_path)
         || is_avif_path(file_path)
 }
 
-pub(crate) async fn get_generated_preview_bytes(file_path: &str) -> Result<Option<Vec<u8>>, String> {
+pub(crate) async fn get_editable_preview_bytes(file_path: &str) -> Result<Option<Vec<u8>>, String> {
+    if is_preview_only_document(file_path) {
+        return Ok(None);
+    }
+    get_generated_preview_bytes(file_path).await
+}
+
+async fn get_generated_preview_bytes(file_path: &str) -> Result<Option<Vec<u8>>, String> {
     t_utils::require_local_content(Path::new(file_path)).map_err(|e| e.to_string())?;
     let file_type = t_utils::get_file_type(file_path).unwrap_or(0);
 
     if file_type == 3 {
         return get_raw_preview_image(file_path, RawDisplayOptions::rendered_bright());
+    }
+
+    if crate::t_affinity::is_affinity_path(file_path) {
+        let path = file_path.to_string();
+        return tauri::async_runtime::spawn_blocking(move || crate::t_affinity::preview_png(&path))
+            .await
+            .map_err(|e| e.to_string());
     }
 
     if t_jxl::is_jxl_path(file_path) {
@@ -1452,6 +1493,15 @@ pub(crate) async fn load_oriented_image(
 ) -> Result<DynamicImage, String> {
     t_utils::require_local_content(Path::new(file_path)).map_err(|e| e.to_string())?;
     let file_type = t_utils::get_file_type(file_path).unwrap_or(0);
+    if crate::t_affinity::is_affinity_path(file_path) {
+        let path = file_path.to_string();
+        return tauri::async_runtime::spawn_blocking(move || {
+            crate::t_affinity::decode_preview(&path)
+                .ok_or_else(|| "Missing embedded Affinity preview".to_string())
+        })
+        .await
+        .map_err(|e| e.to_string())?;
+    }
     // decoding is CPU-bound: keep it off the async runtime threads
     if should_generate_preview_for_file(file_path, file_type) {
         let preview = get_generated_preview_bytes(file_path)
@@ -1476,6 +1526,9 @@ pub(crate) async fn load_oriented_image(
 
 /// get an edited image
 async fn get_edited_image(params: &EditParams) -> Result<DynamicImage, String> {
+    if is_preview_only_document(&params.source_file_path) {
+        return Err("This document format only supports preview".to_string());
+    }
     let mut img = load_oriented_image(&params.source_file_path, params.orientation).await?;
 
     // 1. Flip
@@ -1841,6 +1894,15 @@ pub async fn get_file_image_bytes_cached(
     let image_data = if file_type == 3 {
         get_raw_preview_image(file_path, prefer_embedded_raw_preview)?
             .ok_or_else(|| format!("Failed to resolve RAW preview image: {}", file_path))?
+    } else if crate::t_affinity::is_affinity_path(file_path) {
+        let path = file_path.to_string();
+        tauri::async_runtime::spawn_blocking(move || {
+            crate::t_affinity::preview_png(&path).unwrap_or_else(|| {
+                include_bytes!("../../src-vite/src/assets/images/image-file.png").to_vec()
+            })
+        })
+        .await
+        .map_err(|e| e.to_string())?
     } else if t_jxl::is_jxl_path(file_path) {
         t_jxl::get_jxl_preview_image(file_path, 4096)?
             .ok_or_else(|| format!("Failed to resolve JXL preview image: {}", file_path))?

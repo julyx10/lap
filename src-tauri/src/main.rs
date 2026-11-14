@@ -27,6 +27,7 @@ mod t_embedded_jpeg;
 mod t_face;
 mod t_heif;
 mod t_http;
+mod t_affinity;
 mod t_image;
 mod t_af_area;
 mod t_jpeg;

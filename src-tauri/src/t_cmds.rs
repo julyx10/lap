@@ -200,6 +200,7 @@ pub fn get_supported_format_extensions() -> SupportedFormatExtensions {
     let image: Vec<String> = t_common::NORMAL_IMGS
         .iter()
         .chain(t_common::FFMPEG_BACKED_IMGS.iter())
+        .chain(t_common::AFFINITY_IMGS.iter())
         .map(|ext| ext.to_string())
         .collect();
     let raw: Vec<String> = t_common::RAW_IMGS

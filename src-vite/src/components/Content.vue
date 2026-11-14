@@ -817,7 +817,7 @@ import { isWin, isMac, isLinux, separator,
          getCachedThumbnailDataUrl,
          clearCachedThumbnailDataUrl,
          extractFileName, combineFileName, getFolderPath, getFolderName, getSelectOptions, 
-         getMediaItemSize, shortenFilename, getSlideShowInterval, copyFilePaths, getClipboardItemPaths, getFullPath, normalizePathForCompare, isWithinRootPath, shouldUseBackendPreview } from '@/common/utils';
+         getMediaItemSize, shortenFilename, getSlideShowInterval, copyFilePaths, getClipboardItemPaths, getFullPath, normalizePathForCompare, isWithinRootPath, shouldUseBackendPreview, isPreviewOnlyDocument } from '@/common/utils';
 
 import DropDownSelect from '@/components/DropDownSelect.vue';
 import ProgressBar from '@/components/ProgressBar.vue';
@@ -11452,7 +11452,8 @@ async function createMontageWindow() {
 
 async function openImageEditor(index: number) {
   const file = fileList.value[index];
-  if (!file || !await requireOriginalFiles([file])) return;
+  if (!file || ![1, 3].includes(Number(file.file_type)) || isPreviewOnlyDocument(file.file_path)) return;
+  if (!await requireOriginalFiles([file])) return;
   const fileId = Number(file.id || 0);
   if (fileId <= 0) return;
 

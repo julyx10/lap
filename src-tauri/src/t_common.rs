@@ -7,6 +7,8 @@ pub const NORMAL_IMGS: &[&str] = &[
     "jpg", "jpeg", "jfif", "png", "gif", "bmp", "tif", "tiff", "webp", "avif", "heic", "heif", "hif", "jxl",
 ];
 
+pub const AFFINITY_IMGS: &[&str] = &["af", "afphoto", "afdesign", "afpub"];
+
 // Image formats decoded through the bundled FFmpeg sidecar.
 pub const FFMPEG_BACKED_IMGS: &[&str] = &[
     "psd", // Photoshop native format; preview only (merged composite), no edit support
@@ -106,6 +108,7 @@ pub(crate) fn extension_description(ext: &str) -> &'static str {
         "orf" => "Olympus RAW Format",
         "pef" => "Pentax Electronic File",
         "png" => "Portable Network Graphics",
+        "af" | "afphoto" | "afdesign" | "afpub" => "Affinity Document",
         "psd" => "Photoshop Document",
         "qoi" => "Quite OK Image",
         "raf" => "Fujifilm RAW",

@@ -30,6 +30,8 @@ import {
   IconCollage,
 } from '@/common/icons';
 
+import { isPreviewOnlyDocument } from '@/common/utils';
+
 const OPEN_IN_APP_LABELS = {
   generic: ['open_in_app', 'Open in external app...'],
 } as const;
@@ -207,7 +209,7 @@ export const useFileMenuItems = (
         label: localeMsg.value.menu.file.edit_image,
         icon: markRaw(IconImageEdit),
         shortcut: shortcut('file.editImage'),
-        disabled: !isImage,
+        disabled: !isImage || isPreviewOnlyDocument(f.file_path || ''),
         action: createAction('edit')
       },
       {

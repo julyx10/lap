@@ -642,6 +642,13 @@ export function getPreviewUrl(
   return query ? `${base}?${query}` : base;
 }
 
+const affinityExtensions = ['af', 'afphoto', 'afdesign', 'afpub'];
+
+export function isPreviewOnlyDocument(filePath = ''): boolean {
+  const extension = getFileExtension(filePath).toLowerCase();
+  return extension === 'psd' || affinityExtensions.includes(extension);
+}
+
 export function shouldUseBackendPreview(filePath = '', fileType = 0): boolean {
   if (!filePath) return false;
   if (Number(fileType) === 3) return true;
@@ -651,6 +658,7 @@ export function shouldUseBackendPreview(filePath = '', fileType = 0): boolean {
     return true;
   }
   return [
+    ...affinityExtensions,
     'tif', 'tiff', 'jxl', 'heic', 'heif', 'hif',
     'exr', 'hdr', 'rgbe', 'psd', 'jp2', 'j2k', 'j2c', 'jpc', 'jpf', 'jpx',
     'dpx', 'dds', 'tga', 'qoi', 'fits', 'fit', 'fts'
