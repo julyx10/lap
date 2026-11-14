@@ -1,7 +1,7 @@
 <template>
   <div
     ref="videoContainer"
-    class="relative w-full h-full overflow-hidden cursor-pointer"
+    class="relative w-full h-full overflow-hidden cursor-default"
     :class="{ 'pointer-events-none': !isActive }"
     style="touch-action: none;"
     @wheel.prevent="handleWheel"

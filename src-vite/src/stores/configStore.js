@@ -164,8 +164,7 @@ export const useConfigStore = defineStore('configStore', {
       // RAW display settings
       groupRawJpegPairs: false,   // group matching RAW and JPEG/HEIC files
       rawPairDisplaySource: 'jpeg', // jpeg | raw (used when pairs are grouped)
-      rawPreviewSource: 'embedded', // embedded | rendered
-      rawRenderBrightness: 'original', // original | brightened
+      rawPreviewSource: 'embedded', // embedded | rendered | brightened
       
       // grid view settings
       thumbnailSize: 512,         // gallery thumbnail quality: 256, 512, or 1024
@@ -351,10 +350,7 @@ export const useConfigStore = defineStore('configStore', {
       this.settings.rawPairDisplaySource = source === 'raw' ? 'raw' : 'jpeg';
     },
     setRawPreviewSource(source) {
-      this.settings.rawPreviewSource = source === 'rendered' ? 'rendered' : 'embedded';
-    },
-    setRawRenderBrightness(brightness) {
-      this.settings.rawRenderBrightness = brightness === 'brightened' ? 'brightened' : 'original';
+      this.settings.rawPreviewSource = source === 'rendered' || source === 'brightened' ? source : 'embedded';
     },
     setMapProvider(mapProvider) {
       this.settings.mapProvider = mapProvider === 'tianditu' ? 'tianditu' : 'global';
@@ -460,8 +456,7 @@ export const useConfigStore = defineStore('configStore', {
           if (typeof settings.languageInitialized !== 'boolean' && typeof settings.language === 'string' && settings.language) {
             settings.languageInitialized = true;
           }
-          settings.rawPreviewSource = settings.rawPreviewSource === 'rendered' ? 'rendered' : 'embedded';
-          settings.rawRenderBrightness = settings.rawRenderBrightness === 'brightened' ? 'brightened' : 'original';
+          settings.rawPreviewSource = ['rendered', 'brightened'].includes(settings.rawPreviewSource) ? settings.rawPreviewSource : 'embedded';
           settings.rawPairDisplaySource = settings.rawPairDisplaySource === 'raw' ? 'raw' : 'jpeg';
           delete settings.rawPairClipboardMode;
         }

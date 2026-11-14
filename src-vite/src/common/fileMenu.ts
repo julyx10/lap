@@ -315,7 +315,6 @@ export const useFileMenuItems = (
       {
         label: localeMsg.value.menu.meta.comment,
         icon: markRaw(IconComment),
-        shortcut: shortcut('meta.comment'),
         action: createAction('comment')
       },
       {
@@ -349,7 +348,6 @@ export const useFileMenuItems = (
           },
           {
             label: translate('menu.file.move_to_folder'),
-            shortcut: shortcut('file.moveToFolder'),
             action: createAction('move-to-folder')
           },
           {

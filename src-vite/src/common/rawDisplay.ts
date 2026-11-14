@@ -4,8 +4,8 @@ export type RawDisplayOptions = { mode: 'embedded' | 'rendered'; autoBright: boo
 export function getRawDisplayOptions(): RawDisplayOptions {
   const settings = useConfigStore().settings;
   return {
-    mode: settings.rawPreviewSource,
-    autoBright: settings.rawRenderBrightness === 'brightened',
+    mode: settings.rawPreviewSource === 'embedded' ? 'embedded' : 'rendered',
+    autoBright: settings.rawPreviewSource === 'brightened',
     preferPair: settings.groupRawJpegPairs && settings.rawPairDisplaySource === 'jpeg',
   };
 }
@@ -22,10 +22,3 @@ export function appendRawDisplayParams(params: URLSearchParams, options = getRaw
 }
 
 export type RawPreviewSource = 'embedded' | 'rendered' | 'brightened' | 'pair' | 'image' | '';
-export function nextRawPreviewMode(current: RawPreviewSource, unavailable: boolean, defaults: RawDisplayOptions): Exclude<RawPreviewSource, 'pair' | 'image' | ''> {
-  const modes: Exclude<RawPreviewSource, 'pair' | 'image' | ''>[] = unavailable ? ['rendered', 'brightened'] : ['embedded', 'rendered', 'brightened'];
-  if (current === 'pair' || current === 'image' || !current) {
-    return defaults.mode === 'embedded' && !unavailable ? 'embedded' : defaults.autoBright ? 'brightened' : 'rendered';
-  }
-  return modes[(modes.indexOf(current) + 1) % modes.length];
-}

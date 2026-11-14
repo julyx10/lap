@@ -127,6 +127,7 @@ export { default as IconPanelMax } from '@/assets/icons/panel-max.svg';
 export { default as IconPanelMin } from '@/assets/icons/panel-min.svg';
 export { default as IconPrint } from '@/assets/icons/print.svg';
 export { default as IconRefresh } from '@/assets/icons/refresh.svg';
+export { default as IconRender } from '@/assets/icons/render.svg';
 export { default as IconRepeat } from '@/assets/icons/repeat.svg';
 export { default as IconRemove } from '@/assets/icons/minus.svg';
 export { default as IconSave } from '@/assets/icons/save.svg';

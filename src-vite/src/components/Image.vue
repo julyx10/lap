@@ -1,7 +1,7 @@
 <template>
   <div
     ref="container"
-    class="relative isolate w-full h-full overflow-hidden cursor-pointer"
+    class="relative isolate w-full h-full overflow-hidden cursor-default"
     style="touch-action: none;"
     @wheel="handleImageWheel"
   >
@@ -25,17 +25,25 @@
       </div>
     </transition>
 
-    <div v-if="Number(fileType) === 3 && !offlinePreview" data-raw-preview-controls class="absolute left-4 bottom-4 z-60 flex items-center gap-2" @dblclick.stop @mousedown.stop>
-      <button 
-        class="inline-flex h-10 items-center gap-1 rounded-box px-3 bg-base-100/70 hover:bg-base-100 text-sm font-medium shadow transition-colors cursor-pointer focus:outline-none"
-        :class="effectiveRawSource !== 'pair' && (rawSourceIsOverride || (rawPairLabel && config.settings.groupRawJpegPairs)) ? 'text-primary hover:text-primary' : 'text-base-content/70 hover:text-base-content'" :aria-pressed="effectiveRawSource !== 'pair'" :title="rawSwitchTitle" @click.stop="switchRaw">
-        <span>RAW</span>
-        <span v-if="rawSourceLabel && !rawLoadingVisible" class="inline-flex items-center gap-1">
-          <span>· {{ rawSourceLabel }}</span>
-          <component :is="rawModeSource === 'embedded' ? IconEmbedded : rawModeSource === 'brightened' ? IconBrightnessUp : IconBrightness" class="w-5 h-5" aria-hidden="true" />
-        </span>
-        <span v-if="rawLoadingVisible" class="loading loading-spinner loading-xs" aria-hidden="true"></span>
-      </button>
+    <div v-if="Number(fileType) === 3 && !offlinePreview" data-raw-preview-controls class="absolute left-4 bottom-4 z-60 flex items-center gap-2" @click.stop @dblclick.stop @mousedown.stop>
+      <div class="inline-flex h-10 items-center gap-1 rounded-box bg-base-100/70 px-2 shadow" role="group" aria-label="RAW">
+        <span class="px-1 text-sm font-medium">RAW</span>
+        <button
+          v-for="{ mode, icon } in rawPreviewButtons"
+          :key="mode"
+          type="button"
+          class="inline-flex size-8 items-center justify-center rounded-box text-base-content/70 enabled:hover:bg-base-content/10 disabled:opacity-30 cursor-pointer"
+          :class="{ 'bg-primary/15 text-primary': effectiveRawSource === mode }"
+          :title="t(`settings.raw.source_${mode}`)"
+          :aria-label="t(`settings.raw.source_${mode}`)"
+          :aria-pressed="effectiveRawSource === mode"
+          :disabled="rawModeDisabled(mode)"
+          @click.stop="selectRawMode(mode)"
+        >
+          <span v-if="rawLoadingVisible && rawRequestPending && !rawModeDisabled(mode) && rawModeSource === mode && !requestedRawOptions.preferPair" class="loading loading-spinner loading-xs" aria-hidden="true"></span>
+          <component v-else :is="icon" class="size-5" aria-hidden="true" />
+        </button>
+      </div>
       <button v-if="rawPairLabel && config.settings.groupRawJpegPairs" 
         class="inline-flex h-10 items-center rounded-box px-3 bg-base-100/70 hover:bg-base-100 text-sm font-medium shadow transition-colors cursor-pointer focus:outline-none"
         :class="effectiveRawSource === 'pair' ? 'text-primary hover:text-primary' : 'text-base-content/70 hover:text-base-content'" :aria-pressed="effectiveRawSource === 'pair'" :title="t('settings.raw.show_pair', { format: rawPairLabel })" @click.stop="selectRawPair">{{ rawPairLabel }}</button>
@@ -62,7 +70,7 @@
         <img
           ref="activeImageEl"
           :src="src"
-          :class="isGrabbing ? (isDraggingImage ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-pointer'"
+          :class="isGrabbing ? (isDraggingImage ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-default'"
           :style="getImageStyle(index)"
           draggable="false"
           @mousedown="handleImageMouseDown"
@@ -212,14 +220,14 @@ import {
 } from '@/common/utils';
 import { getFacesForFile, getFileThumbById, getFfmpegBackedImageExtensions } from '@/common/api';
 import { RawFace, Face } from '@/common/types';
-import { rawDisplayKey, getRawDisplayOptions, appendRawDisplayParams, nextRawPreviewMode, type RawPreviewSource, type RawDisplayOptions } from '@/common/rawDisplay';
+import { rawDisplayKey, getRawDisplayOptions, appendRawDisplayParams, type RawPreviewSource, type RawDisplayOptions } from '@/common/rawDisplay';
 import { useI18n } from 'vue-i18n';
 import { useToast } from '@/common/toast';
 import { createDragPreview, isWindowDragEdge, startNativeFileDrag } from '@/common/nativeDrag';
 
 import { checkFileAccessibility, isCloudOnlyFile } from '@/common/api';
 import { setFileAccessibility } from '@/common/availability';
-import { IconCloud, IconError, IconBrightness, IconBrightnessUp, IconEmbedded } from '@/common/icons';
+import { IconCloud, IconError, IconBrightness, IconEmbedded, IconRender } from '@/common/icons';
 import ImageNavigator from '@/components/ImageNavigator.vue';
 
 const { t } = useI18n();
@@ -512,33 +520,34 @@ const rawModeSource = computed<'embedded' | 'rendered' | 'brightened'>(() => {
   if (o.mode === 'embedded' && !rawEmbeddedUnavailable.value) return 'embedded';
   return o.autoBright ? 'brightened' : 'rendered';
 });
-// What is actually on screen: the pair (JPEG/HEIC) or the RAW. Drives which
-// button is highlighted. Prefer the response-confirmed source; before it
-// arrives, predict from the requested options (only when a pair exists).
-const effectiveRawSource = computed<RawPreviewSource>(() => {
-  const actual = rawSource.value;
-  const o = requestedRawOptions.value;
-  if (actual === 'pair' || (o.preferPair && !!rawPairLabel.value)) return 'pair';
-  return rawModeSource.value;
-});
-const rawSourceLabel = computed(() => rawSource.value === 'image' ? '' : rawSource.value || rawOverride.value ? t(`settings.raw.source_${rawModeSource.value}`) : '');
-const rawSourceIsOverride = computed(() => {
-  const defaults = getRawDisplayOptions();
-  const defaultSource = defaults.preferPair && rawPairLabel.value ? 'pair'
-    : defaults.mode === 'embedded' ? 'embedded' : defaults.autoBright ? 'brightened' : 'rendered';
-  return effectiveRawSource.value !== defaultSource;
-});
-const nextRawMode = computed(() => {
-  const requested = requestedRawOptions.value;
-  const current = rawRequestPending.value && rawOverride.value
-    ? requested.preferPair ? 'pair' : requested.mode === 'embedded' && !rawEmbeddedUnavailable.value ? 'embedded' : requested.autoBright ? 'brightened' : 'rendered'
-    : rawSource.value;
-  if (effectiveRawSource.value === 'pair') return rawModeSource.value;
-  return nextRawPreviewMode(current === 'image' ? rawModeSource.value : current, rawEmbeddedUnavailable.value, requested);
-});
-const rawSwitchTitle = computed(() => t('settings.raw.switch_to', { source: t(`settings.raw.source_${nextRawMode.value}`) }));
-function switchRaw() {
-  const mode = nextRawMode.value;
+// Highlight the source confirmed by the preview response. A new file can
+// fall back from embedded to rendered before its first preview is available.
+const effectiveRawSource = rawSource;
+const rawPreviewButtons = [
+  { mode: 'embedded', icon: IconEmbedded },
+  { mode: 'rendered', icon: IconRender },
+  { mode: 'brightened', icon: IconBrightness },
+] as const;
+type RawMode = typeof rawPreviewButtons[number]['mode'];
+const failedRawModes = ref(new Set<RawMode>());
+function rawModeDisabled(mode: RawMode) {
+  return failedRawModes.value.has(mode)
+    || (mode === 'embedded' && (!rawSource.value || rawEmbeddedUnavailable.value));
+}
+function cycleRawPreview() {
+  if (Number(props.fileType) !== 3 || props.originalUnavailable || offlinePreview.value || loadError.value) return false;
+  if (rawRequestPending.value || isLoading.value) return true;
+
+  const modes = rawPreviewButtons.filter(({ mode }) => !rawModeDisabled(mode));
+  if (!modes.length) return true;
+  const current = modes.findIndex(({ mode }) => mode === effectiveRawSource.value);
+  const preferred = modes.find(({ mode }) => mode === rawModeSource.value);
+  const next = current < 0 ? preferred ?? modes[0] : modes[(current + 1) % modes.length];
+  selectRawMode(next.mode);
+  return true;
+}
+function selectRawMode(mode: RawMode) {
+  if (rawModeDisabled(mode) || (!rawRequestPending.value && effectiveRawSource.value === mode)) return;
   rawRequestPending.value = true;
   rawSelectionVersion.value++;
   rawOverride.value = { mode: mode === 'embedded' ? 'embedded' : 'rendered', autoBright: mode === 'embedded' ? getRawDisplayOptions().autoBright : mode === 'brightened', preferPair: false };
@@ -551,11 +560,14 @@ function selectRawPair() {
 }
 let rawAbortController: AbortController | null = null;
 const rawObjectUrls = new Set<string>();
+watch([() => props.filePath, () => props.fileVersion], () => {
+  rawEmbeddedUnavailable.value = false;
+  failedRawModes.value.clear();
+}, { flush: 'sync' });
 watch(() => props.filePath, () => {
   rawOverride.value = null;
   rawSource.value = '';
   resolvedRawPairLabel.value = null;
-  rawEmbeddedUnavailable.value = false;
   rawRequestPending.value = false;
   rawFullSize.value = false;
 }, { flush: 'sync' });
@@ -648,7 +660,7 @@ watch(() => [scale.value[activeImage.value], rawSource.value, rawRequestPending.
       imageSizeRotated.value[slot] = rotated;
       if (loaded.raw) {
         rawSource.value = loaded.raw.source;
-        rawEmbeddedUnavailable.value = loaded.raw.unavailable;
+        rawEmbeddedUnavailable.value ||= loaded.raw.unavailable;
         rawFullSize.value = loaded.raw.source === 'rendered' || loaded.raw.source === 'brightened';
       }
       if (rawObjectUrls.delete(previous)) URL.revokeObjectURL(previous);
@@ -1317,6 +1329,10 @@ watch([
   const usesBackendPreview = shouldUseBackendPreview(newFilePath, Number(props.fileType || 0));
   const ffmpegExtensionsPromise = getFfmpegBackedPreviewExtensions();
   const isRawPreview = Number(props.fileType || 0) === 3;
+  const requested = requestedRawOptions.value;
+  const attemptedMode: RawMode | null = isRawPreview && !requested.preferPair
+    ? requested.mode === 'embedded' ? 'embedded' : requested.autoBright ? 'brightened' : 'rendered'
+    : null;
 
   try {
     const usesRealtimePreview = (await ffmpegExtensionsPromise).has(getFileExtension(newFilePath).toLowerCase());
@@ -1399,6 +1415,9 @@ watch([
         // RAW-only requests do not query companions; retain the known pair.
         if (loaded.raw.pair !== null) resolvedRawPairLabel.value = loaded.raw.pair;
         rawEmbeddedUnavailable.value ||= loaded.raw.unavailable;
+        if (attemptedMode && loaded.raw.source !== attemptedMode && loaded.raw.source !== 'image') {
+          failedRawModes.value.add(attemptedMode);
+        }
       }
       isZoomFit.value = props.isZoomFit;
       const activeIndex = activeImage.value;
@@ -1484,11 +1503,8 @@ watch([
       }
     } catch { /* Keep the decoding error if access could not be checked. */ }
     if (loadingId !== currentLoadingId.value) return;
-    if (isRawPreview && newFilePath === oldFilePath && rawSource.value) {
-      // A RAW mode switch that the decoder can't fulfil (e.g. some NEF variants
-      // only have an embedded preview). Keep the current image; explain why.
-      toast.warning(t('image_viewer.raw_render_unavailable'), { placement: 'bottom-right' });
-    } else {
+    // Keep the displayed RAW preview and allow retrying a failed request.
+    if (!isRawPreview || newFilePath !== oldFilePath || !rawSource.value) {
       loadError.value = true;
     }
   }
@@ -2324,7 +2340,8 @@ function clampPosition(force: boolean = false) {
 };
 
 // Expose methods
-defineExpose({ 
+defineExpose({
+  cycleRawPreview,
   zoomIn, 
   zoomOut,
   zoomActual,

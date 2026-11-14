@@ -146,3 +146,27 @@ test('macOS retains Shift-Cmd-C as copy while Windows and Linux reserve Ctrl-Shi
     assert.equal(matchesShortcut('file.copyPath',e,platform),true);
   }
 });
+
+test('editing, external opening and album moves have distinct bindings', () => {
+  for (const platform of ['mac', 'windows', 'linux']) {
+    const modifier = platform === 'mac' ? { metaKey: true } : { ctrlKey: true };
+    for (const [letter, shiftKey, action] of [
+      ['E', false, 'file.editImage'],
+      ['E', true, 'file.openExternalApp'],
+      ['M', true, 'file.moveTo'],
+      ['I', false, 'file.invertSelection'],
+    ]) {
+      const input = event({ key: letter.toLowerCase(), code: 'Key' + letter, ...modifier, shiftKey });
+      assert.deepEqual(findShortcutMatches('content', input, platform), [action]);
+    }
+    assert.deepEqual(findShortcutMatches('content', event({ key: 'i', code: 'KeyI' }), platform), ['meta.info']);
+    for (const letter of ['A', 'D', 'E', 'M']) {
+      const input = event({ key: letter.toLowerCase(), code: 'Key' + letter });
+      assert.deepEqual(findShortcutMatches('content', input, platform), []);
+    }
+    for (const [letter, action] of [['A', 'view.toggleAfAreas'], ['R', 'view.cycleRawPreview']]) {
+      const input = event({ code: 'Key' + letter, altKey: true, key: platform === 'mac' ? (letter === 'A' ? 'å' : '®') : letter.toLowerCase() });
+      assert.deepEqual(findShortcutMatches('content', input, platform), [action]);
+    }
+  }
+});

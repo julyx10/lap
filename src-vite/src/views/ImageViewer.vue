@@ -747,9 +747,8 @@ function handleKeyDown(event: KeyboardEvent) {
     return;
   }
 
-  if (matchesShortcut('meta.comment', event, shortcutPlatform)) {
-    event.preventDefault();
-    openCommentEditor(getActiveFilePane());
+  if (!isEditingText && matchesShortcut('view.cycleRawPreview', event, shortcutPlatform)) {
+    if (!event.repeat && getViewerRef(getActivePane())?.cycleRawPreview?.()) event.preventDefault();
     return;
   }
 

@@ -29,7 +29,6 @@ export type ShortcutActionId =
   | 'file.invertSelection'
   | 'file.rename'
   | 'file.moveTo'
-  | 'file.moveToFolder'
   | 'file.trash'
   | 'file.reveal'
   | 'file.searchSimilar'
@@ -45,7 +44,6 @@ export type ShortcutActionId =
   | 'meta.culling.unreviewed'
   | 'meta.tag'
   | 'meta.collection'
-  | 'meta.comment'
   | 'meta.rotate'
   | 'meta.rotateCounterclockwise'
   | 'meta.info'
@@ -63,6 +61,7 @@ export type ShortcutActionId =
   | 'view.zoomInDirectional'
   | 'view.zoomOutDirectional'
   | 'view.zoomFit'
+  | 'view.cycleRawPreview'
   | 'view.toggleAfAreas'
   | 'view.cycleBackground'
   | 'view.backgroundTheme'
@@ -178,14 +177,14 @@ export const SHORTCUTS: readonly ShortcutDefinition[] = [
     id: 'file.openExternalApp',
     contexts: ['content'],
     defaultBindings: [
-      { code: 'KeyE', modifiers: ['cmdOrCtrl'], label: { mac: '⌘E', windows: 'Ctrl+E', linux: 'Ctrl+E' } },
+      { code: 'KeyE', modifiers: ['cmdOrCtrl', 'shift'], label: { mac: '⇧⌘E', windows: 'Ctrl+Shift+E', linux: 'Ctrl+Shift+E' } },
     ],
   },
   {
     id: 'file.editImage',
     contexts: ['content'],
     defaultBindings: [
-      { code: 'KeyE', allowShift: true, label: 'E' },
+      { code: 'KeyE', modifiers: ['cmdOrCtrl'], label: { mac: '⌘E', windows: 'Ctrl+E', linux: 'Ctrl+E' } },
     ],
   },
   {
@@ -242,11 +241,6 @@ export const SHORTCUTS: readonly ShortcutDefinition[] = [
   },
   {
     id: 'file.moveTo',
-    contexts: ['content'],
-    defaultBindings: [{ code: 'KeyM', allowShift: true, label: 'M' }],
-  },
-  {
-    id: 'file.moveToFolder',
     contexts: ['content'],
     defaultBindings: [{ code: 'KeyM', modifiers: ['cmdOrCtrl', 'shift'], label: { mac: '⇧⌘M', windows: 'Ctrl+Shift+M', linux: 'Ctrl+Shift+M' } }],
   },
@@ -349,11 +343,6 @@ export const SHORTCUTS: readonly ShortcutDefinition[] = [
     defaultBindings: [{ code: 'KeyB', label: 'B' }],
   },
   {
-    id: 'meta.comment',
-    contexts: ['content', 'media-viewer', 'image-viewer'],
-    defaultBindings: [{ code: 'KeyD', allowShift: true, label: 'D' }],
-  },
-  {
     id: 'meta.rotate',
     contexts: ['content', 'media-viewer', 'image-viewer'],
     defaultBindings: [{ code: 'KeyR', label: 'R' }],
@@ -367,8 +356,7 @@ export const SHORTCUTS: readonly ShortcutDefinition[] = [
     id: 'meta.info',
     contexts: ['content', 'media-viewer'],
     defaultBindings: [
-      { code: 'KeyI', allowShift: true, label: 'I' },
-      { code: 'KeyI', modifiers: ['cmdOrCtrl'], allowShift: true, label: { mac: '⌘I', windows: 'Ctrl+I', linux: 'Ctrl+I' } },
+      { code: 'KeyI', label: 'I' },
     ],
   },
   {
@@ -452,9 +440,14 @@ export const SHORTCUTS: readonly ShortcutDefinition[] = [
     defaultBindings: [{ code: 'KeyZ', label: 'Z' }],
   },
   {
+    id: 'view.cycleRawPreview',
+    contexts: ['content', 'media-viewer', 'image-viewer'],
+    defaultBindings: [{ code: 'KeyR', modifiers: ['alt'], label: { mac: '⌥R', windows: 'Alt+R', linux: 'Alt+R' } }],
+  },
+  {
     id: 'view.toggleAfAreas',
     contexts: ['content', 'media-viewer', 'image-viewer'],
-    defaultBindings: [{ code: 'KeyA', label: 'A' }],
+    defaultBindings: [{ code: 'KeyA', modifiers: ['alt'], label: { mac: '⌥A', windows: 'Alt+A', linux: 'Alt+A' } }],
   },
   {
     id: 'view.cycleBackground',

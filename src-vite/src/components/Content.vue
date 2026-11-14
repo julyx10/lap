@@ -5107,7 +5107,10 @@ function handleLocalKeyDown(event: KeyboardEvent) {
     return;
   }
 
-
+  if (target.tagName !== 'SELECT' && matchesShortcut('view.cycleRawPreview', event, shortcutPlatform)) {
+    if (!event.repeat && getActivePreviewMediaRef()?.cycleRawPreview?.()) event.preventDefault();
+    return;
+  }
   if (getActivePreviewMode() !== 'none' && matchesShortcut('view.toggleAfAreas', event, shortcutPlatform)) {
     if (target.tagName === 'SELECT') return;
     event.preventDefault();
@@ -5177,13 +5180,6 @@ function handleLocalKeyDown(event: KeyboardEvent) {
     return;
   }
 
-  if (matchesShortcut('meta.comment', event, shortcutPlatform)) {
-    event.preventDefault();
-    if (selectMode.value && selectedCount.value === 0) return;
-    showCommentMsgbox.value = true;
-    return;
-  }
-
   if (matchesShortcut('meta.rotate', event, shortcutPlatform)
     || matchesShortcut('meta.rotateCounterclockwise', event, shortcutPlatform)) {
     event.preventDefault();
@@ -5196,13 +5192,6 @@ function handleLocalKeyDown(event: KeyboardEvent) {
     event.preventDefault();
     if (selectMode.value && selectedCount.value === 0) return;
     if (!currentOriginalsUnavailable()) showMoveTo.value = true;
-    return;
-  }
-
-  if (matchesShortcut('file.moveToFolder', event, shortcutPlatform)) {
-    event.preventDefault();
-    if (selectMode.value && selectedCount.value === 0) return;
-    void onMoveToFolder();
     return;
   }
 
@@ -6564,7 +6553,7 @@ watch(() => [config.settings.groupRawJpegPairs, libConfig._libraryId] as const, 
 
 /// watch appearance
 watch(
-  () => [config.settings.rawPreviewSource, config.settings.rawRenderBrightness, config.settings.rawPairDisplaySource, config.settings.groupRawJpegPairs],
+  () => [config.settings.rawPreviewSource, config.settings.rawPairDisplaySource, config.settings.groupRawJpegPairs],
   () => {
     invalidateRawThumbnailPolicy();
     for (const file of fileList.value) {

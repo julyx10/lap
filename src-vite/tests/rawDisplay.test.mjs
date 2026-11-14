@@ -6,23 +6,20 @@ import { computed, ref } from 'vue';
 
 const source = fs.readFileSync(new URL('../src/common/rawDisplay.ts', import.meta.url), 'utf8');
 const js = ts.transpile(source.replace(/^import .*;$/gm, '').replace(/export /g, ''), { target: ts.ScriptTarget.ES2022 });
-const settings = { rawPreviewSource: 'embedded', rawRenderBrightness: 'original', groupRawJpegPairs: false, rawPairDisplaySource: 'jpeg' };
-const { getRawDisplayOptions, rawDisplayKey, appendRawDisplayParams, nextRawPreviewMode } = new Function('useConfigStore', js + '; return { getRawDisplayOptions, rawDisplayKey, appendRawDisplayParams, nextRawPreviewMode };')(() => ({ settings }));
+const settings = { rawPreviewSource: 'embedded', groupRawJpegPairs: false, rawPairDisplaySource: 'jpeg' };
+const { getRawDisplayOptions, rawDisplayKey, appendRawDisplayParams } = new Function('useConfigStore', js + '; return { getRawDisplayOptions, rawDisplayKey, appendRawDisplayParams };')(() => ({ settings }));
 
-test('source and brightness generate four distinct cache keys and request policies', () => {
+test('preview modes generate three distinct cache keys and request policies', () => {
   const keys = new Set();
-  for (const source of ['embedded', 'rendered']) {
-    for (const brightness of ['original', 'brightened']) {
+  for (const source of ['embedded', 'rendered', 'brightened']) {
       settings.rawPreviewSource = source;
-      settings.rawRenderBrightness = brightness;
       keys.add(rawDisplayKey());
       const params = new URLSearchParams();
       appendRawDisplayParams(params);
-      assert.equal(params.get('rawPreviewMode'), source);
-      assert.equal(params.get('rawAutoBright'), String(brightness === 'brightened'));
-    }
+      assert.equal(params.get('rawPreviewMode'), source === 'embedded' ? 'embedded' : 'rendered');
+      assert.equal(params.get('rawAutoBright'), String(source === 'brightened'));
   }
-  assert.equal(keys.size, 4);
+  assert.equal(keys.size, 3);
 });
 
 test('local RAW override removes paired JPEG preference without changing settings', () => {
@@ -35,57 +32,29 @@ test('local RAW override removes paired JPEG preference without changing setting
   assert.equal(getRawDisplayOptions().preferPair, true);
 });
 
-test('direct cycle skips unavailable embedded preview and returns from paired JPEG using defaults', () => {
-  const defaults = { mode: 'embedded', autoBright: false, preferPair: true };
-  assert.equal(nextRawPreviewMode('embedded', false, defaults), 'rendered');
-  assert.equal(nextRawPreviewMode('rendered', false, defaults), 'brightened');
-  assert.equal(nextRawPreviewMode('brightened', false, defaults), 'embedded');
-  assert.equal(nextRawPreviewMode('rendered', true, defaults), 'brightened');
-  assert.equal(nextRawPreviewMode('brightened', true, defaults), 'rendered');
-  assert.equal(nextRawPreviewMode('pair', false, defaults), 'embedded');
-  assert.equal(nextRawPreviewMode('pair', true, { ...defaults, autoBright: true }), 'brightened');
-});
-
 const imageSource = fs.readFileSync(new URL('../src/components/Image.vue', import.meta.url), 'utf8');
 const selectionSource = ts.transpile(imageSource.slice(imageSource.indexOf('const rawModeSource ='), imageSource.indexOf('let rawAbortController')), { target: ts.ScriptTarget.ES2022 });
 
-test('JPEG round trips restore the selected RAW mode before cycling again', () => {
+test('direct RAW buttons override the paired preview and respect embedded availability', () => {
   const defaults = { mode: 'embedded', autoBright: false, preferPair: true };
   const rawOverride = ref(null);
-  const rawSource = ref('embedded');
+  const rawSource = ref('pair');
+  const rawEmbeddedUnavailable = ref(true);
   const rawRequestPending = ref(false);
   const requestedRawOptions = computed(() => rawOverride.value || defaults);
-  const { switchRaw, selectRawPair, rawSourceLabel } = new Function('computed', 'rawOverride', 'rawSource', 'rawRequestPending', 'rawSelectionVersion', 'rawEmbeddedUnavailable', 'requestedRawOptions', 'rawPairLabel', 'nextRawPreviewMode', 'getRawDisplayOptions', 't', selectionSource + '; return { switchRaw, selectRawPair, rawSourceLabel };')(
-    computed, rawOverride, rawSource, rawRequestPending, ref(0), ref(false), requestedRawOptions, ref('JPEG'), nextRawPreviewMode, () => defaults, key => key,
-  );
-  const finish = source => { rawSource.value = source; rawRequestPending.value = false; };
-  // JPEG is highlighted by preferPair even if the last confirmed source
-  // is embedded. The first click must select that badge mode, not cycle it.
-  switchRaw();
-  assert.equal(rawOverride.value.mode, 'embedded');
-  finish('embedded');
-  for (const mode of ['rendered', 'brightened', 'embedded']) {
-    switchRaw();
-    finish(mode);
-    selectRawPair();
-    // Returning before or after the JPEG response must preserve the RAW mode.
-    switchRaw();
-    assert.equal(rawOverride.value.mode, mode === 'embedded' ? 'embedded' : 'rendered');
-    assert.equal(rawOverride.value.autoBright, mode === 'brightened');
-    finish(mode);
-    selectRawPair();
-    finish('pair');
-    switchRaw();
-    assert.equal(rawOverride.value.mode, mode === 'embedded' ? 'embedded' : 'rendered');
-    assert.equal(rawOverride.value.autoBright, mode === 'brightened');
-    assert.equal(rawOverride.value.preferPair, false);
-    finish(mode);
-  }
-  // A generic image fallback must not claim to be an embedded RAW preview.
-  finish('image');
-  assert.equal(rawSourceLabel.value, '');
-  switchRaw();
-  assert.equal(rawOverride.value.mode, 'rendered');
+  const { selectRawMode, selectRawPair } = new Function(
+    'computed', 'ref', 'rawOverride', 'rawSource', 'rawRequestPending', 'rawSelectionVersion',
+    'rawEmbeddedUnavailable', 'requestedRawOptions', 'getRawDisplayOptions',
+    'IconEmbedded', 'IconRender', 'IconBrightness',
+    selectionSource + '; return { selectRawMode, selectRawPair };',
+  )(computed, ref, rawOverride, rawSource, rawRequestPending, ref(0), rawEmbeddedUnavailable,
+    requestedRawOptions, () => defaults, {}, {}, {});
+  selectRawMode('embedded');
+  assert.equal(rawOverride.value, null);
+  selectRawMode('brightened');
+  assert.deepEqual(rawOverride.value, { mode: 'rendered', autoBright: true, preferPair: false });
+  selectRawPair();
+  assert.deepEqual(rawOverride.value, { mode: 'rendered', autoBright: true, preferPair: true });
 });
 
 const loaderSource = ts.transpile(imageSource.slice(imageSource.indexOf('async function loadRawImage'), imageSource.indexOf('watch(() => [scale.value')), { target: ts.ScriptTarget.ES2022 });
@@ -122,10 +91,8 @@ test('editor URL selects the export pipeline regardless of RAW browsing settings
     false, 'test-library', () => ({ getFileVersion: () => 7 }), appendRawDisplayParams,
   );
   const urls = new Set();
-  for (const source of ['embedded', 'rendered']) {
-    for (const brightness of ['original', 'brightened']) {
+  for (const source of ['embedded', 'rendered', 'brightened']) {
       settings.rawPreviewSource = source;
-      settings.rawRenderBrightness = brightness;
       settings.groupRawJpegPairs = true;
       const url = getPreviewUrl(42, 'photo.dng', false, 3, true);
       urls.add(url);
@@ -136,7 +103,6 @@ test('editor URL selects the export pipeline regardless of RAW browsing settings
       assert.equal(params.has('rawPairDisplay'), false);
       assert.equal(params.get('v'), '3');
       assert.equal(params.get('u'), '7');
-    }
   }
   assert.equal(urls.size, 1);
   const browsing = new URL(getPreviewUrl(42, 'photo.dng')).searchParams;

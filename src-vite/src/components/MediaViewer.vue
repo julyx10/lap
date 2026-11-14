@@ -160,10 +160,9 @@
           />
           <TButton
             :icon="IconComment"
+            :tooltip="$t('menu.meta.comment')"
             :disabled="fileIndex < 0 || isSlideShow || !canInteract"
             :selected="!!file?.comments && !isSlideShow"
-            :tooltip="$t('menu.meta.comment')"
-            :shortcut="shortcut('meta.comment')"
             @click="$emit('item-action', { action: 'comment', index: fileIndex })"
           />
           <TButton
@@ -1369,11 +1368,11 @@ const isOverlayBackdropTarget = (event: PointerEvent) => {
   const currentTarget = event.currentTarget;
 
   if (!(currentTarget instanceof HTMLElement)) return false;
-  if (!(target instanceof HTMLElement)) return target === currentTarget;
+  if (!(target instanceof Element)) return false;
   if (target === currentTarget) return true;
 
   if (target.closest(
-    'img, video, button, a, input, select, textarea, label, [role="button"], [data-image-navigator], [data-video-play-overlay], .vjs-tech, .vjs-control-bar, .vjs-control, .vjs-big-play-button, .vjs-menu'
+    'img, video, button, a, input, select, textarea, label, [role="button"], [data-raw-preview-controls], [data-image-navigator], [data-video-play-overlay], .vjs-tech, .vjs-control-bar, .vjs-control, .vjs-big-play-button, .vjs-menu'
   )) {
     return false;
   }
@@ -1434,6 +1433,7 @@ defineExpose({
   rotateView,
   togglePlay,
   toggleAfAreas,
+  cycleRawPreview: () => !isLivePhotoPlaying.value && mediaRef.value?.cycleRawPreview?.(),
   getViewportState,
   applyViewportState,
   navigateImage: (point: { normX: number; normY: number }) => mediaRef.value?.navigateImage?.(point),

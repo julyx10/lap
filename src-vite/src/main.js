@@ -162,9 +162,6 @@ if (isMainWindow) {
   listen('settings-rawPreviewSource-changed', (event) => {
     config.setRawPreviewSource(event.payload)
   })
-  listen('settings-rawRenderBrightness-changed', (event) => {
-    config.setRawRenderBrightness(event.payload)
-  })
   listen('settings-mapProvider-changed', (event) => {
     config.setMapProvider(event.payload)
   })

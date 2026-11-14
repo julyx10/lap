@@ -789,8 +789,7 @@ const settingsTabs = [
   { id: SETTINGS_TAB.ABOUT, label: 'settings.about.title' },
 ];
 const rawPreviewFields = [
-  { key: 'rawPreviewSource', hint: 'preview_source_hint', options: ['embedded', 'rendered'] },
-  { key: 'rawRenderBrightness', hint: 'brightness_hint', options: ['original', 'brightened'] },
+  { key: 'rawPreviewSource', hint: 'preview_source_hint', options: ['embedded', 'rendered', 'brightened'] },
 ];
 
 const appWindow = getCurrentWebviewWindow()
@@ -1216,6 +1215,7 @@ const shortcutDisplaySections: Array<{ key: string; items: ShortcutDisplayItem[]
       { actionId: 'view.zoomIn', labelKey: 'zoom_in' },
       { actionId: 'view.zoomOut', labelKey: 'zoom_out' },
       { actionId: 'view.zoomFit', labelKey: 'zoom_fit' },
+      { actionId: 'view.cycleRawPreview', labelKey: 'cycle_raw_preview' },
       { actionId: 'view.toggleAfAreas', labelKey: 'toggle_af_areas' },
       { actionId: 'view.togglePlayback', labelKey: 'toggle_playback' },
       { actionId: 'view.cycleBackground', labelKey: 'cycle_background' },
@@ -1227,7 +1227,6 @@ const shortcutDisplaySections: Array<{ key: string; items: ShortcutDisplayItem[]
 
       { actionId: 'file.rename', labelKey: 'rename_file' },
       { actionId: 'file.moveTo', labelKey: 'move_within_library' },
-      { actionId: 'file.moveToFolder', labelKey: 'move_to_folder' },
       { actionId: 'file.copy', labelKey: 'copy_file' },
       { actionId: 'file.copyPath', labelKey: 'copy_file_path' },
       { actionId: 'file.paste', labelKey: 'paste_file' },
@@ -1253,7 +1252,6 @@ const shortcutDisplaySections: Array<{ key: string; items: ShortcutDisplayItem[]
       { actionId: 'meta.culling.unreviewed', labelKey: 'mark_unreviewed', advanceLabelKey: 'mark_unreviewed_and_next' },
       { actionId: 'meta.tag', labelKey: 'edit_tags' },
       { actionId: 'meta.collection', labelKey: 'edit_collections' },
-      { actionId: 'meta.comment', labelKey: 'edit_comment' },
       { actionId: 'meta.rotate', labelKey: 'rotate' },
       { actionId: 'meta.rotateCounterclockwise', labelKey: 'rotate_counterclockwise' },
       { actionId: 'meta.info', labelKey: 'show_info' },
@@ -1568,9 +1566,6 @@ watch(() => config.settings.rawPairDisplaySource, (newValue) => {
 });
 watch(() => config.settings.rawPreviewSource, (newValue) => {
   emit('settings-rawPreviewSource-changed', newValue);
-});
-watch(() => config.settings.rawRenderBrightness, (newValue) => {
-  emit('settings-rawRenderBrightness-changed', newValue);
 });
 
 // grid view settings

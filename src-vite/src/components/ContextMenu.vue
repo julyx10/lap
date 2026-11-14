@@ -56,8 +56,8 @@
                   </div>
                   <span class="ml-2 mr-4">{{ item.label }}</span>
                   <span v-if="item.count != null" class="ml-auto sidebar-item-count">{{ item.count }}</span>
-                  <span v-else class="ml-auto text-base-content/30">{{ item.shortcut }}</span>
-                  <IconRight v-if="item.children?.length" class="ml-2 w-3 h-3 text-base-content/70 group-hover:text-base-content"/>
+                  <span v-else-if="item.shortcut && !item.children?.length" class="ml-auto text-base-content/30">{{ item.shortcut }}</span>
+                  <IconRight v-if="item.children?.length" class="ml-auto size-3 shrink-0" aria-hidden="true"/>
                 </div>
               </button>
             </div>
@@ -98,7 +98,7 @@
                     <component class="t-icon-size-sm" :is="child.icon" ></component>
                   </div>
                   <span class="ml-2 mr-4">{{ child.label }}</span>
-                  <span class="ml-auto text-base-content/30">{{ child.shortcut }}</span>
+                  <span v-if="child.shortcut" class="ml-auto text-base-content/30">{{ child.shortcut }}</span>
                 </div>
               </button>
             </div>
