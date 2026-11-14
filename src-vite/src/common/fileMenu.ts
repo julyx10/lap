@@ -12,7 +12,6 @@ import {
   IconStar,
   IconStarFilled,
   IconTag,
-  IconRotate,
   IconCopy,
   IconRename,
   IconFileArrowRight,
@@ -105,7 +104,7 @@ export const useFileMenuItems = (
     const selectionCount = options?.selectionCount?.value ?? 0;
     const unavailable = options?.selectionHasUnavailable?.value === true;
     const batchActions = new Set([
-      'tag', 'add-to-collection', 'rotate', 'rename', 'copy', 'trash',
+      'tag', 'add-to-collection', 'rename', 'copy', 'trash',
     ]);
     const batchLabels = new Set([
       localeMsg.value.rating.title,
@@ -310,12 +309,6 @@ export const useFileMenuItems = (
         icon: markRaw(IconCollection),
         shortcut: shortcut('meta.collection'),
         action: createAction('add-to-collection'),
-      },
-      {
-        label: localeMsg.value.menu.meta.rotate,
-        icon: markRaw(IconRotate),
-        shortcut: shortcut('meta.rotate'),
-        action: createAction('rotate')
       },
       { label: "-", action: null },
       {

@@ -116,20 +116,6 @@
           >
             {{ $t('menu.meta.collection') }}
           </PanelActionButton>
-          <PanelActionButton
-            :icon="IconComment"
-            :disabled="selectedCount === 0"
-            @click="$emit('commentAll')"
-          >
-            {{ $t('menu.meta.comment') }}
-          </PanelActionButton>
-          <PanelActionButton
-            :icon="IconRotate"
-            :disabled="selectedCount === 0"
-            @click="$emit('rotateAll')"
-          >
-            {{ rotateDisplayLabel }}
-          </PanelActionButton>
         </div>
       </div>
 
@@ -139,6 +125,20 @@
           {{ $t('info_panel.file_actions') }}
         </div>
         <div class="flex flex-wrap items-center gap-1">
+          <PanelActionButton
+            :icon="IconRename"
+            :disabled="selectedCount === 0 || originalsUnavailable"
+            @click="$emit('rename')"
+          >
+            {{ $t('menu.file.rename') }}
+          </PanelActionButton>
+          <PanelActionButton
+            :icon="IconCopy"
+            :disabled="selectedCount === 0 || clipboardUnavailable"
+            @click="$emit('copyToClipboard')"
+          >
+            {{ $t('menu.file.copy') }}
+          </PanelActionButton>
           <PanelActionButton
             :icon="IconFileArrowRight"
             :disabled="selectedCount === 0 || originalsUnavailable"
@@ -157,13 +157,6 @@
             @click="$emit('copyToFolder')"
           >
             {{ $t('menu.file.copy_to_folder') }}
-          </PanelActionButton>
-          <PanelActionButton
-            :icon="IconRename"
-            :disabled="selectedCount === 0 || originalsUnavailable"
-            @click="$emit('rename')"
-          >
-            {{ $t('menu.file.rename') }}
           </PanelActionButton>
           <PanelActionButton
             :icon="IconTrash"
@@ -215,9 +208,8 @@ import {
   IconSelectAll,
   IconDeselect,
   IconClose,
-  IconComment,
+  IconCopy,
   IconFileArrowRight,
-  IconRotate,
   IconTag,
   IconTrash,
   IconRename,
@@ -236,6 +228,7 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
+  clipboardUnavailable: { type: Boolean, default: false },
   originalsUnavailable: { type: Boolean, default: false },
   selectedCount: {
     type: Number,
@@ -271,8 +264,7 @@ const emit = defineEmits([
   'setCullingAll',
   'tagAll',
   'addToCollection',
-  'commentAll',
-  'rotateAll',
+  'copyToClipboard',
   'removeFromCollection',
   'unselectFile',
   'moreAction',
@@ -334,25 +326,6 @@ const multiSelectCulling = computed(() => {
   const cullingFlags = props.selectedFiles.map((file: any) => Number(file.culling_flag ?? file.cullingFlag ?? 0));
   const first = cullingFlags[0];
   return cullingFlags.every((cullingFlag: number) => cullingFlag === first) ? first : null;
-});
-
-const multiSelectRotate = computed(() => {
-  if (!props.selectedFiles.length) return 0;
-  const normalizeRotate = (rotate: number) => {
-    const normalized = rotate % 360;
-    return normalized < 0 ? normalized + 360 : normalized;
-  };
-  const rotates = props.selectedFiles.map((f: any) => normalizeRotate(Number(f.rotate || 0)));
-  const first = rotates[0];
-  return rotates.every((rotate: number) => rotate === first) ? first : null;
-});
-
-const rotateDisplayLabel = computed(() => {
-  const rotateText = localeMsg.value.menu.meta.rotate;
-  if (multiSelectRotate.value === null || multiSelectRotate.value === 0) {
-    return rotateText;
-  }
-  return `${rotateText} (${multiSelectRotate.value}°)`;
 });
 
 const visibleMoreActions = computed(() =>
