@@ -239,8 +239,8 @@ const props = withDefaults(defineProps<{
   showFolderActions?: boolean;
   folderPicker?: boolean;
   treeRoot?: boolean;       // only root tree listens to keyboard
-  filterVisiblePaths?: string[];
-  filterMatchedPaths?: string[];
+  filterVisiblePaths?: ReadonlySet<string>;
+  filterMatchedPaths?: ReadonlySet<string>;
   unavailable?: boolean;
 }>(), {
   treeRoot: true,
@@ -274,9 +274,10 @@ const getFolderByPath = (children: Folder[] | undefined, path: string): Folder |
 };
 
 const selectedFolder = computed(() => getFolderByPath(props.children, selection.folderPath.value));
-const isFolderFiltering = computed(() => Array.isArray(props.filterVisiblePaths));
-const visibleFolderPaths = computed(() => new Set(props.filterVisiblePaths || []));
-const matchedFolderPaths = computed(() => new Set(props.filterMatchedPaths || []));
+const EMPTY_PATHS: ReadonlySet<string> = new Set();
+const isFolderFiltering = computed(() => props.filterVisiblePaths instanceof Set);
+const visibleFolderPaths = computed(() => props.filterVisiblePaths ?? EMPTY_PATHS);
+const matchedFolderPaths = computed(() => props.filterMatchedPaths ?? EMPTY_PATHS);
 const visibleChildren = computed(() => (props.children || []).filter(folder =>
   !isFolderFiltering.value || visibleFolderPaths.value.has(folder.path)
 ));

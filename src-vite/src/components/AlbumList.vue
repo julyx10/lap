@@ -571,8 +571,8 @@ interface FilteredAlbumResult {
   album: Album;
   rootFolderMatches: boolean;
   hasMatches: boolean;
-  visibleFolderPaths: string[];
-  matchedFolderPaths: string[];
+  visibleFolderPaths: Set<string>;
+  matchedFolderPaths: Set<string>;
   folderTree: Folder[];
 }
 
@@ -580,7 +580,22 @@ interface AlbumFolderRecord extends Folder {
   album_id: number;
 }
 
-const normalizedFolderSearch = computed(() => folderSearch.value.trim().toLocaleLowerCase());
+const FOLDER_SEARCH_DEBOUNCE_MS = 150;
+const appliedFolderSearch = ref('');
+let folderSearchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+watch(folderSearch, (value) => {
+  if (folderSearchDebounceTimer) clearTimeout(folderSearchDebounceTimer);
+  folderSearchDebounceTimer = null;
+  if (!value.trim()) {
+    appliedFolderSearch.value = value;
+    return;
+  }
+  folderSearchDebounceTimer = setTimeout(() => {
+    folderSearchDebounceTimer = null;
+    appliedFolderSearch.value = folderSearch.value;
+  }, FOLDER_SEARCH_DEBOUNCE_MS);
+});
+const normalizedFolderSearch = computed(() => appliedFolderSearch.value.trim().toLocaleLowerCase());
 const isFolderFiltering = computed(() =>
   isMainPane.value && (normalizedFolderSearch.value.length > 0 || favoriteFoldersOnly.value)
 );
@@ -626,14 +641,13 @@ function getFolderSearchPaths(folders: AlbumFolderRecord[], rootPath: string, qu
   }
 
   return {
-    visibleFolderPaths: Array.from(visiblePaths),
-    matchedFolderPaths: Array.from(matchedPaths),
+    visibleFolderPaths: visiblePaths,
+    matchedFolderPaths: matchedPaths,
     hasMatches: visiblePaths.size > 0,
   };
 }
 
-function buildFilteredFolderTree(folders: AlbumFolderRecord[], visiblePaths: string[]) {
-  const visible = new Set(visiblePaths);
+function buildFilteredFolderTree(folders: AlbumFolderRecord[], visible: ReadonlySet<string>) {
   const nodes = new Map<string, Folder>();
   const roots: Folder[] = [];
 
@@ -676,7 +690,7 @@ async function loadCachedAlbumTree(album: Album) {
     has_subfolders: records.length > 0,
   };
   const folders = [root, ...records.filter((folder: AlbumFolderRecord) => folder.path !== album.path)];
-  album.children = buildFilteredFolderTree(folders, folders.map((folder: AlbumFolderRecord) => folder.path));
+  album.children = buildFilteredFolderTree(folders, new Set(folders.map((folder: AlbumFolderRecord) => folder.path)));
 }
 
 const filteredAlbumResults = computed<FilteredAlbumResult[]>(() => {
@@ -685,8 +699,8 @@ const filteredAlbumResults = computed<FilteredAlbumResult[]>(() => {
     return albums.value.map(album => ({
       album,
       rootFolderMatches: false,
-      visibleFolderPaths: [],
-      matchedFolderPaths: [],
+      visibleFolderPaths: new Set<string>(),
+      matchedFolderPaths: new Set<string>(),
       hasMatches: false,
       folderTree: [],
     }));
@@ -710,31 +724,27 @@ const filteredAlbumResults = computed<FilteredAlbumResult[]>(() => {
       ? folders.filter(folder => folder.is_favorite)
       : folders;
     const folderPaths = getFolderSearchPaths(matchingFolders, album.path, query);
-    const visibleFolderPaths = rootFolderVisible || folderPaths.hasMatches
-      ? [rootFolder.path, ...folderPaths.visibleFolderPaths]
-      : [];
-    const matchedFolderPaths = rootFolderMatches
-      ? [rootFolder.path, ...folderPaths.matchedFolderPaths]
-      : folderPaths.matchedFolderPaths;
-    return rootFolderVisible || folderPaths.hasMatches
-      ? [{
-        album,
-        rootFolderMatches,
-        ...folderPaths,
-        hasMatches: rootFolderVisible || folderPaths.hasMatches,
-        visibleFolderPaths,
-        matchedFolderPaths,
-        folderTree: buildFilteredFolderTree([rootFolder, ...folders], visibleFolderPaths),
-      }]
-      : [];
+    if (!rootFolderVisible && !folderPaths.hasMatches) return [];
+    const { visibleFolderPaths, matchedFolderPaths } = folderPaths;
+    visibleFolderPaths.add(rootFolder.path);
+    if (rootFolderMatches) matchedFolderPaths.add(rootFolder.path);
+    return [{
+      album,
+      rootFolderMatches,
+      hasMatches: true,
+      visibleFolderPaths,
+      matchedFolderPaths,
+      folderTree: buildFilteredFolderTree([rootFolder, ...folders], visibleFolderPaths),
+    }];
   });
 });
 
 const visibleAlbums = computed(() => filteredAlbumResults.value.map(result => result.album));
-const getFilteredAlbumResult = (albumId: number) =>
-  filteredAlbumResults.value.find(result => Number(result.album.id) === Number(albumId));
-const getVisibleFolderPaths = (albumId: number) => getFilteredAlbumResult(albumId)?.visibleFolderPaths || [];
-const getMatchedFolderPaths = (albumId: number) => getFilteredAlbumResult(albumId)?.matchedFolderPaths || [];
+const filteredAlbumResultsById = computed(() =>
+  new Map(filteredAlbumResults.value.map(result => [Number(result.album.id), result])));
+const getFilteredAlbumResult = (albumId: number) => filteredAlbumResultsById.value.get(Number(albumId));
+const getVisibleFolderPaths = (albumId: number) => getFilteredAlbumResult(albumId)?.visibleFolderPaths || new Set<string>();
+const getMatchedFolderPaths = (albumId: number) => getFilteredAlbumResult(albumId)?.matchedFolderPaths || new Set<string>();
 const getFilteredFolderTree = (albumId: number) => getFilteredAlbumResult(albumId)?.folderTree || [];
 const shouldShowFilteredFolderTree = (albumId: number) => {
   const result = getFilteredAlbumResult(albumId);
@@ -1155,6 +1165,7 @@ watch(isFolderFiltering, (filtering) => {
 
 onBeforeUnmount(() => {
   disposed = true;
+  if (folderSearchDebounceTimer) clearTimeout(folderSearchDebounceTimer);
   if (isMainPane.value) resetExternalDrag();
   document.removeEventListener('pointerdown', handleReorderOutsidePointerDown, true);
   document.removeEventListener('dragenter', handleWindowAlbumDrag, true);
