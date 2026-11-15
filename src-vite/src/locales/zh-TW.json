@@ -1172,6 +1172,17 @@
     }
   },
   "file_info": {
+    "metadata_placeholders": {
+      "e_title": "輸入簡短標題",
+      "e_headline": "輸入用於發布的標題",
+      "comments": "描述內容或補充背景",
+      "e_artist": "每行填寫一位作者",
+      "e_copyright": "輸入版權聲明"
+    },
+    "edit_metadata_details": "描述資訊",
+    "edit_metadata_no_fields": "請先在「自訂欄位」中勾選至少一個「整理」欄位，再編輯中繼資料。",
+    "edit_metadata": "編輯中繼資料",
+    "metadata_save_failed": "無法儲存中繼資料",
     "paths_copied": "已複製 {count} 個檔案路徑到剪貼簿",
     "copy_path": "複製檔案路徑",
     "copy_path_failed": "複製路徑失敗",
@@ -1238,7 +1249,7 @@
     "organization": "整理",
     "file": "檔案",
     "capture": "拍攝資訊",
-    "source_metadata": "中繼資料",
+    "source_metadata": "其他資訊",
     "source_description": "原始描述",
     "coordinates": "座標",
     "detail_fields": {

@@ -1172,6 +1172,17 @@
     }
   },
   "file_info": {
+    "metadata_placeholders": {
+      "e_title": "输入简短标题",
+      "e_headline": "输入用于发布的标题",
+      "comments": "描述内容或补充背景",
+      "e_artist": "每行填写一位作者",
+      "e_copyright": "输入版权声明"
+    },
+    "edit_metadata_details": "描述信息",
+    "edit_metadata_no_fields": "请先在「自定义字段」中勾选至少一个「整理」字段，再编辑元数据。",
+    "edit_metadata": "编辑元数据",
+    "metadata_save_failed": "无法保存元数据",
     "paths_copied": "已复制 {count} 个文件路径到剪贴板",
     "copy_path": "复制文件路径",
     "copy_path_failed": "复制路径失败",
@@ -1238,7 +1249,7 @@
     "organization": "整理",
     "file": "文件",
     "capture": "拍摄信息",
-    "source_metadata": "元数据",
+    "source_metadata": "其他信息",
     "source_description": "原始描述",
     "coordinates": "坐标",
     "detail_fields": {

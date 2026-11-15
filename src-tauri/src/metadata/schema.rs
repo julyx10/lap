@@ -422,6 +422,14 @@ impl CatalogField {
     }
 }
 
+// Explicit edits are tracked separately from fields populated by import.
+pub(crate) const EDITABLE_XMP_TEXT: [(&str, &str, i32); 4] = [
+    ("e_title", "title", 32),
+    ("e_headline", "headline", 64),
+    ("e_artist", "creator", 128),
+    ("e_copyright", "copyright", 256),
+];
+
 pub(super) const CATALOG_FIELDS: &[CatalogField] = &[
     CatalogField::Rating,
     CatalogField::Culling,

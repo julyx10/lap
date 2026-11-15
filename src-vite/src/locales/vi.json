@@ -1172,6 +1172,17 @@
     }
   },
   "file_info": {
+    "metadata_placeholders": {
+      "e_title": "Nhập tiêu đề ngắn",
+      "e_headline": "Nhập tiêu đề dùng để xuất bản",
+      "comments": "Mô tả nội dung hoặc bổ sung bối cảnh",
+      "e_artist": "Nhập một tác giả trên mỗi dòng",
+      "e_copyright": "Nhập thông báo bản quyền"
+    },
+    "edit_metadata_details": "Thông tin mô tả",
+    "edit_metadata_no_fields": "Trước khi chỉnh sửa siêu dữ liệu, hãy chọn ít nhất một trường trong mục Tổ chức ở phần Tùy chỉnh trường.",
+    "edit_metadata": "Chỉnh sửa siêu dữ liệu",
+    "metadata_save_failed": "Không thể lưu siêu dữ liệu",
     "paths_copied": "Đã sao chép {count} đường dẫn tệp vào bộ nhớ tạm",
     "copy_path": "Sao chép đường dẫn tệp",
     "copy_path_failed": "Không thể sao chép đường dẫn tệp",
@@ -1237,7 +1248,7 @@
     "organization": "Phân loại",
     "file": "Tệp",
     "capture": "Thông tin chụp",
-    "source_metadata": "Siêu dữ liệu",
+    "source_metadata": "Thông tin khác",
     "source_description": "Mô tả gốc",
     "coordinates": "Tọa độ",
     "detail_fields": {

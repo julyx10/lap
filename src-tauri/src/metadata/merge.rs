@@ -48,9 +48,9 @@ pub(super) fn apply_with_source_text(
         params![file_id, fingerprint, dirty]).map_err(|e| e.to_string())?;
     if let Some(source) = source {
         tx.execute(
-            "UPDATE afiles SET e_title=?1, e_headline=?2, e_artist=?3, e_copyright=?4, e_software=?5
-             WHERE id=?6 AND (e_title IS NOT ?1 OR e_headline IS NOT ?2 OR e_artist IS NOT ?3
-                              OR e_copyright IS NOT ?4 OR e_software IS NOT ?5)",
+            "UPDATE afiles SET e_title=COALESCE(e_title,?1), e_headline=COALESCE(e_headline,?2), e_artist=COALESCE(e_artist,?3), e_copyright=COALESCE(e_copyright,?4), e_software=?5
+             WHERE id=?6 AND ((e_title IS NULL AND ?1 IS NOT NULL) OR (e_headline IS NULL AND ?2 IS NOT NULL) OR (e_artist IS NULL AND ?3 IS NOT NULL)
+                              OR (e_copyright IS NULL AND ?4 IS NOT NULL) OR e_software IS NOT ?5)",
             params![source.title, source.headline, source.creator, source.copyright, source.software, file_id],
         ).map_err(|e| e.to_string())?;
     }
@@ -141,26 +141,12 @@ fn apply_fields(
     // 3. Comments / description
     if let Some(ref desc) = meta.description {
         let trimmed = desc.trim();
-        let db_comment_empty = db_comments.as_deref().is_none_or(|c| c.trim().is_empty());
-
-        let should_update = match mode {
-            XmpImportMode::InitialScan => !trimmed.is_empty(),
-            XmpImportMode::RescanNonDestructive | XmpImportMode::RefreshNonDestructive => {
-                dirty & CatalogField::Description.mask() == 0
-                    && db_comment_empty
-                    && !trimmed.is_empty()
-            }
-            XmpImportMode::ManualOverwrite => true,
-        };
-        if should_update {
-            let new_val: Option<&str> = if trimmed.is_empty() {
-                None
-            } else {
-                Some(trimmed)
-            };
+        let protected_clear = matches!(mode, XmpImportMode::RescanNonDestructive | XmpImportMode::RefreshNonDestructive)
+            && dirty & CatalogField::Description.mask() != 0;
+        if db_comments.is_none() && !trimmed.is_empty() && !protected_clear {
             conn.execute(
                 "UPDATE afiles SET comments = ?1 WHERE id = ?2",
-                params![new_val, file_id],
+                params![trimmed, file_id],
             )
             .map_err(|e| e.to_string())?;
         }

@@ -1172,6 +1172,17 @@
     }
   },
   "file_info": {
+    "metadata_placeholders": {
+      "e_title": "Introduce un título breve",
+      "e_headline": "Introduce un titular para publicar",
+      "comments": "Describe el contenido o añade contexto",
+      "e_artist": "Introduce un autor por línea",
+      "e_copyright": "Introduce un aviso de derechos de autor"
+    },
+    "edit_metadata_details": "Datos descriptivos",
+    "edit_metadata_no_fields": "Antes de editar los metadatos, selecciona al menos un campo de Organización en Personalizar campos.",
+    "edit_metadata": "Editar metadatos",
+    "metadata_save_failed": "No se pudieron guardar los metadatos",
     "paths_copied": "{count} ruta(s) de archivo copiada(s) al portapapeles",
     "copy_path": "Copiar ruta del archivo",
     "copy_path_failed": "No se pudo copiar la ruta",
@@ -1238,7 +1249,7 @@
     "organization": "Organización",
     "file": "Archivo",
     "capture": "Captura",
-    "source_metadata": "Metadatos",
+    "source_metadata": "Otra información",
     "source_description": "Descripción original",
     "coordinates": "Coordenadas",
     "detail_fields": {

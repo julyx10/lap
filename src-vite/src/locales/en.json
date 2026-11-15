@@ -1172,6 +1172,17 @@
     }
   },
   "file_info": {
+    "metadata_placeholders": {
+      "e_title": "Enter a short title",
+      "e_headline": "Enter a headline for publication",
+      "comments": "Describe the content or add context",
+      "e_artist": "Enter one creator per line",
+      "e_copyright": "Enter a copyright notice"
+    },
+    "edit_metadata_details": "Descriptive Details",
+    "edit_metadata_no_fields": "Select at least one Organization field in Customize Fields before editing metadata.",
+    "edit_metadata": "Edit metadata",
+    "metadata_save_failed": "Could not save metadata",
     "paths_copied": "{count} file path(s) copied to clipboard",
     "copy_path": "Copy file path",
     "copy_path_failed": "Failed to copy file path",
@@ -1238,7 +1249,7 @@
     "organization": "Organization",
     "file": "File",
     "capture": "Capture",
-    "source_metadata": "Metadata",
+    "source_metadata": "Other Details",
     "source_description": "Original description",
     "coordinates": "Coordinates",
     "detail_fields": {

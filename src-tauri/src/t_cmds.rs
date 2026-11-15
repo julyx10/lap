@@ -3496,11 +3496,42 @@ pub(crate) fn delete_files_with_components(
     })
 }
 
-/// edit a file's comment
 #[tauri::command]
-pub fn edit_file_comment(file_id: i64, comment: &str) -> Result<usize, String> {
-    AFile::update_column(file_id, "comments", &comment)
-        .map_err(|e| format!("Error while editing file comment: {}", e))
+pub fn edit_file_metadata(
+    library_id: String,
+    file_ids: Vec<i64>,
+    changes: std::collections::HashMap<String, String>,
+) -> Result<(), String> {
+    for field in changes.keys() {
+        if !matches!(field.as_str(), "e_title" | "e_headline" | "comments" | "e_artist" | "e_copyright") {
+            return Err(format!("Invalid metadata field: {field}"));
+        }
+    }
+    with_current_library(&library_id, || {
+        let mut conn = crate::t_sqlite::open_conn()?;
+        let tx = conn.transaction().map_err(|e| e.to_string())?;
+        for (field, value) in &changes {
+            let mut stmt = tx.prepare(&format!("UPDATE afiles SET {field} = ?1 WHERE id = ?2"))
+                .map_err(|e| e.to_string())?;
+            for id in &file_ids {
+                if stmt.execute(rusqlite::params![value, id]).map_err(|e| e.to_string())? != 1 {
+                    return Err(format!("File {id} no longer exists"));
+                }
+            }
+        }
+        let mask = crate::metadata::schema::EDITABLE_XMP_TEXT.iter()
+            .filter(|(column, _, _)| changes.contains_key(*column))
+            .fold(0, |mask, (_, _, bit)| mask | bit);
+        if mask != 0 {
+            let mut stmt = tx.prepare("INSERT INTO axmp_imports(file_id, dirty) VALUES(?1, ?2)
+                ON CONFLICT(file_id) DO UPDATE SET dirty=dirty | excluded.dirty")
+                .map_err(|e| e.to_string())?;
+            for id in &file_ids {
+                stmt.execute(rusqlite::params![id, mask]).map_err(|e| e.to_string())?;
+            }
+        }
+        tx.commit().map_err(|e| e.to_string())
+    })
 }
 
 /// Remove unreferenced thumbnail cache files. When `library_id` is provided,

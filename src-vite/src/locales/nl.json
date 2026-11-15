@@ -1172,6 +1172,17 @@
     }
   },
   "file_info": {
+    "metadata_placeholders": {
+      "e_title": "Voer een korte titel in",
+      "e_headline": "Voer een kop voor publicatie in",
+      "comments": "Beschrijf de inhoud of voeg context toe",
+      "e_artist": "Voer één maker per regel in",
+      "e_copyright": "Voer een auteursrechtvermelding in"
+    },
+    "edit_metadata_details": "Beschrijvende gegevens",
+    "edit_metadata_no_fields": "Selecteer minstens één veld onder Organisatie bij Velden aanpassen voordat je metadata bewerkt.",
+    "edit_metadata": "Metadata bewerken",
+    "metadata_save_failed": "Metadata konden niet worden opgeslagen",
     "paths_copied": "{count} bestandspad(en) naar klembord gekopieerd",
     "copy_path": "Bestandspad kopiëren",
     "copy_path_failed": "Bestandspad kopiëren mislukt",
@@ -1238,7 +1249,7 @@
     "organization": "Organisatie",
     "file": "Bestand",
     "capture": "Opname",
-    "source_metadata": "Metadata",
+    "source_metadata": "Overige informatie",
     "source_description": "Oorspronkelijke beschrijving",
     "coordinates": "Coördinaten",
     "detail_fields": {

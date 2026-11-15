@@ -147,10 +147,13 @@
       </div>
 
       <div class="shrink-0 border-t border-base-content/5 px-1 py-3">
+        <div class="flex items-center gap-2">
         <button type="button" class="flex w-full items-center gap-1 cursor-pointer text-base-content/70 hover:text-base-content" :aria-expanded="showOrganizationPanel" @click="toggleOrganization">
           <IconRight class="w-3 h-3 transition-transform duration-200" :class="{ 'rotate-90': showOrganizationPanel }" />
           <span class="font-bold uppercase text-xs tracking-wide text-base-content/30">{{ $t('file_info.organization') }}</span>
         </button>
+          <TButton :icon="IconEdit" :disabled="!editableMetadataFields.some(field => fieldVisible(`organization.${field.key}`))" :tooltip="$t('file_info.edit_metadata')" button-size="small" @click.stop="emit('editMetadata', 'e_title')" />
+        </div>
         <div class="shrink-0">
           <div v-if="showOrganizationPanel" class="pt-3 space-y-1.5">
             <FavoriteRatingControl class="pl-4"
@@ -195,6 +198,12 @@
                   </button>
                 </div>
               </div>
+            </template>
+
+            <template v-for="field in organizationMetadata" :key="field.key">
+              <div class="text-[11px] text-base-content/30 min-h-6 py-1">{{ $t(field.label) }}</div>
+              <button type="button" class="min-h-6 py-1 text-left text-[12px] text-base-content/70 whitespace-pre-wrap wrap-break-word cursor-pointer hover:text-base-content"
+                @click.stop="emit('editMetadata', field.key)">{{ field.value || '\u00a0' }}</button>
             </template>
 
             <!-- People -->
@@ -491,8 +500,7 @@
         <div v-if="showSourceMetadataPanel" class="pt-3 pl-4 grid grid-cols-[84px_minmax(0,1fr)] gap-y-1.5 gap-x-4 text-xs">
             <template v-for="row in sourceDetailRows" :key="row.key">
               <div class="text-[11px] text-base-content/30 min-h-6 py-1">{{ row.label }}</div>
-              <button v-if="row.key === 'description'" type="button" class="py-1 text-left text-[12px] text-base-content/70 whitespace-pre-wrap wrap-break-word cursor-pointer hover:text-base-content" @click.stop="emit('quickEditComment')">{{ row.value.trim() ? row.value : $t('msgbox.edit_comment.title') }}</button>
-              <div v-else class="text-[12px] text-base-content/70 whitespace-pre-wrap wrap-break-word py-1">{{ row.value }}</div>
+              <div class="text-[12px] text-base-content/70 whitespace-pre-wrap wrap-break-word py-1">{{ row.value }}</div>
             </template>
 
         </div>
@@ -517,7 +525,7 @@
 
 <script setup lang="ts">
 import FileInfoFieldsDialog from '@/components/FileInfoFieldsDialog.vue';
-import { normalizeFileInfoFields } from '@/common/fileInfoFields';
+import { editableMetadataFields, normalizeFileInfoFields } from '@/common/fileInfoFields';
 import ImageNavigator from '@/components/ImageNavigator.vue';
 import { invoke } from '@tauri-apps/api/core';
 import { navigatorLayout } from '@/common/imageNavigator';
@@ -554,6 +562,7 @@ import {
   IconClose,
   IconCloud,
   IconRefresh,
+  IconEdit,
   IconAdjustments,
   IconRight,
   IconFile,
@@ -601,7 +610,7 @@ const emit = defineEmits([
   'rotate',
   'quickEditTag',
   'quickEditCollection',
-  'quickEditComment',
+  'editMetadata',
   'navigateFolder',
   'navigateMetadata',
   'navigatePerson',
@@ -687,7 +696,7 @@ function cancelPendingDetails(sections = sectionNames) {
   });
   if (requestIds.length) void invoke('cancel_file_metadata_requests', { requestIds }).catch(() => {});
 }
-const sourceKeys = ['title', 'headline', 'creator', 'copyright', 'software', 'credit', 'source', 'usageTerms', 'rightsUrl'];
+const sourceKeys = ['software', 'credit', 'source', 'usageTerms', 'rightsUrl'];
 const detailKeys: Record<DetailSection, string[]> = {
   source: sourceKeys,
   capture: ['flash', 'whiteBalance', 'exposureMode', 'exposureProgram', 'meteringMode', 'focalLength35mm', 'timeZone'],
@@ -715,15 +724,10 @@ function detailRows(section: DetailSection, keys = detailKeys[section]) {
     return { key, value: value == null ? '' : String(value), label: t(`file_info.detail_fields.${key}`) };
   }).filter(row => displayField(`${section}.${row.key}`, row.value));
 }
-const sourceDetailRows = computed(() => {
-  const rows = detailRows('source');
-  if (!fieldVisible('source.description')) return rows;
-  const firstOtherField = rows.findIndex(row => row.key !== 'title' && row.key !== 'headline');
-  rows.splice(firstOtherField < 0 ? rows.length : firstOtherField, 0, {
-    key: 'description', label: t('file_info.comment'), value: props.fileInfo?.comments ?? '',
-  });
-  return rows;
-});
+const organizationMetadata = computed(() => editableMetadataFields
+  .map(field => ({ ...field, value: props.fileInfo?.[field.key] ?? '' }))
+  .filter(field => displayField(`organization.${field.key}`, field.value)));
+const sourceDetailRows = computed(() => detailRows('source'));
 const captureDetailRows = computed(() => detailRows('capture'));
 const imageDetailRows = computed(() => [
   { key: 'iccProfile', value: generalFileInfo.value?.icc_profile },

@@ -1172,6 +1172,17 @@
     }
   },
   "file_info": {
+    "metadata_placeholders": {
+      "e_title": "짧은 제목을 입력하세요",
+      "e_headline": "게시용 제목을 입력하세요",
+      "comments": "내용을 설명하거나 배경을 추가하세요",
+      "e_artist": "한 줄에 작성자 한 명을 입력하세요",
+      "e_copyright": "저작권 표시를 입력하세요"
+    },
+    "edit_metadata_details": "설명 정보",
+    "edit_metadata_no_fields": "메타데이터를 편집하려면 표시 항목 설정에서 정리 항목을 하나 이상 선택하세요.",
+    "edit_metadata": "메타데이터 편집",
+    "metadata_save_failed": "메타데이터를 저장하지 못했습니다",
     "paths_copied": "파일 경로 {count}개를 클립보드에 복사했습니다",
     "copy_path": "파일 경로 복사",
     "copy_path_failed": "파일 경로를 복사하지 못했습니다",
@@ -1238,7 +1249,7 @@
     "organization": "정리",
     "file": "파일",
     "capture": "촬영 정보",
-    "source_metadata": "메타데이터",
+    "source_metadata": "기타 정보",
     "source_description": "원본 설명",
     "coordinates": "좌표",
     "detail_fields": {

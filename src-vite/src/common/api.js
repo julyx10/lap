@@ -1270,17 +1270,8 @@ export async function batchDeleteFiles(files, permanently = false) {
   }
 }
 
-// edit file comment
-export async function editFileComment(fileId, comment) {
-  try {
-    const result = await invoke('edit_file_comment', { fileId, comment });
-    if(result) {
-      return result;
-    };
-  } catch (error) {
-    console.log('Failed to edit file comment:', error);
-  }
-  return null;
+export function editFileMetadata(libraryId, fileIds, changes) {
+  return invoke('edit_file_metadata', { libraryId, fileIds, changes });
 }
 
 // get file thumb

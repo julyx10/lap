@@ -541,7 +541,7 @@
             @rotate="rotateSelected(90, true)"
             @quick-edit-tag="clickTag(true)"
             @quick-edit-collection="clickAddToCollection(true)"
-            @quick-edit-comment="openCommentEditor(true)"
+            @edit-metadata="field => openCommentEditor(true, field)"
             @navigate-folder="handleInfoNavigateFolder"
             @navigate-metadata="handleNavigateMetadata"
             @navigate-person="handleNavigatePerson"
@@ -685,19 +685,8 @@
   />
 
   <!-- comment -->
-  <MessageBox
-    v-if="showCommentMsgbox"
-    :title="$t('msgbox.edit_comment.title')"
-    :showInput="true"
-    :inputText="commentInputText"
-    :inputPlaceholder="$t('msgbox.edit_comment.placeholder')"
-    :multiLine="true"
-    :OkText="$t('msgbox.ok')"
-    :cancelText="$t('msgbox.cancel')"
-    position-key="edit-comment"
-    @ok="onEditComment"
-    @cancel="showCommentMsgbox = false"
-  />
+  <EditMetadataDialog v-if="showCommentMsgbox && metadataFiles.length" :files="metadataFiles" :focus-field="metadataFocus"
+    @saved="onMetadataSaved" @cancel="showCommentMsgbox = false" />
 
   <!-- Unsaved Changes Confirmation -->
   <MessageBox
@@ -776,6 +765,7 @@
 </template>
 
 <script setup lang="ts">
+import EditMetadataDialog from "@/components/EditMetadataDialog.vue";
 import { externalDragKind, updateExternalDrag, resetExternalDrag, finishExternalDrag } from '@/common/externalDrag';
 import { getExternalDropUris, getExternalHttpDropUrls, getExternalFileDropPaths, fileUrlToPath, hasExternalDropIntent } from '@/common/externalDrop';
 
@@ -790,7 +780,7 @@ import { useToast } from '@/common/toast';
 import { useUIStore } from '@/stores/uiStore';
 import { getAlbum, getAllAlbums, recountAlbum, getQueryCountAndSum, getQueryTimeLine, getQueryFiles, getFilesByIds, getGroupedQueryRows, getGroupedFilePosition, getGroupFileIds, getQueryFileIds, syncAlbumFolderMtimes, reconcileRawJpegPairs,
          getSmartQueryCountAndSum, getSmartQueryTimeLine, getSmartQueryFiles, getSmartGroupedQueryRows, getSmartGroupFileIds, getSmartQueryFileIds, getSmartQueryFilePosition,
-         copyImages, renameFile, moveFile, moveFileOutsideLibrary, copyFile, withFileTransferBatch, deleteFile, deleteFilePermanently, batchDeleteFiles, editFileComment, getFileThumb, getFileThumbs, getFileInfo,
+         copyImages, renameFile, moveFile, moveFileOutsideLibrary, copyFile, withFileTransferBatch, deleteFile, deleteFilePermanently, batchDeleteFiles, getFileThumb, getFileThumbs, getFileInfo,
          setFileRotate, setFileFavorite, setFileRating, setFileCullingFlag, batchUpdateFileMetadata, getTagsForFile, searchSimilarImages, generateEmbedding,
          revealPath, getTagName, indexAlbum, listenIndexProgress, listenIndexFinished, setAlbumCover, setDesktopWallpaper,
          updateFileInfo, refreshFileInfo, changeVideoThumbnail, getSupportedFormatExtensions, importFiles, importUrl, importFileBytes, getDragPayload, importClipboard, addFileToDb, checkFileExists, checkFileAccessibility, isCloudOnlyFile, cancelIndexing as cancelIndexingApi, selectFolder, getFacesForFile, listenFaceIndexProgress,
@@ -2222,17 +2212,8 @@ let dedupDeletePreviewRequest = 0;
 const dedupPaneRef = ref<InstanceType<typeof DedupPane> | null>(null);
 const dedupStatuses = ref<Record<number, 'keep' | 'dup'>>({});
 const showCommentMsgbox = ref(false);
-const commentSingleFile = ref<any>(null);
-const commentInputText = computed(() => {
-  if (commentSingleFile.value) return commentSingleFile.value.comments ?? '';
-  if (selectMode.value) {
-    const selectedItems = getActionableSelectedItems();
-    if (selectedItems.length === 0) return '';
-    const firstComment = selectedItems[0]?.comments ?? '';
-    return selectedItems.every(item => (item.comments ?? '') === firstComment) ? firstComment : '';
-  }
-  return fileList.value[selectedItemIndex.value]?.comments ?? '';
-});
+const metadataFiles = ref<any[]>([]);
+const metadataFocus = ref('comments');
 const errorMessage = ref('');
 
 // Unsaved changes confirmation
@@ -4749,7 +4730,7 @@ function handleItemAction(payload: { action: string, index: number }) {
     'info': toggleInfoPanel,
     'tag': clickTag,
     'add-to-collection': clickAddToCollection,
-    'comment': () => selectMode.value ? openCommentEditor() : (showCommentMsgbox.value = true),
+    'comment': () => openCommentEditor(),
     'search-similar': () => enterSimilarSearchMode(fileList.value[selectedItemIndex.value]),
     'find-person': () => {
       if (!config.settings.face.enabled) return;
@@ -10399,57 +10380,22 @@ const clickAddToCollection = async (singleFile = false) => {
   showAddToCollectionDialog.value = fileIdsToAddToCollection.value.length > 0;
 };
 
-const onEditComment = async (newComment: any) => {
-  if (commentSingleFile.value) {
-    const file = commentSingleFile.value;
-    if (await editFileComment(file.id, newComment)) {
-      file.comments = newComment;
-      syncFileMetaToImageViewer(file.id, { comments: newComment });
-      showCommentMsgbox.value = false;
-    }
-    return;
-  }
-  if (selectMode.value && selectedCount.value > 0) {
-    const items = await getActionableSelectedItemsForAction();
-    if (!items) return;
-    if (!await confirmLargeBatch(items.length)) return;
-    const result = await batchUpdateFileMetadata({
-      fileIds: items.map(item => item.id),
-      comment: newComment,
-    });
-    if (result === null) return;
-    items.forEach(item => {
-      item.comments = newComment;
-    });
-    const activeItem = fileList.value[selectedItemIndex.value];
-    if (activeItem?.isSelected) {
-      syncFileMetaToImageViewer(activeItem.id, { comments: newComment });
-    }
-    showCommentMsgbox.value = false;
-    return;
-  }
-
-  if (selectedItemIndex.value >= 0) {
-    const file = fileList.value[selectedItemIndex.value];
-    const result = await editFileComment(file.id, newComment);
-    if(result) {
-      console.log('onEditComment:', newComment);
-      file.comments = newComment;
-      showCommentMsgbox.value = false;
-      syncFileMetaToImageViewer(file.id, { comments: newComment });
-    }
-  }
+function onMetadataSaved(files: any[], changes: Record<string, string>) {
+  const byId = new Set(files.map(file => file.id));
+  for (const file of files) Object.assign(file, changes);
+  for (const file of fileList.value) if (byId.has(file.id)) Object.assign(file, changes);
+  const active = fileList.value[selectedItemIndex.value];
+  if (active && byId.has(active.id)) void syncFileMetaToImageViewer(active.id, changes);
+  showCommentMsgbox.value = false;
 }
 
-const openCommentEditor = (singleFile = false) => {
-  commentSingleFile.value = singleFile === true ? fileList.value[selectedItemIndex.value] : null;
-  if (commentSingleFile.value) {
-    showCommentMsgbox.value = true;
-    return;
-  }
-  if ((selectMode.value && selectedCount.value > 0) || (!selectMode.value && selectedItemIndex.value >= 0)) {
-    showCommentMsgbox.value = true;
-  }
+async function openCommentEditor(singleFile = false, field = 'comments') {
+  const file = fileList.value[selectedItemIndex.value];
+  const files = !singleFile && selectMode.value ? await getActionableSelectedItemsForAction() : file ? [file] : [];
+  if (!files?.length || (files.length > 1 && !await confirmLargeBatch(files.length))) return;
+  metadataFiles.value = files;
+  metadataFocus.value = field;
+  showCommentMsgbox.value = true;
 }
 
 const selectAllInCurrentList = async () => {

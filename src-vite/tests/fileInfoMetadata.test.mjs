@@ -9,9 +9,9 @@ const source = await readFile(new URL('../src/components/FileInfo.vue', import.m
 
 test('searchable source metadata displays the indexed values, including empty values', () => {
   const start = source.indexOf('const sourceKeys =');
-  const end = source.indexOf('const sourceDetailRows', start);
-  const keys = ['title', 'headline', 'creator', 'copyright', 'software'];
-  const fields = ['e_title', 'e_headline', 'e_artist', 'e_copyright', 'e_software'];
+  const end = source.indexOf('const organizationMetadata', start);
+  const keys = ['software'];
+  const fields = ['e_software'];
   const details = Object.fromEntries(keys.map(key => [key, { values: [`stale ${key}`] }]));
   const rows = fileInfo => new Function('props', 'metadataDetails', 't', 'fieldVisible', 'displayField', ts.transpile(
     `${source.slice(start, end)}; return detailRows('source', ${JSON.stringify(keys)});`, { target: ts.ScriptTarget.ES2022 }
@@ -22,7 +22,7 @@ test('searchable source metadata displays the indexed values, including empty va
 function section(key) {
   const title = source.indexOf(`$t('file_info.${key}')`);
   assert.ok(title > 0);
-  const start = source.lastIndexOf('      <div ', title);
+  const start = key === 'organization' ? source.lastIndexOf('      <div class=', source.lastIndexOf('        <div class=', title) - 1) : source.lastIndexOf('      <div ', title);
   const end = source.indexOf('\n      </div>', title) + '\n      </div>'.length;
   assert.ok(start >= 0 && end > title);
   return source.slice(start, end);
@@ -31,7 +31,7 @@ async function render(key, overrides = {}) {
   const context = {
     detailSections: {source:{loading:false}},
     sourceDetailRows: [{ key: "software", value: "SOURCE SOFTWARE", source: "EXIF", label: "file_info.detail_fields.software" }], detailsLoading: false, detailsError: false,
-    showOrganizationPanel: true, showSourceMetadataPanel: false, hasSourceMetadata: true,
+    IconEdit: {}, editableMetadataFields: [], fieldVisible: () => false, organizationMetadata: [], showOrganizationPanel: true, showSourceMetadataPanel: false, hasSourceMetadata: true,
     toggleOrganization() {}, toggleSourceMetadata() {}, emit() {},
     isPrimaryGeneralInfo: false, displayTags: [], fileCollections: [], filePersons: [],
     config: { settings: { face: { enabled: false } } },
@@ -45,7 +45,7 @@ async function render(key, overrides = {}) {
   return renderToString(app);
 }
 
-test('organization keeps catalog controls on the companion tab without descriptions', async () => {
+test('organization keeps catalog controls on the companion tab and displays editable metadata', async () => {
   const html = await render('organization');
   assert.doesNotMatch(html, /file_info.marks/);
   assert.doesNotMatch(html, /file_info.comment/);
@@ -53,9 +53,9 @@ test('organization keeps catalog controls on the companion tab without descripti
   assert.doesNotMatch(html, /—/);
   assert.doesNotMatch(html, /<button[^>]*text-left/);
   assert.doesNotMatch(html, /ORIGINAL SOURCE TEXT/);
-  const filled = await render('organization', { fileInfo: { comments: 'USER DESCRIPTION' } });
-  assert.doesNotMatch(filled, /file_info.comment/);
-  assert.doesNotMatch(filled, /USER DESCRIPTION/);
+  const filled = await render('organization', { organizationMetadata: [{ key: 'comments', label: 'file_info.comment', value: 'USER DESCRIPTION' }] });
+  assert.match(filled, /file_info.comment/);
+  assert.match(filled, /USER DESCRIPTION/);
 });
 
 test('source metadata is hidden until expanded and displays source software', async () => {
@@ -166,7 +166,7 @@ test('uncached file waits for all expanded sections and publishes successful fie
   await settle();
   assert.equal(f.state.infoReady.value, true);
   assert.equal(f.state.metadataDetails.value.credit.values[0], 'credit');
-  assert.ok(f.state.sourceDetailRows.value.some(row => row.value === 'DB title'));
+  assert.ok(!f.state.sourceDetailRows.value.some(row => row.key === 'title'));
 });
 
 test('offline albums and cloud-only originals show DB immediately without any file-detail IPC', () => {
@@ -230,16 +230,14 @@ test('DB-only field choices do not start realtime metadata reads', () => {
   f.state.changeFile(['test', 1], undefined);
   assert.equal(f.calls.length, 0);
   assert.equal(f.state.infoReady.value, true);
-  assert.equal(f.state.sourceDetailRows.value[0].value, 'DB title');
 });
 
 test('field choices allow no fields and reject unknown fields', async () => {
   const registry = await readFile(new URL('../src/common/fileInfoFields.ts', import.meta.url), 'utf8');
   const module = await import(`data:text/javascript;base64,${Buffer.from(ts.transpile(registry, {target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext})).toString('base64')}`);
   assert.deepEqual(module.normalizeFileInfoFields([]), []);
-  assert.equal(module.allFileInfoFields.includes('source.description'), true);
-  assert.deepEqual(module.normalizeFileInfoFields(['unknown', 'source.title', 'source.title']), ['source.title']);
-  assert.ok(module.normalizeFileInfoFields(undefined).includes('source.description'));
+  assert.equal(module.allFileInfoFields.includes('source.description'), false);
+  assert.deepEqual(module.normalizeFileInfoFields(['unknown', 'source.software', 'source.software']), ['source.software']);
   assert.deepEqual(module.normalizeFileInfoFields(undefined), module.normalizeFileInfoFields(module.defaultFileInfoFields));
   assert.equal(module.normalizeFileInfoFields(module.defaultFileInfoFields).length, module.defaultFileInfoFields.length);
   for (const locale of ['en','cs','de','es','fr','hu','it','ja','ko','nl','pl','pt','ru','uk','vi','zh-CN','zh-TW']) {

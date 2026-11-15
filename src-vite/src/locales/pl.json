@@ -1172,6 +1172,17 @@
     }
   },
   "file_info": {
+    "metadata_placeholders": {
+      "e_title": "Wpisz krótki tytuł",
+      "e_headline": "Wpisz nagłówek do publikacji",
+      "comments": "Opisz zawartość lub dodaj kontekst",
+      "e_artist": "Wpisz jednego autora w każdym wierszu",
+      "e_copyright": "Wpisz informację o prawach autorskich"
+    },
+    "edit_metadata_details": "Informacje opisowe",
+    "edit_metadata_no_fields": "Przed edycją metadanych wybierz co najmniej jedno pole z sekcji Organizacja w ustawieniach pól.",
+    "edit_metadata": "Edytuj metadane",
+    "metadata_save_failed": "Nie udało się zapisać metadanych",
     "paths_copied": "Skopiowano {count} ścieżek plików do schowka",
     "copy_path": "Kopiuj ścieżkę pliku",
     "copy_path_failed": "Nie udało się skopiować ścieżki",
@@ -1238,7 +1249,7 @@
     "organization": "Organizacja",
     "file": "Plik",
     "capture": "Fotografowanie",
-    "source_metadata": "Metadane",
+    "source_metadata": "Inne informacje",
     "source_description": "Oryginalny opis",
     "coordinates": "Współrzędne",
     "detail_fields": {

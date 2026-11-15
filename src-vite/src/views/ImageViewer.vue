@@ -193,18 +193,8 @@
       @cancel="showAddToCollectionDialog = false"
     />
 
-    <MessageBox
-      v-if="showCommentMsgbox"
-      :title="$t('msgbox.edit_comment.title')"
-      :showInput="true"
-      :inputText="activeFileInfo?.comments ?? ''"
-      :inputPlaceholder="$t('msgbox.edit_comment.placeholder')"
-      :multiLine="true"
-      :OkText="$t('msgbox.ok')"
-      :cancelText="$t('msgbox.cancel')"
-      @ok="onEditComment"
-      @cancel="showCommentMsgbox = false"
-    />
+    <EditMetadataDialog v-if="showCommentMsgbox && metadataFiles.length" :files="metadataFiles" :focus-field="metadataFocus"
+    @saved="onMetadataSaved" @cancel="showCommentMsgbox = false" />
 
   </div>
 
@@ -212,6 +202,7 @@
 
 <script setup lang="ts">
 
+import EditMetadataDialog from "@/components/EditMetadataDialog.vue";
 import { isOriginalStorageUnavailable, isOriginalUnavailable, setAlbumAccessibility, resetFileAccessibility } from '@/common/availability';
 import { ref, watch, computed, onMounted, onUnmounted, reactive } from 'vue';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
@@ -226,7 +217,6 @@ import { handleVideoPlaybackShortcut, handleVideoEscapeShortcut } from '@/common
 import {
   checkFileAccessibility,
   copyImages,
-  editFileComment,
   getFileCollections,
   getFileInfo,
   getTagsForFile,
@@ -328,6 +318,8 @@ const visiblePanes = computed<Pane[]>(() =>
 const showTaggingDialog = ref(false);
 const showAddToCollectionDialog = ref(false);
 const showCommentMsgbox = ref(false);
+const metadataFiles = ref<any[]>([]);
+const metadataFocus = 'comments';
 const taggingFileIds = ref<number[]>([]);
 const collectionFileIds = ref<number[]>([]);
 
@@ -1422,6 +1414,7 @@ const openCommentEditor = (pane: Pane = 'left') => {
   if (currentFileId <= 0) return;
 
   setActivePane(pane);
+  metadataFiles.value = [activeFileInfo.value];
   showCommentMsgbox.value = true;
 };
 
@@ -1474,18 +1467,13 @@ async function handleCollectionDeleted(collectionId: number) {
   }
 }
 
-const onEditComment = async (newComment: any) => {
-  const target = activeFileInfo.value;
-  const currentFileId = activeFileId.value;
-  if (!target || currentFileId <= 0) return;
-
-  const result = await editFileComment(currentFileId, newComment);
-  if (result) {
-    applyFileMetaToPanes(currentFileId, { comments: newComment });
-    showCommentMsgbox.value = false;
-    syncFileMetaToContent(currentFileId, { comments: newComment });
+function onMetadataSaved(files: any[], changes: Record<string, string>) {
+  for (const file of files) {
+    applyFileMetaToPanes(file.id, changes);
+    syncFileMetaToContent(file.id, changes);
   }
-};
+  showCommentMsgbox.value = false;
+}
 
 async function updateFileHasTags(fileStates: Array<{ file_id: number; has_tags: boolean }>) {
   await syncTagStates(fileStates);

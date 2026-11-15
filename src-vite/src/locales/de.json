@@ -1172,6 +1172,17 @@
     }
   },
   "file_info": {
+    "metadata_placeholders": {
+      "e_title": "Kurzen Titel eingeben",
+      "e_headline": "Überschrift für die Veröffentlichung eingeben",
+      "comments": "Inhalt beschreiben oder Kontext ergänzen",
+      "e_artist": "Eine Person pro Zeile eingeben",
+      "e_copyright": "Urheberrechtshinweis eingeben"
+    },
+    "edit_metadata_details": "Beschreibende Angaben",
+    "edit_metadata_no_fields": "Wählen Sie vor dem Bearbeiten mindestens ein Feld im Bereich Organisation unter „Felder anpassen“ aus.",
+    "edit_metadata": "Metadaten bearbeiten",
+    "metadata_save_failed": "Metadaten konnten nicht gespeichert werden",
     "paths_copied": "{count} Dateipfad(e) in die Zwischenablage kopiert",
     "copy_path": "Dateipfad kopieren",
     "copy_path_failed": "Dateipfad konnte nicht kopiert werden",
@@ -1238,7 +1249,7 @@
     "organization": "Organisation",
     "file": "Datei",
     "capture": "Aufnahme",
-    "source_metadata": "Metadaten",
+    "source_metadata": "Weitere Informationen",
     "source_description": "Originalbeschreibung",
     "coordinates": "Koordinaten",
     "detail_fields": {

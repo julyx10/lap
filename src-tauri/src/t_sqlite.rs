@@ -3268,7 +3268,10 @@ impl AFile {
                 e_make = ?17, e_model = ?18, e_lens_make = ?19, e_lens_model = ?20,
                 e_date_time = CASE WHEN ?47 THEN e_date_time ELSE ?21 END,
                 e_exposure_bias = ?22, e_exposure_time = ?23, e_f_number = ?24, e_focal_length = ?25, e_iso_speed = ?26, e_flash = ?27, e_orientation = ?28,
-                e_title = ?29, e_headline = ?30, e_description = ?31, e_artist = ?32, e_copyright = ?33,
+                e_title = COALESCE(e_title, NULLIF(?29, '')),
+                e_headline = COALESCE(e_headline, NULLIF(?30, '')), e_description = ?31,
+                e_artist = COALESCE(e_artist, NULLIF(?32, '')),
+                e_copyright = COALESCE(e_copyright, NULLIF(?33, '')),
                 e_software = ?34,
                 gps_latitude = CASE WHEN ?47 THEN gps_latitude ELSE ?35 END,
                 gps_longitude = CASE WHEN ?47 THEN gps_longitude ELSE ?36 END,
@@ -4178,10 +4181,7 @@ impl AFile {
                 // for the mark-and-sweep deletion logic.
                 if let Some(file_id) = file.id {
                     let _ = Self::update_column(file_id, "last_scan_time", &last_scan_time);
-                    if file
-                        .comments
-                        .as_deref()
-                        .is_none_or(|comment| comment.trim().is_empty())
+                    if file.comments.is_none()
                     {
                         if let Some(comment) = t_ai_png::extract_comment(file_path) {
                             if let Ok(conn) = open_conn() {
@@ -4191,7 +4191,7 @@ impl AFile {
                             }
                         }
                     }
-                    if Self::import_scanned_xmp(file_id, file_path, crate::metadata::xmp::XmpImportMode::RescanNonDestructive, None)? {
+                    if Self::import_scanned_xmp(file_id, file_path, crate::metadata::xmp::XmpImportMode::RescanNonDestructive, None, None)? {
                         if let Some(refreshed) = Self::get_file_info(file_id)? { file = refreshed; }
                     }
                 }
@@ -4202,6 +4202,13 @@ impl AFile {
         // insert the new file into the database
         let mut new_file_struct = Self::new_with_raw_info(folder_id, file_path, file_type, raw_info)?;
         new_file_struct.last_scan_time = Some(last_scan_time);
+        let embedded_text = crate::metadata::xmp::is_xmp_import_enabled().then(|| [
+            new_file_struct.e_title.take(),
+            new_file_struct.e_headline.take(),
+            new_file_struct.e_artist.take(),
+            new_file_struct.e_copyright.take(),
+            new_file_struct.comments.take(),
+        ]);
         let inserted = new_file_struct.insert()?;
 
         // A concurrent folder sync or album scan may have inserted the same
@@ -4218,6 +4225,7 @@ impl AFile {
                 if Self::import_scanned_xmp(
                     file_id, file_path, crate::metadata::xmp::XmpImportMode::InitialScan,
                     Some(new_file_struct.e_software.as_deref()),
+                    embedded_text.as_ref(),
                 )? {
                     if let Some(refreshed) = Self::fetch(folder_id, file_path)? {
                         return Ok((refreshed, 1));
@@ -4276,19 +4284,43 @@ impl AFile {
         Ok(files)
     }
 
+    fn mark_metadata_import_failed(
+        conn: &Connection,
+        file_id: i64,
+        embedded_text: [Option<String>; 5],
+    ) -> Result<(), String> {
+        let [title, headline, artist, copyright, description] = embedded_text;
+        conn.execute(
+            "UPDATE afiles SET metadata_pending=1,
+                e_title=COALESCE(e_title, NULLIF(?2, '')),
+                e_headline=COALESCE(e_headline, NULLIF(?3, '')),
+                e_artist=COALESCE(e_artist, NULLIF(?4, '')),
+                e_copyright=COALESCE(e_copyright, NULLIF(?5, '')),
+                comments=COALESCE(comments, NULLIF(?6, ''))
+             WHERE id=?1",
+            params![file_id, title, headline, artist, copyright, description],
+        ).map_err(|e| e.to_string())?;
+        Ok(())
+    }
+
     fn import_scanned_xmp(
         file_id: i64,
         file_path: &str,
         mode: crate::metadata::xmp::XmpImportMode,
         extracted_software: Option<Option<&str>>,
+        embedded_text: Option<&[Option<String>; 5]>,
     ) -> Result<bool, String> {
         if !crate::metadata::xmp::is_xmp_import_enabled() { return Ok(false); }
         let conn = open_conn()?;
-        match crate::metadata::xmp::import_with_system(file_id, file_path, &conn, mode, None, extracted_software, None) {
+        let result = if let Some(text) = embedded_text {
+            crate::metadata::xmp::import_initial_scan(file_id, file_path, &conn, extracted_software, text[4].as_deref())
+        } else {
+            crate::metadata::xmp::import_with_system(file_id, file_path, &conn, mode, None, extracted_software, None)
+        };
+        match result {
             Ok(changed) => Ok(changed),
             Err(error) => {
-                conn.execute("UPDATE afiles SET metadata_pending=1 WHERE id=?1", params![file_id])
-                    .map_err(|e| e.to_string())?;
+                Self::mark_metadata_import_failed(&conn, file_id, embedded_text.cloned().unwrap_or_default())?;
                 remember_refresh_failure(refresh_failure_key("metadata", file_id), metadata_failure_version(file_path),
                     format!("XMP import failed: {error}"), true);
                 eprintln!("XMP import failed for {file_path}: {error}");
@@ -4506,10 +4538,7 @@ impl AFile {
         new_file_info.is_favorite = old_file_info.is_favorite;
         new_file_info.rating = old_file_info.rating;
         new_file_info.rotate = old_file_info.rotate;
-        if old_file_info
-            .comments
-            .as_deref()
-            .is_some_and(|comment| !comment.trim().is_empty())
+        if old_file_info.comments.is_some()
         {
             new_file_info.comments = old_file_info.comments;
         }
@@ -4534,11 +4563,15 @@ impl AFile {
         // successful values if the sidecar cannot be imported after extraction.
         let import_xmp = crate::metadata::xmp::is_xmp_import_enabled();
         let mut extracted_software = None;
+        let mut embedded_text = Default::default();
         if import_xmp {
-            new_file_info.e_title = old_file_info.e_title.clone();
-            new_file_info.e_headline = old_file_info.e_headline.clone();
-            new_file_info.e_artist = old_file_info.e_artist.clone();
-            new_file_info.e_copyright = old_file_info.e_copyright.clone();
+            embedded_text = [
+                new_file_info.e_title.take(),
+                new_file_info.e_headline.take(),
+                new_file_info.e_artist.take(),
+                new_file_info.e_copyright.take(),
+                None,
+            ];
             extracted_software = std::mem::replace(&mut new_file_info.e_software, old_file_info.e_software.clone());
         }
 
@@ -4560,7 +4593,7 @@ impl AFile {
                 )
             }) {
                 // Keep successful metadata, but make the failed import retryable.
-                Self::update_column(file_id, "metadata_pending", &true)?;
+                Self::mark_metadata_import_failed(&*open_conn()?, file_id, embedded_text)?;
                 let message = format!("XMP import failed: {error}");
                 remember_refresh_failure(refresh_failure_key("metadata", file_id), metadata_failure_version(file_path), message.clone(), true);
                 import_error = Some(message);

@@ -1172,6 +1172,17 @@
     }
   },
   "file_info": {
+    "metadata_placeholders": {
+      "e_title": "Saisissez un titre court",
+      "e_headline": "Saisissez un titre pour publication",
+      "comments": "Décrivez le contenu ou ajoutez du contexte",
+      "e_artist": "Saisissez un auteur par ligne",
+      "e_copyright": "Saisissez une mention de droits d’auteur"
+    },
+    "edit_metadata_details": "Informations descriptives",
+    "edit_metadata_no_fields": "Sélectionnez au moins un champ de la section Organisation dans Personnaliser les champs avant de modifier les métadonnées.",
+    "edit_metadata": "Modifier les métadonnées",
+    "metadata_save_failed": "Impossible d’enregistrer les métadonnées",
     "paths_copied": "{count} chemin(s) de fichier copié(s) dans le presse-papiers",
     "copy_path": "Copier le chemin du fichier",
     "copy_path_failed": "Impossible de copier le chemin",
@@ -1238,7 +1249,7 @@
     "organization": "Organisation",
     "file": "Fichier",
     "capture": "Prise de vue",
-    "source_metadata": "Métadonnées",
+    "source_metadata": "Autres informations",
     "source_description": "Description originale",
     "coordinates": "Coordonnées",
     "detail_fields": {

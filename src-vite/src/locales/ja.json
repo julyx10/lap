@@ -1172,6 +1172,17 @@
     }
   },
   "file_info": {
+    "metadata_placeholders": {
+      "e_title": "短いタイトルを入力",
+      "e_headline": "公開用の見出しを入力",
+      "comments": "内容の説明や背景情報を入力",
+      "e_artist": "1行に1人の作成者を入力",
+      "e_copyright": "著作権表示を入力"
+    },
+    "edit_metadata_details": "説明情報",
+    "edit_metadata_no_fields": "メタデータを編集する前に、表示項目の設定で整理の項目を少なくとも1つ選択してください。",
+    "edit_metadata": "メタデータを編集",
+    "metadata_save_failed": "メタデータを保存できませんでした",
     "paths_copied": "{count} 件のファイルパスをクリップボードにコピーしました",
     "copy_path": "ファイルパスをコピー",
     "copy_path_failed": "パスのコピーに失敗しました",
@@ -1238,7 +1249,7 @@
     "organization": "整理",
     "file": "ファイル",
     "capture": "撮影情報",
-    "source_metadata": "メタデータ",
+    "source_metadata": "その他の情報",
     "source_description": "元の説明",
     "coordinates": "座標",
     "detail_fields": {

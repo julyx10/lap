@@ -1172,6 +1172,17 @@
     }
   },
   "file_info": {
+    "metadata_placeholders": {
+      "e_title": "Adjon meg egy rövid címet",
+      "e_headline": "Adjon meg egy közzétételre szánt címsort",
+      "comments": "Írja le a tartalmat vagy adjon meg háttérinformációt",
+      "e_artist": "Soronként egy alkotót adjon meg",
+      "e_copyright": "Adjon meg szerzői jogi nyilatkozatot"
+    },
+    "edit_metadata_details": "Leíró adatok",
+    "edit_metadata_no_fields": "A metaadatok szerkesztése előtt jelöljön ki legalább egy mezőt a Rendezés szakaszban, a mezők testreszabásánál.",
+    "edit_metadata": "Metaadatok szerkesztése",
+    "metadata_save_failed": "Nem sikerült menteni a metaadatokat",
     "paths_copied": "{count} fájlútvonal a vágólapra másolva",
     "copy_path": "Fájlútvonal másolása",
     "copy_path_failed": "Az útvonal másolása sikertelen",
@@ -1238,7 +1249,7 @@
     "organization": "Rendszerezés",
     "file": "Fájl",
     "capture": "Felvétel",
-    "source_metadata": "Metaadatok",
+    "source_metadata": "Egyéb információk",
     "source_description": "Eredeti leírás",
     "coordinates": "Koordináták",
     "detail_fields": {

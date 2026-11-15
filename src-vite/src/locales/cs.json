@@ -1172,6 +1172,17 @@
     }
   },
   "file_info": {
+    "metadata_placeholders": {
+      "e_title": "Zadejte krátký název",
+      "e_headline": "Zadejte titulek pro publikaci",
+      "comments": "Popište obsah nebo doplňte kontext",
+      "e_artist": "Zadejte jednoho autora na řádek",
+      "e_copyright": "Zadejte autorskoprávní oznámení"
+    },
+    "edit_metadata_details": "Popisné údaje",
+    "edit_metadata_no_fields": "Nejprve v nastavení polí vyberte alespoň jedno pole ze sekce Organizace.",
+    "edit_metadata": "Upravit metadata",
+    "metadata_save_failed": "Metadata se nepodařilo uložit",
     "paths_copied": "Do schránky byly zkopírovány cesty k souborům: {count}",
     "copy_path": "Kopírovat cestu k souboru",
     "copy_path_failed": "Cestu k souboru se nepodařilo zkopírovat",
@@ -1237,7 +1248,7 @@
     "organization": "Organizace",
     "file": "Soubor",
     "capture": "Pořízení",
-    "source_metadata": "Metadata",
+    "source_metadata": "Další informace",
     "source_description": "Původní popis",
     "coordinates": "Souřadnice",
     "detail_fields": {
