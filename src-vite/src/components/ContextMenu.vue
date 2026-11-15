@@ -44,7 +44,7 @@
               >
                 <div class="w-full flex items-center">
                   <div class="w-5">
-                    <component v-if="item.icon" class="t-icon-size-sm" :is="item.icon" />
+                    <component v-if="item.icon" :class="item.iconClass || 't-icon-size-sm'" :is="item.icon" />
                     <span
                       v-else-if="item.swatch"
                       :class="[

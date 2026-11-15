@@ -18,6 +18,7 @@
         :tooltip="$t('menu.album.add')"
         @click="clickNewAlbum"
       />
+      <ContextMenu :menuItems="albumPanelMenuItems" :iconMenu="IconMore" :smallIcon="true" />
     </div>
 
     <div v-if="isMainPane" class="mx-1 mb-2 px-1 shrink-0">
@@ -79,7 +80,7 @@
         <VueDraggable
           v-if="visibleAlbums.length > 0"
           v-model="albums"
-          :disabled="!isMainPane || isFolderFiltering || reorderingAlbumId === null"
+          :disabled="!isMainPane || isFolderFiltering || !isReorderingAlbums"
           handle=".album-drag-handle"
           direction="vertical"
           :group="{ name: 'album-folder', pull: false, put: false }"
@@ -100,7 +101,7 @@
             "
           >
             <div
-              :data-reordering-album="isReorderingAlbum(album) ? 'true' : undefined"
+              :data-reordering-album="isReorderingAlbums && !isFolderFiltering ? 'true' : undefined"
               :data-file-drop-path="selectionSource === 'local' || album.is_accessible === false ? undefined : album.path"
               :data-file-drop-album-id="selectionSource === 'local' || album.is_accessible === false ? undefined : album.id"
               :class="[
@@ -114,7 +115,7 @@
               @contextmenu.prevent.stop="(e: MouseEvent) => handleAlbumContextMenu(album, e)"
             >
               <IconDragHandle
-                v-if="isReorderingAlbum(album)"
+                v-if="isReorderingAlbums && !isFolderFiltering"
                 class="album-drag-handle p-1 w-6 h-6 shrink-0 cursor-grab text-base-content/30"
                 :title="$t('menu.album.reorder')"
                 @click.stop
@@ -333,6 +334,8 @@ import {
   IconAdd,
   IconDownload,
   IconMore,
+  IconOk,
+  IconDot,
   IconEdit,
   IconRemove,
   IconUpdate,
@@ -360,6 +363,40 @@ const props = withDefaults(defineProps<{
 /// i18n
 const { t, locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value] as any);
+const albumPanelMenuItems = computed(() => {
+  const browse = localeMsg.value.settings.browse;
+  return [
+    {
+      label: browse.show_subfolder_files,
+      icon: config.settings.showSubfolderFiles ? IconOk : undefined,
+      iconClass: 'w-4 h-4',
+      action: () => {
+        const value = !config.settings.showSubfolderFiles;
+        config.setShowSubfolderFiles(value);
+        void tauriEmit('settings-showSubfolderFiles-changed', value);
+      },
+    },
+    {
+      label: browse.folder_sort,
+      children: (browse.folder_sort_options as string[]).map((label, value) => ({
+        label,
+        icon: Number(config.settings.folderSort) === value ? IconDot : undefined,
+        action: () => {
+          config.setFolderSort(value);
+          void tauriEmit('settings-folderSort-changed', value);
+        },
+      })),
+    },
+    { label: "-", action: null },
+    {
+      label: localeMsg.value.menu.album.reorder,
+      icon: IconOrder,
+      disabled: albums.value.length < 2 || isFolderFiltering.value,
+      action: () => { isReorderingAlbums.value = !isReorderingAlbums.value; },
+    },
+  ];
+});
+
 const uiStore = useUIStore();
 
 const getAlbumDisplayCount = (album: Album) => {
@@ -564,7 +601,7 @@ watch([externalDragKind, canAcceptAlbumDrop], ([kind, enabled]) => {
 });
 
 const isDragging = ref(false);  // dragging albums
-const reorderingAlbumId = ref<number | null>(null);
+const isReorderingAlbums = ref(false);
 const albumCoverErrors = ref<Record<number, boolean>>({});
 
 interface FilteredAlbumResult {
@@ -795,7 +832,6 @@ function handleAlbumContextMenu(album: Album, event: MouseEvent) {
 
 const getAlbumById = (id: number) =>
   albums.value.find(album => Number(album.id) === Number(id));
-const isReorderingAlbum = (album: Album) => Number(album.id) === reorderingAlbumId.value;
 const selectedAlbum = computed(() => getAlbumById(selection.albumId.value)) || {};
 const editingAlbum = computed(() => getAlbumById(editingAlbumId.value));
 const isAlbumQueued = (albumId: number) =>
@@ -892,13 +928,6 @@ const getMoreMenuItems = async (album: any) => {
       icon: isAlbumQueued(album.id) ? IconUpdateOff : IconUpdate,
       disabled: !isAccessible && !isAlbumQueued(album.id),
       action: () => toggleIndexAlbum(album.id)
-    },
-    {
-      label: localeMsg.value.menu.album.reorder,
-      icon: IconOrder,
-      action: () => {
-        reorderingAlbumId.value = isReorderingAlbum(album) ? null : album.id;
-      }
     },
     {
       label: "-",   // separator
@@ -1159,7 +1188,7 @@ watch(isFolderFiltering, (filtering) => {
     refreshFolderSearchFolders();
     return;
   }
-  reorderingAlbumId.value = null;
+  isReorderingAlbums.value = false;
   void loadFolderSearchFolders();
 });
 
@@ -1365,8 +1394,8 @@ const clickRemoveAlbum = async () => {
 
     // remove the album from the list
     albums.value = albums.value.filter(album => album.id !== albumId);
-    if (reorderingAlbumId.value === albumId) {
-      reorderingAlbumId.value = null;
+    if (albums.value.length < 2) {
+      isReorderingAlbums.value = false;
     }
     showAlbumEdit.value = false; // Close the edit dialog if it's open
 
@@ -1607,9 +1636,9 @@ const onDragEnd = async ({ oldIndex, newIndex }: DraggableEvent) => {
 }
 
 function handleReorderOutsidePointerDown(event: PointerEvent) {
-  if (event.button !== 0 || reorderingAlbumId.value === null || isDragging.value) return;
+  if (event.button !== 0 || !isReorderingAlbums.value || isDragging.value) return;
   if (event.target instanceof Element && event.target.closest('[data-reordering-album="true"]')) return;
-  reorderingAlbumId.value = null;
+  isReorderingAlbums.value = false;
 }
 
 // Expose methods

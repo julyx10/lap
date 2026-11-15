@@ -7,13 +7,13 @@
           ({{ tags.length.toLocaleString() }})</template
         ></span
       >
-      <SortMenuButton v-model="config.settings.tagSort" kind="category" />
       <TButton
-        :icon="IconAdd"
-        buttonSize="small"
-        :tooltip="$t('msgbox.new_tag.title')"
-        @click="clickAddTag()"
+      :icon="IconAdd"
+      buttonSize="small"
+      :tooltip="$t('msgbox.new_tag.title')"
+      @click="clickAddTag()"
       />
+      <SortMenuButton v-model="config.settings.tagSort" kind="category" />
     </div>
     <div v-if="tags.length > 0" class="mx-1 mb-2 px-1 shrink-0">
       <div

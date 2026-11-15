@@ -101,29 +101,6 @@
             </div>
           </div>
 
-          <!-- album folder -->
-          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
-            <div class="flex items-center gap-2 text-base-content/30">
-              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.browse.section_album') }}</span>
-            </div>
-            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-              <div class="flex flex-col gap-0.5 text-sm leading-5">
-                <div>{{ $t('settings.browse.show_subfolder_files') }}</div>
-                <div class="text-xs text-base-content/30">{{ $t('settings.browse.show_subfolder_files_hint') }}</div>
-              </div>
-              <input type="checkbox" class="toggle toggle-primary toggle-sm" v-model="config.settings.showSubfolderFiles" />
-            </div>
-            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-              <div class="flex flex-col gap-0.5 text-sm leading-5">
-                <div>{{ $t('settings.browse.folder_sort') }}</div>
-                <div class="text-xs text-base-content/30">{{ $t('settings.browse.folder_sort_hint') }}</div>
-              </div>
-              <select class="select select-bordered select-sm min-w-40" v-model="config.settings.folderSort">
-                <option v-for="option in folderSortOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
-              </select>
-            </div>
-          </div>
-
         </div>
 
         <!-- Grid Tab -->
@@ -906,17 +883,6 @@ const scaleOptions = computed(() => {
   }));
 });
 
-const folderSortOptions = computed(() => {
-  const options = localeMsg.value.settings.browse.folder_sort_options || [];
-  const result = [];
-
-  for (let i = 0; i < options.length; i++) {
-    result.push({ label: options[i], value: i });
-  }
-
-  return result;
-});
-
 const dateTimeFormatOptions = computed(() => {
   const options = localeMsg.value.settings.general.date_time_format_options || [];
   return options.map((label: string, value: number) => ({ label, value }));
@@ -1547,14 +1513,8 @@ watch(() => config.settings.autoCheckUpdates, (newValue) => {
 watch(() => config.settings.debugMode, (newValue) => {
   emit('settings-debugMode-changed', newValue);
 });
-watch(() => config.settings.folderSort, (newValue) => {
-  emit('settings-folderSort-changed', newValue);
-});
 watch(() => config.settings.dateTimeFormat, (newValue) => {
   emit('settings-dateTimeFormat-changed', newValue);
-});
-watch(() => config.settings.showSubfolderFiles, (newValue) => {
-  emit('settings-showSubfolderFiles-changed', newValue);
 });
 watch(() => config.settings.groupRawJpegPairs, (newValue) => {
   emit('settings-groupRawJpegPairs-changed', newValue);
