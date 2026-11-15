@@ -195,6 +195,7 @@ test('single-file panel refresh preserves metadata and distinguishes warnings fr
     const deps = {
       libConfig: { _libraryId: 'test' }, refreshFileInfo: async () => updated,
       fileInfoRevision: ref(0), tauriEmit: async () => {}, getFileListThumb: async () => {},
+      refreshFileGeometryLayout: () => {},
       toast: { warning: text => messages.push(['warning', text]), error: text => messages.push(['error', text]) },
     };
     const refresh = contentRefresh('const refreshFileInfoFromPanel = async', '// update the file info from the file;', deps, 'refreshFileInfoFromPanel');
@@ -215,6 +216,7 @@ test('single-file menu refresh reports warnings and failures for both local and 
       const deps = {
         requireOriginalFiles: async () => true, refreshFileInfo: async () => updated,
         libConfig: { _libraryId: 'test' }, fileInfoRevision: ref(0), tauriEmit: async () => {}, getFileListThumb: async (...args) => thumbnailLoads.push(args),
+        refreshFileGeometryLayout: () => {},
         updateThumbForFile: async () => { throw new Error("Refresh must not force a second generation"); }, updateSelectedImage: async () => {}, selectedItemIndex: ref(0),
         nextTick: async () => {}, uiStore: { clearActiveAdjustments() {} },
         localeMsg: ref({ tooltip: { update_image: { success: 'Updated', failed: 'Failed' } } }),

@@ -169,14 +169,18 @@ const displayMarkers = computed(() => {
   const candidates: Candidate[] = [];
   let lastYear: number | null = null;
   let lastMonth: number | null = null;
+  const minGroupTickDistance = 2;
+  let lastGroupTickPos = -Infinity;
 
   for (const marker of props.markers) {
     if (marker.position === undefined || marker.position === null) continue;
-    
+
     const top = Math.min(100, (marker.position / props.total) * 100);
     const currentPixelPos = (top / 100) * height;
 
     if (hasLabelMarkers) {
+      if (height > 0 && Math.abs(currentPixelPos - lastGroupTickPos) < minGroupTickDistance) continue;
+      lastGroupTickPos = currentPixelPos;
       candidates.push({
         label: '',
         top: top,

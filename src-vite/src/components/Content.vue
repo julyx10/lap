@@ -1187,6 +1187,7 @@ async function finishSelectedFileRefresh(results: Array<{ file: any; size_delta:
       const updated = skipped.get(Number(file?.id));
       if (updated) Object.assign(file, updated);
     }
+    refreshFileGeometryLayout();
   }
   fileInfoRevision.value++;
   void tauriEmit('tags-changed');
@@ -1210,6 +1211,7 @@ async function finishSelectedFileRefresh(results: Array<{ file: any; size_delta:
     Object.assign(file, updated, { rawThumbnailStale: true });
     refreshedFiles.push(file);
   }
+  refreshFileGeometryLayout();
   for (const [groupId, delta] of groupDeltas) {
     const meta = groupMetaMap.get(groupId);
     if (meta) meta.size = (selection.groupSizes.get(groupId) ?? meta.size) + delta;
@@ -2635,6 +2637,9 @@ const usesGeometryNavigation = computed(() =>
   (!isFilmstripView.value && config.settings.grid.style === 3)
 );
 
+function refreshFileGeometryLayout() {
+  if (isGeometryGridStyle.value) layoutVersion.value++;
+}
 function scheduleLayoutRefresh() {
   if (!isGeometryGridStyle.value) return;
   if (layoutRefreshTimer) return;
@@ -6170,6 +6175,7 @@ onMounted( async() => {
           const index = fileList.value.findIndex(file => file.id === targetFileId);
           if (index !== -1) {
             Object.assign(fileList.value[index], changes);
+            refreshFileGeometryLayout();
           }
           if (changes.culling_flag !== undefined || changes.cullingFlag !== undefined) {
             void tauriEmit('culling-status-updated', { fileIds: [targetFileId], cullingFlag: changes.culling_flag ?? changes.cullingFlag });
@@ -6361,6 +6367,7 @@ onMounted( async() => {
       }));
 
       if (eventLibrary !== libConfig._libraryId) return;
+      refreshFileGeometryLayout();
       totalFileSize.value += sizeDelta;
       fileInfoRevision.value++;
     }
@@ -8885,6 +8892,7 @@ const onFileSaved = async (success: boolean, payload: SavedFilePayload = {}) => 
       }
       if (savedFile && Number(savedFile.rotate || 0) !== 0) {
         savedFile.rotate = 0;
+        refreshFileGeometryLayout();
         await setFileRotate(savedFile.id, 0);
         await syncFileMetaToImageViewer(savedFile.id, { rotate: 0 });
       }
@@ -9897,6 +9905,7 @@ const refreshFileInfoFromPanel = async (file: any) => {
   if (libraryId !== libConfig._libraryId || Number(file.id) !== fileId) return;
   if (!result?.file) throw new Error('File info refresh failed');
   Object.assign(file, result.file);
+  refreshFileGeometryLayout();
   const message = [result.warning, result.error].filter(Boolean).join('; ');
   if (result.error) toast.error(message);
   else if (result.warning) toast.warning(message);
@@ -9915,6 +9924,7 @@ const updateFile = async (file: any, isRefresh = false) => {
     const refreshMessage = [refreshed?.warning, refreshed?.error].filter(Boolean).join('; ');
     if (refreshed?.skipped) {
       if (refreshed.file) Object.assign(file, refreshed.file);
+      refreshFileGeometryLayout();
       fileInfoRevision.value++;
       void tauriEmit('tags-changed');
       if (refreshed?.error) toast.error(refreshMessage);
@@ -9925,6 +9935,7 @@ const updateFile = async (file: any, isRefresh = false) => {
     const updatedFile = isRefresh ? refreshed?.file : await updateFileInfo(file.id, file.file_path);
     if (updatedFile) {
       Object.assign(file, updatedFile);
+      refreshFileGeometryLayout();
       if (isRefresh) { fileInfoRevision.value++; void tauriEmit('tags-changed'); }
       if (isRefresh) await getFileListThumb([file], { bustCache: true, viewportBound: false });
       else await updateThumbForFile(file);
@@ -10329,6 +10340,7 @@ const rotateSelected = async (rotateDelta: number, singleFile = false) => {
     items.forEach(item => {
       item.rotate = (Number(item.rotate) || 0) + rotateDelta;
     });
+    refreshFileGeometryLayout();
     const activeItem = fileList.value[selectedItemIndex.value];
     if (activeItem?.isSelected) {
       tauriEmit('message-from-content', { message: 'rotate', fileId: activeItem.id, rotateDelta });
@@ -10339,6 +10351,7 @@ const rotateSelected = async (rotateDelta: number, singleFile = false) => {
 
   if (selectedItemIndex.value >= 0) {
     fileList.value[selectedItemIndex.value].rotate = (Number(fileList.value[selectedItemIndex.value].rotate) || 0) + rotateDelta;
+    refreshFileGeometryLayout();
 
     // notify the image viewer
     tauriEmit('message-from-content', { message: 'rotate', fileId: fileList.value[selectedItemIndex.value].id, rotateDelta });
