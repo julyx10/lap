@@ -16,7 +16,8 @@ const deps = {
   libConfig: { album: { id: 1 }, activePane: 'album' }, SIDEBAR: { ALBUM: 1 },
   DEFAULT_PLATFORM: 'mac', getShortcutLabel: () => '', isWin: false,
   isOriginalUnavailable: file => !!file?.unavailable,
-  isOriginalStorageUnavailable: file => !!file?.unavailable, requiresOriginalAction,
+  isOriginalStorageUnavailable: file => !!file?.unavailable, requiresOriginalAction, requiresLocalContent: () => false,
+  isPreviewOnlyDocument: () => false,
 };
 const useFileMenuItems = new Function(...Object.keys(deps), menuCode + ';return useFileMenuItems;')(...Object.values(deps));
 

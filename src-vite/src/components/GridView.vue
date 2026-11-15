@@ -310,12 +310,11 @@ const hasGroupRows = computed(() =>
   (Number(props.groupBy || 0) > 0 || isGroupRow(renderItems.value[0]))
 );
 
-const LIST_CHANGE_PROBE = Symbol('list-change-probe');
 function getLayoutItems(): any[] {
   const items = renderItems.value;
   void props.layoutVersion;
-  void items.length;
-  items.indexOf(LIST_CHANGE_PROBE as any);
+  // Creating the iterator tracks item replacements without reading the array.
+  void items[Symbol.iterator]();
   return toRaw(items);
 }
 

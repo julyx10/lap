@@ -843,6 +843,7 @@ import ExternalAppsDialog from '@/components/ExternalAppsDialog.vue';
 import FileInfo from '@/components/FileInfo.vue';
 import Breadcrumb from '@/components/Breadcrumb.vue';
 import DedupPane from '@/components/DedupPane.vue';
+import { getAspectRatio } from '@/common/layout';
 import SelectionPanel from '@/components/SelectionPanel.vue';
 import FileConflictDialog from '@/components/FileConflictDialog.vue';
 import ScrollBar from '@/components/ScrollBar.vue';
@@ -6172,10 +6173,11 @@ onMounted( async() => {
         const targetFileId = Number((event.payload as any).fileId);
         const changes = (event.payload as any).changes || {};
         if (targetFileId > 0) {
-          const index = fileList.value.findIndex(file => file.id === targetFileId);
-          if (index !== -1) {
-            Object.assign(fileList.value[index], changes);
-            refreshFileGeometryLayout();
+          const file = fileList.value.find(file => Number(file?.id) === targetFileId);
+          if (file) {
+            const previousAspectRatio = getAspectRatio(file);
+            Object.assign(file, changes);
+            if (!Object.is(previousAspectRatio, getAspectRatio(file))) refreshFileGeometryLayout();
           }
           if (changes.culling_flag !== undefined || changes.cullingFlag !== undefined) {
             void tauriEmit('culling-status-updated', { fileIds: [targetFileId], cullingFlag: changes.culling_flag ?? changes.cullingFlag });

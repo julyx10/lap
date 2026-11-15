@@ -12,7 +12,7 @@ function fixture(responses, options = {}) {
   let mounted;
   const refreshed = [];
   const calls = [];
-  const props = { fileIds: options.fileIds ?? responses.map((_, i) => i + 1), libraryId: 'test', freeSpace: options.freeSpace ?? true,
+  const props = { fileIds: options.fileIds ?? responses.map((_, i) => i + 1), libraryId: 'test',
     finishRefresh: async results => refreshed.push(...results) };
   const deps = {
     ref, defineProps: () => props, defineEmits: () => () => {},
@@ -35,20 +35,18 @@ function fixture(responses, options = {}) {
     window: { addEventListener() {}, removeEventListener() {} }, console: { error() {} },
   };
   const state = new Function(...Object.keys(deps), body +
-    '; return { processed, succeeded, skipped, failed, warned, releaseRequested, keptLocal, running, cancelled };')(...Object.values(deps));
+    '; return { processed, succeeded, skipped, failed, warned, running, cancelled };')(...Object.values(deps));
   return { state, refreshed, calls, run: () => mounted() };
 }
 const result = (id, extra = {}) => ({ file: { id, cloud_only: false, metadata_pending: false },
-  size_delta: 10, skipped: false, release_requested: false, warning: null, error: null, ...extra });
+  size_delta: 10, skipped: false, warning: null, error: null, ...extra });
 
-test('accepted asynchronous release requests are reported without claiming the file is already cloud-only', async () => {
-  const updated = result(1, { release_requested: true });
+test('a successful refresh applies its metadata result and reports one update', async () => {
+  const updated = result(1, { file: { id: 1, cloud_only: false, metadata_pending: false } });
   const f = fixture([updated]);
   await f.run();
-  assert.equal(f.state.releaseRequested.value, 1);
-  assert.equal(f.state.keptLocal.value, 0);
   assert.equal(f.state.succeeded.value, 1);
-  assert.equal(f.refreshed[0].file.cloud_only, false);
+  assert.equal(f.refreshed[0], updated);
 });
 
 test('thumbnail failure still refreshes the downloaded file, metadata and size delta', async () => {
@@ -58,12 +56,11 @@ test('thumbnail failure still refreshes the downloaded file, metadata and size d
   assert.deepEqual(f.refreshed, [updated]);
   assert.equal(f.state.failed.value, 1);
   assert.equal(f.state.succeeded.value, 0);
-  assert.equal(f.state.keptLocal.value, 1);
 });
 
-test('a mixed batch retains partial updates and continues after command and release failures', async () => {
-  const partial = result(2, { error: 'Release refused' });
-  const complete = result(3, { release_requested: true, file: { id: 3, cloud_only: true } });
+test('a mixed batch keeps partial updates and continues after command failures', async () => {
+  const partial = result(2, { error: 'Refresh failed' });
+  const complete = result(3, { file: { id: 3, cloud_only: true } });
   const f = fixture([new Error('Download failed'), partial, complete]);
   await f.run();
   assert.deepEqual(f.refreshed, [partial, complete]);
@@ -73,11 +70,11 @@ test('a mixed batch retains partial updates and continues after command and rele
   assert.equal(f.state.running.value, false);
   assert.equal(f.calls[0].command, 'begin_file_refresh_batch');
   assert.deepEqual(f.calls.at(-1), { command: 'end_file_refresh_batch', args: { batchId: 42 } });
-  assert.ok(f.calls.slice(1, -1).every(call => call.command === 'index_cloud_file' && call.args.batchId === 42));
+  assert.ok(f.calls.slice(1, -1).every(call => call.command === 'refresh_selected_file_info' && call.args.batchId === 42));
 });
 
-test('normal refresh forwards the shared index and releases it after completion', async () => {
-  const f = fixture([result(1), new Error('Refresh failed')], { freeSpace: false });
+test('normal refresh forwards the shared index and ends after completion', async () => {
+  const f = fixture([result(1), new Error('Refresh failed')]);
   await f.run();
   assert.ok(f.calls.filter(call => call.command === 'refresh_selected_file_info').every(call => call.args.batchId === 42));
   assert.deepEqual(f.calls.at(-1), { command: 'end_file_refresh_batch', args: { batchId: 42 } });
@@ -99,7 +96,7 @@ test('failure to begin a batch is surfaced and does not invoke refresh commands'
 });
 
 test('normal refresh immediately refreshes every selected file once without a staleness check', async () => {
-  const f = fixture([result(1), result(2)], { freeSpace: false, fileIds: [1, 1, 2] });
+  const f = fixture([result(1), result(2)], { fileIds: [1, 1, 2] });
   await f.run();
   const updates = f.calls.filter(call => call.command === 'refresh_selected_file_info');
   assert.deepEqual(updates.map(call => call.args.fileId), [1, 2]);
@@ -123,7 +120,7 @@ test('cancellation between files retains completed results and releases the batc
 
 test('skipped originals retain their metadata result without counting as updated', async () => {
   const unchanged = result(1, { skipped: true, file: { id: 1, cloud_only: true, metadata_pending: true } });
-  const f = fixture([unchanged], { freeSpace: false });
+  const f = fixture([unchanged]);
   await f.run();
   assert.equal(f.state.skipped.value, 1);
   assert.equal(f.state.succeeded.value, 0);
@@ -134,7 +131,7 @@ test('skipped originals retain their metadata result without counting as updated
 test('XMP failure keeps extracted metadata and pending state as a warning', async () => {
   const partial = result(1, { warning: 'XMP import failed: Malformed XML',
     file: { id: 1, icc_profile: 'Display P3', metadata_pending: true } });
-  const f = fixture([partial], { freeSpace: false });
+  const f = fixture([partial]);
   await f.run();
   assert.equal(f.state.succeeded.value, 0);
   assert.equal(f.state.failed.value, 0);
@@ -145,7 +142,7 @@ test('XMP failure keeps extracted metadata and pending state as a warning', asyn
 test('cloud-only XMP warnings are reported while retaining skipped metadata and pending state', async () => {
   const partial = result(1, { skipped: true, warning: 'XMP import failed: Malformed XML',
     file: { id: 1, cloud_only: true, metadata_pending: true, last_scan_time: 12345 } });
-  const f = fixture([partial], { freeSpace: false });
+  const f = fixture([partial]);
   await f.run();
   assert.equal(f.state.failed.value, 0);
   assert.equal(f.state.warned.value, 1);
@@ -163,13 +160,12 @@ test('XMP warnings keep downloaded files local and are separate from failures', 
   assert.equal(f.state.warned.value, 1);
   assert.equal(f.state.failed.value, 1);
   assert.equal(f.state.succeeded.value, 1);
-  assert.equal(f.state.keptLocal.value, 2);
   assert.equal(f.refreshed[0], partial);
 });
 
 test('metadata import and preview failures are both counted while retaining updated metadata', async () => {
   const partial = result(1, { warning: 'XMP import failed: Malformed XML', error: 'Preview rebuild failed: Permission denied' });
-  const f = fixture([partial], { freeSpace: false });
+  const f = fixture([partial]);
   await f.run();
   assert.equal(f.state.processed.value, 1);
   assert.equal(f.state.failed.value, 1);
