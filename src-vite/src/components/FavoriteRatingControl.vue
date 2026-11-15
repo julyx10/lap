@@ -2,34 +2,27 @@
   <div class="h-6 flex items-center gap-0.5">
     <button
       class="btn btn-ghost btn-xs min-h-0 h-6 w-6 p-0 mr-1 relative"
-      :title="favoriteTitle"
-      :aria-label="favoriteTitle"
+      :title="withShortcut(favoriteTitle, 'meta.favorite')"
+      :aria-label="withMixedState(favoriteTitle, favorite === null)"
       :disabled="disabled"
       @click.stop="emit('favorite', favorite === true ? false : true)"
     >
       <component
-        :is="favorite === true || favorite === null ? IconHeartFilled : IconHeart"
+        :is="favorite === true ? IconHeartFilled : IconHeart"
         class="w-3.5 h-3.5"
         :class="favoriteIconClass"
       />
+      <IconHeartFilled v-if="favorite === null" aria-hidden="true"
+        class="absolute w-3.5 h-3.5 [clip-path:inset(0_50%_0_0)]"
+        :class="disabled ? 'text-base-content/30' : 'text-error'" />
     </button>
     <div class="w-px h-4 shrink-0 bg-base-content/10 mx-1"></div>
-    <!-- <span class="mr-1 text-[11px] font-medium" :class="disabled ? 'text-base-content/30' : labelClass">
-      {{ $t('rating.title') }}
-    </span> -->
-    <span
-      v-if="rating === null && !disabled"
-      class="mr-1 rounded border border-base-content/5 px-1 py-0.5 text-[9px] font-bold uppercase tracking-wide text-warning/70"
-      :title="`${$t('rating.title')}: ${$t('rating.mixed')}`"
-    >
-      {{ $t('rating.mixed') }}
-    </span>
     <button
       v-for="value in [1, 2, 3, 4, 5]"
       :key="value"
-      class="btn btn-ghost btn-xs min-h-0 h-6 w-6 p-0"
-      :title="getRatingLabel(value)"
-      :aria-label="getRatingLabel(value)"
+      class="btn btn-ghost btn-xs min-h-0 h-6 w-6 p-0 relative"
+      :title="withShortcut(getRatingLabel(value), ratingShortcuts[value - 1])"
+      :aria-label="withMixedState(getRatingLabel(value), rating === null)"
       :disabled="disabled"
       @click.stop="emit('rating', rating === value ? 0 : value)"
     >
@@ -39,18 +32,16 @@
         :class="getRatingIconClass(value)"
       />
     </button>
-    <div class="w-px h-4 shrink-0 bg-base-content/10 mx-1"></div>
-    <span
-      v-if="culling === null && !disabled"
-      class="mr-1 rounded border border-base-content/5 px-1 py-0.5 text-[9px] font-bold uppercase tracking-wide text-primary/70"
-      :title="`${$t('culling.title')}: ${$t('rating.mixed')}`"
-    >
+    <span v-if="rating === null && !disabled"
+      class="ml-1 shrink-0 rounded bg-base-content/5 px-1 text-[10px] text-base-content/60"
+      :title="$t('rating.title')">
       {{ $t('rating.mixed') }}
     </span>
+    <div class="w-px h-4 shrink-0 bg-base-content/10 mx-1"></div>
     <button
       class="btn btn-ghost btn-xs min-h-0 h-6 w-6 p-0"
-      :title="$t('culling.picks')"
-      :aria-label="$t('culling.picks')"
+      :title="withShortcut($t('culling.picks'), 'meta.culling.pick')"
+      :aria-label="getCullingLabel('picks')"
       :disabled="disabled"
       @click.stop="emit('culling', 1)"
     >
@@ -58,8 +49,8 @@
     </button>
     <button
       class="btn btn-ghost btn-xs min-h-0 h-6 w-6 p-0"
-      :title="$t('culling.rejected')"
-      :aria-label="$t('culling.rejected')"
+      :title="withShortcut($t('culling.rejected'), 'meta.culling.reject')"
+      :aria-label="getCullingLabel('rejected')"
       :disabled="disabled"
       @click.stop="emit('culling', 2)"
     >
@@ -67,19 +58,25 @@
     </button>
     <button
       class="btn btn-ghost btn-xs min-h-0 h-6 w-6 p-0"
-      :title="$t('culling.unreviewed')"
-      :aria-label="$t('culling.unreviewed')"
+      :title="withShortcut($t('culling.unreviewed'), 'meta.culling.unreviewed')"
+      :aria-label="getCullingLabel('unreviewed')"
       :disabled="disabled"
       @click.stop="emit('culling', 0)"
     >
       <component :is="IconFlag" class="w-3.5 h-3.5" :class="getCullingIconClass(0)" />
     </button>
+    <span v-if="culling === null && !disabled"
+      class="ml-1 shrink-0 rounded bg-base-content/5 px-1 text-[10px] text-base-content/60"
+      :title="$t('culling.title')">
+      {{ $t('rating.mixed') }}
+    </span>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { getShortcutLabel, type ShortcutActionId } from '@/common/shortcuts';
 import { IconFlag, IconFlagFilled, IconFlagOff, IconHeart, IconHeartFilled, IconStar, IconStarFilled } from '@/common/icons';
 
 const props = withDefaults(defineProps<{
@@ -109,10 +106,6 @@ const { locale, messages, t } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value] as any);
 
 const favoriteTitle = computed(() => {
-  if (props.favorite === null) {
-    const label = props.favoriteLabel || t('menu.meta.favorite');
-    return `${label} (${t('rating.mixed')})`;
-  }
   if (props.favorite) {
     return props.unfavoriteLabel || t('menu.meta.unfavorite');
   }
@@ -125,6 +118,19 @@ const favoriteIconClass = computed(() => {
   return 'text-base-content/70 hover:text-error/70';
 });
 
+const ratingShortcuts: ShortcutActionId[] = [
+  'meta.rating.one', 'meta.rating.two', 'meta.rating.three', 'meta.rating.four', 'meta.rating.five',
+];
+
+function withShortcut(label: string, action: ShortcutActionId) {
+  const shortcut = !props.disabled && getShortcutLabel(action);
+  return shortcut ? `${label} (${shortcut})` : label;
+}
+
+function withMixedState(label: string, mixed: boolean) {
+  return mixed ? `${label} (${t('rating.mixed')})` : label;
+}
+
 function getRatingLabel(rating: number) {
   const keys: Record<number, string> = {
     5: 'five_stars',
@@ -134,7 +140,7 @@ function getRatingLabel(rating: number) {
     1: 'one_star',
   };
   const key = keys[rating];
-  return localeMsg.value.favorite?.[key] || `${rating}★`;
+  return localeMsg.value.rating?.[key] || `${rating}★`;
 }
 
 function getRatingIconClass(value: number) {
@@ -142,6 +148,11 @@ function getRatingIconClass(value: number) {
   if (props.rating === null) return 'text-base-content/70 hover:text-warning/70';
   if (Number(props.rating || 0) >= value) return 'text-warning';
   return `${props.inactiveRatingClass} hover:text-warning/70`;
+}
+
+function getCullingLabel(state: 'picks' | 'rejected' | 'unreviewed') {
+  const label = t(`culling.${state}`);
+  return withMixedState(label, props.culling === null);
 }
 
 function getCullingIconClass(value: number) {
