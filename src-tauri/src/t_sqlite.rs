@@ -8792,6 +8792,7 @@ impl ATag {
         .map_err(|e| e.to_string())?;
         let id = tx.last_insert_rowid();
         let path = crate::t_tags::path(&tx, id)?;
+        crate::t_tags::clear_deleted_path(&tx, &path, parent_id.is_none())?;
         tx.commit().map_err(|e| e.to_string())?;
         Ok(Self {
             id,
@@ -9038,6 +9039,12 @@ impl ATag {
     pub fn delete(tag_id: i64) -> Result<usize, String> {
         let mut conn = open_conn()?;
         let tx = conn.transaction().map_err(|e| e.to_string())?;
+        if !tx.query_row("SELECT EXISTS(SELECT 1 FROM atags WHERE id=?1)", [tag_id], |row| row.get::<_, bool>(0))
+            .map_err(|e| e.to_string())?
+        {
+            return Ok(0);
+        }
+        crate::t_tags::remember_deleted_subtree(&tx, tag_id)?;
         let file_ids = {
             let mut stmt = tx
                 .prepare(&format!("{} SELECT DISTINCT ft.file_id FROM afile_tags ft JOIN descendants d ON d.id=ft.tag_id", crate::t_tags::DESCENDANTS))
@@ -9089,6 +9096,7 @@ impl ATag {
                 params![name, tag_id],
             )
             .map_err(|e| e.to_string())?;
+        crate::t_tags::clear_deleted_subtree(&tx, tag_id)?;
         tx.commit().map_err(|e| e.to_string())?;
         Ok(result)
     }
@@ -10286,8 +10294,17 @@ fn is_corruption_error(err: &str) -> bool {
 /// A pooled connection that returns to the global pool on Drop.
 pub(crate) struct PooledConn(Option<(String, Connection)>, t_storage::DbConnectionLease);
 
+#[cfg(test)]
+thread_local! {
+    pub(crate) static TEST_DB_PATH: std::cell::RefCell<Option<String>> = const { std::cell::RefCell::new(None) };
+}
+
 impl Drop for PooledConn {
     fn drop(&mut self) {
+        #[cfg(test)]
+        if TEST_DB_PATH.with(|path| path.borrow().is_some()) {
+            return;
+        }
         if let Some(entry) = self.0.take() {
             if let Ok(mut pool) = CONN_POOL.lock() {
                 pool.push(entry);
@@ -10340,6 +10357,12 @@ pub(crate) fn clear_conn_pool() {
 
 pub(crate) fn open_conn() -> Result<PooledConn, String> {
     let lease = t_storage::DbConnectionLease::acquire()?;
+    #[cfg(test)]
+    if let Some(path) = TEST_DB_PATH.with(|path| path.borrow().clone()) {
+        let conn = Connection::open(&path).map_err(|e| e.to_string())?;
+        setup_conn(&conn)?;
+        return Ok(PooledConn(Some((path, conn)), lease));
+    }
     let current_path = t_storage::get_current_db_path()
         .map_err(|e| format!("Failed to get the database file path: {}", e))?;
     if is_path_corrupted(&current_path) {

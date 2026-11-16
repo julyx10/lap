@@ -1814,6 +1814,11 @@ mod import_tests {
 
     fn setup_in_memory_db() -> Connection {
         let conn = Connection::open_in_memory().unwrap();
+        setup_import_db(&conn);
+        conn
+    }
+
+    fn setup_import_db(conn: &Connection) {
         conn.execute_batch(
             "CREATE TABLE afiles (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1834,12 +1839,54 @@ mod import_tests {
             CREATE TABLE afile_tags (
                 file_id INTEGER NOT NULL,
                 tag_id INTEGER NOT NULL,
-                UNIQUE(file_id, tag_id)
+                UNIQUE(file_id, tag_id),
+                FOREIGN KEY(tag_id) REFERENCES atags(id) ON DELETE CASCADE
             );",
         )
         .unwrap();
-        initialize(&conn).unwrap();
-        conn
+        initialize(conn).unwrap();
+    }
+
+    #[test]
+    fn catalog_tag_delete_and_rename_control_automatic_xmp_import() {
+        use crate::t_sqlite::{ATag, TEST_DB_PATH, open_conn};
+
+        struct TestLibrary(PathBuf);
+        impl Drop for TestLibrary {
+            fn drop(&mut self) {
+                TEST_DB_PATH.with(|path| path.replace(None));
+                let _ = fs::remove_dir_all(&self.0);
+            }
+        }
+
+        let library = TestLibrary(create_temp_test_dir("tag_delete_rename"));
+        TEST_DB_PATH.with(|path| path.replace(Some(library.0.join("test.db").to_str().unwrap().into())));
+        let conn = open_conn().unwrap();
+        setup_import_db(&conn);
+        conn.execute("INSERT INTO afiles(id,name) VALUES(1,'before.jpg'),(2,'after.jpg')", []).unwrap();
+
+        let deleted = ATag::add("Places", None).unwrap();
+        assert_eq!(ATag::delete(deleted.id).unwrap(), 1);
+        let sidecar = r#"<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+            <rdf:Description xmlns:dc="http://purl.org/dc/elements/1.1/">
+                <dc:subject><rdf:Bag><rdf:li>Places</rdf:li></rdf:Bag></dc:subject>
+            </rdf:Description></rdf:RDF>"#;
+        let scan = |id, name: &str| {
+            let path = library.0.join(name);
+            fs::write(path.with_extension("xmp"), sidecar).unwrap();
+            assert!(import_xmp_for_file_with_conn(
+                id, path.to_str().unwrap(), &conn, XmpImportMode::RescanNonDestructive,
+            ).unwrap());
+        };
+        scan(1, "before.jpg");
+        assert!(ATag::get_tags_for_file(1).unwrap().is_empty());
+        assert_eq!(crate::t_tags::find(&conn, "Places", None).unwrap(), None);
+
+        let replacement = ATag::add("Other", None).unwrap();
+        assert_eq!(ATag::rename(replacement.id, "Places").unwrap(), 1);
+        scan(2, "after.jpg");
+        let tags = ATag::get_tags_for_file(2).unwrap();
+        assert_eq!(tags.iter().map(|tag| tag.id).collect::<Vec<_>>(), [replacement.id]);
     }
 
     #[test]
