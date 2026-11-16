@@ -107,8 +107,8 @@ export const PANEL_ANIMATION_MS = 200;
 export const MONTAGE_MAX_PHOTOS = 100;
 export const LARGE_BATCH_CONFIRM_THRESHOLD = 1000;
 export const EXTERNAL_OPEN_WARNING_THRESHOLD = 100;
-export const SETTINGS_BASE_WIDTH = 600;
-export const SETTINGS_BASE_HEIGHT = 620;
+export const SETTINGS_BASE_WIDTH = 640;
+export const SETTINGS_BASE_HEIGHT = 560;
 export const MONTAGE_BACKGROUND_PRESETS = ['#ffffff', '#f5f0e6', '#202020'];
 // Export size in pixels, landscape; print formats use 300 dpi.
 export const MONTAGE_PAGE_SIZES = {

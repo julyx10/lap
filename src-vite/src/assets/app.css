@@ -31,6 +31,11 @@ html, body {
   @apply h-8 w-fit rounded-box focus:outline-none focus:rounded-box hover:bg-base-100 hover:text-base-content cursor-pointer transition-colors duration-200;
 }
 
+/* Keep native select options on one line in WebView dropdowns. */
+select option {
+  white-space: nowrap;
+}
+
 /* button */
 .t-button-default {
   @apply btn btn-sm rounded-box min-w-20;

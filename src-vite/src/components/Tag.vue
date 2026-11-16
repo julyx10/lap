@@ -8,7 +8,7 @@
         ></span
       >
       <TButton
-      :icon="IconAdd"
+      :icon="IconTagAdd"
       buttonSize="small"
       :tooltip="$t('msgbox.new_tag.title')"
       @click="clickAddTag()"
@@ -67,12 +67,14 @@
           <div
             :id="`tag-${tag.id}`"
             class="sidebar-item group select-none"
-            :class="{
-              'text-primary': libConfig.tag.id === tag.id,
-              'opacity-50': dragged === tag.id,
-              'bg-primary/10 ring-1 ring-inset ring-primary/40':
-                dropTarget === tag.id,
-            }"
+            :class="[
+              libConfig.tag.id === tag.id ? 'sidebar-item-selected' : 'sidebar-item-hover',
+              {
+                'opacity-50': dragged === tag.id,
+                'bg-primary/10 ring-1 ring-inset ring-primary/40':
+                  dropTarget === tag.id,
+              },
+            ]"
             :style="{ paddingLeft: `${4 + tag.depth * 16}px` }"
             :data-tag-drop-id="tag.id"
             tabindex="0"
@@ -185,7 +187,6 @@ import {
   type LibraryTag,
 } from "@/common/tagTree";
 import {
-  IconAdd,
   IconClose,
   IconMore,
   IconSearch,
@@ -346,7 +347,7 @@ async function saveEditor(value: string) {
 function tagMenu(tag: LibraryTag): any[] {
   return [
     {
-      label: t("tag.add_child"),
+      label: t("msgbox.new_tag.title"),
       icon: IconTagAdd,
       action: () => clickAddTag(tag.id),
     },

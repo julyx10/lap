@@ -10,7 +10,7 @@
           v-for="tab in settingsTabs"
           :key="tab.id"
           :class="[
-            'px-3 py-2 rounded-box cursor-pointer transition-all duration-200 font-medium flex items-center',
+            'px-3 py-2 rounded-box cursor-pointer transition-colors duration-200 font-medium flex items-center',
             config.settings.tabIndex === tab.id
               ? 'bg-base-100 text-primary' 
               : 'hover:text-base-content hover:bg-base-100/30'
