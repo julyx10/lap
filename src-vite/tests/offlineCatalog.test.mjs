@@ -17,8 +17,8 @@ const getClipboardItemPaths = new Function(
   ).replace('export function', 'function'), { target: ts.ScriptTarget.ES2022 })
     + '; return getClipboardItemPaths;'
 )();
-const availability = new Function('reactive', 'libConfig', moduleBody('../src/common/availability.ts') + '; return { isOriginalStorageUnavailable, isOriginalUnavailable, setAlbumAccessibility, setFileAccessibility, setFolderAccessibility, resetFileAccessibility, resetLibraryAccessibility, requiresOriginalAction };')(reactive, libConfig);
-const { isOriginalStorageUnavailable, isOriginalUnavailable, setAlbumAccessibility, setFileAccessibility, setFolderAccessibility, resetFileAccessibility, resetLibraryAccessibility, requiresOriginalAction } = availability;
+const availability = new Function('reactive', 'libConfig', moduleBody('../src/common/availability.ts') + '; return { isOriginalStorageUnavailable, isOriginalUnavailable, setAlbumAccessibility, setFileAccessibility, setFolderAccessibility, resetFileAccessibility, resetLibraryAccessibility, requiresOriginalAction, requiresLocalContent };')(reactive, libConfig);
+const { isOriginalStorageUnavailable, isOriginalUnavailable, setAlbumAccessibility, setFileAccessibility, setFolderAccessibility, resetFileAccessibility, resetLibraryAccessibility, requiresOriginalAction, requiresLocalContent } = availability;
 
 test('offline state does not remove catalog data and follows reconnection, individual files and library scope', () => {
   const file = { id: 42, album_id: 1, album_accessible: true, file_path: '/photos/sub/image.jpg', rating: 5, thumbnail: 'cached' };
@@ -43,8 +43,8 @@ test('offline state does not remove catalog data and follows reconnection, indiv
 const source = fs.readFileSync(new URL('../src/common/fileMenu.ts', import.meta.url), 'utf8');
 const iconNames = source.match(/import \{([^}]+)\} from '@\/common\/icons'/)[1].split(',').map(s => s.trim()).filter(Boolean);
 const config = { main: { sidebarIndex: 1 }, settings: { face: { enabled: true } }, externalAppsFor: () => [{ id: 'editor', name: 'Editor' }], defaultExternalApp: () => null };
-const useFileMenuItems = new Function('computed', 'markRaw', 'config', 'libConfig', 'SIDEBAR', 'DEFAULT_PLATFORM', 'getShortcutLabel', 'isOriginalStorageUnavailable', 'isOriginalUnavailable', 'requiresOriginalAction', 'isWin', ...iconNames, moduleBody('../src/common/fileMenu.ts') + '; return useFileMenuItems;')(
-  computed, markRaw, config, libConfig, { ALBUM: 1 }, '', () => '', isOriginalStorageUnavailable, isOriginalUnavailable, requiresOriginalAction, true, ...iconNames.map(() => ({})),
+const useFileMenuItems = new Function('computed', 'markRaw', 'config', 'libConfig', 'SIDEBAR', 'DEFAULT_PLATFORM', 'getShortcutLabel', 'isOriginalStorageUnavailable', 'isOriginalUnavailable', 'requiresOriginalAction', 'requiresLocalContent', 'isPreviewOnlyDocument', 'isWin', ...iconNames, moduleBody('../src/common/fileMenu.ts') + '; return useFileMenuItems;')(
+  computed, markRaw, config, libConfig, { ALBUM: 1 }, '', () => '', isOriginalStorageUnavailable, isOriginalUnavailable, requiresOriginalAction, requiresLocalContent, () => false, true, ...iconNames.map(() => ({})),
 );
 const words = () => new Proxy({}, { get: (_, key) => String(key) });
 const locale = ref({ menu: { file: words(), meta: words() }, rating: words(), culling: words() });
@@ -292,7 +292,7 @@ test('clipboard selection checks and hydrates only the items it can copy', async
     getFilesByIds: async ids => { fetched.push(ids); return files.filter(file => ids.includes(file.id)); },
   };
   const selection = new Function(...Object.keys(deps),
-    extractFunction(contentSource, 'const CLIPBOARD_SELECTION_LIMIT =', 'const selectionHasCloudOnly')
+    extractFunction(contentSource, 'const CLIPBOARD_SELECTION_LIMIT =', 'let selectionAccessRequest =')
     + extractFunction(contentSource, 'async function getSelectedItemsForClipboard(', '// Track last visible range')
     + '; return { selectionStorageUnavailable, getSelectedItemsForClipboard };'
   )(...Object.values(deps));
@@ -413,76 +413,42 @@ test('dedup detects missing files, skips offline albums and ignores responses fr
   assert.deepEqual(staleStates, []);
 });
 
-test('dedup delete-all blocks unavailable items and selected deletion is independent of the preview file', async () => {
-  const calls = [];
-  const pending = ref(false);
-  const unavailable = ref(true);
-  const trashAll = new Function('totalDuplicateFileCount', 'totalReclaimableBytes', 'duplicateAccessPending', 'hasUnavailableDuplicates', 'emit', 'libConfig', 'refreshFileAccess', 'rawGroups',
-    extractFunction(dedupSource, 'async function trashAllDuplicates(', 'function applyDeletedFiles') + '; return trashAllDuplicates;'
-  )(ref(2), ref(100), pending, unavailable, (...args) => calls.push(args), libConfig, async () => {}, ref([]));
-  await trashAll();
-  assert.equal(calls.length, 0);
-  unavailable.value = false;
-  pending.value = true;
-  await trashAll();
-  assert.equal(calls.length, 0);
-  pending.value = false;
-  await trashAll();
-  assert.equal(calls.length, 1);
+test('ordinary deletion stays behind the originals-available guard', async () => {
   const deps = {
-    currentOriginalsUnavailable: () => true, selectMode: ref(false), selectedCount: ref(0),
-    dedupReclaimBytes: ref(0), dedupTrashGroupKey: ref(''), dedupDeleteFileIds: ref([]),
-    dedupDeletePreview: ref(null), dedupBulkFileCount: ref(0), dedupDeletePreviewRequest: 0, dedupDeletePreviewContext: null,
-    deletePermanently: ref(false), config: { settings: { deletePermanently: true } }, showTrashMsgbox: ref(false),
-    libConfig, similarScanKey: ref('test-scan'), isDedupPanelOpen: ref(true),
-    dedupDelete: async request => {
-      assert.equal(request.preview, true);
-      assert.deepEqual(request.fileIds, request.deleteAll ? null : [42]);
-      return { preview: { token: 'confirmed-plan', itemCount: 1, rawCompanionCount: 1, bytes: 120 } };
-    },
+    showTrashMsgbox: ref(false), showTrashFailedMsgbox: ref(false), isTrashDeleting: ref(false),
+    currentOriginalsUnavailable: () => true,
   };
-  const handlers = extractFunction(contentSource, 'const openTrashMsgbox =', 'const closeTrashMsgbox');
-  const { openTrashMsgbox, openDedupTrashMsgbox } = new Function(...Object.keys(deps),
-    ts.transpile(handlers, { target: ts.ScriptTarget.ES2022 }) + '; return { openTrashMsgbox, openDedupTrashMsgbox };'
+  const openFileDeletion = new Function(...Object.keys(deps),
+    extractFunction(contentSource, 'const openFileDeletion =', 'function showFileDeleteConfirmation(')
+      + '; return openFileDeletion;'
   )(...Object.values(deps));
-  openTrashMsgbox();
+  await openFileDeletion();
   assert.equal(deps.showTrashMsgbox.value, false);
-  await openDedupTrashMsgbox('group', [42]);
-  assert.equal(deps.showTrashMsgbox.value, true);
-  assert.deepEqual(deps.dedupDeleteFileIds.value, [42]);
-  assert.equal(deps.dedupDeletePreview.value.token, 'confirmed-plan');
-  assert.equal(deps.deletePermanently.value, true);
-  deps.deletePermanently.value = false;
-  await openDedupTrashMsgbox('all');
-  assert.equal(deps.deletePermanently.value, true);
-  assert.equal(deps.dedupBulkFileCount.value, 1);
-  assert.equal(deps.dedupDeletePreview.value.rawCompanionCount, 1);
-  assert.equal(deps.dedupReclaimBytes.value, 120);
 });
 
-test('confirmed ordinary and bulk dedup deletions remember their permanent-delete choice', async () => {
-  const config = { settings: { deletePermanently: false } };
-  const deletePermanently = ref(true);
-  const isDedupBulkTrash = ref(false);
+test('trash confirmation dispatches file-plan and dedup handlers', async () => {
   const calls = [];
   const deps = {
-    config, deletePermanently, isDedupBulkTrash, isTrashDeleting: ref(false),
+    isTrashDeleting: ref(false),
     dedupDeletePreviewContext: null,
-    onTrashFile: async () => calls.push('ordinary'),
-    onTrashAllDuplicates: async () => calls.push('bulk'),
+    fileDeletePlan: ref({ files: [] }),
+    executeFileDeletion: async () => { calls.push('file'); },
+    isDedupBulkTrash: ref(false),
+    onTrashAllDuplicates: async () => { calls.push('bulk'); },
+    onTrashDedupFiles: async () => { calls.push('dedup'); },
   };
   const confirm = new Function(...Object.keys(deps),
-    extractFunction(contentSource, 'const handleTrashMsgboxOk =', 'const onTrashFile =')
+    extractFunction(contentSource, 'const handleTrashMsgboxOk =', 'const onTrashDedupFiles =')
       + '; return handleTrashMsgboxOk;'
   )(...Object.values(deps));
-
   await confirm();
-  assert.equal(config.settings.deletePermanently, true);
-  deletePermanently.value = false;
-  isDedupBulkTrash.value = true;
+  assert.deepEqual(calls, ['file']);
+  deps.fileDeletePlan.value = null;
   await confirm();
-  assert.equal(config.settings.deletePermanently, false);
-  assert.deepEqual(calls, ['ordinary', 'bulk']);
+  assert.deepEqual(calls, ['file', 'dedup']);
+  deps.isDedupBulkTrash.value = true;
+  await confirm();
+  assert.deepEqual(calls, ['file', 'dedup', 'bulk']);
 });
 
 test('independent preview updates all visible panes on album recovery and ignores another library', async () => {
@@ -664,4 +630,30 @@ test('cancelled or superseded warmup cannot read an original after the attribute
     await fixture.flush();
     assert.deepEqual(fixture.reads, []);
   }
+});
+
+test('a stale file deletion plan warns and does not call the backend', async () => {
+  let calls = 0;
+  let warnings = 0;
+  let closes = 0;
+  const deps = {
+    libConfig: { _libraryId: 'test-library' },
+    currentContentRequestId: 2,
+    pendingScopeSelectionChange: false,
+    contentQueryRefreshPending: false,
+    toast: { warning: () => { warnings++; } },
+    t: key => key,
+    closeTrashMsgbox: () => { closes++; },
+    deletePermanently: ref(false),
+    rawPairDeleteScope: ref('both'),
+    batchDeleteFiles: async () => { calls++; return { deletedFileIds: [], failedCount: 0 }; },
+  };
+  const executeFileDeletion = new Function(...Object.keys(deps),
+    extractFunction(contentSource, 'async function executeFileDeletion(', 'const handleTrashMsgboxOk =')
+      + '; return executeFileDeletion;'
+  )(...Object.values(deps));
+  await executeFileDeletion({ libraryId: 'test-library', requestId: 1, files: [] });
+  assert.equal(warnings, 1);
+  assert.equal(calls, 0);
+  assert.equal(closes, 1);
 });

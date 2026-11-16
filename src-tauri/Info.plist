@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+  <key>NSAppleEventsUsageDescription</key>
+  <string>Finder moves files to the Trash so you can put them back in their original locations.</string>
   <key>CFBundleDevelopmentRegion</key>
   <string>en</string>
   <key>CFBundleAllowMixedLocalizations</key>

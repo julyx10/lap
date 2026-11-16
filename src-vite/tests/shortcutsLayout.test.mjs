@@ -30,6 +30,28 @@ const event = (overrides) => ({
 
 const cmd = (key, code, extra = {}) => event({ key, code, metaKey: true, ...extra });
 
+test("fullscreen follows the platform binding without intercepting Favorite", () => {
+  for (const platform of ["mac", "windows", "linux"]) {
+    const fullscreen = platform === "mac" ? cmd("f", "KeyF", { ctrlKey: true }) : event({ key: "F11" });
+    for (const context of ["content", "image-viewer"]) {
+      assert.deepEqual(findShortcutMatches(context, fullscreen, platform), ["view.toggleFullscreen"]);
+      assert.deepEqual(findShortcutMatches(context, event({ key: "f", code: "KeyF" }), platform), ["meta.favorite"]);
+    }
+  }
+});
+test("trash and permanent delete use distinct bindings", () => {
+  for (const platform of ["windows", "linux", "mac"]) {
+    const trash = event({ key: "Delete" });
+    const permanent = platform === "mac"
+      ? cmd("Backspace", "Backspace", { altKey: true })
+      : event({ key: "Delete", shiftKey: true });
+    assert.equal(matchesShortcut("file.trash", trash, platform), true);
+    assert.equal(matchesShortcut("file.deletePermanently", trash, platform), false);
+    assert.equal(matchesShortcut("file.trash", permanent, platform), false);
+    assert.equal(matchesShortcut("file.deletePermanently", permanent, platform), true);
+  }
+});
+
 test("QWERTY: Cmd-A selects all", () => {
   assert.equal(matchesShortcut("file.selectAll", cmd("a", "KeyA"), "mac"), true);
 });
@@ -160,7 +182,10 @@ test('editing, external opening and album moves have distinct bindings', () => {
       assert.deepEqual(findShortcutMatches('content', input, platform), [action]);
     }
     assert.deepEqual(findShortcutMatches('content', event({ key: 'i', code: 'KeyI' }), platform), ['meta.info']);
-    for (const letter of ['A', 'D', 'E', 'M']) {
+    for (const context of ['content', 'media-viewer', 'image-viewer']) {
+      assert.deepEqual(findShortcutMatches(context, event({ key: 'm', code: 'KeyM' }), platform), ['meta.edit']);
+    }
+    for (const letter of ['A', 'D', 'E']) {
       const input = event({ key: letter.toLowerCase(), code: 'Key' + letter });
       assert.deepEqual(findShortcutMatches('content', input, platform), []);
     }

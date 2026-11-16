@@ -343,7 +343,6 @@
     "unrated": "Sem classificação",
     "all_rated": "Todos avaliados",
     "rated": "Avaliado",
-    "mixed": "Vários",
     "clear_rating": "Limpar classificação",
     "five_stars": "5 estrelas",
     "four_stars": "4 estrelas",
@@ -617,6 +616,7 @@
       "keep_label": "Manter",
       "unkeep_label": "Não manter",
       "delete_selected": "Excluir selecionados",
+      "trash_all": "Mover tudo para a lixeira",
       "delete_all": "Excluir tudo",
       "move_selected_to_trash": "Mover para lixeira ({count} selecionados · {size})",
       "no_removable_files": "Não há itens removíveis para mover para a lixeira",
@@ -824,6 +824,7 @@
   },
   "msgbox": {
     "ok": "OK",
+    "save": "Salvar",
     "discard": "Descartar",
     "reset": "Redefinir",
     "cancel": "Cancelar",
@@ -966,6 +967,24 @@
       "invalid": "Insira um nome e um número inicial inteiro positivo.",
       "success": "{count} itens renomeados."
     },
+    "file_delete": {
+      "permanent_summary": "1 arquivo será excluído permanentemente. | {count} arquivos serão excluídos permanentemente.",
+      "trash_summary": "1 arquivo será movido para a lixeira. | {count} arquivos serão movidos para a lixeira.",
+      "title": "Excluir {count} arquivo permanentemente? | Excluir {count} arquivos permanentemente?",
+      "confirm": "Excluir {count} arquivo | Excluir {count} arquivos",
+      "irreversible": "Esta ação não pode ser desfeita.",
+      "mixed_hint": "Aplica-se apenas a pares RAW. Os demais itens selecionados são sempre excluídos por completo.",
+      "trash_unavailable": "Não foi possível mover estes arquivos para a lixeira. Talvez a lixeira não esteja disponível nesta unidade."
+    },
+    "raw_pair_delete": {
+      "scope": "Arquivos de pares RAW a excluir",
+      "both": "Ambos os arquivos",
+      "raw": "Somente RAW",
+      "companion": "Somente JPEG / HEIC",
+      "format": "Somente {format}",
+      "failed": "Falhas na exclusão: {count}."
+    },
+    "folder_delete_contents": "Isso inclui todos os arquivos e subpastas.",
     "move_to_trash": {
       "title": "Mover para o lixo",
       "file_content": "O arquivo '{file}' será movido para o lixo.",
@@ -986,7 +1005,6 @@
       "files_content": "{count} itens selecionados serão excluídos permanentemente.",
       "removable_files_content": "Todos os {count} itens removíveis serão excluídos permanentemente.",
       "folder_content": "A pasta '{folder}' será excluída permanentemente.",
-      "checkbox": "Excluir permanentemente (não pode ser desfeito)",
       "ok": "Excluir",
       "file_success": "O arquivo '{file}' foi excluído permanentemente.",
       "files_success": "{count} itens selecionados foram excluídos permanentemente.",
@@ -1000,7 +1018,7 @@
       "file_content": "O arquivo '{file}' não pôde ser movido para a lixeira.\n\nDeseja excluí-lo permanentemente em vez disso?",
       "files_content": "{count} itens selecionados não puderam ser movidos para a lixeira.\n\nDeseja excluí-los permanentemente em vez disso?",
       "folder_content": "A pasta '{folder}' não pôde ser movida para a lixeira.\n\nDeseja excluí-la permanentemente em vez disso?\n\nEsta ação não pode ser desfeita através da lixeira do sistema.",
-      "folder_partial_warning": "A tentativa anterior pode ter movido parte do conteúdo para a lixeira. A exclusão permanente removerá esta pasta e seu conteúdo restante.",
+      "folder_partial_warning": "A tentativa anterior pode ter movido parte do conteúdo para a lixeira.",
       "ok": "Excluir permanentemente"
     },
     "open_external_many": {
@@ -1173,13 +1191,13 @@
   },
   "file_info": {
     "metadata_placeholders": {
-      "e_title": "Insira um título curto",
-      "e_headline": "Insira um título para publicação",
-      "comments": "Descreva o conteúdo ou acrescente contexto",
-      "e_artist": "Insira um autor por linha",
-      "e_copyright": "Insira um aviso de direitos autorais"
+      "e_title": "Título curto",
+      "e_headline": "Manchete para publicação",
+      "comments": "Descreva o conteúdo ou adicione contexto",
+      "e_artist": "Nome",
+      "e_artist_hint": "Um por linha",
+      "e_copyright": "© {year} Nome"
     },
-    "edit_metadata_details": "Informações descritivas",
     "edit_metadata_no_fields": "Antes de editar os metadados, selecione pelo menos um campo da seção Organização em Personalizar campos.",
     "edit_metadata": "Editar metadados",
     "metadata_save_failed": "Não foi possível salvar os metadados",
@@ -1694,6 +1712,10 @@
       }
     },
     "advanced": {
+      "file_delete_behavior": "Ao excluir arquivos",
+      "file_delete_trash_hint": "Move um único arquivo para a lixeira sem confirmação",
+      "file_delete_permanent_hint": "A exclusão permanente sempre exige confirmação",
+      "file_delete_section": "Exclusão de arquivos",
       "title": "Avançado",
       "external_app": {
         "section_external_apps": "Apps externos",

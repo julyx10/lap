@@ -163,7 +163,7 @@
                 {{ $t('info_panel.dedup.compare') }}
               </PanelActionButton>
               <PanelActionButton :icon="IconTrash" :disabled="selectedSimilarCount === 0" danger @click="trashSelectedSimilar(activeSimilarGroup.id)">
-                {{ $t('info_panel.dedup.delete_selected') }}
+                {{ $t(config.settings.fileDeleteBehavior === 'permanent' ? 'menu.file.delete' : 'msgbox.move_to_trash.title') }}
               </PanelActionButton>
             </div>
             <TransitionGroup
@@ -332,7 +332,7 @@
             :disabled="totalDuplicateFileCount === 0 || duplicateAccessPending || hasUnavailableDuplicates"
             @click="trashAllDuplicates"
           >
-            {{ $t('info_panel.dedup.delete_all') }}
+            {{ $t(config.settings.fileDeleteBehavior === 'permanent' ? 'info_panel.dedup.delete_all' : 'info_panel.dedup.trash_all') }}
           </PanelActionButton>
         </section>
       <div ref="dedupSplitPaneRef" class="flex min-h-0 flex-1 flex-col">
@@ -418,7 +418,7 @@
               danger
               @click="trashSelectedDuplicates(activeGroup.id)"
             >
-              {{ $t('info_panel.dedup.delete_selected') }}
+              {{ $t(config.settings.fileDeleteBehavior === 'permanent' ? 'menu.file.delete' : 'msgbox.move_to_trash.title') }}
             </PanelActionButton>
           </div>
           <TransitionGroup

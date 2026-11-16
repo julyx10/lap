@@ -30,6 +30,7 @@ export type ShortcutActionId =
   | 'file.rename'
   | 'file.moveTo'
   | 'file.trash'
+  | 'file.deletePermanently'
   | 'file.reveal'
   | 'file.searchSimilar'
   | 'meta.favorite'
@@ -44,6 +45,7 @@ export type ShortcutActionId =
   | 'meta.culling.unreviewed'
   | 'meta.tag'
   | 'meta.collection'
+  | 'meta.edit'
   | 'meta.rotate'
   | 'meta.rotateCounterclockwise'
   | 'meta.info'
@@ -63,6 +65,7 @@ export type ShortcutActionId =
   | 'view.zoomFit'
   | 'view.cycleRawPreview'
   | 'view.toggleAfAreas'
+  | 'view.toggleFullscreen'
   | 'view.cycleBackground'
   | 'view.backgroundTheme'
   | 'view.backgroundBlack'
@@ -248,8 +251,16 @@ export const SHORTCUTS: readonly ShortcutDefinition[] = [
     id: 'file.trash',
     contexts: ['content'],
     defaultBindings: [
-      { key: 'Backspace', modifiers: ['meta'], platforms: ['mac'], allowShift: true, label: { mac: '⌘⌫' } },
-      { key: 'Delete', platforms: ['windows', 'linux'], allowShift: true, label: { windows: 'Del', linux: 'Del' } },
+      { key: 'Backspace', modifiers: ['meta'], platforms: ['mac'], label: { mac: '⌘⌫' } },
+      { key: 'Delete', label: { mac: '⌦', windows: 'Del', linux: 'Del' } },
+    ],
+  },
+  {
+    id: 'file.deletePermanently',
+    contexts: ['content'],
+    defaultBindings: [
+      { key: 'Backspace', modifiers: ['meta', 'alt'], platforms: ['mac'], label: { mac: '⌘⌥⌫' } },
+      { key: 'Delete', modifiers: ['shift'], platforms: ['windows', 'linux'], label: { windows: 'Shift+Del', linux: 'Shift+Del' } },
     ],
   },
   {
@@ -341,6 +352,11 @@ export const SHORTCUTS: readonly ShortcutDefinition[] = [
     id: 'meta.collection',
     contexts: ['content', 'media-viewer', 'image-viewer'],
     defaultBindings: [{ code: 'KeyB', label: 'B' }],
+  },
+  {
+    id: 'meta.edit',
+    contexts: ['content', 'media-viewer', 'image-viewer'],
+    defaultBindings: [{ code: 'KeyM', label: 'M' }],
   },
   {
     id: 'meta.rotate',
@@ -443,6 +459,14 @@ export const SHORTCUTS: readonly ShortcutDefinition[] = [
     id: 'view.cycleRawPreview',
     contexts: ['content', 'media-viewer', 'image-viewer'],
     defaultBindings: [{ code: 'KeyR', modifiers: ['alt'], label: { mac: '⌥R', windows: 'Alt+R', linux: 'Alt+R' } }],
+  },
+  {
+    id: 'view.toggleFullscreen',
+    contexts: ['content', 'media-viewer', 'image-viewer'],
+    defaultBindings: [
+      { code: 'KeyF', modifiers: ['ctrl', 'meta'], platforms: ['mac'], label: '⌃⌘F' },
+      { key: 'F11', platforms: ['windows', 'linux'], label: 'F11' },
+    ],
   },
   {
     id: 'view.toggleAfAreas',

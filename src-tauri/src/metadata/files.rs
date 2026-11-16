@@ -689,10 +689,22 @@ pub(crate) fn delete_orphans<'a>(
     media: impl IntoIterator<Item = &'a Path>,
     permanently: bool,
 ) -> Result<(), String> {
+    delete_orphans_protected(media, &[], permanently)
+}
+
+pub(crate) fn delete_orphans_protected<'a>(
+    media: impl IntoIterator<Item = &'a Path>,
+    protected_media: &[PathBuf],
+    permanently: bool,
+) -> Result<(), String> {
     let mut directories = HashMap::new();
     let mut seen = HashSet::new();
     let mut errors = Vec::new();
     let mut affected = Vec::new();
+    let protected_stems: HashSet<PathBuf> = protected_media.iter()
+        .flat_map(|path| [path.file_name(), path.file_stem()].into_iter().flatten()
+            .map(|stem| key(&parent(path).join(stem))))
+        .collect();
     for media in media {
         affected.push(media.to_path_buf());
         if fs::symlink_metadata(media).is_ok() {
@@ -716,10 +728,11 @@ pub(crate) fn delete_orphans<'a>(
                 continue;
             }
             if sidecar.file_stem().is_some_and(|base| {
-                directory
-                    .owners
-                    .get(base)
-                    .is_some_and(|owners| !owners.is_empty())
+                protected_stems.contains(&key(&folder.join(base)))
+                    || directory
+                        .owners
+                        .get(base)
+                        .is_some_and(|owners| !owners.is_empty())
             }) {
                 continue;
             }
@@ -904,6 +917,23 @@ mod tests {
         delete_orphans([jpg.as_path()], true).unwrap();
         assert!(!f.path("a.xmp").exists());
     }
+    #[test]
+    fn protected_media_only_preserves_sidecars_in_its_own_directory() {
+        let protected = Fixture::new();
+        let removed = Fixture::new();
+        let retained = protected.path("a.nef");
+        let protected_xmp = protected.write("a.xmp", b"shared");
+        let removed_xmp = removed.write("a.xmp", b"orphan");
+
+        delete_orphans_protected(
+            [protected.path("a.jpg").as_path(), removed.path("a.jpg").as_path()],
+            &[retained],
+            true,
+        ).unwrap();
+        assert!(protected_xmp.is_file());
+        assert!(!removed_xmp.exists());
+    }
+
     #[test]
     fn publish_failure_restores_every_source_and_removes_partial_targets() {
         let f = Fixture::new();

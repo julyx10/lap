@@ -343,7 +343,6 @@
     "unrated": "Sin valorar",
     "all_rated": "Todo valorado",
     "rated": "Valorado",
-    "mixed": "Varios",
     "clear_rating": "Quitar valoración",
     "five_stars": "5 estrellas",
     "four_stars": "4 estrellas",
@@ -617,6 +616,7 @@
       "keep_label": "Conservar",
       "unkeep_label": "No conservar",
       "delete_selected": "Eliminar seleccionados",
+      "trash_all": "Mover todo a la papelera",
       "delete_all": "Eliminar todo",
       "move_selected_to_trash": "Mover a papelera ({count} seleccionados · {size})",
       "no_removable_files": "No hay elementos eliminables para mover a la papelera",
@@ -824,6 +824,7 @@
   },
   "msgbox": {
     "ok": "Aceptar",
+    "save": "Guardar",
     "discard": "Descartar",
     "reset": "Restablecer",
     "cancel": "Cancelar",
@@ -966,6 +967,24 @@
       "invalid": "Introduce un nombre y un número inicial entero positivo.",
       "success": "Se renombraron {count} elementos."
     },
+    "file_delete": {
+      "permanent_summary": "Se eliminará permanentemente 1 archivo. | Se eliminarán permanentemente {count} archivos.",
+      "trash_summary": "Se moverá 1 archivo a la papelera. | Se moverán {count} archivos a la papelera.",
+      "title": "¿Eliminar {count} archivo permanentemente? | ¿Eliminar {count} archivos permanentemente?",
+      "confirm": "Eliminar {count} archivo | Eliminar {count} archivos",
+      "irreversible": "Esta acción no se puede deshacer.",
+      "mixed_hint": "Solo se aplica a pares RAW. Los demás elementos seleccionados se eliminan siempre por completo.",
+      "trash_unavailable": "No se pudieron mover estos archivos a la papelera. Es posible que no haya una papelera disponible en esta unidad."
+    },
+    "raw_pair_delete": {
+      "scope": "Archivos de pares RAW a eliminar",
+      "both": "Ambos archivos",
+      "raw": "Solo RAW",
+      "companion": "Solo JPEG / HEIC",
+      "format": "Solo {format}",
+      "failed": "Eliminaciones fallidas: {count}."
+    },
+    "folder_delete_contents": "Esto incluye todos los archivos y subcarpetas.",
     "move_to_trash": {
       "title": "Mover a la papelera",
       "file_content": "El archivo '{file}' se moverá a la papelera.",
@@ -986,7 +1005,6 @@
       "files_content": "{count} elementos seleccionados se eliminarán permanentemente.",
       "removable_files_content": "Se eliminarán permanentemente todos los {count} elementos eliminables.",
       "folder_content": "La carpeta '{folder}' se eliminará permanentemente.",
-      "checkbox": "Eliminar permanentemente (no se puede deshacer)",
       "ok": "Eliminar",
       "file_success": "El archivo '{file}' se eliminó permanentemente.",
       "files_success": "{count} elementos seleccionados se eliminaron permanentemente.",
@@ -1000,7 +1018,7 @@
       "file_content": "El archivo '{file}' no se pudo mover a la papelera.\n\n¿Quieres eliminarlo permanentemente en su lugar?",
       "files_content": "{count} elementos seleccionados no se pudieron mover a la papelera.\n\n¿Quieres eliminarlos permanentemente en su lugar?",
       "folder_content": "La carpeta '{folder}' no se pudo mover a la papelera.\n\n¿Quieres eliminarla permanentemente en su lugar?\n\nEsta acción no se puede deshacer desde la papelera del sistema.",
-      "folder_partial_warning": "Es posible que el intento anterior haya movido parte del contenido a la papelera. La eliminación permanente borrará esta carpeta y su contenido restante.",
+      "folder_partial_warning": "Es posible que el intento anterior haya movido parte del contenido a la papelera.",
       "ok": "Eliminar permanentemente"
     },
     "open_external_many": {
@@ -1173,13 +1191,13 @@
   },
   "file_info": {
     "metadata_placeholders": {
-      "e_title": "Introduce un título breve",
-      "e_headline": "Introduce un titular para publicar",
+      "e_title": "Título breve",
+      "e_headline": "Titular para publicación",
       "comments": "Describe el contenido o añade contexto",
-      "e_artist": "Introduce un autor por línea",
-      "e_copyright": "Introduce un aviso de derechos de autor"
+      "e_artist": "Nombre",
+      "e_artist_hint": "Uno por línea",
+      "e_copyright": "© {year} Nombre"
     },
-    "edit_metadata_details": "Datos descriptivos",
     "edit_metadata_no_fields": "Antes de editar los metadatos, selecciona al menos un campo de Organización en Personalizar campos.",
     "edit_metadata": "Editar metadatos",
     "metadata_save_failed": "No se pudieron guardar los metadatos",
@@ -1694,6 +1712,10 @@
       }
     },
     "advanced": {
+      "file_delete_behavior": "Al eliminar archivos",
+      "file_delete_trash_hint": "Mueve un solo archivo a la papelera sin confirmar",
+      "file_delete_permanent_hint": "La eliminación permanente siempre requiere confirmación",
+      "file_delete_section": "Eliminación de archivos",
       "title": "Avanzado",
       "external_app": {
         "section_external_apps": "Apps externas",

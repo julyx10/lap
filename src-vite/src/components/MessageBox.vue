@@ -4,6 +4,8 @@
       {{ message }}
     </div>
 
+    <slot />
+
     <label
       v-if="checkboxText"
       class="mt-3 flex items-start gap-2 text-sm cursor-pointer select-none"
@@ -52,6 +54,7 @@
       >{{ thirdText }}</button>
 
       <button v-if="cancelText.length > 0"
+        ref="cancelButton"
         class="t-button-default"
         :disabled="isLoading"
         @click="clickCancel"
@@ -67,7 +70,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
+import { ref, watch, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import { isValidFileName } from '@/common/utils';
 import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
@@ -142,6 +145,10 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
+  focusCancel: {
+    type: Boolean,
+    default: false
+  },
   // Optional key for persisting dialog position across sessions.
   // When empty, dialog always centers on mount (backward compatible).
   positionKey: {
@@ -159,6 +166,7 @@ const emit = defineEmits(['ok', 'cancel', 'reset', 'third', 'checkbox-change']);
 
 // input 
 const inputRef = ref<HTMLInputElement | null>(null);
+const cancelButton = ref<HTMLButtonElement | null>(null);
 const inputValue = ref(props.inputText);
 const needValidateInput = ref(props.needValidateInput);
 const inputErrorMessage = ref('');
@@ -171,6 +179,7 @@ const isInputValid = computed(() =>
 onMounted(async () => {
   window.addEventListener('keydown', handleKeyDown);
   uiStore.pushInputHandler('MessageBox');
+  if (props.focusCancel) void nextTick(() => cancelButton.value?.focus({ preventScroll: true }));
 
   if(props.showInput) { 
     setTimeout(() => {
@@ -212,8 +221,7 @@ function handleKeyDown(event: KeyboardEvent) {
 
   switch (key) {
     case 'Enter':
-      // Don't trigger OK if user is in an input or textarea
-      if (!isInputOrTextarea) {
+      if (!props.focusCancel && !isInputOrTextarea) {
         event.preventDefault();
         clickOk();
       }
@@ -238,6 +246,7 @@ const clickOk = () => {
 };
 
 const clickCancel = () => {
+  if (props.isLoading) return;
   emit('cancel');
 };
 

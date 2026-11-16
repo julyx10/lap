@@ -164,7 +164,7 @@
             danger
             @click="$emit('trash')"
           >
-            {{ $t('menu.file.delete') }}
+            {{ $t(config.settings.fileDeleteBehavior === 'permanent' ? 'menu.file.delete' : 'msgbox.move_to_trash.title') }}
           </PanelActionButton>
         </div>
 
@@ -200,6 +200,7 @@
 </template>
 
 <script setup lang="ts">
+import { config } from '@/common/config';
 import { SELECTED_THUMBNAIL_LIMIT } from '@/common/constants';
 import { computed, type CSSProperties } from 'vue';
 import { useI18n } from 'vue-i18n';

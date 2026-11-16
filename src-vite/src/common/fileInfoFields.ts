@@ -45,3 +45,8 @@ export function normalizeFileInfoFields(value: unknown): string[] {
   const selected = new Set(Array.isArray(value) ? value : defaultFileInfoFields);
   return allFileInfoFields.filter(key => selected.has(key));
 }
+
+export function getVisibleEditableMetadataFields(value: unknown) {
+  const selected = new Set(normalizeFileInfoFields(value));
+  return editableMetadataFields.filter(field => selected.has(`organization.${field.key}`));
+}

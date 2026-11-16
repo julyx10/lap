@@ -1,1 +1,2 @@
 CFBundleDisplayName = "Lap";
+NSAppleEventsUsageDescription = "Finder がファイルをゴミ箱に移動するため、元の場所に戻せます。";

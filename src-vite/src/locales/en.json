@@ -343,7 +343,6 @@
     "unrated": "Unrated",
     "all_rated": "All rated",
     "rated": "Rated",
-    "mixed": "Various",
     "clear_rating": "Clear rating",
     "five_stars": "5 stars",
     "four_stars": "4 stars",
@@ -617,9 +616,10 @@
       "keep_label": "Keep",
       "unkeep_label": "Unkeep",
       "delete_selected": "Delete Selected",
+      "trash_all": "Move all to trash",
       "delete_all": "Delete all",
       "move_selected_to_trash": "Move to trash ({count} selected · {size})",
-      "no_removable_files": "No removable items to move to Trash",
+      "no_removable_files": "No removable items to move to trash",
       "set_keep": "Keep",
       "removable_copies_summary": "{count} removable copies · {size}",
       "similar_items_summary": "{count} similar items · {size}"
@@ -824,6 +824,7 @@
   },
   "msgbox": {
     "ok": "OK",
+    "save": "Save",
     "discard": "Discard",
     "reset": "Reset",
     "cancel": "Cancel",
@@ -966,6 +967,24 @@
       "invalid": "Enter a name and a positive integer start number.",
       "success": "Renamed {count} items."
     },
+    "file_delete": {
+      "permanent_summary": "1 file will be permanently deleted. | {count} files will be permanently deleted.",
+      "trash_summary": "1 file will be moved to trash. | {count} files will be moved to trash.",
+      "title": "Delete {count} file permanently? | Delete {count} files permanently?",
+      "confirm": "Delete {count} file | Delete {count} files",
+      "irreversible": "This can’t be undone.",
+      "mixed_hint": "Applies to RAW pairs only. Other selected items are always deleted in full.",
+      "trash_unavailable": "These files couldn’t be moved to trash. Trash may be unavailable on this drive."
+    },
+    "raw_pair_delete": {
+      "scope": "RAW pair files to delete",
+      "both": "Both files",
+      "raw": "RAW only",
+      "companion": "JPEG / HEIC only",
+      "format": "{format} only",
+      "failed": "One deletion failed. | {count} deletions failed."
+    },
+    "folder_delete_contents": "This includes all files and subfolders.",
     "move_to_trash": {
       "title": "Move to trash",
       "file_content": "The file '{file}' will be trashed.",
@@ -986,7 +1005,6 @@
       "files_content": "{count} selected items will be permanently deleted.",
       "removable_files_content": "All {count} removable items will be permanently deleted.",
       "folder_content": "The folder '{folder}' will be permanently deleted.",
-      "checkbox": "Delete permanently (cannot be undone)",
       "ok": "Delete",
       "file_success": "The file '{file}' has been permanently deleted.",
       "files_success": "{count} selected items have been permanently deleted.",
@@ -999,8 +1017,8 @@
       "title": "Trash failed",
       "file_content": "The file '{file}' could not be moved to trash.\n\nDo you want to permanently delete it instead?",
       "files_content": "{count} selected items could not be moved to trash.\n\nDo you want to permanently delete them instead?",
-      "folder_content": "The folder '{folder}' could not be moved to trash.\n\nDo you want to permanently delete it instead?\n\nThis cannot be undone through the system Trash.",
-      "folder_partial_warning": "The previous attempt may have moved some contents to Trash. Permanent deletion will remove this folder and its remaining contents.",
+      "folder_content": "The folder '{folder}' could not be moved to trash.\n\nDo you want to permanently delete it instead?\n\nThis cannot be undone through the system trash.",
+      "folder_partial_warning": "The previous attempt may have moved some contents to trash.",
       "ok": "Delete permanently"
     },
     "open_external_many": {
@@ -1173,13 +1191,13 @@
   },
   "file_info": {
     "metadata_placeholders": {
-      "e_title": "Enter a short title",
-      "e_headline": "Enter a headline for publication",
+      "e_title": "Short title",
+      "e_headline": "Headline for publication",
       "comments": "Describe the content or add context",
-      "e_artist": "Enter one creator per line",
-      "e_copyright": "Enter a copyright notice"
+      "e_artist": "Name",
+      "e_artist_hint": "One per line",
+      "e_copyright": "© {year} Name"
     },
-    "edit_metadata_details": "Descriptive Details",
     "edit_metadata_no_fields": "Select at least one Organization field in Customize Fields before editing metadata.",
     "edit_metadata": "Edit metadata",
     "metadata_save_failed": "Could not save metadata",
@@ -1694,6 +1712,10 @@
       }
     },
     "advanced": {
+      "file_delete_section": "File deletion",
+      "file_delete_behavior": "When deleting files",
+      "file_delete_trash_hint": "Move a single file to trash without confirmation",
+      "file_delete_permanent_hint": "Always confirm before permanent deletion",
       "title": "Advanced",
       "external_app": {
         "section_external_apps": "External apps",

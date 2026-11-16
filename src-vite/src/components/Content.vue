@@ -508,7 +508,7 @@
             @copy-to-folder="onCopyToFolder"
             @copy-to-clipboard="clickCopyImages()"
             @remove-from-collection="removeSelectedFromCollection"
-            @trash="openTrashMsgbox()"
+            @trash="openFileDeletion()"
             @rename="clickRename"
             @favorite-all="selectModeSetFavorites(true)"
             @unfavorite-all="selectModeSetFavorites(false)"
@@ -620,21 +620,53 @@
     @resolve="resolveFileConflict"
   />
 
-  <!-- move to trash -->
   <MessageBox
     v-if="showTrashMsgbox"
-    :title="trashMsgboxTitle"
-    :message="trashMsgboxMessage"
-    :OkText="trashMsgboxOkText"
+    :title="deletePermanently ? $t('msgbox.file_delete.title', deleteConfirmationCount) : $t('msgbox.move_to_trash.title')"
+    :message="fileDeletePlan ? undefined : trashMsgboxMessage"
+    :OkText="deletePermanently ? $t('msgbox.file_delete.confirm', deleteConfirmationCount) : $t('msgbox.move_to_trash.ok')"
     :cancelText="$t('msgbox.cancel')"
     :warningOk="true"
-    :checkboxText="$t('msgbox.permanent_delete.checkbox')"
-    :checkboxChecked="deletePermanently"
+    :focusCancel="true"
     :isLoading="isTrashDeleting"
     @ok="handleTrashMsgboxOk"
     @cancel="closeTrashMsgbox"
-    @checkbox-change="deletePermanently = $event"
-  />
+  >
+    <template v-if="fileDeletePlan">
+      <p class="text-sm">
+        {{ fileDeleteSubtitle }}
+        {{ deletePermanently ? $t('msgbox.file_delete.irreversible') : '' }}
+      </p>
+      <p v-if="fileDeletePlan.trashUnavailable" class="mt-2 text-sm text-warning">
+        {{ $t('msgbox.file_delete.trash_unavailable') }}
+      </p>
+    </template>
+    <div v-if="deletePreviewFiles.length" class="my-4 flex flex-wrap gap-3 rounded-box border border-base-content/10 bg-base-300/30 p-3">
+      <div v-for="file in deletePreviewFiles" :key="file.id"
+        class="relative h-12 w-12 shrink-0" :title="file.name">
+        <div v-if="file.rawPair" class="absolute inset-0 translate-x-1 translate-y-1 rounded-box border border-base-content/20 bg-base-300"></div>
+        <img :src="fileDeleteThumbnails[file.id] || file.thumbnail || thumbnailPlaceholder" :alt="file.name"
+          class="relative h-full w-full rounded-box border border-base-content/20 bg-base-300 object-cover" />
+      </div>
+      <span v-if="deletePreviewItemCount > fileDeletePreviewLimit"
+        class="flex h-12 w-12 shrink-0 items-center justify-center rounded-box bg-base-300 text-sm">
+        +{{ deletePreviewItemCount - fileDeletePreviewLimit }}
+      </span>
+    </div>
+    <template v-if="fileDeletePlan">
+      <div v-if="rawPairDeleteCount" class="rounded-box border border-base-content/5 bg-base-300/30 p-3">
+        <label class="flex items-center justify-between gap-4 text-sm">
+          <span>{{ $t('msgbox.raw_pair_delete.scope') }}</span>
+          <select v-model="rawPairDeleteScope" class="select select-bordered select-sm w-40 shrink-0" :disabled="isTrashDeleting">
+            <option v-for="choice in rawPairDeleteChoices" :key="choice.value" :value="choice.value">
+              {{ choice.label }}
+            </option>
+          </select>
+        </label>
+        <p v-if="singleDeleteCount" class="mt-2 text-xs text-base-content/70">{{ $t('msgbox.file_delete.mixed_hint') }}</p>
+      </div>
+    </template>
+  </MessageBox>
 
   <MessageBox
     v-if="showTrashFailedMsgbox"
@@ -765,12 +797,13 @@
 </template>
 
 <script setup lang="ts">
+import { getVisibleEditableMetadataFields } from '@/common/fileInfoFields';
 import EditMetadataDialog from "@/components/EditMetadataDialog.vue";
 import { externalDragKind, updateExternalDrag, resetExternalDrag, finishExternalDrag } from '@/common/externalDrag';
 import { getExternalDropUris, getExternalHttpDropUrls, getExternalFileDropPaths, fileUrlToPath, hasExternalDropIntent } from '@/common/externalDrop';
 
 import PrintImage from '@/components/PrintImage.vue';
-import { defineAsyncComponent, ref, watch, computed, createVNode, onMounted, onBeforeUnmount, nextTick, render, markRaw } from 'vue';
+import { defineAsyncComponent, ref, shallowRef, watch, computed, createVNode, onMounted, onBeforeUnmount, nextTick, render, markRaw } from 'vue';
 import { emit as tauriEmit, listen } from '@tauri-apps/api/event';
 import { ask, open as openDialog } from '@tauri-apps/plugin-dialog';
 import { WebviewWindow, getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
@@ -780,7 +813,7 @@ import { useToast } from '@/common/toast';
 import { useUIStore } from '@/stores/uiStore';
 import { getAlbum, getAllAlbums, recountAlbum, getQueryCountAndSum, getQueryTimeLine, getQueryFiles, getFilesByIds, getGroupedQueryRows, getGroupedFilePosition, getGroupFileIds, getQueryFileIds, syncAlbumFolderMtimes, reconcileRawJpegPairs,
          getSmartQueryCountAndSum, getSmartQueryTimeLine, getSmartQueryFiles, getSmartGroupedQueryRows, getSmartGroupFileIds, getSmartQueryFileIds, getSmartQueryFilePosition,
-         copyImages, renameFile, moveFile, moveFileOutsideLibrary, copyFile, withFileTransferBatch, deleteFile, deleteFilePermanently, batchDeleteFiles, getFileThumb, getFileThumbs, getFileInfo,
+         copyImages, renameFile, moveFile, moveFileOutsideLibrary, copyFile, withFileTransferBatch, batchDeleteFiles, getFileThumb, getFileThumbById, getFileThumbs, getFileInfo,
          setFileRotate, setFileFavorite, setFileRating, setFileCullingFlag, batchUpdateFileMetadata, getTagsForFile, searchSimilarImages, generateEmbedding,
          revealPath, getTagName, indexAlbum, listenIndexProgress, listenIndexFinished, setAlbumCover, setDesktopWallpaper,
          updateFileInfo, refreshFileInfo, changeVideoThumbnail, getSupportedFormatExtensions, importFiles, importUrl, importFileBytes, getDragPayload, importClipboard, addFileToDb, checkFileExists, checkFileAccessibility, isCloudOnlyFile, cancelIndexing as cancelIndexingApi, selectFolder, getFacesForFile, listenFaceIndexProgress,
@@ -2244,6 +2277,47 @@ const fileConflictDialog = ref({
 });
 let fileConflictResolver: ((result: { policy: FileConflictPolicy; applyAll: boolean }) => void) | null = null;
 const showTrashMsgbox = ref(false);
+type RawPairDeleteScope = 'both' | 'raw' | 'companion';
+const rawPairDeleteScope = ref<RawPairDeleteScope>('both');
+type FileDeleteItem = {
+  id: number;
+  name: string;
+  file_path: string;
+  album_id?: number;
+  thumbnail?: string;
+  rawPair: boolean;
+  companion?: { id: number; file_path: string };
+};
+const fileDeletePlan = shallowRef<{
+  libraryId: string;
+  requestId: number;
+  files: FileDeleteItem[];
+  trashUnavailable?: boolean;
+} | null>(null);
+const fileDeleteThumbnails = ref<Record<number, string>>({});
+const fileDeletePreviewLimit = 5;
+const rawPairDeleteCount = computed(() => fileDeletePlan.value?.files.filter(file => file.rawPair).length ?? 0);
+const singleDeleteCount = computed(() => (fileDeletePlan.value?.files.length ?? 0) - rawPairDeleteCount.value);
+const fileDeleteCount = computed(() => (fileDeletePlan.value?.files ?? []).reduce((count, file) =>
+  count + (file.companion && (!file.rawPair || rawPairDeleteScope.value === 'both') ? 2 : 1), 0));
+const fileDeleteSubtitle = computed(() => t(deletePermanently.value
+  ? 'msgbox.file_delete.permanent_summary' : 'msgbox.file_delete.trash_summary', fileDeleteCount.value));
+const rawPairCompanionFormat = computed(() => {
+  const formats = new Set(fileDeletePlan.value?.files.filter(file => file.rawPair).map(file =>
+    /\.jpe?g$/i.test(file.companion?.file_path || '') ? 'JPEG'
+      : /\.(heic|heif|hif)$/i.test(file.companion?.file_path || '') ? 'HEIC' : ''));
+  return formats.size === 1 ? [...formats][0] : '';
+});
+const rawPairDeleteChoices = computed(() => {
+  const format = rawPairCompanionFormat.value;
+  return [
+    { value: 'both', label: t('msgbox.raw_pair_delete.both') },
+    { value: 'raw', label: t('msgbox.raw_pair_delete.raw') },
+    { value: 'companion', label: format
+      ? t('msgbox.raw_pair_delete.format', { format })
+      : t('msgbox.raw_pair_delete.companion') },
+  ];
+});
 const isTrashDeleting = ref(false);
 const showTrashFailedMsgbox = ref(false);
 const showExternalOpenWarningMsgbox = ref(false);
@@ -2253,13 +2327,19 @@ const deletePermanently = ref(false);
 const pendingTrashFailedItems = ref<any[]>([]);
 const pendingTrashFailedDedupGroupKey = ref('');
 const pendingTrashFailedOtherFailureCount = ref(0);
-const dedupReclaimBytes = ref(0);
 const dedupTrashGroupKey = ref('');
 const dedupDeleteFileIds = ref<number[]>([]);
 const dedupBulkFileCount = ref(0);
-type DedupDeletePreview = { token: string; itemCount: number; bytes: number };
+type DedupDeletePreview = { token: string; itemCount: number; fileCount: number; previewFileIds: number[]; bytes: number };
+const dedupDeleteSamples = shallowRef<FileDeleteItem[]>([]);
 const dedupDeletePreview = ref<DedupDeletePreview | null>(null);
 const pendingDedupRetryPreview = ref<DedupDeletePreview | null>(null);
+const deleteConfirmationCount = computed(() => fileDeletePlan.value
+  ? fileDeleteCount.value : dedupDeletePreview.value?.fileCount ?? 0);
+const deletePreviewFiles = computed(() => fileDeletePlan.value
+  ? fileDeletePlan.value.files.slice(0, fileDeletePreviewLimit) : dedupDeleteSamples.value);
+const deletePreviewItemCount = computed(() => fileDeletePlan.value?.files.length ?? dedupDeletePreview.value?.itemCount ?? 0);
+
 let dedupDeletePreviewContext: { libraryId: string; scanKey: string } | null = null;
 let dedupDeletePreviewRequest = 0;
 const dedupPaneRef = ref<InstanceType<typeof DedupPane> | null>(null);
@@ -2508,15 +2588,76 @@ async function removeSelectedFromCollection() {
   toast.success(t('collection.removed_toast', { count: fileIds.length }));
 }
 
-const openTrashMsgbox = () => {
-  if (currentOriginalsUnavailable()) return;
-  if (selectMode.value && selectedCount.value === 0) return;
-  dedupDeletePreviewRequest++;
-  deletePermanently.value = config.settings.deletePermanently === true;
-  showTrashMsgbox.value = true;
+const openFileDeletion = async (action: 'preference' | 'trash' | 'permanent' = 'preference') => {
+  if (showTrashMsgbox.value || showTrashFailedMsgbox.value || isTrashDeleting.value || currentOriginalsUnavailable()) return;
+  const preview = ++dedupDeletePreviewRequest;
+  const libraryId = libConfig._libraryId;
+  const requestId = currentContentRequestId;
+  const multiple = selectMode.value;
+  const files = multiple
+    ? await getActionableSelectedItemsForAction()
+    : [fileList.value[selectedItemIndex.value]].filter(isRealFileItem);
+  if (!files?.length || preview !== dedupDeletePreviewRequest || libraryId !== libConfig._libraryId
+    || requestId !== currentContentRequestId || pendingScopeSelectionChange || contentQueryRefreshPending
+    || multiple !== selectMode.value || (multiple && selectedFileIds.size > 0
+      && (files.length !== selectedFileIds.size || files.some(file => !selectedFileIds.has(Number(file.id)))))) {
+    if (preview === dedupDeletePreviewRequest && libraryId === libConfig._libraryId) {
+      toast.warning(t('info_panel.selection_load_failed'));
+    }
+    return;
+  }
+  const plan = {
+    libraryId,
+    requestId,
+    files: files.map((file): FileDeleteItem => {
+      const rawPair = Boolean(config.settings.groupRawJpegPairs && file.media_subtype === 'raw_jpeg_pair'
+        && file.live_photo_video_id && file.live_photo_video_path);
+      return {
+        id: file.id, name: file.name, file_path: file.file_path, album_id: file.album_id, thumbnail: file.thumbnail, rawPair,
+        companion: (rawPair || file.media_subtype === 'live_photo') && file.live_photo_video_id && file.live_photo_video_path
+          ? { id: file.live_photo_video_id, file_path: file.live_photo_video_path } : undefined,
+      };
+    }),
+  };
+  rawPairDeleteScope.value = 'both';
+  deletePermanently.value = action === 'permanent' || (action === 'preference' && config.settings.fileDeleteBehavior === 'permanent');
+  const proceed = () => {
+    if (deletePermanently.value || plan.files.length > 1 || plan.files.some(file => file.companion)) {
+      showFileDeleteConfirmation(plan);
+      return;
+    }
+    isTrashDeleting.value = true;
+    void executeFileDeletion(plan).finally(() => { isTrashDeleting.value = false; });
+  };
+  if (hasUnsavedChanges.value) {
+    pendingAction.value = proceed;
+    showUnsavedChangesMsgbox.value = true;
+    return;
+  }
+  proceed();
 };
 
+function showFileDeleteConfirmation(plan: NonNullable<typeof fileDeletePlan.value>) {
+  fileDeletePlan.value = plan;
+  fileDeleteThumbnails.value = {};
+  showTrashMsgbox.value = true;
+  loadDeleteThumbnails(plan.files.slice(0, fileDeletePreviewLimit),
+    () => fileDeletePlan.value === plan && plan.libraryId === libConfig._libraryId);
+}
+
+function loadDeleteThumbnails(files: FileDeleteItem[], isCurrent: () => boolean) {
+  for (const file of files) {
+    if (file.thumbnail && file.thumbnail !== thumbnailPlaceholder) continue;
+    void getFileThumbById(file.id, config.settings.thumbnailSize).then(thumb => {
+      if (!isCurrent() || !thumb) return;
+      const thumbnail = getThumbnailDataUrl(thumb, thumbnailPlaceholder, false, config.settings.thumbnailSize);
+      fileDeleteThumbnails.value[file.id] = thumbnail;
+    });
+  }
+}
+
 const openDedupTrashMsgbox = async (groupKey: string, fileIds: number[] = []) => {
+  if (showTrashMsgbox.value || isTrashDeleting.value) return;
   const requestId = ++dedupDeletePreviewRequest;
   const libraryId = libConfig._libraryId;
   const scanKey = similarScanKey.value;
@@ -2538,12 +2679,26 @@ const openDedupTrashMsgbox = async (groupKey: string, fileIds: number[] = []) =>
     }
     dedupDeletePreviewContext = { libraryId, scanKey };
     dedupDeletePreview.value = preview;
-    dedupReclaimBytes.value = preview.bytes;
     dedupBulkFileCount.value = deleteAll ? preview.itemCount : 0;
     dedupTrashGroupKey.value = groupKey;
     dedupDeleteFileIds.value = fileIds;
-    deletePermanently.value = config.settings.deletePermanently === true;
+    deletePermanently.value = config.settings.fileDeleteBehavior === 'permanent';
+    if (!deletePermanently.value && !deleteAll && preview.fileCount === 1) {
+      await handleTrashMsgboxOk();
+      return;
+    }
     showTrashMsgbox.value = true;
+    fileDeleteThumbnails.value = {};
+    const samples = await getFilesByIds(preview.previewFileIds);
+    if (!isCurrent() || !showTrashMsgbox.value || !Array.isArray(samples)) return;
+    const byId = new Map(samples.map(file => [Number(file.id), file]));
+    dedupDeleteSamples.value = preview.previewFileIds.flatMap((id: number) => {
+      const file = byId.get(id);
+      if (!file) return [];
+      return [{ id, name: file.name, file_path: file.file_path, thumbnail: file.thumbnail,
+        rawPair: Boolean(config.settings.groupRawJpegPairs && file.media_subtype === 'raw_jpeg_pair') }];
+    });
+    loadDeleteThumbnails(dedupDeleteSamples.value, () => isCurrent() && showTrashMsgbox.value);
   } catch (error) {
     if (!isCurrent()) return;
     console.error('Failed to preview dedup deletion:', error);
@@ -2555,8 +2710,9 @@ const closeTrashMsgbox = () => {
   dedupDeletePreviewRequest++;
   dedupDeletePreviewContext = null;
   dedupDeletePreview.value = null;
+  dedupDeleteSamples.value = [];
   showTrashMsgbox.value = false;
-  dedupReclaimBytes.value = 0;
+  fileDeletePlan.value = null;
   dedupTrashGroupKey.value = '';
   dedupDeleteFileIds.value = [];
   dedupBulkFileCount.value = 0;
@@ -2565,38 +2721,15 @@ const closeTrashMsgbox = () => {
 const isDedupBulkTrash = computed(() => dedupBulkFileCount.value > 0);
 const isDedupTrash = computed(() => dedupDeleteFileIds.value.length > 0 || isDedupBulkTrash.value);
 
-const trashMsgboxTitle = computed(() => {
-  if (deletePermanently.value) {
-    return localeMsg.value.msgbox.permanent_delete.title;
-  }
-  return localeMsg.value.msgbox.move_to_trash.title;
-});
-
-const trashMsgboxOkText = computed(() => {
-  if (deletePermanently.value) {
-    return localeMsg.value.msgbox.permanent_delete.ok;
-  }
-  return localeMsg.value.msgbox.move_to_trash.ok;
-});
-
 const trashMsgboxMessage = computed(() => {
-  const deleteCount = dedupDeletePreview.value?.itemCount ?? selectedCount.value;
-  const base = isDedupBulkTrash.value
-    ? t(
-        deletePermanently.value
-          ? 'msgbox.permanent_delete.removable_files_content'
-          : 'msgbox.move_to_trash.removable_files_content',
-        { count: deleteCount.toLocaleString() },
-      )
-    : deletePermanently.value
-    ? ((isDedupTrash.value || selectMode.value)
-        ? localeMsg.value.msgbox.permanent_delete.files_content.replace('{count}', deleteCount.toLocaleString())
-        : localeMsg.value.msgbox.permanent_delete.file_content.replace('{file}', fileList.value[selectedItemIndex.value]?.name || ''))
-    : ((isDedupTrash.value || selectMode.value)
-        ? localeMsg.value.msgbox.move_to_trash.files_content.replace('{count}', deleteCount.toLocaleString())
-        : localeMsg.value.msgbox.move_to_trash.file_content.replace('{file}', fileList.value[selectedItemIndex.value]?.name || ''));
-  if (dedupReclaimBytes.value <= 0 || !(isDedupTrash.value || selectMode.value)) return base;
-  return `${base}\n${localeMsg.value.info_panel.dedup.reclaimable_size}: ${formatFileSize(dedupReclaimBytes.value)}`;
+  const preview = dedupDeletePreview.value;
+  if (!preview) return '';
+  const action = deletePermanently.value ? 'permanent_delete' : 'move_to_trash';
+  const message = t(`msgbox.${action}.${isDedupBulkTrash.value ? 'removable_files_content' : 'files_content'}`,
+    { count: preview.fileCount.toLocaleString() });
+  return preview.bytes > 0
+    ? `${message}\n${t('info_panel.dedup.reclaimable_size')}: ${formatFileSize(preview.bytes)}`
+    : message;
 });
 
 const trashFailedMsgboxMessage = computed(() => {
@@ -2624,7 +2757,7 @@ const confirmTrashFailedPermanentDelete = async () => {
       dedupTrashGroupKey.value = retryDedupGroupKey;
       dedupDeleteFileIds.value = retryItems.map(item => Number(item.id)).filter(id => id > 0);
     }
-    await onTrashFile(retryItems, retryToken);
+    if (retryItems.length && retryDedupGroupKey) await onTrashDedupFiles(retryToken);
   } finally {
     pendingTrashFailedItems.value = [];
     pendingTrashFailedDedupGroupKey.value = '';
@@ -4754,7 +4887,7 @@ function handleItemAction(payload: { action: string, index: number }) {
     'move-within-library': () => showMoveTo.value = true,
     'move-to-folder': () => void onMoveToFolder(),
     'copy-to-folder': () => void onCopyToFolder(),
-    'trash': () => openTrashMsgbox(),
+    'trash': () => openFileDeletion(),
     'remove-from-collection': () => {
       if (currentQuerySource.value === 'collection' && currentCollectionId.value) {
         void removeFileFromCurrentCollection(selectedItemIndex.value);
@@ -5151,6 +5284,12 @@ function handleLocalKeyDown(event: KeyboardEvent) {
     if (!event.repeat && getActivePreviewMediaRef()?.cycleRawPreview?.()) event.preventDefault();
     return;
   }
+  if (getActivePreviewMode() !== 'none' && matchesShortcut('view.toggleFullscreen', event, shortcutPlatform)) {
+    if (target.tagName === 'SELECT') return;
+    event.preventDefault();
+    if (!event.repeat) void getActivePreviewMediaRef()?.toggleFullScreen?.();
+    return;
+  }
   if (getActivePreviewMode() !== 'none' && matchesShortcut('view.toggleAfAreas', event, shortcutPlatform)) {
     if (target.tagName === 'SELECT') return;
     event.preventDefault();
@@ -5210,6 +5349,12 @@ function handleLocalKeyDown(event: KeyboardEvent) {
     event.preventDefault();
     if (selectMode.value && selectedCount.value === 0) return;
     void clickTag();
+    return;
+  }
+
+  if (matchesShortcut('meta.edit', event, shortcutPlatform)) {
+    event.preventDefault();
+    if (!event.repeat) void openCommentEditor();
     return;
   }
 
@@ -5464,9 +5609,12 @@ const handleKeyDown = (e: any) => {
     if (file && (file.file_type === 1 || file.file_type === 3)) {
       void openImageEditor(selectedItemIndex.value);
     }
+  } else if (matchesShortcut('file.deletePermanently', event, shortcutPlatform)) {
+    event.preventDefault?.();
+    if (!event.repeat) void openFileDeletion('permanent');
   } else if (matchesShortcut('file.trash', event, shortcutPlatform)) {
-    if (selectMode.value && selectedCount.value === 0) return;
-    openTrashMsgbox();
+    event.preventDefault?.();
+    if (!event.repeat) void openFileDeletion('trash');
   } else if (key === 'ArrowUp' || key === 'ArrowDown') {
     if (event.shiftKey && !event.ctrlKey && !event.metaKey && !event.altKey && !isFilmstripView.value
       && toggleKeyboardSelection(key === 'ArrowDown' ? 'down' : 'up')) return;
@@ -9538,20 +9686,14 @@ async function handleDropUrls(
   }
 }
 
-const getDeleteFileSuccessMessage = (fileName: string, permanently: boolean) =>
-  permanently
-    ? localeMsg.value.msgbox.permanent_delete.file_success.replace('{file}', fileName)
-    : localeMsg.value.msgbox.move_to_trash.file_success.replace('{file}', fileName);
-
 const getDeleteFilesSuccessMessage = (count: number, permanently: boolean) =>
   permanently
     ? localeMsg.value.msgbox.permanent_delete.files_success.replace('{count}', count.toLocaleString())
     : localeMsg.value.msgbox.move_to_trash.files_success.replace('{count}', count.toLocaleString());
-
-const getDeleteFileErrorMessage = (permanently: boolean) =>
-  permanently
-    ? localeMsg.value.msgbox.permanent_delete.file_error
-    : localeMsg.value.msgbox.move_to_trash.file_error;
+const getDeleteSuccessMessage = (count: number, permanently: boolean, fileName = '') =>
+  count === 1
+    ? t(permanently ? 'msgbox.permanent_delete.file_success' : 'msgbox.move_to_trash.file_success', { file: fileName })
+    : getDeleteFilesSuccessMessage(count, permanently);
 
 const getDeleteFilesErrorMessage = (permanently: boolean) =>
   permanently
@@ -9588,6 +9730,162 @@ const onTrashAllDuplicates = async () => {
   }
 };
 
+function removeDeletedRows(deleted: Set<number>) {
+  if (groupedModeActive.value || isMapView.value || isLoading.value) return false;
+  const oldIndex = selectedItemIndex.value;
+  let index = oldIndex;
+  let removedSize = 0;
+  const remaining = fileList.value.filter((file, position) => {
+    if (!deleted.has(file?.id)) return true;
+    if (position < oldIndex) index--;
+    removedSize += getMediaItemSize(file);
+    return false;
+  });
+  // Unloaded positions have no file IDs and cannot be shifted safely.
+  if (fileList.value.length - remaining.length !== deleted.size) return false;
+  const selectedIds = new Set([...selectedFileIds].filter(id => !deleted.has(id)));
+  if (selectMode.value && remaining.filter(file => selectedIds.has(file?.id)).length !== selectedIds.size) return false;
+  invalidateThumbnailRequests();
+  const request = ++currentContentRequestId;
+  countedFolderRequestId.value = request;
+  visibleRangeSeqId++;
+  const range = lastVisibleRange;
+  lastVisibleRange = { start: -1, end: -1 };
+  fileList.value = remaining;
+  totalFileCount.value = Math.max(0, totalFileCount.value - deleted.size);
+  totalFileSize.value = Math.max(0, totalFileSize.value - removedSize);
+  selectedItemIndex.value = Math.min(index, remaining.length - 1);
+  if (selectMode.value) {
+    rebuildSelectionAfterListMutation(selectedIds);
+    lastSelectedIndex.value = -1;
+    keyboardSelectionAnchorIndex.value = -1;
+  }
+  refreshFileGeometryLayout();
+  if (selectedItemIndex.value === oldIndex && oldIndex >= 0) {
+    void updateSelectedImage(oldIndex);
+    if (!suppressImageViewerSync) void syncSelectionToImageViewer(oldIndex);
+  }
+  if (isPendingFileItem(remaining[selectedItemIndex.value])) {
+    void fetchDataRange(selectedItemIndex.value, selectedItemIndex.value + 1);
+  }
+  if (range.start >= 0 && remaining.length) {
+    handleVisibleRangeUpdate({
+      startIndex: Math.min(range.start, remaining.length - 1),
+      endIndex: Math.min(range.end, remaining.length - 1),
+    });
+  }
+  markDedupSourceUpdated(request);
+  if (!isSearchLikeView.value && tempViewMode.value === 'none') {
+    void getCurrentQueryTimeLine().then(data => {
+      if (request === currentContentRequestId) timelineData.value = data;
+    }).catch(error => console.error('Failed to refresh timeline after deletion:', error));
+  }
+  return true;
+}
+
+async function executeFileDeletion(plan: NonNullable<typeof fileDeletePlan.value>) {
+  const { files, libraryId, requestId } = plan;
+  const permanently = deletePermanently.value;
+  const isCurrent = () => libraryId === libConfig._libraryId && requestId === currentContentRequestId
+    && !pendingScopeSelectionChange && !contentQueryRefreshPending;
+  let retryPlan: typeof fileDeletePlan.value = null;
+  try {
+    if (!isCurrent()) {
+      toast.warning(t('info_panel.selection_load_failed'));
+      return;
+    }
+    const index = selectedItemIndex.value;
+    const focused = fileList.value[index];
+    const nearby = [fileList.value[index + 1], fileList.value[index - 1]].filter(isRealFileItem);
+    const result = await batchDeleteFiles(
+      files.map(file => ({ fileId: file.id, filePath: file.file_path })),
+      permanently,
+      {
+        libraryId,
+        scope: rawPairDeleteScope.value,
+        companions: files.map(file => file.companion
+          ? { fileId: file.companion.id, filePath: file.companion.file_path } : null),
+      },
+    );
+    if (libraryId !== libConfig._libraryId) return;
+    const deleted = new Set<number>(result.deletedFileIds);
+    const compareFileCount = deleted.size ? removeDeletedFilesFromImageViewerSession([...deleted]) : 0;
+    const applyToCurrentView = isCurrent();
+    let retryRequest = requestId;
+    if (deleted.size) {
+      try {
+        const updatedFiles = files.filter(file => deleted.has(file.id) || (file.companion && deleted.has(file.companion.id)));
+        if (applyToCurrentView && updatedFiles.every(file => !file.companion) && removeDeletedRows(deleted)) {
+          retryRequest = currentContentRequestId;
+        } else if (applyToCurrentView) {
+          const focusedPair = updatedFiles.find(file => file.id === focused?.id);
+          const survivor = focusedPair && (deleted.has(focusedPair.id) ? focusedPair.companion?.id : focusedPair.id);
+          if (!selectMode.value) {
+            pendingFocusedFileId = [survivor, focused?.id, ...nearby.map(file => file.id)]
+              .find(id => id && !deleted.has(id)) ?? null;
+          } else {
+            for (const file of updatedFiles) {
+              if (deleted.has(file.id) && selectedFileIds.delete(file.id)
+                && file.companion && !deleted.has(file.companion.id)) {
+                selectedFileIds.add(file.companion.id);
+              }
+            }
+          }
+          for (const file of updatedFiles) clearCachedThumbnailDataUrl(file.id, config.settings.thumbnailSize);
+          fileInfoRevision.value++;
+          const refresh = updateContent(true);
+          retryRequest = currentContentRequestId;
+          await refresh;
+        }
+        await refreshFolderSidebarCounts(updatedFiles.map(file => getFolderPath(file.file_path)));
+        await refreshAffectedAlbums([...new Set(updatedFiles.map(file => Number(file.album_id || 0)))]);
+        await refreshLibraryTotalCount();
+      } catch (error) {
+        // The files are already deleted; a refresh failure must not turn the
+        // operation into a misleading delete failure.
+        console.error('Failed to refresh after file deletion:', error);
+      }
+      const deletedItem = files.find(file => deleted.has(file.id) || (file.companion && deleted.has(file.companion.id)));
+      const deletedName = deletedItem && deleted.has(deletedItem.id)
+        ? deletedItem.name
+        : deletedItem?.companion?.file_path.split(/[/\\]/).pop() || '';
+      toast.success(getDeleteSuccessMessage(deleted.size, permanently, deletedName));
+      void tauriEmit('files-deleted', {
+        source: 'content', fileIds: [...deleted], compareFileCount,
+        fileCount: fileList.value.length, selectedIndex: selectedItemIndex.value,
+      });
+    }
+    const failed = new Set<number>(result.trashFailedFileIds ?? []);
+    if (!permanently && failed.size && applyToCurrentView
+      && libraryId === libConfig._libraryId && retryRequest === currentContentRequestId) {
+      const retryFiles: FileDeleteItem[] = [];
+      for (const file of files) {
+        if (failed.has(file.id)) retryFiles.push({ ...file, rawPair: false, companion: undefined });
+        if (file.companion && failed.has(file.companion.id)) {
+          retryFiles.push({
+            ...file.companion, name: file.companion.file_path.split(/[/\\]/).pop() || file.companion.file_path,
+            album_id: file.album_id, rawPair: false,
+          });
+        }
+      }
+      if (retryFiles.length) retryPlan = { libraryId, requestId: retryRequest, files: retryFiles, trashUnavailable: true };
+    }
+    const failedCount = result.failedCount - (retryPlan ? failed.size : 0);
+    if (failedCount > 0) toast.error(t('msgbox.raw_pair_delete.failed', failedCount));
+  } catch (error) {
+    console.error('Failed to delete files:', error);
+    if (String(error).startsWith('original_unavailable:')) toast.warning(t('offline.requires_original'));
+    else toast.error(getDeleteFilesErrorMessage(permanently));
+  } finally {
+    closeTrashMsgbox();
+    if (retryPlan) {
+      deletePermanently.value = true;
+      rawPairDeleteScope.value = 'both';
+      showFileDeleteConfirmation(retryPlan);
+    }
+  }
+}
+
 const handleTrashMsgboxOk = async () => {
   if (isTrashDeleting.value) return;
   if (dedupDeletePreviewContext && (
@@ -9598,19 +9896,21 @@ const handleTrashMsgboxOk = async () => {
     return;
   }
   isTrashDeleting.value = true;
-  config.settings.deletePermanently = deletePermanently.value;
   try {
-    if (isDedupBulkTrash.value) {
+    if (fileDeletePlan.value) {
+      await executeFileDeletion(fileDeletePlan.value);
+    } else if (isDedupBulkTrash.value) {
       await onTrashAllDuplicates();
     } else {
-      await onTrashFile();
+      await onTrashDedupFiles();
     }
   } finally {
     isTrashDeleting.value = false;
   }
 };
 
-const onTrashFile = async (retryItemsOverride: any[] = [], retryToken?: string) => {
+const onTrashDedupFiles = async (retryToken?: string) => {
+  if (!dedupDeleteFileIds.value.length) return;
   const permanently = deletePermanently.value;
   const deletedFileIds: number[] = [];
   const affectedAlbumIds = new Set<number>();
@@ -9717,75 +10017,6 @@ const onTrashFile = async (retryItemsOverride: any[] = [], retryToken?: string) 
       totalFileSize.value = fileList.value.reduce((total, file) => total + getMediaItemSize(file), 0);
       selectedItemIndex.value = fileList.value.length > 0 ? Math.min(selectedItemIndex.value, fileList.value.length - 1) : -1;
     }
-    else if (selectMode.value && selectedCount.value > 0) {     // multi-select mode
-      const selectedItems = retryItemsOverride.length > 0
-        ? retryItemsOverride
-        : await getActionableSelectedItemsForAction();
-      if (!selectedItems) return;
-      const result = await batchDeleteFiles(
-        selectedItems.map(item => ({ fileId: item.id, filePath: item.file_path })),
-        permanently,
-      );
-      if (!result) {
-        throw new Error(`Failed to ${permanently ? 'permanently delete' : 'trash'} selected files`);
-      }
-      const deletedIdSet = new Set(result.deletedFileIds.map((id: any) => Number(id)));
-      const deletedItems = selectedItems.filter(item => deletedIdSet.has(Number(item.id)));
-      failedDeleteCount = Number(result.failedCount || 0);
-      const trashFailedIdSet = new Set(
-        Array.isArray(result.trashFailedFileIds)
-          ? result.trashFailedFileIds.map((id: any) => Number(id))
-          : [],
-      );
-
-      if (failedDeleteCount > 0 && deletedItems.length === 0 && trashFailedIdSet.size === 0) {
-        throw new Error(`Failed to ${permanently ? 'permanently delete' : 'trash'} selected files`);
-      }
-
-      deletedItems.forEach(recordDeletedFile);
-      deletedFileIds.push(...deletedItems.map(item => item.id));
-      const remainingSelectedIds = new Set(
-        selectedItems
-          .filter(item => !deletedIdSet.has(Number(item.id)))
-          .map(item => Number(item.id)),
-      );
-      fileList.value = fileList.value.filter((f) => !deletedIdSet.has(Number(f?.id)));
-      totalFileCount.value = fileList.value.length;
-      totalFileSize.value = fileList.value.reduce((total, file) => total + getMediaItemSize(file), 0);
-      selectedItemIndex.value = fileList.value.length > 0 ? Math.min(selectedItemIndex.value, fileList.value.length - 1) : -1;
-      rebuildSelectionAfterListMutation(remainingSelectedIds);
-      if (!permanently && trashFailedIdSet.size > 0) {
-        pendingTrashFailedItems.value = selectedItems.filter(item => trashFailedIdSet.has(Number(item.id)));
-        otherFailureCount = Math.max(0, failedDeleteCount - trashFailedIdSet.size);
-        pendingTrashFailedOtherFailureCount.value = otherFailureCount;
-      }
-    } 
-    else if(selectedItemIndex.value >= 0) {               // single select mode
-      const selectedFile = retryItemsOverride[0] || fileList.value[selectedItemIndex.value];
-      const deletedFileName = selectedFile?.name || '';
-      const result = await deleteFileAlways(selectedFile, permanently);
-      const deletedIdSet = new Set(result.deletedFileIds.map((id: any) => Number(id)));
-      const trashFailedIdSet = new Set(
-        Array.isArray(result.trashFailedFileIds)
-          ? result.trashFailedFileIds.map((id: any) => Number(id))
-          : [],
-      );
-      if (!permanently && trashFailedIdSet.has(Number(selectedFile.id))) {
-        pendingTrashFailedItems.value = [selectedFile];
-        throw new Error(`Failed to trash file: ${selectedFile.file_path}`);
-      }
-      if (!deletedIdSet.has(Number(selectedFile.id))) {
-        throw new Error(`Failed to ${permanently ? 'permanently delete' : 'trash'} file: ${selectedFile.file_path}`);
-      }
-      recordDeletedFile(selectedFile);
-      deletedFileIds.push(selectedFile.id);
-      failedDeleteCount = Number(result.failedCount || 0);
-      removeFromFileList(selectedItemIndex.value);
-      if (failedDeleteCount === 0) {
-        toast.success(getDeleteFileSuccessMessage(deletedFileName, permanently));
-      }
-    }
-
     await refreshGroupedRowsAfterDelete(deletedFileIds);
     await refreshFolderSidebarCounts([...affectedFolderPaths]);
     await refreshAffectedAlbums(Array.from(affectedAlbumIds));
@@ -9820,19 +10051,11 @@ const onTrashFile = async (retryItemsOverride: any[] = [], retryToken?: string) 
     if (failedDeleteCount > 0) {
       if (!permanently && pendingTrashFailedItems.value.length > 0) {
         if (pendingTrashFailedOtherFailureCount.value > 0) {
-          toast.error(
-            (dedupDeleteFileIds.value.length > 0 || selectMode.value)
-              ? getDeleteFilesErrorMessage(permanently)
-              : getDeleteFileErrorMessage(permanently)
-          );
+          toast.error(getDeleteFilesErrorMessage(permanently));
         }
         showTrashFailedMsgbox.value = true;
       } else {
-        toast.error(
-          (dedupDeleteFileIds.value.length > 0 || selectMode.value)
-            ? getDeleteFilesErrorMessage(permanently)
-            : getDeleteFileErrorMessage(permanently)
-        );
+        toast.error(getDeleteFilesErrorMessage(permanently));
       }
     }
 
@@ -9860,34 +10083,13 @@ const onTrashFile = async (retryItemsOverride: any[] = [], retryToken?: string) 
     }
     if (!permanently && pendingTrashFailedItems.value.length > 0) {
       if (pendingTrashFailedOtherFailureCount.value > 0) {
-        toast.error(
-          (dedupDeleteFileIds.value.length > 0 || selectMode.value)
-            ? getDeleteFilesErrorMessage(permanently)
-            : getDeleteFileErrorMessage(permanently)
-        );
+        toast.error(getDeleteFilesErrorMessage(permanently));
       }
       showTrashMsgbox.value = false;
       showTrashFailedMsgbox.value = true;
       return;
     }
-    toast.error(
-      (dedupDeleteFileIds.value.length > 0 || selectMode.value)
-        ? getDeleteFilesErrorMessage(permanently)
-        : getDeleteFileErrorMessage(permanently)
-    );
-  }
-}
-
-// Remove a file from disk first. Keep the DB row if the filesystem operation fails.
-async function deleteFileAlways(file: any, permanently = false) {
-  const deletedFile = permanently
-    ? await deleteFilePermanently(file.id, file.file_path)
-    : await deleteFile(file.id, file.file_path);
-  if (deletedFile && Array.isArray(deletedFile.deletedFileIds)) {
-    console.log(`clickDeleteFile - ${permanently ? 'permanently deleted' : 'trashed'} file:`, file.file_path);
-    return deletedFile;
-  } else {
-    throw new Error(`Failed to ${permanently ? 'permanently delete' : 'trash'} file: ${file.file_path}`);
+    toast.error(getDeleteFilesErrorMessage(permanently));
   }
 }
 
@@ -10444,6 +10646,7 @@ function onMetadataSaved(files: any[], changes: Record<string, string>) {
 }
 
 async function openCommentEditor(singleFile = false, field = 'comments') {
+  if (showCommentMsgbox.value || !getVisibleEditableMetadataFields(config.infoPanel.fields).length) return;
   const file = fileList.value[selectedItemIndex.value];
   const files = !singleFile && selectMode.value ? await getActionableSelectedItemsForAction() : file ? [file] : [];
   if (!files?.length || (files.length > 1 && !await confirmLargeBatch(files.length))) return;

@@ -48,6 +48,9 @@
     }
   },
   "bundle": {
+    "macOS": {
+      "entitlements": "Entitlements.plist"
+    },
     "active": true,
     "category": "Graphics and Design",
     "targets": "all",

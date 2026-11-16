@@ -3355,15 +3355,348 @@ pub struct BatchDeleteResult {
     pub trash_failed_file_ids: Vec<i64>,
 }
 
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum RawPairDeleteScope {
+    Both,
+    Raw,
+    Companion,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FileDeleteSelection {
+    library_id: String,
+    scope: RawPairDeleteScope,
+    companions: Vec<Option<BatchDeleteFile>>,
+}
+
 #[tauri::command]
 pub async fn batch_delete_files(
     files: Vec<BatchDeleteFile>,
     permanently: bool,
     group_raw_pairs: bool,
+    selection: Option<FileDeleteSelection>,
 ) -> Result<BatchDeleteResult, String> {
-    tauri::async_runtime::spawn_blocking(move || delete_files_grouped(files, permanently, group_raw_pairs))
+    tauri::async_runtime::spawn_blocking(move || {
+        if let Some(selection) = selection {
+            return with_current_library(&selection.library_id, || {
+                delete_selected_files(files, permanently, &selection, group_raw_pairs)
+            });
+        }
+        delete_files_grouped(files, permanently, group_raw_pairs)
+    })
         .await
         .map_err(|e| format!("Failed to run batch delete: {}", e))?
+}
+
+fn delete_selected_files(
+    files: Vec<BatchDeleteFile>,
+    permanently: bool,
+    selection: &FileDeleteSelection,
+    group_raw_pairs: bool,
+) -> Result<BatchDeleteResult, String> {
+    if files.len() != selection.companions.len() {
+        return Err("RAW pair selection changed".into());
+    }
+    let ids = files.iter().map(|file| file.file_id)
+        .chain(selection.companions.iter().flatten().map(|file| file.file_id))
+        .collect::<Vec<_>>();
+    if ids.iter().copied().collect::<HashSet<_>>().len() != ids.len() {
+        return Err("RAW pair selection changed".into());
+    }
+    let catalog = AFile::get_files_by_ids(&ids)?.into_iter()
+        .filter_map(|file| Some((file.id?, file)))
+        .collect::<HashMap<_, _>>();
+    delete_selected_file_targets(files, permanently, selection, &catalog, group_raw_pairs)
+}
+
+fn has_other_media_owner(sidecar: &Path) -> bool {
+    let Some(parent) = sidecar.parent() else { return false };
+    let Some(stem) = sidecar.file_stem().and_then(|value| value.to_str()) else { return false };
+    let Ok(entries) = fs::read_dir(parent) else { return false };
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.is_dir() {
+            continue;
+        }
+        if path.extension().is_some_and(|extension| {
+            extension.eq_ignore_ascii_case("aae") || extension.eq_ignore_ascii_case("xmp")
+        }) {
+            continue;
+        }
+        let name_matches = path.file_name().and_then(|value| value.to_str())
+            .is_some_and(|value| value.eq_ignore_ascii_case(stem));
+        let stem_matches = path.file_stem().and_then(|value| value.to_str())
+            .is_some_and(|value| value.eq_ignore_ascii_case(stem));
+        if name_matches || stem_matches {
+            return true;
+        }
+    }
+    parent.to_str().is_some_and(|folder| {
+        AFile::has_other_media_owner(folder, stem).unwrap_or(true)
+    })
+}
+
+fn delete_unowned_aae<'a>(
+    removed: impl IntoIterator<Item = &'a str>,
+    protected: &[PathBuf],
+    permanently: bool,
+) -> usize {
+    let protected: HashSet<_> = protected.iter().filter_map(|path| path.to_str())
+        .flat_map(apple_aae_sidecar_paths).collect();
+    let delete = if permanently { t_utils::delete_file_permanently } else { t_utils::trash_path };
+    let mut seen = HashSet::new();
+    let mut failed = 0;
+    for sidecar in removed.into_iter().flat_map(apple_aae_sidecar_paths) {
+        let Some(path) = sidecar.to_str() else { continue };
+        if protected.contains(&sidecar) || !seen.insert(path.to_ascii_lowercase())
+            || has_other_media_owner(&sidecar)
+        {
+            continue;
+        }
+        if let Err(error) = delete(path) {
+            failed += 1;
+            eprintln!("Failed to delete Apple sidecar: {error}");
+        }
+    }
+    failed
+}
+
+fn delete_selected_file_targets(
+    files: Vec<BatchDeleteFile>,
+    permanently: bool,
+    selection: &FileDeleteSelection,
+    catalog: &HashMap<i64, AFile>,
+    group_raw_pairs: bool,
+) -> Result<BatchDeleteResult, String> {
+    let mut targets = Vec::new();
+    let mut owners = Vec::new();
+    let mut raw_pairs = Vec::new();
+    let mut protected_media = Vec::new();
+    for (file, paired_file) in files.into_iter().zip(&selection.companions) {
+        let Some(primary) = catalog.get(&file.file_id) else {
+            return Err("File deletion selection changed".into());
+        };
+        if primary.file_path.as_deref() != Some(file.file_path.as_str()) {
+            return Err("File deletion selection changed".into());
+        }
+        let primary_id = file.file_id;
+        let primary_path = file.file_path.clone();
+        owners.push((primary_id, primary_path.clone()));
+        let Some(companion) = paired_file else {
+            targets.push(file);
+            continue;
+        };
+        let raw_pair = primary.media_subtype.as_deref() == Some("raw_jpeg_pair");
+        let Some(related) = catalog.get(&companion.file_id) else {
+            return Err("File deletion selection changed".into());
+        };
+        if primary.live_photo_video_id != Some(companion.file_id)
+            || !(if raw_pair { group_raw_pairs } else { primary.media_subtype.as_deref() == Some("live_photo") })
+            || related.file_path.as_deref() != Some(companion.file_path.as_str())
+            || (raw_pair && related.media_subtype.as_deref() == Some("live_photo"))
+        {
+            return Err("File deletion selection changed".into());
+        }
+        owners.push((companion.file_id, companion.file_path.clone()));
+        if !raw_pair || !matches!(selection.scope, RawPairDeleteScope::Companion) {
+            targets.push(file);
+        }
+        if !raw_pair || !matches!(selection.scope, RawPairDeleteScope::Raw) {
+            targets.push(BatchDeleteFile { file_id: companion.file_id, file_path: companion.file_path.clone() });
+        }
+        if raw_pair {
+            raw_pairs.push((primary_id, companion.file_id));
+            match selection.scope {
+                RawPairDeleteScope::Raw => protected_media.push(PathBuf::from(&companion.file_path)),
+                RawPairDeleteScope::Companion => protected_media.push(PathBuf::from(primary_path)),
+                RawPairDeleteScope::Both => {}
+            }
+        }
+    }
+
+    let target_ids: HashSet<i64> = targets.iter().map(|target| target.file_id).collect();
+    for (primary_id, primary_path, companion_id) in AFile::primary_files_for_companions(
+        &target_ids.iter().copied().collect::<Vec<_>>(),
+    )? {
+        if !target_ids.contains(&primary_id) {
+            protected_media.push(PathBuf::from(primary_path));
+            raw_pairs.push((primary_id, companion_id));
+        }
+    }
+    let mut result = delete_resolved_files(
+        targets, permanently, false, Some(HashMap::new()), false,
+    )?;
+    let deleted = result.deleted_file_ids.iter().copied().collect::<HashSet<_>>();
+    let mut retained = protected_media;
+    let mut removed = Vec::new();
+    for (id, path) in &owners {
+        if deleted.contains(id) {
+            removed.push(path.as_str());
+        } else {
+            retained.push(PathBuf::from(path));
+        }
+    }
+    if let Err(error) = crate::metadata::files::delete_orphans_protected(
+        removed.iter().copied().map(Path::new), &retained, permanently,
+    ) {
+        result.failed_count += 1;
+        eprintln!("Failed to delete XMP sidecars: {error}");
+    }
+    for (raw_id, companion_id) in raw_pairs {
+        if deleted.contains(&companion_id) && !deleted.contains(&raw_id) {
+            if let Err(error) = AThumb::delete(raw_id) {
+                eprintln!("Failed to invalidate RAW thumbnail: {error}");
+            }
+        }
+    }
+    result.failed_count += delete_unowned_aae(removed, &retained, permanently);
+    Ok(result)
+}
+
+#[cfg(test)]
+mod raw_pair_delete_tests {
+    use super::*;
+
+    #[test]
+    fn raw_pair_scope_only_removes_selected_files_and_orphaned_sidecars() {
+        for (scope, expected) in [
+            (RawPairDeleteScope::Raw, &[1, 3][..]),
+            (RawPairDeleteScope::Companion, &[2, 3][..]),
+            (RawPairDeleteScope::Both, &[1, 2, 3][..]),
+        ] {
+            assert_pair_deletion(scope, expected);
+        }
+    }
+
+    fn assert_pair_deletion(scope: RawPairDeleteScope, expected: &[i64]) {
+        struct TestLibrary(std::path::PathBuf);
+        impl Drop for TestLibrary {
+            fn drop(&mut self) {
+                crate::t_sqlite::TEST_DB_PATH.with(|path| path.replace(None));
+                let _ = std::fs::remove_dir_all(&self.0);
+            }
+        }
+
+        let unique = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos();
+        let library = TestLibrary(std::env::temp_dir().join(format!("lap-raw-pair-delete-{unique}")));
+        std::fs::create_dir(&library.0).unwrap();
+        let write = |name: &str| {
+            let path = library.0.join(name);
+            std::fs::write(&path, b"fixture").unwrap();
+            path.to_str().unwrap().to_owned()
+        };
+        crate::t_sqlite::TEST_DB_PATH.with(|path| path.replace(Some(library.0.join("catalog.db").to_str().unwrap().into())));
+        let conn = crate::t_sqlite::open_conn().unwrap();
+        conn.execute_batch(
+            "CREATE TABLE afolders(id INTEGER PRIMARY KEY, path TEXT);
+             INSERT INTO afolders VALUES(1,'/fixtures');
+             CREATE TABLE afiles(id INTEGER PRIMARY KEY, name TEXT, folder_id INTEGER, media_subtype TEXT, live_photo_video_id INTEGER);
+             CREATE TABLE athumbs(file_id INTEGER PRIMARY KEY);
+             INSERT INTO afiles VALUES(1,'image.nef',1,'raw_jpeg_pair',2),(2,'image.jpg',1,NULL,NULL),(3,'single.jpg',1,NULL,NULL);",
+        ).unwrap();
+        let raw = write("image.nef");
+        let companion = write("image.jpg");
+        let single = write("single.jpg");
+        let single_xmp = write("single.xmp");
+        let single_aae = write("single.aae");
+        let xmp = write("image.xmp");
+        let aae = write("image.aae");
+        let catalog = HashMap::from([
+            (1, AFile {
+                media_subtype: Some("raw_jpeg_pair".into()),
+                live_photo_video_id: Some(2),
+                file_path: Some(raw.clone()),
+                ..Default::default()
+            }),
+            (2, AFile { file_path: Some(companion.clone()), ..Default::default() }),
+            (3, AFile { file_path: Some(single.clone()), ..Default::default() }),
+        ]);
+        let result = delete_selected_file_targets(
+            vec![
+                BatchDeleteFile { file_id: 1, file_path: raw.clone() },
+                BatchDeleteFile { file_id: 3, file_path: single.clone() },
+            ],
+            true,
+            &FileDeleteSelection {
+                library_id: String::new(),
+                scope,
+                companions: vec![Some(BatchDeleteFile { file_id: 2, file_path: companion.clone() }), None],
+            },
+            &catalog,
+            true,
+        ).unwrap();
+        assert_eq!(result.failed_count, 0);
+        assert_eq!(result.deleted_file_ids, expected);
+        assert_eq!(Path::new(&raw).is_file(), !expected.contains(&1));
+        assert_eq!(Path::new(&companion).is_file(), !expected.contains(&2));
+        assert!(!Path::new(&single).exists());
+        assert!(!Path::new(&single_xmp).exists());
+        assert!(!Path::new(&single_aae).exists());
+        for path in [xmp, aae] {
+            assert_eq!(Path::new(&path).is_file(), expected.len() == 2, "{path}");
+        }
+        let remaining: Vec<(i64, Option<String>, Option<i64>)> = conn.prepare(
+            "SELECT id, media_subtype, live_photo_video_id FROM afiles ORDER BY id",
+        ).unwrap().query_map([], |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?))).unwrap()
+            .collect::<Result<_, _>>().unwrap();
+        assert_eq!(remaining, (1..=2).filter(|id| !expected.contains(id))
+            .map(|id| (id, None, None)).collect::<Vec<_>>());
+    }
+
+
+    #[test]
+    fn shared_aae_is_kept_for_an_unselected_cloud_only_owner() {
+        struct TestLibrary(std::path::PathBuf);
+        impl Drop for TestLibrary {
+            fn drop(&mut self) {
+                crate::t_sqlite::TEST_DB_PATH.with(|path| path.replace(None));
+                let _ = std::fs::remove_dir_all(&self.0);
+            }
+        }
+
+        let unique = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos();
+        let library = TestLibrary(std::env::temp_dir().join(format!("lap-aae-owner-{unique}")));
+        std::fs::create_dir(&library.0).unwrap();
+        let write = |name: &str| {
+            let path = library.0.join(name);
+            std::fs::write(&path, b"fixture").unwrap();
+            path.to_str().unwrap().to_owned()
+        };
+        crate::t_sqlite::TEST_DB_PATH.with(|path| path.replace(Some(library.0.join("catalog.db").to_str().unwrap().into())));
+        let conn = crate::t_sqlite::open_conn().unwrap();
+        conn.execute_batch(
+            "CREATE TABLE afolders(id INTEGER PRIMARY KEY, path TEXT);
+             INSERT INTO afolders VALUES(1,'/fixtures');
+             CREATE TABLE afiles(id INTEGER PRIMARY KEY, name TEXT, folder_id INTEGER, media_subtype TEXT, live_photo_video_id INTEGER);
+             CREATE TABLE athumbs(file_id INTEGER PRIMARY KEY);
+             INSERT INTO afiles VALUES(1,'image.nef',1,'raw_jpeg_pair',2),(2,'image.jpg',1,NULL,NULL),(4,'image.heic',1,NULL,NULL);",
+        ).unwrap();
+        conn.execute("UPDATE afolders SET path=?1", [library.0.to_str().unwrap()]).unwrap();
+        let raw = write("image.nef");
+        let companion = write("image.jpg");
+        // The HEIC row is intentionally cloud-only: no file exists on disk.
+        let _other = library.0.join("image.heic");
+        let aae = write("image.aae");
+        let catalog = HashMap::from([
+            (1, AFile { media_subtype: Some("raw_jpeg_pair".into()), live_photo_video_id: Some(2), file_path: Some(raw.clone()), ..Default::default() }),
+            (2, AFile { file_path: Some(companion.clone()), ..Default::default() }),
+        ]);
+        let result = delete_selected_file_targets(
+            vec![BatchDeleteFile { file_id: 1, file_path: raw }],
+            true,
+            &FileDeleteSelection {
+                library_id: String::new(),
+                scope: RawPairDeleteScope::Both,
+                companions: vec![Some(BatchDeleteFile { file_id: 2, file_path: companion })],
+            },
+            &catalog,
+            true,
+        ).unwrap();
+        assert_eq!(result.deleted_file_ids, vec![1, 2]);
+        assert!(Path::new(&aae).is_file());
+    }
 }
 
 /// Delete files together with their Live Photo and Apple sidecar components.
@@ -3380,19 +3713,27 @@ pub(crate) fn delete_files_with_components(
     files: Vec<BatchDeleteFile>,
     permanently: bool,
     group_raw_pairs: bool,
+    resolved_components: Option<HashMap<i64, Vec<(i64, String)>>>,
+) -> Result<BatchDeleteResult, String> {
+    delete_resolved_files(files, permanently, group_raw_pairs, resolved_components, true)
+}
+
+fn delete_resolved_files(
+    files: Vec<BatchDeleteFile>,
+    permanently: bool,
+    group_raw_pairs: bool,
     mut resolved_components: Option<HashMap<i64, Vec<(i64, String)>>>,
+    cleanup_sidecars: bool,
 ) -> Result<BatchDeleteResult, String> {
     struct DeleteGroup {
         primary_id: i64,
         primary_path: String,
         components: Vec<(i64, String)>,
-        aae_sidecars: Vec<String>,
     }
 
     // Resolve and preflight the same targets before changing disk or catalog entries.
     let mut delete_groups = Vec::with_capacity(files.len());
     let mut seen_ids = HashSet::new();
-    let mut seen_aae_paths = HashSet::new();
     for file in &files {
         if !seen_ids.insert(file.file_id) {
             continue;
@@ -3417,18 +3758,10 @@ pub(crate) fn delete_files_with_components(
                 component_targets.push((id, path));
             }
         }
-        let mut aae_sidecars = Vec::new();
-        for sidecar in apple_aae_sidecar_paths(&file.file_path) {
-            let sidecar_path = sidecar.to_string_lossy().into_owned();
-            if seen_aae_paths.insert(sidecar_path.to_ascii_lowercase()) {
-                aae_sidecars.push(sidecar_path);
-            }
-        }
         delete_groups.push(DeleteGroup {
             primary_id: file.file_id,
             primary_path: file.file_path.clone(),
             components: component_targets,
-            aae_sidecars,
         });
     }
 
@@ -3465,30 +3798,29 @@ pub(crate) fn delete_files_with_components(
             }
         }
 
-        for sidecar_path in &group.aae_sidecars {
-            let result = if permanently {
-                t_utils::delete_file_permanently(sidecar_path)
-            } else {
-                t_utils::trash_path(sidecar_path)
-            };
-            if result.is_err() {
-                group_failed = true;
-                eprintln!("Failed to delete Apple sidecar: {}", sidecar_path);
-            }
-        }
-
         if group_failed {
             failed_count += 1;
         }
     }
 
-    if let Err(error) = crate::metadata::files::delete_orphans(
-        delete_groups.iter().flat_map(|group| std::iter::once(Path::new(&group.primary_path))
-            .chain(group.components.iter().map(|(_, path)| Path::new(path)))), permanently,
-    ) { failed_count += 1; eprintln!("Failed to delete XMP sidecars: {error}"); }
+    if cleanup_sidecars {
+        if let Err(error) = crate::metadata::files::delete_orphans(
+            delete_groups.iter().flat_map(|group| std::iter::once(Path::new(&group.primary_path))
+                .chain(group.components.iter().map(|(_, path)| Path::new(path)))),
+            permanently,
+        ) { failed_count += 1; eprintln!("Failed to delete XMP sidecars: {error}"); }
+    }
 
     AFile::batch_delete(&deleted_file_ids)
         .map_err(|e| format!("Error while deleting files from DB: {}", e))?;
+    if cleanup_sidecars {
+        let deleted_ids: HashSet<_> = deleted_file_ids.iter().copied().collect();
+        let removed = delete_groups.iter()
+            .flat_map(|group| std::iter::once((group.primary_id, &group.primary_path))
+                .chain(group.components.iter().map(|(id, path)| (*id, path))))
+            .filter_map(|(id, path)| deleted_ids.contains(&id).then_some(path.as_str()));
+        failed_count += delete_unowned_aae(removed, &[], permanently);
+    }
     Ok(BatchDeleteResult {
         failed_count,
         deleted_file_ids,

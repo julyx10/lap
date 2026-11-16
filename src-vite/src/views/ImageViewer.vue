@@ -202,6 +202,7 @@
 
 <script setup lang="ts">
 
+import { getVisibleEditableMetadataFields } from '@/common/fileInfoFields';
 import EditMetadataDialog from "@/components/EditMetadataDialog.vue";
 import { isOriginalStorageUnavailable, isOriginalUnavailable, setAlbumAccessibility, resetFileAccessibility } from '@/common/availability';
 import { ref, watch, computed, onMounted, onUnmounted, reactive } from 'vue';
@@ -651,6 +652,11 @@ function handleKeyDown(event: KeyboardEvent) {
 
   const isEditingText = event.target instanceof HTMLElement
     && (event.target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target.tagName));
+  if (!isEditingText && matchesShortcut('view.toggleFullscreen', event, shortcutPlatform)) {
+    event.preventDefault();
+    if (!event.repeat) toggleNativeFullScreen();
+    return;
+  }
   if (matchesShortcut('file.copyPath', event, shortcutPlatform) && !isEditingText) {
     event.preventDefault();
     if (!event.repeat) void copyActiveFilePath();
@@ -730,6 +736,12 @@ function handleKeyDown(event: KeyboardEvent) {
   if (matchesShortcut('meta.tag', event, shortcutPlatform)) {
     event.preventDefault();
     clickTag(getActiveFilePane());
+    return;
+  }
+
+  if (matchesShortcut('meta.edit', event, shortcutPlatform)) {
+    event.preventDefault();
+    if (!event.repeat) openCommentEditor(getActiveFilePane());
     return;
   }
 
@@ -1410,6 +1422,7 @@ const clickTag = (pane: Pane = 'left') => {
 };
 
 const openCommentEditor = (pane: Pane = 'left') => {
+  if (showCommentMsgbox.value || !getVisibleEditableMetadataFields(config.infoPanel.fields).length) return;
   const currentFileId = getFileIdByPane(pane);
   if (currentFileId <= 0) return;
 

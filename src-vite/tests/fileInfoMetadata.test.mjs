@@ -32,7 +32,7 @@ async function render(key, overrides = {}) {
     detailSections: {source:{loading:false}},
     sourceDetailRows: [{ key: "software", value: "SOURCE SOFTWARE", source: "EXIF", label: "file_info.detail_fields.software" }], detailsLoading: false, detailsError: false,
     IconEdit: {}, editableMetadataFields: [], fieldVisible: () => false, organizationMetadata: [], showOrganizationPanel: true, showSourceMetadataPanel: false, hasSourceMetadata: true,
-    toggleOrganization() {}, toggleSourceMetadata() {}, emit() {},
+    toggleOrganization() {}, toggleSourceMetadata() {}, emit() {}, getShortcutLabel: () => 'M',
     isPrimaryGeneralInfo: false, displayTags: [], fileCollections: [], filePersons: [],
     config: { settings: { face: { enabled: false } } },
     fileInfo: { comments: '', e_description: 'ORIGINAL SOURCE TEXT' }, ...overrides,

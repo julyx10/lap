@@ -343,7 +343,6 @@
     "unrated": "Sans note",
     "all_rated": "Tous les éléments notés",
     "rated": "Noté",
-    "mixed": "Divers",
     "clear_rating": "Effacer la note",
     "five_stars": "5 étoiles",
     "four_stars": "4 étoiles",
@@ -617,6 +616,7 @@
       "keep_label": "Conserver",
       "unkeep_label": "Ne pas conserver",
       "delete_selected": "Supprimer les éléments sélectionnés",
+      "trash_all": "Tout placer dans la corbeille",
       "delete_all": "Tout supprimer",
       "move_selected_to_trash": "Mettre à la corbeille ({count} sélectionnés · {size})",
       "no_removable_files": "Aucun élément supprimable à mettre à la corbeille",
@@ -824,6 +824,7 @@
   },
   "msgbox": {
     "ok": "OK",
+    "save": "Enregistrer",
     "discard": "Abandonner",
     "reset": "Réinitialiser",
     "cancel": "Annuler",
@@ -966,6 +967,24 @@
       "invalid": "Saisissez un nom et un numéro de départ entier positif.",
       "success": "{count} éléments renommés."
     },
+    "file_delete": {
+      "permanent_summary": "1 fichier sera supprimé définitivement. | {count} fichiers seront supprimés définitivement.",
+      "trash_summary": "1 fichier sera placé dans la corbeille. | {count} fichiers seront placés dans la corbeille.",
+      "title": "Supprimer définitivement {count} fichier ? | Supprimer définitivement {count} fichiers ?",
+      "confirm": "Supprimer {count} fichier | Supprimer {count} fichiers",
+      "irreversible": "Cette action est irréversible.",
+      "mixed_hint": "S’applique uniquement aux paires RAW. Les autres éléments sélectionnés sont toujours supprimés en entier.",
+      "trash_unavailable": "Impossible de placer ces fichiers dans la corbeille. La corbeille est peut-être indisponible sur ce lecteur."
+    },
+    "raw_pair_delete": {
+      "scope": "Fichiers de paires RAW à supprimer",
+      "both": "Les deux fichiers",
+      "raw": "RAW uniquement",
+      "companion": "JPEG / HEIC uniquement",
+      "format": "{format} uniquement",
+      "failed": "Échecs de suppression : {count}."
+    },
+    "folder_delete_contents": "Cela inclut tous les fichiers et sous-dossiers.",
     "move_to_trash": {
       "title": "Mettre à la corbeille",
       "file_content": "Le fichier '{file}' sera mis à la corbeille.",
@@ -986,7 +1005,6 @@
       "files_content": "{count} éléments sélectionnés seront supprimés définitivement.",
       "removable_files_content": "Les {count} éléments supprimables seront tous supprimés définitivement.",
       "folder_content": "Le dossier '{folder}' sera supprimé définitivement.",
-      "checkbox": "Supprimer définitivement (action irréversible)",
       "ok": "Supprimer",
       "file_success": "Le fichier '{file}' a été supprimé définitivement.",
       "files_success": "{count} éléments sélectionnés ont été supprimés définitivement.",
@@ -1000,7 +1018,7 @@
       "file_content": "Le fichier '{file}' n’a pas pu être déplacé vers la Corbeille.\n\nVoulez-vous le supprimer définitivement à la place ?",
       "files_content": "{count} éléments sélectionnés n’ont pas pu être déplacés vers la Corbeille.\n\nVoulez-vous les supprimer définitivement à la place ?",
       "folder_content": "Le dossier '{folder}' n’a pas pu être déplacé vers la Corbeille.\n\nVoulez-vous le supprimer définitivement à la place ?\n\nCette action ne peut pas être annulée via la corbeille du système.",
-      "folder_partial_warning": "La tentative précédente a peut-être déplacé une partie du contenu vers la corbeille. La suppression définitive effacera ce dossier et son contenu restant.",
+      "folder_partial_warning": "La tentative précédente a peut-être déplacé une partie du contenu vers la corbeille.",
       "ok": "Supprimer définitivement"
     },
     "open_external_many": {
@@ -1173,13 +1191,13 @@
   },
   "file_info": {
     "metadata_placeholders": {
-      "e_title": "Saisissez un titre court",
-      "e_headline": "Saisissez un titre pour publication",
+      "e_title": "Titre court",
+      "e_headline": "Titre pour publication",
       "comments": "Décrivez le contenu ou ajoutez du contexte",
-      "e_artist": "Saisissez un auteur par ligne",
-      "e_copyright": "Saisissez une mention de droits d’auteur"
+      "e_artist": "Nom",
+      "e_artist_hint": "Un par ligne",
+      "e_copyright": "© {year} Nom"
     },
-    "edit_metadata_details": "Informations descriptives",
     "edit_metadata_no_fields": "Sélectionnez au moins un champ de la section Organisation dans Personnaliser les champs avant de modifier les métadonnées.",
     "edit_metadata": "Modifier les métadonnées",
     "metadata_save_failed": "Impossible d’enregistrer les métadonnées",
@@ -1694,6 +1712,10 @@
       }
     },
     "advanced": {
+      "file_delete_behavior": "Lors de la suppression",
+      "file_delete_trash_hint": "Place un seul fichier dans la corbeille sans confirmation",
+      "file_delete_permanent_hint": "La suppression définitive exige toujours une confirmation",
+      "file_delete_section": "Suppression de fichiers",
       "title": "Avancé",
       "external_app": {
         "section_external_apps": "Applications externes",

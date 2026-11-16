@@ -199,6 +199,7 @@
           :icon="!isFullScreen ? IconFullScreen : IconRestoreScreen"
           :tooltip="!isFullScreen ? $t('image_viewer.toolbar.fullscreen') : $t('image_viewer.toolbar.exit_fullscreen')"
           :disabled="!canInteract"
+          :shortcut="shortcut('view.toggleFullscreen')"
           @click="toggleFullScreen"
         />
         <TButton v-if="mode !== 2 && !isFullScreen"
@@ -1406,6 +1407,7 @@ const handleMessageFromImageViewer = (payload: { message: string }) => {
 defineExpose({
   isFullScreen,
   exitPreviewFullScreen,
+  toggleFullScreen,
   zoomIn,
   zoomOut,
   zoomActual,

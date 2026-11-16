@@ -67,21 +67,39 @@ pub fn trash_path(path: &str) -> Result<(), String> {
 }
 
 #[cfg(target_os = "macos")]
+fn finder_script_safe_path(path: &str) -> bool {
+    // trash 3.3.1's Finder backend interpolates the path into AppleScript
+    // without escaping. Do not pass quotes, backslashes or control characters
+    // to it; use NSFileManager for those names instead.
+    !path.chars().any(|c| c == '"' || c == '\\' || c.is_control())
+}
+
+#[cfg(target_os = "macos")]
+fn finder_trash_path(path: &Path) -> Option<PathBuf> {
+    let canonical = path.parent()?.canonicalize().ok()?.join(path.file_name()?);
+    canonical.to_str().is_some_and(finder_script_safe_path).then_some(canonical)
+}
+
+#[cfg(target_os = "macos")]
 pub(crate) fn move_to_trash(path: &str) -> Result<(), trash::Error> {
     use trash::macos::{DeleteMethod, TrashContextExtMacos};
 
-    // NsFileManager is fast but requires Automation permission that users may deny.
-    // When denied, Put Back metadata is lost. Fall back to Finder (AppleScript) which
-    // always preserves Put Back metadata and does not require special permissions.
-    let mut context = trash::TrashContext::default();
-    context.set_delete_method(DeleteMethod::NsFileManager);
-    if let Err(_error) = context.delete(path) {
-        let mut fallback = trash::TrashContext::default();
-        fallback.set_delete_method(DeleteMethod::Finder);
-        fallback.delete(path)
-    } else {
-        Ok(())
+    // Finder records the original location for Put Back. NSFileManager is a
+    // safe fallback when Automation is denied or the filename cannot be safely
+    // interpolated into Finder's AppleScript.
+    if let Some(canonical) = finder_trash_path(Path::new(path)) {
+        let mut finder = trash::TrashContext::default();
+        finder.set_delete_method(DeleteMethod::Finder);
+        if finder.delete(canonical).is_ok() && !path_exists(path) {
+            return Ok(());
+        }
     }
+    if !path_exists(path) {
+        return Ok(());
+    }
+    let mut fallback = trash::TrashContext::default();
+    fallback.set_delete_method(DeleteMethod::NsFileManager);
+    fallback.delete(path)
 }
 
 #[cfg(all(not(target_os = "macos")))]
@@ -5106,4 +5124,19 @@ mod import_file_concurrency_tests {
         assert_eq!(fs::read_dir(&destination).unwrap().count(), 17);
         fs::remove_dir_all(root).unwrap();
     }
+}
+
+#[cfg(all(test, target_os = "macos"))]
+#[test]
+fn finder_path_validation_rejects_unsafe_names_and_accepts_safe_names() {
+    let root = std::env::temp_dir().join(format!("lap-finder-path-{}", uuid::Uuid::new_v4()));
+    std::fs::create_dir_all(&root).unwrap();
+    let safe = root.join("safe.jpg");
+    let unsafe_name = root.join("unsafe\"name.jpg");
+    std::fs::write(&safe, b"x").unwrap();
+    std::fs::write(&unsafe_name, b"x").unwrap();
+
+    assert!(finder_trash_path(&safe).is_some());
+    assert!(finder_trash_path(&unsafe_name).is_none());
+    let _ = std::fs::remove_dir_all(root);
 }

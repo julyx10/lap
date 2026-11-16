@@ -343,7 +343,6 @@
     "unrated": "未评分",
     "all_rated": "全部已评分",
     "rated": "已评分",
-    "mixed": "多种",
     "clear_rating": "清除评分",
     "five_stars": "5 星",
     "four_stars": "4 星",
@@ -617,6 +616,7 @@
       "keep_label": "保留",
       "unkeep_label": "取消保留",
       "delete_selected": "删除所选项",
+      "trash_all": "全部移到废纸篓",
       "delete_all": "删除全部",
       "move_selected_to_trash": "移到废纸篓（已选 {count} 项 · {size}）",
       "no_removable_files": "没有可移至废纸篓的可删除项目",
@@ -824,6 +824,7 @@
   },
   "msgbox": {
     "ok": "确定",
+    "save": "保存",
     "discard": "丢弃",
     "reset": "重置",
     "cancel": "取消",
@@ -966,6 +967,24 @@
       "invalid": "请输入名称和正整数起始编号。",
       "success": "已重命名 {count} 个项目。"
     },
+    "file_delete": {
+      "permanent_summary": "将永久删除 {count} 个文件。",
+      "trash_summary": "将把 {count} 个文件移到废纸篓。",
+      "title": "永久删除 {count} 个文件？",
+      "confirm": "删除 {count} 个文件",
+      "irreversible": "此操作无法撤销。",
+      "mixed_hint": "仅适用于 RAW 配对，其他选中项目始终会完整删除。",
+      "trash_unavailable": "这些文件无法移到废纸篓。此磁盘可能没有可用的废纸篓。"
+    },
+    "raw_pair_delete": {
+      "scope": "要删除的 RAW 配对文件",
+      "both": "删除两者",
+      "raw": "仅删除 RAW",
+      "companion": "仅删除 JPEG / HEIC",
+      "format": "仅删除 {format}",
+      "failed": "有 {count} 项删除失败。"
+    },
+    "folder_delete_contents": "这包括其中的所有文件和子文件夹。",
     "move_to_trash": {
       "title": "移到废纸篓",
       "file_content": "文件 '{file}' 将被移到废纸篓。",
@@ -986,7 +1005,6 @@
       "files_content": "{count} 个所选项目将被永久删除。",
       "removable_files_content": "全部 {count} 个可删除项目将被永久删除。",
       "folder_content": "文件夹 '{folder}' 将被永久删除。",
-      "checkbox": "永久删除（无法撤销）",
       "ok": "删除",
       "file_success": "文件 '{file}' 已永久删除。",
       "files_success": "{count} 个所选项目已永久删除。",
@@ -1000,7 +1018,7 @@
       "file_content": "文件 '{file}' 无法移到废纸篓。\n\n是否改为永久删除？",
       "files_content": "所选 {count} 个项目无法移到废纸篓。\n\n是否改为永久删除？",
       "folder_content": "文件夹 '{folder}' 无法移到废纸篓。\n\n是否改为永久删除？\n\n此操作无法通过系统回收站撤销。",
-      "folder_partial_warning": "上一次操作可能已将部分内容移入回收站。永久删除将删除此文件夹及其剩余内容。",
+      "folder_partial_warning": "上一次操作可能已将部分内容移入回收站。",
       "ok": "永久删除"
     },
     "open_external_many": {
@@ -1173,13 +1191,13 @@
   },
   "file_info": {
     "metadata_placeholders": {
-      "e_title": "输入简短标题",
-      "e_headline": "输入用于发布的标题",
+      "e_title": "简短标题",
+      "e_headline": "用于发布的标题",
       "comments": "描述内容或补充背景",
-      "e_artist": "每行填写一位作者",
-      "e_copyright": "输入版权声明"
+      "e_artist": "姓名",
+      "e_artist_hint": "每行一位",
+      "e_copyright": "© {year} 姓名"
     },
-    "edit_metadata_details": "描述信息",
     "edit_metadata_no_fields": "请先在「自定义字段」中勾选至少一个「整理」字段，再编辑元数据。",
     "edit_metadata": "编辑元数据",
     "metadata_save_failed": "无法保存元数据",
@@ -1694,6 +1712,10 @@
       }
     },
     "advanced": {
+      "file_delete_section": "文件删除",
+      "file_delete_behavior": "删除时的行为",
+      "file_delete_trash_hint": "单个文件直接移到废纸篓",
+      "file_delete_permanent_hint": "永久删除前始终需要确认",
       "title": "高级",
       "external_app": {
         "section_external_apps": "外部应用",

@@ -343,7 +343,6 @@
     "unrated": "Bez oceny",
     "all_rated": "Wszystkie ocenione",
     "rated": "Ocenione",
-    "mixed": "Różne",
     "clear_rating": "Wyczyść ocenę",
     "five_stars": "5 gwiazdek",
     "four_stars": "4 gwiazdki",
@@ -617,6 +616,7 @@
       "keep_label": "Zachowaj",
       "unkeep_label": "Anuluj zachowanie",
       "delete_selected": "Usuń zaznaczone",
+      "trash_all": "Przenieś wszystko do kosza",
       "delete_all": "Usuń wszystkie",
       "move_selected_to_trash": "Przenieś do kosza ({count} zaznaczonych · {size})",
       "no_removable_files": "Brak elementów do przeniesienia do kosza",
@@ -824,6 +824,7 @@
   },
   "msgbox": {
     "ok": "OK",
+    "save": "Zapisz",
     "discard": "Odrzuć",
     "reset": "Resetuj",
     "cancel": "Anuluj",
@@ -966,6 +967,24 @@
       "invalid": "Podaj nazwę i dodatni całkowity numer początkowy.",
       "success": "Zmieniono nazwy {count} elementów."
     },
+    "file_delete": {
+      "permanent_summary": "Zostanie trwale usunięte: {count}.",
+      "trash_summary": "Zostanie przeniesione do kosza: {count}.",
+      "title": "Trwale usunąć: {count}?",
+      "confirm": "Usunąć: {count}",
+      "irreversible": "Tej operacji nie można cofnąć.",
+      "mixed_hint": "Dotyczy tylko par RAW. Pozostałe wybrane elementy są zawsze usuwane w całości.",
+      "trash_unavailable": "Nie udało się przenieść tych plików do kosza. Kosz może być niedostępny na tym dysku."
+    },
+    "raw_pair_delete": {
+      "scope": "Pliki par RAW do usunięcia",
+      "both": "Oba pliki",
+      "raw": "Tylko RAW",
+      "companion": "Tylko JPEG / HEIC",
+      "format": "Tylko {format}",
+      "failed": "Nieudane operacje usuwania: {count}."
+    },
+    "folder_delete_contents": "Dotyczy to wszystkich plików i podfolderów.",
     "move_to_trash": {
       "title": "Przenieś do kosza",
       "file_content": "Plik „{file}” zostanie przeniesiony do kosza.",
@@ -986,7 +1005,6 @@
       "files_content": "{count} zaznaczonych elementów zostanie trwale usuniętych.",
       "removable_files_content": "Wszystkie {count} elementy możliwe do usunięcia zostaną trwale usunięte.",
       "folder_content": "Folder „{folder}” zostanie trwale usunięty.",
-      "checkbox": "Usuń trwale (nie można cofnąć)",
       "ok": "Usuń",
       "file_success": "Plik „{file}” został trwale usunięty.",
       "files_success": "{count} zaznaczonych elementów zostało trwale usuniętych.",
@@ -1000,7 +1018,7 @@
       "file_content": "Nie udało się przenieść pliku „{file}” do kosza.\n\nCzy chcesz zamiast tego trwale go usunąć?",
       "files_content": "Nie udało się przenieść {count} zaznaczonych elementów do kosza.\n\nCzy chcesz zamiast tego trwale je usunąć?",
       "folder_content": "Nie udało się przenieść folderu „{folder}” do kosza.\n\nCzy chcesz zamiast tego trwale go usunąć?\n\nTej operacji nie można cofnąć za pomocą kosza systemowego.",
-      "folder_partial_warning": "Poprzednia próba mogła przenieść część zawartości do kosza. Trwałe usunięcie skasuje ten folder i jego pozostałą zawartość.",
+      "folder_partial_warning": "Poprzednia próba mogła przenieść część zawartości do kosza.",
       "ok": "Usuń trwale"
     },
     "open_external_many": {
@@ -1173,13 +1191,13 @@
   },
   "file_info": {
     "metadata_placeholders": {
-      "e_title": "Wpisz krótki tytuł",
-      "e_headline": "Wpisz nagłówek do publikacji",
-      "comments": "Opisz zawartość lub dodaj kontekst",
-      "e_artist": "Wpisz jednego autora w każdym wierszu",
-      "e_copyright": "Wpisz informację o prawach autorskich"
+      "e_title": "Krótki tytuł",
+      "e_headline": "Nagłówek do publikacji",
+      "comments": "Opisz treść lub dodaj kontekst",
+      "e_artist": "Imię i nazwisko",
+      "e_artist_hint": "Jeden w wierszu",
+      "e_copyright": "© {year} Imię i nazwisko"
     },
-    "edit_metadata_details": "Informacje opisowe",
     "edit_metadata_no_fields": "Przed edycją metadanych wybierz co najmniej jedno pole z sekcji Organizacja w ustawieniach pól.",
     "edit_metadata": "Edytuj metadane",
     "metadata_save_failed": "Nie udało się zapisać metadanych",
@@ -1694,6 +1712,10 @@
       }
     },
     "advanced": {
+      "file_delete_behavior": "Podczas usuwania plików",
+      "file_delete_trash_hint": "Przenosi pojedynczy plik do kosza bez potwierdzenia",
+      "file_delete_permanent_hint": "Trwałe usunięcie zawsze wymaga potwierdzenia",
+      "file_delete_section": "Usuwanie plików",
       "title": "Zaawansowane",
       "external_app": {
         "section_external_apps": "Aplikacje zewnętrzne",

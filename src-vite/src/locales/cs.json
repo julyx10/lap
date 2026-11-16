@@ -343,7 +343,6 @@
     "unrated": "Bez hodnocení",
     "all_rated": "Všechny ohodnocené",
     "rated": "Ohodnocené",
-    "mixed": "Různé",
     "clear_rating": "Zrušit hodnocení",
     "five_stars": "5 hvězdiček",
     "four_stars": "4 hvězdičky",
@@ -617,6 +616,7 @@
       "keep_label": "Ponechat",
       "unkeep_label": "Zrušit označení k ponechání",
       "delete_selected": "Odstranit vybrané",
+      "trash_all": "Přesunout vše do koše",
       "delete_all": "Odstranit vše",
       "move_selected_to_trash": "Přesunout do koše ({count} vybraných · {size})",
       "no_removable_files": "Nejsou zde žádné odstranitelné položky k přesunutí do koše",
@@ -824,6 +824,7 @@
   },
   "msgbox": {
     "ok": "OK",
+    "save": "Uložit",
     "discard": "Zahodit",
     "reset": "Resetovat",
     "cancel": "Zrušit",
@@ -966,6 +967,24 @@
       "invalid": "Zadejte název a kladné celé počáteční číslo.",
       "success": "Přejmenováno položek: {count}."
     },
+    "file_delete": {
+      "permanent_summary": "Bude trvale odstraněno: {count}.",
+      "trash_summary": "Bude přesunuto do koše: {count}.",
+      "title": "Trvale odstranit: {count}?",
+      "confirm": "Odstranit: {count}",
+      "irreversible": "Tuto akci nelze vrátit zpět.",
+      "mixed_hint": "Platí pouze pro páry RAW. Ostatní vybrané položky se vždy odstraní celé.",
+      "trash_unavailable": "Soubory se nepodařilo přesunout do koše. Koš na tomto disku nemusí být dostupný."
+    },
+    "raw_pair_delete": {
+      "scope": "Soubory párů RAW k odstranění",
+      "both": "Oba soubory",
+      "raw": "Pouze RAW",
+      "companion": "Pouze JPEG / HEIC",
+      "format": "Pouze {format}",
+      "failed": "Nezdařená odstranění: {count}."
+    },
+    "folder_delete_contents": "Týká se to všech souborů a podsložek.",
     "move_to_trash": {
       "title": "Přesunout do koše",
       "file_content": "Soubor „{file}“ bude přesunut do koše.",
@@ -986,7 +1005,6 @@
       "files_content": "Vybrané položky ({count}) budou trvale odstraněny.",
       "removable_files_content": "Všech {count} odstranitelných položek bude trvale smazáno.",
       "folder_content": "Složka „{folder}“ bude trvale odstraněna.",
-      "checkbox": "Trvale odstranit (nelze vrátit zpět)",
       "ok": "Odstranit",
       "file_success": "Soubor „{file}“ byl trvale odstraněn.",
       "files_success": "Vybrané položky ({count}) byly trvale odstraněny.",
@@ -1000,7 +1018,7 @@
       "file_content": "Soubor „{file}“ se nepodařilo přesunout do koše.\n\nChcete jej místo toho trvale odstranit?",
       "files_content": "Vybrané položky ({count}) se nepodařilo přesunout do koše.\n\nChcete je místo toho trvale odstranit?",
       "folder_content": "Složku „{folder}“ se nepodařilo přesunout do koše.\n\nChcete ji místo toho trvale odstranit?\n\nTuto akci nelze vrátit zpět přes systémový koš.",
-      "folder_partial_warning": "Předchozí pokus mohl část obsahu přesunout do koše. Trvalé odstranění smaže tuto složku i její zbývající obsah.",
+      "folder_partial_warning": "Předchozí pokus mohl část obsahu přesunout do koše.",
       "ok": "Odstranit trvale"
     },
     "open_external_many": {
@@ -1173,13 +1191,13 @@
   },
   "file_info": {
     "metadata_placeholders": {
-      "e_title": "Zadejte krátký název",
-      "e_headline": "Zadejte titulek pro publikaci",
-      "comments": "Popište obsah nebo doplňte kontext",
-      "e_artist": "Zadejte jednoho autora na řádek",
-      "e_copyright": "Zadejte autorskoprávní oznámení"
+      "e_title": "Krátký název",
+      "e_headline": "Titulek pro publikaci",
+      "comments": "Popište obsah nebo přidejte kontext",
+      "e_artist": "Jméno",
+      "e_artist_hint": "Jeden na řádek",
+      "e_copyright": "© {year} Jméno"
     },
-    "edit_metadata_details": "Popisné údaje",
     "edit_metadata_no_fields": "Nejprve v nastavení polí vyberte alespoň jedno pole ze sekce Organizace.",
     "edit_metadata": "Upravit metadata",
     "metadata_save_failed": "Metadata se nepodařilo uložit",
@@ -1693,6 +1711,10 @@
       }
     },
     "advanced": {
+      "file_delete_behavior": "Chování při odstraňování",
+      "file_delete_trash_hint": "Jeden soubor se přesune do koše bez potvrzení",
+      "file_delete_permanent_hint": "Trvalé odstranění vždy vyžaduje potvrzení",
+      "file_delete_section": "Odstraňování souborů",
       "title": "Pokročilé",
       "external_app": {
         "section_external_apps": "Externí aplikace",

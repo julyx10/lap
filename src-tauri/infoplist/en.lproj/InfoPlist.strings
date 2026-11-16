@@ -1,1 +1,2 @@
 CFBundleDisplayName = "Lap";
+NSAppleEventsUsageDescription = "Finder moves files to the Trash so you can put them back in their original locations.";

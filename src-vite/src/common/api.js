@@ -1261,9 +1261,9 @@ export async function deleteDbFile(fileId) {
   }
 }
 
-export async function batchDeleteFiles(files, permanently = false) {
+export async function batchDeleteFiles(files, permanently = false, selection = null) {
   try {
-    return await invoke('batch_delete_files', { files, permanently, groupRawPairs: Boolean(config.settings.groupRawJpegPairs) });
+    return await invoke('batch_delete_files', { files, permanently, groupRawPairs: Boolean(config.settings.groupRawJpegPairs), selection });
   } catch (error) {
     console.error('batchDeleteFiles error:', error);
     throw error;

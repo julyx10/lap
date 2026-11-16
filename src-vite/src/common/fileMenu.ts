@@ -394,9 +394,9 @@ export const useFileMenuItems = (
       },
       { label: "-", action: null },
       {
-        label: localeMsg.value.menu.file.delete,
+        label: translate(config.settings.fileDeleteBehavior === 'permanent' ? 'menu.file.delete' : 'msgbox.move_to_trash.title'),
         icon: markRaw(IconTrash),
-        shortcut: shortcut('file.trash'),
+        shortcut: shortcut(config.settings.fileDeleteBehavior === 'permanent' ? 'file.deletePermanently' : 'file.trash'),
         action: createAction('trash')
       },
     ];

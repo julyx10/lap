@@ -343,7 +343,6 @@
     "unrated": "Nincs értékelve",
     "all_rated": "Mind értékelt",
     "rated": "Értékelt",
-    "mixed": "Vegyes",
     "clear_rating": "Értékelés törlése",
     "five_stars": "5 csillag",
     "four_stars": "4 csillag",
@@ -617,6 +616,7 @@
       "keep_label": "Megtartás",
       "unkeep_label": "Megtartás törlése",
       "delete_selected": "Kijelöltek törlése",
+      "trash_all": "Összes áthelyezése a kukába",
       "delete_all": "Összes törlése",
       "move_selected_to_trash": "Kukába helyezés ({count} kijelölve · {size})",
       "no_removable_files": "Nincs kukába helyezhető eltávolítható elem",
@@ -824,6 +824,7 @@
   },
   "msgbox": {
     "ok": "OK",
+    "save": "Mentés",
     "discard": "Elvetés",
     "reset": "Alaphelyzet",
     "cancel": "Mégse",
@@ -966,6 +967,24 @@
       "invalid": "Adjon meg egy nevet és egy pozitív egész kezdőszámot.",
       "success": "{count} elem átnevezve."
     },
+    "file_delete": {
+      "permanent_summary": "{count} fájl véglegesen törlődik.",
+      "trash_summary": "{count} fájl a kukába kerül.",
+      "title": "Véglegesen töröl {count} fájlt?",
+      "confirm": "{count} fájl törlése",
+      "irreversible": "Ez a művelet nem vonható vissza.",
+      "mixed_hint": "Csak a RAW-párokra vonatkozik. A többi kijelölt elem mindig teljesen törlődik.",
+      "trash_unavailable": "A fájlok nem helyezhetők át a kukába. Lehet, hogy ezen a meghajtón nem érhető el a kuka."
+    },
+    "raw_pair_delete": {
+      "scope": "Törlendő RAW-pár fájlok",
+      "both": "Mindkét fájl",
+      "raw": "Csak RAW",
+      "companion": "Csak JPEG / HEIC",
+      "format": "Csak {format}",
+      "failed": "Sikertelen törlések: {count}."
+    },
+    "folder_delete_contents": "Ez minden fájlra és almappára vonatkozik.",
     "move_to_trash": {
       "title": "Kukába helyezés",
       "file_content": "A(z) \"{file}\" fájl a kukába kerül.",
@@ -986,7 +1005,6 @@
       "files_content": "{count} kiválasztott elem véglegesen törlődik.",
       "removable_files_content": "Az összes {count} eltávolítható elem véglegesen törlődik.",
       "folder_content": "A(z) \"{folder}\" mappa véglegesen törlődik.",
-      "checkbox": "Végleges törlés (nem vonható vissza)",
       "ok": "Törlés",
       "file_success": "A(z) \"{file}\" fájl véglegesen törölve lett.",
       "files_success": "{count} kiválasztott elem véglegesen törölve lett.",
@@ -1000,7 +1018,7 @@
       "file_content": "A(z) \"{file}\" fájl nem helyezhető át a kukába.\n\nEhelyett véglegesen törölni szeretné?",
       "files_content": "{count} kiválasztott elemet nem sikerült a kukába helyezni.\n\nEhelyett véglegesen törölni szeretné őket?",
       "folder_content": "A(z) \"{folder}\" mappa nem helyezhető át a kukába.\n\nEhelyett véglegesen törölni szeretné?\n\nEz a művelet nem vonható vissza a rendszer Lomtárából.",
-      "folder_partial_warning": "Az előző kísérlet során a tartalom egy része a Lomtárba kerülhetett. A végleges törlés ezt a mappát és a megmaradt tartalmát törli.",
+      "folder_partial_warning": "Az előző kísérlet során a tartalom egy része a Lomtárba kerülhetett.",
       "ok": "Végleges törlés"
     },
     "open_external_many": {
@@ -1173,13 +1191,13 @@
   },
   "file_info": {
     "metadata_placeholders": {
-      "e_title": "Adjon meg egy rövid címet",
-      "e_headline": "Adjon meg egy közzétételre szánt címsort",
-      "comments": "Írja le a tartalmat vagy adjon meg háttérinformációt",
-      "e_artist": "Soronként egy alkotót adjon meg",
-      "e_copyright": "Adjon meg szerzői jogi nyilatkozatot"
+      "e_title": "Rövid cím",
+      "e_headline": "Közzétételi cím",
+      "comments": "Írja le a tartalmat vagy adjon kontextust",
+      "e_artist": "Név",
+      "e_artist_hint": "Soronként egy",
+      "e_copyright": "© {year} Név"
     },
-    "edit_metadata_details": "Leíró adatok",
     "edit_metadata_no_fields": "A metaadatok szerkesztése előtt jelöljön ki legalább egy mezőt a Rendezés szakaszban, a mezők testreszabásánál.",
     "edit_metadata": "Metaadatok szerkesztése",
     "metadata_save_failed": "Nem sikerült menteni a metaadatokat",
@@ -1694,6 +1712,10 @@
       }
     },
     "advanced": {
+      "file_delete_behavior": "Fájlok törlésekor",
+      "file_delete_trash_hint": "Egyetlen fájl megerősítés nélkül a kukába kerül",
+      "file_delete_permanent_hint": "A végleges törléshez mindig megerősítés szükséges",
+      "file_delete_section": "Fájlok törlése",
       "title": "Speciális",
       "external_app": {
         "section_external_apps": "Külső alkalmazások",

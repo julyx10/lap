@@ -3377,7 +3377,12 @@ impl AFile {
             let mut file_stmt = tx
                 .prepare_cached("DELETE FROM afiles WHERE id = ?1")
                 .map_err(|e| e.to_string())?;
+            let mut unpair_stmt = tx.prepare_cached(
+                "UPDATE afiles SET media_subtype=NULL, live_photo_video_id=NULL
+                 WHERE live_photo_video_id=?1 AND media_subtype='raw_jpeg_pair'",
+            ).map_err(|e| e.to_string())?;
             for id in ids {
+                unpair_stmt.execute(params![id]).map_err(|e| e.to_string())?;
                 thumb_stmt.execute(params![id]).map_err(|e| e.to_string())?;
                 deleted += file_stmt.execute(params![id]).map_err(|e| e.to_string())?;
             }
@@ -4282,6 +4287,52 @@ impl AFile {
         }
 
         Ok(files)
+    }
+
+    /// Whether any catalog media row in a folder shares the sidecar's stem.
+    /// This catches cloud-only owners that are absent from the filesystem scan.
+    pub fn has_other_media_owner(folder_path: &str, stem: &str) -> Result<bool, String> {
+        let conn = open_conn()?;
+        conn.query_row(
+            "SELECT EXISTS(
+                SELECT 1 FROM afiles a JOIN afolders f ON f.id = a.folder_id
+                WHERE f.path = ?1
+                  AND (lower(a.name) = lower(?2) OR lower(a.name) LIKE lower(?2) || '.%')
+            )",
+            params![folder_path, stem],
+            |row| row.get::<_, bool>(0),
+        ).map_err(|e| e.to_string())
+    }
+
+    /// Return primary media rows that still reference the given companion ids.
+    /// Used by deletion cleanup so a client request cannot orphan a retained
+    /// RAW/Live Photo sidecar or its metadata.
+    pub fn primary_files_for_companions(companion_ids: &[i64]) -> Result<Vec<(i64, String, i64)>, String> {
+        let mut ids = companion_ids.iter().copied().filter(|id| *id > 0).collect::<Vec<_>>();
+        ids.sort_unstable();
+        ids.dedup();
+        if ids.is_empty() {
+            return Ok(Vec::new());
+        }
+        let conn = open_conn()?;
+        let mut owners = Vec::new();
+        for ids in ids.chunks(500) {
+            let placeholders = std::iter::repeat_n("?", ids.len()).collect::<Vec<_>>().join(",");
+            let sql = format!(
+                "SELECT a.id, f.path || '/' || a.name, a.live_photo_video_id
+                 FROM afiles a JOIN afolders f ON f.id = a.folder_id
+                 WHERE a.live_photo_video_id IN ({placeholders})
+                   AND a.media_subtype IN ('raw_jpeg_pair', 'live_photo')"
+            );
+            let mut stmt = conn.prepare(&sql).map_err(|e| e.to_string())?;
+            let rows = stmt.query_map(rusqlite::params_from_iter(ids.iter()), |row| {
+                Ok((row.get(0)?, row.get(1)?, row.get(2)?))
+            }).map_err(|e| e.to_string())?;
+            for row in rows {
+                owners.push(row.map_err(|e| e.to_string())?);
+            }
+        }
+        Ok(owners)
     }
 
     fn mark_metadata_import_failed(

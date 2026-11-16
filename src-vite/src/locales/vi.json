@@ -343,7 +343,6 @@
     "unrated": "Chưa đánh giá",
     "all_rated": "Tất cả đã đánh giá",
     "rated": "Đã đánh giá",
-    "mixed": "Khác nhau",
     "clear_rating": "Xóa đánh giá",
     "five_stars": "5 sao",
     "four_stars": "4 sao",
@@ -617,6 +616,7 @@
       "keep_label": "Giữ lại",
       "unkeep_label": "Bỏ giữ lại",
       "delete_selected": "Xóa mục đã chọn",
+      "trash_all": "Chuyển tất cả vào thùng rác",
       "delete_all": "Xóa tất cả",
       "move_selected_to_trash": "Chuyển vào thùng rác (đã chọn {count} · {size})",
       "no_removable_files": "Không có mục nào có thể chuyển vào thùng rác",
@@ -824,6 +824,7 @@
   },
   "msgbox": {
     "ok": "OK",
+    "save": "Lưu",
     "discard": "Bỏ thay đổi",
     "reset": "Đặt lại",
     "cancel": "Hủy",
@@ -966,6 +967,24 @@
       "invalid": "Nhập tên và số bắt đầu là số nguyên dương.",
       "success": "Đã đổi tên {count} mục."
     },
+    "file_delete": {
+      "permanent_summary": "{count} tệp sẽ bị xóa vĩnh viễn.",
+      "trash_summary": "{count} tệp sẽ được chuyển vào thùng rác.",
+      "title": "Xóa vĩnh viễn {count} tệp?",
+      "confirm": "Xóa {count} tệp",
+      "irreversible": "Không thể hoàn tác thao tác này.",
+      "mixed_hint": "Chỉ áp dụng cho cặp RAW. Các mục đã chọn khác luôn bị xóa hoàn toàn.",
+      "trash_unavailable": "Không thể chuyển các tệp này vào thùng rác. Có thể ổ đĩa này không hỗ trợ thùng rác."
+    },
+    "raw_pair_delete": {
+      "scope": "Tệp cặp RAW cần xóa",
+      "both": "Cả hai tệp",
+      "raw": "Chỉ RAW",
+      "companion": "Chỉ JPEG / HEIC",
+      "format": "Chỉ {format}",
+      "failed": "Số lần xóa thất bại: {count}."
+    },
+    "folder_delete_contents": "Thao tác này bao gồm tất cả tệp và thư mục con.",
     "move_to_trash": {
       "title": "Chuyển vào thùng rác",
       "file_content": "Tệp “{file}” sẽ được chuyển vào thùng rác.",
@@ -986,7 +1005,6 @@
       "files_content": "{count} mục đã chọn sẽ bị xóa vĩnh viễn.",
       "removable_files_content": "Tất cả {count} mục có thể gỡ bỏ sẽ bị xóa vĩnh viễn.",
       "folder_content": "Thư mục “{folder}” sẽ bị xóa vĩnh viễn.",
-      "checkbox": "Xóa vĩnh viễn (không thể hoàn tác)",
       "ok": "Xóa",
       "file_success": "Đã xóa vĩnh viễn tệp “{file}”.",
       "files_success": "Đã xóa vĩnh viễn {count} mục đã chọn.",
@@ -999,8 +1017,8 @@
       "title": "Không thể chuyển vào thùng rác",
       "file_content": "Không thể chuyển tệp “{file}” vào thùng rác.\n\nBạn có muốn xóa vĩnh viễn tệp này không?",
       "files_content": "Không thể chuyển {count} mục đã chọn vào thùng rác.\n\nBạn có muốn xóa vĩnh viễn các mục này không?",
-      "folder_content": "Không thể chuyển thư mục “{folder}” vào thùng rác.\n\nBạn có muốn xóa vĩnh viễn thư mục này không?\n\nKhông thể hoàn tác thao tác này qua Thùng rác của hệ thống.",
-      "folder_partial_warning": "Lần thử trước có thể đã chuyển một phần nội dung vào Thùng rác. Xóa vĩnh viễn sẽ xóa thư mục này cùng phần nội dung còn lại.",
+      "folder_content": "Không thể chuyển thư mục “{folder}” vào thùng rác.\n\nBạn có muốn xóa vĩnh viễn thư mục này không?\n\nKhông thể hoàn tác thao tác này qua thùng rác của hệ thống.",
+      "folder_partial_warning": "Lần thử trước có thể đã chuyển một phần nội dung vào thùng rác.",
       "ok": "Xóa vĩnh viễn"
     },
     "open_external_many": {
@@ -1173,13 +1191,13 @@
   },
   "file_info": {
     "metadata_placeholders": {
-      "e_title": "Nhập tiêu đề ngắn",
-      "e_headline": "Nhập tiêu đề dùng để xuất bản",
-      "comments": "Mô tả nội dung hoặc bổ sung bối cảnh",
-      "e_artist": "Nhập một tác giả trên mỗi dòng",
-      "e_copyright": "Nhập thông báo bản quyền"
+      "e_title": "Tiêu đề ngắn",
+      "e_headline": "Tiêu đề xuất bản",
+      "comments": "Mô tả nội dung hoặc thêm ngữ cảnh",
+      "e_artist": "Tên",
+      "e_artist_hint": "Mỗi dòng một",
+      "e_copyright": "© {year} Tên"
     },
-    "edit_metadata_details": "Thông tin mô tả",
     "edit_metadata_no_fields": "Trước khi chỉnh sửa siêu dữ liệu, hãy chọn ít nhất một trường trong mục Tổ chức ở phần Tùy chỉnh trường.",
     "edit_metadata": "Chỉnh sửa siêu dữ liệu",
     "metadata_save_failed": "Không thể lưu siêu dữ liệu",
@@ -1693,6 +1711,10 @@
       }
     },
     "advanced": {
+      "file_delete_behavior": "Khi xóa tệp",
+      "file_delete_trash_hint": "Chuyển một tệp vào thùng rác mà không cần xác nhận",
+      "file_delete_permanent_hint": "Luôn xác nhận trước khi xóa vĩnh viễn",
+      "file_delete_section": "Xóa tệp",
       "title": "Nâng cao",
       "external_app": {
         "section_external_apps": "Ứng dụng bên ngoài",

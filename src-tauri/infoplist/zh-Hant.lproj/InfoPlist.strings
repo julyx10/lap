@@ -1,1 +1,2 @@
 CFBundleDisplayName = "Lap";
+NSAppleEventsUsageDescription = "Finder 會將檔案移到垃圾桶，以便你可以將其放回原位置。";

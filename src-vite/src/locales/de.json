@@ -343,7 +343,6 @@
     "unrated": "Unbewertet",
     "all_rated": "Alle bewerteten",
     "rated": "Bewertet",
-    "mixed": "Verschieden",
     "clear_rating": "Bewertung löschen",
     "five_stars": "5 Sterne",
     "four_stars": "4 Sterne",
@@ -617,6 +616,7 @@
       "keep_label": "Behalten",
       "unkeep_label": "Nicht behalten",
       "delete_selected": "Auswahl löschen",
+      "trash_all": "Alles in den Papierkorb verschieben",
       "delete_all": "Alle löschen",
       "move_selected_to_trash": "In Papierkorb ({count} ausgewählt · {size})",
       "no_removable_files": "Keine entfernbaren Elemente zum Verschieben in den Papierkorb",
@@ -824,6 +824,7 @@
   },
   "msgbox": {
     "ok": "OK",
+    "save": "Speichern",
     "discard": "Verwerfen",
     "reset": "Zurücksetzen",
     "cancel": "Abbrechen",
@@ -966,6 +967,24 @@
       "invalid": "Geben Sie einen Namen und eine positive ganze Startnummer ein.",
       "success": "{count} Elemente umbenannt."
     },
+    "file_delete": {
+      "permanent_summary": "1 Datei wird dauerhaft gelöscht. | {count} Dateien werden dauerhaft gelöscht.",
+      "trash_summary": "1 Datei wird in den Papierkorb verschoben. | {count} Dateien werden in den Papierkorb verschoben.",
+      "title": "{count} Datei dauerhaft löschen? | {count} Dateien dauerhaft löschen?",
+      "confirm": "{count} Datei löschen | {count} Dateien löschen",
+      "irreversible": "Dies kann nicht rückgängig gemacht werden.",
+      "mixed_hint": "Gilt nur für RAW-Paare. Andere ausgewählte Elemente werden immer vollständig gelöscht.",
+      "trash_unavailable": "Die Dateien konnten nicht in den Papierkorb verschoben werden. Möglicherweise ist auf diesem Laufwerk kein Papierkorb verfügbar."
+    },
+    "raw_pair_delete": {
+      "scope": "Zu löschende RAW-Paardateien",
+      "both": "Beide Dateien",
+      "raw": "Nur RAW",
+      "companion": "Nur JPEG / HEIC",
+      "format": "Nur {format}",
+      "failed": "Fehlgeschlagene Löschvorgänge: {count}."
+    },
+    "folder_delete_contents": "Dies betrifft alle Dateien und Unterordner.",
     "move_to_trash": {
       "title": "In Papierkorb verschieben",
       "file_content": "Die Datei '{file}' wird in den Papierkorb verschoben.",
@@ -986,7 +1005,6 @@
       "files_content": "{count} ausgewählte Elemente werden endgültig gelöscht.",
       "removable_files_content": "Alle {count} entfernbaren Elemente werden endgültig gelöscht.",
       "folder_content": "Der Ordner '{folder}' wird endgültig gelöscht.",
-      "checkbox": "Endgültig löschen (kann nicht rückgängig gemacht werden)",
       "ok": "Löschen",
       "file_success": "Die Datei '{file}' wurde endgültig gelöscht.",
       "files_success": "{count} ausgewählte Elemente wurden endgültig gelöscht.",
@@ -1000,7 +1018,7 @@
       "file_content": "Die Datei '{file}' konnte nicht in den Papierkorb verschoben werden.\n\nMöchtest du sie stattdessen endgültig löschen?",
       "files_content": "{count} ausgewählte Elemente konnten nicht in den Papierkorb verschoben werden.\n\nMöchtest du sie stattdessen endgültig löschen?",
       "folder_content": "Der Ordner '{folder}' konnte nicht in den Papierkorb verschoben werden.\n\nMöchtest du ihn stattdessen endgültig löschen?\n\nDieser Vorgang kann nicht über den Papierkorb rückgängig gemacht werden.",
-      "folder_partial_warning": "Beim vorherigen Versuch wurden möglicherweise einige Inhalte in den Papierkorb verschoben. Das endgültige Löschen entfernt diesen Ordner und seine verbleibenden Inhalte.",
+      "folder_partial_warning": "Beim vorherigen Versuch wurden möglicherweise einige Inhalte in den Papierkorb verschoben.",
       "ok": "Endgültig löschen"
     },
     "open_external_many": {
@@ -1173,13 +1191,13 @@
   },
   "file_info": {
     "metadata_placeholders": {
-      "e_title": "Kurzen Titel eingeben",
-      "e_headline": "Überschrift für die Veröffentlichung eingeben",
+      "e_title": "Kurzer Titel",
+      "e_headline": "Schlagzeile für die Veröffentlichung",
       "comments": "Inhalt beschreiben oder Kontext ergänzen",
-      "e_artist": "Eine Person pro Zeile eingeben",
-      "e_copyright": "Urheberrechtshinweis eingeben"
+      "e_artist": "Name",
+      "e_artist_hint": "Einer pro Zeile",
+      "e_copyright": "© {year} Name"
     },
-    "edit_metadata_details": "Beschreibende Angaben",
     "edit_metadata_no_fields": "Wählen Sie vor dem Bearbeiten mindestens ein Feld im Bereich Organisation unter „Felder anpassen“ aus.",
     "edit_metadata": "Metadaten bearbeiten",
     "metadata_save_failed": "Metadaten konnten nicht gespeichert werden",
@@ -1694,6 +1712,10 @@
       }
     },
     "advanced": {
+      "file_delete_behavior": "Verhalten beim Löschen",
+      "file_delete_trash_hint": "Einzelne Dateien ohne Rückfrage in den Papierkorb verschieben",
+      "file_delete_permanent_hint": "Dauerhaftes Löschen immer bestätigen",
+      "file_delete_section": "Dateien löschen",
       "title": "Erweitert",
       "external_app": {
         "section_external_apps": "Externe Apps",

@@ -1,1 +1,2 @@
 CFBundleDisplayName = "Lap";
+NSAppleEventsUsageDescription = "Finder가 파일을 휴지통으로 이동하므로 원래 위치로 복원할 수 있습니다.";

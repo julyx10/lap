@@ -343,7 +343,6 @@
     "unrated": "Niet beoordeeld",
     "all_rated": "Alle beoordeelde",
     "rated": "Beoordeeld",
-    "mixed": "Gemengd",
     "clear_rating": "Beoordeling wissen",
     "five_stars": "5 sterren",
     "four_stars": "4 sterren",
@@ -617,6 +616,7 @@
       "keep_label": "Behouden",
       "unkeep_label": "Niet behouden",
       "delete_selected": "Selectie verwijderen",
+      "trash_all": "Alles naar de prullenmand verplaatsen",
       "delete_all": "Alles verwijderen",
       "move_selected_to_trash": "Naar prullenbak ({count} geselecteerd · {size})",
       "no_removable_files": "Geen verwijderbare items om naar de prullenbak te verplaatsen",
@@ -824,6 +824,7 @@
   },
   "msgbox": {
     "ok": "OK",
+    "save": "Opslaan",
     "discard": "Negeren",
     "reset": "Resetten",
     "cancel": "Annuleren",
@@ -966,6 +967,24 @@
       "invalid": "Voer een naam en een positief geheel startnummer in.",
       "success": "{count} items hernoemd."
     },
+    "file_delete": {
+      "permanent_summary": "1 bestand wordt permanent verwijderd. | {count} bestanden worden permanent verwijderd.",
+      "trash_summary": "1 bestand wordt naar de prullenmand verplaatst. | {count} bestanden worden naar de prullenmand verplaatst.",
+      "title": "{count} bestand permanent verwijderen? | {count} bestanden permanent verwijderen?",
+      "confirm": "{count} bestand verwijderen | {count} bestanden verwijderen",
+      "irreversible": "Dit kan niet ongedaan worden gemaakt.",
+      "mixed_hint": "Geldt alleen voor RAW-paren. Andere geselecteerde items worden altijd volledig verwijderd.",
+      "trash_unavailable": "Deze bestanden konden niet naar de prullenmand worden verplaatst. Mogelijk is er geen prullenmand beschikbaar op dit station."
+    },
+    "raw_pair_delete": {
+      "scope": "Te verwijderen RAW-paardbestanden",
+      "both": "Beide bestanden",
+      "raw": "Alleen RAW",
+      "companion": "Alleen JPEG / HEIC",
+      "format": "Alleen {format}",
+      "failed": "Mislukte verwijderingen: {count}."
+    },
+    "folder_delete_contents": "Dit omvat alle bestanden en submappen.",
     "move_to_trash": {
       "title": "Naar prullenbak",
       "file_content": "Het bestand '{file}' wordt naar de prullenbak verplaatst.",
@@ -986,7 +1005,6 @@
       "files_content": "{count} geselecteerde items worden definitief verwijderd.",
       "removable_files_content": "Alle {count} verwijderbare items worden definitief verwijderd.",
       "folder_content": "De map '{folder}' wordt definitief verwijderd.",
-      "checkbox": "Definitief verwijderen (kan niet ongedaan worden gemaakt)",
       "ok": "Verwijderen",
       "file_success": "Het bestand '{file}' is definitief verwijderd.",
       "files_success": "{count} geselecteerde items zijn definitief verwijderd.",
@@ -1000,7 +1018,7 @@
       "file_content": "Het bestand '{file}' kon niet naar de prullenbak worden verplaatst.\n\nWil je het in plaats daarvan definitief verwijderen?",
       "files_content": "{count} geselecteerde items konden niet naar de prullenbak worden verplaatst.\n\nWil je ze in plaats daarvan definitief verwijderen?",
       "folder_content": "De map '{folder}' kon niet naar de prullenbak worden verplaatst.\n\nWil je deze in plaats daarvan definitief verwijderen?\n\nDeze actie kan niet via de prullenbak van het systeem ongedaan worden gemaakt.",
-      "folder_partial_warning": "Bij de vorige poging is mogelijk een deel van de inhoud naar de prullenbak verplaatst. Permanent verwijderen wist deze map en de resterende inhoud.",
+      "folder_partial_warning": "Bij de vorige poging is mogelijk een deel van de inhoud naar de prullenbak verplaatst.",
       "ok": "Definitief verwijderen"
     },
     "open_external_many": {
@@ -1173,13 +1191,13 @@
   },
   "file_info": {
     "metadata_placeholders": {
-      "e_title": "Voer een korte titel in",
-      "e_headline": "Voer een kop voor publicatie in",
+      "e_title": "Korte titel",
+      "e_headline": "Kop voor publicatie",
       "comments": "Beschrijf de inhoud of voeg context toe",
-      "e_artist": "Voer één maker per regel in",
-      "e_copyright": "Voer een auteursrechtvermelding in"
+      "e_artist": "Naam",
+      "e_artist_hint": "Eén per regel",
+      "e_copyright": "© {year} Naam"
     },
-    "edit_metadata_details": "Beschrijvende gegevens",
     "edit_metadata_no_fields": "Selecteer minstens één veld onder Organisatie bij Velden aanpassen voordat je metadata bewerkt.",
     "edit_metadata": "Metadata bewerken",
     "metadata_save_failed": "Metadata konden niet worden opgeslagen",
@@ -1694,6 +1712,10 @@
       }
     },
     "advanced": {
+      "file_delete_behavior": "Bij het verwijderen van bestanden",
+      "file_delete_trash_hint": "Verplaats één bestand zonder bevestiging naar de prullenmand",
+      "file_delete_permanent_hint": "Permanent verwijderen vereist altijd bevestiging",
+      "file_delete_section": "Bestanden verwijderen",
       "title": "Geavanceerd",
       "external_app": {
         "section_external_apps": "Externe apps",

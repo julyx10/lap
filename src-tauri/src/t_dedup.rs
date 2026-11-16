@@ -55,6 +55,8 @@ pub struct DedupDeletePreview {
     pub token: String,
     pub item_count: usize,
     pub raw_companion_count: usize,
+    pub file_count: usize,
+    pub preview_file_ids: Vec<i64>,
     pub bytes: i64,
 }
 
@@ -1532,6 +1534,8 @@ fn delete_preview(
         token: hasher.finalize().to_hex().to_string(),
         item_count: files.len(),
         raw_companion_count,
+        file_count: files.len() + components.values().map(Vec::len).sum::<usize>(),
+        preview_file_ids: files.iter().take(5).map(|file| file.file_id).collect(),
         bytes,
     }, components))
 }
@@ -2395,6 +2399,9 @@ mod keep_rules_tests {
                 .flat_map(|(&primary, members)| members.iter().map(move |(id, _)| (primary, *id)))
                 .collect::<Vec<_>>();
             component_ids.sort_unstable();
+            assert_eq!(preview.file_count, removed.len() + component_ids.len(), "{}", case.name);
+            assert_eq!(preview.preview_file_ids,
+                removed.iter().take(5).map(|file| file.file_id).collect::<Vec<_>>(), "{}", case.name);
             assert_eq!(
                 preview.item_count,
                 removed.len(),

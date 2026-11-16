@@ -152,7 +152,7 @@
           <IconRight class="w-3 h-3 transition-transform duration-200" :class="{ 'rotate-90': showOrganizationPanel }" />
           <span class="font-bold uppercase text-xs tracking-wide text-base-content/30">{{ $t('file_info.organization') }}</span>
         </button>
-          <TButton :icon="IconEdit" :disabled="!editableMetadataFields.some(field => fieldVisible(`organization.${field.key}`))" :tooltip="$t('file_info.edit_metadata')" button-size="small" @click.stop="emit('editMetadata', 'e_title')" />
+          <TButton :icon="IconEdit" :disabled="!editableMetadataFields.some(field => fieldVisible(`organization.${field.key}`))" :tooltip="$t('file_info.edit_metadata')" :shortcut="getShortcutLabel('meta.edit')" button-size="small" @click.stop="emit('editMetadata', 'e_title')" />
         </div>
         <div class="shrink-0">
           <div v-if="showOrganizationPanel" class="pt-3 space-y-1.5">
@@ -200,12 +200,6 @@
               </div>
             </template>
 
-            <template v-for="field in organizationMetadata" :key="field.key">
-              <div class="text-[11px] text-base-content/30 min-h-6 py-1">{{ $t(field.label) }}</div>
-              <button type="button" class="min-h-6 py-1 text-left text-[12px] text-base-content/70 whitespace-pre-wrap wrap-break-word cursor-pointer hover:text-base-content"
-                @click.stop="emit('editMetadata', field.key)">{{ field.value || '\u00a0' }}</button>
-            </template>
-
             <!-- People -->
             <template v-if="config.settings.face.enabled && filePersons.length">
               <div class="flex items-center text-[11px] text-base-content/30 min-h-6 py-1.5">{{ $t('sidebar.people') }}</div>
@@ -229,6 +223,13 @@
                   {{ person.name || person.id }}
                 </button>
               </div>
+            </template>
+
+            <!-- Metadata -->
+            <template v-for="field in organizationMetadata" :key="field.key">
+              <div class="text-[11px] text-base-content/30 min-h-6 py-1">{{ $t(field.label) }}</div>
+              <button type="button" class="min-h-6 py-1 text-left text-[12px] text-base-content/70 whitespace-pre-wrap wrap-break-word cursor-pointer hover:text-base-content"
+                @click.stop="emit('editMetadata', field.key)">{{ field.value || '\u00a0' }}</button>
             </template>
 
           </div>
@@ -320,7 +321,7 @@
                 <button
                   type="button"
                   class="shrink-0 p-1 cursor-pointer hover:text-primary"
-                  :title="t('file_info.copy_path')"
+                  :title="`${t('file_info.copy_path')} (${getShortcutLabel('file.copyPath')})`"
                   :aria-label="t('file_info.copy_path')"
                   @click.stop="copyInfoFilePath"
                 >
@@ -525,6 +526,7 @@
 
 <script setup lang="ts">
 import FileInfoFieldsDialog from '@/components/FileInfoFieldsDialog.vue';
+import { getShortcutLabel } from '@/common/shortcuts';
 import { editableMetadataFields, normalizeFileInfoFields } from '@/common/fileInfoFields';
 import ImageNavigator from '@/components/ImageNavigator.vue';
 import { invoke } from '@tauri-apps/api/core';

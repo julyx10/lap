@@ -1,1 +1,2 @@
 CFBundleDisplayName = "Lap";
+NSAppleEventsUsageDescription = "Finder déplace les fichiers vers la corbeille afin que vous puissiez les remettre à leur emplacement d’origine.";

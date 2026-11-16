@@ -343,7 +343,6 @@
     "unrated": "未評分",
     "all_rated": "全部已評分",
     "rated": "已評分",
-    "mixed": "多種",
     "clear_rating": "清除評分",
     "five_stars": "5 星",
     "four_stars": "4 星",
@@ -617,6 +616,7 @@
       "keep_label": "保留",
       "unkeep_label": "取消保留",
       "delete_selected": "刪除所選",
+      "trash_all": "全部移到垃圾桶",
       "delete_all": "全部刪除",
       "move_selected_to_trash": "移到垃圾桶（已選 {count} · {size}）",
       "no_removable_files": "沒有可移到垃圾桶的可移除項目",
@@ -824,6 +824,7 @@
   },
   "msgbox": {
     "ok": "確定",
+    "save": "儲存",
     "discard": "捨棄",
     "reset": "重設",
     "cancel": "取消",
@@ -966,6 +967,24 @@
       "invalid": "請輸入名稱及正整數起始編號。",
       "success": "已重新命名 {count} 個項目。"
     },
+    "file_delete": {
+      "permanent_summary": "將永久刪除 {count} 個檔案。",
+      "trash_summary": "將把 {count} 個檔案移到垃圾桶。",
+      "title": "永久刪除 {count} 個檔案？",
+      "confirm": "刪除 {count} 個檔案",
+      "irreversible": "此操作無法復原。",
+      "mixed_hint": "僅適用於 RAW 配對，其他選取項目一律會完整刪除。",
+      "trash_unavailable": "這些檔案無法移到垃圾桶。此磁碟可能沒有可用的垃圾桶。"
+    },
+    "raw_pair_delete": {
+      "scope": "要刪除的 RAW 配對檔案",
+      "both": "刪除兩者",
+      "raw": "僅刪除 RAW",
+      "companion": "僅刪除 JPEG / HEIC",
+      "format": "僅刪除 {format}",
+      "failed": "有 {count} 項刪除失敗。"
+    },
+    "folder_delete_contents": "這包括其中的所有檔案與子資料夾。",
     "move_to_trash": {
       "title": "移到垃圾桶",
       "file_content": "檔案「{file}」將被移到垃圾桶。",
@@ -986,7 +1005,6 @@
       "files_content": "已選的 {count} 個項目將被永久刪除。",
       "removable_files_content": "全部 {count} 個可移除項目將被永久刪除。",
       "folder_content": "資料夾「{folder}」將被永久刪除。",
-      "checkbox": "永久刪除（無法復原）",
       "ok": "刪除",
       "file_success": "已永久刪除檔案「{file}」。",
       "files_success": "已永久刪除已選的 {count} 個項目。",
@@ -1000,7 +1018,7 @@
       "file_content": "無法將檔案「{file}」移到垃圾桶。\n\n要改為永久刪除嗎？",
       "files_content": "無法將已選的 {count} 個項目移到垃圾桶。\n\n要改為永久刪除嗎？",
       "folder_content": "無法將資料夾「{folder}」移到垃圾桶。\n\n要改為永久刪除嗎？\n\n此操作無法透過系統垃圾桶復原。",
-      "folder_partial_warning": "上一次操作可能已將部分內容移至垃圾桶。永久刪除將刪除此資料夾及其剩餘內容。",
+      "folder_partial_warning": "上一次操作可能已將部分內容移至垃圾桶。",
       "ok": "永久刪除"
     },
     "open_external_many": {
@@ -1173,13 +1191,13 @@
   },
   "file_info": {
     "metadata_placeholders": {
-      "e_title": "輸入簡短標題",
-      "e_headline": "輸入用於發布的標題",
+      "e_title": "簡短標題",
+      "e_headline": "用於發布的標題",
       "comments": "描述內容或補充背景",
-      "e_artist": "每行填寫一位作者",
-      "e_copyright": "輸入版權聲明"
+      "e_artist": "姓名",
+      "e_artist_hint": "每行一位",
+      "e_copyright": "© {year} 姓名"
     },
-    "edit_metadata_details": "描述資訊",
     "edit_metadata_no_fields": "請先在「自訂欄位」中勾選至少一個「整理」欄位，再編輯中繼資料。",
     "edit_metadata": "編輯中繼資料",
     "metadata_save_failed": "無法儲存中繼資料",
@@ -1694,6 +1712,10 @@
       }
     },
     "advanced": {
+      "file_delete_section": "檔案刪除",
+      "file_delete_behavior": "刪除時的行為",
+      "file_delete_trash_hint": "單一檔案直接移到垃圾桶",
+      "file_delete_permanent_hint": "永久刪除前一律需要確認",
       "title": "進階",
       "external_app": {
         "section_external_apps": "外部應用程式",

@@ -147,7 +147,7 @@ export const useConfigStore = defineStore('configStore', {
       showToolTip: true,          // show button tooltip
       showStatusBar: true,        // show status bar
       autoCheckUpdates: true,      // automatically check for updates
-      deletePermanently: false,   // last confirmed file deletion choice
+      fileDeleteBehavior: 'trash',
       debugMode: false,           // debug mode
 
       // navigation settings
@@ -459,6 +459,10 @@ export const useConfigStore = defineStore('configStore', {
           settings.rawPreviewSource = ['rendered', 'brightened'].includes(settings.rawPreviewSource) ? settings.rawPreviewSource : 'embedded';
           settings.rawPairDisplaySource = settings.rawPairDisplaySource === 'raw' ? 'raw' : 'jpeg';
           delete settings.rawPairClipboardMode;
+          if (settings.fileDeleteBehavior !== 'trash' && settings.fileDeleteBehavior !== 'permanent') {
+            settings.fileDeleteBehavior = settings.deletePermanently === true ? 'permanent' : 'trash';
+          }
+          delete settings.deletePermanently;
         }
         return state;
       },

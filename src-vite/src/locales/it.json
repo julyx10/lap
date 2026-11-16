@@ -343,7 +343,6 @@
     "unrated": "Senza valutazione",
     "all_rated": "Tutte valutate",
     "rated": "Valutate",
-    "mixed": "Varie",
     "clear_rating": "Azzera valutazione",
     "five_stars": "5 stelle",
     "four_stars": "4 stelle",
@@ -617,6 +616,7 @@
       "keep_label": "Mantieni",
       "unkeep_label": "Non mantenere",
       "delete_selected": "Elimina selezionati",
+      "trash_all": "Sposta tutto nel cestino",
       "delete_all": "Elimina tutti",
       "move_selected_to_trash": "Sposta nel cestino ({count} selezionati · {size})",
       "no_removable_files": "Nessun elemento rimovibile da spostare nel cestino",
@@ -824,6 +824,7 @@
   },
   "msgbox": {
     "ok": "OK",
+    "save": "Salva",
     "discard": "Scarta",
     "reset": "Reimposta",
     "cancel": "Annulla",
@@ -966,6 +967,24 @@
       "invalid": "Inserisci un nome e un numero iniziale intero positivo.",
       "success": "{count} elementi rinominati."
     },
+    "file_delete": {
+      "permanent_summary": "Verrà eliminato definitivamente 1 file. | Verranno eliminati definitivamente {count} file.",
+      "trash_summary": "Verrà spostato nel cestino 1 file. | Verranno spostati nel cestino {count} file.",
+      "title": "Eliminare definitivamente {count} file?",
+      "confirm": "Elimina {count} file",
+      "irreversible": "Questa operazione non può essere annullata.",
+      "mixed_hint": "Si applica solo alle coppie RAW. Gli altri elementi selezionati vengono sempre eliminati completamente.",
+      "trash_unavailable": "Impossibile spostare i file nel cestino. Il cestino potrebbe non essere disponibile su questa unità."
+    },
+    "raw_pair_delete": {
+      "scope": "File delle coppie RAW da eliminare",
+      "both": "Entrambi i file",
+      "raw": "Solo RAW",
+      "companion": "Solo JPEG / HEIC",
+      "format": "Solo {format}",
+      "failed": "Eliminazioni non riuscite: {count}."
+    },
+    "folder_delete_contents": "Sono inclusi tutti i file e le sottocartelle.",
     "move_to_trash": {
       "title": "Sposta nel cestino",
       "file_content": "Il file '{file}' verrà spostato nel cestino.",
@@ -986,7 +1005,6 @@
       "files_content": "{count} elementi selezionati verranno eliminati definitivamente.",
       "removable_files_content": "Tutti i {count} elementi rimovibili verranno eliminati definitivamente.",
       "folder_content": "La cartella '{folder}' verrà eliminata definitivamente.",
-      "checkbox": "Elimina definitivamente (operazione non annullabile)",
       "ok": "Elimina",
       "file_success": "Il file '{file}' è stato eliminato definitivamente.",
       "files_success": "{count} elementi selezionati sono stati eliminati definitivamente.",
@@ -1000,7 +1018,7 @@
       "file_content": "Impossibile spostare nel cestino il file '{file}'.\n\nVuoi eliminarlo definitivamente?",
       "files_content": "Impossibile spostare nel cestino {count} elementi selezionati.\n\nVuoi eliminarli definitivamente?",
       "folder_content": "Impossibile spostare nel cestino la cartella '{folder}'.\n\nVuoi eliminarla definitivamente?\n\nQuesta operazione non può essere annullata tramite il cestino di sistema.",
-      "folder_partial_warning": "Il tentativo precedente potrebbe aver spostato parte del contenuto nel cestino. L’eliminazione permanente rimuoverà questa cartella e il contenuto rimanente.",
+      "folder_partial_warning": "Il tentativo precedente potrebbe aver spostato parte del contenuto nel cestino.",
       "ok": "Elimina definitivamente"
     },
     "open_external_many": {
@@ -1173,13 +1191,13 @@
   },
   "file_info": {
     "metadata_placeholders": {
-      "e_title": "Inserisci un titolo breve",
-      "e_headline": "Inserisci un titolo per la pubblicazione",
+      "e_title": "Titolo breve",
+      "e_headline": "Titolo per la pubblicazione",
       "comments": "Descrivi il contenuto o aggiungi contesto",
-      "e_artist": "Inserisci un autore per riga",
-      "e_copyright": "Inserisci una nota sul copyright"
+      "e_artist": "Nome",
+      "e_artist_hint": "Uno per riga",
+      "e_copyright": "© {year} Nome"
     },
-    "edit_metadata_details": "Informazioni descrittive",
     "edit_metadata_no_fields": "Prima di modificare i metadati, seleziona almeno un campo della sezione Organizzazione in Personalizza campi.",
     "edit_metadata": "Modifica metadati",
     "metadata_save_failed": "Impossibile salvare i metadati",
@@ -1694,6 +1712,10 @@
       }
     },
     "advanced": {
+      "file_delete_behavior": "Quando elimini i file",
+      "file_delete_trash_hint": "Sposta un singolo file nel cestino senza conferma",
+      "file_delete_permanent_hint": "L’eliminazione definitiva richiede sempre conferma",
+      "file_delete_section": "Eliminazione dei file",
       "title": "Avanzate",
       "external_app": {
         "section_external_apps": "App esterne",
