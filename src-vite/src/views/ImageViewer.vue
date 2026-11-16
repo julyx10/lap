@@ -1478,6 +1478,7 @@ function onMetadataSaved(files: any[], changes: Record<string, string>) {
 async function updateFileHasTags(fileStates: Array<{ file_id: number; has_tags: boolean }>) {
   await syncTagStates(fileStates);
   showTaggingDialog.value = false;
+  void emit("tags-changed");
 }
 
 async function syncTagStates(fileStates: Array<{ file_id: number; has_tags: boolean }>) {

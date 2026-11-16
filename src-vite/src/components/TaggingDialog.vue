@@ -217,6 +217,7 @@ import {
 import {
   tagRows,
   ancestorIds,
+  subtreeIds,
   isValidTagName,
   type LibraryTag,
 } from "@/common/tagTree";
@@ -567,12 +568,14 @@ async function clickOk() {
     .filter(([, action]) => action === "remove")
     .map(([id]) => id);
   const library = libConfig._libraryId;
+  const tagId = Number(libConfig.tag.id);
+  const branch = add.length === 0 && remove.length > 0 && allTags.value.some(tag => tag.id === tagId)
+    ? subtreeIds(allTags.value, tagId) : null;
   try {
     const result = await applyTagsToFiles(props.fileIds, add, remove);
     if (library !== libConfig._libraryId || disposed) return;
     if (result !== null) {
-      await tauriEmit("tags-changed");
-      emit("ok", result);
+      emit("ok", result, branch ? { library, tagId, branch } : null);
     }
   } finally {
     isApplyingTags.value = false;

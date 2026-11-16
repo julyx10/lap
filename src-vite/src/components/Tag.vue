@@ -522,12 +522,13 @@ async function load() {
 }
 useLibraryChangeRefresh(load);
 onMounted(async () => {
-  const stop = await listen<{ source?: string }>(
+  const stop = await listen<{ source?: string; patchedTagId?: number; library?: string }>(
     "tags-changed",
     async (event) => {
       if (event.payload?.source === tagsChangeSource) return;
       await load();
-      if (!disposed && config.main.sidebarIndex === SIDEBAR.TAG)
+      if (!disposed && config.main.sidebarIndex === SIDEBAR.TAG
+        && !(event.payload?.library === libConfig._libraryId && event.payload?.patchedTagId === Number(libConfig.tag.id)))
         libConfig.tag.activateTick++;
     },
   );

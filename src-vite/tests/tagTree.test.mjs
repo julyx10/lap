@@ -240,3 +240,160 @@ test("selected-only tags retain unselected ancestors and combine with search", (
   editor.value = { id: 2, name: 'Child', parent: 1 };
   assert.deepEqual(rows.value.map(tag => tag.id), [1, 2], 'keep the editor mounted if its selection changes');
 });
+
+const content = await readFile(new URL('../src/components/Content.vue', import.meta.url), 'utf8');
+const tagPanel = await readFile(new URL('../src/components/Tag.vue', import.meta.url), 'utf8');
+const imageViewer = await readFile(new URL('../src/views/ImageViewer.vue', import.meta.url), 'utf8');
+
+function removalFixture(getTagsForFile) {
+  const original = [1, 2, 3].map(id => ({ id, size: 10 }));
+  const events = [];
+  const state = {
+    isTagRemovalView: () => true, groupedModeActive: ref(false), isMapView: ref(false),
+    isLoading: ref(false), tempViewMode: ref('none'), fileList: ref(original),
+    isRealFileItem: file => !!file, getTagsForFile, getMediaItemSize: file => file.size,
+    selectedItemIndex: ref(1), countedFolderRequestId: ref(0), totalFileCount: ref(3),
+    totalFileSize: ref(30), selectMode: ref(false), refreshFileGeometryLayout() {},
+    updateSelectedImage() {}, syncSelectionToImageViewer() {}, isPendingFileItem: () => false,
+    markDedupSourceUpdated() {}, getCurrentQueryTimeLine: async () => [], timelineData: ref([]),
+    showTaggingDialog: ref(true), syncTagStates: async () => {},
+    tauriEmit: (...args) => events.push(args), gridViewRef: ref({ getScrollTop: () => 128 }),
+  };
+  const start = content.indexOf('async function updateFileHasTags');
+  const end = content.indexOf('async function syncTagStates', start);
+  const code = ts.transpile(content.slice(start, end), { target: ts.ScriptTarget.ES2022 });
+  const run = new Function(...Object.keys(state), `
+    let currentContentRequestId = 1, tagRemovalRestoreVersion = 0, visibleRangeSeqId = 0;
+    let pendingTagRemovalAnchor = { index: 999 }, pendingScopeSelectionChange = false, contentQueryRefreshPending = false;
+    let lastVisibleRange = {start: -1, end: -1}, suppressImageViewerSync = false;
+    ${code}
+    return { updateFileHasTags, anchor: () => pendingTagRemovalAnchor,
+      beginRefresh: () => { contentQueryRefreshPending = true; } };
+  `)(...Object.values(state));
+  return { ...state, ...run, events };
+}
+
+const removal = { library: 'test', tagId: 10, branch: new Set([10, 11]) };
+test('tag removal patches the current list and focuses the next photo', async () => {
+  const f = removalFixture(async () => [{ id: 20 }]);
+  await f.updateFileHasTags([{ file_id: 2, has_tags: true }], removal);
+  assert.deepEqual(f.fileList.value.map(file => file.id), [1, 3]);
+  assert.equal(f.fileList.value[f.selectedItemIndex.value].id, 3);
+  assert.equal(f.totalFileCount.value, 2);
+  assert.equal(f.anchor(), null);
+  assert.equal(f.events[0][1].patchedTagId, 10);
+});
+
+test('removing another tag or retaining a descendant keeps the photo in the list', async () => {
+  for (const id of [10, 11]) {
+    const f = removalFixture(async () => [{ id }]);
+    await f.updateFileHasTags([{ file_id: 2, has_tags: true }], removal);
+    assert.deepEqual(f.fileList.value.map(file => file.id), [1, 2, 3]);
+    assert.equal(f.events[0][1].patchedTagId, 10);
+  }
+});
+
+test('missing rows or large batches fall back with a fresh anchor and no per-file reads', async () => {
+  const f = removalFixture(async () => assert.fail('unexpected membership lookup'));
+  await f.updateFileHasTags([{ file_id: 99, has_tags: true }], removal);
+  assert.equal(f.events[0][1], undefined);
+  assert.deepEqual(f.anchor().ids, [2, 3, 1]);
+  assert.equal(f.anchor().scrollTop, 128);
+  f.fileList.value = Array.from({ length: 25 }, (_, index) => ({ id: index + 1 }));
+  await f.updateFileHasTags(f.fileList.value.map(file => ({ file_id: file.id, has_tags: true })), removal);
+  assert.equal(f.events[1][1], undefined);
+  assert.ok(f.anchor());
+  await f.updateFileHasTags([], null);
+  assert.equal(f.anchor(), null);
+});
+
+test('a query refresh starting during membership lookup blocks a stale patch and anchor', async () => {
+  let release;
+  const f = removalFixture(() => new Promise(resolve => { release = resolve; }));
+  const pending = f.updateFileHasTags([{ file_id: 2, has_tags: true }], removal);
+  await Promise.resolve();
+  f.beginRefresh();
+  release([]);
+  await pending;
+  assert.equal(f.fileList.value.length, 3);
+  assert.equal(f.anchor(), null);
+  assert.equal(f.events[0][1], undefined);
+});
+
+test('tag sidebar reloads counts but skips query activation for a matching patched view', async () => {
+  const start = tagPanel.indexOf('      if (event.payload?.source === tagsChangeSource)');
+  const end = tagPanel.indexOf('\n    },', start);
+  const config = { main: { sidebarIndex: 7 } };
+  const libConfig = { _libraryId: 'test', tag: { id: 10, activateTick: 0 } };
+  let loads = 0;
+  const run = new Function('config', 'libConfig', 'load', `
+    const tagsChangeSource = 'sidebar', disposed = false, SIDEBAR = { TAG: 7 };
+    return async event => { ${tagPanel.slice(start, end)} };
+  `)(config, libConfig, async () => { loads++; });
+  await run({ payload: { library: 'test', patchedTagId: 10 } });
+  assert.equal(loads, 1);
+  assert.equal(libConfig.tag.activateTick, 0);
+  await run({ payload: { library: 'test', patchedTagId: 11 } });
+  assert.equal(libConfig.tag.activateTick, 1);
+});
+
+test('ImageViewer tag edits still notify the main view to refresh', async () => {
+  const start = imageViewer.indexOf('async function updateFileHasTags');
+  const end = imageViewer.indexOf('async function syncTagStates', start);
+  const events = [];
+  const visible = ref(true);
+  const handler = new Function('syncTagStates', 'showTaggingDialog', 'emit',
+    ts.transpile(imageViewer.slice(start, end)) + ';return updateFileHasTags;'
+  )(async () => {}, visible, event => events.push(event));
+  await handler([]);
+  assert.equal(visible.value, false);
+  assert.deepEqual(events, ['tags-changed']);
+});
+
+test('fallback restoration skips removed photos and selects the next surviving candidate', async () => {
+  const start = content.indexOf('async function restoreTagRemovalAnchor');
+  const end = content.indexOf('watch([fileList, contentReady]', start);
+  const selected = [];
+  const deps = {
+    contentCountIsAuthoritative: ref(true),
+    config: { main: { sidebarIndex: 7 } }, SIDEBAR: { TAG: 7 },
+    libConfig: { _libraryId: 'test', tag: { id: 10 } },
+    currentQueryParams: ref({ tagId: 10 }), fileList: ref([{}, {}]),
+    groupedModeActive: ref(false),
+    resolveRefreshedFileIndex: async id => id === 3 ? 1 : -1,
+    restoreRefreshedFileSelection: async (index, current, scrollTop) => {
+      if (current()) selected.push([index, scrollTop]);
+    },
+    fetchDataRange() {},
+  };
+  const restore = new Function(...Object.keys(deps), `
+    let pendingTagRemovalAnchor = { request: 1, library: 'test', tagId: 10, index: 0, ids: [2, 3, 1], scrollTop: 128 };
+    const currentContentRequestId = 2, tagRemovalRestoreVersion = 1;
+    const pendingScopeSelectionChange = false, contentQueryRefreshPending = false;
+    ${content.slice(start, end)}
+    return restoreTagRemovalAnchor;
+  `)(...Object.values(deps));
+  await restore();
+  assert.deepEqual(selected, [[1, 128]]);
+});
+
+test('restoring the same index refreshes the photo and syncs ImageViewer', async () => {
+  const start = content.indexOf('async function restoreRefreshedFileSelection');
+  const end = content.indexOf('async function restoreFocusedFileAfterListRefresh', start);
+  const selectedItemIndex = ref(1);
+  const calls = [];
+  const deps = {
+    selectedItemIndex, nextTick: async () => {}, groupedModeActive: ref(false),
+    gridViewRef: ref(null), suppressImageViewerSync: false,
+    updateSelectedImage: index => calls.push(['photo', index]),
+    syncSelectionToImageViewer: index => calls.push(['viewer', index]),
+  };
+  const restore = new Function(...Object.keys(deps),
+    ts.transpile(content.slice(start, end)) + ';return restoreRefreshedFileSelection;'
+  )(...Object.values(deps));
+  await restore(0, () => false);
+  assert.equal(selectedItemIndex.value, 1);
+  assert.deepEqual(calls, []);
+  await restore(1, () => true);
+  assert.deepEqual(calls, [['photo', 1], ['viewer', 1]]);
+});

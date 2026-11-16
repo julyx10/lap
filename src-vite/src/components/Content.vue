@@ -1485,6 +1485,32 @@ function rememberFocusedFileForPresentationRefresh() {
   pendingFocusedFileId = fileId > 0 ? fileId : null;
 }
 
+function resolveRefreshedFileIndex(fileId: number) {
+  return groupedModeActive.value ? resolveGroupedFileIndex(fileId) : getCurrentQueryFilePosition(fileId);
+}
+
+async function restoreRefreshedFileSelection(
+  index: number,
+  stillCurrent: () => boolean,
+  scrollTop: number | null = null,
+) {
+  if (!stillCurrent()) return;
+  const sameIndex = selectedItemIndex.value === index;
+  selectedItemIndex.value = index;
+  await nextTick();
+  if (!stillCurrent()) return;
+  if (sameIndex && selectedItemIndex.value === index) {
+    void updateSelectedImage(index);
+    if (!suppressImageViewerSync) void syncSelectionToImageViewer(index);
+  }
+  if (groupedModeActive.value) {
+    await scrollToGroupedFile(index);
+  } else {
+    if (scrollTop !== null) gridViewRef.value?.scrollToPosition(scrollTop);
+    gridViewRef.value?.scrollToItem(index);
+  }
+}
+
 async function restoreFocusedFileAfterListRefresh() {
   const fileId = pendingFocusedFileId;
   if (!fileId || isRestoringFocusedFile || fileList.value.length === 0) return;
@@ -1493,9 +1519,7 @@ async function restoreFocusedFileAfterListRefresh() {
   const requestId = currentContentRequestId;
   let retryForNewerRefresh = false;
   try {
-    const fileIndex = groupedModeActive.value
-      ? await resolveGroupedFileIndex(fileId)
-      : await getCurrentQueryFilePosition(fileId);
+    const fileIndex = await resolveRefreshedFileIndex(fileId);
     if (requestId !== currentContentRequestId || pendingFocusedFileId !== fileId) {
       retryForNewerRefresh = true;
       return;
@@ -1510,14 +1534,8 @@ async function restoreFocusedFileAfterListRefresh() {
       selectedItemIndex.value = totalFileCount.value > 0 ? 0 : -1;
       return;
     }
-    selectedItemIndex.value = fileIndex;
-    await nextTick();
-    if (requestId !== currentContentRequestId || pendingScopeSelectionChange) return;
-    if (groupedModeActive.value) {
-      await scrollToGroupedFile(fileIndex);
-    } else {
-      gridViewRef.value?.scrollToItem(fileIndex);
-    }
+    await restoreRefreshedFileSelection(fileIndex,
+      () => requestId === currentContentRequestId && !pendingScopeSelectionChange);
   } catch (error) {
     console.error('restoreFocusedFileAfterListRefresh error:', error);
   } finally {
@@ -1555,8 +1573,43 @@ async function scrollToGroupedFile(fileIndex: number) {
   }
 }
 
+let tagRemovalRestoreVersion = 0;
+let pendingTagRemovalAnchor: {
+  library: string;
+  tagId: number;
+  request: number;
+  index: number;
+  ids: number[];
+  scrollTop: number | null;
+} | null = null;
+
+async function restoreTagRemovalAnchor() {
+  const anchor = pendingTagRemovalAnchor;
+  if (!anchor || anchor.request === currentContentRequestId || !contentCountIsAuthoritative.value) return;
+  pendingTagRemovalAnchor = null;
+  const version = tagRemovalRestoreVersion;
+  const request = currentContentRequestId;
+  const stillCurrent = () => request === currentContentRequestId && version === tagRemovalRestoreVersion
+    && !contentQueryRefreshPending && anchor.library === libConfig._libraryId && config.main.sidebarIndex === SIDEBAR.TAG
+    && Number(libConfig.tag.id) === anchor.tagId && Number(currentQueryParams.value.tagId) === anchor.tagId
+    && !pendingScopeSelectionChange;
+  if (!stillCurrent() || !fileList.value.length) return;
+  let index = Math.min(anchor.index, fileList.value.length - 1);
+  for (const id of anchor.ids) {
+    const position = await resolveRefreshedFileIndex(id);
+    if (!stillCurrent()) return;
+    if (typeof position === 'number' && position >= 0 && position < fileList.value.length) {
+      index = position;
+      break;
+    }
+  }
+  await restoreRefreshedFileSelection(index, stillCurrent, anchor.scrollTop);
+  if (stillCurrent() && !groupedModeActive.value) void fetchDataRange(index, index + 1);
+}
+
 watch([fileList, contentReady], () => {
   if (!contentReady.value) return;
+  void restoreTagRemovalAnchor();
   selectedItemIndex.value = fileList.value.length > 0
     ? Math.min(Math.max(selectedItemIndex.value, 0), fileList.value.length - 1)
     : -1;
@@ -6625,6 +6678,7 @@ watch(
     if (previousView !== undefined && nextView !== previousView) {
       pendingScopeSelectionChange = true;
       pendingFocusedFileId = null;
+      pendingTagRemovalAnchor = null;
       pendingSelectionRestore = null;
       pendingInitialSelectedIndex = -1;
       hasRestoredInitialSelection = true;
@@ -10941,13 +10995,109 @@ async function updateSelectedImage(index: number) {
   }
 }
 
-// click ok in tagging dialog
-async function updateFileHasTags(fileStates: Array<{ file_id: number; has_tags: boolean }>) {
-  await syncTagStates(fileStates);
-  showTaggingDialog.value = false;
+type TagFileState = { file_id: number; has_tags: boolean };
+type TagRemovalContext = { library: string; tagId: number; branch: Set<number> };
+
+function isTagRemovalView({ library, tagId }: TagRemovalContext) {
+  return library === libConfig._libraryId && config.main.sidebarIndex === SIDEBAR.TAG
+    && currentQuerySource.value === 'query' && Number(currentQueryParams.value.tagId) === tagId
+    && Number(libConfig.tag.id) === tagId;
 }
 
-async function syncTagStates(fileStates: Array<{ file_id: number; has_tags: boolean }>) {
+async function updateFileHasTags(fileStates: TagFileState[], removal?: TagRemovalContext | null) {
+  const version = ++tagRemovalRestoreVersion;
+  pendingTagRemovalAnchor = null;
+  let patched = false;
+  try {
+    await syncTagStates(fileStates);
+    if (removal && version === tagRemovalRestoreVersion) {
+      patched = await patchTagRemoval(fileStates, removal, version);
+      if (!patched && version === tagRemovalRestoreVersion && isTagRemovalView(removal) && !pendingScopeSelectionChange
+        && !contentQueryRefreshPending && selectedItemIndex.value >= 0) {
+        const index = selectedItemIndex.value;
+        const ids = [...fileList.value.slice(index, index + 8),
+          ...fileList.value.slice(Math.max(0, index - 4), index).reverse()]
+          .filter(isRealFileItem).map(file => Number(file.id));
+        pendingTagRemovalAnchor = {
+          library: removal.library, tagId: removal.tagId, request: currentContentRequestId,
+          index, ids, scrollTop: gridViewRef.value?.getScrollTop() ?? null,
+        };
+      }
+    }
+  } finally {
+    showTaggingDialog.value = false;
+    void tauriEmit('tags-changed', patched && removal ? { library: removal.library, patchedTagId: removal.tagId } : undefined);
+  }
+}
+
+async function patchTagRemoval(fileStates: TagFileState[], removal: TagRemovalContext, version: number) {
+  const request = currentContentRequestId;
+  const isCurrent = () => request === currentContentRequestId && version === tagRemovalRestoreVersion && isTagRemovalView(removal)
+    && !groupedModeActive.value && !isMapView.value
+    && !isLoading.value && !pendingScopeSelectionChange && !contentQueryRefreshPending
+    && tempViewMode.value === 'none';
+  if (!isCurrent()) return false;
+  const states = new Map(fileStates.map(state => [Number(state.file_id), state]));
+  const affected = fileList.value.filter(file => isRealFileItem(file) && states.has(file.id));
+  // Unknown slots may contain an affected file. Let the query refresh those views.
+  if (affected.length !== states.size) return false;
+  // Bound the serial membership lookups for large selections.
+  if (fileStates.filter(state => state.has_tags).length > 24) return false;
+  const removed = new Set<number>();
+  for (const file of affected) {
+    const tags = states.get(file.id)?.has_tags ? await getTagsForFile(file.id) : [];
+    if (!Array.isArray(tags) || !isCurrent()) return false;
+    if (!tags.some(tag => removal.branch.has(Number(tag.id)))) removed.add(file.id);
+  }
+  if (!removed.size) return true;
+  const oldIndex = selectedItemIndex.value;
+  let nextIndex = oldIndex;
+  let removedSize = 0;
+  const remaining = fileList.value.filter((file, index) => {
+    if (!removed.has(file?.id)) return true;
+    if (index < oldIndex) nextIndex--;
+    removedSize += getMediaItemSize(file);
+    return false;
+  });
+
+  // Offset-based requests started before the removal can no longer fill these slots.
+  const nextRequest = ++currentContentRequestId;
+  countedFolderRequestId.value = nextRequest;
+  visibleRangeSeqId++;
+  const range = lastVisibleRange;
+  lastVisibleRange = { start: -1, end: -1 };
+  fileList.value = remaining;
+  totalFileCount.value = Math.max(0, totalFileCount.value - removed.size);
+  totalFileSize.value = Math.max(0, totalFileSize.value - removedSize);
+  selectedItemIndex.value = Math.min(nextIndex, remaining.length - 1);
+  if (selectMode.value) {
+    for (const file of affected) {
+      if (removed.has(file.id) && selectedFileIds.delete(file.id)) applySelectionDelta(file, -1);
+    }
+    lastSelectedIndex.value = -1;
+    keyboardSelectionAnchorIndex.value = -1;
+    if (selectedCount.value === 0) selectMode.value = false;
+  }
+  refreshFileGeometryLayout();
+  if (selectedItemIndex.value === oldIndex && oldIndex >= 0) {
+    void updateSelectedImage(oldIndex);
+    if (!suppressImageViewerSync) void syncSelectionToImageViewer(oldIndex);
+  }
+  if (isPendingFileItem(fileList.value[selectedItemIndex.value])) {
+    void fetchDataRange(selectedItemIndex.value, selectedItemIndex.value + 1);
+  }
+  markDedupSourceUpdated(nextRequest);
+  void getCurrentQueryTimeLine().then(data => {
+    if (currentContentRequestId === nextRequest) timelineData.value = data;
+  });
+  if (range.start >= 0 && fileList.value.length) {
+    handleVisibleRangeUpdate({ startIndex: Math.min(range.start, fileList.value.length - 1),
+      endIndex: Math.min(range.end, fileList.value.length - 1) });
+  }
+  return true;
+}
+
+async function syncTagStates(fileStates: TagFileState[]) {
   const filesById = new Map(
     fileList.value
       .filter(file => isRealFileItem(file))
