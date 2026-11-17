@@ -339,6 +339,7 @@
     "folders": "즐겨찾는 폴더"
   },
   "rating": {
+    "mixed": "혼합",
     "title": "평점",
     "unrated": "별점 없음",
     "all_rated": "모든 평점 있음",
@@ -1358,6 +1359,7 @@
     "loading_compatible": "호환 재생을 준비 중...",
     "failed": "재생 실패",
     "errors": {
+      "playback_failed": "재생 실패",
       "aborted": "중단됨",
       "network": "네트워크 오류",
       "decode": "디코딩 오류",

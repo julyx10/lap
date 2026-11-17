@@ -339,6 +339,7 @@
     "folders": "Cartelle preferite"
   },
   "rating": {
+    "mixed": "Misto",
     "title": "Valutazioni",
     "unrated": "Senza valutazione",
     "all_rated": "Tutte valutate",
@@ -1358,6 +1359,7 @@
     "loading_compatible": "Preparazione della riproduzione compatibile...",
     "failed": "Impossibile riprodurre il video",
     "errors": {
+      "playback_failed": "Riproduzione non riuscita",
       "aborted": "Il caricamento del video è stato annullato",
       "network": "Errore di rete durante il caricamento del video",
       "decode": "Errore di decodifica del video",

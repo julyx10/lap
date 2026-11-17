@@ -339,6 +339,7 @@
     "folders": "Ulubione foldery"
   },
   "rating": {
+    "mixed": "Różne",
     "title": "Oceny",
     "unrated": "Bez oceny",
     "all_rated": "Wszystkie ocenione",
@@ -1358,6 +1359,7 @@
     "loading_compatible": "Przygotowywanie zgodnego odtwarzania...",
     "failed": "Nie udało się odtworzyć filmu",
     "errors": {
+      "playback_failed": "Odtwarzanie nie powiodło się",
       "aborted": "Wczytywanie filmu zostało anulowane",
       "network": "Błąd sieci podczas wczytywania filmu",
       "decode": "Błąd dekodowania filmu",

@@ -339,6 +339,7 @@
     "folders": "お気に入りフォルダー"
   },
   "rating": {
+    "mixed": "混在",
     "title": "評価",
     "unrated": "未評価",
     "all_rated": "すべての評価済み",
@@ -1358,6 +1359,7 @@
     "loading_compatible": "互換再生を準備中...",
     "failed": "再生できません",
     "errors": {
+      "playback_failed": "再生に失敗しました",
       "aborted": "中止されました",
       "network": "ネットワークエラー",
       "decode": "デコードエラー",

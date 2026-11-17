@@ -339,6 +339,7 @@
     "folders": "Favorite folders"
   },
   "rating": {
+    "mixed": "Mixed",
     "title": "Ratings",
     "unrated": "Unrated",
     "all_rated": "All rated",
@@ -1358,6 +1359,7 @@
     "loading_compatible": "Preparing compatible playback...",
     "failed": "Video could not be played",
     "errors": {
+      "playback_failed": "Playback failed",
       "aborted": "Video loading was canceled",
       "network": "Network error while loading video",
       "decode": "Video decoding error",

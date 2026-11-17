@@ -339,6 +339,7 @@
     "folders": "Pastas favoritas"
   },
   "rating": {
+    "mixed": "Variado",
     "title": "Avaliações",
     "unrated": "Sem classificação",
     "all_rated": "Todos avaliados",
@@ -1358,6 +1359,7 @@
     "loading_compatible": "Preparando reprodução compatível...",
     "failed": "Erro na reprodução",
     "errors": {
+      "playback_failed": "Falha na reprodução",
       "aborted": "Abortado",
       "network": "Erro de rede",
       "decode": "Erro de decodificação",

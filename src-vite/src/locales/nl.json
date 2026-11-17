@@ -339,6 +339,7 @@
     "folders": "Favoriete mappen"
   },
   "rating": {
+    "mixed": "Gemengd",
     "title": "Beoordelingen",
     "unrated": "Niet beoordeeld",
     "all_rated": "Alle beoordeelde",
@@ -1358,6 +1359,7 @@
     "loading_compatible": "Compatibele weergave voorbereiden...",
     "failed": "Video kan niet worden afgespeeld",
     "errors": {
+      "playback_failed": "Afspelen mislukt",
       "aborted": "Laden van video is geannuleerd",
       "network": "Netwerkfout bij het laden van de video",
       "decode": "Fout bij het decoderen van de video",

@@ -339,6 +339,7 @@
     "folders": "Kedvenc mappák"
   },
   "rating": {
+    "mixed": "Vegyes",
     "title": "Értékelések",
     "unrated": "Nincs értékelve",
     "all_rated": "Mind értékelt",
@@ -1358,6 +1359,7 @@
     "loading_compatible": "Kompatibilis lejátszás előkészítése...",
     "failed": "A videót nem lehetett lejátszani",
     "errors": {
+      "playback_failed": "A lejátszás sikertelen",
       "aborted": "A videó betöltése megszakadt",
       "network": "Hálózati hiba a videó betöltése közben",
       "decode": "Videó dekódolási hiba",

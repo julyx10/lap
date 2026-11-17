@@ -339,6 +339,7 @@
     "folders": "Dossiers favoris"
   },
   "rating": {
+    "mixed": "Mixte",
     "title": "Notes",
     "unrated": "Sans note",
     "all_rated": "Tous les éléments notés",
@@ -1358,6 +1359,7 @@
     "loading_compatible": "Préparation de la lecture compatible...",
     "failed": "Erreur lecture",
     "errors": {
+      "playback_failed": "Échec de la lecture",
       "aborted": "Annulé",
       "network": "Erreur réseau",
       "decode": "Erreur décodage",

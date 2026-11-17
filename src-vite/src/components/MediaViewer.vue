@@ -171,7 +171,7 @@
             v-if="mode !== 2"
             :icon="IconFileInfo"
             :disabled="fileIndex < 0 || isSlideShow || !canInteract"
-            :tooltip="$t('menu.meta.info')"
+            :tooltip="$t('menu.file.show_info')"
             :shortcut="shortcut('meta.info')"
             @click="$emit('item-action', { action: 'info', index: fileIndex })"
           /> -->

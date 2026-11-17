@@ -339,6 +339,7 @@
     "folders": "Oblíbené složky"
   },
   "rating": {
+    "mixed": "Smíšené",
     "title": "Hodnocení",
     "unrated": "Bez hodnocení",
     "all_rated": "Všechny ohodnocené",
@@ -1357,6 +1358,7 @@
     "loading_compatible": "Připravuje se kompatibilní přehrávání…",
     "failed": "Video se nepodařilo přehrát",
     "errors": {
+      "playback_failed": "Přehrávání selhalo",
       "aborted": "Načítání videa bylo zrušeno",
       "network": "Síťová chyba při načítání videa",
       "decode": "Chyba dekódování videa",

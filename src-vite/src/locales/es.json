@@ -339,6 +339,7 @@
     "folders": "Carpetas favoritas"
   },
   "rating": {
+    "mixed": "Variado",
     "title": "Valoraciones",
     "unrated": "Sin valorar",
     "all_rated": "Todo valorado",
@@ -1358,6 +1359,7 @@
     "loading_compatible": "Preparando reproducción compatible...",
     "failed": "Error reproducción",
     "errors": {
+      "playback_failed": "Error de reproducción",
       "aborted": "Abortado",
       "network": "Error red",
       "decode": "Error decodificación",

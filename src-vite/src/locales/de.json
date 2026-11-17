@@ -339,6 +339,7 @@
     "folders": "Favorisierte Ordner"
   },
   "rating": {
+    "mixed": "Unterschiedlich",
     "title": "Bewertungen",
     "unrated": "Unbewertet",
     "all_rated": "Alle bewerteten",
@@ -1358,6 +1359,7 @@
     "loading_compatible": "Kompatible Wiedergabe wird vorbereitet...",
     "failed": "Wiedergabefehler",
     "errors": {
+      "playback_failed": "Wiedergabe fehlgeschlagen",
       "aborted": "Abgebrochen",
       "network": "Netzwerkfehler",
       "decode": "Dekodierfehler",

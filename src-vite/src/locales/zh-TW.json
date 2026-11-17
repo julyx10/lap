@@ -339,6 +339,7 @@
     "folders": "我的最愛資料夾"
   },
   "rating": {
+    "mixed": "混合",
     "title": "評分",
     "unrated": "未評分",
     "all_rated": "全部已評分",
@@ -1358,6 +1359,7 @@
     "loading_compatible": "正在準備相容播放...",
     "failed": "無法播放影片",
     "errors": {
+      "playback_failed": "播放失敗",
       "aborted": "影片載入已取消",
       "network": "載入影片時發生網路錯誤",
       "decode": "影片解碼錯誤",

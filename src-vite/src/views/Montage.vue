@@ -66,7 +66,7 @@
                 <button
                   class="absolute top-1 right-1 size-5 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 focus-visible:opacity-100 cursor-pointer disabled:cursor-default"
                   :disabled="files.length <= 2 || isProcessing"
-                  :aria-label="$t('tooltip.album.remove')"
+                  :aria-label="$t('menu.album.remove')"
                   @pointerdown.stop
                   @click.stop="removePhoto(item.fileId)"
                 ><IconClose class="size-3" /></button>

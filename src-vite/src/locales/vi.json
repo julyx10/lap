@@ -339,6 +339,7 @@
     "folders": "Thư mục yêu thích"
   },
   "rating": {
+    "mixed": "Hỗn hợp",
     "title": "Đánh giá",
     "unrated": "Chưa đánh giá",
     "all_rated": "Tất cả đã đánh giá",
@@ -1357,6 +1358,7 @@
     "loading_compatible": "Đang chuẩn bị phát ở chế độ tương thích...",
     "failed": "Không thể phát video",
     "errors": {
+      "playback_failed": "Không phát được video",
       "aborted": "Đã hủy tải video",
       "network": "Lỗi mạng khi tải video",
       "decode": "Lỗi giải mã video",

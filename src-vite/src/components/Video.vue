@@ -827,7 +827,7 @@ function handlePlayerError(playerInstance: ReturnType<typeof videojs>) {
       case 4: msg = getFallbackErrorMessage(); break;
     }
   } else {
-    msg = $t('video.errors.playback_failed') || 'Playback failed';
+    msg = $t('video.errors.playback_failed');
   }
 
   hasError.value = true;
