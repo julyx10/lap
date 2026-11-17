@@ -12,7 +12,11 @@
 [English](../README.md) | [Česky](README.cs.md) | [Deutsch](README.de.md) | [Español](README.es.md) | Français | [Italiano](README.it.md) | [Magyar](README.hu.md) | [Nederlands](README.nl.md) | [Polski](README.pl.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [Українська](README.uk.md) | [Tiếng Việt](README.vi.md) | [中文简体](README.zh-CN.md) | [中文繁體](README.zh-TW.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
 Lap est un gestionnaire de photos open source et local-first conçu pour parcourir les albums familiaux, retrouver rapidement d'anciennes photos et gérer de grandes bibliothèques multimédias personnelles hors ligne.
-C'est une alternative respectueuse de la vie privée aux services de photos en ligne : pas de téléchargement forcé, recherche IA locale, flux de travail centré sur les dossiers, et gratuit à utiliser.
+Sans importation obligatoire, abonnement ni téléversement. Ouvrez vos dossiers directement dans Lap. Les fichiers conservent leur emplacement et leur format. Enregistrez-les dans des fichiers annexes XMP pour les utiliser dans les applications compatibles.
+
+<div align="center">
+  <p><strong><a href="https://julyx10.github.io/lap/">SITE OFFICIEL</a> | <a href="https://julyx10.github.io/lap/demos/lap/index.html">DÉMO</a></strong></p>
+</div>
 
 ## Télécharger Lap
 
@@ -21,7 +25,7 @@ Ouvrez la [page des dernières versions](https://github.com/julyx10/lap/releases
 | Plateforme | Paquet | Remarque |
 | :-- | :-- | :-- |
 | **macOS (Apple Silicon / Intel)** | `_aarch64.dmg` / `_x64.dmg` | Notarié par Apple |
-| **Windows 10/11 (x64 / ARM64)** | `_x64_en-US.msi` / `_arm64_en-US.msi` | Non signé — si SmartScreen bloque le téléchargement, cliquez sur **Conserver quand même** |
+| **Windows 10/11 (x64 / ARM64)** | `_x64_en-US.msi` / `_arm64_en-US.msi` | Non signé. Choisissez **Conserver quand même** dans le navigateur ou **Informations complémentaires** → **Exécuter quand même** dans SmartScreen. |
 | **Linux (x64 / ARM64)** | `_amd64.deb` / `_arm64.deb` | Pour les distributions basées sur Debian (Ubuntu, Debian, Linux Mint, etc.) |
 | **Linux (x64 / ARM64)** | `_amd64.AppImage` / `_aarch64.AppImage` | Rendez le fichier exécutable, puis double-cliquez pour le lancer |
 
@@ -42,57 +46,58 @@ brew install --cask lap
 
 ## Pourquoi Lap
 
-- **Conçu en local-first** : vos photos restent sur votre propre disque, sans compte cloud ni téléversement obligatoire.
-- **Pas de verrouillage de bibliothèque** : travaillez directement avec vos dossiers existants au lieu de tout importer dans une base de données fermée.
-- **Outils d'IA privés** : recherche, similarité, tags intelligents et fonctions de visages s'exécutent localement sur votre machine.
-- **Conçu pour les grandes collections** : optimisé pour parcourir et organiser des bibliothèques de plus de 100 000 fichiers.
-- **Open source et gratuit** : pas d'abonnement, pas d'écosystème imposé, et un code que vous pouvez inspecter.
+- **Gestion de la photothèque par dossiers.** Ouvrez vos dossiers directement dans Lap. Les fichiers conservent leur emplacement et leur format.
+- **Recherche IA locale.** Décrivez une photo, trouvez des images similaires ou parcourez les visages. Tout est traité sur votre appareil.
+- **Notes et mots-clés portables.** Enregistrez-les dans des fichiers annexes XMP pour les utiliser dans les applications compatibles.
+- **Tri des photos.** Aperçu avec la barre d’espace, avance après notation, affichage des zones AF, comparaison à quatre panneaux et règles de conservation des doublons.
+- **Pour les photothèques de plus de 100 000 photos et vidéos.** Un cœur natif en Rust assure la navigation, la recherche et l’analyse.
+- **Gratuit et open source.** Sans abonnement ni compte, en 17 langues sur macOS, Windows et Linux.
 
 ## Fonctionnalités
 
 - **Navigation flexible** par date, dossier, lieu, appareil, objectif, tags, notes et visages, avec tri et recherche.
-- **Organisation par dossiers** avec plusieurs bibliothèques, import/export par glisser-déposer ou copier-coller, synchronisation et opérations de fichiers sécurisées.
+- **Organisation par dossiers.** Photothèques multiples, import et export par glisser-déposer ou presse-papiers, renommage par lots et synchronisation.
 - **Recherche par IA locale** par texte, similarité visuelle, sujets et regroupement de visages, avec recherche multilingue optionnelle dans plus de 50 langues.
-- **Albums intelligents** pour enregistrer des vues basées sur des règles, avec regroupement et tri personnalisés.
+- **Importation des métadonnées et écriture XMP.** EXIF, IPTC, XMP.
+- **Albums intelligents.** Regroupement et tri personnalisés, filtres par nom de dossier et sélecteurs avec recherche.
 - **Import organisé par date** dans des dossiers par jour, mois, année ou un dossier unique, en conservant les noms d’origine et en ignorant les doublons.
-- **Collections et tags** pour organiser les fichiers sélectionnés par lot sans déplacer ni dupliquer les originaux.
-- **Nettoyage des doublons** avec estimation de l’espace récupérable et suppression par lot dans plusieurs groupes.
-- **Outils de sélection et de comparaison** avec une visionneuse à quatre volets.
+- **Collections et tags** pour organiser les fichiers sélectionnés par lot sans déplacer ni dupliquer les originaux. Arborescence de mots-clés avec glisser-déposer et compteurs par branche.
+- **Nettoyage des doublons.** Règles par dossier, format, taille et date, espace récupérable et suppression par lots.
+- **Outils de sélection et de comparaison.** Aperçu avec la barre d’espace, avance après notation, affichage des zones AF, comparaison à quatre panneaux et règles de conservation des doublons.
 - **Édition intégrée** pour recadrer, redresser à un angle quelconque, pivoter, retourner, redimensionner et effectuer des ajustements de base.
 - **Collage de photos** pour assembler les photos sélectionnées en grille, en mosaïque justifiée ou en pile de photos.
 - **Apple Live Photos et Google Motion Photos** avec lecture animée et filtre commun dans les albums intelligents.
-- **Paires RAW + JPEG/HEIC** affichées comme un seul élément, dont les fichiers liés restent ensemble lors des opérations.
+- **Paires RAW + JPEG/HEIC** affichées comme un seul élément, dont les fichiers liés restent ensemble lors des opérations. Vous pouvez supprimer un seul fichier d’une paire RAW ou les deux. Si un fichier reste, son fichier annexe XMP partagé est conservé.
 - **Miniatures et aperçus RAW configurables** à partir du rendu RAW ou de l’aperçu intégré de l’appareil, avec luminosité réglable et affichage des paires RAW+JPEG.
+- **Informations de fichier personnalisables.** Champs sélectionnables, détails chargés à la demande et zones AF dans la visionneuse.
 - **Carte interactive** pour explorer les photos et vidéos géolocalisées, regroupées selon les filtres actifs.
 - **Navigation hors ligne des albums** qui garde les albums sur un stockage déconnecté ou réseau visibles avec des miniatures en cache.
-- **Large compatibilité** avec plus de 60 formats photo, RAW et vidéo.
+- **Fichiers uniquement en ligne.** Les fichiers OneDrive à la demande et les fichiers dématérialisés de macOS sont indexés et affichés sans téléchargement automatique.
+- **Thèmes clair et sombre.** Peuvent suivre l’apparence du système.
+- **Large compatibilité** avec plus de 60 formats image, RAW et vidéo. Documents Affinity (aperçu intégré).
 
 ## Métadonnées, collections et déplacement de fichiers
 
-Lap est centré sur les dossiers, mais toutes les informations affichées dans Lap ne sont pas intégrées au fichier d’origine. Cette distinction est importante si vous gérez aussi les mêmes dossiers dans Finder, l’Explorateur ou une autre application photo.
+Lap lit les métadonnées compatibles de Lightroom, digiKam, darktable et ACDSee. Activez l’importation dans les paramètres. Les valeurs compatibles des fichiers annexes XMP priment sur les valeurs intégrées. Les modifications locales sont conservées.
 
 ### Ce qui reste avec le fichier
 
 - Vos photos et vidéos originales restent toujours des fichiers ordinaires dans leurs dossiers existants.
 - Les métadonnées déjà intégrées à un fichier, telles que la date EXIF, l’appareil, l’objectif, le GPS et l’orientation, sont lues depuis ce fichier lorsque Lap l’indexe.
+- Le titre, le titre éditorial, la description, l’auteur et le copyright sont modifiables et enregistrés dans la base de données locale. L’enregistrement en XMP écrit aussi les mots-clés, notes, favoris et états de tri dans les fichiers annexes. Les autres propriétés XMP et les originaux sont préservés.
+- Lorsque vous renommez, déplacez, copiez ou supprimez des fichiers **dans Lap**, Lap met simultanément à jour son catalogue local. Il conserve également ensemble les éléments groupés pris en charge, tels que les composants Apple Live Photo, les fichiers annexes AAE et les paires RAW + JPEG/HEIC activées. Vous pouvez supprimer un seul fichier d’une paire RAW ou les deux. Si un fichier reste, son fichier annexe XMP partagé est conservé.
 - L’enregistrement d’une modification d’image intégrée écrit l’image obtenue à l’emplacement choisi.
-- Lorsque vous renommez, déplacez, copiez ou supprimez des fichiers **dans Lap**, Lap met simultanément à jour son catalogue local. Il conserve également ensemble les éléments groupés pris en charge, tels que les composants Apple Live Photo, les fichiers annexes AAE et les paires RAW + JPEG/HEIC activées.
 
 ### Ce que Lap stocke localement
 
-Les informations suivantes sont des données de bibliothèque Lap. Elles sont stockées dans la base de données locale ou la configuration de bibliothèque de Lap, et ne sont pas écrites dans les données EXIF, IPTC ou les fichiers annexes XMP :
-
-- Collections, tags, commentaires, favoris, notes et états de sélection (Sélectionnées et Rejetées)
-- Les albums intelligents, ainsi que leurs règles, regroupements, tris et ordres
+- Les collections, les albums intelligents, leurs règles et les réglages d’affichage restent dans la base de données locale ou la configuration.
 - Les données de recherche IA, données de visage, miniatures et autres données d’index ou de cache
-
-Ces données ne voyagent pas avec le fichier lorsqu’il est copié, exporté ou déplacé hors de Lap, et elles ne sont pas automatiquement disponibles dans d’autres applications.
 
 ### Travailler avec des fichiers hors de Lap
 
 Lap peut analyser à nouveau les dossiers et détecter de nombreux changements du système de fichiers. Toutefois, les modifications effectuées hors de Lap — comme le renommage, le déplacement, le remplacement ou la copie de fichiers — peuvent affecter l’organisation stockée uniquement dans Lap.
 
-Pour des résultats plus fiables, renommez et déplacez les fichiers dans Lap lorsque vous utilisez des collections, tags, commentaires, favoris, notes ou états de sélection. Si vous gérez aussi des fichiers hors de Lap, sauvegardez la base de données et la configuration de Lap avec vos photos. Vous pouvez gérer l’emplacement de la base de données et créer une sauvegarde dans **Paramètres → Stockage**.
+Lorsque l’importation des métadonnées est activée, Lap vérifie aussi les modifications des fichiers annexes XMP. Renommez et déplacez les fichiers dans Lap pour conserver leur appartenance aux collections. Gardez les fichiers annexes XMP avec les originaux. Si vous gérez aussi des fichiers hors de Lap, sauvegardez la base de données et la configuration de Lap avec vos photos. Vous pouvez gérer l’emplacement de la base de données et créer une sauvegarde dans **Paramètres → Stockage**.
 
 Supprimer la base de données ou la configuration de Lap supprime cette organisation locale et les données d’index, mais ne supprime pas vos fichiers média originaux.
 
@@ -140,6 +145,8 @@ Pour une installation DEB, désinstallez le paquet :
 sudo apt remove lap
 ```
 
+Pour désinstaller le paquet Arch local, utilisez `sudo pacman -R lap`.
+
 Pour une installation AppImage, quittez Lap et supprimez le fichier `.AppImage` téléchargé.
 
 Supprimez ensuite tous les fichiers de base de données, de cache et de configuration de Lap :
@@ -178,15 +185,28 @@ cargo tauri dev
 
 Les paquets de distribution peuvent utiliser le libheif système (1.17 ou plus récent) au lieu du libheif et du libde265 intégrés. Définissez `LAP_SYSTEM_LIBHEIF=1` pour la compilation. Les sous-modules `third_party/libheif` et `third_party/libde265` ne sont alors pas nécessaires. Le décodage HEVC dépend des plugins de codec du libheif système.
 
+### Arch Linux (x86_64)
+
+Recette expérimentale pour Arch, encore absente de l’AUR. Installation locale: [`contrib/aur`](../contrib/aur/README.md).
+
+```bash
+cd contrib/aur
+makepkg -s
+sudo pacman -U lap-<version>-x86_64.pkg.tar.zst
+```
+
+La recette fixe le commit et vérifie les modèles IA et FFmpeg par sommes de contrôle. Pacman gère les mises à jour.
+
 ## Formats supportés
 
-Lap prend en charge plus de 60 formats photo, RAW et vidéo.
+Lap prend en charge plus de 60 formats image, RAW et vidéo.
 
 | Type | Formats |
 | :--- | :--- |
 | Images | JPG/JPEG/JFIF, PNG, GIF, BMP, TIFF, WebP, HEIC/HEIF/HIF, AVIF, JXL, PSD, EXR, HDR/RGBE, TGA, JPEG 2000 (JP2/J2K/J2C/JPC/JPF/JPX), DDS, DPX, QOI |
-| Photos RAW | CR2, CR3, CRW, NEF, NRW, ARW, SRF, SR2, RAF, RW2, ORF, PEF, DNG, SRW, RWL, MRW, 3FR, MOS, DCR, KDC, ERF, MEF, RAW, MDC |
-| Vidéos | MP4, MOV, M4V, MKV, AVI, FLV, TS/M2TS, WMV, WebM, 3GP/3G2, F4V, VOB, MPG/MPEG, ASF, DIVX et plus. La lecture H.264 est supportée sur toutes les plateformes, avec un traitement automatique de compatibilité lorsque la lecture native n'est pas disponible. HEVC/H.265 et VP9 sont supportés nativement sur macOS. |
+| Photos RAW | CR2, CR3, CRW, NEF, NRW, ARW, SRF, SR2, RAF, RW2, ORF, PEF, DNG, SRW, RWL, MRW, 3FR, MOS, IIQ, DCR, KDC, ERF, MEF, RAW, MDC |
+| Documents Affinity | AF, AFPHOTO, AFDESIGN, AFPUB (aperçu intégré) |
+| Vidéos | MP4, MOV, M4V, MKV, AVI, FLV, TS/MTS/M2TS, WMV, WebM, 3GP, MPG/MPEG, VOB, MOD/TOD, HEVC, ASF. La lecture H.264 est supportée sur toutes les plateformes, avec un traitement automatique de compatibilité lorsque la lecture native n'est pas disponible. HEVC/H.265 et VP9 sont supportés nativement sur macOS. |
 
 ### Lecture vidéo sous Linux
 
@@ -210,6 +230,7 @@ sudo apt install gstreamer1.0-libav gstreamer1.0-plugins-good
 | [libheif](https://github.com/strukturag/libheif) | Décodage d'images HEIC/HEIF/HIF et génération d'aperçus |
 | [libjpeg-turbo](https://libjpeg-turbo.org/) | Décodage JPEG rapide et génération de miniatures |
 | [FFmpeg](https://ffmpeg.org/) | Traitement vidéo et génération de miniatures |
+| [exiftool-rs](https://github.com/Le-Syl21/exiftool-rs) | EXIF / IPTC / XMP |
 | [Video.js](https://videojs.com/) | Interface de lecture vidéo multiplateforme |
 | [ONNX Runtime](https://onnxruntime.ai/) | Moteur d'inférence de modèles d'IA local |
 | [CLIP](https://github.com/openai/CLIP) | Recherche de similitude image-texte |

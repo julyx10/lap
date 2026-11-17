@@ -12,7 +12,11 @@
 [English](../README.md) | [Česky](README.cs.md) | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | [Italiano](README.it.md) | [Magyar](README.hu.md) | [Nederlands](README.nl.md) | [Polski](README.pl.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [Українська](README.uk.md) | [Tiếng Việt](README.vi.md) | [中文简体](README.zh-CN.md) | 中文繁體 | [日本語](README.ja.md) | [한국어](README.ko.md)
 
 Lap 是一款開放原始碼、以本機為先的相片管理器，讓您輕鬆瀏覽家庭相簿、快速找出老照片，並離線管理大型個人媒體資料庫。
-它是雲端相片服務的隱私替代方案：不強制上傳、內建本機 AI 搜尋、以資料夾為中心的工作流程，且完全免費使用。
+無須預先匯入、訂閱或上傳。直接在 Lap 開啟現有資料夾。檔案保留在原位置，格式不變。將評分與標籤儲存到 XMP 附屬檔，可在相容的相片管理應用程式讀取。
+
+<div align="center">
+  <p><strong><a href="https://julyx10.github.io/lap/">官方網站</a> | <a href="https://julyx10.github.io/lap/demos/lap/index.html">演示</a></strong></p>
+</div>
 
 ## 下載 Lap
 
@@ -21,7 +25,7 @@ Lap 是一款開放原始碼、以本機為先的相片管理器，讓您輕鬆�
 | 平台 | 安裝包 | 備註 |
 | :-- | :-- | :-- |
 | **macOS (Apple Silicon / Intel)** | `_aarch64.dmg` / `_x64.dmg` | 已通過 Apple 公證 |
-| **Windows 10/11 (x64 / ARM64)** | `_x64_en-US.msi` / `_arm64_en-US.msi` | 未簽章 — 若 SmartScreen 阻擋下載，請點擊**仍要保留** |
+| **Windows 10/11 (x64 / ARM64)** | `_x64_en-US.msi` / `_arm64_en-US.msi` | 未簽署。若瀏覽器阻擋下載，請選擇 **仍要保留**。若 SmartScreen 阻擋安裝程式，請選擇 **其他資訊** → **仍要執行**。 |
 | **Linux (x64 / ARM64)** | `_amd64.deb` / `_arm64.deb` | 適用於 Debian 系列發行版（Ubuntu、Debian、Linux Mint 等） |
 | **Linux (x64 / ARM64)** | `_amd64.AppImage` / `_aarch64.AppImage` | 授予檔案可執行權限後，雙擊執行 |
 
@@ -42,57 +46,58 @@ brew install --cask lap
 
 ## 為什麼選擇 Lap
 
-- **本機優先設計**：您的相片保存在自己的硬碟上，不需要雲端帳號或強制上傳。
-- **不鎖定資料庫**：直接使用現有的資料夾，無需將所有內容匯入封閉式資料庫。
-- **隱私的 AI 工具**：搜尋、相似照片、智慧標籤與人臉辨識功能皆在本機執行。
-- **為大型資料庫打造**：針對超過 10 萬個檔案的資料庫最佳化，瀏覽與整理依然順暢。
-- **開放原始碼且免費**：無訂閱、無生態系綁定，程式碼可自行檢視。
+- **以資料夾管理媒體庫。** 直接在 Lap 開啟現有資料夾。檔案保留在原位置，格式不變。
+- **本機 AI 搜尋。** 用文字描述尋找相片、找出相似相片，或依人臉瀏覽。所有運算皆在裝置上進行。
+- **評分與標籤可跨應用程式使用。** 將評分與標籤儲存到 XMP 附屬檔，可在相容的相片管理應用程式讀取。
+- **相片篩選工具。** 空白鍵快速預覽、評分後自動切換、顯示自動對焦區域、四窗格比較，以及重複檔案保留規則。
+- **適用於有 10 萬張以上相片與影片的媒體庫。** 原生 Rust 核心負責瀏覽、搜尋與掃描。
+- **免費開放原始碼。** 無須訂閱或帳號，支援 macOS、Windows 和 Linux，提供 17 種語言。
 
 ## 功能特色
 
 - **彈性瀏覽資料庫**：依日期、資料夾、地點、相機、鏡頭、標籤、評分與人臉篩選，支援排序與搜尋。
-- **以資料夾為中心的工作流程**：支援多個資料庫、拖曳匯入/匯出、剪貼簿匯入/匯出、檔案系統同步，以及安全的移動、複製與刪除操作。
+- **以資料夾為中心的工作流程。** 支援多個媒體庫、拖曳或剪貼簿匯入匯出、批次重新命名和檔案同步。
 - **本機 AI 搜尋**：支援文字搜尋、視覺相似搜尋、主題、人臉分群，以及可選的 50 多種語言搜尋。
-- **智慧相簿**：儲存基於規則的檢視，可自訂分組與排序。
+- **匯入中繼資料並寫回 XMP。** EXIF, IPTC, XMP.
+- **智慧相簿。** 支援自訂分組、排序、資料夾名稱篩選和可搜尋的值選擇器。
 - **依日期整理的匯入方式**：支援按日、月、年或單一資料夾匯入，保留原檔名並跳過重複項目。
-- **收藏與標籤**：批次整理所選檔案，無需移動或複製原始檔案。
-- **重複照片清理**：顯示可釋出的空間，並可跨重複群組批次清理。
-- **選片與比較工具**：包含四窗格圖片比較檢視器。
+- **收藏與標籤**：批次整理所選檔案，無需移動或複製原始檔案。支援拖曳和分支計數的標籤樹。
+- **重複照片清理。** 依資料夾、格式、大小或日期保留檔案，顯示可釋放空間並支援批次刪除。
+- **選片與比較工具。** 空白鍵快速預覽、評分後自動切換、顯示自動對焦區域、四窗格比較，以及重複檔案保留規則。
 - **內建編輯**：支援裁剪、任意角度拉直、旋轉、翻轉、縮放與基本影像調整。
 - **相片拼貼**：將所選相片排成格狀、馬賽克或相片堆疊，合成一張拼貼。
 - **Apple 原況相片與 Google 動態相片**：支援動態播放，並可透過統一的智慧相簿條件篩選。
-- **RAW + JPEG/HEIC 配對**：以單一項目顯示，進行檔案操作時同步處理相關聯檔案。
+- **RAW + JPEG/HEIC 配對**：以單一項目顯示，進行檔案操作時同步處理相關聯檔案。刪除 RAW 配對時可選擇刪除其中一個或兩個檔案。保留一個檔案時，也會保留共用的 XMP 附屬檔。
 - **可設定的 RAW 縮圖與預覽**：可使用 RAW 算繪或相機內嵌預覽，並支援調整亮度與 RAW+JPEG 配對顯示。
+- **可自訂的檔案資訊。** 可選擇顯示欄位、按需載入詳細資訊，並在檢視器中顯示自動對焦區域。
 - **互動式地圖檢視**：以叢集方式瀏覽含地理資訊的相片與影片，並遵循目前的篩選條件。
 - **離線相簿瀏覽**：未連接或網路儲存上的相簿仍會顯示，並保留快取的縮圖。
-- **廣泛的格式支援**：支援 60 多種相片、RAW 與影片格式。
+- **僅存在雲端的檔案。** 為 OneDrive 隨選檔案和 macOS 尚未下載的檔案建立索引並顯示，不會自動下載。
+- **淺色與深色主題。** 可跟隨系統外觀。
+- **廣泛的格式支援**：支援 60 多種影像、RAW 與影片格式。 Affinity 文件 (內嵌預覽).
 
 ## 中繼資料、收藏與檔案移動
 
-Lap 以資料夾為中心，但 Lap 中顯示的資訊並非全都內嵌在原始檔案中。若您同時也會在 Finder、Explorer 或其他相片應用程式中管理同一批資料夾，理解這項差異就十分重要。
+Lap 可匯入 Lightroom、digiKam、darktable 和 ACDSee 的相容中繼資料。在設定中開啟匯入後，XMP 附屬檔中受支援的值會優先於內嵌值，本機編輯的內容會保留。
 
 ### 會隨檔案保留的資訊
 
 - 您的原始相片與影片始終是現有資料夾中的普通檔案。
 - 已內嵌在檔案中的中繼資料，例如 EXIF 拍攝日期、相機、鏡頭、GPS 與方向，會在 Lap 建立索引時從該檔案中讀取。
+- 標題、短標題、描述、創作者和版權皆可編輯，變更會儲存在本機資料庫。執行「將中繼資料儲存至 XMP」即可將這些欄位和標籤、評分、最愛與篩選狀態寫入 XMP 附屬檔。其他 XMP 屬性和原始檔會保留。
+- 當您**在 Lap 中**重新命名、移動、複製或刪除檔案時，Lap 會同時更新其本機目錄。支援的群組資源，例如 Apple 原況相片元件、AAE 附屬檔案與已啟用的 RAW + JPEG/HEIC 配對，都會一併維持在一起。刪除 RAW 配對時可選擇刪除其中一個或兩個檔案。保留一個檔案時，也會保留共用的 XMP 附屬檔。
 - 儲存內建圖片編輯時，產生的圖片會寫入所選的目標位置。
-- 當您**在 Lap 中**重新命名、移動、複製或刪除檔案時，Lap 會同時更新其本機目錄。支援的群組資源，例如 Apple 原況相片元件、AAE 附屬檔案與已啟用的 RAW + JPEG/HEIC 配對，都會一併維持在一起。
 
 ### Lap 在本機儲存的資訊
 
-以下項目屬於 Lap 的資料庫資料，儲存於 Lap 的本機資料庫或資料庫設定中，不會寫入 EXIF、IPTC 或 XMP 附屬檔案：
-
-- 收藏、標籤、註解、我的最愛、評分與選片狀態（包含已選與已排除）
-- 智慧相簿及其規則、分組、排序與順序
+- 收藏、智慧型相簿及其規則和檢視設定儲存在本機資料庫或設定中。
 - AI 搜尋資料、人臉資料、縮圖，以及其他索引或快取資料
-
-當檔案在 Lap 之外被複製、匯出或移動時，這些資料不會隨檔案一起傳遞，也不會自動提供給其他應用程式。
 
 ### 在 Lap 之外管理檔案
 
 Lap 可以重新掃描資料夾並偵測許多檔案系統變更。但若在 Lap 之外進行重新命名、移動、取代或複製檔案等操作，可能會影響僅儲存於 Lap 中的整理資訊。
 
-若需要最可靠的結果，只要您使用收藏、標籤、註解、我的最愛、評分或選片狀態，請盡量在 Lap 中進行檔案的重新命名與移動。若您也在 Lap 之外管理檔案，請將 Lap 的資料庫與設定連同相片一起備份。您可以在 **設定 → 儲存空間** 中管理資料庫位置並建立備份。
+開啟中繼資料匯入後，Lap 也會檢查 XMP 附屬檔是否有變更。在 Lap 中移動或重新命名檔案可保留收藏歸屬。請將 XMP 附屬檔與原始檔一起存放。若您也在 Lap 之外管理檔案，請將 Lap 的資料庫與設定連同相片一起備份。您可以在 **設定 → 儲存空間** 中管理資料庫位置並建立備份。
 
 刪除 Lap 的資料庫或設定檔會移除這些本機整理與索引資料，但不會刪除您的原始媒體檔案。
 
@@ -140,6 +145,8 @@ Remove-Item -Recurse -Force -ErrorAction SilentlyContinue "$env:APPDATA\com.july
 sudo apt remove lap
 ```
 
+解除安裝在本機安裝的 Arch 套件請使用 `sudo pacman -R lap`.
+
 對於 AppImage 安裝方式，請結束 Lap，並刪除下載的 `.AppImage` 檔案。
 
 接著移除所有 Lap 資料庫、快取與設定檔：
@@ -178,15 +185,28 @@ cargo tauri dev
 
 發行版套件可以連結系統的 libheif（1.17 或更新版本），取代內建的 libheif 與 libde265。建置時請設定 `LAP_SYSTEM_LIBHEIF=1`。此時不再需要 `third_party/libheif` 與 `third_party/libde265` 這兩個子模組。HEVC 解碼取決於系統 libheif 的編解碼器外掛程式。
 
+### Arch Linux (x86_64)
+
+Arch 的實驗性建置配方尚未發佈到 AUR。可在本機建置和安裝: [`contrib/aur`](../contrib/aur/README.md).
+
+```bash
+cd contrib/aur
+makepkg -s
+sudo pacman -U lap-<version>-x86_64.pkg.tar.zst
+```
+
+配方固定上游提交，並以校驗和驗證隨附的 AI 模型和 FFmpeg。更新由 pacman 管理。
+
 ## 支援的格式
 
-Lap 支援 60 多種相片、RAW 與影片格式。
+Lap 支援 60 多種影像、RAW 與影片格式。
 
 | 類型 | 格式 |
 | :--- | :--- |
 | 圖片 | JPG/JPEG/JFIF, PNG, GIF, BMP, TIFF, WebP, HEIC/HEIF/HIF, AVIF, JXL, PSD, EXR, HDR/RGBE, TGA, JPEG 2000 (JP2/J2K/J2C/JPC/JPF/JPX), DDS, DPX, QOI |
-| RAW 相片 | CR2, CR3, CRW, NEF, NRW, ARW, SRF, SR2, RAF, RW2, ORF, PEF, DNG, SRW, RWL, MRW, 3FR, MOS, DCR, KDC, ERF, MEF, RAW, MDC |
-| 影片 | MP4, MOV, M4V, MKV, AVI, FLV, TS/M2TS, WMV, WebM, 3GP/3G2, F4V, VOB, MPG/MPEG, ASF, DIVX 等。所有平台皆支援 H.264 播放；當原生播放不可用時，會自動進行相容性處理。HEVC/H.265 與 VP9 在 macOS 上原生支援。 |
+| RAW 相片 | CR2, CR3, CRW, NEF, NRW, ARW, SRF, SR2, RAF, RW2, ORF, PEF, DNG, SRW, RWL, MRW, 3FR, MOS, IIQ, DCR, KDC, ERF, MEF, RAW, MDC |
+| Affinity 文件 | AF, AFPHOTO, AFDESIGN, AFPUB (內嵌預覽) |
+| 影片 | MP4, MOV, M4V, MKV, AVI, FLV, TS/MTS/M2TS, WMV, WebM, 3GP, MPG/MPEG, VOB, MOD/TOD, HEVC, ASF. 所有平台皆支援 H.264 播放；當原生播放不可用時，會自動進行相容性處理。HEVC/H.265 與 VP9 在 macOS 上原生支援。 |
 
 ### Linux 影片播放
 
@@ -210,6 +230,7 @@ sudo apt install gstreamer1.0-libav gstreamer1.0-plugins-good
 | [libheif](https://github.com/strukturag/libheif) | HEIC/HEIF/HIF 影像解碼與預覽產生 |
 | [libjpeg-turbo](https://libjpeg-turbo.org/) | 快速 JPEG 解碼與縮圖產生 |
 | [FFmpeg](https://ffmpeg.org/) | 影片處理與縮圖產生 |
+| [exiftool-rs](https://github.com/Le-Syl21/exiftool-rs) | EXIF / IPTC / XMP |
 | [Video.js](https://videojs.com/) | 跨平台影片播放使用者介面 |
 | [ONNX Runtime](https://onnxruntime.ai/) | 本機 AI 模型推論引擎 |
 | [CLIP](https://github.com/openai/CLIP) | 影像與文字相似性搜尋 |

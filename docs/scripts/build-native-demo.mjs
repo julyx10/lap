@@ -24,7 +24,7 @@ const root = fileURLToPath(new URL("../demo-native/", import.meta.url));
 const app = fileURLToPath(new URL("../../src-vite/src/", import.meta.url));
 const out = fileURLToPath(new URL("../public/demos/lap/", import.meta.url));
 const seed = addDuplicateFixtures(createState());
-seed.photos[0].comment = "A sample memory — click to edit this comment.";
+seed.photos[0].comment = "A sample memory from the Lap demo library.";
 seed.photos.forEach(
   (p) => (p.base64 = readFileSync(`${out}/${p.image}`).toString("base64")),
 );
@@ -32,6 +32,9 @@ writeFileSync(`${root}/fixtures.generated.json`, JSON.stringify(seed));
 const sourceFiles = [
   "views/Home.vue",
   "views/Settings.vue",
+  "components/SettingsMetadata.vue",
+  "components/TaggingDialog.vue",
+  "components/FavoriteRatingControl.vue",
   "components/Library.vue",
   "components/Content.vue",
   "components/CollectionTray.vue",
@@ -99,6 +102,11 @@ await build({
         const component = id.match(
           /\/(Library|AlbumList|SmartAlbumList|ImageSearch|Tag|Calendar|Person|Location|Camera|SelectionPanel|DedupPane|FileInfo)\.vue$/,
         )?.[1];
+        if (component === "DedupPane")
+          return code.replace(
+            '<div class="w-full h-full rounded-box',
+            '<div data-demo-component="DedupPane" class="w-full h-full rounded-box',
+          );
         if (component)
           return code.replace(
             /(<template>\s*<div)/,

@@ -18,7 +18,7 @@ brew install --cask lap
 ### Linux (Ubuntu/Debian/Linux Mint, amd64 / arm64)
 
 1. Download the latest `_amd64.deb` or `_arm64.deb` package from the [Releases page](https://github.com/julyx10/lap/releases).
-2. Install it with your package manager or run `sudo apt install ./Lap_0.3.3_amd64.deb` (x64) or `sudo apt install ./Lap_0.3.3_arm64.deb` (ARM64).
+2. Install it with your package manager or run `sudo apt install ./Lap_0.4.0_amd64.deb` (x64) or `sudo apt install ./Lap_0.4.0_arm64.deb` (ARM64).
 3. Launch **Lap** from your applications menu.
 
 For better video playback support on Ubuntu/Debian/Linux Mint, install:
@@ -30,7 +30,7 @@ sudo apt install gstreamer1.0-libav gstreamer1.0-plugins-good
 ### Linux AppImage (x64 / ARM64)
 
 1. Download the `_amd64.AppImage` (x64) or `_aarch64.AppImage` (ARM64) file from the [latest release](https://github.com/julyx10/lap/releases/latest).
-2. Make it executable in your file manager, or run `chmod +x Lap_0.3.3_amd64.AppImage` using the filename you downloaded.
+2. Make it executable in your file manager, or run `chmod +x Lap_0.4.0_amd64.AppImage` using the filename you downloaded.
 3. Double-click the AppImage to launch Lap.
 
 The AppImage uses system multimedia libraries for video playback. On Ubuntu/Debian/Linux Mint, install the GStreamer packages listed above.
@@ -71,4 +71,4 @@ On macOS and Windows, use the built-in updater or install the latest package ove
 
 For AppImage installations, download the new AppImage instead of using the built-in updater. AppImage packages include embedded update information and companion `.zsync` files for delta updates through compatible external tools such as AppImageUpdate.
 
-See the [v0.3.3 release notes](/guide/release-notes/v0.3.3) for the latest changes.
+See the [v0.4.0 release notes](/guide/release-notes/v0.4.0) for the latest changes.

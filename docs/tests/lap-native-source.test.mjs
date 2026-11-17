@@ -10,7 +10,11 @@ const manifest = JSON.parse(
   ),
 );
 test("published demo is built against the current app sources for all requested panels", () => {
-  assert.equal(manifest.components.length, 27);
+  const paths = new Set(manifest.components.map((file) => file.path));
+  for (const name of ["SettingsMetadata", "TaggingDialog", "FavoriteRatingControl"]) {
+    assert(paths.has(`src-vite/src/components/${name}.vue`));
+  }
+  assert.equal(paths.size, 30);
   for (const file of manifest.components) {
     const hash = createHash("sha256")
       .update(readFileSync(new URL(file.path, root)))

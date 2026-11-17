@@ -15,7 +15,11 @@
 English | [Česky](i18n/README.cs.md) | [Deutsch](i18n/README.de.md) | [Español](i18n/README.es.md) | [Français](i18n/README.fr.md) | [Italiano](i18n/README.it.md) | [Magyar](i18n/README.hu.md) | [Nederlands](i18n/README.nl.md) | [Polski](i18n/README.pl.md) | [Português](i18n/README.pt.md) | [Русский](i18n/README.ru.md) | [Українська](i18n/README.uk.md) | [Tiếng Việt](i18n/README.vi.md) | [中文简体](i18n/README.zh-CN.md) | [中文繁體](i18n/README.zh-TW.md) | [日本語](i18n/README.ja.md) | [한국어](i18n/README.ko.md)
 
 Lap is an open-source, local-first photo manager for browsing family albums, finding old photos quickly, and managing large personal media libraries offline.
-It is a privacy-focused alternative to cloud photo services: no forced upload, local AI search, folder-first workflow, and free to use.
+No import step, no subscription, no upload: your folders stay as they are, AI search runs on your machine, and you can save your ratings and tags to standard XMP sidecars.
+
+<div align="center">
+  <p><strong><a href="https://julyx10.github.io/lap/">OFFICIAL WEBSITE</a> | <a href="https://julyx10.github.io/lap/demos/lap/index.html">DEMO</a></strong></p>
+</div>
 
 ## Download Lap
 
@@ -24,7 +28,7 @@ Open the [latest release page](https://github.com/julyx10/lap/releases/latest), 
 | Platform | Package | Note |
 | :-- | :-- | :-- |
 | **macOS (Apple Silicon / Intel)** | `_aarch64.dmg` / `_x64.dmg` | Notarized by Apple |
-| **Windows 10/11 (x64 / ARM64)** | `_x64_en-US.msi` / `_arm64_en-US.msi` | Unsigned — if SmartScreen blocks the download, click **Keep anyway** |
+| **Windows 10/11 (x64 / ARM64)** | `_x64_en-US.msi` / `_arm64_en-US.msi` | Unsigned. If your browser blocks the download, choose **Keep anyway**. If SmartScreen blocks the installer, choose **More info** → **Run anyway**. |
 | **Linux (x64 / ARM64)** | `_amd64.deb` / `_arm64.deb` | For Debian-based distros (Ubuntu, Debian, Linux Mint, etc.) |
 | **Linux (x64 / ARM64)** | `_amd64.AppImage` / `_aarch64.AppImage` | Make the file executable, then double-click to run |
 
@@ -34,18 +38,6 @@ Open the [latest release page](https://github.com/julyx10/lap/releases/latest), 
 brew tap julyx10/lap
 brew install --cask lap
 ```
-
-### Arch Linux (x86_64)
-
-An experimental source-built Arch recipe is in [`contrib/aur`](contrib/aur/README.md). It has not been published to the AUR, so `yay -S lap` is not available yet. To build and install it locally on Arch Linux:
-
-```bash
-cd contrib/aur
-makepkg -s
-sudo pacman -U lap-0.3.2-2-x86_64.pkg.tar.zst
-```
-
-The recipe pins an upstream source commit and checksums the bundled AI models and FFmpeg tools. The Arch build disables in-app self-updates so pacman remains responsible for upgrades; other platform builds keep their existing updater. See the recipe guide for build details and outstanding release checks.
 
 ## Screenshots
 
@@ -57,57 +49,67 @@ The recipe pins an upstream source commit and checksums the bundled AI models an
 
 ## Why Lap
 
-- **Local-first by design**: your photos stay on your own disk, with no required cloud account or upload.
-- **No library lock-in**: work directly with your existing folders instead of importing everything into a closed database.
-- **Private AI tools**: search, similarity, smart tags, and face features run locally on your machine.
-- **Built for large collections**: optimized for smooth browsing and organization across libraries with 100k+ files.
-- **Open source and free**: no subscription, no forced ecosystem, and code you can inspect.
+- **Folder-based library management.** Open your existing folders directly in Lap. Your files stay where they are, in their original formats.
+- **AI search that never leaves your machine.** Describe a photo ("sunset at the beach"), find similar shots, or browse by face. Everything is computed locally.
+- **Portable ratings and tags.** Save your ratings and tags to XMP sidecars to use them in compatible photo apps.
+- **Culling built for photographers.** Instant Space-bar preview, auto-advance after rating, autofocus area overlay, four-pane comparison, and duplicate keep rules.
+- **Built for libraries with 100,000+ photos and videos.** A native Rust core powers browsing, search, and scanning.
+- **Free and open source.** No subscription, no account, no forced ecosystem. 17 languages, on macOS, Windows, and Linux.
 
 ## Features
 
 - **Flexible library browsing** by date, folder, location, camera, lens, tags, ratings, and faces, with sorting and search.
-- **Folder-first workflow** with multiple libraries, drag-&-drop import/export, copy-paste import/export, filesystem sync, and safe move/copy/delete operations.
+- **Folder-first workflow** with multiple libraries, drag-&-drop import/export, copy-paste import/export, batch rename, filesystem sync, and safe move/copy/delete operations.
 - **Local AI search** for text prompts, visual similarity, subjects, face clustering, and optional multilingual search in 50+ languages.
-- **Smart Albums** save rule-based views with custom grouping and sorting.
+- **Metadata import and XMP writeback**: read embedded EXIF/IPTC/XMP and sidecars (ratings, tags, favorites, culling flags, GPS, dates, and more), edit text fields, and write your organization back to XMP sidecars.
+- **Smart Albums** save rule-based views with custom grouping, sorting, folder-name filters, and searchable value pickers.
 - **Date-organized import** with day, month, year, or single-folder layouts, original filenames, and duplicate skipping.
-- **Collections and tags** to organize selected files in bulk without moving or duplicating the originals.
-- **Duplicate cleanup** with reclaimable-space summaries and bulk removal across duplicate sets.
-- **Culling and comparison tools** including a four-pane image comparison viewer.
+- **Collections and hierarchical tags** to organize files in bulk, with a drag-to-reorder tag tree and subtree counts.
+- **Duplicate cleanup** with keep rules (preferred folders, format, size, date), reclaimable-space summaries, and bulk removal.
+- **Culling and comparison tools** including a four-pane comparison viewer and auto-advance.
 - **Built-in editing** for crop, arbitrary-angle straighten, rotate, flip, resize, and basic image adjustments.
 - **Photo Collage** to compose selected photos into grid, justified-mosaic, or picture-pile layouts.
 - **Apple Live Photos and Google Motion Photos** with motion playback and a unified Smart Album filter.
-- **RAW + JPEG/HEIC pairs** displayed as one item, with linked files kept together during file operations.
+- **RAW + JPEG/HEIC pairs** displayed as one item and kept together during file operations, with a choice of deletion scope.
 - **Configurable RAW thumbnails and previews** using RAW rendering or the camera's embedded preview, with adjustable brightness and RAW+JPEG pair display.
+- **Customizable File Info** with selectable fields, lazy-loaded details, and an autofocus area overlay in the viewer.
 - **Interactive Map View** to explore geotagged photos and videos in clusters that follow your current filters.
 - **Offline album browsing** that keeps albums on disconnected or network storage visible with cached thumbnails.
-- **Broad format support** for 60+ photo, RAW, and video formats.
+- **Cloud-only file browsing** for OneDrive Files On-Demand and macOS dataless files: indexed and shown without downloading. Lap never downloads them automatically.
+- **Light and dark themes**, optionally following the system appearance.
+- **Broad format support** for 60+ image, RAW, and video formats, plus Affinity document previews.
 
 ## Metadata, Collections, and Moving Files
 
-Lap is folder-first, but not every piece of information shown in Lap is embedded in the original file. This distinction matters when you also manage the same folders in Finder, Explorer, or another photo app.
+Lap is folder-first. Most of the information shown in Lap is read from your files, and you can choose to write your organization back to standard XMP sidecars so it travels with the files and stays readable by other photo apps.
+
+Lap imports compatible metadata from Lightroom, digiKam, darktable, and ACDSee. Supported fields vary by application.
 
 ### What stays with the file
 
 - Your original photos and videos always remain ordinary files in their existing folders.
-- File metadata already embedded in a file, such as EXIF capture date, camera, lens, GPS, and orientation, is read from that file when Lap indexes it.
+- Embedded EXIF, IPTC, and XMP metadata is read when Lap indexes the file: capture date, camera, lens, GPS, orientation, ratings, favorites, keywords, culling flags, descriptions, title, headline, creator, copyright. Turn on **Settings → Metadata → Import metadata** to import the organization fields into the local database; your local edits are preserved.
+- When Lap imports metadata from an XMP sidecar, supported sidecar values take precedence over embedded values, including GPS and capture dates.
+- Title, headline, description, creator, and copyright are editable in Lap. Edits are saved to the local database.
+- **Save Metadata to XMP** writes tags (including hierarchical keywords), ratings, favorites, culling states, title, headline, description, creator, and copyright to sidecars. It preserves unrelated XMP properties and leaves the original files untouched.
+- When you rename, move, copy, delete, or import files **in Lap**, Lap updates its local database and keeps XMP sidecars and supported grouped assets — Apple Live Photo components, AAE sidecars, and enabled RAW + JPEG/HEIC pairs — together with the files. When deleting a RAW pair, you can delete either file or both. The shared XMP sidecar stays with the remaining file if you keep one.
 - Saving a built-in image edit writes the resulting image to the selected destination.
-- When you rename, move, copy, or delete files **in Lap**, Lap updates its local catalog at the same time. It also keeps supported grouped assets, such as Apple Live Photo components, AAE sidecars, and enabled RAW + JPEG/HEIC pairs, together.
 
 ### What is stored locally by Lap
 
-The following are Lap library data. They are stored in Lap's local database or library configuration, not written into EXIF, IPTC, or XMP sidecars:
+The following are Lap library data. They are stored in Lap's local database or library configuration:
 
-- Collections, Tags, Comments, Favorites, Ratings, and Culling states (including Picks and Rejects)
-- Smart Albums and their rules, grouping, sorting, and ordering
+- Collections, Smart Albums and their rules, grouping, sorting, and ordering
 - AI search data, face data, thumbnails, and other index/cache data
+- Tags, ratings, favorites, culling states (picks and rejects), and editable text fields are stored in the local database and can be written to XMP as described above.
 
-This data does not travel with a file when it is copied, exported, or moved outside Lap, and it is not available automatically to other applications.
+By default, this data does not travel with a file when it is copied, exported, or moved outside Lap, and it is not available automatically to other applications.
 
 ### Working with files outside Lap
 
-Lap can rescan folders and detect many filesystem changes. But changes made outside Lap—such as renaming, moving, replacing, or copying files—can disrupt organization that is stored only in Lap.
+Lap can rescan folders and detect many filesystem changes. With metadata import enabled, it also checks for changes to XMP sidecars. But changes made outside Lap—such as renaming, moving, replacing, or copying files—can disrupt organization that is stored only in Lap.
 
-For the most reliable results, rename and move files in Lap whenever you rely on Collections, Tags, Comments, Favorites, Ratings, or culling states. If you also manage files outside Lap, back up Lap's database and configuration together with your photos. You can manage the database location and create a backup in **Settings → Storage**.
+Rename and move files in Lap to preserve their data in the local database, including collection membership. To share supported metadata with other apps, use **Save Metadata to XMP** and keep the sidecar with the file. If you also manage files outside Lap, back up Lap's database and configuration together with your photos. You can manage the database location and create a backup in **Settings → Storage**.
 
 Deleting Lap's database or configuration removes this local organization and index data, but does not delete your original media files.
 
@@ -195,19 +197,32 @@ cargo tauri dev
 
 Distribution packages can link against the system libheif (1.17 or newer) instead of the bundled libheif and libde265. Set `LAP_SYSTEM_LIBHEIF=1` for the build. The submodules `third_party/libheif` and `third_party/libde265` are then not needed. HEVC decoding depends on the codec plugins of the system libheif.
 
+### Arch Linux (x86_64)
+
+An experimental source-built Arch recipe is in [`contrib/aur`](contrib/aur/README.md). It has not been published to the AUR, so `yay -S lap` is not available yet. To build and install it locally on Arch Linux:
+
+```bash
+cd contrib/aur
+makepkg -s
+sudo pacman -U lap-<version>-x86_64.pkg.tar.zst
+```
+
+The recipe pins an upstream source commit and checksums the bundled AI models and FFmpeg tools. The Arch build disables in-app self-updates so pacman remains responsible for upgrades; other platform builds keep their existing updater. See the recipe guide for build details and outstanding release checks.
+
 ## Supported Formats
 
-Lap supports 60+ photo, RAW, and video formats.
+Lap supports 60+ image, RAW, and video formats.
 
 | Type | Formats |
 | :--- | :--- |
 | Images | JPG/JPEG/JFIF, PNG, GIF, BMP, TIFF, WebP, HEIC/HEIF/HIF, AVIF, JXL, PSD, EXR, HDR/RGBE, TGA, JPEG 2000 (JP2/J2K/J2C/JPC/JPF/JPX), DDS, DPX, QOI |
-| RAW photos | CR2, CR3, CRW, NEF, NRW, ARW, SRF, SR2, RAF, RW2, ORF, PEF, DNG, SRW, RWL, MRW, 3FR, MOS, DCR, KDC, ERF, MEF, RAW, MDC |
-| Videos | MP4, MOV, M4V, MKV, AVI, FLV, TS/M2TS, WMV, WebM, 3GP/3G2, F4V, VOB, MPG/MPEG, ASF, DIVX and more. H.264 playback is supported on all platforms, with automatic compatibility processing when native playback is unavailable. HEVC/H.265 and VP9 are natively supported on macOS. |
+| RAW photos | CR2, CR3, CRW, NEF, NRW, ARW, SRF, SR2, RAF, RW2, ORF, PEF, DNG, SRW, RWL, MRW, 3FR, MOS, IIQ, DCR, KDC, ERF, MEF, RAW, MDC |
+| Affinity documents | AF, AFPHOTO, AFDESIGN, AFPUB (embedded preview) |
+| Videos | MP4, MOV, M4V, MKV, AVI, FLV, TS/MTS/M2TS, WMV, WebM, 3GP, MPG/MPEG, VOB, MOD/TOD, HEVC, ASF. H.264 playback is supported on all platforms, with automatic compatibility processing when native playback is unavailable. HEVC/H.265 and VP9 are natively supported on macOS. |
 
 ### Linux Video Playback
 
-Lap uses system GStreamer plugins for video playback, including in the AppImage. If videos fail to play on Ubuntu, Debian, or Linux Mint, install:
+If videos don't play, install the GStreamer plugins:
 
 ```bash
 sudo apt install gstreamer1.0-libav gstreamer1.0-plugins-good
@@ -227,6 +242,7 @@ sudo apt install gstreamer1.0-libav gstreamer1.0-plugins-good
 | [libheif](https://github.com/strukturag/libheif) | HEIC/HEIF/HIF image decoding and preview generation |
 | [libjpeg-turbo](https://libjpeg-turbo.org/) | Fast JPEG decoding and thumbnail generation |
 | [FFmpeg](https://ffmpeg.org/) | Video processing and thumbnail generation |
+| [exiftool-rs](https://github.com/Le-Syl21/exiftool-rs) | Rust port of ExifTool |
 | [Video.js](https://videojs.com/) | Cross-platform video playback UI |
 | [ONNX Runtime](https://onnxruntime.ai/) | Local AI model inference engine |
 | [CLIP](https://github.com/openai/CLIP) | Image-text similarity search |

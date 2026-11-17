@@ -15,7 +15,11 @@
 [English](../README.md) | Česky | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | [Italiano](README.it.md) | [Magyar](README.hu.md) | [Nederlands](README.nl.md) | [Polski](README.pl.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [Українська](README.uk.md) | [Tiếng Việt](README.vi.md) | [中文简体](README.zh-CN.md) | [中文繁體](README.zh-TW.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
 Lap je open-source správce fotografií se zaměřením na lokální provoz. Umožňuje procházet rodinná alba, rychle vyhledávat staré fotografie a spravovat offline rozsáhlé osobní knihovny médií.
-Je to alternativa ke cloudovým fotografickým službám zaměřená na soukromí: bez povinného nahrávání, s lokálním vyhledáváním pomocí AI, pracovním postupem založeným na složkách a bezplatným používáním.
+Bez povinného importu, předplatného nebo nahrávání. Otevřete stávající složky přímo v Lap. Soubory si zachovají umístění i formát. Uložte je do doprovodných souborů XMP pro použití v kompatibilních aplikacích.
+
+<div align="center">
+  <p><strong><a href="https://julyx10.github.io/lap/">OFICIÁLNÍ WEB</a> | <a href="https://julyx10.github.io/lap/demos/lap/index.html">DEMO</a></strong></p>
+</div>
 
 ## Stažení Lap
 
@@ -24,7 +28,7 @@ Otevřete [stránku nejnovějšího vydání](https://github.com/julyx10/lap/rel
 | Platforma | Balíček | Poznámka |
 | :-- | :-- | :-- |
 | **macOS (Apple Silicon / Intel)** | `_aarch64.dmg` / `_x64.dmg` | Notářsky ověřeno společností Apple |
-| **Windows 10/11 (x64 / ARM64)** | `_x64_en-US.msi` / `_arm64_en-US.msi` | Nepodepsáno – pokud SmartScreen zablokuje stažení, klikněte na **Přesto pokračovat** |
+| **Windows 10/11 (x64 / ARM64)** | `_x64_en-US.msi` / `_arm64_en-US.msi` | Nepodepsáno. V prohlížeči zvolte **Přesto ponechat** nebo v SmartScreenu **Další informace** → **Přesto spustit**. |
 | **Linux (x64 / ARM64)** | `_amd64.deb` / `_arm64.deb` | Pro distribuce založené na Debianu (Ubuntu, Debian, Linux Mint atd.) |
 | **Linux (x64 / ARM64)** | `_amd64.AppImage` / `_aarch64.AppImage` | Nastavte soubor jako spustitelný a potom jej spusťte dvojitým kliknutím |
 
@@ -45,57 +49,58 @@ brew install --cask lap
 
 ## Proč Lap
 
-- **Navržen pro lokální provoz**: vaše fotografie zůstávají na vlastním disku, bez nutnosti cloudového účtu nebo nahrávání.
-- **Bez závislosti na jediné knihovně**: pracujte přímo se svými existujícími složkami, místo abyste vše importovali do uzavřené databáze.
-- **Nástroje AI s důrazem na soukromí**: vyhledávání, podobnost, chytré štítky a funkce rozpoznávání tváří běží lokálně na vašem počítači.
-- **Pro rozsáhlé sbírky**: optimalizováno pro plynulé procházení a organizaci knihoven se 100 000 a více fotografií.
-- **Open source a zdarma**: bez předplatného, bez nuceného používání jednoho ekosystému a s veřejně dostupným zdrojovým kódem.
+- **Správa knihovny podle složek.** Otevřete stávající složky přímo v Lap. Soubory si zachovají umístění i formát.
+- **Místní vyhledávání s AI.** Popište fotografii, vyhledejte podobné snímky nebo procházejte podle tváří. Vše se zpracovává místně.
+- **Přenosné hodnocení a štítky.** Uložte je do doprovodných souborů XMP pro použití v kompatibilních aplikacích.
+- **Výběr fotografií.** Náhled mezerníkem, posun po ohodnocení, zobrazení oblastí AF, porovnání ve čtyřech panelech a pravidla pro ponechání duplikátů.
+- **Pro knihovny s více než 100 000 fotografiemi a videi.** Nativní jádro v Rustu zajišťuje procházení, vyhledávání i skenování.
+- **Zdarma a s otevřeným kódem.** Bez předplatného a účtu, v 17 jazycích pro macOS, Windows a Linux.
 
 ## Funkce
 
 - **Flexibilní procházení knihovny** podle data, složky, místa, fotoaparátu, objektivu, štítků, hodnocení a tváří, včetně řazení a vyhledávání.
-- **Pracovní postup založený na složkách** s více knihovnami, importem/exportem přetažením, importem/exportem pomocí kopírování a vložení, synchronizací se souborovým systémem a bezpečnými operacemi přesunu, kopírování a mazání.
+- **Pracovní postup založený na složkách.** Více knihoven, import a export přetažením či přes schránku, dávkové přejmenování a synchronizace.
 - **Lokální vyhledávání pomocí AI** podle textových zadání, vizuální podobnosti, objektů, seskupování tváří a volitelné vícejazyčné vyhledávání ve více než 50 jazycích.
-- **Chytrá alba** ukládají pohledy založené na pravidlech s vlastním seskupováním a řazením.
+- **Import metadat a zápis do XMP.** EXIF, IPTC, XMP.
+- **Chytrá alba.** Vlastní seskupování a řazení, filtry podle názvu složky a prohledávatelný výběr hodnot.
 - **Import s uspořádáním podle data** do složek podle dne, měsíce, roku nebo do jediné složky, se zachováním původních názvů souborů a vynecháváním duplicit.
-- **Kolekce a štítky** umožňují hromadně organizovat vybrané soubory, aniž by se originály přesouvaly nebo duplikovaly.
-- **Odstraňování duplicit** s přehledem o velikosti místa, které lze uvolnit, a možností hromadného odstranění v rámci skupin duplicit.
-- **Nástroje pro výběr a porovnávání** včetně prohlížeče pro porovnání obrázků ve čtyřech panelech.
+- **Kolekce a štítky** umožňují hromadně organizovat vybrané soubory, aniž by se originály přesouvaly nebo duplikovaly. Strom štítků s přetahováním a počty v jednotlivých větvích.
+- **Odstraňování duplicit.** Pravidla podle složky, formátu, velikosti a data, uvolnitelné místo a hromadné odstranění.
+- **Nástroje pro výběr a porovnávání.** Náhled mezerníkem, posun po ohodnocení, zobrazení oblastí AF, porovnání ve čtyřech panelech a pravidla pro ponechání duplikátů.
 - **Vestavěné úpravy** ořezu, narovnání pod libovolným úhlem, otočení, převrácení, změny velikosti a základních úprav obrazu.
 - **Koláže fotografií** umožňují sestavit vybrané fotografie do mřížky, mozaiky se zarovnanými okraji nebo hromádky snímků.
 - **Apple Live Photos a Google Motion Photos** s přehráváním pohybu a jednotným filtrem pro chytrá alba.
-- **Dvojice RAW + JPEG/HEIC** se zobrazují jako jedna položka; propojené soubory zůstávají při operacích se soubory pohromadě.
+- **Dvojice RAW + JPEG/HEIC** se zobrazují jako jedna položka; propojené soubory zůstávají při operacích se soubory pohromadě. Z dvojice RAW lze odstranit jeden nebo oba soubory. Pokud jeden zachováte, zachová se i sdílený soubor XMP.
 - **Nastavitelné náhledy RAW** a miniatury s vykreslením RAW nebo s použitím náhledu vytvořeného fotoaparátem, s nastavitelným jasem a zobrazením dvojic RAW+JPEG.
+- **Přizpůsobitelné informace o souboru.** Volitelná pole, podrobnosti na vyžádání a oblasti AF v prohlížeči.
 - **Interaktivní zobrazení mapy** umožňuje procházet fotografie a videa s geotagy ve skupinách, které odpovídají aktuálním filtrům.
 - **Procházení alb offline** zachovává viditelnost alb na odpojených nebo síťových úložištích díky uloženým miniaturám.
-- **Široká podpora formátů** pro více než 60 formátů fotografií, RAW a videa.
+- **Soubory dostupné pouze online.** Soubory OneDrive na vyžádání a zástupné soubory macOS se indexují a zobrazují bez automatického stažení.
+- **Světlý a tmavý motiv.** Mohou se řídit vzhledem systému.
+- **Široká podpora formátů** pro více než 60 formátů obrázků, RAW a videa. Dokumenty Affinity (vložený náhled).
 
 ## Metadata, kolekce a přesouvání souborů
 
-Lap pracuje především se složkami, ale ne všechny informace zobrazované v Lap jsou vloženy do původního souboru. Tento rozdíl je důležitý, pokud stejné složky spravujete také ve Vyhledávači, Průzkumníku souborů nebo jiné fotografické aplikaci.
+Lap čte kompatibilní metadata z Lightroomu, digiKamu, darktable a ACDSee. Import zapnete v nastavení. Podporované hodnoty z doprovodného XMP mají přednost před vloženými hodnotami. Místní úpravy zůstávají zachovány.
 
 ### Co zůstává u souboru
 
 - Vaše původní fotografie a videa zůstávají vždy běžnými soubory ve svých stávajících složkách.
 - Metadata již vložená do souboru, například datum pořízení EXIF, fotoaparát, objektiv, GPS a orientace, Lap je načítá při indexování z tohoto souboru.
+- Název, titulek, popis, autora a autorská práva lze upravit a uložit do místní databáze. Uložení do XMP zapíše tato pole, štítky, hodnocení, oblíbené položky a stav výběru do doprovodných souborů. Ostatní vlastnosti XMP a originály zůstanou zachovány.
+- Když v Lap přejmenujete, přesunete, zkopírujete nebo odstraníte soubory, Lap současně aktualizuje svůj místní katalog. Zároveň zachovává pohromadě podporované skupiny souborů, například součásti Apple Live Photo, doprovodné soubory AAE a zapnuté dvojice RAW + JPEG/HEIC. Z dvojice RAW lze odstranit jeden nebo oba soubory. Pokud jeden zachováte, zachová se i sdílený soubor XMP.
 - Uložení úprav obrázku pomocí vestavěných nástrojů zapíše výsledný obrázek do vybraného umístění.
-- Když v Lap přejmenujete, přesunete, zkopírujete nebo odstraníte soubory, Lap současně aktualizuje svůj místní katalog. Zároveň zachovává pohromadě podporované skupiny souborů, například součásti Apple Live Photo, doprovodné soubory AAE a zapnuté dvojice RAW + JPEG/HEIC.
 
 ### Co Lap ukládá lokálně
 
-Následující údaje patří ke knihovně Lap. Jsou uloženy v místní databázi Lap nebo v konfiguraci knihovny, nikoli v doprovodných souborech EXIF, IPTC nebo XMP:
-
-- Kolekce, štítky, komentáře, oblíbené položky, hodnocení a stavy výběru (včetně položek Vybrané a Odmítnuté)
-- Chytrá alba a jejich pravidla, seskupování, řazení a pořadí
+- Kolekce, chytrá alba, pravidla a nastavení zobrazení zůstávají v místní databázi nebo konfiguraci.
 - Data vyhledávání AI, data o tvářích, miniatury a další data indexu a mezipaměti
-
-Tato data se nepřenášejí spolu se souborem při kopírování, exportu nebo přesunu mimo Lap a nejsou automaticky dostupná jiným aplikacím.
 
 ### Práce se soubory mimo Lap
 
 Lap může znovu prohledat složky a zjistit mnoho změn v souborovém systému. Změny provedené mimo Lap – například přejmenování, přesun, nahrazení nebo kopírování souborů – však mohou narušit organizaci, která je uložena pouze v Lap.
 
-Nejspolehlivější je přejmenovávat a přesouvat soubory přímo v Lap, pokud spoléháte na kolekce, štítky, komentáře, oblíbené položky, hodnocení nebo stavy výběru. Pokud soubory spravujete také mimo Lap, zálohujte databázi a konfiguraci Lap společně s fotografiemi. Umístění databáze můžete spravovat a zálohu vytvořit v **Nastavení → Úložiště**.
+Při povoleném importu metadat Lap kontroluje také změny v doprovodných souborech XMP. Soubory přejmenovávejte a přesouvejte v Lap, aby zůstaly v kolekcích. Doprovodné soubory XMP ponechte u originálů. Pokud soubory spravujete také mimo Lap, zálohujte databázi a konfiguraci Lap společně s fotografiemi. Umístění databáze můžete spravovat a zálohu vytvořit v **Nastavení → Úložiště**.
 
 Odstranění databáze nebo konfigurace Lap smaže tato místní organizační a indexová data, nikoli však původní mediální soubory.
 
@@ -143,6 +148,8 @@ Při odinstalaci balíčku DEB odinstalujte balíček:
 sudo apt remove lap
 ```
 
+Místní balíček Arch odinstalujete příkazem `sudo pacman -R lap`.
+
 Při použití AppImage ukončete Lap a odstraňte stažený soubor `.AppImage`.
 
 Poté odstraňte veškerou databázi Lap, mezipaměť a konfigurační soubory:
@@ -181,15 +188,28 @@ cargo tauri dev
 
 Distribuční balíčky mohou místo přibalených knihoven libheif a libde265 odkazovat na systémovou knihovnu libheif (verze 1.17 nebo novější). Pro sestavení nastavte `LAP_SYSTEM_LIBHEIF=1`. V takovém případě nejsou potřeba submoduly `third_party/libheif` a `third_party/libde265`. Dekódování HEVC závisí na kodekových zásuvných modulech systémové knihovny libheif.
 
+### Arch Linux (x86_64)
+
+Experimentální recept pro Arch dosud není v AUR. Místní instalace: [`contrib/aur`](../contrib/aur/README.md).
+
+```bash
+cd contrib/aur
+makepkg -s
+sudo pacman -U lap-<version>-x86_64.pkg.tar.zst
+```
+
+Recept určuje konkrétní revizi zdrojů a kontroluje součty modelů AI a FFmpeg. Aktualizace spravuje pacman.
+
 ## Podporované formáty
 
-Lap podporuje více než 60 formátů fotografií, RAW a videa.
+Lap podporuje více než 60 formátů obrázků, RAW a videa.
 
 | Typ | Formáty |
 | :--- | :--- |
 | Obrázky | JPG/JPEG/JFIF, PNG, GIF, BMP, TIFF, WebP, HEIC/HEIF/HIF, AVIF, JXL, PSD, EXR, HDR/RGBE, TGA, JPEG 2000 (JP2/J2K/J2C/JPC/JPF/JPX), DDS, DPX, QOI |
-| Fotografie RAW | CR2, CR3, CRW, NEF, NRW, ARW, SRF, SR2, RAF, RW2, ORF, PEF, DNG, SRW, RWL, MRW, 3FR, MOS, DCR, KDC, ERF, MEF, RAW, MDC |
-| Videa | MP4, MOV, M4V, MKV, AVI, FLV, TS/M2TS, WMV, WebM, 3GP/3G2, F4V, VOB, MPG/MPEG, ASF, DIVX a další. Přehrávání H.264 je podporováno na všech platformách; pokud nativní přehrávání není dostupné, automaticky se použije zpracování zajišťující kompatibilitu. HEVC/H.265 a VP9 jsou nativně podporovány v macOS. |
+| Fotografie RAW | CR2, CR3, CRW, NEF, NRW, ARW, SRF, SR2, RAF, RW2, ORF, PEF, DNG, SRW, RWL, MRW, 3FR, MOS, IIQ, DCR, KDC, ERF, MEF, RAW, MDC |
+| Dokumenty Affinity | AF, AFPHOTO, AFDESIGN, AFPUB (vložený náhled) |
+| Videa | MP4, MOV, M4V, MKV, AVI, FLV, TS/MTS/M2TS, WMV, WebM, 3GP, MPG/MPEG, VOB, MOD/TOD, HEVC, ASF. Přehrávání H.264 je podporováno na všech platformách; pokud nativní přehrávání není dostupné, automaticky se použije zpracování zajišťující kompatibilitu. HEVC/H.265 a VP9 jsou nativně podporovány v macOS. |
 
 ### Přehrávání videa v Linuxu
 
@@ -213,6 +233,7 @@ sudo apt install gstreamer1.0-libav gstreamer1.0-plugins-good
 | [libheif](https://github.com/strukturag/libheif) | Dekódování obrázků HEIC/HEIF/HIF a vytváření náhledů |
 | [libjpeg-turbo](https://libjpeg-turbo.org/) | Rychlé dekódování JPEG a vytváření miniatur |
 | [FFmpeg](https://ffmpeg.org/) | Zpracování videa a vytváření miniatur |
+| [exiftool-rs](https://github.com/Le-Syl21/exiftool-rs) | EXIF / IPTC / XMP |
 | [Video.js](https://videojs.com/) | Uživatelské rozhraní pro přehrávání videa napříč platformami |
 | [ONNX Runtime](https://onnxruntime.ai/) | Lokální modul pro spouštění modelů AI |
 | [CLIP](https://github.com/openai/CLIP) | Vyhledávání podobnosti mezi obrázkem a textem |

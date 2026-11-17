@@ -77,7 +77,7 @@ const assert = require("node:assert/strict");
           .getByText("Five-star photos", { exact: true })
           .waitFor();
       if (i === 4)
-        await comp("Tag").getByText("Nature", { exact: true }).waitFor();
+        await comp("Tag").getByText("Outdoors", { exact: true }).waitFor();
       if (i === 5) await comp("Calendar").getByText(/2025/).first().waitFor();
       if (i === 6)
         await comp("Person").getByText("Sophie", { exact: true }).waitFor();
@@ -149,22 +149,22 @@ const assert = require("node:assert/strict");
     await rail.last().click();
     await page.locator(".demo-window.settings").waitFor();
     const tabs = page.locator(".demo-window.settings .w-40 > div");
-    assert.equal(await tabs.count(), 8);
+    assert.equal(await tabs.count(), 9);
     const expected = [
       "LANGUAGE & REGION",
       "GRID",
       "NAVIGATION",
       "PAIRED FILES",
+      "IMPORT METADATA",
       "PHOTO SEARCH",
       "THUMBNAIL CACHE",
       "GLOBAL",
       "Version",
     ];
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < expected.length; i++) {
       await tabs.nth(i).click();
-      assert(
-        (await page.locator(".demo-window").innerText()).includes(expected[i]),
-      );
+      const content = await page.locator(".demo-window").innerText();
+      assert(content.toUpperCase().includes(expected[i].toUpperCase()), `Missing ${expected[i]} in Settings tab ${i}`);
       await shot("settings-" + i);
     }
     await tabs.nth(0).click();
@@ -190,7 +190,7 @@ const assert = require("node:assert/strict");
       .getByRole("button", { name: "Close dialog", exact: true })
       .click();
     console.log(
-      "PASS: all eight original Settings pages and live appearance change",
+      "PASS: all nine original Settings pages and live appearance change",
     );
     await chooseSection(0);
     await comp("Library").getByText("All files", { exact: true }).click();
@@ -227,7 +227,7 @@ const assert = require("node:assert/strict");
     );
     console.log("PASS: filmstrip preview and all four placements");
     await page
-      .getByRole("button", { name: "Multi-select", exact: true })
+      .getByRole("button", { name: "Selection", exact: true })
       .click();
     const selection = comp("SelectionPanel");
     await selection.waitFor();
@@ -238,15 +238,16 @@ const assert = require("node:assert/strict");
       "Move in library...",
       "Move to folder...",
       "Copy to folder...",
-      "Batch Rename",
-      "Delete",
-      "Compare",
-      "Create collage",
+      "Rename...",
+      "Move to trash",
+      "Compare...",
+      "Create collage...",
       "Refresh file info",
     ])
       assert.equal(
         await selection.getByRole("button", { name, exact: true }).count(),
         1,
+        name,
       );
     await selection
       .getByRole("button", { name: "Select all", exact: true })
@@ -255,7 +256,7 @@ const assert = require("node:assert/strict");
     await page.waitForFunction(() =>
       window.__lapDemoBackend.state.photos.every((p) => p.favorite),
     );
-    await selection.getByRole("button", { name: "3★", exact: true }).click();
+    await selection.getByRole("button", { name: /^3 stars/ }).click();
     await page.waitForFunction(() =>
       window.__lapDemoBackend.state.photos.every((p) => p.rating === 3),
     );
@@ -263,7 +264,7 @@ const assert = require("node:assert/strict");
     await selection
       .getByRole("button", { name: "Tags...", exact: true })
       .click();
-    await page.getByText("Subjects", { exact: true }).last().waitFor();
+    await page.getByText("Outdoors", { exact: true }).last().waitFor();
     await page.keyboard.press("Escape");
     await selection
       .getByRole("button", { name: "Collections...", exact: true })
@@ -271,19 +272,22 @@ const assert = require("node:assert/strict");
     await page.getByText("For printing", { exact: true }).last().waitFor();
     await page.keyboard.press("Escape");
     await selection
-      .getByRole("button", { name: "Batch Rename", exact: true })
+      .getByRole("button", { name: "Rename...", exact: true })
       .click();
     await page.getByText("Preview", { exact: true }).last().waitFor();
     await page.keyboard.press("Escape");
-    await page
-      .getByRole("button", { name: "Exit multi-select", exact: true })
+    await selection
+      .getByRole("button", { name: "Close", exact: true })
       .click();
     console.log("PASS: native multi-select actions, batch edits and dialogs");
     await page
-      .getByRole("button", { name: "Find Duplicates & Similar", exact: true })
+      .getByRole("button", { name: "Duplicates", exact: true })
       .click();
     const dedup = comp("DedupPane");
-    await dedup.getByText("Duplicate Sets", { exact: true }).waitFor();
+    await dedup.getByText("Duplicate Sets", { exact: true }).waitFor().catch(async (error) => {
+      console.error(await dedup.innerText(), errors);
+      throw error;
+    });
     await page.waitForFunction(() =>
       window.__lapDemoBackend.commands.some(
         (c) => c.command === "dedup_list_groups",
@@ -291,7 +295,7 @@ const assert = require("node:assert/strict");
     );
     await shot("dedup-native");
     await dedup
-      .getByRole("button", { name: "Similar Photos", exact: true })
+      .getByRole("button", { name: "Similar Images", exact: true })
       .click();
     await dedup
       .getByRole("button", { name: "Analyze 20 photos", exact: true })
@@ -301,10 +305,9 @@ const assert = require("node:assert/strict");
     await dedup
       .getByRole("button", { name: "Duplicates", exact: true })
       .click();
-    await dedup
-      .getByRole("button", { name: "Unkeep", exact: true })
-      .last()
-      .click();
+    const keep = dedup.getByRole("button", { name: "Keep", exact: true }).last();
+    await keep.locator("../..").hover();
+    await keep.click();
     assert(
       await page.evaluate(() =>
         window.__lapDemoBackend.commands.some(
@@ -314,20 +317,24 @@ const assert = require("node:assert/strict");
     );
     await dedup.locator('input[type="checkbox"]').check();
     await dedup
-      .getByRole("button", { name: "Delete Selected", exact: true })
+      .getByRole("button", { name: "Move to trash", exact: true })
       .click();
-    await page.getByRole("button", { name: "Trash", exact: true }).click();
     await page.waitForFunction(
       () =>
         window.__lapDemoBackend.state.photos.filter((p) => p.deleted).length ===
         1,
     );
     console.log(
-      "PASS: native duplicate/similar scan, keep and confirmed sample deletion",
+      "PASS: native duplicate/similar scan, keep and single-file trash",
     );
-    await page.getByRole("button", { name: /^(Show|Hide) info$/ }).click();
-    await comp("FileInfo").waitFor();
     const info = comp("FileInfo");
+    if (!(await info.isVisible()))
+      await page.getByRole("button", { name: "Info", exact: true }).click();
+    await info.waitFor();
+    await info.getByRole("button", { name: "Edit metadata", exact: true }).click();
+    await page.locator("#metadata-e_title").fill("Edited demo title");
+    await page.getByRole("button", { name: "Save", exact: true }).click();
+    await info.getByText("Edited demo title", { exact: true }).waitFor();
     await info.getByRole("tab", { name: "Histogram", exact: true }).click();
     await info.locator('svg[viewBox="0 0 256 64"]').waitFor();
     await shot("info-native");
@@ -338,34 +345,27 @@ const assert = require("node:assert/strict");
       await page.goto("http://127.0.0.1:4180/lap/", {
         waitUntil: "domcontentloaded",
       });
-      const frame = page.frameLocator(
-        'iframe[title="Lap interactive photo manager demo"]',
-      );
-      await frame.locator('[data-demo-component="AlbumList"]').waitFor();
-      assert.equal(await page.locator('iframe[src*="youtube"]').count(), 0);
-      await page.setViewportSize({ width: 1280, height: 1050 });
-      await page.locator('iframe[title="Lap interactive photo manager demo"]').evaluate(el => window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 100));
-      const embedded = page.frames().find((f) => f.url().includes('/demos/lap/index.html'));
-      const embeddedRail = frame.locator('.demo-workspace .fixed.top-14 [role="button"]');
-      await embeddedRail.last().click();
-      assert.equal(await frame.locator('.demo-window.settings .w-40 > div').count(), 8);
-      await frame.getByRole('button', { name: 'Close dialog', exact: true }).click();
-      await embeddedRail.nth(0).click();
-      await frame.locator('[data-demo-component="Library"]').getByText('All files', { exact: true }).click();
-      await frame.getByRole('button', { name: 'Filmstrip', exact: true }).click();
-      await embedded.waitForFunction(() => [...document.querySelectorAll('.slide-wrapper img')].some(i => i.complete && i.naturalWidth > 0));
-      await frame.getByRole('button', { name: 'Justified view', exact: true }).click();
-      await frame.getByRole('button', { name: 'Multi-select', exact: true }).click();
-      await frame.locator('[data-demo-component="SelectionPanel"]').getByRole('button', { name: 'Select all', exact: true }).click();
-      await shot('homepage-interactive');
-      assert.deepEqual(errors, []);
-      console.log('PASS: homepage replaces video; embedded settings, filmstrip preview and multi-select at 1280px');
-      await page.getByRole("link", { name: "Try Lap", exact: true }).click();
+      const features = page.getByRole("region", { name: "Features", exact: true });
+      await features.getByRole("heading", { name: "Local AI search", exact: true }).waitFor();
+      assert.equal(await features.locator("article").count(), 8);
+      assert.equal(await features.locator("img, svg, iframe").count(), 0);
+      assert.equal(await page.locator("iframe").count(), 0);
+      await page.setViewportSize({ width: 390, height: 844 });
+      assert.equal(await features.locator("article").evaluateAll(cards =>
+        new Set(cards.map(card => card.getBoundingClientRect().left)).size,
+      ), 1);
+      await shot("homepage-mobile");
+      await page.setViewportSize({ width: 1280, height: 900 });
+      assert.equal(await features.locator("article").evaluateAll(cards =>
+        new Set(cards.slice(0, 2).map(card => card.getBoundingClientRect().top)).size,
+      ), 1);
+      await shot("homepage-features");
+      await page.getByRole("link", { name: "Demo", exact: true }).click();
       await page.waitForURL("**/lap/demos/lap/index.html", {
         waitUntil: "domcontentloaded",
       });
       await comp("FileInfo").waitFor();
-      console.log("PASS: built homepage embed and Try Lap navigation");
+      console.log("PASS: text-only homepage features and standalone Demo navigation");
     }
     console.log("PASS: no browser exceptions");
   } finally {

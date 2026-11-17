@@ -18,12 +18,15 @@ try {
   const saved = JSON.parse(localStorage.getItem(KEY));
   if (saved?.photos?.length) db = saved;
 } catch {}
-db.tagGroups ||= [
-  { id: 1, name: "Subjects", sort_order: 0 },
-  { id: 2, name: "My tags", sort_order: 1 },
-];
 db.tagNames ||= [...new Set(db.photos.flatMap((p) => p.tags))];
-db.tagGroupIds ||= Object.fromEntries(db.tagNames.map((name) => [name, 1]));
+db.tagParents ||= {};
+if (!db.tagNames.includes("Outdoors") && !db.tagNames.includes(null)) {
+  const parent = db.tagNames.push("Outdoors");
+  for (const name of ["Nature", "Landscape"]) {
+    const index = db.tagNames.indexOf(name);
+    if (index >= 0) db.tagParents[index + 1] = parent;
+  }
+}
 let libraryState = db.libraryState || null,
   dedupScanned = false,
   similarScanned = false;
@@ -107,6 +110,11 @@ function nativeFile(p) {
     e_artist: "Sample photographer",
     e_description: "Demo metadata",
     e_copyright: "Sample",
+    e_title: p.name.replace(/\.[^.]+$/, ""),
+    icc_profile: "sRGB",
+    color_space: "sRGB",
+    bit_depth: 8,
+    ...p.metadata,
     gps_latitude: 48.23 + p.id * 0.002,
     gps_longitude: 15.33 + p.id * 0.003,
     geo_name: p.location,
@@ -127,19 +135,30 @@ function nativeFile(p) {
     media_subtype: null,
   };
 }
+const tagParent = (id) => db.tagParents[id] ?? null;
+function tagPath(id) {
+  const name = db.tagNames[id - 1];
+  const parent = tagParent(id);
+  return parent === null ? name : tagPath(parent) + "|" + name;
+}
+function subtreeTags(id) {
+  const children = Object.keys(db.tagParents).map(Number)
+    .filter((child) => tagParent(child) === id);
+  return [id, ...children.flatMap(subtreeTags)];
+}
+function filesWithTags(ids, files = live()) {
+  const names = new Set(ids.map((id) => db.tagNames[id - 1]));
+  return files.filter((p) => p.tags.some((tag) => names.has(tag)));
+}
 const tagRecords = () =>
-  db.tagNames
-    .map((name, i) => ({
-      id: i + 1,
-      name,
-      group_id: db.tagGroupIds[name] || 1,
-      group_name:
-        db.tagGroups.find((g) => g.id === (db.tagGroupIds[name] || 1))?.name ||
-        "Subjects",
-      count: live().filter((p) => p.tags.includes(name)).length,
-      sort_order: i,
-    }))
-    .filter((t) => t.name);
+  db.tagNames.flatMap((name, i) => name ? [{
+    id: i + 1,
+    name,
+    parent_id: tagParent(i + 1),
+    path: tagPath(i + 1),
+    count: filesWithTags(subtreeTags(i + 1)).length,
+    source: null,
+  }] : []);
 function query(params = {}, collectionId) {
   const p = Object.fromEntries(
     Object.entries(params || {}).map(([key, value]) => [
@@ -170,12 +189,9 @@ function query(params = {}, collectionId) {
         ({ pick: 1, reject: 2, unreviewed: 0 })[f.culling] ===
         Number(p.culling_flag),
     );
-  if (p.tag_id > 0)
-    list = list.filter((f) => f.tags.includes(db.tagNames[p.tag_id - 1]));
-  if (p.tag_group_id > 0)
-    list = list.filter((f) =>
-      f.tags.some((t) => (db.tagGroupIds[t] || 1) === p.tag_group_id),
-    );
+  if (p.tag_id > 0) {
+    list = filesWithTags(subtreeTags(p.tag_id), list);
+  }
   if (p.person_id > 0) list = list.filter((f) => f.person);
   if (p.make) list = list.filter((f) => f.camera.startsWith(p.make));
   if (p.model) list = list.filter((f) => f.camera === p.model);
@@ -396,6 +412,7 @@ function groups(similar = false) {
           is_keep: keeps.get(groupId)
             ? Number(keeps.get(groupId) === p.id)
             : Number(j === 0),
+          can_delete: true,
           is_selected: 0,
           score: 1 - j * 0.01,
           file: nativeFile(p),
@@ -666,6 +683,26 @@ export async function invoke(command, args = {}) {
       has_subfolders: !f,
     };
   }
+  if (command === "refresh_album_folders")
+    return {
+      dirty_folder_count: 0, new_folder_count: 0, new_file_count: 0,
+      updated_file_count: 0, deleted_file_count: 0, rename_count: 0,
+      deleted_folder_count: 0, folder_path_migrations: [],
+    };
+  if (["prepare_folder_delete", "delete_folder", "delete_folder_permanently"].includes(command)) {
+    const folder = db.folders.find((f) => folderPath(f.id) === args.folderPath);
+    if (!folder) throw new Error("Sample folder no longer exists.");
+    const identity = String(folder.id);
+    if (command === "prepare_folder_delete") return identity;
+    if (args.expectedIdentity !== identity)
+      throw new Error("Sample folder changed since confirmation.");
+    const files = live().filter((file) => file.folder === folder.id);
+    files.forEach((file) => { file.deleted = true; });
+    db.folders = db.folders.filter((f) => f.id !== folder.id);
+    changed();
+    if (command === "delete_folder_permanently") return files.length;
+    return { deletedCount: files.length, canDeletePermanently: false, mayHavePartiallyCompleted: false };
+  }
   if (command === "select_folder") {
     const f = db.folders.find((f) => folderPath(f.id) === args.folderPath);
     if (f) return nativeFolder(f);
@@ -828,6 +865,7 @@ export async function invoke(command, args = {}) {
     for (const p of live()) counts.set(p.date, (counts.get(p.date) || 0) + 1);
     return [...counts].sort((a, b) => a[0].localeCompare(b[0]));
   }
+  if (command === "get_file_has_tags") return Boolean(p?.tags.length);
   if (command === "get_tag_counts")
     return Object.fromEntries(tagRecords().map((t) => [t.id, t.count]));
   if (command === "set_file_favorite") {
@@ -850,10 +888,22 @@ export async function invoke(command, args = {}) {
     changed();
     return true;
   }
-  if (command === "edit_file_comment") {
-    if (p) p.comment = args.comment;
+  if (command === "edit_file_metadata") {
+    for (const id of args.fileIds) {
+      const file = photo(id);
+      if (!file || file.deleted) throw new Error("Sample file no longer exists.");
+      file.metadata = { ...file.metadata, ...args.changes };
+    }
     changed();
-    return nativeFile(p);
+    return null;
+  }
+  if (command === "get_file_metadata_details") {
+    if (!p) return {};
+    if (args.section === "capture")
+      return { whiteBalance: { values: ["Auto"], source: "EXIF" } };
+    if (args.section === "source")
+      return { credit: { values: ["Lap demo library"], source: "IPTC" } };
+    return {};
   }
   if (command === "rename_file") {
     if (p) p.name = args.newName || args.fileName || p.name;
@@ -893,13 +943,27 @@ export async function invoke(command, args = {}) {
     return nativeFile(p);
   }
   if (command === "batch_delete_files" || command === "dedup_delete") {
-    const targets =
-      command === "dedup_delete"
-        ? args.request?.fileIds ||
-          groups().flatMap((g) =>
-            g.items.filter((i) => !i.is_keep).map((i) => i.file_id),
-          )
-        : (args.files || []).map((f) => f.id ?? f.fileId);
+    const requested = command === "dedup_delete"
+      ? args.request?.fileIds ?? groups().flatMap((group) =>
+        group.items.filter((item) => !item.is_keep).map((item) => item.file_id),
+      )
+      : (args.files || []).map((file) => file.fileId);
+    const targets = [...new Set(requested)].filter((id) => {
+      const file = photo(id);
+      return file && !file.deleted;
+    });
+    if (args.request?.preview) {
+      return {
+        preview: {
+          token: targets.join(","),
+          itemCount: targets.length,
+          rawCompanionCount: 0,
+          fileCount: targets.length,
+          previewFileIds: targets.slice(0, 5),
+          bytes: targets.reduce((sum, id) => sum + (nativeFile(photo(id))?.size ?? 0), 0),
+        },
+      };
+    }
     targets.forEach((id) => {
       if (photo(id)) photo(id).deleted = true;
     });
@@ -912,10 +976,10 @@ export async function invoke(command, args = {}) {
       trashFailedFileIds: [],
     };
   }
-  if (command === "delete_file" || command === "delete_db_file") {
+  if (command === "delete_file" || command === "delete_file_permanently" || command === "delete_db_file") {
     if (p) p.deleted = true;
     changed();
-    return true;
+    return { deletedFileIds: p ? [p.id] : [], failedCount: 0, trashFailedFileIds: [] };
   }
   if (command === "add_album") {
     const id = Math.max(...db.albums.map((a) => a.id)) + 1;
@@ -1021,7 +1085,6 @@ export async function invoke(command, args = {}) {
       .filter((p) => p.collectionIds.includes(args.collectionId))
       .map((p) => p.id);
   if (command === "get_tags" || command === "get_all_tags") return tagRecords();
-  if (command === "get_tag_groups") return db.tagGroups;
   if (command === "get_file_tags" || command === "get_tags_for_file")
     return tagRecords().filter((t) => p?.tags.includes(t.name));
   if (command === "get_tag_selection_counts")
@@ -1043,7 +1106,10 @@ export async function invoke(command, args = {}) {
       }
     }
     changed();
-    return (args.fileIds || []).length;
+    return (args.fileIds || []).filter((id) => photo(id)).map((id) => ({
+      file_id: id,
+      has_tags: photo(id).tags.length > 0,
+    }));
   }
   if (command === "batch_update_file_metadata") {
     const change = args.params || {},
@@ -1078,55 +1144,45 @@ export async function invoke(command, args = {}) {
   }
   if (command === "rename_tag") {
     const old = db.tagNames[args.tagId - 1];
+    if (old !== args.newName && db.tagNames.includes(args.newName))
+      throw new Error("This sample already contains a tag with that name.");
     db.tagNames[args.tagId - 1] = args.newName;
     db.photos.forEach(
       (p) => (p.tags = p.tags.map((t) => (t === old ? args.newName : t))),
     );
     changed();
-    return tagRecords()[args.tagId - 1];
+    return tagRecords().find((tag) => tag.id === args.tagId);
   }
-  if (command === "get_tag_group_name")
-    return db.tagGroups.find((g) => g.id === args.id)?.name || "";
-  if (command === "save_tag_group") {
-    let g = db.tagGroups.find((g) => g.id === args.id);
-    if (g) g.name = args.name;
-    else {
-      g = {
-        id: Math.max(0, ...db.tagGroups.map((g) => g.id)) + 1,
-        name: args.name,
-        sort_order: db.tagGroups.length,
+  if (command === "move_tag") {
+    if (subtreeTags(args.tagId).includes(args.parentId))
+      throw new Error("A tag cannot be moved into its own subtree.");
+    db.tagParents[args.tagId] = args.parentId ?? null;
+    changed();
+    return null;
+  }
+  if (command === "get_tag_subtree_info" || command === "delete_tag") {
+    const ids = subtreeTags(args.tagId);
+    const names = new Set(ids.map((id) => db.tagNames[id - 1]));
+    if (command === "get_tag_subtree_info")
+      return {
+        tag_count: ids.length,
+        file_count: filesWithTags(ids).length,
       };
-      db.tagGroups.push(g);
+    for (const id of ids) {
+      db.tagNames[id - 1] = null;
+      delete db.tagParents[id];
     }
-    save();
-    return g.id;
-  }
-  if (command === "move_tags_to_group") {
-    for (const id of args.tagIds || [])
-      db.tagGroupIds[db.tagNames[id - 1]] = args.groupId;
-    save();
-    return true;
-  }
-  if (command === "delete_tag_group") {
-    db.tagGroups = db.tagGroups.filter((g) => g.id !== args.id);
-    Object.keys(db.tagGroupIds).forEach((name) => {
-      if (db.tagGroupIds[name] === args.id) db.tagGroupIds[name] = 1;
-    });
-    save();
-    return true;
-  }
-  if (command === "delete_tag") {
-    const name = db.tagNames[args.tagId - 1];
-    db.tagNames[args.tagId - 1] = null;
-    db.photos.forEach((p) => (p.tags = p.tags.filter((t) => t !== name)));
+    db.photos.forEach((p) => (p.tags = p.tags.filter((tag) => !names.has(tag))));
     changed();
     return true;
   }
   if (command === "get_tag_name")
     return tagRecords().find((t) => t.id === args.tagId)?.name || "";
   if (command === "add_tag" || command === "create_tag") {
-    db.tagNames.push(args.name);
-    db.tagGroupIds[args.name] = args.groupId || 1;
+    if (db.tagNames.includes(args.name))
+      throw new Error("This sample already contains a tag with that name.");
+    const id = db.tagNames.push(args.name);
+    db.tagParents[id] = args.parentId ?? null;
     save();
     return tagRecords().at(-1);
   }
@@ -1212,6 +1268,8 @@ export async function invoke(command, args = {}) {
       skipped: 0,
     };
   if (command === "dedup_list_groups") return dedupScanned ? groups() : [];
+  if (command === "dedup_get_group_items")
+    return groups().find((group) => group.id === args.groupId)?.items ?? [];
   if (command === "dedup_get_overview")
     return {
       total_groups: dedupScanned ? groups().length : 0,

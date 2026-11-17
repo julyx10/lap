@@ -39,6 +39,28 @@ test('actual batch metadata changes are visible to queries and survive reload', 
   const reloaded = await adapter(storage);
   assert.deepEqual(ids(reloaded.demoBackend.query({ rating: 4 })), [2, 3]);
 });
+test('editable metadata persists in the browser catalog', async () => {
+  const storage = new Map();
+  const a = await adapter(storage);
+  await a.invoke('edit_file_metadata', { fileIds: [1], changes: { e_title: 'New title', comments: '' } });
+  const reloaded = await adapter(storage);
+  const file = await reloaded.invoke('get_file_info', { fileId: 1 });
+  assert.equal(file.e_title, 'New title');
+  assert.equal(file.comments, '');
+});
+test('tag tree supports subtree queries and keeps assignments when a tag moves', async () => {
+  const a = await adapter();
+  const tags = await a.invoke('get_all_tags');
+  const parent = tags.find(tag => tag.name === 'Outdoors');
+  const child = tags.find(tag => tag.name === 'Nature');
+  assert.equal(child.parent_id, parent.id);
+  assert.equal(child.path, 'Outdoors|Nature');
+  assert.equal(a.demoBackend.query({ tagId: parent.id }).length, parent.count);
+  const files = ids(a.demoBackend.query({ tagId: child.id }));
+  assert(files.length > 0);
+  await a.invoke('move_tag', { tagId: child.id, parentId: null });
+  assert.deepEqual(ids(a.demoBackend.query({ tagId: child.id })), files);
+});
 test('actual collection operations are idempotent and leave original folders intact', async () => {
   const a = await adapter(), before = a.demoBackend.state.photos[0].folder;
   await a.invoke('add_files_to_collection', { fileIds: [1, 2], collectionId: 2 });
@@ -59,7 +81,10 @@ test('actual dedup keep choice controls deletion and remaining groups', async ()
   const a = await adapter();
   await a.invoke('dedup_set_keep', { groupId: 8, fileId: 20 });
   assert.equal(a.demoBackend.groups()[0].items.find(i => i.file_id === 20).is_keep, 1);
-  await a.invoke('dedup_delete');
+  const { preview } = await a.invoke('dedup_delete', { request: { preview: true } });
+  assert.equal(preview.fileCount, 2);
+  assert.equal(a.demoBackend.query().length, 20);
+  await a.invoke('dedup_delete', { request: { planToken: preview.token } });
   assert.equal(a.demoBackend.query().length, 18);
   assert.equal(a.demoBackend.groups().length, 0);
   assert(a.demoBackend.state.photos.find(p => p.id === 8).deleted);

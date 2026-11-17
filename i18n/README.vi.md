@@ -15,7 +15,11 @@
 [English](../README.md) | [Česky](README.cs.md) | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | [Italiano](README.it.md) | [Magyar](README.hu.md) | [Nederlands](README.nl.md) | [Polski](README.pl.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [Українська](README.uk.md) | Tiếng Việt | [中文简体](README.zh-CN.md) | [中文繁體](README.zh-TW.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
 Lap là trình quản lý ảnh mã nguồn mở, ưu tiên cục bộ, dùng để duyệt album gia đình, tìm nhanh ảnh cũ và quản lý thư viện phương tiện cá nhân lớn khi ngoại tuyến.
-Đây là giải pháp thay thế tập trung vào quyền riêng tư cho các dịch vụ ảnh đám mây: không bắt buộc tải lên, tìm kiếm AI cục bộ, quy trình ưu tiên thư mục và miễn phí sử dụng.
+Không cần nhập trước, đăng ký trả phí hay tải lên. Mở thư mục hiện có trực tiếp trong Lap. Tệp giữ nguyên vị trí và định dạng. Lưu vào tệp phụ XMP để dùng trong ứng dụng tương thích.
+
+<div align="center">
+  <p><strong><a href="https://julyx10.github.io/lap/">TRANG WEB CHÍNH THỨC</a> | <a href="https://julyx10.github.io/lap/demos/lap/index.html">DEMO</a></strong></p>
+</div>
 
 ## Tải Lap
 
@@ -24,7 +28,7 @@ Mở [trang phát hành mới nhất](https://github.com/julyx10/lap/releases/la
 | Nền tảng | Gói | Ghi chú |
 | :-- | :-- | :-- |
 | **macOS (Apple Silicon / Intel)** | `_aarch64.dmg` / `_x64.dmg` | Được Apple công chứng |
-| **Windows 10/11 (x64 / ARM64)** | `_x64_en-US.msi` / `_arm64_en-US.msi` | Chưa ký — nếu SmartScreen chặn tải xuống, hãy nhấp **Vẫn giữ** |
+| **Windows 10/11 (x64 / ARM64)** | `_x64_en-US.msi` / `_arm64_en-US.msi` | Chưa ký. Chọn **Vẫn giữ** trong trình duyệt hoặc **Thông tin thêm** → **Vẫn chạy** trong SmartScreen. |
 | **Linux (x64 / ARM64)** | `_amd64.deb` / `_arm64.deb` | Dành cho các bản phân phối dựa trên Debian (Ubuntu, Debian, Linux Mint, v.v.) |
 | **Linux (x64 / ARM64)** | `_amd64.AppImage` / `_aarch64.AppImage` | Cấp quyền thực thi cho tệp, sau đó nhấp đúp để chạy |
 
@@ -45,57 +49,58 @@ brew install --cask lap
 
 ## Vì sao chọn Lap
 
-- **Ưu tiên cục bộ theo thiết kế**: ảnh của bạn nằm trên đĩa của bạn, không cần tài khoản đám mây hay tải lên.
-- **Không khóa chặt thư viện**: làm việc trực tiếp với các thư mục hiện có thay vì nhập mọi thứ vào một cơ sở dữ liệu đóng.
-- **Công cụ AI riêng tư**: tìm kiếm, độ tương đồng, thẻ thông minh và tính năng khuôn mặt chạy cục bộ trên máy của bạn.
-- **Dành cho bộ sưu tập lớn**: tối ưu để duyệt và sắp xếp mượt mà trên thư viện hơn 100.000 tệp.
-- **Mã nguồn mở và miễn phí**: không đăng ký, không bị ép buộc vào hệ sinh thái, mã nguồn có thể kiểm tra.
+- **Quản lý thư viện theo thư mục.** Mở thư mục hiện có trực tiếp trong Lap. Tệp giữ nguyên vị trí và định dạng.
+- **Tìm kiếm AI cục bộ.** Mô tả ảnh, tìm ảnh tương tự hoặc duyệt theo khuôn mặt. Mọi xử lý diễn ra trên thiết bị.
+- **Xếp hạng và thẻ có thể chuyển đổi.** Lưu vào tệp phụ XMP để dùng trong ứng dụng tương thích.
+- **Chọn lọc ảnh.** Xem nhanh bằng phím cách, tự chuyển sau khi xếp hạng, hiển thị vùng lấy nét, so sánh bốn khung và quy tắc giữ bản trùng.
+- **Cho thư viện hơn 100.000 ảnh và video.** Lõi Rust gốc xử lý việc duyệt, tìm kiếm và quét.
+- **Miễn phí và mã nguồn mở.** Không cần đăng ký trả phí hay tài khoản, có 17 ngôn ngữ trên macOS, Windows và Linux.
 
 ## Tính năng
 
 - **Duyệt thư viện linh hoạt** theo ngày, thư mục, vị trí, máy ảnh, ống kính, thẻ, xếp hạng và khuôn mặt, kèm sắp xếp và tìm kiếm.
-- **Quy trình ưu tiên thư mục** với nhiều thư viện, nhập/xuất kéo và thả, nhập/xuất sao chép-dán, đồng bộ hệ thống tệp và thao tác di chuyển/sao chép/xóa an toàn.
+- **Quy trình ưu tiên thư mục.** Nhiều thư viện, nhập và xuất qua kéo thả hoặc bảng nhớ tạm, đổi tên hàng loạt và đồng bộ.
 - **Tìm kiếm AI cục bộ** theo câu lệnh văn bản, độ tương đồng hình ảnh, chủ thể, phân nhóm khuôn mặt và tìm kiếm đa ngôn ngữ tùy chọn trong hơn 50 ngôn ngữ.
-- **Album thông minh** lưu chế độ xem dựa trên quy tắc với nhóm và sắp xếp tùy chỉnh.
+- **Nhập siêu dữ liệu và ghi XMP.** EXIF, IPTC, XMP.
+- **Album thông minh.** Nhóm và sắp xếp tùy chỉnh, lọc theo tên thư mục và bộ chọn có tìm kiếm.
 - **Nhập ảnh theo ngày** với bố cục theo ngày, tháng, năm hoặc một thư mục, giữ nguyên tên tệp gốc và bỏ qua tệp trùng.
-- **Bộ sưu tập và thẻ** để sắp xếp hàng loạt tệp đã chọn mà không di chuyển hay nhân bản bản gốc.
-- **Dọn ảnh trùng lặp** với tóm tắt dung lượng có thể giải phóng và xóa hàng loạt theo nhóm trùng.
-- **Công cụ chọn và so sánh** bao gồm trình xem so sánh ảnh bốn khung.
+- **Bộ sưu tập và thẻ** để sắp xếp hàng loạt tệp đã chọn mà không di chuyển hay nhân bản bản gốc. Cây thẻ kéo thả với số lượng theo nhánh.
+- **Dọn ảnh trùng lặp.** Quy tắc theo thư mục, định dạng, kích thước và ngày, dung lượng có thể thu hồi và xóa hàng loạt.
+- **Công cụ chọn và so sánh.** Xem nhanh bằng phím cách, tự chuyển sau khi xếp hạng, hiển thị vùng lấy nét, so sánh bốn khung và quy tắc giữ bản trùng.
 - **Chỉnh sửa tích hợp** cắt, làm thẳng góc tùy ý, xoay, lật, đổi kích thước và điều chỉnh ảnh cơ bản.
 - **Ảnh ghép** để kết hợp ảnh đã chọn thành bố cục lưới, mosaic căn đều hoặc chồng ảnh.
 - **Apple Live Photos và Google Motion Photos** với phát lại chuyển động và bộ lọc Album thông minh thống nhất.
-- **Cặp RAW + JPEG/HEIC** hiển thị như một mục, giữ các tệp liên kết bên nhau khi thao tác tệp.
+- **Cặp RAW + JPEG/HEIC** hiển thị như một mục, giữ các tệp liên kết bên nhau khi thao tác tệp. Có thể xóa một hoặc cả hai tệp trong cặp RAW. Nếu giữ một tệp, tệp phụ XMP dùng chung cũng được giữ lại.
 - **Ảnh thu nhỏ và bản xem trước RAW có thể cấu hình** bằng cách hiển thị RAW hoặc bản xem trước nhúng của máy ảnh, với độ sáng điều chỉnh được và hiển thị cặp RAW+JPEG.
+- **Thông tin tệp tùy chỉnh.** Chọn trường hiển thị, tải chi tiết theo yêu cầu và hiển thị vùng lấy nét trong trình xem.
 - **Chế độ xem bản đồ tương tác** để khám phá ảnh và video có gắn thẻ địa lý theo cụm tuân theo bộ lọc hiện tại.
 - **Duyệt album ngoại tuyến** giữ album trên thiết bị lưu trữ bị ngắt kết nối hoặc mạng vẫn hiển thị với ảnh thu nhỏ được lưu đệm.
-- **Hỗ trợ nhiều định dạng** cho hơn 60 định dạng ảnh, RAW và video.
+- **Tệp chỉ có trên đám mây.** Tệp theo yêu cầu của OneDrive và tệp giữ chỗ macOS được lập chỉ mục và hiển thị mà không tự động tải xuống.
+- **Giao diện sáng và tối.** Có thể theo giao diện hệ thống.
+- **Hỗ trợ nhiều định dạng** cho hơn 60 định dạng ảnh, RAW và video. Tài liệu Affinity (bản xem trước nhúng).
 
 ## Siêu dữ liệu, bộ sưu tập và di chuyển tệp
 
-Lap ưu tiên thư mục, nhưng không phải mọi thông tin hiển thị trong Lap đều được nhúng trong tệp gốc. Sự khác biệt này quan trọng khi bạn cũng quản lý cùng các thư mục đó trong Finder, Explorer hoặc ứng dụng ảnh khác.
+Lap đọc siêu dữ liệu tương thích từ Lightroom, digiKam, darktable và ACDSee. Bật tính năng nhập trong phần cài đặt. Các giá trị được hỗ trợ trong tệp phụ XMP được ưu tiên hơn giá trị nhúng. Các chỉnh sửa cục bộ được giữ lại.
 
 ### Thông tin nào đi cùng tệp
 
 - Ảnh và video gốc của bạn luôn là tệp thông thường trong các thư mục hiện có.
 - Siêu dữ liệu đã nhúng trong tệp, như ngày chụp EXIF, máy ảnh, ống kính, GPS và hướng, được Lap đọc từ tệp khi lập chỉ mục.
+- Có thể sửa tiêu đề, tiêu đề ngắn, mô tả, tác giả và bản quyền. Thay đổi được lưu trong cơ sở dữ liệu cục bộ. Lưu vào XMP ghi các trường này cùng thẻ, xếp hạng, mục yêu thích và trạng thái chọn lọc vào tệp phụ, đồng thời giữ nguyên các thuộc tính XMP khác và tệp gốc.
+- Khi bạn đổi tên, di chuyển, sao chép hoặc xóa tệp **trong Lap**, Lap cập nhật danh mục cục bộ cùng lúc. Lap cũng giữ các thành phần được hỗ trợ đi cùng nhau, chẳng hạn như các thành phần Apple Live Photo, tệp phụ AAE và cặp RAW + JPEG/HEIC đã bật. Có thể xóa một hoặc cả hai tệp trong cặp RAW. Nếu giữ một tệp, tệp phụ XMP dùng chung cũng được giữ lại.
 - Lưu chỉnh sửa ảnh tích hợp sẽ ghi ảnh kết quả vào đích đã chọn.
-- Khi bạn đổi tên, di chuyển, sao chép hoặc xóa tệp **trong Lap**, Lap cập nhật danh mục cục bộ cùng lúc. Lap cũng giữ các thành phần được hỗ trợ đi cùng nhau, chẳng hạn như các thành phần Apple Live Photo, tệp phụ AAE và cặp RAW + JPEG/HEIC đã bật.
 
 ### Những gì Lap lưu cục bộ
 
-Các mục sau là dữ liệu thư viện Lap. Chúng được lưu trong cơ sở dữ liệu cục bộ hoặc cấu hình thư viện của Lap, không được ghi vào tệp phụ EXIF, IPTC hoặc XMP:
-
-- Bộ sưu tập, Thẻ, Bình luận, Yêu thích, Xếp hạng và trạng thái chọn ảnh (bao gồm Chọn và Loại)
-- Album thông minh và quy tắc, nhóm, sắp xếp và thứ tự của chúng
+- Bộ sưu tập, album thông minh, quy tắc và tùy chọn hiển thị nằm trong cơ sở dữ liệu cục bộ hoặc cấu hình.
 - Dữ liệu tìm kiếm AI, dữ liệu khuôn mặt, ảnh thu nhỏ và dữ liệu chỉ mục/bộ nhớ đệm khác
-
-Dữ liệu này không đi cùng tệp khi tệp được sao chép, xuất hoặc di chuyển ra ngoài Lap và không tự động khả dụng cho ứng dụng khác.
 
 ### Làm việc với tệp ngoài Lap
 
 Lap có thể quét lại thư mục và phát hiện nhiều thay đổi hệ thống tệp. Tuy nhiên, các thay đổi thực hiện ngoài Lap—như đổi tên, di chuyển, thay thế hoặc sao chép tệp—có thể làm gián đoạn tổ chức chỉ được lưu trong Lap.
 
-Để có kết quả đáng tin cậy nhất, hãy đổi tên và di chuyển tệp trong Lap khi bạn dựa vào Bộ sưu tập, Thẻ, Bình luận, Yêu thích, Xếp hạng hoặc trạng thái chọn ảnh. Nếu bạn cũng quản lý tệp ngoài Lap, hãy sao lưu cơ sở dữ liệu và cấu hình của Lap cùng với ảnh. Bạn có thể quản lý vị trí cơ sở dữ liệu và tạo bản sao lưu trong **Cài đặt → Lưu trữ**.
+Khi bật nhập siêu dữ liệu, Lap cũng kiểm tra thay đổi trong các tệp phụ XMP. Đổi tên và di chuyển tệp trong Lap để giữ nguyên bộ sưu tập. Đặt tệp phụ XMP cạnh tệp gốc. Nếu bạn cũng quản lý tệp ngoài Lap, hãy sao lưu cơ sở dữ liệu và cấu hình của Lap cùng với ảnh. Bạn có thể quản lý vị trí cơ sở dữ liệu và tạo bản sao lưu trong **Cài đặt → Lưu trữ**.
 
 Xóa cơ sở dữ liệu hoặc cấu hình của Lap sẽ xóa dữ liệu tổ chức và chỉ mục cục bộ này, nhưng không xóa tệp phương tiện gốc.
 
@@ -143,6 +148,8 @@ Remove-Item -Recurse -Force -ErrorAction SilentlyContinue "$env:APPDATA\com.july
 sudo apt remove lap
 ```
 
+Để gỡ gói Arch cài cục bộ, dùng `sudo pacman -R lap`.
+
 Đối với gói Arch cài cục bộ, dùng `sudo pacman -R lap`.
 
 Đối với cài đặt AppImage, thoát Lap và xóa tệp `.AppImage` đã tải xuống.
@@ -183,6 +190,18 @@ cargo tauri dev
 
 Các gói phân phối có thể liên kết với libheif hệ thống (1.17 trở lên) thay vì libheif và libde265 đi kèm. Đặt `LAP_SYSTEM_LIBHEIF=1` khi biên dịch. Khi đó không cần các mô-đun con `third_party/libheif` và `third_party/libde265`. Giải mã HEVC phụ thuộc vào plugin codec của libheif hệ thống.
 
+### Arch Linux (x86_64)
+
+Công thức biên dịch thử nghiệm cho Arch chưa được đưa lên AUR. Cài đặt cục bộ: [`contrib/aur`](../contrib/aur/README.md).
+
+```bash
+cd contrib/aur
+makepkg -s
+sudo pacman -U lap-<version>-x86_64.pkg.tar.zst
+```
+
+Công thức cố định commit và xác minh tổng kiểm tra của mô hình AI và FFmpeg. Pacman quản lý cập nhật.
+
 ## Định dạng hỗ trợ
 
 Lap hỗ trợ hơn 60 định dạng ảnh, RAW và video.
@@ -190,8 +209,9 @@ Lap hỗ trợ hơn 60 định dạng ảnh, RAW và video.
 | Loại | Định dạng |
 | :--- | :--- |
 | Hình ảnh | JPG/JPEG/JFIF, PNG, GIF, BMP, TIFF, WebP, HEIC/HEIF/HIF, AVIF, JXL, PSD, EXR, HDR/RGBE, TGA, JPEG 2000 (JP2/J2K/J2C/JPC/JPF/JPX), DDS, DPX, QOI |
-| Ảnh RAW | CR2, CR3, CRW, NEF, NRW, ARW, SRF, SR2, RAF, RW2, ORF, PEF, DNG, SRW, RWL, MRW, 3FR, MOS, DCR, KDC, ERF, MEF, RAW, MDC |
-| Video | MP4, MOV, M4V, MKV, AVI, FLV, TS/M2TS, WMV, WebM, 3GP/3G2, F4V, VOB, MPG/MPEG, ASF, DIVX và hơn thế nữa. Phát lại H.264 được hỗ trợ trên mọi nền tảng, với xử lý tương thích tự động khi không thể phát native. HEVC/H.265 và VP9 được hỗ trợ native trên macOS. |
+| Ảnh RAW | CR2, CR3, CRW, NEF, NRW, ARW, SRF, SR2, RAF, RW2, ORF, PEF, DNG, SRW, RWL, MRW, 3FR, MOS, IIQ, DCR, KDC, ERF, MEF, RAW, MDC |
+| Tài liệu Affinity | AF, AFPHOTO, AFDESIGN, AFPUB (bản xem trước nhúng) |
+| Video | MP4, MOV, M4V, MKV, AVI, FLV, TS/MTS/M2TS, WMV, WebM, 3GP, MPG/MPEG, VOB, MOD/TOD, HEVC, ASF. Phát lại H.264 được hỗ trợ trên mọi nền tảng, với xử lý tương thích tự động khi không thể phát native. HEVC/H.265 và VP9 được hỗ trợ native trên macOS. |
 
 ### Phát video trên Linux
 
@@ -215,6 +235,7 @@ sudo apt install gstreamer1.0-libav gstreamer1.0-plugins-good
 | [libheif](https://github.com/strukturag/libheif) | Giải mã ảnh HEIC/HEIF/HIF và tạo bản xem trước |
 | [libjpeg-turbo](https://libjpeg-turbo.org/) | Giải mã JPEG nhanh và tạo ảnh thu nhỏ |
 | [FFmpeg](https://ffmpeg.org/) | Xử lý video và tạo ảnh thu nhỏ |
+| [exiftool-rs](https://github.com/Le-Syl21/exiftool-rs) | EXIF / IPTC / XMP |
 | [Video.js](https://videojs.com/) | Giao diện phát video đa nền tảng |
 | [ONNX Runtime](https://onnxruntime.ai/) | Công cụ suy luận mô hình AI cục bộ |
 | [CLIP](https://github.com/openai/CLIP) | Tìm kiếm tương đồng hình ảnh-văn bản |
