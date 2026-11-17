@@ -1102,8 +1102,13 @@ export async function syncAlbumFolderMtimes(albumId, folderId, folderPath) {
   return null;
 };
 
-export async function refreshAlbumSubfolders(albumId, folderPath) {
-  return await invoke('refresh_album_subfolders', { albumId, folderPath });
+export async function refreshAlbumFolders(albumId, folderPath, libraryId) {
+  return await invoke('refresh_album_folders', {
+    albumId,
+    folderPath,
+    libraryId,
+    groupRawJpegPairs: Boolean(config.settings.groupRawJpegPairs),
+  });
 }
 
 export async function reconcileRawJpegPairs(libraryId, enabled) {

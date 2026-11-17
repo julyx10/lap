@@ -671,9 +671,9 @@
       "success": "Fond d'écran mis à jour",
       "failed": "Impossible de définir le fond d'écran"
     },
-    "refresh_subfolders": {
-      "success": "Sous-dossiers actualisés",
-      "failed": "Impossible d’actualiser les sous-dossiers"
+    "refresh_folders": {
+      "success": "Dossiers actualisés",
+      "failed": "Impossible d’actualiser les dossiers"
     },
     "copy_image": {
       "success": "{count} fichier(s) copié(s) dans le presse-papiers",
@@ -738,7 +738,7 @@
       "exclude_from_search": "Exclure de recherche",
       "remove": "Supprimer",
       "delete_folder": "Supprimer le dossier",
-      "refresh_subfolders": "Actualiser les sous-dossiers"
+      "refresh_folders": "Actualiser les dossiers"
     },
     "file": {
       "new_folder": "Nouveau dossier",

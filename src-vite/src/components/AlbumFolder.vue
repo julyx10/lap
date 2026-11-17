@@ -190,7 +190,7 @@ import { isMac, shortenFilename, isValidFileName, getFolderPath, getFullPath, no
 import {
   createFolder, renameFolder, fetchFolder, getAllAlbums, moveFolder, moveFolderOutsideLibrary,
   copyFolder, checkFileExists, revealPath, prepareFolderDelete, deleteFolder, deleteFolderPermanently, recountAlbum, selectFolder as selectFolderInDb,
-  isDirectoryAccessible, setFolderFavorite, setFolderSearchExcluded, hasImportableClipboard, refreshAlbumSubfolders,
+  isDirectoryAccessible, setFolderFavorite, setFolderSearchExcluded, hasImportableClipboard, refreshAlbumFolders,
 } from '@/common/api';
 import { DEFAULT_PLATFORM, getShortcutLabel } from '@/common/shortcuts';
 import { Album, Folder } from '@/common/types';
@@ -498,10 +498,10 @@ const getMenuItemsForFolder = async (folder: any) => {
       action: null
     },
     {
-      label: localeMsg.value.menu.album.refresh_subfolders,
+      label: localeMsg.value.menu.album.refresh_folders,
       icon: IconRefresh,
       disabled: unavailable || refreshingSubfolderPaths.value.has(folder.path),
-      action: () => { void refreshSubfolders(folder); }
+      action: () => { void refreshFolders(folder); }
     },
     {
       label: folder?.is_excluded_from_search ? localeMsg.value.menu.album.include_in_search : localeMsg.value.menu.album.exclude_from_search,
@@ -552,22 +552,32 @@ const toggleFolderFavorite = async (folder: Folder) => {
 
 const refreshingSubfolderPaths = ref(new Set<string>());
 
-const refreshSubfolders = async (folder: Folder) => {
+const refreshFolders = async (folder: Folder) => {
+  const albumId = props.albumId;
+  const libraryId = libConfig._libraryId;
   const paths = new Set(refreshingSubfolderPaths.value);
   paths.add(folder.path);
   refreshingSubfolderPaths.value = paths;
   try {
-    await refreshAlbumSubfolders(props.albumId, folder.path);
+    const result = await refreshAlbumFolders(albumId, folder.path, libraryId);
+    if (disposed || libraryId !== libConfig._libraryId) return;
+    if (result.dirty_folder_count > 0) {
+      const treeChanged = Boolean(result.refresh_error)
+        || result.deleted_folder_count > 0 || result.folder_path_migrations.length > 0;
+      await tauriEmit('refresh-content', { libraryId, albumId, folderPath: folder.path, treeChanged });
+    }
     const refreshed = await fetchFolder(folder.path, true, config.settings.folderSort);
+    if (disposed || libraryId !== libConfig._libraryId) return;
     if (refreshed) {
       folder.has_subfolders = refreshed.has_subfolders;
       folder.children = refreshed.children;
       folder.is_expanded = true;
     }
-    toast.success(localeMsg.value.tooltip.refresh_subfolders.success);
+    if (result.refresh_error) throw new Error(result.refresh_error);
+    toast.success(localeMsg.value.tooltip.refresh_folders.success);
   } catch (error) {
-    console.error('Failed to refresh subfolders:', error);
-    toast.error(localeMsg.value.tooltip.refresh_subfolders.failed);
+    console.error('Failed to refresh folders:', error);
+    toast.error(localeMsg.value.tooltip.refresh_folders.failed);
   } finally {
     const nextPaths = new Set(refreshingSubfolderPaths.value);
     nextPaths.delete(folder.path);

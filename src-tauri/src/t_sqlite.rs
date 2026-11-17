@@ -3520,16 +3520,13 @@ impl AFile {
                 a.content_identifier,
                 a.media_subtype,
                 a.live_photo_video_id,
-                CASE
-                    WHEN lpv.id IS NOT NULL AND lpf.path IS NOT NULL
-                    THEN lpf.path || '/' || lpv.name
-                    ELSE NULL
-                END AS live_photo_video_path,
+                lpf.path AS live_photo_video_folder,
                 {} AS album_visible,
                 a.motion_photo_offset,
                 a.cloud_only,
                 a.metadata_pending,
-                COALESCE(lpv.size, 0)
+                COALESCE(lpv.size, 0),
+                lpv.name AS live_photo_video_name
             FROM afiles a
             LEFT JOIN afolders b ON a.folder_id = b.id
             LEFT JOIN albums c ON b.album_id = c.id
@@ -3615,7 +3612,9 @@ impl AFile {
             content_identifier: row.get(56)?,
             media_subtype: row.get(57)?,
             live_photo_video_id: row.get(58)?,
-            live_photo_video_path: row.get(59)?,
+            live_photo_video_path: row.get::<_, Option<String>>(59)?
+                .zip(row.get::<_, Option<String>>(65)?)
+                .map(|(folder, name)| t_utils::get_file_path(&folder, &name)),
             album_accessible: row.get::<_, Option<i64>>(50)?.is_none_or(t_utils::album_accessible),
             album_visible: row.get(60)?,
             motion_photo_offset: row.get(61)?,
@@ -4319,14 +4318,16 @@ impl AFile {
         for ids in ids.chunks(500) {
             let placeholders = std::iter::repeat_n("?", ids.len()).collect::<Vec<_>>().join(",");
             let sql = format!(
-                "SELECT a.id, f.path || '/' || a.name, a.live_photo_video_id
+                "SELECT a.id, f.path, a.name, a.live_photo_video_id
                  FROM afiles a JOIN afolders f ON f.id = a.folder_id
                  WHERE a.live_photo_video_id IN ({placeholders})
                    AND a.media_subtype IN ('raw_jpeg_pair', 'live_photo')"
             );
             let mut stmt = conn.prepare(&sql).map_err(|e| e.to_string())?;
             let rows = stmt.query_map(rusqlite::params_from_iter(ids.iter()), |row| {
-                Ok((row.get(0)?, row.get(1)?, row.get(2)?))
+                let folder: String = row.get(1)?;
+                let name: String = row.get(2)?;
+                Ok((row.get(0)?, t_utils::get_file_path(&folder, &name), row.get(3)?))
             }).map_err(|e| e.to_string())?;
             for row in rows {
                 owners.push(row.map_err(|e| e.to_string())?);
@@ -5375,15 +5376,14 @@ impl AFile {
         ).map_err(|error| error.to_string())
     }
 
-    pub fn retain_excluded_image(album_id: i64, path: &str, width: u32, height: u32) -> Result<(), String> {
+    pub fn retain_excluded_image(album_id: i64, path: &str, width: u32, height: u32) -> Result<usize, String> {
         let path = Path::new(path);
         let parent = path.parent().ok_or("Image has no parent folder")?.to_string_lossy();
         let name = path.file_name().ok_or("Image has no filename")?.to_string_lossy();
         open_conn()?.execute("UPDATE afiles SET width=?1, height=?2
             WHERE name=?3 AND folder_id IN (SELECT id FROM afolders WHERE album_id=?4 AND path=?5)
             AND (width IS NOT ?1 OR height IS NOT ?2)",
-            params![width, height, name.as_ref(), album_id, parent.as_ref()]).map_err(|e| e.to_string())?;
-        Ok(())
+            params![width, height, name.as_ref(), album_id, parent.as_ref()]).map_err(|e| e.to_string())
     }
 
     /// delete unseen files in an album (database only)
@@ -7223,6 +7223,15 @@ impl AFile {
             Self::build_base_query()
         );
         Self::query_files(&sql, &[&folder_id])
+    }
+
+    pub(crate) fn file_stats_in_folder(folder_id: i64) -> Result<HashMap<String, (i64, Option<i64>)>, String> {
+        let conn = open_conn()?;
+        let mut stmt = conn.prepare("SELECT name, size, modified_at FROM afiles WHERE folder_id = ?1")
+            .map_err(|error| error.to_string())?;
+        let rows = stmt.query_map([folder_id], |row| Ok((row.get(0)?, (row.get(1)?, row.get(2)?))))
+            .map_err(|error| error.to_string())?;
+        rows.collect::<Result<_, _>>().map_err(|error| error.to_string())
     }
 
     /// Recheck only the opened folder; avoid loading full catalog records or

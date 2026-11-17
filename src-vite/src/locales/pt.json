@@ -671,9 +671,9 @@
       "success": "Papel de parede atualizado",
       "failed": "Falha ao definir o papel de parede"
     },
-    "refresh_subfolders": {
-      "success": "Subpastas atualizadas",
-      "failed": "Falha ao atualizar subpastas"
+    "refresh_folders": {
+      "success": "Pastas atualizadas",
+      "failed": "Falha ao atualizar pastas"
     },
     "copy_image": {
       "success": "{count} arquivo(s) copiado(s) para a área de transferência",
@@ -738,7 +738,7 @@
       "exclude_from_search": "Excluir da pesquisa",
       "remove": "Remover",
       "delete_folder": "Excluir pasta",
-      "refresh_subfolders": "Atualizar subpastas"
+      "refresh_folders": "Atualizar pastas"
     },
     "file": {
       "new_folder": "Nova pasta",

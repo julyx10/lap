@@ -671,9 +671,9 @@
       "success": "Fondo de escritorio actualizado",
       "failed": "No se pudo establecer el fondo de escritorio"
     },
-    "refresh_subfolders": {
-      "success": "Subcarpetas actualizadas",
-      "failed": "No se pudieron actualizar las subcarpetas"
+    "refresh_folders": {
+      "success": "Carpetas actualizadas",
+      "failed": "No se pudieron actualizar las carpetas"
     },
     "copy_image": {
       "success": "{count} archivo(s) copiado(s) al portapapeles",
@@ -738,7 +738,7 @@
       "exclude_from_search": "Excluir de búsqueda",
       "remove": "Eliminar",
       "delete_folder": "Eliminar carpeta",
-      "refresh_subfolders": "Actualizar subcarpetas"
+      "refresh_folders": "Actualizar carpetas"
     },
     "file": {
       "new_folder": "Nueva carpeta",

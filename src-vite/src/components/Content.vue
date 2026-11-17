@@ -6575,7 +6575,26 @@ onMounted( async() => {
   });
 
   // listen for external refresh requests (e.g. from folder context menu)
-  unlistenRefreshContent = await listen('refresh-content', () => {
+  unlistenRefreshContent = await listen<{ libraryId: string; albumId: number; folderPath: string; treeChanged: boolean }>('refresh-content', ({ payload }) => {
+    if (payload?.folderPath) {
+      if (payload.libraryId !== libConfig._libraryId) return;
+      const affectedPaths = payload.treeChanged
+        ? [payload.folderPath, ...getCountedFolderPaths().filter(path => isWithinRootPath(path, payload.folderPath))]
+        : [payload.folderPath];
+      void refreshFolderSidebarCounts(affectedPaths);
+      void refreshAffectedAlbums([payload.albumId]);
+      void refreshLibraryTotalCount();
+      if (config.main.sidebarIndex !== SIDEBAR.ALBUM || libConfig.activePane === 'collection'
+        || tempViewMode.value !== 'none') return;
+      const { id, selected, folderPath } = libConfig.album;
+      if (id === 0 || (id === payload.albumId && (selected
+        || normalizePathForCompare(folderPath || '') === normalizePathForCompare(payload.folderPath)
+        || (folderPath && config.settings.showSubfolderFiles && isWithinRootPath(payload.folderPath, folderPath))
+        || (folderPath && payload.treeChanged && isWithinRootPath(folderPath, payload.folderPath))))) {
+        void updateContent();
+      }
+      return;
+    }
     // A manual folder refresh must bypass the mtime-sync debounce; otherwise
     // revisiting an already selected folder only reloads stale DB rows.
     lastSyncedAlbumFolder = '';

@@ -107,6 +107,59 @@ pub(crate) fn move_to_trash(path: &str) -> Result<(), trash::Error> {
     trash::delete(path)
 }
 
+#[cfg(not(target_os = "windows"))]
+pub(crate) fn move_folder_to_trash(path: &str) -> Result<(), trash::Error> {
+    move_to_trash(path)
+}
+
+#[cfg(target_os = "windows")]
+pub(crate) fn move_folder_to_trash(path: &str) -> Result<(), trash::Error> {
+    use std::os::windows::ffi::OsStrExt;
+    use windows::core::PCWSTR;
+    use windows::Win32::System::Com::{
+        CLSCTX_INPROC_SERVER, COINIT_APARTMENTTHREADED, CoCreateInstance, CoInitializeEx, CoUninitialize,
+    };
+    use windows::Win32::UI::Shell::{
+        COPYENGINE_E_USER_CANCELLED, FOF_ALLOWUNDO, FOF_NOERRORUI, FOF_SILENT, FOF_WANTNUKEWARNING,
+        FOFX_EARLYFAILURE, FOFX_RECYCLEONDELETE, FileOperation, IFileOperation, IShellItem,
+        SHCreateItemFromParsingName,
+    };
+
+    let absolute_path = std::path::absolute(path).map_err(|error| trash::Error::CouldNotAccess {
+        target: format!("{path}: {error}"),
+    })?;
+    let wide_path: Vec<_> = absolute_path.as_os_str().encode_wide().chain([0]).collect();
+    let windows_error = |error: windows::core::Error| trash::Error::Os {
+        code: error.code().0,
+        description: error.to_string(),
+    };
+
+    // The trash crate enumerates the directory tree on Windows. Queue a single
+    // Shell item on an STA thread so Explorer recycles the folder as a unit.
+    let operation = std::thread::Builder::new().spawn(move || unsafe {
+        CoInitializeEx(None, COINIT_APARTMENTTHREADED).ok().map_err(windows_error)?;
+        let result = (|| {
+            let item: IShellItem = SHCreateItemFromParsingName(PCWSTR(wide_path.as_ptr()), None)?;
+            let operation: IFileOperation = CoCreateInstance(&FileOperation, None, CLSCTX_INPROC_SERVER)?;
+            operation.SetOperationFlags(
+                FOFX_RECYCLEONDELETE | FOF_ALLOWUNDO | FOF_SILENT | FOF_NOERRORUI
+                    | FOFX_EARLYFAILURE | FOF_WANTNUKEWARNING,
+            )?;
+            operation.DeleteItem(&item, None)?;
+            operation.PerformOperations()?;
+            if operation.GetAnyOperationsAborted()?.as_bool() {
+                return Err(windows::core::Error::from_hresult(COPYENGINE_E_USER_CANCELLED));
+            }
+            Ok(())
+        })();
+        CoUninitialize();
+        result.map_err(windows_error)
+    }).map_err(|error| trash::Error::Unknown { description: error.to_string() })?;
+    operation.join().map_err(|_| trash::Error::Unknown {
+        description: "Windows folder recycle operation did not finish".into(),
+    })?
+}
+
 pub fn delete_file_permanently(path: &str) -> Result<(), String> {
     let metadata = fs::symlink_metadata(path).map_err(|e| {
         format!(
@@ -2197,8 +2250,11 @@ pub fn get_folder_files(
             if let Some(ftype) = get_file_type(file_path_str) {
                 if !album.allows_file_type(ftype) { continue; }
                 match skip_excluded_image(&album, file_path_str, ftype) {
-                    Ok(true) => continue,
-                    Ok(false) => {},
+                    Ok(Some(changed)) => {
+                        updated_count += changed;
+                        continue;
+                    }
+                    Ok(None) => {},
                     Err(error) => {
                         eprintln!("Failed to retain excluded image: {error}");
                         continue;
@@ -2275,6 +2331,8 @@ pub struct FolderMtimeSyncResult {
     pub rename_count: u32,
     pub deleted_folder_count: u32,
     pub folder_path_migrations: Vec<FolderPathMigration>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub refresh_error: Option<String>,
 }
 
 #[derive(Clone, serde::Serialize)]
@@ -2300,6 +2358,7 @@ struct FolderSyncOutcome {
     updated_file_count: u32,
     deleted_file_count: u32,
     rename_count: u32,
+    failed_file_count: u32,
     tasks: Vec<SyncedFileTask>,
 }
 
@@ -2344,6 +2403,9 @@ struct AlbumScanGuard {
 
 impl AlbumScanGuard {
     fn acquire(album_id: i64) -> Result<Self, String> {
+        let sync_lock = album_sync_lock(album_id);
+        let _sync_guard = sync_lock.lock()
+            .map_err(|_| format!("Album sync lock poisoned: {album_id}"))?;
         if album_removal_pending(album_id) {
             return Err(format!("Album {} is being removed", album_id));
         }
@@ -2552,10 +2614,9 @@ fn sync_dirty_folders_by_mtime(
         };
         dirty_folder_count += 1;
 
-        let child_scan = scan_new_child_folders(folder.album_id, &folder.path, false)?;
+        let child_scan = scan_new_child_folders(folder.album_id, &folder.path, false, &mut folder_path_migrations)?;
         new_folder_count += child_scan.folders.len() as u32;
         deleted_folder_count += child_scan.deleted_folder_count;
-        folder_path_migrations.extend(child_scan.folder_path_migrations);
         for child in child_scan.folders {
             queue.push((child, None, true));
         }
@@ -2597,6 +2658,7 @@ fn sync_dirty_folders_by_mtime(
             rename_count,
             deleted_folder_count,
             folder_path_migrations,
+            refresh_error: None,
         },
         tasks,
     ))
@@ -2607,18 +2669,18 @@ struct ChildFolderScan {
     child_paths: Vec<String>,
     has_subfolders: bool,
     deleted_folder_count: u32,
-    folder_path_migrations: Vec<FolderPathMigration>,
 }
 
 fn scan_new_child_folders(
     album_id: i64,
     folder_path: &str,
     reconcile_removed_children: bool,
+    folder_path_migrations: &mut Vec<FolderPathMigration>,
 ) -> Result<ChildFolderScan, String> {
     let album = Album::get_album_by_id(album_id)?;
     if album.excludes_path(Path::new(folder_path)) {
         return Ok(ChildFolderScan { folders: Vec::new(), child_paths: Vec::new(), has_subfolders: false,
-            deleted_folder_count: 0, folder_path_migrations: Vec::new() });
+            deleted_folder_count: 0 });
     }
     let entries = fs::read_dir(folder_path).map_err(|e| e.to_string())?;
     let mut has_subfolders = false;
@@ -2643,7 +2705,6 @@ fn scan_new_child_folders(
     }
 
     let mut new_folders = Vec::new();
-    let mut folder_path_migrations = Vec::new();
     for child_path in &seen_paths {
         if AFolder::fetch(&child_path)?.is_some() {
             continue;
@@ -2679,7 +2740,6 @@ fn scan_new_child_folders(
         child_paths: seen_paths.into_iter().collect(),
         has_subfolders,
         deleted_folder_count,
-        folder_path_migrations,
     })
 }
 
@@ -2712,6 +2772,7 @@ fn sync_folder_direct_files(
     let mut rename_count = 0u32;
     let mut tasks = Vec::new();
     let mut live_photo_affected_names = HashSet::new();
+    let mut failed_file_count = 0;
 
     // Helper to check background cancellation (generation 0 = foreground, never cancels).
     let is_cancelled =
@@ -2722,12 +2783,10 @@ fn sync_folder_direct_files(
     // file has been renamed and the old path no longer exists on disk.
     let db_inodes: HashMap<u64, (i64, String)> = {
         let mut map = HashMap::new();
-        if let Ok(files) = AFile::get_files_by_folder_id(folder_id) {
-            for file in files {
-                if let (Some(id), Some(inode)) = (file.id, file.inode) {
-                    if inode > 0 {
-                        map.insert(inode as u64, (id, file.name.clone()));
-                    }
+        for file in AFile::get_files_by_folder_id(folder_id)? {
+            if let (Some(id), Some(inode)) = (file.id, file.inode) {
+                if inode > 0 {
+                    map.insert(inode as u64, (id, file.name));
                 }
             }
         }
@@ -2758,7 +2817,22 @@ fn sync_folder_direct_files(
         }
 
         if let Some(ftype) = get_file_type(file_path_str) {
-            if !album.allows_file_type(ftype) || skip_excluded_image(&album, file_path_str, ftype)? { continue; }
+            if !album.allows_file_type(ftype) { continue; }
+            match skip_excluded_image(&album, file_path_str, ftype) {
+                Ok(None) => {}
+                Ok(Some(changed)) => {
+                    updated_count += changed;
+                    if changed > 0 && is_live_photo_candidate_name(&file_name) {
+                        live_photo_affected_names.insert(file_name.clone());
+                    }
+                    continue;
+                }
+                Err(error) => {
+                    failed_file_count += 1;
+                    eprintln!("sync_folder: failed to retain excluded image {file_path_str}: {error}");
+                    continue;
+                }
+            }
             // Check for rename: a file whose file_id matches a known DB record
             // with a different name.
             let renamed: Option<(i64, String)> = file_id(path).and_then(|fid| {
@@ -2785,24 +2859,31 @@ fn sync_folder_direct_files(
                 } else {
                     AFile::update_path(db_id, file_path_str, scan_time)
                 };
-                if let Ok(Some(updated_file)) = renamed_file {
-                    rename_count += 1;
-                    if is_live_photo_candidate_name(&file_name) {
-                        live_photo_affected_names.insert(file_name.clone());
+                let updated_file = match renamed_file {
+                    Ok(Some(file)) => file,
+                    result => {
+                        failed_file_count += 1;
+                        let error = result.err().unwrap_or_else(|| "Catalog row not found".into());
+                        eprintln!("sync_folder: failed to update renamed file {file_path_str}: {error}");
+                        continue;
                     }
-                    if is_live_photo_candidate_name(&old_file_name) {
-                        live_photo_affected_names.insert(old_file_name);
-                    }
-                    if should_process_synced_file(&updated_file, ftype, album.small_image_filter) {
-                        tasks.push(SyncedFileTask {
-                            file_id: db_id,
-                            file_path: file_path_str.to_string(),
-                            file_type: ftype,
-                            orientation: updated_file.e_orientation.unwrap_or(1) as i32,
-                            album_id,
-                            invalidate_thumbnail: false,
-                        });
-                    }
+                };
+                rename_count += 1;
+                if is_live_photo_candidate_name(&file_name) {
+                    live_photo_affected_names.insert(file_name.clone());
+                }
+                if is_live_photo_candidate_name(&old_file_name) {
+                    live_photo_affected_names.insert(old_file_name);
+                }
+                if should_process_synced_file(&updated_file, ftype, album.small_image_filter) {
+                    tasks.push(SyncedFileTask {
+                        file_id: db_id,
+                        file_path: file_path_str.to_string(),
+                        file_type: ftype,
+                        orientation: updated_file.e_orientation.unwrap_or(1) as i32,
+                        album_id,
+                        invalidate_thumbnail: false,
+                    });
                 }
             } else {
                 if is_cancelled() {
@@ -2835,6 +2916,7 @@ fn sync_folder_direct_files(
                         }
                     }
                     Err(e) => {
+                        failed_file_count += 1;
                         eprintln!(
                             "sync_folder: failed to add file to DB: {} ({})",
                             file_path_str, e
@@ -2860,27 +2942,31 @@ fn sync_folder_direct_files(
     }
     let deleted_count: u32 = {
         let mut count = 0u32;
-        if let Ok(files) = AFile::get_files_by_folder_id(folder_id) {
-            for file in files {
-                if !file.album_visible || seen_names.contains(&file.name) {
-                    continue;
+        for file in AFile::get_files_by_folder_id(folder_id)? {
+            if !file.album_visible || seen_names.contains(&file.name) {
+                continue;
+            }
+            let still_exists = file
+                .inode
+                .map(|ino| ino > 0 && seen_inodes.contains(&(ino as u64)))
+                .unwrap_or(false);
+            if still_exists {
+                continue;
+            }
+            if let Some(id) = file.id {
+                if is_cancelled() {
+                    return Ok(FolderSyncOutcome::default());
                 }
-                let still_exists = file
-                    .inode
-                    .map(|ino| ino > 0 && seen_inodes.contains(&(ino as u64)))
-                    .unwrap_or(false);
-                if still_exists {
-                    continue;
-                }
-                if let Some(id) = file.id {
-                    if is_cancelled() {
-                        return Ok(FolderSyncOutcome::default());
-                    }
-                    if AFile::delete(id).is_ok() {
-                        count += 1;
+                match AFile::delete(id) {
+                    Ok(deleted) => {
+                        count += deleted as u32;
                         if is_live_photo_candidate_name(&file.name) {
-                            live_photo_affected_names.insert(file.name.clone());
+                            live_photo_affected_names.insert(file.name);
                         }
+                    }
+                    Err(error) => {
+                        failed_file_count += 1;
+                        eprintln!("sync_folder: failed to remove missing file {}: {error}", file.name);
                     }
                 }
             }
@@ -2938,6 +3024,7 @@ fn sync_folder_direct_files(
         updated_file_count: updated_count,
         deleted_file_count: deleted_count,
         rename_count,
+        failed_file_count,
         tasks,
     })
 }
@@ -3026,26 +3113,77 @@ fn reconcile_raw_jpeg_pairs_after_album_index(
     Ok(())
 }
 
-/// Sync the opened folder, including cloud state changes that leave its mtime unchanged.
+fn folder_files_changed(album: &Album, folder_id: i64, folder_path: &str, check_existing: bool) -> Result<bool, String> {
+    if album.excludes_path(Path::new(folder_path)) {
+        return Ok(false);
+    }
+    let mut files = AFile::file_stats_in_folder(folder_id)?;
+    for entry in WalkDir::new(folder_path)
+        .min_depth(1)
+        .max_depth(1)
+        .into_iter()
+        .filter_entry(is_visible_or_root)
+    {
+        let entry = entry.map_err(|error| error.to_string())?;
+        let Some(name) = entry.file_name().to_str() else { continue };
+        let indexed_stat = files.remove(name);
+        if !entry.file_type().is_file() {
+            if check_existing && indexed_stat.is_some() {
+                return Ok(true);
+            }
+            continue;
+        }
+        if let Some((size, modified)) = indexed_stat {
+            if check_existing {
+                let metadata = entry.metadata().map_err(|error| error.to_string())?;
+                if metadata.len() as i64 != size
+                    || systemtime_to_timestamp(metadata.modified().ok()) != modified
+                {
+                    return Ok(true);
+                }
+            }
+            continue;
+        }
+        let Some(path) = entry.path().to_str() else { continue };
+        if let Some(file_type) = get_file_type(path) {
+            if album.allows_file_type(file_type)
+                && excluded_image_dimensions(path, file_type, album.small_image_filter).is_none()
+            {
+                return Ok(true);
+            }
+        }
+    }
+    Ok(check_existing && !files.is_empty())
+}
+
+/// Sync the opened folder, including changes that leave its mtime unchanged.
 pub fn sync_single_folder(
     app_handle: &tauri::AppHandle,
     album_id: i64,
-    folder_id: i64,
+    folder_id: Option<i64>,
     folder_path: &str,
     group_raw_jpeg_pairs: bool,
 ) -> Result<FolderMtimeSyncResult, String> {
     // A complete album scan owns folder and file reconciliation for this
     // album. Skip foreground refreshes until it finishes to avoid concurrent
     // writes based on different filesystem snapshots.
+    let refresh_tree = folder_id.is_none();
+    let unavailable = || {
+        if refresh_tree {
+            Err("Album scan or removal is already in progress.".to_string())
+        } else {
+            Ok(FolderMtimeSyncResult::default())
+        }
+    };
     if album_scan_active(album_id) || album_removal_pending(album_id) {
-        return Ok(FolderMtimeSyncResult::default());
+        return unavailable();
     }
     let album_sync_lock = album_sync_lock(album_id);
     let _album_sync_guard = album_sync_lock
         .lock()
         .map_err(|_| format!("Album sync lock poisoned: {}", album_id))?;
     if album_scan_active(album_id) || album_removal_pending(album_id) {
-        return Ok(FolderMtimeSyncResult::default());
+        return unavailable();
     }
 
     let album = Album::get_album_by_id(album_id).map_err(|e| e.to_string())?;
@@ -3056,19 +3194,10 @@ pub fn sync_single_folder(
     let info = match FileInfo::new(folder_path) {
         Ok(info) => info,
         Err(e) => {
-            if is_path_not_found(&e) {
+            if !refresh_tree && is_path_not_found(&e) {
                 // Keep missing folders until an explicit parent refresh can
                 // reconcile a rename or remove an intentionally deleted path.
-                return Ok(FolderMtimeSyncResult {
-                    dirty_folder_count: 0,
-                    new_folder_count: 0,
-                    new_file_count: 0,
-                    updated_file_count: 0,
-                    deleted_file_count: 0,
-                    rename_count: 0,
-                    deleted_folder_count: 0,
-                    folder_path_migrations: Vec::new(),
-                });
+                return Ok(FolderMtimeSyncResult::default());
             }
             return Err(e);
         }
@@ -3079,7 +3208,7 @@ pub fn sync_single_folder(
     let resolved_folder_id = folder
         .id
         .ok_or_else(|| format!("Folder has no id: {}", folder_path))?;
-    if resolved_folder_id != folder_id {
+    if let Some(folder_id) = folder_id.filter(|id| *id != resolved_folder_id) {
         eprintln!(
             "sync_single_folder: using DB folder id {} for path {} instead of stale id {}",
             resolved_folder_id, folder_path, folder_id
@@ -3092,121 +3221,95 @@ pub fn sync_single_folder(
         ));
     }
 
-    // Always reconcile direct child additions before deciding whether file
-    // metadata needs an mtime-driven update.
-    let child_scan = scan_new_child_folders(album_id, folder_path, false)?;
-    let new_folder_count = child_scan.folders.len() as u32;
+    let mut result = FolderMtimeSyncResult::default();
+    let sync = (|| -> Result<(), String> {
+        let child_scan = scan_new_child_folders(album_id, folder_path, refresh_tree, &mut result.folder_path_migrations)?;
+        result.new_folder_count = child_scan.folders.len() as u32;
+        result.deleted_folder_count = child_scan.deleted_folder_count;
+        if refresh_tree {
+            let mut pending = child_scan.child_paths;
+            let mut subfolder_flags = vec![(folder_path.to_string(), child_scan.has_subfolders)];
+            let tree_scan = (|| -> Result<(), String> {
+                while let Some(path) = pending.pop() {
+                    let scan = scan_new_child_folders(album_id, &path, true, &mut result.folder_path_migrations)?;
+                    result.new_folder_count += scan.folders.len() as u32;
+                    result.deleted_folder_count += scan.deleted_folder_count;
+                    subfolder_flags.push((path, scan.has_subfolders));
+                    pending.extend(scan.child_paths);
+                }
+                Ok(())
+            })();
+            let flag_update = FolderSubfolderState::update_subfolder_flags(album_id, &subfolder_flags);
+            tree_scan?;
+            flag_update?;
+        }
+        let folder_layout_changed = result.deleted_folder_count > 0 || !result.folder_path_migrations.is_empty()
+            || (!refresh_tree && result.new_folder_count > 0);
 
-    let needs_live_photo_reindex = FolderScanState::needs_version(
-        resolved_folder_id,
-        FolderScanState::LIVE_PHOTO_PAIRING,
-        FolderScanState::LIVE_PHOTO_PAIRING_VERSION,
-    )?;
-    let (cloud_flags_changed, needs_cloud_indexing) = if info.modified == folder.modified_at && !needs_live_photo_reindex {
-        AFile::refresh_cloud_state(resolved_folder_id, folder_path)?
-    } else {
-        (false, false)
-    };
-    if info.modified == folder.modified_at && !needs_live_photo_reindex && !needs_cloud_indexing {
-        // An unchanged mtime-driven sync still reconciles the existing pair state.
+        let needs_live_photo_reindex = FolderScanState::needs_version(
+            resolved_folder_id,
+            FolderScanState::LIVE_PHOTO_PAIRING,
+            FolderScanState::LIVE_PHOTO_PAIRING_VERSION,
+        )?;
+        let (cloud_flags_changed, needs_cloud_indexing) =
+            if info.modified == folder.modified_at && !needs_live_photo_reindex {
+                AFile::refresh_cloud_state(resolved_folder_id, folder_path)?
+            } else {
+                (false, false)
+            };
+        let needs_file_sync = info.modified != folder.modified_at
+            || needs_live_photo_reindex || needs_cloud_indexing
+            || folder_files_changed(&album, resolved_folder_id, folder_path, refresh_tree)?;
+        let failed_file_count = if needs_file_sync {
+            let outcome = sync_folder_direct_files(
+                resolved_folder_id,
+                album_id,
+                folder_path,
+                0,
+                needs_live_photo_reindex,
+            )?;
+            result.new_file_count = outcome.new_file_count;
+            result.updated_file_count = outcome.updated_file_count;
+            result.deleted_file_count = outcome.deleted_file_count;
+            result.rename_count = outcome.rename_count;
+            for task in outcome.tasks {
+                schedule_synced_file_processing(app_handle.clone(), task);
+            }
+            outcome.failed_file_count
+        } else {
+            0
+        };
         let raw_pairing_changed = reconcile_raw_pairs_in_folder(resolved_folder_id, group_raw_jpeg_pairs)? > 0;
-        let folder_layout_changed = new_folder_count > 0 || child_scan.deleted_folder_count > 0;
-        let _ = FolderSubfolderState::update_after_scan(album_id, &[FolderSubfolderState {
+        if refresh_tree && failed_file_count > 0 {
+            return Err(format!("Failed to synchronize {failed_file_count} file(s)"));
+        }
+        let state_update = FolderSubfolderState::update_after_scan(album_id, &[FolderSubfolderState {
             path: folder_path.to_string(),
             created_at: None,
             modified_at: info.modified,
             inode: None,
             has_subfolders: child_scan.has_subfolders,
         }]);
-        return Ok(FolderMtimeSyncResult {
-            // The frontend uses this to decide whether it needs to reload the
-            // current list.  A newly created or cleared association changes
-            // which companion rows are visible.
-            dirty_folder_count: u32::from(raw_pairing_changed || folder_layout_changed || cloud_flags_changed),
-            new_folder_count,
-            new_file_count: 0,
-            updated_file_count: 0,
-            deleted_file_count: 0,
-            rename_count: 0,
-            deleted_folder_count: child_scan.deleted_folder_count,
-            folder_path_migrations: child_scan.folder_path_migrations,
-        });
+        if refresh_tree {
+            state_update?;
+        }
+        result.dirty_folder_count = u32::from(
+            raw_pairing_changed || needs_live_photo_reindex || needs_cloud_indexing || cloud_flags_changed
+                || folder_layout_changed || result.new_file_count > 0 || result.updated_file_count > 0
+                || result.deleted_file_count > 0 || result.rename_count > 0,
+        );
+        Ok(())
+    })();
+    if let Err(error) = sync {
+        if !refresh_tree {
+            return Err(error);
+        }
+        // A filesystem or DB error can occur after earlier changes were committed.
+        // Refresh the affected scope and report the failure in the same response.
+        result.dirty_folder_count = 1;
+        result.refresh_error = Some(error);
     }
-
-    let outcome = sync_folder_direct_files(
-        resolved_folder_id,
-        album_id,
-        folder_path,
-        0,
-        needs_live_photo_reindex,
-    )?; // 0 = foreground, never cancel
-    reconcile_raw_pairs_in_folder(resolved_folder_id, group_raw_jpeg_pairs)?;
-    for task in outcome.tasks {
-        schedule_synced_file_processing(app_handle.clone(), task);
-    }
-
-    let mtime = info.modified;
-    let _ = FolderSubfolderState::update_after_scan(album_id, &[FolderSubfolderState {
-        path: folder_path.to_string(),
-        created_at: None,
-        modified_at: mtime,
-        inode: None,
-        has_subfolders: child_scan.has_subfolders,
-    }]);
-
-    Ok(FolderMtimeSyncResult {
-        dirty_folder_count: 1,
-        new_folder_count,
-        new_file_count: outcome.new_file_count,
-        updated_file_count: outcome.updated_file_count,
-        deleted_file_count: outcome.deleted_file_count,
-        rename_count: outcome.rename_count,
-        deleted_folder_count: child_scan.deleted_folder_count,
-        folder_path_migrations: child_scan.folder_path_migrations,
-    })
-}
-
-/// Recursively reconcile the folder hierarchy below `folder_path` without
-/// enumerating or updating any file records.
-pub fn refresh_album_subfolders(
-    album_id: i64,
-    folder_path: &str,
-) -> Result<Vec<FolderPathMigration>, String> {
-    if album_scan_active(album_id) {
-        return Err("Album scan is already in progress.".to_string());
-    }
-    if album_removal_pending(album_id) {
-        return Err("Album is being removed.".to_string());
-    }
-
-    let album_sync_lock = album_sync_lock(album_id);
-    let _album_sync_guard = album_sync_lock
-        .lock()
-        .map_err(|_| format!("Album sync lock poisoned: {album_id}"))?;
-    if album_scan_active(album_id) || album_removal_pending(album_id) {
-        return Err("Album is unavailable for subfolder refresh.".to_string());
-    }
-
-    let folder = AFolder::fetch(folder_path)?
-        .ok_or_else(|| format!("Folder not found: {folder_path}"))?;
-    if folder.album_id != album_id {
-        return Err(format!("Folder does not belong to album: {folder_path}"));
-    }
-    if !directory_accessible(folder_path) {
-        return Err(format!("Folder is not accessible: {folder_path}"));
-    }
-
-    let mut pending = vec![folder_path.to_string()];
-    let mut migrations = Vec::new();
-    let mut subfolder_flags = Vec::new();
-    while let Some(path) = pending.pop() {
-        let scan = scan_new_child_folders(album_id, &path, true)?;
-        migrations.extend(scan.folder_path_migrations);
-        subfolder_flags.push((path, scan.has_subfolders));
-        pending.extend(scan.child_paths);
-    }
-    FolderSubfolderState::update_subfolder_flags(album_id, &subfolder_flags)?;
-    Ok(migrations)
+    Ok(result)
 }
 
 fn should_process_synced_file(file: &AFile, file_type: i64, threshold: i64) -> bool {
@@ -3215,6 +3318,73 @@ fn should_process_synced_file(file: &AFile, file_type: i64, threshold: i64) -> b
         return true;
     }
     matches!(file_type, 1 | 3) && !file.has_embedding.unwrap_or(false)
+}
+
+#[cfg(test)]
+mod folder_refresh_tests {
+    use super::*;
+    use crate::t_sqlite::{open_conn, TEST_DB_PATH};
+
+    struct Fixture(PathBuf);
+    impl Drop for Fixture {
+        fn drop(&mut self) {
+            TEST_DB_PATH.with(|path| path.replace(None));
+            let _ = fs::remove_dir_all(&self.0);
+        }
+    }
+
+    #[test]
+    fn manual_refresh_detects_a_same_name_edit_when_folder_mtime_is_unchanged() {
+        let root = Fixture(std::env::temp_dir().join(format!("lap-folder-refresh-{}", uuid::Uuid::new_v4())));
+        fs::create_dir(&root.0).unwrap();
+        let folder = root.0.join("photos");
+        fs::create_dir(&folder).unwrap();
+        let file = folder.join("image.jpg");
+        fs::write(&file, b"original").unwrap();
+        let folder_path = folder.to_str().unwrap();
+        let initial_folder_mtime = FileInfo::new(folder_path).unwrap().modified;
+        let modified = systemtime_to_timestamp(fs::metadata(&file).unwrap().modified().ok());
+        TEST_DB_PATH.with(|path| path.replace(Some(root.0.join("catalog.db").to_str().unwrap().to_string())));
+        let conn = open_conn().unwrap();
+        conn.execute_batch("CREATE TABLE afiles (folder_id INTEGER, name TEXT, size INTEGER, modified_at INTEGER);").unwrap();
+        conn.execute("INSERT INTO afiles VALUES (1, 'image.jpg', 8, ?1)", [modified]).unwrap();
+        let album: Album = serde_json::from_value(serde_json::json!({
+            "name": "photos", "path": folder_path, "file_types": 7,
+            "small_image_filter": 0, "excluded_folders": [],
+        })).unwrap();
+
+        assert!(!folder_files_changed(&album, 1, folder_path, true).unwrap());
+        fs::write(&file, b"replacement with a different size").unwrap();
+        assert_eq!(FileInfo::new(folder_path).unwrap().modified, initial_folder_mtime);
+        assert!(!folder_files_changed(&album, 1, folder_path, false).unwrap());
+        assert!(folder_files_changed(&album, 1, folder_path, true).unwrap());
+
+        fs::remove_file(&file).unwrap();
+        assert!(folder_files_changed(&album, 1, folder_path, true).unwrap());
+    }
+
+    #[test]
+    fn excluded_replacement_reports_a_change_only_when_dimensions_change() {
+        let root = Fixture(std::env::temp_dir().join(format!("lap-folder-exclusion-{}", uuid::Uuid::new_v4())));
+        fs::create_dir(&root.0).unwrap();
+        let path = root.0.join("image.png");
+        image::RgbImage::new(100, 100).save(&path).unwrap();
+        TEST_DB_PATH.with(|db| db.replace(Some(root.0.join("catalog.db").to_str().unwrap().to_string())));
+        let conn = open_conn().unwrap();
+        conn.execute_batch(
+            "CREATE TABLE afolders (id INTEGER, album_id INTEGER, path TEXT);
+             CREATE TABLE afiles (folder_id INTEGER, name TEXT, width INTEGER, height INTEGER);
+             INSERT INTO afiles VALUES (1, 'image.png', 800, 600);",
+        ).unwrap();
+        conn.execute("INSERT INTO afolders VALUES (1, 1, ?1)", [root.0.to_str().unwrap()]).unwrap();
+        let album: Album = serde_json::from_value(serde_json::json!({
+            "id": 1, "name": "photos", "path": root.0, "file_types": 7,
+            "small_image_filter": 160, "excluded_folders": [],
+        })).unwrap();
+
+        assert_eq!(skip_excluded_image(&album, path.to_str().unwrap(), 1).unwrap(), Some(1));
+        assert_eq!(skip_excluded_image(&album, path.to_str().unwrap(), 1).unwrap(), Some(0));
+    }
 }
 
 fn schedule_synced_file_processing(app_handle: tauri::AppHandle, task: SyncedFileTask) {
@@ -3370,14 +3540,14 @@ fn excluded_image_dimensions(path: &str, file_type: i64, threshold: i64) -> Opti
     dimensions_excluded(file_type, width, height, threshold).then_some(dimensions)
 }
 
-fn skip_excluded_image(album: &Album, path: &str, file_type: i64) -> Result<bool, String> {
+fn skip_excluded_image(album: &Album, path: &str, file_type: i64) -> Result<Option<u32>, String> {
     if let Some((width, height)) = excluded_image_dimensions(path, file_type, album.small_image_filter) {
         // Do not insert new excluded files. For previously indexed files, retain
         // ratings/tags and update dimensions so the query exclusion stays accurate.
-        AFile::retain_excluded_image(album.id.ok_or("Album has no id")?, path, width, height)?;
-        return Ok(true);
+        let updated = AFile::retain_excluded_image(album.id.ok_or("Album has no id")?, path, width, height)?;
+        return Ok(Some(updated as u32));
     }
-    Ok(false)
+    Ok(None)
 }
 
 /// Get folder, media, and scan candidate totals (including all sub-folders).
@@ -4316,24 +4486,24 @@ async fn process_thumbnail_task(
 pub async fn index_album_worker(
     app_handle: &tauri::AppHandle,
     cancellation_token: Arc<Mutex<HashMap<i64, bool>>>,
+    scan_library_id: String,
     album_id: i64,
     thumbnail_size: u32,
     prefer_embedded_raw_thumbnail: RawDisplayOptions,
     skip_file_path: Option<String>,
     group_raw_jpeg_pairs: bool,
 ) -> Result<(), String> {
-    let _album_scan_guard = AlbumScanGuard::acquire(album_id)?;
-    let scan_library_id = crate::t_config::current_library_id().unwrap_or_default();
-    let metadata_failures = {
+    let _album_scan_guard = tauri::async_runtime::spawn_blocking(move || AlbumScanGuard::acquire(album_id))
+        .await.map_err(|error| error.to_string())??;
+    let (album, metadata_failures) = crate::t_cmds::with_current_library(&scan_library_id, || {
+        let album = Album::get_album_by_id(album_id)?;
         let conn = crate::t_sqlite::open_conn()?;
-        crate::metadata::import_count::ScanFailures::start(&conn, album_id)
-    };
+        Ok((album, crate::metadata::import_count::ScanFailures::start(&conn, album_id)))
+    })?;
     let scan_start = std::time::Instant::now();
     // Generate a unique scan time for this session (current timestamp)
     let current_scan_time = Utc::now().timestamp_millis();
     let processing_budget = ProcessingBudget::new();
-    // 1. Get album info
-    let album = Album::get_album_by_id(album_id).map_err(|e| e.to_string())?;
     let previous_indexed = album.indexed.unwrap_or(0).max(0) as u64;
     let previous_total = album.total.unwrap_or(0).max(0) as u64;
     if !directory_accessible(&album.path) {
@@ -4487,7 +4657,7 @@ pub async fn index_album_worker(
         if entry.file_type().is_file() {
             let path_str = entry.path().to_string_lossy().to_string();
             if let Some(ftype) = get_file_type(&path_str) {
-                if !album.allows_file_type(ftype) || skip_excluded_image(&album, &path_str, ftype)? { continue; }
+                if !album.allows_file_type(ftype) || skip_excluded_image(&album, &path_str, ftype)?.is_some() { continue; }
                 // Resume mode: skip already-indexed prefix files.
                 if traversed_count < resume_from {
                     traversed_count += 1;

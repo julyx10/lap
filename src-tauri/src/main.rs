@@ -314,7 +314,7 @@ async fn main() {
             t_cmds::get_folder_files,
             t_cmds::sync_album_folder_mtimes,
             t_cmds::reconcile_raw_jpeg_pairs,
-            t_cmds::refresh_album_subfolders,
+            t_cmds::refresh_album_folders,
             t_cmds::is_directory_accessible,
             t_cmds::get_folder_thumb_count,
             // file operations

@@ -671,9 +671,9 @@
       "success": "Đã cập nhật hình nền màn hình",
       "failed": "Không thể đặt hình nền màn hình"
     },
-    "refresh_subfolders": {
-      "success": "Đã làm mới thư mục con",
-      "failed": "Không thể làm mới thư mục con"
+    "refresh_folders": {
+      "success": "Đã làm mới thư mục",
+      "failed": "Không thể làm mới thư mục"
     },
     "copy_image": {
       "success": "Đã sao chép {count} tệp vào bộ nhớ tạm",
@@ -738,7 +738,7 @@
       "exclude_from_search": "Loại khỏi tìm kiếm",
       "remove": "Gỡ bỏ",
       "delete_folder": "Xóa thư mục",
-      "refresh_subfolders": "Làm mới thư mục con"
+      "refresh_folders": "Làm mới thư mục"
     },
     "file": {
       "new_folder": "Thư mục mới",

@@ -671,9 +671,9 @@
       "success": "Desktop-Hintergrund aktualisiert",
       "failed": "Desktop-Hintergrund konnte nicht festgelegt werden"
     },
-    "refresh_subfolders": {
-      "success": "Unterordner aktualisiert",
-      "failed": "Unterordner konnten nicht aktualisiert werden"
+    "refresh_folders": {
+      "success": "Ordner aktualisiert",
+      "failed": "Ordner konnten nicht aktualisiert werden"
     },
     "copy_image": {
       "success": "{count} Datei(en) in die Zwischenablage kopiert",
@@ -738,7 +738,7 @@
       "exclude_from_search": "Vom Suchen ausschließen",
       "remove": "Entfernen",
       "delete_folder": "Ordner löschen",
-      "refresh_subfolders": "Unterordner aktualisieren"
+      "refresh_folders": "Ordner aktualisieren"
     },
     "file": {
       "new_folder": "Neuer Ordner",

@@ -671,9 +671,9 @@
       "success": "Desktop wallpaper updated",
       "failed": "Failed to set desktop wallpaper"
     },
-    "refresh_subfolders": {
-      "success": "Subfolders refreshed",
-      "failed": "Failed to refresh subfolders"
+    "refresh_folders": {
+      "success": "Folders refreshed",
+      "failed": "Failed to refresh folders"
     },
     "copy_image": {
       "success": "{count} file(s) copied to clipboard",
@@ -738,7 +738,7 @@
       "exclude_from_search": "Exclude from search",
       "remove": "Remove",
       "delete_folder": "Delete folder",
-      "refresh_subfolders": "Refresh subfolders"
+      "refresh_folders": "Refresh folders"
     },
     "file": {
       "new_folder": "New folder",

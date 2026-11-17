@@ -671,9 +671,9 @@
       "success": "Обои рабочего стола обновлены",
       "failed": "Не удалось установить обои рабочего стола"
     },
-    "refresh_subfolders": {
-      "success": "Подпапки обновлены",
-      "failed": "Не удалось обновить подпапки"
+    "refresh_folders": {
+      "success": "Папки обновлены",
+      "failed": "Не удалось обновить папки"
     },
     "copy_image": {
       "success": "Скопировано файлов в буфер обмена: {count}",
@@ -738,7 +738,7 @@
       "exclude_from_search": "Исключить из поиска",
       "remove": "Удалить",
       "delete_folder": "Удалить папку",
-      "refresh_subfolders": "Обновить подпапки"
+      "refresh_folders": "Обновить папки"
     },
     "file": {
       "new_folder": "Новая папка",

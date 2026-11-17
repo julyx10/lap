@@ -671,9 +671,9 @@
       "success": "Шпалери стільниці оновлено",
       "failed": "Не вдалося встановити шпалери стільниці"
     },
-    "refresh_subfolders": {
-      "success": "Підтеки оновлено",
-      "failed": "Не вдалося оновити підтеки"
+    "refresh_folders": {
+      "success": "Теки оновлено",
+      "failed": "Не вдалося оновити теки"
     },
     "copy_image": {
       "success": "Скопійовано файлів до буфера обміну: {count}",
@@ -738,7 +738,7 @@
       "exclude_from_search": "Виключити з пошуку",
       "remove": "Вилучити",
       "delete_folder": "Видалити теку",
-      "refresh_subfolders": "Оновити підтеки"
+      "refresh_folders": "Оновити теки"
     },
     "file": {
       "new_folder": "Нова тека",

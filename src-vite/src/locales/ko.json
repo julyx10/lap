@@ -671,9 +671,9 @@
       "success": "바탕 화면 배경이 업데이트되었습니다",
       "failed": "바탕 화면 배경을 설정하지 못했습니다"
     },
-    "refresh_subfolders": {
-      "success": "하위 폴더를 새로 고쳤습니다",
-      "failed": "하위 폴더를 새로 고치지 못했습니다"
+    "refresh_folders": {
+      "success": "폴더를 새로 고쳤습니다",
+      "failed": "폴더를 새로 고치지 못했습니다"
     },
     "copy_image": {
       "success": "{count}개 파일을 클립보드에 복사했습니다",
@@ -738,7 +738,7 @@
       "exclude_from_search": "검색에서 제외",
       "remove": "제거",
       "delete_folder": "폴더 삭제",
-      "refresh_subfolders": "하위 폴더 새로고침"
+      "refresh_folders": "폴더 새로고침"
     },
     "file": {
       "new_folder": "새 폴더",

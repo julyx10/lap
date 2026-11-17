@@ -671,9 +671,9 @@
       "success": "Háttérkép frissítve",
       "failed": "A háttérkép nem állítható be"
     },
-    "refresh_subfolders": {
-      "success": "Almappák frissítve",
-      "failed": "Az almappák nem frissíthetők"
+    "refresh_folders": {
+      "success": "Mappák frissítve",
+      "failed": "Az mappák nem frissíthetők"
     },
     "copy_image": {
       "success": "{count} fájl a vágólapra másolva",
@@ -738,7 +738,7 @@
       "exclude_from_search": "Kizárás a keresésből",
       "remove": "Eltávolítás",
       "delete_folder": "Mappa törlése",
-      "refresh_subfolders": "Almappák frissítése"
+      "refresh_folders": "Mappák frissítése"
     },
     "file": {
       "new_folder": "Új mappa",

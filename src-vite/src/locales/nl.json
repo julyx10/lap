@@ -671,9 +671,9 @@
       "success": "Bureaubladachtergrond bijgewerkt",
       "failed": "Kan bureaubladachtergrond niet instellen"
     },
-    "refresh_subfolders": {
-      "success": "Submappen vernieuwd",
-      "failed": "Kan submappen niet vernieuwen"
+    "refresh_folders": {
+      "success": "Mappen vernieuwd",
+      "failed": "Kan mappen niet vernieuwen"
     },
     "copy_image": {
       "success": "{count} bestand(en) naar klembord gekopieerd",
@@ -738,7 +738,7 @@
       "exclude_from_search": "Uitsluiten van zoeken",
       "remove": "Verwijderen",
       "delete_folder": "Map verwijderen",
-      "refresh_subfolders": "Submappen vernieuwen"
+      "refresh_folders": "Mappen vernieuwen"
     },
     "file": {
       "new_folder": "Nieuwe map",

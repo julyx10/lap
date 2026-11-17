@@ -699,6 +699,7 @@ pub fn index_album(
     skip_file_path: Option<String>,
     group_raw_jpeg_pairs: bool,
 ) -> Result<(), String> {
+    let library_id = t_config::current_library_id()?;
     // Reset cancellation flag
     state.0.lock().unwrap().insert(album_id, false);
     let cancellation_token = state.0.clone();
@@ -707,6 +708,7 @@ pub fn index_album(
         if let Err(e) = t_utils::index_album_worker(
             &app_handle,
             cancellation_token,
+            library_id,
             album_id,
             thumbnail_size,
             raw_display_options,
@@ -1168,7 +1170,7 @@ pub fn delete_folder(folder_path: &str, library_id: &str, expected_identity: &st
                 error: Some("This network location does not support the Windows Recycle Bin".into()),
             });
         }
-        if let Err(error) = t_utils::move_to_trash(folder_path) {
+        if let Err(error) = t_utils::move_folder_to_trash(folder_path) {
             eprintln!("Failed to move folder to trash: {folder_path}: {error}");
             let can_delete_permanently = folder_trash_allows_permanent_delete(&error)
                 && validate_folder_delete(folder_path, library_id).is_ok()
@@ -1730,7 +1732,7 @@ pub async fn sync_album_folder_mtimes(
         crate::t_utils::sync_single_folder(
             &sync_app_handle,
             album_id,
-            folder_id,
+            Some(folder_id),
             &folder_path,
             group_raw_jpeg_pairs,
         )
@@ -1756,22 +1758,29 @@ pub async fn reconcile_raw_jpeg_pairs(library_id: String, enabled: bool) -> Resu
     .map_err(|error| format!("RAW pair update task failed ({error})"))?
 }
 
-/// Refresh the subfolder tree below a folder without scanning its files.
+/// Refresh the subfolder tree and synchronize the files directly in the folder.
 #[tauri::command]
-pub async fn refresh_album_subfolders(
+pub async fn refresh_album_folders(
     app_handle: tauri::AppHandle,
     album_id: i64,
     folder_path: String,
-) -> Result<(), String> {
-    let migrations = tauri::async_runtime::spawn_blocking(move || {
-        t_utils::refresh_album_subfolders(album_id, &folder_path)
+    library_id: String,
+    group_raw_jpeg_pairs: bool,
+) -> Result<t_utils::FolderMtimeSyncResult, String> {
+    let sync_app_handle = app_handle.clone();
+    let sync = tauri::async_runtime::spawn_blocking(move || {
+        with_current_library(&library_id, || {
+            t_utils::sync_single_folder(
+                &sync_app_handle, album_id, None, &folder_path, group_raw_jpeg_pairs,
+            )
+        })
     })
     .await
-    .map_err(|error| format!("Subfolder refresh task failed: {error}"))??;
-    if !migrations.is_empty() {
-        let _ = app_handle.emit("album-folder-paths-migrated", &migrations);
+    .map_err(|error| format!("Folder refresh task failed: {error}"))??;
+    if !sync.folder_path_migrations.is_empty() {
+        let _ = app_handle.emit("album-folder-paths-migrated", &sync.folder_path_migrations);
     }
-    Ok(())
+    Ok(sync)
 }
 
 #[tauri::command]

@@ -671,9 +671,9 @@
       "success": "Sfondo del desktop aggiornato",
       "failed": "Impossibile impostare lo sfondo del desktop"
     },
-    "refresh_subfolders": {
-      "success": "Sottocartelle aggiornate",
-      "failed": "Impossibile aggiornare le sottocartelle"
+    "refresh_folders": {
+      "success": "Cartelle aggiornate",
+      "failed": "Impossibile aggiornare le cartelle"
     },
     "copy_image": {
       "success": "{count} file copiati negli appunti",
@@ -738,7 +738,7 @@
       "exclude_from_search": "Escludi dalla ricerca",
       "remove": "Rimuovi",
       "delete_folder": "Elimina cartella",
-      "refresh_subfolders": "Aggiorna sottocartelle"
+      "refresh_folders": "Aggiorna cartelle"
     },
     "file": {
       "new_folder": "Nuova cartella",

@@ -671,9 +671,9 @@
       "success": "Tapeta pulpitu zaktualizowana",
       "failed": "Nie udało się ustawić tapety pulpitu"
     },
-    "refresh_subfolders": {
-      "success": "Podfoldery odświeżone",
-      "failed": "Nie udało się odświeżyć podfolderów"
+    "refresh_folders": {
+      "success": "Foldery odświeżone",
+      "failed": "Nie udało się odświeżyć folderów"
     },
     "copy_image": {
       "success": "Skopiowano {count} plik(ów) do schowka",
@@ -738,7 +738,7 @@
       "exclude_from_search": "Wyklucz z wyszukiwania",
       "remove": "Usuń",
       "delete_folder": "Usuń folder",
-      "refresh_subfolders": "Odśwież podfoldery"
+      "refresh_folders": "Odśwież foldery"
     },
     "file": {
       "new_folder": "Nowy folder",

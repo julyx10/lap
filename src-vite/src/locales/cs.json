@@ -671,9 +671,9 @@
       "success": "Tapeta plochy byla aktualizována",
       "failed": "Nepodařilo se nastavit tapetu plochy"
     },
-    "refresh_subfolders": {
-      "success": "Podsložky byly aktualizovány",
-      "failed": "Nepodařilo se aktualizovat podsložky"
+    "refresh_folders": {
+      "success": "Složky byly aktualizovány",
+      "failed": "Nepodařilo se aktualizovat složky"
     },
     "copy_image": {
       "success": "Do schránky bylo zkopírováno {count} souborů",
@@ -738,7 +738,7 @@
       "exclude_from_search": "Vyloučit z vyhledávání",
       "remove": "Odebrat",
       "delete_folder": "Odstranit složku",
-      "refresh_subfolders": "Aktualizovat podsložky"
+      "refresh_folders": "Aktualizovat složky"
     },
     "file": {
       "new_folder": "Nová složka",
