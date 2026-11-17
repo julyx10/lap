@@ -139,6 +139,7 @@
   <!-- trash folder -->
   <MessageBox
     v-if="showTrashFolderMsgbox"
+    position-key="folder-delete"
     :title="trashFolderDialogTitle"
     :message="trashFolderDialogMessage"
     :OkText="trashFolderDialogOkText"

@@ -46,7 +46,7 @@ pub const RAW_IMGS: &[&str] = &[
 
 // Video support
 pub const VIDEOS: &[&str] = &[
-    "mpg", "mpeg", "mp4", "mkv", "avi", "mov", "webm", "flv", "wmv", "3gp", "m4v", "hevc", "asf",
+    "mpg", "mpeg", "vob", "mp4", "mkv", "avi", "mov", "webm", "flv", "wmv", "3gp", "m4v", "hevc", "asf",
     "mts", "m2ts", "mod", "tod", "ts",
 ];
 // pub const AUDIOS: &[&str] = &[
@@ -124,6 +124,7 @@ pub(crate) fn extension_description(ext: &str) -> &'static str {
         "tiff" => "Tagged Image File Format",
         "tod" => "JVC HD Camcorder Video",
         "ts" => "MPEG Transport Stream",
+        "vob" => "DVD Video Object",
         "webm" => "WebM Video",
         "webp" => "Web Picture Format",
         "wmv" => "Windows Media Video",

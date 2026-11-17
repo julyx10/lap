@@ -8,7 +8,8 @@ const source = fs.readFileSync(new URL('../src/components/DedupPane.vue', import
 const start = source.indexOf('async function setKeep(');
 const end = source.indexOf('async function setSimilarKeep(', start);
 assert.ok(start >= 0 && end > start);
-const code = ts.transpile(source.slice(start, end), { target: ts.ScriptTarget.ES2022 });
+const navigation = source.slice(source.indexOf('function handleDuplicateSelection('), source.indexOf('function handleSimilarSelection('));
+const code = ts.transpile(navigation + source.slice(start, end), { target: ts.ScriptTarget.ES2022 });
 
 function keepFixture(detail) {
   const calls = [];
@@ -22,7 +23,7 @@ function keepFixture(detail) {
   }]);
   const setKeep = new Function(
     'dedupSetKeep', 'dedupGetGroupItems', 'rawGroups', 'getDupSelectedSet',
-    'emitDedupStatuses', 'refreshOverview', 'emit',
+    'emitDedupStatuses', 'refreshOverview', 'emit', 'canSelectForDeletion',
     `${code}; return setKeep;`,
   )(
     async (groupId, fileId) => calls.push(['setKeep', groupId, fileId]),
@@ -32,6 +33,7 @@ function keepFixture(detail) {
     () => calls.push(['statuses']),
     () => calls.push(['overview']),
     (...args) => calls.push(['emit', ...args]),
+    item => item?.can_delete === true,
   );
   return { calls, selected, rawGroups, setKeep };
 }
@@ -47,11 +49,37 @@ test('setKeep refreshes can_delete from the backend group state', async () => {
   assert.deepEqual(f.calls[0], ['setKeep', 7, 2]);
   assert.deepEqual(f.calls[1], ['statuses']);
   assert.deepEqual(f.calls[2], ['overview']);
-  assert.deepEqual(f.calls[3], ['emit', 'select-file', 2]);
+  assert.deepEqual(f.calls[3], ['emit', 'select-file', 2, undefined]);
   assert.equal(f.selected.has(1), true);
   assert.equal(f.selected.has(2), false);
   const items = f.rawGroups.value[0].items;
   assert.equal(items.find(item => item.file_id === 1).can_delete, true);
   assert.equal(items.find(item => item.file_id === 2).can_delete, false);
   assert.equal(items.find(item => item.file_id === 1).file.name, 'keep.raw');
+});
+
+test('switching Keep does not select a protected former keep for deletion', async () => {
+  const f = keepFixture([
+    { file_id: 1, is_keep: 0, can_delete: false },
+    { file_id: 2, is_keep: 1, can_delete: false, raw_pair_primary_id: 10 },
+  ]);
+  await f.setKeep(7, 2);
+  assert.equal(f.selected.size, 0);
+  assert.deepEqual(f.calls.at(-1), ['emit', 'select-file', 2, 10]);
+});
+
+test('Dedup navigation selects a standalone JPEG or falls back to its visible RAW', async () => {
+  const content = fs.readFileSync(new URL('../src/components/Content.vue', import.meta.url), 'utf8');
+  const start = content.indexOf('async function resolveFileIndexForDedup(');
+  const end = content.indexOf('const handleDedupSelectFile', start);
+  assert.ok(start >= 0 && end > start);
+  const resolver = new Function('fileList', 'groupedModeActive', 'getCurrentQueryFilePosition',
+    'totalFileCount', 'config', ts.transpile(content.slice(start, end)) + '; return resolveFileIndexForDedup;');
+  const files = ref([{ id: 10 }]);
+  const findIndex = resolver(files, ref(false), async () => -1, ref(1), { settings: { groupRawJpegPairs: true } });
+  assert.equal(await findIndex(11, 10), 0);
+  const findAfterMissingPosition = resolver(files, ref(false), async () => undefined, ref(1), { settings: { groupRawJpegPairs: true } });
+  assert.equal(await findAfterMissingPosition(11, 10), 0);
+  files.value = [{ id: 11 }];
+  assert.equal(await findIndex(11), 0);
 });

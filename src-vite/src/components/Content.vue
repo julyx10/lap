@@ -622,6 +622,7 @@
 
   <MessageBox
     v-if="showTrashMsgbox"
+    position-key="file-delete"
     :title="deletePermanently ? $t('msgbox.file_delete.title', deleteConfirmationCount) : $t('msgbox.move_to_trash.title')"
     :message="fileDeletePlan ? undefined : trashMsgboxMessage"
     :OkText="deletePermanently ? $t('msgbox.file_delete.confirm', deleteConfirmationCount) : $t('msgbox.move_to_trash.ok')"
@@ -9859,6 +9860,7 @@ async function executeFileDeletion(plan: NonNullable<typeof fileDeletePlan.value
         await refreshFolderSidebarCounts(updatedFiles.map(file => getFolderPath(file.file_path)));
         await refreshAffectedAlbums([...new Set(updatedFiles.map(file => Number(file.album_id || 0)))]);
         await refreshLibraryTotalCount();
+        if (isDedupPanelOpen.value) await dedupPaneRef.value?.refreshGroups();
       } catch (error) {
         // The files are already deleted; a refresh failure must not turn the
         // operation into a misleading delete failure.
@@ -10996,15 +10998,16 @@ async function resolveGroupedFileIndex(fileId: number): Promise<number | null> {
   return -1;
 }
 
-async function resolveFileIndexForDedup(fileId: number): Promise<number> {
+async function resolveFileIndexForDedup(fileId: number, rawPrimaryId?: number): Promise<number> {
   const loadedIndex = fileList.value.findIndex(file => Number(file?.id) === Number(fileId));
   if (loadedIndex !== -1) return loadedIndex;
 
   const position = groupedModeActive.value
     ? await resolveGroupedFileIndex(fileId)
     : await getCurrentQueryFilePosition(fileId);
-  if (position === null || position < 0 || position >= totalFileCount.value) {
-    return -1;
+  if (typeof position !== 'number' || position < 0 || position >= totalFileCount.value) {
+    return config.settings.groupRawJpegPairs && rawPrimaryId && rawPrimaryId !== fileId
+      ? resolveFileIndexForDedup(rawPrimaryId) : -1;
   }
 
   const buffer = 200;
@@ -11020,10 +11023,10 @@ async function resolveFileIndexForDedup(fileId: number): Promise<number> {
   return isRealFileItem(fileList.value[position]) ? position : -1;
 }
 
-const handleDedupSelectFile = (fileId: number) => {
+const handleDedupSelectFile = (fileId: number, rawPrimaryId?: number) => {
   const requestId = ++dedupNavigationRequestId;
   checkUnsavedChanges(async () => {
-    const index = await resolveFileIndexForDedup(fileId);
+    const index = await resolveFileIndexForDedup(fileId, rawPrimaryId);
     if (requestId !== dedupNavigationRequestId) return;
     if (index === -1) return;
     selectedItemIndex.value = index;
@@ -11031,10 +11034,10 @@ const handleDedupSelectFile = (fileId: number) => {
   });
 };
 
-const handleDedupPreviewFile = (fileId: number) => {
+const handleDedupPreviewFile = (fileId: number, rawPrimaryId?: number) => {
   const requestId = ++dedupNavigationRequestId;
   checkUnsavedChanges(async () => {
-    const index = await resolveFileIndexForDedup(fileId);
+    const index = await resolveFileIndexForDedup(fileId, rawPrimaryId);
     if (requestId !== dedupNavigationRequestId) return;
     if (index === -1) return;
     selectedItemIndex.value = index;

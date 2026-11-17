@@ -842,6 +842,7 @@ pub struct DedupGroupItem {
     pub can_set_keep: bool,
     pub can_delete: bool,
     pub is_live_photo_companion: bool,
+    pub raw_pair_primary_id: Option<i64>,
     pub file: Option<AFile>,
 }
 
@@ -1015,7 +1016,9 @@ fn get_group_items(
         .prepare(
             "SELECT group_id, file_id, is_keep, is_selected, score,
                     EXISTS (SELECT 1 FROM afiles still WHERE still.media_subtype = 'live_photo'
-                            AND still.live_photo_video_id = item.file_id)
+                            AND still.live_photo_video_id = item.file_id),
+                    (SELECT raw.id FROM afiles raw WHERE raw.media_subtype = 'raw_jpeg_pair'
+                            AND raw.live_photo_video_id = item.file_id ORDER BY raw.id LIMIT 1)
          FROM duplicate_group_items item
          WHERE group_id = ?1
          ORDER BY is_keep DESC, score DESC",
@@ -1033,6 +1036,7 @@ fn get_group_items(
                 can_set_keep: !keep_locked,
                 can_delete: false,
                 is_live_photo_companion: row.get(5)?,
+                raw_pair_primary_id: row.get(6)?,
                 file: None, // Will populate shortly
             })
         })
@@ -1047,6 +1051,9 @@ fn get_group_items(
                     || (group_raw_pairs && subtype == Some("raw_jpeg_pair"));
                 item.can_delete = !protected_ids.contains(&item.file_id)
                     && (!grouped || pair_has_exact_keep(conn, item.file_id, group_raw_pairs, false)?);
+                if keep_locked && grouped {
+                    item.can_set_keep = pair_can_replace_keep(conn, group_id, item.file_id, group_raw_pairs)?;
+                }
                 item.file = Some(file_info);
             }
             items.push(item);
@@ -1326,15 +1333,19 @@ pub(crate) fn apply_keep_rules(
 fn pair_keep_locked(conn: &Connection, group_id: i64, group_raw_pairs: bool) -> Result<bool, String> {
     conn.query_row(&format!(
         "SELECT EXISTS (SELECT 1 FROM duplicate_group_items i JOIN afiles a ON a.id = i.file_id
-         WHERE i.group_id = ?1 AND i.is_keep = 1 AND ({}))", pair_member_sql(group_raw_pairs)
-    ), [group_id], |row| row.get(0)).map_err(|e| e.to_string())
+         WHERE i.group_id = ?1 AND i.is_keep = 1 AND (({LIVE_PHOTO_MEMBER_SQL})
+            OR (?2 AND a.media_subtype IS 'raw_jpeg_pair' AND EXISTS
+                (SELECT 1 FROM afiles jpeg WHERE jpeg.id = a.live_photo_video_id))))"
+    ), params![group_id, group_raw_pairs], |row| row.get(0)).map_err(|e| e.to_string())
 }
 
 pub fn set_keep(group_id: i64, file_id: i64, group_raw_pairs: bool) -> Result<(), String> {
     let mut conn = get_db_conn()?;
     let tx = conn.transaction().map_err(|e| e.to_string())?;
 
-    if pair_keep_locked(&tx, group_id, group_raw_pairs)? {
+    if pair_keep_locked(&tx, group_id, group_raw_pairs)?
+        && !pair_can_replace_keep(&tx, group_id, file_id, group_raw_pairs)?
+    {
         return Err("The complete RAW pair must be kept".into());
     }
 
@@ -1409,6 +1420,21 @@ fn protected_pair_delete_ids(conn: &Connection, group_raw_pairs: bool) -> Result
 }
 
 fn pair_has_exact_keep(conn: &Connection, file_id: i64, raw_pairs: bool, similar: bool) -> Result<bool, String> {
+    pair_has_exact_keep_in_group(conn, file_id, raw_pairs, similar, None)
+}
+
+fn pair_can_replace_keep(conn: &Connection, group_id: i64, file_id: i64, raw_pairs: bool) -> Result<bool, String> {
+    let complete_pair: bool = conn.query_row(
+        "SELECT EXISTS (SELECT 1 FROM afiles a JOIN afiles companion ON companion.id=a.live_photo_video_id
+          WHERE a.id=?1 AND (a.media_subtype='live_photo' OR (?2 AND a.media_subtype='raw_jpeg_pair')))",
+        params![file_id, raw_pairs], |row| row.get(0),
+    ).map_err(|e| e.to_string())?;
+    Ok(complete_pair && pair_has_exact_keep_in_group(conn, file_id, raw_pairs, false, Some(group_id))?)
+}
+
+fn pair_has_exact_keep_in_group(
+    conn: &Connection, file_id: i64, raw_pairs: bool, similar: bool, group_id: Option<i64>,
+) -> Result<bool, String> {
     let mut stmt = conn.prepare_cached(
         "SELECT NOT EXISTS (
              SELECT 1 FROM afiles raw
@@ -1427,12 +1453,13 @@ fn pair_has_exact_keep(conn: &Connection, file_id: i64, raw_pairs: bool, similar
                        AND r.mtime = COALESCE(raw.modified_at, 0)
                    JOIN file_hashes kr ON kr.file_id = kept_raw.id AND kr.file_size = kept_raw.size
                        AND kr.mtime = COALESCE(kept_raw.modified_at, 0)
-                   WHERE dup.file_id = raw.id AND h.hash = kh.hash AND h.file_size = kh.file_size
+                   WHERE dup.file_id = raw.id AND (?4 IS NULL OR dup.group_id = ?4)
+                     AND h.hash = kh.hash AND h.file_size = kh.file_size
                      AND r.hash = kr.hash AND r.file_size = kr.file_size
                )
          )",
     ).map_err(|e| e.to_string())?;
-    stmt.query_row(params![file_id, raw_pairs, similar], |row| row.get(0)).map_err(|e| e.to_string())
+    stmt.query_row(params![file_id, raw_pairs, similar, group_id], |row| row.get(0)).map_err(|e| e.to_string())
 }
 
 #[cfg(test)]
@@ -1878,6 +1905,14 @@ mod keep_rules_tests {
         assert_eq!(results, vec![(1,1),(2,1),(5,0),(7,0),(8,0),(9,1),(11,0)]);
         assert!(raw_pair_has_exact_keep(&conn, 5).unwrap());
         assert!(!raw_pair_has_exact_keep(&conn, 3).unwrap());
+        let group = conn.query_row("SELECT group_id FROM duplicate_group_items WHERE file_id=5", [], |row| row.get(0)).unwrap();
+        assert!(pair_keep_locked(&conn, group, true).unwrap());
+        assert!(pair_can_replace_keep(&conn, group, 5, true).unwrap());
+        let jpeg_group = conn.query_row("SELECT group_id FROM duplicate_group_items WHERE file_id=2", [], |row| row.get(0)).unwrap();
+        assert!(!pair_keep_locked(&conn, jpeg_group, true).unwrap());
+        assert!(raw_pair_protected_delete_ids(&conn).unwrap().contains(&2));
+        assert!(!pair_can_replace_keep(&conn, group, 7, true).unwrap());
+        assert!(!pair_can_replace_keep(&conn, group, 11, true).unwrap());
 
         let files = [crate::t_cmds::BatchDeleteFile { file_id: 5, file_path: "/photos/c.raw".into() }];
         let (enabled, components) = delete_preview(&conn, &files, true).unwrap();

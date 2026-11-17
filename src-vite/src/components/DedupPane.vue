@@ -376,6 +376,12 @@
                   {{ group.file_count }}
                 </div>
                 <div
+                  v-if="group.keepItem && dedupPairBadge(group.keepItem)"
+                  class="absolute right-0.5 top-0.5 thumb-badge"
+                >
+                  {{ dedupPairBadge(group.keepItem) }}
+                </div>
+                <div
                   class="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 to-transparent px-1.5 pb-1 pt-4 text-left text-[10px] leading-tight text-white/90 opacity-0 transition-opacity group-hover/thumb:opacity-100"
                   :class="{ 'opacity-100': selectedGroupId === group.id }"
                 >
@@ -434,11 +440,11 @@
               role="button"
               tabindex="0"
               class="group/row w-full rounded-box p-2.5 border text-left transition-colors cursor-pointer"
-              :class="getDedupItemClass(item.file_id, item.is_keep !== 1 && isDupSelected(activeGroup.id, item.file_id))"
-              @click="handleDuplicateSelection(item.file_id)"
-              @dblclick="handleDuplicateSelection(item.file_id, true)"
-              @keydown.enter.self="handleDuplicateSelection(item.file_id)"
-              @keydown.space.self.prevent="handleDuplicateSelection(item.file_id)"
+              :class="getDedupItemClass(item.file_id, item.is_keep !== 1 && isDupSelected(activeGroup.id, item.file_id), item.raw_pair_primary_id)"
+              @click="handleDuplicateSelection(item)"
+              @dblclick="handleDuplicateSelection(item, true)"
+              @keydown.enter.self="handleDuplicateSelection(item)"
+              @keydown.space.self.prevent="handleDuplicateSelection(item)"
             >
               <div class="flex items-center gap-2">
                 <label v-if="item.is_keep !== 1" class="flex items-center shrink-0" :class="!canSelectForDeletion(item) ? 'cursor-not-allowed' : 'cursor-pointer'" @click.stop @dblclick.stop>
@@ -603,8 +609,8 @@ const props = defineProps({
 
 const emit = defineEmits<{
   close: [];
-  'select-file': [fileId: number];
-  'preview-file': [fileId: number];
+  'select-file': [fileId: number, rawPrimaryId?: number];
+  'preview-file': [fileId: number, rawPrimaryId?: number];
   'trash-selected-duplicates': [groupId: string, fileIds: number[]];
   'trash-all-duplicates': [];
   'trash-selected-similar': [groupId: string, fileIds: number[]];
@@ -871,8 +877,10 @@ function keepActionClass(fileId: number) {
     : 'opacity-0 pointer-events-none group-hover/row:opacity-100 group-hover/row:pointer-events-auto focus-visible:opacity-100 focus-visible:pointer-events-auto';
 }
 
-function getDedupItemClass(fileId: number, isDuplicateSelected = false) {
-  const isActive = Number(props.selectedFileId) === Number(fileId);
+function getDedupItemClass(fileId: number, isDuplicateSelected = false, rawPrimaryId?: number) {
+  const selectedId = Number(props.selectedFileId);
+  const isActive = selectedId === Number(fileId)
+    || (config.settings.groupRawJpegPairs && !!rawPrimaryId && selectedId === Number(rawPrimaryId));
   // if (isDuplicateSelected) {
   //   return isActive
   //     ? 'border-error/70 bg-error/10'
@@ -890,11 +898,9 @@ function toggleDupSelected(groupId: number, fileId: number) {
   else set.add(fileId);
 }
 
-function handleDuplicateSelection(fileId: number, preview = false) {
-  emit('select-file', fileId);
-  if (preview) {
-    emit('preview-file', fileId);
-  }
+function handleDuplicateSelection(item: { file_id: number; raw_pair_primary_id?: number }, preview = false) {
+  if (preview) emit('preview-file', item.file_id, item.raw_pair_primary_id);
+  else emit('select-file', item.file_id, item.raw_pair_primary_id);
 }
 
 function handleSimilarSelection(fileId: number, preview = false) {
@@ -1186,7 +1192,7 @@ function selectDuplicateGroup(group: any) {
   selectedGroupId.value = Number(group.id);
   const keepFileId = Number(group.keepItem?.file_id || 0);
   if (keepFileId > 0) {
-    emit('select-file', keepFileId);
+    emit('select-file', keepFileId, group.keepItem?.raw_pair_primary_id);
   }
 }
 
@@ -1235,11 +1241,12 @@ async function setKeep(groupId: number, fileId: number) {
   emitDedupStatuses();
   void refreshOverview();
 
-  // The new keep replaces the old one; the old keep becomes deletable again.
   const selectedIds = getDupSelectedSet(groupId);
   selectedIds.delete(fileId);
-  if (previousKeepId > 0 && previousKeepId !== fileId) selectedIds.add(previousKeepId);
-  emit('select-file', fileId);
+  const previousKeep = items.find((item: any) => Number(item.file_id) === previousKeepId);
+  if (previousKeepId !== fileId && canSelectForDeletion(previousKeep)) selectedIds.add(previousKeepId);
+  const keep = items.find((item: any) => Number(item.file_id) === fileId);
+  handleDuplicateSelection(keep ?? { file_id: fileId });
 }
 
 async function setSimilarKeep(groupId: number, fileId: number) {
