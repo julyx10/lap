@@ -27,6 +27,15 @@
         :disabled="collections.length >= maxCollectionCount"
         @click.stop="addCollection"
       />
+      <ContextMenu
+        v-if="expanded"
+        data-collection-reorder-area
+        :menuItems="collectionPanelMenuItems"
+        :iconMenu="IconMore"
+        :smallIcon="true"
+        @click.stop
+        @open-change="collectionPanelMenuOpen = $event"
+      />
     </div>
 
     <transition
@@ -76,7 +85,7 @@
             ghost-class="sidebar-reorder-placeholder"
             :revertOnSpill="true"
             :bubble-scroll="false"
-            :disabled="Boolean(searchQuery) || renamingId !== null || isItemDragging || reorderingCollectionId === null"
+            :disabled="!isReorderingCollections || !canReorderCollections"
             @start="onReorderStart"
             @end="onReorderEnd"
             @drop.stop
@@ -84,7 +93,7 @@
             <div
               v-for="collection in filteredCollections"
               :key="collection.id"
-              :data-reordering-collection="isReorderingCollection(collection) ? 'true' : undefined"
+              data-collection-reorder-area
               :data-collection-drop-id="renamingId === collection.id ? undefined : collection.id"
               :class="[
                 'sidebar-item group border-2 border-transparent transition-colors',
@@ -93,11 +102,11 @@
               @click="selectCollection(collection)"
             >
             <IconDragHandle
-              v-if="isReorderingCollection(collection)"
+              v-if="isReorderingCollections && canReorderCollections"
               class="collection-drag-handle p-1 w-6 h-6 shrink-0 cursor-grab text-base-content/30"
               :title="$t('collection.reorder')"
+              @click.stop
             />
-            <span v-else-if="reorderingCollectionId !== null" class="p-1 w-6 h-6 shrink-0"></span>
             <IconCollection class="pr-1 w-6 h-6 shrink-0" />
             <input
               v-if="renamingId === collection.id"
@@ -184,7 +193,7 @@ import ContextMenu from '@/components/ContextMenu.vue';
 import MessageBox from '@/components/MessageBox.vue';
 import TButton from '@/components/TButton.vue';
 
-defineProps({
+const props = defineProps({
   expanded: {
     type: Boolean,
     required: true,
@@ -221,11 +230,29 @@ watch(() => libConfig.activePane, () => {
 });
 const selectedId = ref<number | null>(Number(libConfig.collection.selectedId || 0) || null);
 const getCollectionDisplayCount = (collection: Collection) => Number(libConfig.collection.counts?.[String(collection.id)] || 0);
-const reorderingCollectionId = ref<number | null>(null);
+const isReorderingCollections = ref(false);
+const collectionPanelMenuOpen = ref(false);
 const renamingId = ref<number | null>(null);
 const renameValue = ref('');
 const renameInputRef = ref<HTMLInputElement | HTMLInputElement[] | null>(null);
 const isItemDragging = ref(false);
+const canReorderCollections = computed(() =>
+  collections.value.length > 1 && !searchQuery.value.trim() && renamingId.value === null && !isItemDragging.value
+);
+const collectionPanelMenuItems = computed(() => [{
+  label: t('collection.reorder'),
+  icon: IconOrder,
+  disabled: !canReorderCollections.value,
+  action: () => { isReorderingCollections.value = !isReorderingCollections.value; },
+}]);
+watch(canReorderCollections, (canReorder) => {
+  if (!canReorder) isReorderingCollections.value = false;
+});
+watch(() => props.expanded, (expanded) => {
+  if (expanded) return;
+  isReorderingCollections.value = false;
+  collectionPanelMenuOpen.value = false;
+});
 const deleteTarget = ref<Collection | null>(null);
 const clearTarget = ref<Collection | null>(null);
 let unlistenCollectionFilesDropped: (() => void) | null = null;
@@ -264,7 +291,7 @@ onMounted(async () => {
   });
   unlistenLibrarySwitched = await listen('library-switched', async () => {
     selectedId.value = Number(libConfig.collection.selectedId || 0) || null;
-    reorderingCollectionId.value = null;
+    isReorderingCollections.value = false;
     renamingId.value = null;
     renameValue.value = '';
     deleteTarget.value = null;
@@ -403,14 +430,6 @@ function collectionMenuItems(collection: Collection) {
       action: () => startRename(collection),
     },
     {
-      label: t('collection.reorder'),
-      icon: IconOrder,
-      action: () => {
-        searchQuery.value = '';
-        reorderingCollectionId.value = reorderingCollectionId.value === collection.id ? null : collection.id;
-      },
-    },
-    {
       label: t('collection.clear'),
       action: () => { clearTarget.value = collection; },
     },
@@ -423,12 +442,10 @@ function collectionMenuItems(collection: Collection) {
   ];
 }
 
-const isReorderingCollection = (collection: Collection) => reorderingCollectionId.value === collection.id;
-
 function handleReorderOutsidePointerDown(event: PointerEvent) {
-  if (event.button !== 0 || reorderingCollectionId.value === null) return;
-  if (event.target instanceof Element && event.target.closest('[data-reordering-collection="true"]')) return;
-  reorderingCollectionId.value = null;
+  if (event.button !== 0 || !isReorderingCollections.value || collectionPanelMenuOpen.value) return;
+  if (event.target instanceof Element && event.target.closest('[data-collection-reorder-area]')) return;
+  isReorderingCollections.value = false;
 }
 
 function onReorderStart() {

@@ -10,6 +10,13 @@
         :tooltip="$t('album.add_smart_album')"
         @click="clickAddSmartAlbum"
       />
+      <ContextMenu
+        data-smart-album-reorder-area
+        :menuItems="smartAlbumPanelMenuItems"
+        :iconMenu="IconMore"
+        :smallIcon="true"
+        @open-change="smartAlbumPanelMenuOpen = $event"
+      />
     </div>
 
     <div class="mx-1 mb-2 px-1 shrink-0">
@@ -46,7 +53,7 @@
       <VueDraggable
         v-model="customSmartAlbums"
         tag="ul"
-        :disabled="reorderingSmartAlbumId === null || Boolean(smartAlbumSearch.trim())"
+        :disabled="!isReorderingSmartAlbums || !canReorderSmartAlbums"
         handle=".smart-album-drag-handle"
         direction="vertical"
         :group="{ name: 'smart-album-list', pull: false, put: false }"
@@ -62,7 +69,7 @@
       >
         <li v-for="smartAlbum in filteredSmartAlbums" :key="smartAlbum.id">
           <div
-            :data-reordering-smart-album="isReorderingSmartAlbum(smartAlbum) ? 'true' : undefined"
+            data-smart-album-reorder-area
             :class="[
               'sidebar-item sidebar-item-media group transition-colors',
               libConfig.smartAlbum.type === 'custom' && libConfig.smartAlbum.id === smartAlbum.id ? 'sidebar-item-selected' : 'sidebar-item-hover',
@@ -71,12 +78,11 @@
             @contextmenu.prevent.stop="(event: MouseEvent) => handleSmartAlbumContextMenu(smartAlbum, event)"
           >
             <IconDragHandle
-              v-if="isReorderingSmartAlbum(smartAlbum)"
+              v-if="isReorderingSmartAlbums && canReorderSmartAlbums"
               class="smart-album-drag-handle p-1 w-6 h-6 shrink-0 cursor-grab text-base-content/30"
               :title="$t('album.smart_edit.reorder')"
               @click.stop
             />
-            <span v-else-if="reorderingSmartAlbumId !== null" class="p-1 w-6 h-6 shrink-0"></span>
             <div class="w-10 h-10 mr-2 rounded-box shrink-0 overflow-hidden border border-base-content/5 bg-base-content/5">
               <img
                 v-if="getSmartAlbumCount(smartAlbum) > 0 && getSmartAlbumCoverSrc(smartAlbum) && Number(smartAlbumCoverErrors[smartAlbum.id]) !== Number(smartAlbum.coverFileId)"
@@ -159,8 +165,16 @@ const deletingSmartAlbum = ref<any | null>(null);
 const smartAlbumContextMenus = ref<Record<string, any>>({});
 const smartAlbumCoverErrors = ref<Record<string, number>>({});
 const smartAlbumCoverUrls = ref<Record<string, string>>({});
-const reorderingSmartAlbumId = ref<string | null>(null);
+const isReorderingSmartAlbums = ref(false);
+const smartAlbumPanelMenuOpen = ref(false);
 const smartAlbumSearch = ref('');
+const canReorderSmartAlbums = computed(() => customSmartAlbums.value.length > 1 && !smartAlbumSearch.value.trim());
+const smartAlbumPanelMenuItems = computed(() => [{
+  label: t('album.smart_edit.reorder'),
+  icon: IconOrder,
+  disabled: !canReorderSmartAlbums.value,
+  action: () => { isReorderingSmartAlbums.value = !isReorderingSmartAlbums.value; },
+}]);
 const isSmartAlbumSearchFocused = ref(false);
 let smartAlbumCoverLoadToken = 0;
 let smartCountRequest = 0;
@@ -229,8 +243,12 @@ watch(
   { immediate: true },
 );
 
-watch(smartAlbumSearch, () => {
-  reorderingSmartAlbumId.value = null;
+watch(canReorderSmartAlbums, (canReorder) => {
+  if (!canReorder) isReorderingSmartAlbums.value = false;
+});
+
+watch(() => libConfig._libraryId, () => {
+  isReorderingSmartAlbums.value = false;
 });
 
 const getSmartAlbumCoverSrc = (smartAlbum: any) => {
@@ -295,13 +313,6 @@ const getMoreMenuItems = (smartAlbum: any) => [
     action: () => clickEditSmartAlbum(smartAlbum),
   },
   {
-    label: t('album.smart_edit.reorder'),
-    icon: IconOrder,
-    action: () => {
-      reorderingSmartAlbumId.value = reorderingSmartAlbumId.value === smartAlbum.id ? null : smartAlbum.id;
-    },
-  },
-  {
     label: "-",
     action: null
   },
@@ -312,12 +323,10 @@ const getMoreMenuItems = (smartAlbum: any) => [
   },
 ];
 
-const isReorderingSmartAlbum = (smartAlbum: any) => reorderingSmartAlbumId.value === smartAlbum.id;
-
 function handleReorderOutsidePointerDown(event: PointerEvent) {
-  if (event.button !== 0 || reorderingSmartAlbumId.value === null) return;
-  if (event.target instanceof Element && event.target.closest('[data-reordering-smart-album="true"]')) return;
-  reorderingSmartAlbumId.value = null;
+  if (event.button !== 0 || !isReorderingSmartAlbums.value || smartAlbumPanelMenuOpen.value) return;
+  if (event.target instanceof Element && event.target.closest('[data-smart-album-reorder-area]')) return;
+  isReorderingSmartAlbums.value = false;
 }
 
 onMounted(async () => {
