@@ -884,8 +884,6 @@
       "library_file_path": "Cesta k souboru knihovny",
       "library_file_size": "Velikost souboru knihovny",
       "created_at": "Vytvořeno v",
-      "clean_cache": "Vyčistit nepoužívanou mezipaměť",
-      "cache_cleaned": "Vyčištěno {count} miniatur, uvolněné místo: {size}.",
       "cache_size": "mezipaměť miniatur {size}"
     },
     "remove_library": {

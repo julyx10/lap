@@ -884,8 +884,6 @@
       "library_file_path": "Ruta archivo",
       "library_file_size": "Tamaño archivo",
       "created_at": "Creado el",
-      "clean_cache": "Limpiar caché sin usar",
-      "cache_cleaned": "{count} miniaturas limpiadas, {size} liberados.",
       "cache_size": "caché de miniaturas {size}"
     },
     "remove_library": {

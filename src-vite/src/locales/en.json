@@ -884,8 +884,6 @@
       "library_file_path": "Library file path",
       "library_file_size": "Library file size",
       "created_at": "Created at",
-      "clean_cache": "Clean Unused Cache",
-      "cache_cleaned": "Cleaned {count} thumbnails, freed {size}.",
       "cache_size": "thumbnail cache {size}"
     },
     "remove_library": {
@@ -1747,6 +1745,16 @@
         "tianditu_token_status_empty": "Not configured"
       },
       "thumbnail_cache": {
+        "cleanup": {
+          "title": "Clean unused cache",
+          "hint": "Clean unused thumbnails from listed libraries",
+          "button": "Clean",
+          "progress": "Processing {current} / {total} · {name}",
+          "freed": "Freed {size}.",
+          "empty": "No unused thumbnail cache to clean.",
+          "failed": "Could not clean these libraries:",
+          "list_error": "Could not load the library list."
+        },
         "rolling_back": "Rolling back…",
         "cancelled": "Cancelled. Original cache retained.",
         "new_location": "New location: {path}",

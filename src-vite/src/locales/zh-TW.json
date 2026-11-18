@@ -884,8 +884,6 @@
       "library_file_path": "媒體庫檔案路徑",
       "library_file_size": "媒體庫檔案大小",
       "created_at": "建立時間",
-      "clean_cache": "清除未使用的快取",
-      "cache_cleaned": "已清除 {count} 個縮圖，釋放 {size}。",
       "cache_size": "縮圖快取 {size}"
     },
     "remove_library": {
@@ -1747,6 +1745,16 @@
         "tianditu_token_status_empty": "未設定"
       },
       "thumbnail_cache": {
+        "cleanup": {
+          "title": "清理未使用的快取",
+          "hint": "清理清單中各程式庫未使用的縮圖快取",
+          "button": "清理",
+          "progress": "正在處理 {current} / {total} · {name}",
+          "freed": "已釋出 {size} 空間。",
+          "empty": "沒有可清理的未使用縮圖快取。",
+          "failed": "以下程式庫清理失敗：",
+          "list_error": "無法載入程式庫清單。"
+        },
         "rolling_back": "正在復原…",
         "cancelled": "已取消，原快取已保留。",
         "new_location": "新位置：{path}",

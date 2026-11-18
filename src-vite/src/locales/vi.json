@@ -884,8 +884,6 @@
       "library_file_path": "Đường dẫn tệp thư viện",
       "library_file_size": "Kích thước tệp thư viện",
       "created_at": "Ngày tạo",
-      "clean_cache": "Dọn bộ nhớ đệm không dùng",
-      "cache_cleaned": "Đã dọn {count} ảnh thu nhỏ, giải phóng {size}.",
       "cache_size": "bộ nhớ đệm ảnh thu nhỏ {size}"
     },
     "remove_library": {

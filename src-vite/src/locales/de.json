@@ -884,8 +884,6 @@
       "library_file_path": "Dateipfad",
       "library_file_size": "Dateigröße",
       "created_at": "Erstellt am",
-      "clean_cache": "Unbenutzten Cache bereinigen",
-      "cache_cleaned": "{count} Miniaturen bereinigt, {size} freigegeben.",
       "cache_size": "Thumbnail-Cache {size}"
     },
     "remove_library": {

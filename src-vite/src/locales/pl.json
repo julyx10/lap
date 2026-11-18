@@ -884,8 +884,6 @@
       "library_file_path": "Ścieżka pliku biblioteki",
       "library_file_size": "Rozmiar pliku biblioteki",
       "created_at": "Data utworzenia",
-      "clean_cache": "Wyczyść nieużywany cache",
-      "cache_cleaned": "Wyczyszczono {count} miniatur, zwolniono {size}.",
       "cache_size": "cache miniatur {size}"
     },
     "remove_library": {

@@ -884,8 +884,6 @@
       "library_file_path": "Шлях до файлу бібліотеки",
       "library_file_size": "Розмір файлу бібліотеки",
       "created_at": "Створено",
-      "clean_cache": "Очистити невикористаний кеш",
-      "cache_cleaned": "Очищено мініатюр: {count}, звільнено {size}.",
       "cache_size": "кеш мініатюр {size}"
     },
     "remove_library": {

@@ -884,8 +884,6 @@
       "library_file_path": "Pad bibliotheekbestand",
       "library_file_size": "Grootte bibliotheekbestand",
       "created_at": "Aangemaakt op",
-      "clean_cache": "Ongebruikte cache opschonen",
-      "cache_cleaned": "{count} miniaturen opgeschoond, {size} vrijgemaakt.",
       "cache_size": "miniaturencache {size}"
     },
     "remove_library": {

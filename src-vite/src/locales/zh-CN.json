@@ -884,8 +884,6 @@
       "library_file_path": "库文件路径",
       "library_file_size": "库文件大小",
       "created_at": "创建时间",
-      "clean_cache": "清理未使用的缓存",
-      "cache_cleaned": "已清理 {count} 张缩略图，释放 {size}。",
       "cache_size": "缩略图缓存 {size}"
     },
     "remove_library": {
@@ -1747,6 +1745,16 @@
         "tianditu_token_status_empty": "未配置"
       },
       "thumbnail_cache": {
+        "cleanup": {
+          "title": "清理未使用的缓存",
+          "hint": "清理列表中各库的未使用缩略图缓存",
+          "button": "清理",
+          "progress": "正在处理 {current} / {total} · {name}",
+          "freed": "已释放 {size} 空间。",
+          "empty": "没有可清理的未使用缩略图缓存。",
+          "failed": "以下库清理失败：",
+          "list_error": "无法加载库列表。"
+        },
         "rolling_back": "正在回滚…",
         "cancelled": "已取消，原缓存已保留。",
         "new_location": "新位置：{path}",

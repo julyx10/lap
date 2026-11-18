@@ -501,6 +501,19 @@
                 <option v-for="option in thumbnailQualityOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
               </select>
             </div>
+            <div class="flex items-center justify-between gap-4 px-1 rounded-box hover:bg-base-100/10">
+              <div class="min-w-0 text-sm leading-5">
+                <div>{{ $t(cleanupKey + '.title') }}</div>
+                <div class="text-xs text-base-content/30">{{ $t(cleanupKey + '.hint') }}</div>
+              </div>
+              <button
+                class="btn btn-sm btn-ghost rounded-box bg-base-100 border border-base-content/30 shrink-0"
+                :disabled="!cleanupLibraryCount || cleanupOpen || isChangingThumbnailCache || isChangingDbStorage"
+                @click="cleanThumbnailCache"
+              >
+                {{ $t(cleanupKey + '.button') }}
+              </button>
+            </div>
           </div>
 
           <!-- data -->
@@ -678,6 +691,31 @@
       </div>
     </div>
 
+    <ModalDialog v-if="cleanupOpen" :title="$t(cleanupKey + '.title')" :width="440" hide-close>
+      <div class="space-y-2 text-sm" role="status">
+        <template v-if="cleanupRunning">
+          <p class="break-words">{{ cleanupTotal
+            ? $t(cleanupKey + '.progress', { current: cleanupCompleted + 1, total: cleanupTotal, name: cleanupLibraryName })
+            : $t('tooltip.loading') }}</p>
+          <progress class="progress progress-primary w-full" :value="cleanupCompleted" :max="Math.max(cleanupTotal, 1)" :aria-label="$t(cleanupKey + '.title')"></progress>
+        </template>
+        <template v-else>
+          <p v-if="cleanupListError" class="text-error">{{ $t(cleanupKey + '.list_error') }}</p>
+          <p v-else-if="cleanupFiles">{{ $t(cleanupKey + '.freed', { size: formatFileSize(cleanupBytes) }) }}</p>
+          <p v-else-if="!cleanupFailures.length">{{ $t(cleanupKey + '.empty') }}</p>
+          <template v-if="cleanupFailures.length">
+            <p class="text-error">{{ $t(cleanupKey + '.failed') }}</p>
+            <ul class="max-h-32 overflow-y-auto list-disc pl-5 break-words">
+              <li v-for="failure in cleanupFailures" :key="failure.id">{{ failure.name }} — {{ failure.error }}</li>
+            </ul>
+          </template>
+        </template>
+      </div>
+      <div v-if="!cleanupRunning" class="mt-4 flex justify-end">
+        <button class="t-button-default" @click="cleanupOpen = false">{{ $t('msgbox.close') }}</button>
+      </div>
+    </ModalDialog>
+
     <ModalDialog
       v-if="showThumbnailMigrationDialog"
       :title="$t('settings.advanced.thumbnail_cache.current_location')"
@@ -751,6 +789,8 @@ import { config, libConfig } from '@/common/config';
 import { normalizeThumbnailSize } from '@/common/thumbnailProfiles';
 import { THUMBNAIL_BADGE, MAP_MARKER_SIZES, SETTINGS_TAB, SETTINGS_BASE_WIDTH, SETTINGS_BASE_HEIGHT } from '@/common/constants';
 import {
+  getAppConfig,
+  cleanUnusedThumbnailCache,
   getThumbnailCacheLocation,
   getThumbnailCacheMigrationCount,
   changeThumbnailCacheLocation,
@@ -803,6 +843,53 @@ const rawPreviewFields = [
 
 const appWindow = getCurrentWebviewWindow()
 let unlistenCloseRequested: (() => void) | null = null;
+
+const cleanupKey = 'settings.advanced.thumbnail_cache.cleanup';
+const cleanupLibraryCount = ref(0);
+const cleanupOpen = ref(false);
+const cleanupRunning = ref(false);
+const cleanupTotal = ref(0);
+const cleanupCompleted = ref(0);
+const cleanupLibraryName = ref('');
+const cleanupBytes = ref(0);
+const cleanupFiles = ref(0);
+const cleanupListError = ref(false);
+const cleanupFailures = ref<{ id: string; name: string; error: string }[]>([]);
+
+async function cleanThumbnailCache() {
+  if (cleanupOpen.value || !cleanupLibraryCount.value) return;
+  cleanupOpen.value = true;
+  cleanupRunning.value = true;
+  cleanupTotal.value = 0;
+  cleanupCompleted.value = 0;
+  cleanupBytes.value = 0;
+  cleanupFiles.value = 0;
+  cleanupFailures.value = [];
+  cleanupListError.value = false;
+  try {
+    const appConfig = await getAppConfig();
+    if (!appConfig) {
+      cleanupListError.value = true;
+      return;
+    }
+    const libraries = (appConfig.libraries ?? []).filter((library: { id: string }) => library.id);
+    cleanupLibraryCount.value = libraries.length;
+    cleanupTotal.value = libraries.length;
+    for (const { id, name } of libraries) {
+      cleanupLibraryName.value = name;
+      try {
+        const result = await cleanUnusedThumbnailCache(id) as { filesRemoved: number; bytesFreed: number };
+        cleanupFiles.value += result.filesRemoved;
+        cleanupBytes.value += result.bytesFreed;
+      } catch (error) {
+        cleanupFailures.value.push({ id, name, error: String(error) });
+      }
+      cleanupCompleted.value++;
+    }
+  } finally {
+    cleanupRunning.value = false;
+  }
+}
 
 const thumbnailCacheDir = ref('');
 const thumbnailCacheAvailable = ref(true);
@@ -1489,6 +1576,8 @@ onMounted(async () => {
   }
 
   
+  cleanupLibraryCount.value = (await getAppConfig())?.libraries?.length ?? 0;
+
   // Show window after mount
   await appWindow.show();
 
@@ -1497,6 +1586,7 @@ onMounted(async () => {
   // closed transparent window can fail silently on Windows.
   unlistenCloseRequested = await appWindow.onCloseRequested(async (event) => {
     event.preventDefault();
+    if (cleanupRunning.value) return;
     if (isChangingThumbnailCache.value) {
       toast.error(t('settings.advanced.thumbnail_cache.busy'));
       return;
@@ -1659,6 +1749,14 @@ watch(() => config.settings.face.clusterThresholdIndex, (newValue) => {
 
 // Handle keyboard shortcuts
 function handleKeyDown(event: KeyboardEvent) {
+  if (cleanupOpen.value) {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      if (!cleanupRunning.value) cleanupOpen.value = false;
+    }
+    if (event.key === 'Tab' && cleanupRunning.value) event.preventDefault();
+    return;
+  }
   const navigationKeys = ['Tab', 'Escape'];
 
   // Disable default behavior for certain keys

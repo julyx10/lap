@@ -21,6 +21,7 @@
             <slot name="title-actions"></slot>
           </div>
           <TButton
+            v-if="!hideClose"
             :icon="IconClose"
             :buttonSize="'small'"
             @mousedown.stop
@@ -44,6 +45,7 @@ import { IconClose } from '@/common/icons';
 import TButton from '@/components/TButton.vue';
 
 const props = defineProps({
+  hideClose: Boolean,
   title: { 
     type: String, 
     required: true

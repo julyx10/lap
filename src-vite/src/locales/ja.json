@@ -884,8 +884,6 @@
       "library_file_path": "ファイルパス",
       "library_file_size": "ファイルサイズ",
       "created_at": "作成日時",
-      "clean_cache": "未使用のキャッシュを削除",
-      "cache_cleaned": "サムネイル {count} 個を削除、{size} を解放しました。",
       "cache_size": "サムネイルキャッシュ {size}"
     },
     "remove_library": {

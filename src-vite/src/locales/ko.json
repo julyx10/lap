@@ -884,8 +884,6 @@
       "library_file_path": "파일 경로",
       "library_file_size": "파일 크기",
       "created_at": "생성일",
-      "clean_cache": "사용하지 않는 캐시 정리",
-      "cache_cleaned": "축소판 {count}개 정리, {size} 확보.",
       "cache_size": "축소판 캐시 {size}"
     },
     "remove_library": {

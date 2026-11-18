@@ -201,7 +201,6 @@ import {
   reorderLibraries, 
   getLibraryInfo,
   switchLibrary,
-  cleanUnusedThumbnailCache,
 } from '@/common/api';
 import { isValidFileName, formatFileSize } from '@/common/utils';
 import ModalDialog from '@/components/ModalDialog.vue';
@@ -239,9 +238,6 @@ const libraryStats = ref<Record<string, any>>({});
 const libraryStatsLoading = ref<Record<string, boolean>>({});
 const libraryStatsError = ref<Record<string, boolean>>({});
 const isAddingLibrary = ref(false);
-// Per-library "clean thumbnail cache" in-flight flag so the row button can
-// show a spinner and further clicks on the same row are ignored.
-const cleaningCacheIds = ref<Record<string, boolean>>({});
 const selectedLibraryId = ref('');
 let statsLoadToken = 0;
 
@@ -577,32 +573,6 @@ const clickOk = async () => {
   emit('cancel');
 };
 
-// Clean unreferenced thumbnail cache for a specific library. Works for any
-// library (not just the current one) — the backend opens that library's DB
-// transiently to read its athumbs table.
-const cleanLibraryCache = async (lib: any) => {
-  if (!lib?.id || cleaningCacheIds.value[lib.id]) return;
-  cleaningCacheIds.value = { ...cleaningCacheIds.value, [lib.id]: true };
-  try {
-    const result = await cleanUnusedThumbnailCache(lib.id);
-    toast.success(t('msgbox.manage_libraries.cache_cleaned', {
-      count: result?.filesRemoved ?? 0,
-      size: formatFileSize(result?.bytesFreed ?? 0),
-    }));
-    // Refresh this row's stats so the cache size updates in place.
-    const info = await getLibraryInfo(lib.id);
-    if (info) {
-      libraryStats.value = { ...libraryStats.value, [lib.id]: info };
-    }
-  } catch (error: any) {
-    toast.error(error?.message || String(error));
-  } finally {
-    const next = { ...cleaningCacheIds.value };
-    delete next[lib.id];
-    cleaningCacheIds.value = next;
-  }
-};
-
 const clickCancel = () => {
   emit('cancel');
 };
@@ -610,10 +580,9 @@ const clickCancel = () => {
 // Context menu items for a library row. Mirrors the CollectionTray / Tag
 // panel pattern: rename + maintenance actions on top, destructive at bottom
 // behind a separator. `disabled` per-item handles the "default" library
-// (cannot hide/remove) and the in-flight cache clean case.
+// (cannot hide/remove).
 const libraryMenuItems = (lib: any) => {
   const isDefault = lib.id === 'default';
-  const isCleaning = !!cleaningCacheIds.value[lib.id];
   return [
     {
       label: t('msgbox.manage_libraries.rename'),
@@ -627,12 +596,6 @@ const libraryMenuItems = (lib: any) => {
       icon: lib.hidden ? IconUnhide : IconHide,
       disabled: isDefault,
       action: () => toggleVisibility(lib),
-    },
-    { label: '-', action: null },
-    {
-      label: t('msgbox.manage_libraries.clean_cache'),
-      disabled: isCleaning,
-      action: () => cleanLibraryCache(lib),
     },
     { label: '-', action: null },
     {

@@ -884,8 +884,6 @@
       "library_file_path": "Chemin fichier",
       "library_file_size": "Taille fichier",
       "created_at": "Créé le",
-      "clean_cache": "Nettoyer le cache inutilisé",
-      "cache_cleaned": "{count} vignettes supprimées, {size} libérés.",
       "cache_size": "cache des vignettes {size}"
     },
     "remove_library": {
