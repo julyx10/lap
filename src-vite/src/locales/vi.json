@@ -552,7 +552,7 @@
         "title": "Quy tắc giữ lại",
         "priority_order": "Thứ tự ưu tiên",
         "folders": "Thư mục ưu tiên",
-        "subfolders": "Bao gồm thư mục con. Mục ở trên trong danh sách được ưu tiên.",
+        "subfolders": "Bao gồm thư mục con. Mục ở trên trong danh sách được ưu tiên",
         "folders_skipped": "Chưa đặt, bỏ qua",
         "add_folder": "Thêm thư mục",
         "folder_already_added": "Đã thêm",
@@ -579,15 +579,16 @@
       },
       "scanning": "Đang quét ảnh trùng lặp...",
       "error_title": "Không thể quét ảnh trùng lặp",
-      "error_desc": "Không thể hoàn tất quá trình quét. Hãy thử lại sau khi cập nhật danh sách tệp.",
+      "error_desc": "Không thể hoàn tất quá trình quét. Hãy thử lại sau khi cập nhật danh sách tệp",
       "empty_title": "Không tìm thấy ảnh trùng lặp",
-      "empty_desc": "Hãy thử thêm tệp hoặc thay đổi phạm vi bộ lọc hiện tại.",
+      "empty_desc": "Hãy thử thêm tệp hoặc thay đổi phạm vi bộ lọc hiện tại",
       "similar_title": "Sắp có tính năng ảnh tương tự",
-      "similar_desc": "Thẻ này sẽ dùng cho các ảnh tương tự về hình ảnh sau khi quy trình xử lý ảnh giống hệt nhau được mở rộng.",
+      "similar_desc": "Thẻ này sẽ dùng cho các ảnh tương tự về hình ảnh sau khi quy trình xử lý ảnh giống hệt nhau được mở rộng",
       "similar": {
-        "description": "Tìm các ảnh tương tự về hình ảnh trong chế độ xem hiện tại.",
-        "analyze": "Phân tích {count} ảnh",
-        "large_scan_confirm": "Phân tích {count} ảnh để tìm các ảnh tương tự về hình ảnh? Việc này có thể mất vài phút.",
+        "analyze_images": "Phân tích ảnh tương tự",
+        "analyze": "Phân tích",
+        "no_eligible_photos": "Không có ảnh để phân tích",
+        "large_scan_confirm": "Phân tích {count} ảnh để tìm các ảnh tương tự về hình ảnh? Việc này có thể mất vài phút",
         "cancel": "Hủy",
         "preparing": "Đang chuẩn bị kết quả hiện tại",
         "finding_matches": "Đang tìm các ảnh gần giống nhất",
@@ -599,7 +600,6 @@
         "load_more": "Tải thêm",
         "error_title": "Không thể tải ảnh tương tự",
         "empty_title": "Không tìm thấy ảnh tương tự",
-        "analyze_confirm": "Phân tích",
         "reanalyze": "Phân tích lại"
       },
       "reclaimable_size": "Có thể giải phóng",
@@ -1717,10 +1717,10 @@
       }
     },
     "advanced": {
+      "file_delete_section": "Xóa tệp",
       "file_delete_behavior": "Khi xóa tệp",
       "file_delete_trash_hint": "Chuyển một tệp vào thùng rác mà không cần xác nhận",
       "file_delete_permanent_hint": "Luôn xác nhận trước khi xóa vĩnh viễn",
-      "file_delete_section": "Xóa tệp",
       "title": "Nâng cao",
       "external_app": {
         "section_external_apps": "Ứng dụng bên ngoài",
@@ -1750,6 +1750,16 @@
         "tianditu_token_status_empty": "Chưa cấu hình"
       },
       "thumbnail_cache": {
+        "cleanup": {
+          "title": "Dọn bộ nhớ đệm không dùng",
+          "hint": "Xóa hình thu nhỏ không dùng trong các thư viện được liệt kê",
+          "button": "Dọn dẹp",
+          "progress": "Đang xử lý {current} / {total} · {name}",
+          "freed": "Đã giải phóng {size}.",
+          "empty": "Không có hình thu nhỏ không dùng cần dọn.",
+          "failed": "Không thể dọn bộ nhớ đệm của các thư viện sau:",
+          "list_error": "Không thể tải danh sách thư viện."
+        },
         "rolling_back": "Đang hoàn tác…",
         "cancelled": "Đã hủy. Bộ nhớ đệm ban đầu được giữ nguyên.",
         "new_location": "Vị trí mới: {path}",

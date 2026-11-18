@@ -35,8 +35,8 @@
           :icon="IconRefresh"
           :tooltip="$t('info_panel.dedup.similar.reanalyze')"
           :buttonSize="'small'"
-          :disabled="isDedupLoading || similarLoading || !similarHasScanned"
-          @click="reanalyzeSimilar"
+          :disabled="!canRequestSimilarAnalysis || !similarHasScanned"
+          @click="requestSimilarAnalysis(true)"
         />
         <TButton
           :icon="IconAdjustments"
@@ -58,6 +58,7 @@
       class="mb-2 px-2 flex-1 min-h-0 overflow-hidden flex flex-col"
     >
       <template v-if="activeTab === 'similar'">
+        <p v-if="similarEligibleCountLoading" class="px-3 py-1 text-xs" role="status">{{ $t('tooltip.loading') }}</p>
         <div v-if="similarLoading" class="p-4 flex-1 flex items-center justify-center">
           <div class="text-center text-base-content/30 space-y-3 max-w-65">
             <span class="loading loading-spinner text-primary w-8 h-8 mx-auto"></span>
@@ -81,17 +82,21 @@
         </div>
         <div v-else-if="similarGroups.length === 0" class="p-4 flex-1 flex items-center justify-center">
           <div class="text-center text-base-content/30 space-y-3 max-w-65">
-            <p v-if="similarHasScanned || (!similarEligibleCountLoading && similarEligibleCount === 0)" class="text-sm">{{ $t('info_panel.dedup.similar.empty_title') }}</p>
-            <template v-else>
-              <p class="text-sm">{{ $t('info_panel.dedup.similar.description') }}</p>
-              <PanelActionButton primary :disabled="isDedupLoading || similarEligibleCountLoading || similarEligibleCount === 0 || similarLoading" @click="startSimilar">
-                {{ similarEligibleCountLoading ? $t('tooltip.loading') : $t('info_panel.dedup.similar.analyze', { count: similarEligibleCount.toLocaleString() }) }}
-              </PanelActionButton>
-            </template>
+            <p v-if="!viewHasFiles || noEligibleSimilarPhotos || similarHasScanned" class="text-sm" role="status">
+              {{ $t(!viewHasFiles || noEligibleSimilarPhotos
+                ? 'info_panel.dedup.similar.no_eligible_photos'
+                : 'info_panel.dedup.similar.empty_title') }}
+            </p>
+            <PanelActionButton v-if="!similarHasScanned && viewHasFiles && !noEligibleSimilarPhotos" primary :disabled="!canRequestSimilarAnalysis" @click="requestSimilarAnalysis()">
+              {{ $t('info_panel.dedup.similar.analyze_images') }}
+            </PanelActionButton>
           </div>
         </div>
         <div v-else class="flex min-h-0 flex-1 flex-col">
-          <section class="mb-2 flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 rounded-box border border-base-content/10 bg-base-100/40 px-3 py-2" aria-label="Similar photo summary">
+          <p v-if="noEligibleSimilarPhotos" class="mb-2 text-center text-sm text-base-content/60" role="status">
+            {{ $t('info_panel.dedup.similar.no_eligible_photos') }}
+          </p>
+          <section class="mb-2 flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 rounded-box border border-base-content/10 bg-base-100/40 px-3 py-2" :aria-label="$t('info_panel.dedup.tabs.similar')">
             <div class="min-w-0">
               <div class="text-[10px] font-bold uppercase tracking-widest text-base-content/30">
                 {{ $t('info_panel.dedup.similar.results') }}
@@ -510,10 +515,10 @@
     </div>
   </div>
   <MessageBox
-    v-if="showLargeSimilarScanConfirm"
+    v-if="pendingSimilarAnalysis"
     :title="$t('info_panel.dedup.tabs.similar')"
-    :message="$t('info_panel.dedup.similar.large_scan_confirm', { count: similarEligibleCount.toLocaleString() })"
-    :OkText="$t('info_panel.dedup.similar.analyze_confirm')"
+    :message="$t('info_panel.dedup.similar.large_scan_confirm', { count: pendingSimilarAnalysis.count.toLocaleString() })"
+    :OkText="$t('info_panel.dedup.similar.analyze')"
     :cancelText="$t('msgbox.cancel')"
     @ok="confirmLargeSimilarScan"
     @cancel="cancelLargeSimilarScan"
@@ -589,6 +594,9 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  panelOpen: Boolean,
+  viewHasFiles: Boolean,
+  sourceVersion: { type: Number, default: 0 },
   similarityThreshold: {
     type: Number,
     required: true,
@@ -625,7 +633,8 @@ const isDedupLoading = ref(true);
 const activeTab = ref<'duplicates' | 'similar'>(
   config.dedup.activeTab === 'similar' ? 'similar' : 'duplicates',
 );
-const similarLoading = ref(activeTab.value === 'similar');
+const similarLoading = ref(false);
+const similarRestoring = ref(false);
 const showKeepRules = ref(false);
 const keepRules = computed(() => ({
   preferFormat: config.dedup.keepRules?.preferFormat ?? 'raw',
@@ -643,13 +652,20 @@ const similarPhotoCount = ref(0);
 const similarPhotoBytes = ref(0);
 const isLoadingMoreSimilarGroups = ref(false);
 const selectedSimilarGroupId = ref<number | null>(null);
-const similarEligibleCount = ref(0);
 const similarEligibleCountLoading = ref(false);
 const similarHasScanned = ref(false);
 const similarError = ref(false);
 const similarLoadedScope = ref('');
-const showLargeSimilarScanConfirm = ref(false);
-const pendingSimilarReanalyze = ref(false);
+const noEligibleSimilarPhotos = ref(false);
+const pendingSimilarAnalysis = ref<{ scopeKey: string; count: number; reanalyze: boolean } | null>(null);
+let similarCountRequest = 0;
+let similarCandidateRevision = 0;
+const canRequestSimilarAnalysis = computed(() =>
+  props.panelOpen && activeTab.value === 'similar' && props.viewHasFiles && !!props.similarScanKey
+  && !isDedupLoading.value && !similarLoading.value && !similarRestoring.value
+  && !similarEligibleCountLoading.value && !pendingSimilarAnalysis.value
+  && !noEligibleSimilarPhotos.value
+);
 const unlistenSimilarProgress = ref<null | (() => void)>(null);
 const unlistenCullingStatus = ref<null | (() => void)>(null);
 const dedupScanError = ref(false);
@@ -970,14 +986,19 @@ async function fetchSimilarGroups(append = false) {
   similarGroups.value = append ? [...similarGroups.value, ...groups] : groups;
   similarTotalGroups.value = Number(page?.total || 0);
   if (!append) await refreshSimilarOverview(scopeKey);
-  similarLoadedScope.value = props.similarScanKey;
+  if (scopeKey !== props.similarScanKey) return;
+  similarLoadedScope.value = scopeKey;
   if (!append) {
     selectedSimilarGroupId.value = similarGroups.value[0] ? Number(similarGroups.value[0].id) : null;
     const firstGroup = similarGroups.value[0];
     if (firstGroup) {
       let detail;
       try { detail = await similarGetGroup(firstGroup.id, scopeKey); }
-      catch (error) { console.error('getSimilarGroup error:', error); similarError.value = true; return; }
+      catch (error) {
+        console.error('getSimilarGroup error:', error);
+        if (scopeKey === props.similarScanKey) similarError.value = true;
+        return;
+      }
       if (scopeKey !== props.similarScanKey) return;
       Object.assign(firstGroup, detail);
       selectSimilarDuplicatesByDefault(firstGroup);
@@ -1014,77 +1035,33 @@ async function loadMoreSimilarGroups(event: Event) {
 async function openSimilarTab(forceReload = false) {
   activeTab.value = 'similar';
   config.dedup.activeTab = 'similar';
-  if (!props.similarScanKey) {
-    similarLoading.value = false;
-    return;
-  }
   const scopeKey = props.similarScanKey;
-  similarLoading.value = true;
-  if (!similarHasScanned.value) similarEligibleCountLoading.value = true;
-  if (isDedupLoading.value) return;
+  if (!scopeKey || isDedupLoading.value || similarRestoring.value) return;
+  similarRestoring.value = true;
   if (forceReload) similarLoadedScope.value = '';
   similarError.value = false;
-  let status;
-  try { status = await similarGetScanStatus(); }
-  catch (error) {
-    console.error('getSimilarScanStatus error:', error);
-    similarLoading.value = false;
-    similarEligibleCountLoading.value = false;
-    similarError.value = true;
-    return;
-  }
-  if (scopeKey !== props.similarScanKey) return;
-  if (status?.scopeKey === props.similarScanKey && (status.state === 'running' || status.isScanning)) {
-    similarStatus.value = status;
-    similarLoading.value = true;
-    similarEligibleCountLoading.value = false;
-    return;
-  }
-  if (similarLoadedScope.value !== props.similarScanKey) await fetchSimilarGroups();
-  if (scopeKey !== props.similarScanKey) return;
-  if (similarError.value) {
-    similarLoading.value = false;
-    similarEligibleCountLoading.value = false;
-    return;
-  }
-  const hasCachedGroups = similarGroups.value.length > 0;
-  let hasPersistedScan = false;
-  try { hasPersistedScan = await similarHasScan(props.similarScanKey); }
-  catch (error) {
-    console.error('similarHasScan error:', error);
-    similarLoading.value = false;
-    similarEligibleCountLoading.value = false;
-    similarError.value = true;
-    return;
-  }
-  if (scopeKey !== props.similarScanKey) return;
-  similarHasScanned.value = hasCachedGroups
-    || (status?.scopeKey === props.similarScanKey && status?.state === 'finished')
-    || hasPersistedScan;
-  if (similarHasScanned.value) {
-    similarLoading.value = false;
-    similarEligibleCountLoading.value = false;
-    return;
-  }
-  let eligibleCount;
   try {
-    eligibleCount = Number(await similarGetEligibleCount(
-      props.dedupFileIds === null ? (props.dedupQueryParams || null) : null,
-      props.dedupFileIds === null ? props.dedupCollectionId : null,
-      props.dedupFileIds,
-    ));
-  } catch (error) {
-    console.error('getSimilarEligibleCount error:', error);
-    similarError.value = true;
-    return;
-  } finally {
-    if (scopeKey === props.similarScanKey) {
-      similarLoading.value = false;
-      similarEligibleCountLoading.value = false;
+    const status = await similarGetScanStatus();
+    if (scopeKey !== props.similarScanKey) return;
+    if (status?.scopeKey === scopeKey && (status.state === 'running' || status.isScanning)) {
+      similarStatus.value = status;
+      similarLoading.value = true;
+      return;
     }
+    if (similarLoadedScope.value !== scopeKey) await fetchSimilarGroups();
+    if (scopeKey !== props.similarScanKey || similarError.value) return;
+
+    const hasPersistedScan = await similarHasScan(scopeKey);
+    if (scopeKey !== props.similarScanKey) return;
+    similarHasScanned.value = similarGroups.value.length > 0
+      || (status?.scopeKey === scopeKey && status.state === 'finished')
+      || hasPersistedScan;
+  } catch (error) {
+    console.error('openSimilarTab error:', error);
+    if (scopeKey === props.similarScanKey) similarError.value = true;
+  } finally {
+    if (scopeKey === props.similarScanKey) similarRestoring.value = false;
   }
-  if (scopeKey !== props.similarScanKey) return;
-  similarEligibleCount.value = eligibleCount;
 }
 
 function selectDuplicatesTab() {
@@ -1092,15 +1069,6 @@ function selectDuplicatesTab() {
   config.dedup.activeTab = 'duplicates';
   const keepFileId = Number(activeGroup.value?.keepItem?.file_id || 0);
   if (keepFileId > 0) emit('select-file', keepFileId);
-}
-
-async function startSimilar() {
-  if (isDedupLoading.value || similarLoading.value) return;
-  if (similarEligibleCount.value > SIMILAR_SCAN.LARGE_RESULT_THRESHOLD) {
-    showLargeSimilarScanConfirm.value = true;
-    return;
-  }
-  await runSimilarScan();
 }
 
 function resetSimilarResults() {
@@ -1115,52 +1083,75 @@ function resetSimilarResults() {
   similarLoadedScope.value = '';
 }
 
-async function reanalyzeSimilar() {
-  if (isDedupLoading.value || similarLoading.value) return;
+async function requestSimilarAnalysis(reanalyze = false) {
+  if (!canRequestSimilarAnalysis.value) return;
   const scopeKey = props.similarScanKey;
-  let eligibleCount;
+  const request = ++similarCountRequest;
+  const candidateRevision = similarCandidateRevision;
+  similarEligibleCountLoading.value = true;
+  noEligibleSimilarPhotos.value = false;
+  let count: number;
   try {
-    eligibleCount = Number(await similarGetEligibleCount(
+    count = Number(await similarGetEligibleCount(
       props.dedupFileIds === null ? (props.dedupQueryParams || null) : null,
       props.dedupFileIds === null ? props.dedupCollectionId : null,
       props.dedupFileIds,
     ));
   } catch (error) {
     console.error('getSimilarEligibleCount error:', error);
-    if (scopeKey === props.similarScanKey) similarError.value = true;
+    if (request === similarCountRequest) similarError.value = true;
+    return;
+  } finally {
+    if (request === similarCountRequest) similarEligibleCountLoading.value = false;
+  }
+  if (request !== similarCountRequest || scopeKey !== props.similarScanKey || !canRequestSimilarAnalysis.value) return;
+  if (count === 0) {
+    noEligibleSimilarPhotos.value = candidateRevision === similarCandidateRevision;
     return;
   }
-  if (scopeKey !== props.similarScanKey) return;
-  similarEligibleCount.value = eligibleCount;
-  if (eligibleCount > SIMILAR_SCAN.LARGE_RESULT_THRESHOLD) {
-    pendingSimilarReanalyze.value = true;
-    showLargeSimilarScanConfirm.value = true;
+  if (count > SIMILAR_SCAN.LARGE_RESULT_THRESHOLD) {
+    pendingSimilarAnalysis.value = { scopeKey, count, reanalyze };
     return;
   }
-  resetSimilarResults();
-  await runSimilarScan();
-}
-
-async function confirmLargeSimilarScan() {
-  showLargeSimilarScanConfirm.value = false;
-  const reanalyze = pendingSimilarReanalyze.value;
-  pendingSimilarReanalyze.value = false;
   if (reanalyze) resetSimilarResults();
   await runSimilarScan();
 }
 
-function cancelLargeSimilarScan() {
-  showLargeSimilarScanConfirm.value = false;
-  pendingSimilarReanalyze.value = false;
+async function confirmLargeSimilarScan() {
+  const pending = pendingSimilarAnalysis.value;
+  cancelLargeSimilarScan();
+  if (!pending || pending.scopeKey !== props.similarScanKey || !canRequestSimilarAnalysis.value) return;
+  if (pending.reanalyze) resetSimilarResults();
+  await runSimilarScan();
 }
 
+function cancelLargeSimilarScan() {
+  pendingSimilarAnalysis.value = null;
+}
+
+function invalidateSimilarCount() {
+  similarCountRequest++;
+  similarEligibleCountLoading.value = false;
+  noEligibleSimilarPhotos.value = false;
+  cancelLargeSimilarScan();
+}
+
+watch([() => props.similarScanKey, () => props.panelOpen, activeTab], invalidateSimilarCount, { flush: 'sync' });
+
+function markSimilarCandidatesChanged() {
+  similarCandidateRevision++;
+  noEligibleSimilarPhotos.value = false;
+}
+
+watch([() => props.sourceVersion, () => libConfig.index.searchReady], markSimilarCandidatesChanged, { flush: 'sync' });
+
 async function runSimilarScan() {
-  if (isDedupLoading.value || similarLoading.value) return;
+  const scopeKey = props.similarScanKey;
   similarLoading.value = true;
   try {
-    const sourceVersion = Number(props.similarScanKey.match(/\|similar-view:(\d+)$/)?.[1] || 0);
+    const sourceVersion = Number(scopeKey.match(/\|similar-view:(\d+)$/)?.[1] || 0);
     await similarStartScan(
-      props.similarScanKey,
+      scopeKey,
       sourceVersion,
       props.similarityThreshold,
       props.dedupFileIds === null ? (props.dedupQueryParams || null) : null,
@@ -1170,6 +1161,7 @@ async function runSimilarScan() {
     );
   } catch (error) {
     console.error('startSimilar error:', error);
+    if (scopeKey !== props.similarScanKey) return;
     similarLoading.value = false;
     similarError.value = true;
   }
@@ -1777,14 +1769,11 @@ watch(
     isLoadingMoreSimilarGroups.value = false;
     selectedSimilarIdsByGroup.value.clear();
     selectedSimilarGroupId.value = null;
-    similarEligibleCount.value = 0;
-    similarEligibleCountLoading.value = false;
     similarHasScanned.value = false;
     similarError.value = false;
     similarLoadedScope.value = '';
-    similarLoading.value = Boolean(newKey && activeTab.value === 'similar');
-    showLargeSimilarScanConfirm.value = false;
-    pendingSimilarReanalyze.value = false;
+    similarLoading.value = false;
+    similarRestoring.value = false;
     if (newKey && activeTab.value === 'similar') void openSimilarTab();
   },
 );
@@ -1811,6 +1800,7 @@ onMounted(async () => {
   unlistenAlbumAccessChanged = await listen('album-accessibility-changed', async (event: any) => {
     const { libraryId, albumId, available } = event.payload || {};
     if (libraryId !== libConfig._libraryId) return;
+    markSimilarCandidatesChanged();
     for (const group of [...rawGroups.value, ...similarGroups.value]) {
       for (const file of [group.representative, ...(group.items || []).map((item: any) => item.file)]) {
         if (file && Number(file.album_id) === Number(albumId)) file.album_accessible = available;
@@ -1848,7 +1838,7 @@ onMounted(async () => {
     if (payload?.state === 'finished') {
       similarLoading.value = false;
       await fetchSimilarGroups();
-      similarHasScanned.value = true;
+      if (payload.scopeKey === props.similarScanKey) similarHasScanned.value = true;
       return;
     }
     if (payload?.state === 'idle') {
@@ -1880,6 +1870,7 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
+  invalidateSimilarCount();
   unlistenAlbumAccessChanged?.();
   stopDedupStatusPolling();
   stopDraggingDuplicateSplitter();
