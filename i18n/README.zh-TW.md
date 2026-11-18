@@ -45,6 +45,7 @@ brew install --cask lap
   <img src="../docs/public/screenshots/lap_library.png" alt="Lap 本機相片資料庫管理器" width="900">
   <img src="../docs/public/screenshots/lap_map_view.png" alt="Lap 地圖檢視" width="900">
   <img src="../docs/public/screenshots/lap_montage.png" alt="Lap 相片拼貼" width="900">
+  <img src="../docs/public/screenshots/lap_preview.png" alt="Lap 相片預覽" width="900">
 </p>
 
 ## 為什麼選擇 Lap

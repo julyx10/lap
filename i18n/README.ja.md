@@ -45,6 +45,7 @@ brew install --cask lap
   <img src="../docs/public/screenshots/lap_library.png" alt="Lap のローカルフォトライブラリ管理" width="900">
   <img src="../docs/public/screenshots/lap_map_view.png" alt="Lap のマップビュー" width="900">
   <img src="../docs/public/screenshots/lap_montage.png" alt="Lap の写真コラージュ" width="900">
+  <img src="../docs/public/screenshots/lap_preview.png" alt="Lap の写真プレビュー" width="900">
 </p>
 
 ## Lapを選ぶ理由

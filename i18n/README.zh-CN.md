@@ -45,6 +45,7 @@ brew install --cask lap
   <img src="../docs/public/screenshots/lap_library.png" alt="Lap 本地照片资料库" width="900">
   <img src="../docs/public/screenshots/lap_map_view.png" alt="Lap 地图视图" width="900">
   <img src="../docs/public/screenshots/lap_montage.png" alt="Lap 照片拼图" width="900">
+  <img src="../docs/public/screenshots/lap_preview.png" alt="Lap 照片预览" width="900">
 </p>
 
 ## 为什么选择 Lap

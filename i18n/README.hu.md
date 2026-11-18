@@ -45,6 +45,7 @@ brew install --cask lap
   <img src="../docs/public/screenshots/lap_library.png" alt="A Lap helyi fotókönyvtár-kezelője" width="900">
   <img src="../docs/public/screenshots/lap_map_view.png" alt="A Lap térképnézete" width="900">
   <img src="../docs/public/screenshots/lap_montage.png" alt="Lap fotókollázs" width="900">
+  <img src="../docs/public/screenshots/lap_preview.png" alt="Fénykép előnézete a Lapban" width="900">
 </p>
 
 ## Miért a Lap?

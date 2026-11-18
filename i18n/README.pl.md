@@ -45,6 +45,7 @@ brew install --cask lap
   <img src="../docs/public/screenshots/lap_library.png" alt="Lap — lokalny menedżer biblioteki zdjęć" width="900">
   <img src="../docs/public/screenshots/lap_map_view.png" alt="Widok mapy w Lap" width="900">
   <img src="../docs/public/screenshots/lap_montage.png" alt="Kolaż zdjęć w Lap" width="900">
+  <img src="../docs/public/screenshots/lap_preview.png" alt="Podgląd zdjęcia w Lap" width="900">
 </p>
 
 ## Dlaczego Lap

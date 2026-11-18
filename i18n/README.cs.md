@@ -45,6 +45,7 @@ brew install --cask lap
   <img src="../docs/public/screenshots/lap_library.png" alt="Správce místní knihovny fotografií Lap" width="900">
   <img src="../docs/public/screenshots/lap_map_view.png" alt="Zobrazení mapy v Lap" width="900">
   <img src="../docs/public/screenshots/lap_montage.png" alt="Koláž fotografií v Lap" width="900">
+  <img src="../docs/public/screenshots/lap_preview.png" alt="Náhled fotografie v Lap" width="900">
 </p>
 
 ## Proč Lap

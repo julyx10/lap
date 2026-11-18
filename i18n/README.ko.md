@@ -45,6 +45,7 @@ brew install --cask lap
   <img src="../docs/public/screenshots/lap_library.png" alt="Lap 로컬 사진 라이브러리 관리" width="900">
   <img src="../docs/public/screenshots/lap_map_view.png" alt="Lap 지도 보기" width="900">
   <img src="../docs/public/screenshots/lap_montage.png" alt="Lap 사진 콜라주" width="900">
+  <img src="../docs/public/screenshots/lap_preview.png" alt="Lap 사진 미리보기" width="900">
 </p>
 
 ## 왜 Lap인가요?

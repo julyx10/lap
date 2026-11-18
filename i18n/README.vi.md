@@ -45,6 +45,7 @@ brew install --cask lap
   <img src="../docs/public/screenshots/lap_library.png" alt="Trình quản lý thư viện ảnh cục bộ Lap" width="900">
   <img src="../docs/public/screenshots/lap_map_view.png" alt="Chế độ xem bản đồ Lap" width="900">
   <img src="../docs/public/screenshots/lap_montage.png" alt="Ảnh ghép Lap" width="900">
+  <img src="../docs/public/screenshots/lap_preview.png" alt="Xem trước ảnh trong Lap" width="900">
 </p>
 
 ## Vì sao chọn Lap

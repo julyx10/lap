@@ -45,6 +45,7 @@ brew install --cask lap
   <img src="../docs/public/screenshots/lap_library.png" alt="Локальный менеджер фототеки Lap" width="900">
   <img src="../docs/public/screenshots/lap_map_view.png" alt="Просмотр карты в Lap" width="900">
   <img src="../docs/public/screenshots/lap_montage.png" alt="Фотоколлаж в Lap" width="900">
+  <img src="../docs/public/screenshots/lap_preview.png" alt="Предпросмотр фотографии в Lap" width="900">
 </p>
 
 ## Почему Lap
