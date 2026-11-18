@@ -707,6 +707,12 @@
     "album_nested": "Esta pasta sobrepõe-se a outro álbum"
   },
   "statusbar": {
+    "name_and_size": "Nome do arquivo (tamanho)",
+    "color_info": "Informações de cor",
+    "customize": "Personalizar a barra de status…",
+    "customize_title": "Personalizar barra de status",
+    "restore_defaults": "Restaurar padrões",
+    "selection_summary": "Seleção: {count} ({size})",
     "files_summary": "{count} arquivos ({size})",
     "items_summary": "{count} itens ({size})"
   },

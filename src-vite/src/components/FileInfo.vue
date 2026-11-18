@@ -552,6 +552,7 @@ import {
   formatRelativeTime,
   formatVideoDurationBadge,
   formatCaptureSettings,
+  formatTakenDate,
   formatCameraInfo,
   formatGpsCoordinates,
   getCountryName,
@@ -888,8 +889,7 @@ const hasAltitude = computed(() => {
 const cameraText = computed(() => formatCameraInfo(props.fileInfo?.e_make, props.fileInfo?.e_model) || '');
 const exposureText = computed(() => formatCaptureSettings(props.fileInfo?.e_focal_length, props.fileInfo?.e_exposure_time,
   props.fileInfo?.e_f_number, props.fileInfo?.e_iso_speed, props.fileInfo?.e_exposure_bias) || '');
-const captureTimeText = computed(() => props.fileInfo?.e_date_time?.trim() && props.fileInfo?.taken_date != null
-  ? formatTimestamp(props.fileInfo.taken_date, 'date_time') : '');
+const captureTimeText = computed(() => formatTakenDate(props.fileInfo));
 const hasFileInfo = computed(() => {
   const file = generalFileInfo.value;
   return ['name', 'album_name', 'size', 'created_at', 'modified_at'].some(key => displayField(`file.${key}`, file?.[key]))

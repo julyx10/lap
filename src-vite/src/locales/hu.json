@@ -707,6 +707,12 @@
     "album_nested": "A mappa átfed egy másik albumot"
   },
   "statusbar": {
+    "name_and_size": "Fájlnév (méret)",
+    "color_info": "Színinformációk",
+    "customize": "Állapotsor testreszabása…",
+    "customize_title": "Állapotsor testreszabása",
+    "restore_defaults": "Alapértékek visszaállítása",
+    "selection_summary": "{count} kijelölve ({size})",
     "files_summary": "{count} fájl ({size})",
     "items_summary": "{count} elem ({size})"
   },

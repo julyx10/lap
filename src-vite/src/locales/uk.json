@@ -707,6 +707,12 @@
     "album_nested": "Ця тека перекривається з іншим альбомом"
   },
   "statusbar": {
+    "name_and_size": "Назва файлу (розмір)",
+    "color_info": "Відомості про колір",
+    "customize": "Налаштувати рядок стану…",
+    "customize_title": "Налаштувати рядок стану",
+    "restore_defaults": "Відновити типові налаштування",
+    "selection_summary": "Вибрано: {count} ({size})",
     "files_summary": "{count} файлів ({size})",
     "items_summary": "{count} елементів ({size})"
   },

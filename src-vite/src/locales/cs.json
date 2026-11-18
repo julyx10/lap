@@ -707,6 +707,12 @@
     "album_nested": "Tato složka se překrývá s jiným albem"
   },
   "statusbar": {
+    "name_and_size": "Název souboru (velikost)",
+    "color_info": "Informace o barvách",
+    "customize": "Přizpůsobit stavový řádek…",
+    "customize_title": "Přizpůsobit stavový řádek",
+    "restore_defaults": "Obnovit výchozí nastavení",
+    "selection_summary": "Počet vybraných: {count} ({size})",
     "files_summary": "{count} souborů ({size})",
     "items_summary": "{count} položek ({size})"
   },

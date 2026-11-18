@@ -707,6 +707,12 @@
     "album_nested": "This folder overlaps another album"
   },
   "statusbar": {
+    "name_and_size": "File name (size)",
+    "color_info": "Color information",
+    "customize": "Customize Status Bar…",
+    "customize_title": "Customize Status Bar",
+    "restore_defaults": "Restore Defaults",
+    "selection_summary": "{count} selected ({size})",
     "files_summary": "{count} files ({size})",
     "items_summary": "{count} items ({size})"
   },

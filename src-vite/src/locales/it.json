@@ -707,6 +707,12 @@
     "album_nested": "Questa cartella si sovrappone a un altro album"
   },
   "statusbar": {
+    "name_and_size": "Nome file (dimensione)",
+    "color_info": "Informazioni sul colore",
+    "customize": "Personalizza la barra di stato…",
+    "customize_title": "Personalizza barra di stato",
+    "restore_defaults": "Ripristina impostazioni predefinite",
+    "selection_summary": "Selezionati: {count} ({size})",
     "files_summary": "{count} file ({size})",
     "items_summary": "{count} elementi ({size})"
   },

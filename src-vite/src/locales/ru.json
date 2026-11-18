@@ -707,6 +707,12 @@
     "album_nested": "Эта папка пересекается с другим альбомом"
   },
   "statusbar": {
+    "name_and_size": "Имя файла (размер)",
+    "color_info": "Сведения о цвете",
+    "customize": "Настроить строку состояния…",
+    "customize_title": "Настроить строку состояния",
+    "restore_defaults": "Восстановить настройки по умолчанию",
+    "selection_summary": "Выбрано: {count} ({size})",
     "files_summary": "Файлов: {count} ({size})",
     "items_summary": "Элементов: {count} ({size})"
   },

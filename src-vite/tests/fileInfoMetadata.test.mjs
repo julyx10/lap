@@ -377,18 +377,34 @@ return { generalInfoTab, generalFileInfo, videoDurationBadge, primaryFileLabel, 
 test('StatusBar shows a Live Photo as one item with the combined size', async () => {
   const statusBar = await readFile(new URL('../src/components/StatusBar.vue', import.meta.url), 'utf8');
   const utils = await readFile(new URL('../src/common/utils.ts', import.meta.url), 'utf8');
-  const templateStart = statusBar.indexOf('<div class="flex items-center shrink-0">');
-  const templateEnd = statusBar.indexOf('<div class="flex items-center gap-1 shink-0">', templateStart);
+  const templateStart = statusBar.indexOf('<div class="flex h-full');
+  const templateEnd = statusBar.indexOf('<ContextMenu', templateStart);
   assert.ok(templateStart >= 0 && templateEnd > templateStart);
-  const template = statusBar.slice(templateStart, templateEnd) + '</template>';
+  const template = statusBar.slice(templateStart, templateEnd);
   const sizeHelper = utils.slice(utils.indexOf('export function getMediaItemSize'), utils.indexOf('export function formatFileSize'));
   const getMediaItemSize = new Function(ts.transpile(sizeHelper.replace('export function', 'function')) + '; return getMediaItemSize;')();
   const currentFile = { name: 'IMG.HEIC', file_type: 1, size: 100, companion_size: 200 };
+  const formatFileSize = size => `${size} B`;
+  const fieldSetup = statusBar.slice(statusBar.indexOf('const visibleFields ='), statusBar.indexOf('const containerClass'));
+  const resolveFields = new Function(
+    'computed', 'currentFile', 'config', 'normalizeStatusBarFields',
+    'shortenFilename', 'formatCameraInfo', 'getFolderPath', 'formatTakenDate', 'formatCaptureSettings',
+    'IconPhoto', 'IconVideo', 'IconFile', 'IconAspectRatio', 'IconCalendarDay',
+    'IconFolder', 'IconFolders', 'IconCameraAperture', 'IconCamera', 'IconLocation',
+    ts.transpile(fieldSetup) + '; return visibleFields();'
+  );
+  const icon = () => null;
+  const visibleFields = resolveFields(
+    callback => callback, { value: currentFile }, { settings: {} },
+    () => [{ key: 'name', visible: true }],
+    name => name, () => '', () => '', () => '', () => '',
+    ...Array(10).fill(icon)
+  );
   const app = createSSRApp({
     data: () => ({
-      selectedItemIndex: 1, hasRealSelectedFile: true, itemPosition: '2 / 4', totalFileSize: 500,
-      currentFile, isLivePhoto: true, rawPairBadge: '', IconPhoto: () => null,
-      formatFileSize: size => `${size} B`, getMediaItemSize, shortenFilename: name => name,
+      fileList: [currentFile], selectedFile: null, selectionCount: 0, emptyMessage: '',
+      hasRealSelectedFile: true, itemPosition: '2 / 4', totalFileSize: 500,
+      isLivePhoto: true, rawPairBadge: '', formatFileSize, visibleFields, currentFile, getMediaItemSize,
     }),
     render: compile(template),
   });
@@ -398,5 +414,5 @@ test('StatusBar shows a Live Photo as one item with the combined size', async ()
   for (const name of ['IconList', 'IconLivePhoto']) app.component(name, { render: () => null });
   const html = await renderToString(app);
   assert.match(html, /2 \/ 4 items \(500 B\)/);
-  assert.match(html, /IMG\.HEIC.*LIVE.*\(300 B\)/s);
+  assert.match(html, /IMG\.HEIC.*LIVE.*300 B/s);
 });

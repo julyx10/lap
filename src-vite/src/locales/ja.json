@@ -707,6 +707,12 @@
     "album_nested": "このフォルダは別のアルバムと重複しています"
   },
   "statusbar": {
+    "name_and_size": "ファイル名（サイズ）",
+    "color_info": "色情報",
+    "customize": "ステータスバーをカスタマイズ…",
+    "customize_title": "ステータスバーをカスタマイズ",
+    "restore_defaults": "既定値に戻す",
+    "selection_summary": "{count} 件選択（{size}）",
     "files_summary": "{count} ファイル ({size})",
     "items_summary": "{count} 項目 ({size})"
   },

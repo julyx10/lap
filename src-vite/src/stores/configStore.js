@@ -145,6 +145,7 @@ export const useConfigStore = defineStore('configStore', {
       darkTheme: 0,               // dark theme color index
       scale: 1,                   // root font-size scale
       showToolTip: true,          // show button tooltip
+      statusBarFields: null,
       showStatusBar: true,        // show status bar
       autoCheckUpdates: true,      // automatically check for updates
       fileDeleteBehavior: 'trash',

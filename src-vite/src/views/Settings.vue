@@ -97,7 +97,21 @@
               <div class="flex flex-col gap-0.5 text-sm leading-5">
                 <div>{{ $t('settings.general.show_status_bar') }}</div>
               </div>
-              <input type="checkbox" class="toggle toggle-primary toggle-sm" v-model="config.settings.showStatusBar" />
+              <div class="flex shrink-0 items-center gap-2">
+                <button
+                  :disabled="!config.settings.showStatusBar"
+                  class="btn btn-sm btn-ghost rounded-box bg-base-100 border border-base-content/30 text-base-content/70 hover:text-base-content"
+                  @click="showStatusBarFieldsDialog = true"
+                >
+                  {{ $t('statusbar.customize') }}
+                </button>
+                <input
+                  v-model="config.settings.showStatusBar"
+                  type="checkbox"
+                  class="toggle toggle-primary toggle-sm"
+                  :aria-label="$t('settings.general.show_status_bar')"
+                />
+              </div>
             </div>
           </div>
 
@@ -691,6 +705,7 @@
       </div>
     </div>
 
+    <StatusBarFieldsDialog v-if="showStatusBarFieldsDialog" @cancel="showStatusBarFieldsDialog = false" />
     <ModalDialog v-if="cleanupOpen" :title="$t(cleanupKey + '.title')" :width="440" hide-close>
       <div class="space-y-2 text-sm" role="status">
         <template v-if="cleanupRunning">
@@ -816,6 +831,7 @@ import TitleBar from '@/components/TitleBar.vue';
 import SettingsAbout from '@/components/SettingsAbout.vue';
 import SettingsMetadata from '@/components/SettingsMetadata.vue';
 import MessageBox from '@/components/MessageBox.vue';
+import StatusBarFieldsDialog from '@/components/StatusBarFieldsDialog.vue';
 import ModalDialog from '@/components/ModalDialog.vue';
 import BackupDialog from '@/components/BackupDialog.vue';
 import RestoreDialog from '@/components/RestoreDialog.vue';
@@ -925,6 +941,7 @@ const hasCustomDbStorage = ref(false);
 const showChangeDbStorageDialog = ref(false);
 const showResetDbStorageDialog = ref(false);
 const showBackupDialog = ref(false);
+const showStatusBarFieldsDialog = ref(false);
 const showRestoreDialog = ref(false);
 const isDownloadingMultilingualModel = ref(false);
 const isCancelingMultilingualModelDownload = ref(false);
@@ -1749,6 +1766,7 @@ watch(() => config.settings.face.clusterThresholdIndex, (newValue) => {
 
 // Handle keyboard shortcuts
 function handleKeyDown(event: KeyboardEvent) {
+  if (showStatusBarFieldsDialog.value) return;
   if (cleanupOpen.value) {
     if (event.key === 'Escape') {
       event.preventDefault();

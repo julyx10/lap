@@ -707,6 +707,12 @@
     "album_nested": "Esta carpeta se solapa con otro álbum"
   },
   "statusbar": {
+    "name_and_size": "Nombre de archivo (tamaño)",
+    "color_info": "Información de color",
+    "customize": "Personalizar la barra de estado…",
+    "customize_title": "Personalizar barra de estado",
+    "restore_defaults": "Restaurar valores predeterminados",
+    "selection_summary": "Selección: {count} ({size})",
     "files_summary": "{count} archivos ({size})",
     "items_summary": "{count} elementos ({size})"
   },

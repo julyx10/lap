@@ -707,6 +707,12 @@
     "album_nested": "이 폴더는 다른 앨범과 겹칩니다"
   },
   "statusbar": {
+    "name_and_size": "파일 이름(크기)",
+    "color_info": "색상 정보",
+    "customize": "상태 표시줄 사용자 지정…",
+    "customize_title": "상태 표시줄 사용자 지정",
+    "restore_defaults": "기본값 복원",
+    "selection_summary": "{count}개 선택됨 ({size})",
     "files_summary": "{count} 파일 ({size})",
     "items_summary": "{count}개 항목 ({size})"
   },

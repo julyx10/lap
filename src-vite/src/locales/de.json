@@ -707,6 +707,12 @@
     "album_nested": "Dieser Ordner überschneidet sich mit einem anderen Album"
   },
   "statusbar": {
+    "name_and_size": "Dateiname (Größe)",
+    "color_info": "Farbinformationen",
+    "customize": "Statusleiste anpassen…",
+    "customize_title": "Statusleiste anpassen",
+    "restore_defaults": "Standardeinstellungen wiederherstellen",
+    "selection_summary": "{count} ausgewählt ({size})",
     "files_summary": "{count} Dateien ({size})",
     "items_summary": "{count} Elemente ({size})"
   },

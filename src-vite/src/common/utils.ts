@@ -365,6 +365,12 @@ export function formatCaptureSettingValue(value: string | null | undefined): str
 }
 
 /// format capture settings to string
+export function formatTakenDate(file?: { e_date_time?: string | null; taken_date?: number | null } | null): string {
+  return file?.e_date_time?.trim() && file.taken_date != null
+    ? formatTimestamp(file.taken_date, 'date_time')
+    : '';
+}
+
 export function formatCaptureSettings(focal_length: string, exposure_time: string, f_number: string, iso_speed: string, exposure_bias: string): string {
   let result = '';
   result += focal_length ? formatCaptureSettingValue(focal_length) : '';

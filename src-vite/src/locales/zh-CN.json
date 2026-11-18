@@ -707,6 +707,12 @@
     "album_nested": "该文件夹与其他相册重叠"
   },
   "statusbar": {
+    "name_and_size": "文件名 (大小)",
+    "color_info": "色彩信息",
+    "customize": "自定义状态栏…",
+    "customize_title": "自定义状态栏",
+    "restore_defaults": "恢复默认",
+    "selection_summary": "已选 {count} 项（{size}）",
     "files_summary": "{count} 个文件 ({size})",
     "items_summary": "{count} 项 ({size})"
   },

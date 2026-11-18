@@ -171,8 +171,6 @@
         :selected-item-index="getFileIndexByPane(statusPane)"
         :total-file-count="fileCount"
         :total-file-size="getMediaItemSize(activeFileInfo)"
-        :image-scale="getPaneScale(statusPane).display"
-        :show-scale="true"
         :is-embedded="true"
       />
     </div>
@@ -281,11 +279,9 @@ const slideShowIntervalIndex = ref(Number(config.settings.slideShowInterval ?? 0
 let timer: NodeJS.Timeout | null = null;  // Timer for slide show
 
 const imageScale = ref(1);          // Image scale
-const imageDisplayScale = ref(1);   // User-facing image scale
 const imageMinScale = ref(0);       // Minimum image scale
 const imageMaxScale = ref(10);      // Maximum image scale
 const rightImageScale = ref(1);     // Right image scale
-const rightImageDisplayScale = ref(1); // User-facing right image scale
 const rightImageMinScale = ref(0);  // Right minimum scale
 const rightImageMaxScale = ref(10); // Right maximum scale
 
@@ -300,17 +296,16 @@ const extraPaneState = reactive<Record<'bottomLeft' | 'bottomRight', {
   nextFilePath: string;
   isZoomFit: boolean;
   scale: number;
-  displayScale: number;
   minScale: number;
   maxScale: number;
 }>>({
   bottomLeft: {
     fileId: 0, fileIndex: -1, fileInfo: null, nextFilePath: '',
-    isZoomFit: true, scale: 1, displayScale: 1, minScale: 0, maxScale: 10,
+    isZoomFit: true, scale: 1, minScale: 0, maxScale: 10,
   },
   bottomRight: {
     fileId: 0, fileIndex: -1, fileInfo: null, nextFilePath: '',
-    isZoomFit: true, scale: 1, displayScale: 1, minScale: 0, maxScale: 10,
+    isZoomFit: true, scale: 1, minScale: 0, maxScale: 10,
   },
 });
 const visiblePanes = computed<Pane[]>(() =>
@@ -1145,7 +1140,7 @@ function clearSecondaryPanes() {
   for (const pane of ['bottomLeft', 'bottomRight'] as const) {
     Object.assign(extraPaneState[pane], {
       fileId: 0, fileIndex: -1, fileInfo: null, nextFilePath: '',
-      isZoomFit: true, scale: 1, displayScale: 1, minScale: 0, maxScale: 10,
+      isZoomFit: true, scale: 1, minScale: 0, maxScale: 10,
     });
   }
 }
@@ -1193,19 +1188,19 @@ function getNextFilePathByPane(pane: Pane = 'left') {
 function getPaneScale(pane: Pane) {
   if (pane === 'right') {
     return {
-      scale: rightImageScale.value, display: rightImageDisplayScale.value,
+      scale: rightImageScale.value,
       min: rightImageMinScale.value, max: rightImageMaxScale.value,
     };
   }
   if (pane === 'bottomLeft' || pane === 'bottomRight') {
     const state = extraPaneState[pane];
     return {
-      scale: state.scale, display: state.displayScale,
+      scale: state.scale,
       min: state.minScale, max: state.maxScale,
     };
   }
   return {
-    scale: imageScale.value, display: imageDisplayScale.value,
+    scale: imageScale.value,
     min: imageMinScale.value, max: imageMaxScale.value,
   };
 }
@@ -1311,7 +1306,6 @@ const closeWindow = () => {
 const clickScale = (event: any, pane: Pane = 'left') => {
   if (pane === 'right') {
     rightImageScale.value = event.scale;
-    rightImageDisplayScale.value = event.displayScale ?? event.scale;
     rightImageMinScale.value = event.minScale;
     rightImageMaxScale.value = event.maxScale;
     return;
@@ -1319,14 +1313,12 @@ const clickScale = (event: any, pane: Pane = 'left') => {
   if (pane === 'bottomLeft' || pane === 'bottomRight') {
     const state = extraPaneState[pane];
     state.scale = event.scale;
-    state.displayScale = event.displayScale ?? event.scale;
     state.minScale = event.minScale;
     state.maxScale = event.maxScale;
     return;
   }
 
   imageScale.value = event.scale;
-  imageDisplayScale.value = event.displayScale ?? event.scale;
   imageMinScale.value = event.minScale;
   imageMaxScale.value = event.maxScale;
 };

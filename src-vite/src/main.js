@@ -10,6 +10,7 @@ import { getSystemRegionLocale } from '@/common/api'
 import 'cally'
 import router from '@/common/router'
 import App from '@/App.vue'
+import { normalizeStatusBarFields } from '@/common/statusBarFields'
 import { useConfigStore } from '@/stores/configStore'
 import '@/assets/app.css'
 
@@ -27,6 +28,13 @@ const currentWindowLabel = getCurrentWebviewWindow().label
 const isMainWindow = currentWindowLabel === 'main'
 const isSettingsWindow = currentWindowLabel === 'settings'
 let settingsSyncRequest = 0
+
+listen('status-bar-fields-changed', ({ payload }) => {
+  const fields = normalizeStatusBarFields(payload)
+  if (JSON.stringify(config.settings.statusBarFields) !== JSON.stringify(fields)) {
+    config.settings.statusBarFields = fields
+  }
+})
 
 listen('montage-config-changed', (event) => {
   // Keep other windows current so their later writes preserve collage preferences.

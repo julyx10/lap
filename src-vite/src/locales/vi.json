@@ -707,6 +707,12 @@
     "album_nested": "Thư mục này chồng lấn với một album khác"
   },
   "statusbar": {
+    "name_and_size": "Tên tệp (dung lượng)",
+    "color_info": "Thông tin màu",
+    "customize": "Tùy chỉnh thanh trạng thái…",
+    "customize_title": "Tùy chỉnh thanh trạng thái",
+    "restore_defaults": "Khôi phục mặc định",
+    "selection_summary": "Đã chọn {count} mục ({size})",
     "files_summary": "{count} tệp ({size})",
     "items_summary": "{count} mục ({size})"
   },
