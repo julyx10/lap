@@ -92,7 +92,6 @@
           @action="(actionName) => $emit('item-action', { action: actionName, index: getFileIndex(item, index) })"
           @selection-context-menu="(event) => $emit('selection-context-menu', getFileIndex(item, index), event)"
         />
-        <div v-else class="w-full h-full bg-base-200/70"></div>
       </div>
     </VirtualScroll>
     <!-- Empty State / Loading -->
