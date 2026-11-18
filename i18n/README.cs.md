@@ -15,7 +15,7 @@
 [English](../README.md) | Česky | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | [Italiano](README.it.md) | [Magyar](README.hu.md) | [Nederlands](README.nl.md) | [Polski](README.pl.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [Українська](README.uk.md) | [Tiếng Việt](README.vi.md) | [中文简体](README.zh-CN.md) | [中文繁體](README.zh-TW.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
 Lap je open-source správce fotografií se zaměřením na lokální provoz. Umožňuje procházet rodinná alba, rychle vyhledávat staré fotografie a spravovat offline rozsáhlé osobní knihovny médií.
-Bez povinného importu, předplatného nebo nahrávání. Otevřete stávající složky přímo v Lap. Soubory si zachovají umístění i formát. Uložte je do doprovodných souborů XMP pro použití v kompatibilních aplikacích.
+Bez povinného importu, předplatného nebo nahrávání. Otevřete stávající složky přímo v Lap. Soubory si zachovají umístění i formát. Uložte hodnocení a štítky do standardních doprovodných souborů XMP pro kompatibilní aplikace. Vyhledávání AI běží na vašem zařízení.
 
 <div align="center">
   <p><strong><a href="https://julyx10.github.io/lap/">OFICIÁLNÍ WEB</a> | <a href="https://julyx10.github.io/lap/demos/lap/index.html">DEMO</a></strong></p>
@@ -59,9 +59,9 @@ brew install --cask lap
 ## Funkce
 
 - **Flexibilní procházení knihovny** podle data, složky, místa, fotoaparátu, objektivu, štítků, hodnocení a tváří, včetně řazení a vyhledávání.
-- **Pracovní postup založený na složkách.** Více knihoven, import a export přetažením či přes schránku, dávkové přejmenování a synchronizace.
+- **Pracovní postup založený na složkách.** Více knihoven, import a export přetažením či přes schránku, dávkové přejmenování a synchronizace, bezpečné přesouvání, kopírování a mazání.
 - **Lokální vyhledávání pomocí AI** podle textových zadání, vizuální podobnosti, objektů, seskupování tváří a volitelné vícejazyčné vyhledávání ve více než 50 jazycích.
-- **Import metadat a zápis do XMP.** EXIF, IPTC, XMP.
+- **Import metadat a zápis do XMP** · Lap čte vložené EXIF, IPTC a XMP i doprovodné soubory (hodnocení, štítky, oblíbené položky, stav výběru, GPS a data). Textová pole lze upravovat a organizační údaje uložit do XMP.
 - **Chytrá alba.** Vlastní seskupování a řazení, filtry podle názvu složky a prohledávatelný výběr hodnot.
 - **Import s uspořádáním podle data** do složek podle dne, měsíce, roku nebo do jediné složky, se zachováním původních názvů souborů a vynecháváním duplicit.
 - **Kolekce a štítky** umožňují hromadně organizovat vybrané soubory, aniž by se originály přesouvaly nebo duplikovaly. Strom štítků s přetahováním a počty v jednotlivých větvích.
@@ -81,20 +81,29 @@ brew install --cask lap
 
 ## Metadata, kolekce a přesouvání souborů
 
-Lap čte kompatibilní metadata z Lightroomu, digiKamu, darktable a ACDSee. Import zapnete v nastavení. Podporované hodnoty z doprovodného XMP mají přednost před vloženými hodnotami. Místní úpravy zůstávají zachovány.
+Lap pracuje přímo se složkami. Většinu zobrazených údajů čte ze souborů. Organizační údaje lze zapsat do standardních doprovodných souborů XMP a používat je v jiných aplikacích.
+
+Lap čte kompatibilní metadata z Lightroomu, digiKamu, darktable a ACDSee. Rozsah podporovaných polí závisí na aplikaci.
 
 ### Co zůstává u souboru
 
 - Vaše původní fotografie a videa zůstávají vždy běžnými soubory ve svých stávajících složkách.
-- Metadata již vložená do souboru, například datum pořízení EXIF, fotoaparát, objektiv, GPS a orientace, Lap je načítá při indexování z tohoto souboru.
-- Název, titulek, popis, autora a autorská práva lze upravit a uložit do místní databáze. Uložení do XMP zapíše tato pole, štítky, hodnocení, oblíbené položky a stav výběru do doprovodných souborů. Ostatní vlastnosti XMP a originály zůstanou zachovány.
-- Když v Lap přejmenujete, přesunete, zkopírujete nebo odstraníte soubory, Lap současně aktualizuje svůj místní katalog. Zároveň zachovává pohromadě podporované skupiny souborů, například součásti Apple Live Photo, doprovodné soubory AAE a zapnuté dvojice RAW + JPEG/HEIC. Z dvojice RAW lze odstranit jeden nebo oba soubory. Pokud jeden zachováte, zachová se i sdílený soubor XMP.
+- Při indexování Lap čte vložené EXIF, IPTC a XMP, včetně údajů o snímku a organizačních polí. Organizační údaje importujete do místní databáze přes **Nastavení → Metadata → Import metadat**. Místní úpravy zůstanou zachovány.
+- Platné hodnoty z doprovodného souboru XMP mají přednost před vloženými hodnotami, včetně GPS a data pořízení.
+- Název, titulek, popis, autora a autorská práva lze upravit a uložit do místní databáze.
+- Uložení do XMP zapíše tato pole, štítky (včetně hierarchických klíčových slov), hodnocení, oblíbené položky a stav výběru do doprovodných souborů. Ostatní vlastnosti XMP a originály zůstanou zachovány.
+- Když v Lap přejmenujete, přesunete, zkopírujete, odstraníte nebo importujete soubory, Lap současně aktualizuje svůj místní katalog. Zároveň zachovává pohromadě podporované skupiny souborů, například součásti Apple Live Photo, doprovodné soubory XMP a AAE a zapnuté dvojice RAW + JPEG/HEIC. Z dvojice RAW lze odstranit jeden nebo oba soubory. Pokud jeden zachováte, zachová se i sdílený soubor XMP.
 - Uložení úprav obrázku pomocí vestavěných nástrojů zapíše výsledný obrázek do vybraného umístění.
 
 ### Co Lap ukládá lokálně
 
+Tyto údaje Lap ukládá do místní databáze nebo konfigurace knihovny.
+
 - Kolekce, chytrá alba, pravidla a nastavení zobrazení zůstávají v místní databázi nebo konfiguraci.
 - Data vyhledávání AI, data o tvářích, miniatury a další data indexu a mezipaměti
+- Štítky, hodnocení, oblíbené položky, stav výběru a upravitelná textová pole jsou uloženy lokálně a lze je zapsat do XMP.
+
+Při práci se soubory mimo Lap se tato data automaticky nepřenášejí.
 
 ### Práce se soubory mimo Lap
 
@@ -233,7 +242,7 @@ sudo apt install gstreamer1.0-libav gstreamer1.0-plugins-good
 | [libheif](https://github.com/strukturag/libheif) | Dekódování obrázků HEIC/HEIF/HIF a vytváření náhledů |
 | [libjpeg-turbo](https://libjpeg-turbo.org/) | Rychlé dekódování JPEG a vytváření miniatur |
 | [FFmpeg](https://ffmpeg.org/) | Zpracování videa a vytváření miniatur |
-| [exiftool-rs](https://github.com/Le-Syl21/exiftool-rs) | EXIF / IPTC / XMP |
+| [exiftool-rs](https://github.com/Le-Syl21/exiftool-rs) | Rust port nástroje ExifTool |
 | [Video.js](https://videojs.com/) | Uživatelské rozhraní pro přehrávání videa napříč platformami |
 | [ONNX Runtime](https://onnxruntime.ai/) | Lokální modul pro spouštění modelů AI |
 | [CLIP](https://github.com/openai/CLIP) | Vyhledávání podobnosti mezi obrázkem a textem |

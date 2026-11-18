@@ -3,6 +3,9 @@
   <h1>Lap – Privater lokaler Fotomanager</h1>
   <h3>Open-Source-Desktop-Fotomanager für macOS, Windows und Linux.</h3>
   <p>
+    <a href="https://trendshift.io/repositories/24497?utm_source=repository-badge&amp;utm_medium=badge&amp;utm_campaign=badge-repository-24497" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/repositories/24497" alt="julyx10%2Flap | Trendshift" width="250" height="55"/></a>
+  </p>
+  <p>
     <a href="https://github.com/julyx10/lap/releases"><img src="https://img.shields.io/github/v/release/julyx10/lap" alt="GitHub release"></a>
     <a href="https://github.com/julyx10/lap/releases"><img src="https://img.shields.io/github/downloads/julyx10/lap/total" alt="GitHub all releases"></a>
     <a href="https://github.com/julyx10/lap/stargazers"><img src="https://img.shields.io/github/stars/julyx10/lap" alt="GitHub stars"></a>
@@ -12,7 +15,7 @@
 [English](../README.md) | [Česky](README.cs.md) | Deutsch | [Español](README.es.md) | [Français](README.fr.md) | [Italiano](README.it.md) | [Magyar](README.hu.md) | [Nederlands](README.nl.md) | [Polski](README.pl.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [Українська](README.uk.md) | [Tiếng Việt](README.vi.md) | [中文简体](README.zh-CN.md) | [中文繁體](README.zh-TW.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
 Lap ist ein quelloffener, lokal orientierter Fotomanager zum Durchsuchen von Familienalben, zum schnellen Finden alter Fotos und zum Offline-Verwalten großer persönlichen Medienbibliotheken.
-Kein Pflichtimport, kein Abo, kein Upload. Öffnen Sie vorhandene Ordner direkt in Lap. Ihre Dateien bleiben am ursprünglichen Ort und im ursprünglichen Format. Speichern Sie Bewertungen und Tags für kompatible Foto-Apps in XMP-Begleitdateien.
+Kein Pflichtimport, kein Abo, kein Upload. Öffnen Sie vorhandene Ordner direkt in Lap. Ihre Dateien bleiben am ursprünglichen Ort und im ursprünglichen Format. Speichern Sie Bewertungen und Tags für kompatible Foto-Apps in XMP-Begleitdateien. Die KI-Suche läuft auf Ihrem Gerät.
 
 <div align="center">
   <p><strong><a href="https://julyx10.github.io/lap/">OFFIZIELLE WEBSITE</a> | <a href="https://julyx10.github.io/lap/demos/lap/index.html">DEMO</a></strong></p>
@@ -56,9 +59,9 @@ brew install --cask lap
 ## Funktionen
 
 - **Flexible Bibliotheksansichten** nach Datum, Ordner, Ort, Kamera, Objektiv, Tags, Bewertungen und Gesichtern, mit Sortierung und Suche.
-- **Ordnerbasierter Workflow.** Mehrere Bibliotheken, Import und Export per Drag-and-drop oder Zwischenablage, Stapelumbenennung und Dateisynchronisierung.
+- **Ordnerbasierter Workflow.** Mehrere Bibliotheken, Import und Export per Drag-and-drop oder Zwischenablage, Stapelumbenennung und Dateisynchronisierung, sicheres Verschieben, Kopieren und Löschen.
 - **Lokale KI-Suche** mit Textanfragen, visueller Ähnlichkeit, Motiven, Gesichtsgruppierung und optionaler Suche in über 50 Sprachen.
-- **Metadatenimport und XMP-Export.** EXIF, IPTC, XMP.
+- **Metadatenimport und XMP-Export** · Lap liest eingebettetes EXIF, IPTC und XMP sowie Begleitdateien (Bewertungen, Tags, Favoriten, Auswahlstatus, GPS und Datumsangaben). Textfelder lassen sich bearbeiten und Organisationsdaten in XMP speichern.
 - **Intelligente Alben.** Eigene Gruppierung und Sortierung, Ordnernamenfilter und durchsuchbare Werteauswahl.
 - **Import nach Datum** in Tages-, Monats-, Jahres- oder einzelne Ordner, mit ursprünglichen Dateinamen und Überspringen von Duplikaten.
 - **Sammlungen und Tags** zum gemeinsamen Organisieren ausgewählter Dateien, ohne Originale zu verschieben oder zu kopieren. Verschlagwortung mit Tag-Baum, Drag-and-drop und Zählung je Teilbaum.
@@ -78,20 +81,29 @@ brew install --cask lap
 
 ## Metadaten, Sammlungen und das Verschieben von Dateien
 
-Lap liest kompatible Metadaten aus Lightroom, digiKam, darktable und ACDSee. Aktivieren Sie den Metadatenimport in den Einstellungen. Unterstützte XMP-Begleitwerte haben Vorrang vor eingebetteten Werten. Lokale Änderungen bleiben erhalten.
+Lap arbeitet direkt mit Ordnern. Die meisten angezeigten Informationen stammen aus den Dateien. Organisationsdaten lassen sich in standardisierte XMP-Begleitdateien schreiben und in anderen Foto-Apps lesen.
+
+Lap liest kompatible Metadaten aus Lightroom, digiKam, darktable und ACDSee. Die unterstützten Felder hängen von der Anwendung ab.
 
 ### Was bei der Datei bleibt
 
 - Ihre Originalfotos und -videos bleiben stets normale Dateien in ihren vorhandenen Ordnern.
-- Bereits in einer Datei eingebettete Metadaten wie EXIF-Aufnahmedatum, Kamera, Objektiv, GPS und Ausrichtung werden beim Indizieren von Lap aus der Datei gelesen.
-- Titel, Überschrift, Beschreibung, Urheber und Copyright lassen sich bearbeiten und werden in der lokalen Datenbank gespeichert. Der Befehl zum Speichern von Metadaten in XMP schreibt diese Felder sowie Tags, Bewertungen, Favoriten und Auswahlstatus in Begleitdateien. Andere XMP-Eigenschaften und die Originaldateien bleiben erhalten.
-- Wenn Sie Dateien **in Lap** umbenennen, verschieben, kopieren oder löschen, aktualisiert Lap gleichzeitig seinen lokalen Katalog. Unterstützte zusammengehörige Dateien wie Apple-Live-Photo-Komponenten, AAE-Seitendateien und aktivierte RAW- + JPEG/HEIC-Paare werden dabei zusammengehalten. Bei RAW-Paaren können Sie eine oder beide Dateien löschen. Bleibt eine Datei erhalten, bleibt auch die gemeinsame XMP-Begleitdatei erhalten.
+- Beim Indizieren liest Lap eingebettetes EXIF, IPTC und XMP mit Aufnahme- und Organisationsdaten. Unter **Einstellungen → Metadaten → Metadaten importieren** können Sie Organisationsdaten in die lokale Datenbank übernehmen. Lokale Änderungen bleiben erhalten.
+- Unterstützte Werte aus XMP-Begleitdateien haben Vorrang vor eingebetteten Werten, auch bei GPS und Aufnahmedatum.
+- Titel, Überschrift, Beschreibung, Urheber und Copyright lassen sich bearbeiten und werden in der lokalen Datenbank gespeichert.
+- Der Befehl zum Speichern von Metadaten in XMP schreibt diese Felder sowie Tags (einschließlich hierarchischer Stichwörter), Bewertungen, Favoriten und Auswahlstatus in Begleitdateien. Andere XMP-Eigenschaften und die Originaldateien bleiben erhalten.
+- Wenn Sie Dateien **in Lap** umbenennen, verschieben, kopieren, löschen oder importieren, aktualisiert Lap gleichzeitig seinen lokalen Katalog. Unterstützte zusammengehörige Dateien wie Apple-Live-Photo-Komponenten, XMP- und AAE-Begleitdateien und aktivierte RAW- + JPEG/HEIC-Paare werden dabei zusammengehalten. Bei RAW-Paaren können Sie eine oder beide Dateien löschen. Bleibt eine Datei erhalten, bleibt auch die gemeinsame XMP-Begleitdatei erhalten.
 - Das Speichern einer integrierten Bildbearbeitung schreibt das resultierende Bild an den gewählten Speicherort.
 
 ### Was Lap lokal speichert
 
+Diese Bibliotheksdaten speichert Lap in der lokalen Datenbank oder Bibliothekskonfiguration.
+
 - Sammlungen, Smart-Alben, deren Regeln und Ansichtseinstellungen bleiben in der lokalen Datenbank oder Konfiguration.
 - KI-Suchdaten, Gesichtsdaten, Thumbnails und weitere Index- bzw. Cache-Daten
+- Tags, Bewertungen, Favoriten, Auswahlstatus und bearbeitbare Textfelder werden lokal gespeichert und können in XMP geschrieben werden.
+
+Bei Dateioperationen außerhalb von Lap werden diese Daten standardmäßig nicht mitgeführt.
 
 ### Arbeiten mit Dateien außerhalb von Lap
 
@@ -230,7 +242,7 @@ sudo apt install gstreamer1.0-libav gstreamer1.0-plugins-good
 | [libheif](https://github.com/strukturag/libheif) | HEIC/HEIF/HIF-Bilddekodierung und Vorschaugenerierung |
 | [libjpeg-turbo](https://libjpeg-turbo.org/) | Schnelle JPEG-Dekodierung und Thumbnail-Generierung |
 | [FFmpeg](https://ffmpeg.org/) | Videoverarbeitung und Thumbnail-Generierung |
-| [exiftool-rs](https://github.com/Le-Syl21/exiftool-rs) | EXIF / IPTC / XMP |
+| [exiftool-rs](https://github.com/Le-Syl21/exiftool-rs) | Rust-Portierung von ExifTool |
 | [Video.js](https://videojs.com/) | Plattformübergreifende Benutzeroberfläche für die Videowiedergabe |
 | [ONNX Runtime](https://onnxruntime.ai/) | Lokale KI-Modell-Inferenz-Engine |
 | [CLIP](https://github.com/openai/CLIP) | Bild-Text-Ähnlichkeitssuche |

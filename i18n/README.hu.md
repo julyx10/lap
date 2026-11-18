@@ -3,6 +3,9 @@
   <h1>Lap – Privát, helyi fotókezelő</h1>
   <h3>Nyílt forráskódú asztali fotókezelő macOS, Windows és Linux rendszerekhez.</h3>
   <p>
+    <a href="https://trendshift.io/repositories/24497?utm_source=repository-badge&amp;utm_medium=badge&amp;utm_campaign=badge-repository-24497" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/repositories/24497" alt="julyx10%2Flap | Trendshift" width="250" height="55"/></a>
+  </p>
+  <p>
     <a href="https://github.com/julyx10/lap/releases"><img src="https://img.shields.io/github/v/release/julyx10/lap" alt="GitHub release"></a>
     <a href="https://github.com/julyx10/lap/releases"><img src="https://img.shields.io/github/downloads/julyx10/lap/total" alt="GitHub all releases"></a>
     <a href="https://github.com/julyx10/lap/stargazers"><img src="https://img.shields.io/github/stars/julyx10/lap" alt="GitHub stars"></a>
@@ -12,7 +15,7 @@
 [English](../README.md) | [Česky](README.cs.md) | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | [Italiano](README.it.md) | Magyar | [Nederlands](README.nl.md) | [Polski](README.pl.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [Українська](README.uk.md) | [Tiếng Việt](README.vi.md) | [中文简体](README.zh-CN.md) | [中文繁體](README.zh-TW.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
 A Lap egy nyílt forráskódú, helyi alapú fotókezelő családi albumok böngészéséhez, régi fényképek gyors megtalálásához és nagy személyes médiakönyvtárak offline kezeléséhez.
-Nincs kötelező importálás, előfizetés vagy feltöltés. Nyissa meg meglévő mappáit közvetlenül a Lapban. A fájlok helye és formátuma megmarad. Mentse őket XMP-kísérőfájlokba kompatibilis alkalmazásokhoz.
+Nincs kötelező importálás, előfizetés vagy feltöltés. Nyissa meg meglévő mappáit közvetlenül a Lapban. A fájlok helye és formátuma megmarad. Mentse őket XMP-kísérőfájlokba kompatibilis alkalmazásokhoz. A mesterséges intelligenciával végzett keresés a saját gépeden fut.
 
 <div align="center">
   <p><strong><a href="https://julyx10.github.io/lap/">HIVATALOS WEBOLDAL</a> | <a href="https://julyx10.github.io/lap/demos/lap/index.html">DEMÓ</a></strong></p>
@@ -56,9 +59,9 @@ brew install --cask lap
 ## Funkciók
 
 - **Rugalmas könyvtárböngészés** dátum, mappa, helyszín, fényképezőgép, objektív, címkék, értékelések és arcok szerint, rendezéssel és kereséssel.
-- **Mappaközpontú munkafolyamat.** Több könyvtár, importálás és exportálás húzással vagy vágólapon, kötegelt átnevezés és szinkronizálás.
+- **Mappaközpontú munkafolyamat.** Több könyvtár, importálás és exportálás húzással vagy vágólapon, kötegelt átnevezés és szinkronizálás, biztonságos áthelyezés, másolás és törlés.
 - **Helyi AI-keresés** szöveges lekérdezésekhez, vizuális hasonlósághoz, témákhoz, arccsoportosításhoz, valamint opcionális többnyelvű kereséshez több mint 50 nyelven.
-- **Metaadatok importálása és írása XMP-be.** EXIF, IPTC, XMP.
+- **Metaadat-importálás és XMP-írás** · A Lap beágyazott EXIF-, IPTC- és XMP-adatokat és kísérőfájlokat olvas (értékelések, címkék, kedvencek, válogatási állapotok, GPS és dátumok). A szövegmezők szerkeszthetők, a rendszerezési adatok XMP-be menthetők.
 - **Intelligens albumok.** Egyéni csoportosítás és rendezés, mappanévszűrők és kereshető értékválasztók.
 - **Dátum szerinti importálás** napi, havi, éves vagy egyetlen mappás elrendezéssel, eredeti fájlnevekkel és a duplikátumok kihagyásával.
 - **Gyűjtemények és címkék** a kiválasztott fájlok tömeges rendszerezéséhez, az eredeti fájlok áthelyezése vagy duplikálása nélkül. Címkefa húzással és ágankénti elemszámmal.
@@ -78,20 +81,29 @@ brew install --cask lap
 
 ## Metaadatok, gyűjtemények és fájlok áthelyezése
 
-A Lap beolvassa a Lightroom, a digiKam, a darktable és az ACDSee kompatibilis metaadatait. Az importálást a beállításokban kapcsolhatja be. A támogatott XMP-értékek elsőbbséget élveznek a beágyazott értékekkel szemben. A helyi módosítások megmaradnak.
+A Lap közvetlenül a mappákkal dolgozik. A megjelenített adatok többségét a fájlokból olvassa. A rendszerezési adatok szabványos XMP-kísérőfájlba írhatók, amelyet más fotóalkalmazások is olvashatnak.
+
+A Lap beolvassa a Lightroom, a digiKam, a darktable és az ACDSee kompatibilis metaadatait. A támogatott mezők alkalmazásonként eltérnek.
 
 ### Mi marad a fájllal
 
 - Eredeti fényképei és videói mindig szokásos fájlok maradnak a meglévő mappáikban.
-- A fájlba már beágyazott metaadatokat – például az EXIF-felvétel dátumát, a fényképezőgépet, az objektívet, a GPS-t és a tájolást – a Lap az indexeléskor a fájlból olvassa ki.
-- A cím, címsor, leírás, készítő és szerzői jog szerkeszthető és a helyi adatbázisban tárolódik. Az XMP-mentés ezeket a mezőket, a címkéket, az értékeléseket, a kedvenceket és a válogatási állapotokat kísérőfájlba írja. A többi XMP-adat és az eredeti megmarad.
-- Amikor fájlokat nevez át, helyez át, másol vagy töröl **a Lapban**, a Lap ezzel egyidejűleg frissíti a helyi katalógusát. A támogatott csoportosított elemeket – például az Apple Live Photo összetevőit, az AAE-oldalfájlokat és az engedélyezett RAW + JPEG/HEIC párokat – együtt tartja. RAW-pár esetén az egyik vagy mindkét fájl törölhető. Ha az egyik megmarad, a közös XMP-fájl is megmarad.
+- Indexeléskor a Lap beolvassa a beágyazott EXIF-, IPTC- és XMP-adatokat, beleértve a felvételi és rendszerezési adatokat. A rendszerezési adatok helyi importálásához kapcsold be a **Beállítások → Metaadatok → Metaadatok importálása** lehetőséget. A helyi módosítások megmaradnak.
+- Az XMP-kísérőfájl támogatott értékei elsőbbséget élveznek a beágyazott értékekkel szemben, ideértve a GPS-t és a felvétel dátumát.
+- A cím, címsor, leírás, készítő és szerzői jog szerkeszthető és a helyi adatbázisban tárolódik.
+- Az XMP-mentés ezeket a mezőket, a címkéket (a hierarchikus kulcsszavakkal együtt), az értékeléseket, a kedvenceket és a válogatási állapotokat kísérőfájlba írja. A többi XMP-adat és az eredeti megmarad.
+- Amikor fájlokat nevez át, helyez át, másol, töröl vagy importál **a Lapban**, a Lap ezzel egyidejűleg frissíti a helyi katalógusát. A támogatott csoportosított elemeket – például az Apple Live Photo összetevőit, az XMP- és AAE-kísérőfájlokat és az engedélyezett RAW + JPEG/HEIC párokat – együtt tartja. RAW-pár esetén az egyik vagy mindkét fájl törölhető. Ha az egyik megmarad, a közös XMP-fájl is megmarad.
 - Egy beépített képszerkesztés mentése az eredményül kapott képet a kiválasztott célhelyre írja.
 
 ### Mit tárol a Lap helyileg
 
+A Lap ezeket a helyi adatbázisban vagy a könyvtár beállításaiban tárolja.
+
 - A gyűjtemények, intelligens albumok, szabályok és nézetbeállítások a helyi adatbázisban vagy konfigurációban maradnak.
 - AI-keresési adatok, arcadatok, bélyegképek és egyéb index- vagy gyorsítótár-adatok
+- A címkék, értékelések, kedvencek, válogatási állapotok és szerkeszthető szövegmezők helyben tárolódnak és XMP-be írhatók.
+
+A Lap alkalmazáson kívül ezek az adatok alapértelmezés szerint nem követik a fájlokat.
 
 ### Munka a Lapon kívüli fájlokkal
 
@@ -230,7 +242,7 @@ sudo apt install gstreamer1.0-libav gstreamer1.0-plugins-good
 | [libheif](https://github.com/strukturag/libheif) | HEIC/HEIF/HIF képek dekódolása és előnézet-generálás |
 | [libjpeg-turbo](https://libjpeg-turbo.org/) | Gyors JPEG-dekódolás és bélyegkép-generálás |
 | [FFmpeg](https://ffmpeg.org/) | Videofeldolgozás és bélyegkép-generálás |
-| [exiftool-rs](https://github.com/Le-Syl21/exiftool-rs) | EXIF / IPTC / XMP |
+| [exiftool-rs](https://github.com/Le-Syl21/exiftool-rs) | Az ExifTool Rust-portja |
 | [Video.js](https://videojs.com/) | Platformokon átívelő videolejátszó felhasználói felület |
 | [ONNX Runtime](https://onnxruntime.ai/) | Helyi AI-modell következtető motor |
 | [CLIP](https://github.com/openai/CLIP) | Kép-szöveg hasonlósági keresés |

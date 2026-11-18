@@ -3,6 +3,9 @@
   <h1>Lap - Privé lokale fotobeheerder</h1>
   <h3>Open-source fotobeheerder voor desktop op macOS, Windows en Linux.</h3>
   <p>
+    <a href="https://trendshift.io/repositories/24497?utm_source=repository-badge&amp;utm_medium=badge&amp;utm_campaign=badge-repository-24497" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/repositories/24497" alt="julyx10%2Flap | Trendshift" width="250" height="55"/></a>
+  </p>
+  <p>
     <a href="https://github.com/julyx10/lap/releases"><img src="https://img.shields.io/github/v/release/julyx10/lap" alt="GitHub release"></a>
     <a href="https://github.com/julyx10/lap/releases"><img src="https://img.shields.io/github/downloads/julyx10/lap/total" alt="GitHub all releases"></a>
     <a href="https://github.com/julyx10/lap/stargazers"><img src="https://img.shields.io/github/stars/julyx10/lap" alt="GitHub stars"></a>
@@ -12,7 +15,7 @@
 [English](../README.md) | [Česky](README.cs.md) | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | [Italiano](README.it.md) | [Magyar](README.hu.md) | Nederlands | [Polski](README.pl.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [Українська](README.uk.md) | [Tiếng Việt](README.vi.md) | [中文简体](README.zh-CN.md) | [中文繁體](README.zh-TW.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
 Lap is een open-source, local-first fotobeheerder om door familiealbums te bladeren, oude foto's snel terug te vinden en grote persoonlijke mediabibliotheken offline te beheren.
-Geen verplichte import, abonnement of upload. Open bestaande mappen rechtstreeks in Lap. Bestanden behouden hun locatie en formaat. Sla ze op in XMP-nevenbestanden voor gebruik in compatibele foto-apps.
+Geen verplichte import, abonnement of upload. Open bestaande mappen rechtstreeks in Lap. Bestanden behouden hun locatie en formaat. Sla ze op in XMP-nevenbestanden voor gebruik in compatibele foto-apps. AI-zoeken draait op je eigen apparaat.
 
 <div align="center">
   <p><strong><a href="https://julyx10.github.io/lap/">OFFICIËLE WEBSITE</a> | <a href="https://julyx10.github.io/lap/demos/lap/index.html">DEMO</a></strong></p>
@@ -56,9 +59,9 @@ brew install --cask lap
 ## Functies
 
 - **Flexibel bladeren door je bibliotheek** op datum, map, locatie, camera, objectief, tags, beoordelingen en gezichten, met sortering en zoeken.
-- **Werken vanuit mappen.** Meerdere bibliotheken, import en export via slepen of klembord, batchgewijs hernoemen en synchronisatie.
+- **Werken vanuit mappen.** Meerdere bibliotheken, import en export via slepen of klembord, batchgewijs hernoemen en synchronisatie, veilig verplaatsen, kopiëren en verwijderen.
 - **Lokaal zoeken met AI** op tekst, visuele overeenkomst, onderwerpen, gezichtsgroepering en optioneel meertalig zoeken in meer dan 50 talen.
-- **Metadata importeren en wegschrijven naar XMP.** EXIF, IPTC, XMP.
+- **Metadata importeren en naar XMP schrijven** · Lap leest ingebedde EXIF-, IPTC- en XMP-gegevens en sidecars (beoordelingen, tags, favorieten, selectiestatus, GPS en datums). Je kunt tekstvelden bewerken en organisatiegegevens naar XMP schrijven.
 - **Slimme albums.** Aangepaste groepering en sortering, filters op mapnaam en doorzoekbare keuzelijsten.
 - **Importeren op datum** met een indeling per dag, maand, jaar of in één map, met behoud van originele bestandsnamen en het overslaan van duplicaten.
 - **Collecties en tags** om geselecteerde bestanden in bulk te ordenen zonder de originelen te verplaatsen of te dupliceren. Tagboom met slepen en aantallen per tak.
@@ -78,20 +81,29 @@ brew install --cask lap
 
 ## Metadata, collecties en het verplaatsen van bestanden
 
-Lap leest compatibele metadata van Lightroom, digiKam, darktable en ACDSee. Schakel import in via de instellingen. Ondersteunde waarden uit XMP-nevenbestanden hebben voorrang op ingesloten waarden. Lokale wijzigingen blijven behouden.
+Lap werkt rechtstreeks met je mappen en leest de meeste getoonde informatie uit de bestanden. Je kunt organisatiegegevens bewaren in standaard XMP-sidecars die andere foto-apps kunnen lezen.
+
+Lap leest compatibele metadata van Lightroom, digiKam, darktable en ACDSee. Welke velden worden ondersteund, verschilt per app.
 
 ### Wat bij het bestand blijft
 
 - Je originele foto's en video's blijven altijd gewone bestanden in hun bestaande mappen.
-- Metadata die al in een bestand zit, zoals de EXIF-opnamedatum, camera, objectief, GPS en oriëntatie, wordt uit dat bestand gelezen wanneer Lap het indexeert.
-- Titel, kopregel, beschrijving, maker en copyright zijn bewerkbaar en worden lokaal in de database opgeslagen. Opslaan naar XMP schrijft deze velden, tags, beoordelingen, favorieten en selectiestatussen naar nevenbestanden. Andere XMP-eigenschappen en originelen blijven behouden.
-- Als je bestanden **in Lap** hernoemt, verplaatst, kopieert of verwijdert, werkt Lap tegelijk zijn lokale catalogus bij. Ook ondersteunde gegroepeerde bestanden blijven bij elkaar, zoals de onderdelen van een Apple Live Photo, AAE-sidecars en ingeschakelde RAW + JPEG/HEIC-paren. Bij een RAW-paar kunt u één bestand of beide verwijderen. Als één bestand blijft, blijft ook het gedeelde XMP-bestand behouden.
+- Bij het indexeren leest Lap ingebedde EXIF-, IPTC- en XMP-gegevens, waaronder opname- en organisatiegegevens. Schakel **Instellingen → Metadata → Metadata importeren** in om organisatiegegevens in de lokale database op te nemen. Lokale bewerkingen blijven behouden.
+- Ondersteunde waarden uit XMP-sidecars gaan vóór ingebedde waarden, ook voor GPS en opnamedatum.
+- Titel, kopregel, beschrijving, maker en copyright zijn bewerkbaar en worden lokaal in de database opgeslagen.
+- Opslaan naar XMP schrijft deze velden, tags (inclusief hiërarchische trefwoorden), beoordelingen, favorieten en selectiestatussen naar nevenbestanden. Andere XMP-eigenschappen en originelen blijven behouden.
+- Als je bestanden **in Lap** hernoemt, verplaatst, kopieert, verwijdert of importeert, werkt Lap tegelijk zijn lokale catalogus bij. Ook ondersteunde gegroepeerde bestanden blijven bij elkaar, zoals de onderdelen van een Apple Live Photo, XMP- en AAE-sidecars en ingeschakelde RAW + JPEG/HEIC-paren. Bij een RAW-paar kunt u één bestand of beide verwijderen. Als één bestand blijft, blijft ook het gedeelde XMP-bestand behouden.
 - Als je een bewerking in de ingebouwde editor opslaat, wordt de bewerkte afbeelding naar de gekozen bestemming geschreven.
 
 ### Wat Lap lokaal opslaat
 
+Lap bewaart deze bibliotheekgegevens in de lokale database of bibliotheekconfiguratie.
+
 - Collecties, slimme albums, regels en weergave-instellingen blijven in de lokale database of configuratie.
 - AI-zoekgegevens, gezichtsgegevens, miniaturen en andere index- en cachegegevens
+- Tags, beoordelingen, favorieten, selectiestatus en bewerkbare tekstvelden worden lokaal opgeslagen en kunnen naar XMP worden geschreven.
+
+Standaard gaan deze gegevens niet mee met bestanden buiten Lap.
 
 ### Werken met bestanden buiten Lap
 
@@ -230,7 +242,7 @@ sudo apt install gstreamer1.0-libav gstreamer1.0-plugins-good
 | [libheif](https://github.com/strukturag/libheif) | HEIC/HEIF/HIF-afbeeldingen decoderen en voorbeelden genereren |
 | [libjpeg-turbo](https://libjpeg-turbo.org/) | Snel JPEG decoderen en miniaturen genereren |
 | [FFmpeg](https://ffmpeg.org/) | Videoverwerking en miniaturen genereren |
-| [exiftool-rs](https://github.com/Le-Syl21/exiftool-rs) | EXIF / IPTC / XMP |
+| [exiftool-rs](https://github.com/Le-Syl21/exiftool-rs) | Rust-port van ExifTool |
 | [Video.js](https://videojs.com/) | Interface voor video afspelen op alle platforms |
 | [ONNX Runtime](https://onnxruntime.ai/) | Engine voor lokale uitvoering van AI-modellen |
 | [CLIP](https://github.com/openai/CLIP) | Zoeken op overeenkomst tussen afbeelding en tekst |

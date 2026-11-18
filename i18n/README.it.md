@@ -3,6 +3,9 @@
   <h1>Lap – Gestore fotografico locale e privato</h1>
   <h3>Gestore fotografico desktop open source per macOS, Windows e Linux.</h3>
   <p>
+    <a href="https://trendshift.io/repositories/24497?utm_source=repository-badge&amp;utm_medium=badge&amp;utm_campaign=badge-repository-24497" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/repositories/24497" alt="julyx10%2Flap | Trendshift" width="250" height="55"/></a>
+  </p>
+  <p>
     <a href="https://github.com/julyx10/lap/releases"><img src="https://img.shields.io/github/v/release/julyx10/lap" alt="GitHub release"></a>
     <a href="https://github.com/julyx10/lap/releases"><img src="https://img.shields.io/github/downloads/julyx10/lap/total" alt="GitHub all releases"></a>
     <a href="https://github.com/julyx10/lap/stargazers"><img src="https://img.shields.io/github/stars/julyx10/lap" alt="GitHub stars"></a>
@@ -12,7 +15,7 @@
 [English](../README.md) | [Česky](README.cs.md) | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | Italiano | [Magyar](README.hu.md) | [Nederlands](README.nl.md) | [Polski](README.pl.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [Українська](README.uk.md) | [Tiếng Việt](README.vi.md) | [中文简体](README.zh-CN.md) | [中文繁體](README.zh-TW.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
 Lap è un gestore fotografico open source e local-first, pensato per sfogliare album di famiglia, ritrovare rapidamente vecchie foto e gestire offline ampie raccolte multimediali personali.
-Senza importazione obbligatoria, abbonamento o caricamenti. Apri le cartelle esistenti direttamente in Lap. I file conservano posizione e formato originali. Salvali in file sidecar XMP per usarli con app compatibili.
+Senza importazione obbligatoria, abbonamento o caricamenti. Apri le cartelle esistenti direttamente in Lap. I file conservano posizione e formato originali. Salvali in file sidecar XMP per usarli con app compatibili. La ricerca con IA viene eseguita sul tuo dispositivo.
 
 <div align="center">
   <p><strong><a href="https://julyx10.github.io/lap/">SITO UFFICIALE</a> | <a href="https://julyx10.github.io/lap/demos/lap/index.html">DEMO</a></strong></p>
@@ -56,9 +59,9 @@ brew install --cask lap
 ## Funzionalità
 
 - **Navigazione flessibile della raccolta** per data, cartella, posizione, fotocamera, obiettivo, tag, valutazioni e volti, con ordinamento e ricerca.
-- **Flusso di lavoro incentrato sulle cartelle.** Più librerie, importazione ed esportazione tramite trascinamento o appunti, rinomina in blocco e sincronizzazione.
+- **Flusso di lavoro incentrato sulle cartelle.** Più librerie, importazione ed esportazione tramite trascinamento o appunti, rinomina in blocco e sincronizzazione, spostamento, copia ed eliminazione sicuri.
 - **Ricerca IA locale** con prompt di testo, similarità visiva, soggetti, raggruppamento dei volti e ricerca multilingue facoltativa in oltre 50 lingue.
-- **Importazione dei metadati e scrittura XMP.** EXIF, IPTC, XMP.
+- **Importazione dei metadati e scrittura in XMP** · Lap legge EXIF, IPTC e XMP incorporati e i sidecar (valutazioni, tag, preferiti, stati di selezione, GPS e date). Puoi modificare i campi di testo e salvare i dati di organizzazione nei sidecar XMP.
 - **Album intelligenti.** Raggruppamento e ordinamento personalizzati, filtri per nome cartella e selettori con ricerca.
 - **Importazione organizzata per data** con struttura per giorno, mese, anno o cartella singola, nomi file originali e salto dei duplicati.
 - **Raccolte e tag** per organizzare in blocco i file selezionati senza spostare o duplicare gli originali. Albero di tag con trascinamento e conteggi per ramo.
@@ -78,20 +81,29 @@ brew install --cask lap
 
 ## Metadati, raccolte e spostamento dei file
 
-Lap legge i metadati compatibili di Lightroom, digiKam, darktable e ACDSee. Attiva l’importazione nelle impostazioni. I valori supportati dei sidecar XMP hanno priorità su quelli incorporati. Le modifiche locali vengono conservate.
+Lap lavora direttamente con le cartelle e legge dai file la maggior parte delle informazioni visualizzate. Puoi scrivere i dati di organizzazione in sidecar XMP standard leggibili da altre app fotografiche.
+
+Lap legge i metadati compatibili di Lightroom, digiKam, darktable e ACDSee. I campi supportati variano in base all’applicazione.
 
 ### Cosa resta nel file
 
 - Le foto e i video originali rimangono sempre file comuni nelle rispettive cartelle esistenti.
-- I metadati già incorporati in un file, come data di scatto EXIF, fotocamera, obiettivo, GPS e orientamento, vengono letti da quel file quando Lap lo indicizza.
-- Titolo, intestazione, descrizione, autore e copyright sono modificabili e salvati nel database locale. Il salvataggio in XMP scrive questi campi, tag, valutazioni, preferiti e stati di selezione nei sidecar, preservando le altre proprietà XMP e gli originali.
-- Quando si rinominano, spostano, copiano o eliminano file **in Lap**, Lap aggiorna contemporaneamente il proprio catalogo locale. Mantiene inoltre insieme gli asset raggruppati supportati, come i componenti delle Apple Live Photo, i file sidecar AAE e le coppie RAW + JPEG/HEIC abilitate. Puoi eliminare uno o entrambi i file di una coppia RAW. Se ne mantieni uno, rimane anche il sidecar XMP condiviso.
+- Durante l’indicizzazione Lap legge i dati EXIF, IPTC e XMP incorporati, compresi i dati di scatto e di organizzazione. Attiva **Impostazioni → Metadati → Importa metadati** per importare i dati di organizzazione nel database locale. Le modifiche locali vengono conservate.
+- I valori supportati nei sidecar XMP hanno precedenza sui valori incorporati, compresi GPS e data di scatto.
+- Titolo, intestazione, descrizione, autore e copyright sono modificabili e salvati nel database locale.
+- Il salvataggio in XMP scrive questi campi, tag, valutazioni, preferiti e stati di selezione nei sidecar, preservando le altre proprietà XMP e gli originali.
+- Quando si rinominano, spostano, copiano, eliminano o importano file **in Lap**, Lap aggiorna contemporaneamente il proprio catalogo locale. Mantiene inoltre insieme gli asset raggruppati supportati, come i componenti delle Apple Live Photo, i file sidecar XMP e AAE e le coppie RAW + JPEG/HEIC abilitate. Puoi eliminare uno o entrambi i file di una coppia RAW. Se ne mantieni uno, rimane anche il sidecar XMP condiviso.
 - Il salvataggio di una modifica immagine integrata scrive l'immagine risultante nella destinazione selezionata.
 
 ### Cosa viene salvato localmente da Lap
 
+Lap conserva questi dati nel database locale o nella configurazione della libreria.
+
 - Raccolte, album intelligenti, regole e impostazioni della vista restano nel database locale o nella configurazione.
 - Dati di ricerca IA, dati dei volti, miniature e altri dati di indice e cache
+- Tag, valutazioni, preferiti, stati di selezione e campi di testo modificabili sono salvati in locale e possono essere scritti in XMP.
+
+Per impostazione predefinita, questi dati non seguono i file fuori da Lap.
 
 ### Lavorare con i file al di fuori di Lap
 
@@ -230,7 +242,7 @@ sudo apt install gstreamer1.0-libav gstreamer1.0-plugins-good
 | [libheif](https://github.com/strukturag/libheif) | Decodifica delle immagini HEIC/HEIF/HIF e generazione delle anteprime |
 | [libjpeg-turbo](https://libjpeg-turbo.org/) | Decodifica JPEG veloce e generazione delle miniature |
 | [FFmpeg](https://ffmpeg.org/) | Elaborazione video e generazione delle miniature |
-| [exiftool-rs](https://github.com/Le-Syl21/exiftool-rs) | EXIF / IPTC / XMP |
+| [exiftool-rs](https://github.com/Le-Syl21/exiftool-rs) | Port di ExifTool in Rust |
 | [Video.js](https://videojs.com/) | Interfaccia di riproduzione video multipiattaforma |
 | [ONNX Runtime](https://onnxruntime.ai/) | Motore di inferenza locale per i modelli IA |
 | [CLIP](https://github.com/openai/CLIP) | Ricerca di similarità immagine-testo |

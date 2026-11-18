@@ -3,6 +3,9 @@
   <h1>Lap - プライベート・ローカル写真管理ツール</h1>
   <h3>macOS、Windows、Linux向けのオープンソース・デスクトップ写真管理ツール。</h3>
   <p>
+    <a href="https://trendshift.io/repositories/24497?utm_source=repository-badge&amp;utm_medium=badge&amp;utm_campaign=badge-repository-24497" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/repositories/24497" alt="julyx10%2Flap | Trendshift" width="250" height="55"/></a>
+  </p>
+  <p>
     <a href="https://github.com/julyx10/lap/releases"><img src="https://img.shields.io/github/v/release/julyx10/lap" alt="GitHub release"></a>
     <a href="https://github.com/julyx10/lap/releases"><img src="https://img.shields.io/github/downloads/julyx10/lap/total" alt="GitHub all releases"></a>
     <a href="https://github.com/julyx10/lap/stargazers"><img src="https://img.shields.io/github/stars/julyx10/lap" alt="GitHub stars"></a>
@@ -12,7 +15,7 @@
 [English](../README.md) | [Česky](README.cs.md) | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | [Italiano](README.it.md) | [Magyar](README.hu.md) | [Nederlands](README.nl.md) | [Polski](README.pl.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [Українська](README.uk.md) | [Tiếng Việt](README.vi.md) | [中文简体](README.zh-CN.md) | [中文繁體](README.zh-TW.md) | 日本語 | [한국어](README.ko.md)
 
 Lapは、オープンソースでローカルファーストな写真管理ツールです。家族のアルバムを閲覧したり、古い写真を素早く見つけたり、膨大な個人メディアライブラリをオフラインで管理したりするために設計されています。
-読み込み作業やサブスクリプション、アップロードは不要です。既存のフォルダーを Lap で直接開けます。ファイルの場所と形式はそのままです。互換性のある写真アプリで使えるよう、評価とタグを XMP サイドカーに保存できます。
+読み込み作業やサブスクリプション、アップロードは不要です。既存のフォルダーを Lap で直接開けます。ファイルの場所と形式はそのままです。互換性のある写真アプリで使えるよう、評価とタグを XMP サイドカーに保存できます。AI 検索はお使いの端末上で実行されます。
 
 <div align="center">
   <p><strong><a href="https://julyx10.github.io/lap/">公式サイト</a> | <a href="https://julyx10.github.io/lap/demos/lap/index.html">デモ</a></strong></p>
@@ -56,9 +59,9 @@ brew install --cask lap
 ## 主な機能
 
 - **柔軟なライブラリ閲覧**：日付、フォルダー、場所、カメラ、レンズ、タグ、評価、顔で絞り込み、並び替えや検索にも対応。
-- **フォルダー中心のワークフロー。** 複数ライブラリ、ドラッグ＆ドロップやクリップボードでの読み込みと書き出し、一括名前変更、ファイル同期。
+- **フォルダー中心のワークフロー。** 複数ライブラリ、ドラッグ＆ドロップやクリップボードでの読み込みと書き出し、一括名前変更、ファイル同期、安全な移動・コピー・削除。
 - **ローカル AI 検索**：テキスト、見た目の類似性、被写体、顔のグループ化に対応し、50 以上の言語での検索も選択可能。
-- **メタデータの読み込みと XMP への書き出し。** EXIF, IPTC, XMP.
+- **メタデータの読み込みと XMP への書き出し** · 埋め込み EXIF・IPTC・XMP とサイドカー（評価、タグ、お気に入り、選別状態、GPS、日付など）を読み取ります。テキスト項目を編集し、整理情報を XMP サイドカーに保存できます。
 - **スマートアルバム。** 独自のグループ化と並べ替え、フォルダー名フィルター、検索可能な値の選択。
 - **日付別の読み込み**：日・月・年別または単一フォルダーに整理し、元のファイル名を保持して重複をスキップ。
 - **コレクションとタグ**：元ファイルを移動・複製せず、選択したファイルを一括整理。ドラッグ操作と枝ごとの件数表示に対応したタグツリー。
@@ -78,20 +81,29 @@ brew install --cask lap
 
 ## メタデータ、コレクション、ファイルの移動
 
-Lap は Lightroom、digiKam、darktable、ACDSee の互換メタデータを読み込みます。設定で読み込みを有効にしてください。対応する XMP サイドカーの値は埋め込み値より優先されます。ローカルでの編集内容は保持されます。
+Lap は既存のフォルダーを直接扱い、表示する情報の大半をファイルから読み取ります。整理情報は、他の写真アプリでも読み取れる標準の XMP サイドカーに保存できます。
+
+Lap は Lightroom、digiKam、darktable、ACDSee の互換メタデータを読み込みます。対応する項目はアプリによって異なります。
 
 ### ファイルとともに残るもの
 
 - 元の写真と動画は、既存のフォルダー内の通常のファイルのままです。
-- EXIFの撮影日時、カメラ、レンズ、GPS、向きなど、ファイルにすでに埋め込まれているメタデータは、Lapがインデックスを作成する際にそのファイルから読み取られます。
-- タイトル、見出し、説明、作成者、著作権を編集できます。変更はローカルデータベースに保存されます。XMP への保存では、これらの項目とタグ、評価、お気に入り、選別状態をサイドカーに書き出します。その他の XMP プロパティや元ファイルは保持されます。
-- ファイルを**Lap内で**名前変更、移動、コピー、削除すると、Lapは同時にローカルカタログを更新します。Apple Live Photoの構成ファイル、AAEサイドカーファイル、有効にしたRAW + JPEG/HEICペアなど、対応する関連ファイルもまとめて扱います。 RAW ペアは片方だけでも両方でも削除できます。片方を残す場合、共有 XMP サイドカーも保持されます。
+- インデックス作成時に、撮影情報や整理情報を含む埋め込み EXIF・IPTC・XMP を読み取ります。整理情報をローカルデータベースに取り込むには、**設定 → メタデータ → メタデータを読み込む** を有効にします。ローカルでの編集内容は保持されます。
+- GPS や撮影日時を含め、対応する XMP サイドカーの値が埋め込み値より優先されます。
+- タイトル、見出し、説明、作成者、著作権を編集できます。変更はローカルデータベースに保存されます。
+- XMP への保存では、これらの項目とタグ（階層キーワードを含む）、評価、お気に入り、選別状態をサイドカーに書き出します。その他の XMP プロパティや元ファイルは保持されます。
+- ファイルを**Lap内で**名前変更、移動、コピー、削除、読み込みすると、Lapは同時にローカルカタログを更新します。Apple Live Photoの構成ファイル、XMP・AAE サイドカー、有効にしたRAW + JPEG/HEICペアなど、対応する関連ファイルもまとめて扱います。 RAW ペアは片方だけでも両方でも削除できます。片方を残す場合、共有 XMP サイドカーも保持されます。
 - 内蔵の画像編集を保存すると、編集後の画像が選択した保存先に書き込まれます。
 
 ### Lapがローカルに保存するもの
 
+これらのライブラリ情報はローカルデータベースまたはライブラリ設定に保存されます。
+
 - コレクション、スマートアルバム、ルールや表示設定はローカルデータベースまたは設定に保存されます。
 - AI検索データ、顔データ、サムネイル、その他のインデックスまたはキャッシュデータ
+- タグ、評価、お気に入り、選別状態、編集可能なテキストはローカルに保存され、XMP に書き出せます。
+
+既定では Lap の外でファイルを扱ってもこれらの情報は引き継がれません。
 
 ### Lapの外でファイルを扱う場合
 
@@ -230,7 +242,7 @@ sudo apt install gstreamer1.0-libav gstreamer1.0-plugins-good
 | [libheif](https://github.com/strukturag/libheif) | HEIC/HEIF/HIF画像のデコードとプレビュー生成 |
 | [libjpeg-turbo](https://libjpeg-turbo.org/) | 高速なJPEGデコードとサムネイル生成 |
 | [FFmpeg](https://ffmpeg.org/) | 動画処理とサムネイル生成 |
-| [exiftool-rs](https://github.com/Le-Syl21/exiftool-rs) | EXIF / IPTC / XMP |
+| [exiftool-rs](https://github.com/Le-Syl21/exiftool-rs) | ExifTool の Rust 移植版 |
 | [Video.js](https://videojs.com/) | クロスプラットフォームの動画再生UI |
 | [ONNX Runtime](https://onnxruntime.ai/) | ローカルAIモデル推論エンジン |
 | [CLIP](https://github.com/openai/CLIP) | 画像・テキストの類似度検索 |

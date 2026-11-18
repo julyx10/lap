@@ -3,6 +3,9 @@
   <h1>Lap — prywatny, lokalny menedżer zdjęć</h1>
   <h3>Darmowy menedżer zdjęć na komputery stacjonarne o otwartym kodzie źródłowym, dla systemów macOS, Windows i Linux.</h3>
   <p>
+    <a href="https://trendshift.io/repositories/24497?utm_source=repository-badge&amp;utm_medium=badge&amp;utm_campaign=badge-repository-24497" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/repositories/24497" alt="julyx10%2Flap | Trendshift" width="250" height="55"/></a>
+  </p>
+  <p>
     <a href="https://github.com/julyx10/lap/releases"><img src="https://img.shields.io/github/v/release/julyx10/lap" alt="Wydanie GitHub"></a>
     <a href="https://github.com/julyx10/lap/releases"><img src="https://img.shields.io/github/downloads/julyx10/lap/total" alt="Wszystkie wydania GitHub"></a>
     <a href="https://github.com/julyx10/lap/stargazers"><img src="https://img.shields.io/github/stars/julyx10/lap" alt="Gwiazdki GitHub"></a>
@@ -12,7 +15,7 @@
 [English](../README.md) | [Česky](README.cs.md) | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | [Italiano](README.it.md) | [Magyar](README.hu.md) | [Nederlands](README.nl.md) | Polski | [Português](README.pt.md) | [Русский](README.ru.md) | [Українська](README.uk.md) | [Tiếng Việt](README.vi.md) | [中文简体](README.zh-CN.md) | [中文繁體](README.zh-TW.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
 Lap to menedżer zdjęć o otwartym kodzie źródłowym, działający w modelu lokalnym (local-first), służący do przeglądania rodzinnych albumów, szybkiego wyszukiwania starych zdjęć i zarządzania dużymi osobistymi bibliotekami multimediów w trybie offline.
-Bez obowiązkowego importu, subskrypcji ani przesyłania. Otwieraj istniejące foldery bezpośrednio w Lap. Pliki zachowują lokalizację i format. Zapisuj je w plikach towarzyszących XMP dla zgodnych aplikacji.
+Bez obowiązkowego importu, subskrypcji ani przesyłania. Otwieraj istniejące foldery bezpośrednio w Lap. Pliki zachowują lokalizację i format. Zapisuj je w plikach towarzyszących XMP dla zgodnych aplikacji. Wyszukiwanie AI działa na Twoim urządzeniu.
 
 <div align="center">
   <p><strong><a href="https://julyx10.github.io/lap/">OFICJALNA STRONA</a> | <a href="https://julyx10.github.io/lap/demos/lap/index.html">DEMO</a></strong></p>
@@ -56,9 +59,9 @@ brew install --cask lap
 ## Funkcje
 
 - **Elastyczne przeglądanie biblioteki** według daty, folderu, lokalizacji, aparatu, obiektywu, tagów, ocen i twarzy, z sortowaniem i wyszukiwaniem.
-- **Praca oparta na folderach.** Wiele bibliotek, import i eksport przez przeciąganie lub schowek, zbiorcza zmiana nazw i synchronizacja.
+- **Praca oparta na folderach.** Wiele bibliotek, import i eksport przez przeciąganie lub schowek, zbiorcza zmiana nazw i synchronizacja, bezpieczne przenoszenie, kopiowanie i usuwanie.
 - **Lokalne wyszukiwanie AI** dla zapytań tekstowych, podobieństwa wizualnego, tematów, grupowania twarzy oraz opcjonalnego wyszukiwania wielojęzycznego w ponad 50 językach.
-- **Import metadanych i zapis do XMP.** EXIF, IPTC, XMP.
+- **Import metadanych i zapis do XMP** · Lap odczytuje osadzone dane EXIF, IPTC i XMP oraz pliki towarzyszące (oceny, tagi, ulubione, stany selekcji, GPS i daty). Pola tekstowe można edytować, a dane organizacyjne zapisać do XMP.
 - **Inteligentne albumy.** Własne grupowanie i sortowanie, filtry nazw folderów i wyszukiwalne listy wartości.
 - **Import z organizacją wg dat** z układami dziennym, miesięcznym, rocznym lub jednym folderem, oryginalnymi nazwami plików i pomijaniem duplikatów.
 - **Kolekcje i tagi** do masowego porządkowania wybranych plików bez przenoszenia lub duplikowania oryginałów. Drzewo tagów z przeciąganiem i licznikami gałęzi.
@@ -78,20 +81,29 @@ brew install --cask lap
 
 ## Metadane, kolekcje i przenoszenie plików
 
-Lap odczytuje zgodne metadane z Lightrooma, digiKama, darktable i ACDSee. Włącz import w ustawieniach. Obsługiwane wartości z pliku XMP mają pierwszeństwo przed osadzonymi. Lokalne edycje są zachowywane.
+Lap pracuje bezpośrednio z folderami i odczytuje większość wyświetlanych informacji z plików. Dane organizacyjne można zapisać w standardowych plikach XMP, które odczytują inne aplikacje fotograficzne.
+
+Lap odczytuje zgodne metadane z Lightrooma, digiKama, darktable i ACDSee. Obsługiwane pola zależą od aplikacji.
 
 ### Co pozostaje z plikiem
 
 - Twoje oryginalne zdjęcia i filmy są zawsze zwykłymi plikami w istniejących folderach.
-- Metadane już osadzone w pliku, takie jak data wykonania EXIF, aparat, obiektyw, GPS i orientacja, są odczytywane z tego pliku podczas indeksowania przez Lap.
-- Tytuł, nagłówek, opis, twórcę i prawa autorskie można edytować i zapisywać w lokalnej bazie danych. Zapis do XMP obejmuje również tagi, oceny, ulubione i stany selekcji. Pozostałe właściwości XMP i oryginały pozostają bez zmian.
-- Gdy zmieniasz nazwę, przenosisz, kopiujesz lub usuwasz pliki **w Lap**, Lap aktualizuje jednocześnie swój lokalny katalog. Utrzymuje też razem obsługiwane powiązane zasoby, takie jak składniki Apple Live Photo, pliki towarzyszące AAE oraz włączone pary RAW + JPEG/HEIC. Z pary RAW można usunąć jeden plik lub oba. Gdy jeden zostaje, zachowywany jest wspólny plik XMP.
+- Podczas indeksowania Lap odczytuje osadzone dane EXIF, IPTC i XMP, w tym dane zdjęcia i informacje organizacyjne. Włącz **Ustawienia → Metadane → Importuj metadane**, aby zaimportować dane organizacyjne do lokalnej bazy. Lokalne zmiany zostają zachowane.
+- Obsługiwane wartości z plików XMP mają pierwszeństwo przed osadzonymi, również w przypadku GPS i daty wykonania.
+- Tytuł, nagłówek, opis, twórcę i prawa autorskie można edytować i zapisywać w lokalnej bazie danych.
+- Zapis do XMP obejmuje również tagi (w tym hierarchiczne słowa kluczowe), oceny, ulubione i stany selekcji. Pozostałe właściwości XMP i oryginały pozostają bez zmian.
+- Gdy zmieniasz nazwę, przenosisz, kopiujesz, usuwasz lub importujesz pliki **w Lap**, Lap aktualizuje jednocześnie swój lokalny katalog. Utrzymuje też razem obsługiwane powiązane zasoby, takie jak składniki Apple Live Photo, pliki towarzyszące XMP i AAE oraz włączone pary RAW + JPEG/HEIC. Z pary RAW można usunąć jeden plik lub oba. Gdy jeden zostaje, zachowywany jest wspólny plik XMP.
 - Zapisanie edycji wykonanej wbudowanym edytorem zapisuje wynikowy obraz do wybranego miejsca docelowego.
 
 ### Co Lap przechowuje lokalnie
 
+Lap przechowuje te dane w lokalnej bazie danych lub konfiguracji biblioteki.
+
 - Kolekcje, inteligentne albumy, reguły i ustawienia widoku pozostają w lokalnej bazie danych lub konfiguracji.
 - Dane wyszukiwania AI, dane twarzy, miniatury oraz inne dane indeksów/cache
+- Tagi, oceny, ulubione, stany selekcji i edytowalne pola tekstowe są przechowywane lokalnie i mogą zostać zapisane do XMP.
+
+Domyślnie dane te nie są przenoszone razem z plikami poza Lap.
 
 ### Praca z plikami poza Lap
 
@@ -230,7 +242,7 @@ sudo apt install gstreamer1.0-libav gstreamer1.0-plugins-good
 | [libheif](https://github.com/strukturag/libheif) | Dekodowanie obrazów HEIC/HEIF/HIF i generowanie podglądów |
 | [libjpeg-turbo](https://libjpeg-turbo.org/) | Szybkie dekodowanie JPEG i generowanie miniatur |
 | [FFmpeg](https://ffmpeg.org/) | Przetwarzanie wideo i generowanie miniatur |
-| [exiftool-rs](https://github.com/Le-Syl21/exiftool-rs) | EXIF / IPTC / XMP |
+| [exiftool-rs](https://github.com/Le-Syl21/exiftool-rs) | Port ExifTool na Rusta |
 | [Video.js](https://videojs.com/) | Międzyplatformowy interfejs odtwarzania wideo |
 | [ONNX Runtime](https://onnxruntime.ai/) | Lokalny silnik wnioskowania modeli AI |
 | [CLIP](https://github.com/openai/CLIP) | Wyszukiwanie podobieństwa obraz–tekst |

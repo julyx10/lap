@@ -3,6 +3,9 @@
   <h1>Lap - Gerenciador de fotos privadas locais</h1>
   <h3>Gerenciador de fotos de desktop de código aberto para macOS, Windows e Linux.</h3>
   <p>
+    <a href="https://trendshift.io/repositories/24497?utm_source=repository-badge&amp;utm_medium=badge&amp;utm_campaign=badge-repository-24497" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/repositories/24497" alt="julyx10%2Flap | Trendshift" width="250" height="55"/></a>
+  </p>
+  <p>
     <a href="https://github.com/julyx10/lap/releases"><img src="https://img.shields.io/github/v/release/julyx10/lap" alt="GitHub release"></a>
     <a href="https://github.com/julyx10/lap/releases"><img src="https://img.shields.io/github/downloads/julyx10/lap/total" alt="GitHub all releases"></a>
     <a href="https://github.com/julyx10/lap/stargazers"><img src="https://img.shields.io/github/stars/julyx10/lap" alt="GitHub stars"></a>
@@ -12,7 +15,7 @@
 [English](../README.md) | [Česky](README.cs.md) | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | [Italiano](README.it.md) | [Magyar](README.hu.md) | [Nederlands](README.nl.md) | [Polski](README.pl.md) | Português | [Русский](README.ru.md) | [Українська](README.uk.md) | [Tiếng Việt](README.vi.md) | [中文简体](README.zh-CN.md) | [中文繁體](README.zh-TW.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
 Lap é um gerenciador de fotos de código aberto e local-first, projetado para navegar em álbuns de família, encontrar fotos antigas rapidamente e gerenciar grandes bibliotecas de mídia pessoal offline.
-Sem importação obrigatória, assinatura ou envio. Abra suas pastas diretamente no Lap. Os arquivos mantêm o local e o formato original. Salve-as em arquivos auxiliares XMP para usá-las em aplicativos compatíveis.
+Sem importação obrigatória, assinatura ou envio. Abra suas pastas diretamente no Lap. Os arquivos mantêm o local e o formato original. Salve-as em arquivos auxiliares XMP para usá-las em aplicativos compatíveis. A busca com IA é executada no seu dispositivo.
 
 <div align="center">
   <p><strong><a href="https://julyx10.github.io/lap/">SITE OFICIAL</a> | <a href="https://julyx10.github.io/lap/demos/lap/index.html">DEMO</a></strong></p>
@@ -56,9 +59,9 @@ brew install --cask lap
 ## Recursos
 
 - **Navegação flexível** por data, pasta, local, câmera, lente, tags, avaliações e rostos, com ordenação e busca.
-- **Fluxo baseado em pastas.** Várias bibliotecas, importação e exportação por arrastar ou pela área de transferência, renomeação em lote e sincronização.
+- **Fluxo baseado em pastas.** Várias bibliotecas, importação e exportação por arrastar ou pela área de transferência, renomeação em lote e sincronização, movimentação, cópia e exclusão seguras.
 - **Busca com IA local** por texto, similaridade visual, temas e agrupamento de rostos, com busca opcional em mais de 50 idiomas.
-- **Importação de metadados e gravação XMP.** EXIF, IPTC, XMP.
+- **Importação de metadados e gravação em XMP** · O Lap lê EXIF, IPTC e XMP incorporados e arquivos auxiliares (avaliações, etiquetas, favoritos, estados de seleção, GPS e datas). Você pode editar campos de texto e gravar os dados de organização em XMP.
 - **Álbuns inteligentes.** Agrupamento e ordenação personalizados, filtros por nome de pasta e seletores com busca.
 - **Importação organizada por data** em pastas por dia, mês, ano ou uma única pasta, preservando os nomes originais e ignorando duplicatas.
 - **Coleções e tags** para organizar arquivos selecionados em lote sem mover ou duplicar os originais. Árvore de etiquetas com arraste e contagem por ramo.
@@ -72,26 +75,35 @@ brew install --cask lap
 - **Informações de arquivo personalizáveis.** Campos selecionáveis, detalhes sob demanda e áreas AF no visualizador.
 - **Mapa interativo** para explorar fotos e vídeos geolocalizados em grupos que seguem os filtros atuais.
 - **Navegação offline de álbuns** que mantém os álbuns em armazenamento desconectado ou de rede visíveis com miniaturas em cache.
-- **Arquivos disponíveis apenas na nuvem.** Arquivos sob demanda do OneDrive e marcadores do macOS são indexados e exibidos sem download automático.
+- **Arquivos disponíveis apenas na nuvem.** Arquivos sob demanda do OneDrive e arquivos sem dados locais do macOS são indexados e exibidos sem download automático.
 - **Temas claro e escuro.** Podem seguir a aparência do sistema.
 - **Amplo suporte a formatos** para mais de 60 formatos de imagens, RAW e vídeo. Documentos Affinity (prévia incorporada).
 
 ## Metadados, coleções e movimentação de arquivos
 
-O Lap lê metadados compatíveis do Lightroom, digiKam, darktable e ACDSee. Ative a importação nos ajustes. Os valores compatíveis dos arquivos auxiliares XMP têm prioridade sobre os incorporados. As edições locais são preservadas.
+O Lap trabalha diretamente com suas pastas e lê dos arquivos a maioria das informações exibidas. Você pode salvar os dados de organização em arquivos XMP padrão legíveis por outros aplicativos de fotos.
+
+O Lap lê metadados compatíveis do Lightroom, digiKam, darktable e ACDSee. Os campos compatíveis variam conforme o aplicativo.
 
 ### O que permanece com o arquivo
 
 - Suas fotos e vídeos originais permanecem sempre como arquivos comuns em suas pastas existentes.
-- Metadados já incorporados a um arquivo, como data de captura EXIF, câmera, lente, GPS e orientação, são lidos desse arquivo quando o Lap o indexa.
-- Título, manchete, descrição, autor e direitos autorais podem ser editados e ficam no banco de dados local. Salvar metadados em XMP grava esses campos, etiquetas, avaliações, favoritos e estados de seleção nos arquivos auxiliares, preservando outras propriedades XMP e os originais.
-- Quando você renomeia, move, copia ou exclui arquivos **no Lap**, ele atualiza simultaneamente seu catálogo local. Ele também mantém juntos os recursos agrupados compatíveis, como componentes de Apple Live Photo, arquivos auxiliares AAE e pares RAW + JPEG/HEIC ativados. Você pode excluir um ou ambos os arquivos de um par RAW. Se mantiver um, o XMP compartilhado também será mantido.
+- Ao indexar os arquivos, o Lap lê EXIF, IPTC e XMP incorporados, incluindo dados de captura e organização. Ative **Configurações → Metadados → Importar metadados** para importar os dados de organização no banco local. As edições locais são preservadas.
+- Os valores compatíveis em arquivos XMP têm prioridade sobre os incorporados, incluindo GPS e data de captura.
+- Título, manchete, descrição, autor e direitos autorais podem ser editados e ficam no banco de dados local.
+- Salvar metadados em XMP grava esses campos, etiquetas (incluindo palavras-chave hierárquicas), avaliações, favoritos e estados de seleção nos arquivos auxiliares, preservando outras propriedades XMP e os originais.
+- Quando você renomeia, move, copia, exclui ou importa arquivos **no Lap**, ele atualiza simultaneamente seu catálogo local. Ele também mantém juntos os recursos agrupados compatíveis, como componentes de Apple Live Photo, arquivos auxiliares XMP e AAE e pares RAW + JPEG/HEIC ativados. Você pode excluir um ou ambos os arquivos de um par RAW. Se mantiver um, o XMP compartilhado também será mantido.
 - Salvar uma edição de imagem integrada grava a imagem resultante no destino escolhido.
 
 ### O que o Lap armazena localmente
 
+O Lap armazena esses dados no banco local ou na configuração da biblioteca.
+
 - Coleções, álbuns inteligentes, suas regras e opções de visualização ficam no banco de dados local ou na configuração.
 - Dados de pesquisa por IA, dados faciais, miniaturas e outros dados de índice ou cache
+- Etiquetas, avaliações, favoritos, estados de seleção e campos de texto editáveis são armazenados localmente e podem ser gravados em XMP.
+
+Por padrão, esses dados não acompanham os arquivos fora do Lap.
 
 ### Trabalhar com arquivos fora do Lap
 
@@ -230,7 +242,7 @@ sudo apt install gstreamer1.0-libav gstreamer1.0-plugins-good
 | [libheif](https://github.com/strukturag/libheif) | Decodificação de imagem HEIC/HEIF/HIF e geração de pré-visualização |
 | [libjpeg-turbo](https://libjpeg-turbo.org/) | Decodificação rápida de JPEG e geração de miniaturas |
 | [FFmpeg](https://ffmpeg.org/) | Processamento de vídeo e geração de miniaturas |
-| [exiftool-rs](https://github.com/Le-Syl21/exiftool-rs) | EXIF / IPTC / XMP |
+| [exiftool-rs](https://github.com/Le-Syl21/exiftool-rs) | Port do ExifTool para Rust |
 | [Video.js](https://videojs.com/) | Interface de reprodução de vídeo multiplataforma |
 | [ONNX Runtime](https://onnxruntime.ai/) | Mecanismo de inferência de modelo de IA local |
 | [CLIP](https://github.com/openai/CLIP) | Busca de similaridade imagem-texto |

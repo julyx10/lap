@@ -3,6 +3,9 @@
   <h1>Lap - 本地私有照片管理器</h1>
   <h3>适用于 macOS、Windows 和 Linux 的开源桌面照片管理工具。</h3>
   <p>
+    <a href="https://trendshift.io/repositories/24497?utm_source=repository-badge&amp;utm_medium=badge&amp;utm_campaign=badge-repository-24497" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/repositories/24497" alt="julyx10%2Flap | Trendshift" width="250" height="55"/></a>
+  </p>
+  <p>
     <a href="https://github.com/julyx10/lap/releases"><img src="https://img.shields.io/github/v/release/julyx10/lap" alt="GitHub release"></a>
     <a href="https://github.com/julyx10/lap/releases"><img src="https://img.shields.io/github/downloads/julyx10/lap/total" alt="GitHub all releases"></a>
     <a href="https://github.com/julyx10/lap/stargazers"><img src="https://img.shields.io/github/stars/julyx10/lap" alt="GitHub stars"></a>
@@ -12,7 +15,7 @@
 [English](../README.md) | [Česky](README.cs.md) | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | [Italiano](README.it.md) | [Magyar](README.hu.md) | [Nederlands](README.nl.md) | [Polski](README.pl.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [Українська](README.uk.md) | [Tiếng Việt](README.vi.md) | 中文简体 | [中文繁體](README.zh-TW.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
 Lap 是一款开源、本地优先的照片管理工具，帮助您轻松浏览家庭相册、快速查找旧照片，并离线管理大型个人资料库。
-无需预先导入、订阅或上传。直接在 Lap 中打开现有文件夹。文件保留在原位置，格式不变。将评分和标签保存到 XMP 附属文件，可在兼容的照片管理软件中读取。
+无需预先导入、订阅或上传。直接在 Lap 中打开现有文件夹。文件保留在原位置，格式不变。将评分和标签保存到 XMP 附属文件，可在兼容的照片管理软件中读取。AI 搜索在您的设备上运行。
 
 <div align="center">
   <p><strong><a href="https://julyx10.github.io/lap/">官方网站</a> | <a href="https://julyx10.github.io/lap/demos/lap/index.html">演示</a></strong></p>
@@ -56,9 +59,9 @@ brew install --cask lap
 ## 功能特性
 
 - **灵活浏览资料库**：按日期、文件夹、地点、相机、镜头、标签、评分和人脸筛选，支持排序和搜索。
-- **以文件夹为中心的工作流。** 支持多个媒体库、拖放或剪贴板导入导出、批量重命名和文件同步。
+- **以文件夹为中心的工作流。** 支持多个媒体库、拖放或剪贴板导入导出、批量重命名和文件同步，支持安全地移动、复制和删除文件。
 - **本地 AI 搜索**：支持文本搜索、视觉相似搜索、主题、人脸聚类，以及可选的 50 多种语言搜索。
-- **导入元数据和写回 XMP。** EXIF, IPTC, XMP.
+- **元数据导入与 XMP 写回** · 读取内嵌的 EXIF、IPTC、XMP 和 XMP 附属文件中的评分、标签、收藏、选片标记、GPS 和日期等信息。可编辑文本字段并将整理信息写回 XMP 附属文件。
 - **智能相册。** 支持自定义分组、排序、文件夹名称筛选和可搜索的值选择器。
 - **按日期整理导入**：支持按日、月、年或单一文件夹导入，保留原文件名并跳过重复内容。
 - **合集与标签**：批量整理所选文件，无需移动或复制原件。支持拖动和分支计数的标签树。
@@ -90,20 +93,29 @@ brew install --cask lap
 
 ## 元数据、合集与文件移动
 
-Lap 支持导入 Lightroom、digiKam、darktable 和 ACDSee 的兼容元数据。在设置中启用元数据导入后，XMP 附属文件中受支持的值优先于内嵌值，已在本地编辑的内容会保留。
+Lap 直接使用现有文件夹，显示的大多数信息都从文件中读取。您可以将整理信息写入标准 XMP 附属文件，供其他照片应用读取。
+
+Lap 支持导入 Lightroom、digiKam、darktable 和 ACDSee 的兼容元数据。支持的字段因应用而异。
 
 ### 会随文件保留的信息
 
 - 您的原始照片和视频始终是现有文件夹中的普通文件。
-- EXIF 拍摄日期、相机、镜头、GPS 和方向等已嵌入文件的元数据，会在 Lap 索引时从文件中读取。
-- 标题、短标题、描述、创作者和版权可编辑，修改保存在本地数据库。执行「保存元数据到 XMP」可将这些字段以及标签、评分、收藏和选片状态写入 XMP 附属文件。其他 XMP 属性和原始文件会保留。
-- 当您**在 Lap 中**重命名、移动、复制或删除文件时，Lap 会同步更新本地资料库记录，并将 Apple 实况照片组件、AAE 附属文件和已启用的 RAW + JPEG/HEIC 配对等关联资源一并处理。删除 RAW 配对时可选择删除其中一个文件或同时删除两者。保留一个文件时，共用的 XMP 附属文件也会保留。
+- 建立索引时，Lap 读取内嵌的 EXIF、IPTC 和 XMP，包括拍摄日期、相机、镜头、GPS、方向、评分、收藏、关键词、选片标记、描述、标题、短标题、创作者和版权。在 **设置 → 元数据 → 导入元数据** 中开启导入后，整理信息会进入本地数据库，已有的本地编辑会保留。
+- 导入 XMP 附属文件时，受支持的字段优先使用附属文件中的值，包括 GPS 和拍摄日期。
+- 标题、短标题、描述、创作者和版权可编辑，修改保存在本地数据库。
+- 执行「保存元数据到 XMP」可将这些字段以及标签（包括层级关键词）、评分、收藏和选片状态写入 XMP 附属文件。其他 XMP 属性和原始文件会保留。
+- 当您**在 Lap 中**重命名、移动、复制、删除或导入文件时，Lap 会同步更新本地资料库记录，并将 Apple 实况照片组件、XMP 和 AAE 附属文件和已启用的 RAW + JPEG/HEIC 配对等关联资源一并处理。删除 RAW 配对时可选择删除其中一个文件或同时删除两者。保留一个文件时，共用的 XMP 附属文件也会保留。
 - 保存内置图片编辑时，生成的图片会写入所选目标位置。
 
 ### Lap 在本地存储的信息
 
+以下资料库数据保存在 Lap 的本地数据库或资料库配置中。
+
 - 合集、智能相册及其规则和视图设置保存在本地数据库或配置中。
 - AI 搜索数据、人脸数据、缩略图以及其他索引或缓存数据
+- 标签、评分、收藏、选片状态和可编辑文本字段保存在本地数据库，可按上述方式写入 XMP。
+
+默认情况下，在 Lap 外复制、导出或移动文件时，这些本地信息不会随文件转移，也不会自动提供给其他应用。
 
 ### 在 Lap 外管理文件
 
@@ -242,7 +254,7 @@ sudo apt install gstreamer1.0-libav gstreamer1.0-plugins-good
 | [libheif](https://github.com/strukturag/libheif) | HEIC/HEIF/HIF 图像解码与预览生成 |
 | [libjpeg-turbo](https://libjpeg-turbo.org/) | 快速 JPEG 解码与缩略图生成 |
 | [FFmpeg](https://ffmpeg.org/) | 视频处理与缩略图生成 |
-| [exiftool-rs](https://github.com/Le-Syl21/exiftool-rs) | EXIF / IPTC / XMP |
+| [exiftool-rs](https://github.com/Le-Syl21/exiftool-rs) | ExifTool 的 Rust 移植版 |
 | [Video.js](https://videojs.com/) | 跨平台视频播放界面 |
 | [ONNX Runtime](https://onnxruntime.ai/) | 本地 AI 模型推理引擎 |
 | [CLIP](https://github.com/openai/CLIP) | 图文相似度搜索 |

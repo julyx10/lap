@@ -15,7 +15,7 @@
 [English](../README.md) | [Česky](README.cs.md) | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | [Italiano](README.it.md) | [Magyar](README.hu.md) | [Nederlands](README.nl.md) | [Polski](README.pl.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [Українська](README.uk.md) | Tiếng Việt | [中文简体](README.zh-CN.md) | [中文繁體](README.zh-TW.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
 Lap là trình quản lý ảnh mã nguồn mở, ưu tiên cục bộ, dùng để duyệt album gia đình, tìm nhanh ảnh cũ và quản lý thư viện phương tiện cá nhân lớn khi ngoại tuyến.
-Không cần nhập trước, đăng ký trả phí hay tải lên. Mở thư mục hiện có trực tiếp trong Lap. Tệp giữ nguyên vị trí và định dạng. Lưu vào tệp phụ XMP để dùng trong ứng dụng tương thích.
+Không cần nhập trước, đăng ký trả phí hay tải lên. Mở thư mục hiện có trực tiếp trong Lap. Tệp giữ nguyên vị trí và định dạng. Lưu xếp hạng và thẻ vào tệp phụ XMP chuẩn để dùng trong ứng dụng tương thích. Tìm kiếm AI chạy trên thiết bị của bạn.
 
 <div align="center">
   <p><strong><a href="https://julyx10.github.io/lap/">TRANG WEB CHÍNH THỨC</a> | <a href="https://julyx10.github.io/lap/demos/lap/index.html">DEMO</a></strong></p>
@@ -59,9 +59,9 @@ brew install --cask lap
 ## Tính năng
 
 - **Duyệt thư viện linh hoạt** theo ngày, thư mục, vị trí, máy ảnh, ống kính, thẻ, xếp hạng và khuôn mặt, kèm sắp xếp và tìm kiếm.
-- **Quy trình ưu tiên thư mục.** Nhiều thư viện, nhập và xuất qua kéo thả hoặc bảng nhớ tạm, đổi tên hàng loạt và đồng bộ.
+- **Quy trình ưu tiên thư mục.** Nhiều thư viện, nhập và xuất qua kéo thả hoặc bảng nhớ tạm, đổi tên hàng loạt và đồng bộ, di chuyển, sao chép và xóa an toàn.
 - **Tìm kiếm AI cục bộ** theo câu lệnh văn bản, độ tương đồng hình ảnh, chủ thể, phân nhóm khuôn mặt và tìm kiếm đa ngôn ngữ tùy chọn trong hơn 50 ngôn ngữ.
-- **Nhập siêu dữ liệu và ghi XMP.** EXIF, IPTC, XMP.
+- **Nhập siêu dữ liệu và ghi vào XMP** · Lap đọc EXIF, IPTC và XMP nhúng cùng các tệp phụ (xếp hạng, thẻ, mục yêu thích, trạng thái chọn lọc, GPS và ngày chụp). Có thể sửa các trường văn bản và lưu dữ liệu tổ chức vào XMP.
 - **Album thông minh.** Nhóm và sắp xếp tùy chỉnh, lọc theo tên thư mục và bộ chọn có tìm kiếm.
 - **Nhập ảnh theo ngày** với bố cục theo ngày, tháng, năm hoặc một thư mục, giữ nguyên tên tệp gốc và bỏ qua tệp trùng.
 - **Bộ sưu tập và thẻ** để sắp xếp hàng loạt tệp đã chọn mà không di chuyển hay nhân bản bản gốc. Cây thẻ kéo thả với số lượng theo nhánh.
@@ -81,20 +81,29 @@ brew install --cask lap
 
 ## Siêu dữ liệu, bộ sưu tập và di chuyển tệp
 
-Lap đọc siêu dữ liệu tương thích từ Lightroom, digiKam, darktable và ACDSee. Bật tính năng nhập trong phần cài đặt. Các giá trị được hỗ trợ trong tệp phụ XMP được ưu tiên hơn giá trị nhúng. Các chỉnh sửa cục bộ được giữ lại.
+Lap làm việc trực tiếp với các thư mục và đọc phần lớn thông tin hiển thị từ tệp. Bạn có thể lưu dữ liệu tổ chức vào tệp phụ XMP chuẩn để các ứng dụng ảnh khác đọc được.
+
+Lap đọc siêu dữ liệu tương thích từ Lightroom, digiKam, darktable và ACDSee. Các trường được hỗ trợ tùy theo ứng dụng.
 
 ### Thông tin nào đi cùng tệp
 
 - Ảnh và video gốc của bạn luôn là tệp thông thường trong các thư mục hiện có.
-- Siêu dữ liệu đã nhúng trong tệp, như ngày chụp EXIF, máy ảnh, ống kính, GPS và hướng, được Lap đọc từ tệp khi lập chỉ mục.
-- Có thể sửa tiêu đề, tiêu đề ngắn, mô tả, tác giả và bản quyền. Thay đổi được lưu trong cơ sở dữ liệu cục bộ. Lưu vào XMP ghi các trường này cùng thẻ, xếp hạng, mục yêu thích và trạng thái chọn lọc vào tệp phụ, đồng thời giữ nguyên các thuộc tính XMP khác và tệp gốc.
-- Khi bạn đổi tên, di chuyển, sao chép hoặc xóa tệp **trong Lap**, Lap cập nhật danh mục cục bộ cùng lúc. Lap cũng giữ các thành phần được hỗ trợ đi cùng nhau, chẳng hạn như các thành phần Apple Live Photo, tệp phụ AAE và cặp RAW + JPEG/HEIC đã bật. Có thể xóa một hoặc cả hai tệp trong cặp RAW. Nếu giữ một tệp, tệp phụ XMP dùng chung cũng được giữ lại.
+- Khi lập chỉ mục, Lap đọc EXIF, IPTC và XMP nhúng, gồm dữ liệu chụp và tổ chức. Bật **Cài đặt → Siêu dữ liệu → Nhập siêu dữ liệu** để nhập dữ liệu tổ chức vào cơ sở dữ liệu cục bộ. Các chỉnh sửa cục bộ được giữ lại.
+- Các giá trị được hỗ trợ trong tệp phụ XMP được ưu tiên hơn giá trị nhúng, bao gồm GPS và ngày chụp.
+- Có thể sửa tiêu đề, tiêu đề ngắn, mô tả, tác giả và bản quyền. Thay đổi được lưu trong cơ sở dữ liệu cục bộ.
+- Lưu vào XMP ghi các trường này cùng thẻ (bao gồm từ khóa phân cấp), xếp hạng, mục yêu thích và trạng thái chọn lọc vào tệp phụ, đồng thời giữ nguyên các thuộc tính XMP khác và tệp gốc.
+- Khi bạn đổi tên, di chuyển, sao chép, xóa hoặc nhập tệp **trong Lap**, Lap cập nhật danh mục cục bộ cùng lúc. Lap cũng giữ các thành phần được hỗ trợ đi cùng nhau, chẳng hạn như các thành phần Apple Live Photo, tệp phụ XMP và AAE và cặp RAW + JPEG/HEIC đã bật. Có thể xóa một hoặc cả hai tệp trong cặp RAW. Nếu giữ một tệp, tệp phụ XMP dùng chung cũng được giữ lại.
 - Lưu chỉnh sửa ảnh tích hợp sẽ ghi ảnh kết quả vào đích đã chọn.
 
 ### Những gì Lap lưu cục bộ
 
+Lap lưu các dữ liệu thư viện này trong cơ sở dữ liệu cục bộ hoặc cấu hình thư viện.
+
 - Bộ sưu tập, album thông minh, quy tắc và tùy chọn hiển thị nằm trong cơ sở dữ liệu cục bộ hoặc cấu hình.
 - Dữ liệu tìm kiếm AI, dữ liệu khuôn mặt, ảnh thu nhỏ và dữ liệu chỉ mục/bộ nhớ đệm khác
+- Thẻ, xếp hạng, mục yêu thích, trạng thái chọn lọc và trường văn bản có thể sửa được lưu cục bộ và có thể ghi vào XMP.
+
+Theo mặc định, dữ liệu này không đi theo tệp khi thao tác bên ngoài Lap.
 
 ### Làm việc với tệp ngoài Lap
 
@@ -235,7 +244,7 @@ sudo apt install gstreamer1.0-libav gstreamer1.0-plugins-good
 | [libheif](https://github.com/strukturag/libheif) | Giải mã ảnh HEIC/HEIF/HIF và tạo bản xem trước |
 | [libjpeg-turbo](https://libjpeg-turbo.org/) | Giải mã JPEG nhanh và tạo ảnh thu nhỏ |
 | [FFmpeg](https://ffmpeg.org/) | Xử lý video và tạo ảnh thu nhỏ |
-| [exiftool-rs](https://github.com/Le-Syl21/exiftool-rs) | EXIF / IPTC / XMP |
+| [exiftool-rs](https://github.com/Le-Syl21/exiftool-rs) | Bản chuyển ExifTool sang Rust |
 | [Video.js](https://videojs.com/) | Giao diện phát video đa nền tảng |
 | [ONNX Runtime](https://onnxruntime.ai/) | Công cụ suy luận mô hình AI cục bộ |
 | [CLIP](https://github.com/openai/CLIP) | Tìm kiếm tương đồng hình ảnh-văn bản |

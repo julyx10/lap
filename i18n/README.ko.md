@@ -3,6 +3,9 @@
   <h1>Lap - 프라이빗 로컬 사진 관리자</h1>
   <h3>macOS, Windows, Linux를 위한 오픈 소스 데스크톱 사진 관리 도구.</h3>
   <p>
+    <a href="https://trendshift.io/repositories/24497?utm_source=repository-badge&amp;utm_medium=badge&amp;utm_campaign=badge-repository-24497" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/repositories/24497" alt="julyx10%2Flap | Trendshift" width="250" height="55"/></a>
+  </p>
+  <p>
     <a href="https://github.com/julyx10/lap/releases"><img src="https://img.shields.io/github/v/release/julyx10/lap" alt="GitHub release"></a>
     <a href="https://github.com/julyx10/lap/releases"><img src="https://img.shields.io/github/downloads/julyx10/lap/total" alt="GitHub all releases"></a>
     <a href="https://github.com/julyx10/lap/stargazers"><img src="https://img.shields.io/github/stars/julyx10/lap" alt="GitHub stars"></a>
@@ -12,7 +15,7 @@
 [English](../README.md) | [Česky](README.cs.md) | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | [Italiano](README.it.md) | [Magyar](README.hu.md) | [Nederlands](README.nl.md) | [Polski](README.pl.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [Українська](README.uk.md) | [Tiếng Việt](README.vi.md) | [中文简体](README.zh-CN.md) | [中文繁體](README.zh-TW.md) | [日本語](README.ja.md) | 한국어
 
 Lap은 오픈 소스 기반의 '로컬 우선(local-first)' 사진 관리 도구입니다. 가족 앨범을 둘러보고, 오래된 사진을 빠르게 찾으며, 대규모 개인 미디어 라이브러리를 오프라인에서 직접 관리할 수 있도록 설계되었습니다.
-별도의 가져오기, 구독, 업로드가 필요 없습니다. 기존 폴더를 Lap에서 바로 엽니다. 파일의 위치와 형식은 그대로 유지됩니다. 지원하는 사진 앱에서 사용할 수 있도록 XMP 사이드카에 저장합니다.
+별도의 가져오기, 구독, 업로드가 필요 없습니다. 기존 폴더를 Lap에서 바로 엽니다. 파일의 위치와 형식은 그대로 유지됩니다. 지원하는 사진 앱에서 사용할 수 있도록 XMP 사이드카에 저장합니다. AI 검색은 사용자의 기기에서 실행됩니다.
 
 <div align="center">
   <p><strong><a href="https://julyx10.github.io/lap/">공식 웹사이트</a> | <a href="https://julyx10.github.io/lap/demos/lap/index.html">데모</a></strong></p>
@@ -56,9 +59,9 @@ brew install --cask lap
 ## 주요 기능
 
 - **유연한 라이브러리 탐색**: 날짜, 폴더, 위치, 카메라, 렌즈, 태그, 평점, 얼굴별 필터와 정렬, 검색을 지원합니다.
-- **폴더 중심 작업 흐름.** 여러 라이브러리, 끌어서 놓기 또는 클립보드를 통한 가져오기 및 내보내기, 일괄 이름 변경과 동기화.
+- **폴더 중심 작업 흐름.** 여러 라이브러리, 끌어서 놓기 또는 클립보드를 통한 가져오기 및 내보내기, 일괄 이름 변경과 동기화, 안전한 이동, 복사 및 삭제.
 - **로컬 AI 검색**: 텍스트, 시각적 유사성, 피사체, 얼굴 그룹화를 지원하며 50개 이상의 언어로 검색할 수 있습니다.
-- **메타데이터 가져오기 및 XMP 쓰기.** EXIF, IPTC, XMP.
+- **메타데이터 가져오기 및 XMP 쓰기** · 내장 EXIF, IPTC, XMP와 사이드카(평점, 태그, 즐겨찾기, 선별 상태, GPS, 날짜 등)를 읽습니다. 텍스트 필드를 편집하고 정리 정보를 XMP 사이드카에 저장할 수 있습니다.
 - **스마트 앨범.** 사용자 지정 그룹화와 정렬, 폴더 이름 필터, 검색 가능한 값 선택기.
 - **날짜별 가져오기**: 일별, 월별, 연도별 또는 단일 폴더로 정리하고 원래 파일명을 유지하며 중복을 건너뜁니다.
 - **컬렉션과 태그**: 원본을 이동하거나 복제하지 않고 선택한 파일을 일괄 정리합니다. 드래그와 하위 분기별 개수 표시를 지원하는 태그 트리.
@@ -78,20 +81,29 @@ brew install --cask lap
 
 ## 메타데이터, 컬렉션 및 파일 이동
 
-Lap은 Lightroom, digiKam, darktable, ACDSee의 호환 메타데이터를 읽습니다. 설정에서 가져오기를 켜세요. 지원하는 XMP 사이드카 값은 내장 값보다 우선하며 로컬 편집 내용은 유지됩니다.
+Lap은 기존 폴더를 직접 사용하며 표시되는 정보 대부분을 파일에서 읽습니다. 정리 정보를 다른 사진 앱에서도 읽을 수 있는 표준 XMP 사이드카에 저장할 수 있습니다.
+
+Lap은 Lightroom, digiKam, darktable, ACDSee의 호환 메타데이터를 읽습니다. 지원하는 필드는 앱마다 다릅니다.
 
 ### 파일과 함께 유지되는 정보
 
 - 원본 사진과 비디오는 기존 폴더에 있는 일반 파일로 항상 유지됩니다.
-- EXIF 촬영 날짜, 카메라, 렌즈, GPS, 방향처럼 파일에 이미 포함된 메타데이터는 Lap이 파일을 인덱싱할 때 해당 파일에서 읽습니다.
-- 제목, 헤드라인, 설명, 제작자, 저작권을 편집할 수 있으며 변경 내용은 로컬 데이터베이스에 저장됩니다. XMP로 저장하면 이 필드와 태그, 평점, 즐겨찾기, 선별 상태가 사이드카에 기록됩니다. 다른 XMP 속성과 원본 파일은 유지됩니다.
-- 파일을 **Lap에서** 이름 변경, 이동, 복사 또는 삭제하면 Lap은 동시에 로컬 카탈로그를 업데이트합니다. Apple Live Photo 구성 요소, AAE 사이드카 파일 및 활성화한 RAW + JPEG/HEIC 쌍처럼 지원되는 연결 자산도 함께 처리합니다. RAW 쌍에서 한 파일 또는 두 파일을 모두 삭제할 수 있습니다. 한 파일을 남기면 공유 XMP 사이드카도 유지됩니다.
+- 인덱싱할 때 촬영 및 정리 정보가 포함된 내장 EXIF, IPTC, XMP를 읽습니다. 로컬 데이터베이스로 정리 정보를 가져오려면 **설정 → 메타데이터 → 메타데이터 가져오기**를 켜세요. 로컬 편집 내용은 유지됩니다.
+- GPS와 촬영 날짜를 포함하여 지원되는 XMP 사이드카 값이 내장 값보다 우선합니다.
+- 제목, 헤드라인, 설명, 제작자, 저작권을 편집할 수 있으며 변경 내용은 로컬 데이터베이스에 저장됩니다.
+- XMP로 저장하면 이 필드와 태그 (계층형 키워드 포함), 평점, 즐겨찾기, 선별 상태가 사이드카에 기록됩니다. 다른 XMP 속성과 원본 파일은 유지됩니다.
+- 파일을 **Lap에서** 이름 변경, 이동, 복사, 삭제 또는 가져오기하면 Lap은 동시에 로컬 카탈로그를 업데이트합니다. Apple Live Photo 구성 요소, XMP 및 AAE 사이드카 파일 및 활성화한 RAW + JPEG/HEIC 쌍처럼 지원되는 연결 자산도 함께 처리합니다. RAW 쌍에서 한 파일 또는 두 파일을 모두 삭제할 수 있습니다. 한 파일을 남기면 공유 XMP 사이드카도 유지됩니다.
 - 내장 이미지 편집을 저장하면 결과 이미지가 선택한 대상 위치에 기록됩니다.
 
 ### Lap이 로컬에 저장하는 정보
 
+이 라이브러리 데이터는 로컬 데이터베이스 또는 라이브러리 구성에 저장됩니다.
+
 - 컬렉션, 스마트 앨범의 규칙 및 보기 설정은 로컬 데이터베이스 또는 구성에 저장됩니다.
 - AI 검색 데이터, 얼굴 데이터, 썸네일 및 기타 인덱스 또는 캐시 데이터
+- 태그, 평점, 즐겨찾기, 선별 상태 및 편집 가능한 텍스트 필드는 로컬에 저장되며 XMP에 쓸 수 있습니다.
+
+기본적으로 Lap 외부에서 파일을 처리할 때 이 데이터는 함께 이동하지 않습니다.
 
 ### Lap 외부에서 파일 작업하기
 
@@ -230,7 +242,7 @@ sudo apt install gstreamer1.0-libav gstreamer1.0-plugins-good
 | [libheif](https://github.com/strukturag/libheif) | HEIC/HEIF/HIF 이미지 디코딩 및 미리보기 생성 |
 | [libjpeg-turbo](https://libjpeg-turbo.org/) | 빠른 JPEG 디코딩 및 썸네일 생성 |
 | [FFmpeg](https://ffmpeg.org/) | 비디오 처리 및 썸네일 생성 |
-| [exiftool-rs](https://github.com/Le-Syl21/exiftool-rs) | EXIF / IPTC / XMP |
+| [exiftool-rs](https://github.com/Le-Syl21/exiftool-rs) | ExifTool의 Rust 포팅 |
 | [Video.js](https://videojs.com/) | 교차 플랫폼 비디오 재생 UI |
 | [ONNX Runtime](https://onnxruntime.ai/) | 로컬 AI 모델 추론 엔진 |
 | [CLIP](https://github.com/openai/CLIP) | 이미지-텍스트 유사도 검색 |
