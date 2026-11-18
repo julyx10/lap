@@ -185,13 +185,20 @@ fn original_response(
 pub fn register_protocols(builder: Builder<Wry>) -> Builder<Wry> {
     builder
         .register_asynchronous_uri_scheme_protocol("original", |ctx, request, responder| {
+            // Respond before this handler returns. On macOS, WKWebView delivers
+            // stopURLSchemeTask: on the same thread, so the task stays valid
+            // until then. Replying later from spawn_blocking races that stop:
+            // WebKit raises NSInternalInconsistencyException from
+            // didReceiveResponse:, and a release build (panic = "abort") cannot
+            // catch it across Rust frames, so the process SIGABRTs. Video
+            // playback cancels range requests constantly; still images usually
+            // finish first. This is the same threading the asset protocol used
+            // when these files played stably in v0.3.3.
             let scope = ctx.app_handle().asset_protocol_scope();
-            tauri::async_runtime::spawn_blocking(move || {
-                let response = original_response(request, scope).unwrap_or_else(|error| {
-                    text_response(http::StatusCode::INTERNAL_SERVER_ERROR, &error.to_string())
-                });
-                responder.respond(response);
+            let response = original_response(request, scope).unwrap_or_else(|error| {
+                text_response(http::StatusCode::INTERNAL_SERVER_ERROR, &error.to_string())
             });
+            responder.respond(response);
         })
         .register_asynchronous_uri_scheme_protocol("thumb", |_ctx, request, responder| {
             // URL format: thumb://localhost/{library_id}/{file_id}
