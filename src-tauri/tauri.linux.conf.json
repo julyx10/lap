@@ -1,0 +1,20 @@
+{
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Lap",
+        "width": 1200,
+        "height": 800,
+        "minWidth": 800,
+        "minHeight": 600,
+        "resizable": true,
+        "fullscreen": false,
+        "visible": false,
+        "decorations": false,
+        "transparent": false,
+        "dragDropEnabled": false
+      }
+    ]
+  }
+}
