@@ -672,6 +672,8 @@ const thumbnailBadge = computed(() => {
   const file = props.file || {};
   switch (summary) {
     case THUMBNAIL_BADGE.FILE_FORMAT: {
+      const formatLabel = (file.format_label || '').trim();
+      if (formatLabel) return formatLabel.toUpperCase();
       const extension = getFileExtension(file.name || file.file_path || '').trim();
       return extension ? extension.toUpperCase() : '';
     }

@@ -1516,7 +1516,12 @@ pub(crate) async fn load_oriented_image(
     } else {
         let path = file_path.to_string();
         tauri::async_runtime::spawn_blocking(move || {
-            let img = image::open(Path::new(&path)).map_err(|e| e.to_string())?;
+            // Prefer the file signature, as File Info does for its format label.
+            let img = ImageReader::open(&path)
+                .and_then(|reader| reader.with_guessed_format())
+                .map_err(|e| e.to_string())?
+                .decode()
+                .map_err(|e| e.to_string())?;
             Ok(apply_orientation(img, orientation))
         })
         .await
@@ -2169,6 +2174,19 @@ mod offline_preview_tests {
         // Export/crop must decode the same oriented pixels as the editing preview.
         let export = tauri::async_runtime::block_on(load_oriented_image(&path, 1)).unwrap();
         assert_eq!(export.to_rgb8(), image.to_rgb8());
+    }
+
+    #[test]
+    fn editable_png_with_jpeg_extension_uses_file_signature() {
+        let dir = std::env::temp_dir().join(format!("lap-edit-format-{}", uuid::Uuid::new_v4()));
+        fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("sample.jpg");
+        let pixels = image::RgbaImage::from_pixel(4, 3, image::Rgba([60, 120, 180, 128]));
+        pixels.save_with_format(&path, ImageFormat::Png).unwrap();
+
+        let result = tauri::async_runtime::block_on(load_oriented_image(path.to_str().unwrap(), 1));
+        fs::remove_dir_all(dir).unwrap();
+        assert_eq!(result.unwrap().into_rgba8(), pixels);
     }
 
     #[test]
