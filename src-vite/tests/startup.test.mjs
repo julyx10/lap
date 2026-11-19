@@ -152,3 +152,21 @@ test('Home starts warmup and update checking once, including the corrupt-library
     assert.deepEqual(calls, autoCheckUpdates ? [['finish_startup', { model: 1 }], ['update']] : [['finish_startup', { model: 1 }]]);
   }
 });
+
+test('media startup failure still mounts the app and reports the error', async () => {
+  const source = await readFile(new URL('../src/main.js', import.meta.url), 'utf8');
+  const start = source.indexOf('const originalMediaAvailable = await originalMediaReady');
+  const end = source.indexOf("performance.mark('startup-app-mounted')", start);
+  assert.ok(start >= 0 && end > start);
+  const calls = [];
+  const AsyncFunction = Object.getPrototypeOf(async () => {}).constructor;
+  const mount = new AsyncFunction('originalMediaReady', 'app', 'isMainWindow', 'message', 'i18n', source.slice(start, end));
+  await mount(
+    Promise.resolve(false),
+    { mount: selector => calls.push(selector) },
+    true,
+    async (message, options) => { calls.push([message, options.kind]); },
+    { global: { t: key => key } },
+  );
+  assert.deepEqual(calls, ['#app', ['image_viewer.media_server_unavailable', 'error']]);
+});

@@ -6,6 +6,8 @@ import piniaPersistedState from 'pinia-plugin-persistedstate'
 import { emit, listen } from '@tauri-apps/api/event'
 import { invoke } from '@tauri-apps/api/core'
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow'
+import { message } from '@tauri-apps/plugin-dialog'
+import { initializeOriginalMedia } from '@/common/utils'
 import { getSystemRegionLocale } from '@/common/api'
 import 'cally'
 import router from '@/common/router'
@@ -28,6 +30,10 @@ const currentWindowLabel = getCurrentWebviewWindow().label
 const isMainWindow = currentWindowLabel === 'main'
 const isSettingsWindow = currentWindowLabel === 'settings'
 let settingsSyncRequest = 0
+const originalMediaReady = initializeOriginalMedia().then(() => true, error => {
+  console.error(error)
+  return false
+})
 
 listen('status-bar-fields-changed', ({ payload }) => {
   const fields = normalizeStatusBarFields(payload)
@@ -115,7 +121,11 @@ app.use(router)
 app.use(i18n)
 
 // Mount the app
+const originalMediaAvailable = await originalMediaReady
 app.mount('#app')
+if (!originalMediaAvailable && isMainWindow) {
+  void message(i18n.global.t('image_viewer.media_server_unavailable'), { title: 'Lap', kind: 'error' }).catch(console.error)
+}
 performance.mark('startup-app-mounted')
 if (isMainWindow) void invoke('record_startup_stage', { stage: 'app-mounted' }).catch(console.error)
 

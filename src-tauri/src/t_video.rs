@@ -61,25 +61,6 @@ pub fn init_ffmpeg_path(app: &AppHandle) {
     }
 }
 
-/// Get video url for different platforms
-fn platform_video_url(file_path: &str) -> Result<String, String> {
-    #[cfg(target_os = "linux")]
-    {
-        crate::t_http::make_video_stream_url(file_path)
-    }
-    #[cfg(not(target_os = "linux"))]
-    {
-        Ok(file_path.to_string())
-    }
-}
-
-/// Resolve the original video's platform transport without compatibility processing.
-#[tauri::command]
-pub fn get_video_stream_url(file_path: String) -> Result<String, String> {
-    crate::t_utils::require_local_content(std::path::Path::new(&file_path)).map_err(|e| e.to_string())?;
-    platform_video_url(&file_path)
-}
-
 /// Manages active FFmpeg/FFprobe processes, allowing per-player cancellation.
 pub struct VideoManager {
     pub active_processes: Mutex<HashMap<String, (u64, tokio::process::Child)>>,
@@ -1217,7 +1198,7 @@ pub async fn prepare_video(
 
     if action == VideoAction::Direct && !force_process && !force_compatible {
         let result = VideoPrepareResult {
-            url: platform_video_url(&file_path)?,
+            url: crate::t_http::make_video_stream_url(&file_path)?,
             action: VideoAction::Direct,
         };
         finish_video_request(&state, &player_id, request_id).await;
@@ -1257,7 +1238,7 @@ pub async fn prepare_video(
     if let Ok(meta) = tokio::fs::metadata(&output_path).await {
         if meta.len() > 32 * 1024 && (force.is_none() || force_compatible) {
             let result = VideoPrepareResult {
-                url: platform_video_url(output_path.to_string_lossy().as_ref())?,
+                url: crate::t_http::make_video_stream_url(output_path.to_string_lossy().as_ref())?,
                 action: current_action,
             };
             finish_video_request(&state, &player_id, request_id).await;
@@ -1412,7 +1393,7 @@ pub async fn prepare_video(
                 let _ = tokio::fs::remove_file(&tmp_path).await;
                 finish_video_request(&state, &player_id, request_id).await;
                 return Ok(VideoPrepareResult {
-                    url: platform_video_url(output_path.to_string_lossy().as_ref())?,
+                    url: crate::t_http::make_video_stream_url(output_path.to_string_lossy().as_ref())?,
                     action: current_action,
                 });
             }
@@ -1427,7 +1408,7 @@ pub async fn prepare_video(
                 });
                 finish_video_request(&state, &player_id, request_id).await;
                 return Ok(VideoPrepareResult {
-                    url: platform_video_url(output_path.to_string_lossy().as_ref())?,
+                    url: crate::t_http::make_video_stream_url(output_path.to_string_lossy().as_ref())?,
                     action: current_action,
                 });
             }

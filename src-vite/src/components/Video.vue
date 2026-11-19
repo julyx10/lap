@@ -92,7 +92,6 @@ import { isCloudOnlyFile, openFileWithApp } from '@/common/api';
 import zhCN from 'video.js/dist/lang/zh-CN.json';
 import {
   prepareVideo,
-  getVideoStreamUrl,
   cancelVideoPrepare,
   isWebViewVideoPlaybackDisabled,
   type VideoPrepareMode,
@@ -632,12 +631,13 @@ const loadVideo = async (filePath: string) => {
     try {
       const result = await prepareVideo(filePath, playerId, force, backendRequestId);
       if (currentLoadId !== currentLoadingId) return;
-      const playbackSrc = isLinux ? result.url : getAssetSrc(result.url);
+      const playbackSrc = result.url;
+      const isWebm = decodeURIComponent(new URL(playbackSrc).pathname).toLowerCase().endsWith('.webm');
 
       player.reset();
       player.src({
         src: playbackSrc,
-        type: result.action === 'remux' ? 'video/mp4' : (result.url.endsWith('.webm') ? 'video/webm' : 'video/mp4'),
+        type: result.action === 'remux' ? 'video/mp4' : (isWebm ? 'video/webm' : 'video/mp4'),
       });
 
       let preparedAttemptSettled = false;
@@ -695,20 +695,12 @@ const loadVideo = async (filePath: string) => {
 
   const loadDirect = async (type: string | null) => {
     resetCompatibilityProcessing();
-    let playbackSrc: string;
-    try {
-      // Use the same Range-capable transport as prepared videos on Linux,
-      // without probing or copying the original MP4/M4V file.
-      playbackSrc = isLinux && /\.(mp4|m4v)$/i.test(filePath)
-        ? await getVideoStreamUrl(filePath)
-        : getAssetSrc(filePath);
-    } catch (error) {
-      if (currentLoadId !== currentLoadingId) return;
-      console.warn('[Video] Direct stream URL unavailable, preparing a compatible source...', error);
+    if (currentLoadId !== currentLoadingId) return;
+    const playbackSrc = getAssetSrc(filePath);
+    if (!playbackSrc) {
       void loadPrepared('compatible');
       return;
     }
-    if (currentLoadId !== currentLoadingId) return;
     player.reset();
     const source = type
       ? { src: playbackSrc, type }

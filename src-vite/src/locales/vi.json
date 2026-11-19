@@ -1335,6 +1335,7 @@
     "title": "Trình xem ảnh",
     "loading": "Đang tải...",
     "loading_original": "Đang tải ảnh gốc...",
+    "media_server_unavailable": "Không thể tải ảnh và video gốc. Hãy khởi động lại Lap để thử lại.",
     "failed": "Không thể tải ảnh. Tệp bị thiếu hoặc bị hỏng.",
     "raw_render_unavailable": "Không thể kết xuất ảnh RAW này; đang hiển thị bản xem trước nhúng.",
     "af_unavailable": "Ảnh này không có dữ liệu AF được hỗ trợ",

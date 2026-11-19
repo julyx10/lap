@@ -1336,6 +1336,7 @@
     "title": "Bildanzeige",
     "loading": "Lade...",
     "loading_original": "Originalfoto wird geladen...",
+    "media_server_unavailable": "Originalfotos und -videos konnten nicht geladen werden. Starten Sie Lap neu und versuchen Sie es erneut.",
     "failed": "Foto konnte nicht geladen werden. Die Datei fehlt oder ist beschädigt.",
     "raw_render_unavailable": "RAW kann nicht gerendert werden; eingebettete Vorschau angezeigt.",
     "af_unavailable": "Keine unterstützten AF-Daten für dieses Bild",

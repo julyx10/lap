@@ -143,10 +143,6 @@ async fn main() {
                 }
             }
 
-            // Initialize video HTTP server for Linux
-            #[cfg(target_os = "linux")]
-            t_http::init_video_http_server();
-
             // Cleanup video cache
             t_video::init_video_cache(&_app.handle());
 
@@ -155,6 +151,10 @@ async fn main() {
                     eprintln!("Failed to restore asset scopes: {}", e);
                 }
             }
+            if let Err(error) = t_http::init_original_media_server(_app.handle()) {
+                eprintln!("Failed to initialize original media server: {error}");
+            }
+
             t_startup::mark(&_app.handle(), "setup-ready");
 
             // Open devtools in development mode
@@ -447,7 +447,7 @@ async fn main() {
             t_cmds::similar_has_scan,
             // video
             t_video::prepare_video,
-            t_video::get_video_stream_url,
+            t_http::original_media_base_url,
             t_video::cancel_video_prepare,
             t_video::clear_video_cache,
             // backup / restore

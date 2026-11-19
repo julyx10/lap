@@ -1336,6 +1336,7 @@
     "title": "이미지 뷰어",
     "loading": "로딩 중...",
     "loading_original": "원본 사진을 불러오는 중...",
+    "media_server_unavailable": "원본 사진과 동영상을 불러올 수 없습니다. Lap을 다시 시작한 후 재시도하세요.",
     "failed": "사진을 불러오지 못했습니다. 파일이 없거나 손상되었습니다.",
     "raw_render_unavailable": "이 RAW는 렌더링할 수 없습니다. 내장 미리보기 표시 중.",
     "af_unavailable": "이 이미지에는 지원되는 AF 데이터가 없습니다",

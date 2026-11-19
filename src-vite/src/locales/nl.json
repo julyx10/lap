@@ -1336,6 +1336,7 @@
     "title": "Fotoviewer",
     "loading": "Laden...",
     "loading_original": "Originele foto laden...",
+    "media_server_unavailable": "De originele foto’s en video’s konden niet worden geladen. Start Lap opnieuw om het nogmaals te proberen.",
     "failed": "Kan foto niet laden. Het bestand ontbreekt of is beschadigd.",
     "raw_render_unavailable": "Kan deze RAW niet renderen; ingesloten voorbeeld getoond.",
     "af_unavailable": "Geen ondersteunde AF-gegevens voor deze afbeelding",

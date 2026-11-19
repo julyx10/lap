@@ -1336,6 +1336,7 @@
     "title": "圖片檢視器",
     "loading": "載入中...",
     "loading_original": "正在載入原始相片...",
+    "media_server_unavailable": "無法載入原始相片和影片。請重新啟動 Lap 後再試。",
     "failed": "無法載入相片。檔案遺失或已損毀。",
     "raw_render_unavailable": "無法算繪此 RAW；已顯示內嵌預覽。",
     "af_unavailable": "此圖片沒有可用的自動對焦資料",

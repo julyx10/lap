@@ -1335,6 +1335,7 @@
     "title": "Prohlížeč obrázků",
     "loading": "Načítání…",
     "loading_original": "Načítá se původní fotografie…",
+    "media_server_unavailable": "Původní fotografie a videa se nepodařilo načíst. Restartujte Lap a zkuste to znovu.",
     "failed": "Fotografii se nepodařilo načíst. Soubor chybí nebo je poškozený.",
     "raw_render_unavailable": "Tento soubor RAW nelze vykreslit; zobrazuje se vložený náhled.",
     "af_unavailable": "Tento obrázek nemá podporovaná data AF",

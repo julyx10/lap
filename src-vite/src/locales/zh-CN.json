@@ -1336,6 +1336,7 @@
     "title": "图像查看器",
     "loading": "加载中...",
     "loading_original": "加载原始照片...",
+    "media_server_unavailable": "无法加载原图和视频。请重启 Lap 后重试。",
     "failed": "加载照片失败。文件不存在或已损坏。",
     "raw_render_unavailable": "无法渲染该 RAW，已显示内嵌预览。",
     "af_unavailable": "此图片没有可用的自动对焦数据",

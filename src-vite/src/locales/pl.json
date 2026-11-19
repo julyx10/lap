@@ -1336,6 +1336,7 @@
     "title": "Przeglądarka zdjęć",
     "loading": "Wczytywanie...",
     "loading_original": "Wczytywanie oryginalnego zdjęcia...",
+    "media_server_unavailable": "Nie udało się wczytać oryginalnych zdjęć i filmów. Uruchom ponownie Lap i spróbuj jeszcze raz.",
     "failed": "Nie udało się wczytać zdjęcia. Plik jest uszkodzony lub nie istnieje.",
     "raw_render_unavailable": "Nie można wyrenderować tego RAW; pokazano osadzony podgląd.",
     "af_unavailable": "Brak obsługiwanych danych AF dla tego obrazu",

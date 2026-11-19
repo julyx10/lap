@@ -1336,6 +1336,7 @@
     "title": "Visionneuse d’images",
     "loading": "Chargement...",
     "loading_original": "Chargement de la photo originale...",
+    "media_server_unavailable": "Impossible de charger les photos et vidéos originales. Redémarrez Lap pour réessayer.",
     "failed": "Impossible de charger la photo. Le fichier est manquant ou corrompu.",
     "raw_render_unavailable": "Impossible de rendre ce RAW ; aperçu intégré affiché.",
     "af_unavailable": "Aucune donnée AF prise en charge pour cette image",

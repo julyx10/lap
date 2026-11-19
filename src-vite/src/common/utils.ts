@@ -1,5 +1,5 @@
 import { open as openDialog } from '@tauri-apps/plugin-dialog';
-import { convertFileSrc, invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/core';
 import { useUIStore } from '@/stores/uiStore';
 import { config } from '@/common/config';
 import { appendRawDisplayParams, rawDisplayKey } from './rawDisplay';
@@ -793,14 +793,18 @@ export function scrollToFolder(folderId: number) {
   }
 }
 
+let originalMediaBaseUrl = '';
+
+export async function initializeOriginalMedia() {
+  originalMediaBaseUrl = await invoke<string>('original_media_base_url');
+}
+
 // get image file asset source url with version number
 export function getAssetSrc(filePath: string, fileVersion = 0): string {
-  if (!filePath) {
-    return '';
-  }
+  if (!filePath || !originalMediaBaseUrl) return '';
   const uiStore = useUIStore();
   const localVersion = uiStore.getFileVersion(filePath);
-  const assetUrl = convertFileSrc(filePath, 'original');
+  const assetUrl = `${originalMediaBaseUrl}${encodeURIComponent(filePath)}`;
   const params = new URLSearchParams();
   if (fileVersion > 0) params.set('v', String(fileVersion));
   if (localVersion > 0) params.set('u', String(localVersion));

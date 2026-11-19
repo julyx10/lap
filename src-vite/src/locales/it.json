@@ -1336,6 +1336,7 @@
     "title": "Visualizzatore immagini",
     "loading": "Caricamento...",
     "loading_original": "Caricamento della foto originale...",
+    "media_server_unavailable": "Impossibile caricare le foto e i video originali. Riavvia Lap per riprovare.",
     "failed": "Impossibile caricare la foto. Il file manca o è danneggiato.",
     "raw_render_unavailable": "Impossibile elaborare questo RAW; viene mostrata l'anteprima incorporata.",
     "af_unavailable": "Nessun dato AF supportato per questa immagine",

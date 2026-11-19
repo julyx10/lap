@@ -1336,6 +1336,7 @@
     "title": "Visor de imagenes",
     "loading": "Cargando...",
     "loading_original": "Cargando foto original...",
+    "media_server_unavailable": "No se pudieron cargar las fotos y los vídeos originales. Reinicia Lap para volver a intentarlo.",
     "failed": "No se pudo cargar la foto. El archivo falta o está dañado.",
     "raw_render_unavailable": "No se puede renderizar este RAW; se muestra la vista previa incrustada.",
     "af_unavailable": "No hay datos de AF compatibles para esta imagen",
