@@ -225,7 +225,12 @@ export function useAppUpdater(localeMsg: Ref<any>, options: AppUpdaterOptions = 
         );
       }
     } catch (error: unknown) {
-      const message = getErrorMessage(error, localeMsg.value.settings.about.auto_update.failed_check);
+      const rawMessage = extractRawErrorMessage(error);
+      const platformUnavailable = /None of the fallback platforms .* were found in the response `platforms` object/i.test(rawMessage)
+        || /the platform `[^`]+` was not found in the response `platforms` object/i.test(rawMessage);
+      const message = platformUnavailable
+        ? localeMsg.value.settings.about.auto_update.platform_unavailable
+        : getErrorMessage(error, localeMsg.value.settings.about.auto_update.failed_check);
       console.error('Failed to check for updates:', error);
       checkError.value = message;
       if (manual && !silent) {

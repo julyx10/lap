@@ -1877,6 +1877,7 @@
         "update_installed_waiting_restart": "Đã cài đặt bản cập nhật. Vui lòng khởi động lại ứng dụng.",
         "release_note": "Ghi chú phát hành",
         "restart": "Khởi động lại",
+        "platform_unavailable": "Bản cập nhật chưa có sẵn cho nền tảng của bạn. Vui lòng thử lại sau.",
         "failed_check": "Không thể kiểm tra cập nhật",
         "failed_install": "Không thể cài đặt bản cập nhật"
       }

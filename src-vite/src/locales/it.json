@@ -1868,6 +1868,7 @@
         "update_installed_waiting_restart": "Aggiornamento installato. Riavvia l'app.",
         "release_note": "Note di rilascio",
         "restart": "Riavvia",
+        "platform_unavailable": "L’aggiornamento non è ancora disponibile per la tua piattaforma. Riprova più tardi.",
         "failed_check": "Impossibile controllare gli aggiornamenti",
         "failed_install": "Impossibile installare l'aggiornamento"
       }

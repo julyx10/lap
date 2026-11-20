@@ -1878,6 +1878,7 @@
         "update_installed_waiting_restart": "更新已安装。请重启应用。",
         "release_note": "更新说明",
         "restart": "重启",
+        "platform_unavailable": "当前平台的更新暂不可用，请稍后重试。",
         "failed_check": "检查更新失败",
         "failed_install": "安装更新失败"
       }

@@ -1868,6 +1868,7 @@
         "update_installed_waiting_restart": "업데이트가 설치되었습니다. 앱을 재시작해 주세요.",
         "release_note": "릴리스 노트",
         "restart": "재시작",
+        "platform_unavailable": "현재 플랫폼의 업데이트가 아직 제공되지 않습니다. 나중에 다시 시도하세요.",
         "failed_check": "업데이트 확인 실패",
         "failed_install": "업데이트 설치 실패"
       }

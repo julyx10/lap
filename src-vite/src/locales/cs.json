@@ -1867,6 +1867,7 @@
         "update_installed_waiting_restart": "Aktualizace byla nainstalována. Restartujte aplikaci.",
         "release_note": "Poznámky k vydání",
         "restart": "Restartovat",
+        "platform_unavailable": "Aktualizace pro vaši platformu zatím není dostupná. Zkuste to později.",
         "failed_check": "Nepodařilo se zkontrolovat aktualizace",
         "failed_install": "Nepodařilo se nainstalovat aktualizaci"
       }

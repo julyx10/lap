@@ -1868,6 +1868,7 @@
         "update_installed_waiting_restart": "更新がインストールされました。アプリを再起動してください。",
         "release_note": "リリースノート",
         "restart": "再起動",
+        "platform_unavailable": "お使いのプラットフォーム向けの更新はまだ利用できません。しばらくしてから再試行してください。",
         "failed_check": "更新の確認に失敗しました",
         "failed_install": "更新のインストールに失敗しました"
       }

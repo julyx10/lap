@@ -1878,6 +1878,7 @@
         "update_installed_waiting_restart": "Update installed. Please restart the app.",
         "release_note": "Release note",
         "restart": "Restart",
+        "platform_unavailable": "The update is not available for your platform yet. Please try again later.",
         "failed_check": "Failed to check for updates",
         "failed_install": "Failed to install update"
       }

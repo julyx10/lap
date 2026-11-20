@@ -1878,6 +1878,7 @@
         "update_installed_waiting_restart": "更新已安裝。請重新啟動應用程式。",
         "release_note": "版本說明",
         "restart": "重新啟動",
+        "platform_unavailable": "目前平台的更新暫不可用，請稍後再試。",
         "failed_check": "無法檢查更新",
         "failed_install": "無法安裝更新"
       }

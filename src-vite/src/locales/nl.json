@@ -1868,6 +1868,7 @@
         "update_installed_waiting_restart": "Update geïnstalleerd. Start de app opnieuw.",
         "release_note": "Release-opmerkingen",
         "restart": "Herstarten",
+        "platform_unavailable": "De update is nog niet beschikbaar voor jouw platform. Probeer het later opnieuw.",
         "failed_check": "Kan niet controleren op updates",
         "failed_install": "Kan update niet installeren"
       }

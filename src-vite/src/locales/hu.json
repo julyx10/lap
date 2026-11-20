@@ -1868,6 +1868,7 @@
         "update_installed_waiting_restart": "Frissítés telepítve. Kérjük, indítsa újra az alkalmazást.",
         "release_note": "Kiadási megjegyzések",
         "restart": "Újraindítás",
+        "platform_unavailable": "A frissítés még nem érhető el az Ön platformjára. Próbálja újra később.",
         "failed_check": "Nem sikerült ellenőrizni a frissítéseket",
         "failed_install": "Nem sikerült telepíteni a frissítést"
       }
