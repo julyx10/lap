@@ -2141,6 +2141,10 @@ pub struct QueryParams {
     pub model: String,
     pub lens_make: String,
     pub lens_model: String,
+    #[serde(default)]
+    pub location_cc: Option<String>,
+    #[serde(default)]
+    pub location_depth: i64,
     pub location_admin1: String,
     pub location_name: String,
     pub is_favorite: bool,
@@ -5547,11 +5551,20 @@ impl AFile {
             }
         }
 
-        if !params.location_admin1.is_empty() {
-            conditions.push("a.geo_admin1 = ?".to_string());
+        if let Some(cc) = &params.location_cc {
+            conditions.push("COALESCE(a.geo_cc, '') = ?".to_string());
+            sql_params.push(Box::new(cc.clone()));
+            // Match the sidebar's location-bearing records for unknown countries.
+            if cc.is_empty() {
+                conditions.push("(COALESCE(a.geo_admin1, '') <> '' OR COALESCE(a.geo_name, '') <> '')".to_string());
+            }
+        }
+
+        if params.location_depth >= 2 || !params.location_admin1.is_empty() {
+            conditions.push("COALESCE(a.geo_admin1, '') = ?".to_string());
             sql_params.push(Box::new(params.location_admin1.clone()));
-            if !params.location_name.is_empty() {
-                conditions.push("a.geo_name = ?".to_string());
+            if params.location_depth >= 3 || !params.location_name.is_empty() {
+                conditions.push("COALESCE(a.geo_name, '') = ?".to_string());
                 sql_params.push(Box::new(params.location_name.clone()));
             }
         }
@@ -10163,14 +10176,16 @@ impl ALocation {
     pub fn get_from_db(sort: i64) -> Result<Vec<Self>, String> {
         let conn = open_conn()?;
 
-        let query = format!("SELECT COALESCE(a.geo_cc, ''), a.geo_admin1, a.geo_name, count(a.id) as count
+        let query = format!("SELECT COALESCE(a.geo_cc, ''), COALESCE(a.geo_admin1, ''), COALESCE(a.geo_name, ''), count(a.id) as count
             FROM afiles a
             JOIN afolders b ON a.folder_id = b.id
-            WHERE COALESCE(a.geo_admin1, '') <> '' AND COALESCE(a.geo_name, '') <> ''
+            WHERE (COALESCE(a.geo_cc, '') <> ''
+                OR COALESCE(a.geo_admin1, '') <> ''
+                OR COALESCE(a.geo_name, '') <> '')
                 AND a.id NOT IN (
                     SELECT live_photo_video_id FROM afiles WHERE live_photo_video_id IS NOT NULL
                 ){} AND {}
-            GROUP BY a.geo_cc, a.geo_admin1, a.geo_name
+            GROUP BY COALESCE(a.geo_cc, ''), COALESCE(a.geo_admin1, ''), COALESCE(a.geo_name, '')
             ORDER BY a.geo_cc, a.geo_admin1, a.geo_name", AFile::album_filter_sql("a"), AFile::search_exclusion_condition("b"));
 
         let mut stmt = conn.prepare(query.as_str()).map_err(|e| e.to_string())?;
@@ -11949,5 +11964,149 @@ mod file_refresh_policy_tests {
             .unwrap()
             .at = std::time::Instant::now() - Duration::from_secs(31);
         assert_eq!(recent_refresh_failure(&key, "v2"), None);
+    }
+}
+
+#[cfg(test)]
+mod location_group_tests {
+    use super::*;
+
+    struct Fixture(PathBuf);
+    impl Fixture {
+        fn new() -> Self {
+            let path =
+                std::env::temp_dir().join(format!("lap-location-group-{}", uuid::Uuid::new_v4()));
+            fs::create_dir(&path).unwrap();
+            Self(path)
+        }
+    }
+    impl Drop for Fixture {
+        fn drop(&mut self) {
+            TEST_DB_PATH.with(|path| path.replace(None));
+            clear_conn_pool();
+            let _ = fs::remove_dir_all(&self.0);
+        }
+    }
+
+    fn seed(conn: &Connection) {
+        conn.execute_batch(
+            "CREATE TABLE albums (id INTEGER PRIMARY KEY, path TEXT,
+                file_types INTEGER NOT NULL DEFAULT 7,
+                small_image_filter INTEGER NOT NULL DEFAULT 0,
+                excluded_folders TEXT NOT NULL DEFAULT '[]');
+             CREATE TABLE afolders (id INTEGER PRIMARY KEY, album_id INTEGER, path TEXT,
+                is_excluded_from_search INTEGER NOT NULL DEFAULT 0);
+             CREATE TABLE afiles (id INTEGER PRIMARY KEY, folder_id INTEGER, file_type INTEGER,
+                width INTEGER, height INTEGER, geo_cc TEXT, geo_admin1 TEXT, geo_name TEXT,
+                live_photo_video_id INTEGER);
+             INSERT INTO albums (id, path) VALUES (1, '/library');
+             INSERT INTO afolders (id, album_id, path) VALUES (1, 1, '/library');
+             -- No location at all: must never reach the sidebar.
+             INSERT INTO afiles (id, folder_id, file_type) VALUES (1, 1, 1);
+             INSERT INTO afiles (id, folder_id, file_type, geo_cc) VALUES (2, 1, 1, 'US');
+             INSERT INTO afiles (id, folder_id, file_type, geo_cc, geo_admin1)
+                 VALUES (3, 1, 1, 'US', 'California');
+             INSERT INTO afiles (id, folder_id, file_type, geo_cc, geo_admin1, geo_name)
+                 VALUES (4, 1, 1, 'US', 'California', 'San Francisco');
+             INSERT INTO afiles (id, folder_id, file_type, geo_cc, geo_admin1, geo_name)
+                 VALUES (5, 1, 1, 'DE', 'Berlin', 'Berlin');
+             -- Live Photo video components stay out of the counts.
+             INSERT INTO afiles (id, folder_id, file_type, geo_cc, geo_admin1, geo_name)
+                 VALUES (6, 1, 1, 'IT', 'Lazio', 'Rome');
+             INSERT INTO afiles (id, folder_id, file_type, live_photo_video_id) VALUES (7, 1, 2, 6);",
+        )
+        .unwrap();
+    }
+
+    #[test]
+    fn unknown_country_query_matches_sidebar_count() {
+        let fixture = Fixture::new();
+        TEST_DB_PATH.with(|path| {
+            path.replace(Some(
+                fixture.0.join("catalog.db").to_str().unwrap().to_string(),
+            ))
+        });
+        let conn = open_conn().unwrap();
+        seed(&conn);
+        conn.execute_batch("INSERT INTO afiles (id, folder_id, file_type, geo_admin1) VALUES (8, 1, 1, 'California');
+            INSERT INTO afiles (id, folder_id, file_type, geo_cc, geo_admin1, geo_name) VALUES (9, 1, 1, '', '', 'Paris');
+            INSERT INTO afiles (id, folder_id, file_type, geo_cc, geo_admin1, geo_name) VALUES (10, 1, 1, '', '', '');").unwrap();
+        let mut params: QueryParams = serde_json::from_value(serde_json::json!({
+            "searchFileName":"", "searchFileType":0, "sortType":0, "sortOrder":0,
+            "searchAllSubfolders":"", "searchFolder":"", "startDate":0, "endDate":0,
+            "calendarSort":0, "make":"", "model":"", "lensMake":"", "lensModel":"",
+            "locationCc":"", "locationDepth":1, "locationAdmin1":"", "locationName":"",
+            "isFavorite":false, "rating":-1, "tagId":0, "personId":0
+        }))
+        .unwrap();
+        let sidebar_count: i64 = ALocation::get_from_db(0)
+            .unwrap()
+            .iter()
+            .filter(|location| location.cc.is_empty())
+            .flat_map(|location| location.counts.iter())
+            .sum();
+        assert_eq!(sidebar_count, 2);
+        for (depth, admin1, name, expected) in [
+            (1, "", "", vec![8_i64, 9]),
+            (2, "", "", vec![9]),
+            (3, "", "Paris", vec![9]),
+        ] {
+            params.location_depth = depth;
+            params.location_admin1 = admin1.into();
+            params.location_name = name.into();
+            let (joins, conditions, values) = AFile::build_search_query_parts(&params);
+            let mut stmt = conn.prepare(&format!("SELECT a.id FROM afiles a JOIN afolders b ON b.id = a.folder_id {joins} {conditions} ORDER BY a.id")).unwrap();
+            let ids: Vec<i64> = stmt
+                .query_map(rusqlite::params_from_iter(values.iter()), |r| r.get(0))
+                .unwrap()
+                .collect::<Result<_, _>>()
+                .unwrap();
+            assert_eq!(ids, expected);
+            if depth == 1 {
+                assert_eq!(ids.len() as i64, sidebar_count);
+            }
+        }
+    }
+
+    #[test]
+    fn sidebar_groups_partial_locations_and_skips_files_without_any_location() {
+        let fixture = Fixture::new();
+        TEST_DB_PATH.with(|path| {
+            path.replace(Some(
+                fixture.0.join("catalog.db").to_str().unwrap().to_string(),
+            ))
+        });
+        {
+            let conn = open_conn().unwrap();
+            seed(&conn);
+        }
+
+        let mut grouped: Vec<(String, String, Vec<String>, Vec<i64>)> = ALocation::get_from_db(0)
+            .unwrap()
+            .into_iter()
+            .map(|location| {
+                (
+                    location.cc,
+                    location.admin1,
+                    location.names,
+                    location.counts,
+                )
+            })
+            .collect();
+        grouped.sort();
+
+        assert_eq!(
+            grouped,
+            vec![
+                ("DE".into(), "Berlin".into(), vec!["Berlin".into()], vec![1]),
+                ("US".into(), "".into(), vec!["".into()], vec![1]),
+                (
+                    "US".into(),
+                    "California".into(),
+                    vec!["".into(), "San Francisco".into()],
+                    vec![1, 1]
+                ),
+            ]
+        );
     }
 }

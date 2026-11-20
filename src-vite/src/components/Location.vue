@@ -45,38 +45,62 @@
     <!-- list view -->
     <div v-if="sortedLocations.length > 0" class="flex-1 overflow-x-hidden overflow-y-auto">
       <ul>
-        <li v-for="location in sortedLocations">
+        <li v-for="country in countries" :key="country.cc">
+          <div :class="['sidebar-item', libConfig.location.cc === country.cc && libConfig.location.admin1 === null ? 'sidebar-item-selected' : 'sidebar-item-hover']" @click="selectCountry(country.cc)">
+            <IconRight v-if="country.children.length" :class="['p-1 w-6 h-6 shrink-0 transition-transform', countryExpanded(country.cc) ? 'rotate-90' : '']" @click.stop="toggleCountry(country.cc)" />
+            <span v-else class="w-6 shrink-0"></span>
+            <span class="sidebar-item-label">{{ country.label }}</span>
+            <span class="sidebar-item-count">{{ country.count.toLocaleString() }}</span>
+          </div>
+          <ul v-if="countryExpanded(country.cc)">
+        <li v-for="child in country.children" :key="child.key" class="pl-4">
+          <div v-if="child.kind === 'place'"
+            :class="['sidebar-item sidebar-item-compact', libConfig.location.cc === country.cc && libConfig.location.admin1 === '' && libConfig.location.name === child.name ? 'sidebar-item-selected' : 'sidebar-item-hover']"
+            @click="clickLocationName(child.location, child.name)">
+            <span class="w-6 h-6 shrink-0 flex items-center justify-center"><IconLocation class="w-4 h-4" /></span>
+            <span class="sidebar-item-label">{{ child.name }}</span>
+            <span class="sidebar-item-count">{{ child.count.toLocaleString() }}</span>
+          </div>
+          <template v-else>
+          <template v-for="location in [child.location]" :key="location.admin1">
           <div
+            v-if="location.admin1"
             :class="[
               'sidebar-item',
-              libConfig.location.admin1 === location.admin1 && !libConfig.location.name ? 'sidebar-item-selected' : 'sidebar-item-hover',
+              libConfig.location.cc === location.cc && libConfig.location.admin1 === location.admin1 && libConfig.location.name === null ? 'sidebar-item-selected' : 'sidebar-item-hover',
             ]"
             @click="clickLocationAdmin1(location)"
           >
             <IconRight
+              v-if="location.names.some((name: string) => !!name)"
               :class="[
                 'p-1 w-6 h-6 shrink-0 transition-transform',
                 (location.is_expanded || hasSearch) ? 'rotate-90' : ''
               ]"
               @click.stop="clickExpandLocation(location)"
             />
-            <span class="sidebar-item-label">{{ location.admin1 + (location.cc ? ', ' + getCountryName(location.cc, locale) : '') }}</span>
+            <span v-else class="w-6 shrink-0"></span>
+            <span class="sidebar-item-label">{{ location.admin1 || localeMsg.search.unknown_location }}</span>
             <span class="sidebar-item-count">{{ location.counts.reduce((a: number, b: number) => a + b, 0).toLocaleString() }}</span>
           </div>
-          <ul v-if="(location.is_expanded || hasSearch) && location.names.length > 0">
-            <li v-for="(name, index) in location.names" class="pl-4">
-              <div
+          <ul v-if="!location.admin1 || location.is_expanded || hasSearch">
+            <li v-for="(name, index) in location.names" :key="name" :class="location.admin1 ? 'pl-4' : ''">
+              <div v-if="name"
                 :class="[
                   'sidebar-item sidebar-item-compact ml-2',
-                  libConfig.location.name === name ? 'sidebar-item-selected' : 'sidebar-item-hover',
+                  libConfig.location.cc === location.cc && libConfig.location.admin1 === location.admin1 && libConfig.location.name === name ? 'sidebar-item-selected' : 'sidebar-item-hover',
                 ]"
                 @click="clickLocationName(location, name)"
               >
                 <IconLocation class="mx-1 w-4 h-4 shrink-0" />
-                <span class="sidebar-item-label">{{ name }}</span>
+                <span class="sidebar-item-label">{{ name || localeMsg.search.unknown_location }}</span>
                 <span class="sidebar-item-count">{{ location.counts[index].toLocaleString() }}</span>
               </div>
             </li>
+          </ul>
+          </template>
+          </template>
+        </li>
           </ul>
         </li>
       </ul>
@@ -102,6 +126,7 @@ import { SIDEBAR } from '@/common/constants';
 import { getCountryName } from '@/common/utils';
 import { IconLocation, IconRight, IconSearch, IconClose } from '@/common/icons';
 import SortMenuButton from './SortMenuButton.vue';
+import { buildCountryChildren } from '@/common/locationTree.js';
 
 const props = defineProps({
   titlebar: {
@@ -135,7 +160,7 @@ const sortedLocations = computed(() => {
   const out: any[] = [];
   for (const loc of locations.value) {
     const admin1 = String(loc.admin1 || '').toLowerCase();
-    const country = String(getCountryName(loc.cc, locale.value) || '').toLowerCase();
+    const country = String(getCountryName(loc.cc, locale.value) || localeMsg.value.search.unknown_location).toLowerCase();
     if (admin1.includes(q) || country.includes(q)) {
       out.push(loc);
       continue;
@@ -143,18 +168,50 @@ const sortedLocations = computed(() => {
     const names = Array.isArray(loc.names) ? loc.names : [];
     const counts = Array.isArray(loc.counts) ? loc.counts : [];
     const keep: number[] = [];
-    names.forEach((n: string, i: number) => { if (String(n).toLowerCase().includes(q)) keep.push(i); });
+    names.forEach((n: string, i: number) => { if (String(n || '').toLowerCase().includes(q)) keep.push(i); });
     if (keep.length > 0) {
       out.push({ ...loc, names: keep.map((i) => names[i]), counts: keep.map((i) => counts[i]) });
     }
   }
   return out;
 });
+const expandedCountries = ref(new Set<string>());
+const countries = computed(() => {
+  const groups = new Map<string, any>();
+  for (const region of sortedLocations.value) {
+    if (!groups.has(region.cc)) groups.set(region.cc, {
+      cc: region.cc, label: getCountryName(region.cc, locale.value) || localeMsg.value.search.unknown_location,
+      regions: [], count: 0,
+    });
+    const country = groups.get(region.cc);
+    country.regions.push(region);
+    country.count += region.counts.reduce((sum: number, count: number) => sum + count, 0);
+  }
+  const sort = config.settings.locationSort;
+  for (const country of groups.values()) country.children = buildCountryChildren(country.regions, sort, locale.value);
+  return [...groups.values()].sort((a, b) => {
+    const label = a.label.localeCompare(b.label, locale.value);
+    if (sort === 2) return a.count - b.count || label;
+    if (sort === 3) return b.count - a.count || label;
+    return sort === 1 ? -label : label;
+  });
+});
+function countryExpanded(cc: string) { return hasSearch.value || expandedCountries.value.has(cc); }
+function toggleCountry(cc: string) {
+  if (expandedCountries.value.has(cc)) expandedCountries.value.delete(cc);
+  else expandedCountries.value.add(cc);
+}
+function selectCountry(cc: string) {
+  libConfig.location.cc = cc;
+  libConfig.location.admin1 = null;
+  libConfig.location.name = null;
+  expandedCountries.value.add(cc);
+}
 const hasSearch = computed(() => !!search.value.trim());
 
-// Header counts the second level (individual places), not the top-level regions.
+// Header counts the individual places (the deepest level), not countries or regions.
 const placeCount = computed(() =>
-  sortedLocations.value.reduce((sum: number, loc: any) => sum + (Array.isArray(loc.names) ? loc.names.length : 0), 0),
+  sortedLocations.value.reduce((sum: number, loc: any) => sum + (Array.isArray(loc.names) ? loc.names.filter(Boolean).length : 0), 0),
 );
 
 onMounted(async () => {
@@ -167,8 +224,8 @@ onMounted(async () => {
       (libConfig.location as any).name = null;
     }
     
-    if(libConfig.location.cc && libConfig.location.admin1 && libConfig.location.name) {
-      let location = locations.value.find((location: any) => location.admin1 === libConfig.location.admin1)
+    if(libConfig.location.cc !== null && libConfig.location.admin1 !== null && libConfig.location.name !== null) {
+      let location = locations.value.find((location: any) => location.admin1 === libConfig.location.admin1 && location.cc === libConfig.location.cc)
       if(location) {
         location.is_expanded = true;     // expand selected location
       } else {
@@ -196,7 +253,11 @@ watch(() => [config.main.sidebarIndex, libConfig.activePane], async () => {
 });
 
 function restoreLocationSelection() {
-  if (!libConfig.location.admin1) return;
+  // Empty levels are no longer selectable nodes.
+  if (libConfig.location.name === '') libConfig.location.name = null;
+  if (libConfig.location.admin1 === '' && libConfig.location.name === null) libConfig.location.admin1 = null;
+  if (libConfig.location.cc !== null) expandedCountries.value.add(libConfig.location.cc);
+  if (libConfig.location.admin1 === null) return;
 
   const location = locations.value.find((item: any) =>
     item.admin1 === libConfig.location.admin1 && item.cc === (libConfig.location.cc || '')
@@ -211,8 +272,9 @@ function restoreLocationSelection() {
 
   location.is_expanded = true;
 
-  if (libConfig.location.name && !location.names.includes(libConfig.location.name)) {
+  if (libConfig.location.name !== null && !location.names.includes(libConfig.location.name)) {
     (libConfig.location as any).name = null;
+    if (libConfig.location.admin1 === '') libConfig.location.admin1 = null;
   }
 }
 
@@ -246,9 +308,11 @@ async function getLocations(preserveFilter = false) {
     const fetchedLocations = await getLocationInfo(config.settings.locationSort);
     if (!isLocationMounted || requestVersion !== locationRequestVersion || libraryId !== libConfig._libraryId) return false;
     if (fetchedLocations) {
+      const expanded = new Set(locations.value.filter((location: any) => location.is_expanded)
+        .map((location: any) => JSON.stringify([location.cc, location.admin1])));
       locations.value = fetchedLocations.map((location: any) => ({
         ...location,
-        is_expanded: false,
+        is_expanded: expanded.has(JSON.stringify([location.cc, location.admin1])),
       }));
       if (!preserveFilter) restoreLocationSelection();
     }

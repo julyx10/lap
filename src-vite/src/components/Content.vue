@@ -843,7 +843,7 @@ import { isWin, isMac, isLinux, separator,
          getCachedThumbnailDataUrl,
          clearCachedThumbnailDataUrl,
          extractFileName, combineFileName, getFolderPath, getFolderName, getSelectOptions, 
-         getMediaItemSize, shortenFilename, getSlideShowInterval, copyFilePaths, getClipboardItemPaths, getFullPath, normalizePathForCompare, isWithinRootPath, shouldUseBackendPreview, isPreviewOnlyDocument } from '@/common/utils';
+         getCountryName, getMediaItemSize, shortenFilename, getSlideShowInterval, copyFilePaths, getClipboardItemPaths, getFullPath, normalizePathForCompare, isWithinRootPath, shouldUseBackendPreview, isPreviewOnlyDocument } from '@/common/utils';
 
 import DropDownSelect from '@/components/DropDownSelect.vue';
 import ProgressBar from '@/components/ProgressBar.vue';
@@ -1001,9 +1001,14 @@ function handleBreadcrumbClick(segmentIndex: number) {
 
   const sidebarIndex = config.main.sidebarIndex;
 
-  // Location: clicking parent segment navigates to admin1 only
+  // Location: segments navigate the country > region > place path
   if (sidebarIndex === SIDEBAR.LOCATION) {
-    if (segmentIndex === 0) {
+    if (segmentIndex === 1) {
+      libConfig.location.name = null;
+    } else if (segmentIndex === 0) {
+      // A null country code means a pre-hierarchy selection, where the first
+      // segment is the region itself, so only the place can be dropped.
+      if (libConfig.location.cc !== null) libConfig.location.admin1 = null;
       libConfig.location.name = null;
     }
     return;
@@ -2543,7 +2548,7 @@ function handleNavigateMetadata(payload: { type: string; [key: string]: any }) {
     case 'location': {
       const title = [payload.name, payload.admin1, payload.cc].filter(Boolean).join(', ');
       enterMetadataTempView('location', title, {
-        locationAdmin1: payload.admin1 || '', locationName: payload.name || '', searchFileType: 0,
+        locationCc: payload.cc ?? null, locationAdmin1: payload.admin1 || '', locationName: payload.name || '', searchFileType: 0,
       });
       break;
     }
@@ -3828,6 +3833,8 @@ const currentQueryParams = ref({
   model: "",
   lensMake: "",
   lensModel: "",
+  locationCc: null,
+  locationDepth: 0,
   locationAdmin1: "",
   locationName: "",
   isFavorite: false,
@@ -3929,7 +3936,7 @@ async function refreshFolderSidebarCount(path: string) {
       sortType: 0, sortOrder: 0, searchAllSubfolders: showSubfolderFiles ? path : '',
       searchFolder: showSubfolderFiles ? '' : path,
       startDate: 0, endDate: 0, calendarSort: 0, make: '', model: '', lensMake: '', lensModel: '',
-      locationAdmin1: '', locationName: '', isFavorite: false, rating: -1, cullingFlag: -1, tagId: 0, personId: 0,
+      locationCc: null, locationDepth: 0, locationAdmin1: '', locationName: '', isFavorite: false, rating: -1, cullingFlag: -1, tagId: 0, personId: 0,
     });
     if (result && libConfig._libraryId === libraryId
       && config.settings.showSubfolderFiles === showSubfolderFiles) {
@@ -5869,6 +5876,8 @@ function buildScanStreamQueryParams() {
     model: "",
     lensMake: "",
     lensModel: "",
+    locationCc: null,
+    locationDepth: 0,
     locationAdmin1: "",
     locationName: "",
     isFavorite: false,
@@ -6839,7 +6848,7 @@ watch(
     personId: libConfig.person.id,
     calendar: [config.calendar.view, libConfig.calendar.year, libConfig.calendar.month, libConfig.calendar.date],
     tagId: libConfig.tag.id,
-    location: [libConfig.location.admin1, libConfig.location.name],
+    location: [libConfig.location.cc, libConfig.location.admin1, libConfig.location.name],
     camera: [config.camera.isCamera, libConfig.camera.make, libConfig.camera.model, (libConfig.camera as any).lensMake, (libConfig.camera as any).lensModel],
   }),
   (nextView, previousView) => {
@@ -6876,7 +6885,7 @@ watch(
     libConfig.person.id,                                                              // person
     config.calendar.view, libConfig.calendar.year, libConfig.calendar.month, libConfig.calendar.date, // calendar
     libConfig.tag.id, libConfig.tag.activateTick, // tag
-    libConfig.location.admin1, libConfig.location.name,                               // location
+    libConfig.location.cc, libConfig.location.admin1, libConfig.location.name,                               // location
     libConfig.camera.make, libConfig.camera.model,                                    // camera 
     config.camera.isCamera, (libConfig.camera as any).lensMake, (libConfig.camera as any).lensModel, // lens
   ], 
@@ -7842,6 +7851,8 @@ async function getFileList(
     model = '', 
     lensMake = '',
     lensModel = '',
+    locationCc = null,
+    locationDepth = 0,
     locationAdmin1 = '', 
     locationName = '', 
     isFavorite = activeFavoritesOnly.value,
@@ -7883,6 +7894,8 @@ async function getFileList(
     model,
     lensMake,
     lensModel,
+    locationCc,
+    locationDepth,
     locationAdmin1,
     locationName,
     isFavorite,
@@ -8042,7 +8055,7 @@ async function getCollectionFileList(collectionId: number, requestId: number) {
     model: '',
     lensMake: '',
     lensModel: '',
-    locationAdmin1: '',
+    locationCc: null, locationDepth: 0, locationAdmin1: '',
     locationName: '',
     isFavorite: Boolean(config.search.favoritesOnly),
     rating: -1,
@@ -8304,7 +8317,7 @@ async function getUnifiedSearchFileList(searchText: string, requestId: number) {
     model: '',
     lensMake: '',
     lensModel: '',
-    locationAdmin1: '',
+    locationCc: null, locationDepth: 0, locationAdmin1: '',
     locationName: '',
     isFavorite: Boolean(config.search.favoritesOnly),
     rating: -1,
@@ -8778,17 +8791,16 @@ async function updateContent(force = false, preserveMultiSelection = selectMode.
     }
   }
   else if(newIndex === SIDEBAR.LOCATION) {
-    if(libConfig.location.admin1 === null) {
+    if(libConfig.location.cc === null && libConfig.location.admin1 === null) {
       contentTitle.value = "";
       showEmptyContent(requestId);
     } else {
-      if(libConfig.location.name) {
-        contentTitle.value = `${libConfig.location.admin1} > ${libConfig.location.name}`;
-        getFileList({ locationAdmin1: libConfig.location.admin1, locationName: libConfig.location.name }, requestId);
-      } else {
-        contentTitle.value = `${libConfig.location.admin1}`;
-        getFileList({ locationAdmin1: libConfig.location.admin1 }, requestId);
-      } 
+      const unknownLocation = localeMsg.value.search.unknown_location;
+      const locationPath = [getCountryName(libConfig.location.cc, locale.value) || unknownLocation];
+      if (libConfig.location.admin1) locationPath.push(libConfig.location.admin1);
+      if (libConfig.location.name) locationPath.push(libConfig.location.name);
+      contentTitle.value = locationPath.join(' > ');
+      getFileList({ locationDepth: libConfig.location.name !== null ? 3 : libConfig.location.admin1 !== null ? 2 : 1, locationCc: libConfig.location.cc, locationAdmin1: libConfig.location.admin1 || '', locationName: libConfig.location.name || '' }, requestId);
     }
   }
   else if(newIndex === SIDEBAR.CAMERA) {
