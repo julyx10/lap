@@ -1,6 +1,6 @@
 {
   "productName": "Lap",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "identifier": "com.julyx10.lap",
   "build": {
     "beforeBuildCommand": "pnpm --dir ../src-vite build",

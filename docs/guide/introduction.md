@@ -39,4 +39,4 @@ Lap is currently available for macOS, Linux, and Windows.
 - macOS: Install with Homebrew: `brew tap julyx10/lap && brew install --cask lap`, or download the `_aarch64.dmg` / `_x64.dmg` file manually.
 - Linux: Install the `_amd64.deb` or `_arm64.deb` package on Debian-based distributions, or run the `_amd64.AppImage` / `_aarch64.AppImage` package.
 - Windows: Download the `_x64_en-US.msi` or `_arm64_en-US.msi` installer and complete the setup wizard.
-- [Check out what's new in v0.3.3](/guide/release-notes/v0.3.3)
+- [Check out what's new in v0.4.1](/guide/release-notes/v0.4.1)
