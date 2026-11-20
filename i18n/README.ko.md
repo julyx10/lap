@@ -14,8 +14,7 @@
 
 [English](../README.md) | [Česky](README.cs.md) | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | [Italiano](README.it.md) | [Magyar](README.hu.md) | [Nederlands](README.nl.md) | [Polski](README.pl.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [Українська](README.uk.md) | [Tiếng Việt](README.vi.md) | [中文简体](README.zh-CN.md) | [中文繁體](README.zh-TW.md) | [日本語](README.ja.md) | 한국어
 
-Lap은 오픈 소스 기반의 '로컬 우선(local-first)' 사진 관리 도구입니다. 가족 앨범을 둘러보고, 오래된 사진을 빠르게 찾으며, 대규모 개인 미디어 라이브러리를 오프라인에서 직접 관리할 수 있도록 설계되었습니다.
-별도의 가져오기, 구독, 업로드가 필요 없습니다. 기존 폴더를 Lap에서 바로 엽니다. 파일의 위치와 형식은 그대로 유지됩니다. 지원하는 사진 앱에서 사용할 수 있도록 XMP 사이드카에 저장합니다. AI 검색은 사용자의 기기에서 실행됩니다.
+Lap은 macOS, Windows, Linux용 무료 오픈 소스 로컬 우선 사진 관리 앱입니다. 기존 폴더를 정리하고 기기 내 AI로 검색하며 클라우드 계정이나 구독 없이 대규모 라이브러리를 관리하세요.
 
 <div align="center">
   <p><strong><a href="https://julyx10.github.io/lap/">공식 웹사이트</a> | <a href="https://julyx10.github.io/lap/demos/lap/index.html">데모</a></strong></p>
@@ -29,30 +28,30 @@ Lap은 오픈 소스 기반의 '로컬 우선(local-first)' 사진 관리 도구
 | :-- | :-- | :-- |
 | **macOS (Apple Silicon / Intel)** | `_aarch64.dmg` / `_x64.dmg` | Apple 공증 완료 |
 | **Windows 10/11 (x64 / ARM64)** | `_x64_en-US.msi` / `_arm64_en-US.msi` | 서명되지 않았습니다. 브라우저에서 **계속 유지**를 선택하거나 SmartScreen에서 **추가 정보** → **실행**을 선택하세요. |
-| **Linux (x64 / ARM64)** | `_amd64.deb` / `_arm64.deb` | Debian 기반 배포판용（Ubuntu, Debian, Linux Mint 등） |
+| **Linux (x64 / ARM64)** | `_amd64.deb` / `_arm64.deb` | Debian 기반 배포판용(Ubuntu, Debian, Linux Mint 등) |
 | **Linux (x64 / ARM64)** | `_amd64.AppImage` / `_aarch64.AppImage` | 파일에 실행 권한을 부여한 다음 더블 클릭하여 실행 |
 
 ### Homebrew로 macOS에 설치
 
 ```bash
-brew tap julyx10/lap
 brew install --cask lap
 ```
+
+이전에 `julyx10/lap` tap으로 설치했다면 [이전 안내](https://github.com/julyx10/lap/discussions/567)를 참고하세요.
 
 ## 스크린샷
 
 <p align="center">
   <img src="../docs/public/screenshots/lap_library.png" alt="Lap 로컬 사진 라이브러리 관리" width="900">
   <img src="../docs/public/screenshots/lap_map_view.png" alt="Lap 지도 보기" width="900">
-  <img src="../docs/public/screenshots/lap_montage.png" alt="Lap 사진 콜라주" width="900">
   <img src="../docs/public/screenshots/lap_preview.png" alt="Lap 사진 미리보기" width="900">
 </p>
 
 ## 왜 Lap인가요?
 
-- **폴더 기반 라이브러리 관리.** 기존 폴더를 Lap에서 바로 엽니다. 파일의 위치와 형식은 그대로 유지됩니다.
-- **로컬 AI 검색.** 사진을 문장으로 검색하고, 비슷한 사진을 찾거나 얼굴별로 탐색할 수 있습니다. 모든 처리는 기기에서 이루어집니다.
-- **다른 앱에서도 쓸 수 있는 평점과 태그.** 지원하는 사진 앱에서 사용할 수 있도록 XMP 사이드카에 저장합니다.
+- **개인정보를 지키는 로컬 AI.** 사진을 문장으로 검색하고, 비슷한 사진을 찾거나 얼굴별로 탐색할 수 있습니다. 모든 처리는 기기에서 이루어집니다.
+- **직접 관리하는 내 폴더.** 기존 폴더를 Lap에서 바로 엽니다. 파일의 위치와 형식은 그대로 유지됩니다.
+- **앱 간에 활용하는 메타데이터.** 내장 EXIF, IPTC, XMP와 사이드카(평점, 태그, 즐겨찾기, 선별 상태, GPS, 날짜 등)를 읽습니다. 수정한 메타데이터를 XMP 사이드카에 저장할 수 있으며, 원본 파일은 변경되지 않습니다.
 - **사진 선별 도구.** 스페이스바로 즉시 미리 보기, 평점 지정 후 자동 이동, AF 영역 표시, 4분할 비교 및 중복 파일 보존 규칙을 지원합니다.
 - **사진과 동영상 10만 개 이상의 라이브러리 지원.** Rust 네이티브 코어가 탐색, 검색, 스캔을 처리합니다.
 - **무료 오픈 소스.** 구독이나 계정 없이 macOS, Windows, Linux에서 17개 언어를 지원합니다.
@@ -65,7 +64,7 @@ brew install --cask lap
 - **메타데이터 가져오기 및 XMP 쓰기** · 내장 EXIF, IPTC, XMP와 사이드카(평점, 태그, 즐겨찾기, 선별 상태, GPS, 날짜 등)를 읽습니다. 텍스트 필드를 편집하고 정리 정보를 XMP 사이드카에 저장할 수 있습니다.
 - **스마트 앨범.** 사용자 지정 그룹화와 정렬, 폴더 이름 필터, 검색 가능한 값 선택기.
 - **날짜별 가져오기**: 일별, 월별, 연도별 또는 단일 폴더로 정리하고 원래 파일명을 유지하며 중복을 건너뜁니다.
-- **컬렉션과 태그**: 원본을 이동하거나 복제하지 않고 선택한 파일을 일괄 정리합니다. 드래그와 하위 분기별 개수 표시를 지원하는 태그 트리.
+- **컬렉션과 계층형 태그**: 원본을 이동하거나 복제하지 않고 선택한 파일을 일괄 정리합니다. 드래그와 하위 분기별 개수 표시를 지원하는 태그 트리.
 - **중복 정리.** 폴더, 형식, 크기, 날짜별 보존 규칙, 확보 가능한 공간 및 일괄 삭제.
 - **사진 선별 및 비교 도구.** 스페이스바로 즉시 미리 보기, 평점 지정 후 자동 이동, AF 영역 표시, 4분할 비교 및 중복 파일 보존 규칙을 지원합니다.
 - **내장 편집**: 자르기, 임의 각도 기울기 보정, 회전, 뒤집기, 크기 변경과 기본 이미지 조정을 지원합니다.
@@ -76,27 +75,30 @@ brew install --cask lap
 - **사용자 지정 파일 정보.** 표시할 필드 선택, 필요한 상세 정보만 불러오기 및 뷰어의 AF 영역 표시.
 - **대화형 지도 보기**: 현재 필터에 맞는 위치 정보가 있는 사진과 동영상을 그룹으로 탐색합니다.
 - **오프라인 앨범 탐색**: 연결이 끊긴 저장소나 네트워크 저장소의 앨범도 캐시된 썸네일로 계속 볼 수 있습니다.
-- **클라우드에만 있는 파일.** OneDrive 주문형 파일 및 macOS 자리 표시자를 자동 다운로드 없이 색인하고 표시.
+- **클라우드에만 있는 파일.** OneDrive 주문형 파일 및 macOS 자리 표시자를 자동 다운로드 없이 인덱싱하고 표시합니다. Lap은 자동으로 다운로드하지 않습니다.
 - **밝은 테마와 어두운 테마.** 시스템 테마를 따를 수 있습니다.
 - **폭넓은 형식 지원**: 60개 이상의 이미지, RAW, 동영상 형식을 지원합니다. Affinity 문서 (내장 미리 보기).
 
-## 메타데이터, 컬렉션 및 파일 이동
+## 메타데이터와 데이터 소유권
 
 Lap은 기존 폴더를 직접 사용하며 표시되는 정보 대부분을 파일에서 읽습니다. 정리 정보를 다른 사진 앱에서도 읽을 수 있는 표준 XMP 사이드카에 저장할 수 있습니다.
 
 Lap은 Lightroom, digiKam, darktable, ACDSee의 호환 메타데이터를 읽습니다. 지원하는 필드는 앱마다 다릅니다.
 
-### 파일과 함께 유지되는 정보
+### 기존 메타데이터 읽기
 
-- 원본 사진과 비디오는 기존 폴더에 있는 일반 파일로 항상 유지됩니다.
+- 원본 사진과 동영상은 기존 폴더에 있는 일반 파일로 항상 유지됩니다.
 - 인덱싱할 때 촬영 및 정리 정보가 포함된 내장 EXIF, IPTC, XMP를 읽습니다. 로컬 데이터베이스로 정리 정보를 가져오려면 **설정 → 메타데이터 → 메타데이터 가져오기**를 켜세요. 로컬 편집 내용은 유지됩니다.
 - GPS와 촬영 날짜를 포함하여 지원되는 XMP 사이드카 값이 내장 값보다 우선합니다.
+
+### 지원되는 편집을 XMP에 저장
+
 - 제목, 헤드라인, 설명, 제작자, 저작권을 편집할 수 있으며 변경 내용은 로컬 데이터베이스에 저장됩니다.
 - XMP로 저장하면 이 필드와 태그 (계층형 키워드 포함), 평점, 즐겨찾기, 선별 상태가 사이드카에 기록됩니다. 다른 XMP 속성과 원본 파일은 유지됩니다.
 - 파일을 **Lap에서** 이름 변경, 이동, 복사, 삭제 또는 가져오기하면 Lap은 동시에 로컬 카탈로그를 업데이트합니다. Apple Live Photo 구성 요소, XMP 및 AAE 사이드카 파일 및 활성화한 RAW + JPEG/HEIC 쌍처럼 지원되는 연결 자산도 함께 처리합니다. RAW 쌍에서 한 파일 또는 두 파일을 모두 삭제할 수 있습니다. 한 파일을 남기면 공유 XMP 사이드카도 유지됩니다.
 - 내장 이미지 편집을 저장하면 결과 이미지가 선택한 대상 위치에 기록됩니다.
 
-### Lap이 로컬에 저장하는 정보
+### Lap 데이터베이스에 남는 정보
 
 이 라이브러리 데이터는 로컬 데이터베이스 또는 라이브러리 구성에 저장됩니다.
 
@@ -104,7 +106,7 @@ Lap은 Lightroom, digiKam, darktable, ACDSee의 호환 메타데이터를 읽습
 - AI 검색 데이터, 얼굴 데이터, 썸네일 및 기타 인덱스 또는 캐시 데이터
 - 태그, 평점, 즐겨찾기, 선별 상태 및 편집 가능한 텍스트 필드는 로컬에 저장되며 XMP에 쓸 수 있습니다.
 
-기본적으로 Lap 외부에서 파일을 처리할 때 이 데이터는 함께 이동하지 않습니다.
+편집은 지원되는 필드를 명시적으로 XMP에 저장하기 전까지 데이터베이스에 남습니다. 컬렉션, 스마트 앨범, AI 검색 및 얼굴 데이터는 XMP에 포함되지 않습니다. 원본 파일 복사만으로는 보존되지 않으므로 데이터베이스를 백업하세요.
 
 ### Lap 외부에서 파일 작업하기
 
@@ -158,7 +160,7 @@ DEB로 설치한 경우 패키지를 제거합니다:
 sudo apt remove lap
 ```
 
-로컬 Arch 패키지를 제거하려면 다음 명령을 사용하세요. `sudo pacman -R lap`.
+로컬에 설치한 Arch 패키지는 `sudo pacman -R lap`을 사용하세요.
 
 AppImage로 설치한 경우 Lap을 종료하고 다운로드한 `.AppImage` 파일을 삭제합니다.
 
@@ -174,7 +176,7 @@ Lap 설정에서 사용자 지정 데이터베이스 저장 폴더를 선택했�
 
 ## 소스에서 빌드하기
 
-요구 사양: Node.js 20+, pnpm, Rust stable.
+요구 사항: Node.js 20+, pnpm, Rust stable
 
 ```bash
 # macOS 시스템 의존성
@@ -200,7 +202,7 @@ cargo tauri dev
 
 ### Arch Linux (x86_64)
 
-Arch용 실험적 빌드 레시피는 아직 AUR에 게시되지 않았습니다. 로컬 설치: [`contrib/aur`](../contrib/aur/README.md).
+Arch용 실험적 소스 빌드 레시피는 [`contrib/aur`](../contrib/aur/README.md)에 있습니다. 아직 AUR에 게시되지 않아 `yay -S lap`은 사용할 수 없습니다. Arch Linux에서 로컬로 빌드하고 설치하려면:
 
 ```bash
 cd contrib/aur
@@ -208,7 +210,7 @@ makepkg -s
 sudo pacman -U lap-<version>-x86_64.pkg.tar.zst
 ```
 
-소스 커밋을 고정하고 AI 모델과 FFmpeg를 체크섬으로 확인합니다. 업데이트는 pacman이 관리합니다.
+레시피는 업스트림 소스 커밋을 고정하고 번들된 AI 모델과 FFmpeg 도구를 체크섬으로 검증합니다. Arch 빌드는 앱 내 자체 업데이트를 비활성화하여 업그레이드를 pacman이 담당하도록 하며, 다른 플랫폼 빌드는 기존 업데이터를 유지합니다. 빌드 세부 사항과 남은 릴리스 확인 사항은 레시피 가이드를 참조하세요.
 
 ## 지원 포맷
 
@@ -219,11 +221,11 @@ Lap은 60개 이상의 이미지, RAW, 비디오 포맷을 지원합니다.
 | 이미지 | JPG/JPEG/JFIF, PNG, GIF, BMP, TIFF, WebP, HEIC/HEIF/HIF, AVIF, JXL, PSD, EXR, HDR/RGBE, TGA, JPEG 2000 (JP2/J2K/J2C/JPC/JPF/JPX), DDS, DPX, QOI |
 | RAW 사진 | CR2, CR3, CRW, NEF, NRW, ARW, SRF, SR2, RAF, RW2, ORF, PEF, DNG, SRW, RWL, MRW, 3FR, MOS, IIQ, DCR, KDC, ERF, MEF, RAW, MDC |
 | Affinity 문서 | AF, AFPHOTO, AFDESIGN, AFPUB (내장 미리 보기) |
-| 비디오 | MP4, MOV, M4V, MKV, AVI, FLV, TS/MTS/M2TS, WMV, WebM, 3GP, MPG/MPEG, VOB, MOD/TOD, HEVC, ASF. H.264 재생은 모든 플랫폼에서 지원되며, 네이티브 재생이 불가한 경우 자동으로 호환성 처리가 진행됩니다. HEVC/H.265 및 VP9은 macOS에서 네이티브 지원됩니다. |
+| 비디오 | MP4, MOV, M4V, MKV, AVI, FLV, TS/MTS/M2TS, WMV, WebM, 3GP, MPG/MPEG, VOB, MOD/TOD, HEVC, ASF. H.264 재생은 모든 플랫폼에서 지원되며, 네이티브 재생이 불가능한 경우 자동으로 호환성 처리가 진행됩니다. HEVC/H.265 및 VP9은 macOS에서 네이티브 지원됩니다. |
 
 ### Linux 동영상 재생
 
-Lap은 AppImage에서도 시스템 GStreamer 플러그인을 사용하여 동영상을 재생합니다. Ubuntu, Debian 또는 Linux Mint에서 동영상이 재생되지 않으면 다음 패키지를 설치하세요:
+동영상이 재생되지 않으면 GStreamer 플러그인을 설치하세요:
 
 ```bash
 sudo apt install gstreamer1.0-libav gstreamer1.0-plugins-good

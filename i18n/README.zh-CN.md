@@ -14,8 +14,7 @@
 
 [English](../README.md) | [Česky](README.cs.md) | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | [Italiano](README.it.md) | [Magyar](README.hu.md) | [Nederlands](README.nl.md) | [Polski](README.pl.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [Українська](README.uk.md) | [Tiếng Việt](README.vi.md) | 中文简体 | [中文繁體](README.zh-TW.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
-Lap 是一款开源、本地优先的照片管理工具，帮助您轻松浏览家庭相册、快速查找旧照片，并离线管理大型个人资料库。
-无需预先导入、订阅或上传。直接在 Lap 中打开现有文件夹。文件保留在原位置，格式不变。将评分和标签保存到 XMP 附属文件，可在兼容的照片管理软件中读取。AI 搜索在您的设备上运行。
+Lap 是一款免费、开源、本地优先的照片管理工具，支持 macOS、Windows 和 Linux。直接浏览和整理现有照片文件夹，使用本地 AI 搜索，无需云端账号或订阅即可管理大型媒体库。
 
 <div align="center">
   <p><strong><a href="https://julyx10.github.io/lap/">官方网站</a> | <a href="https://julyx10.github.io/lap/demos/lap/index.html">演示</a></strong></p>
@@ -23,7 +22,7 @@ Lap 是一款开源、本地优先的照片管理工具，帮助您轻松浏览�
 
 ## 下载 Lap
 
-打开 [最新版本发布页面](https://github.com/julyx10/lap/releases/latest)，下载匹配您系统的文件：
+打开 [最新版本发布页面](https://github.com/julyx10/lap/releases/latest)，下载匹配你系统的文件：
 
 | 平台 | 安装包 | 备注 |
 | :-- | :-- | :-- |
@@ -35,24 +34,24 @@ Lap 是一款开源、本地优先的照片管理工具，帮助您轻松浏览�
 ### 使用 Homebrew 安装 macOS 版
 
 ```bash
-brew tap julyx10/lap
 brew install --cask lap
 ```
+
+此前通过 `julyx10/lap` tap 安装？请参阅[迁移说明](https://github.com/julyx10/lap/discussions/567)。
 
 ## 屏幕截图
 
 <p align="center">
   <img src="../docs/public/screenshots/lap_library.png" alt="Lap 本地照片资料库" width="900">
   <img src="../docs/public/screenshots/lap_map_view.png" alt="Lap 地图视图" width="900">
-  <img src="../docs/public/screenshots/lap_montage.png" alt="Lap 照片拼图" width="900">
   <img src="../docs/public/screenshots/lap_preview.png" alt="Lap 照片预览" width="900">
 </p>
 
 ## 为什么选择 Lap
 
-- **基于文件夹管理媒体库。** 直接在 Lap 中打开现有文件夹。文件保留在原位置，格式不变。
-- **本地 AI 搜索。** 用文字描述查找照片、寻找相似照片，或按人脸浏览。所有计算都在本机进行。
-- **评分与标签可跨应用使用。** 将评分和标签保存到 XMP 附属文件，可在兼容的照片管理软件中读取。
+- **私密的本地 AI。** 按描述搜索、查找相似照片或按人脸浏览，处理均在本机进行。
+- **你的文件夹，由你掌控。** 直接打开现有文件夹，原始文件保留在原处，无需上传或导入媒体库。
+- **跨应用使用元数据。** 读取内嵌 EXIF/IPTC/XMP 和现有附属文件，支持将修改的元数据保存到 XMP 附属文件，原始文件保持不变。
 - **摄影选片工具。** 空格键快速预览、评分后自动切换、显示自动对焦区域、四窗格对比，以及重复文件保留规则。
 - **面向包含 10 万张以上照片和视频的媒体库。** 原生 Rust 核心负责浏览、搜索和扫描。
 - **免费开源。** 无需订阅或账号，支持 macOS、Windows 和 Linux，提供 17 种语言。
@@ -62,10 +61,10 @@ brew install --cask lap
 - **灵活浏览资料库**：按日期、文件夹、地点、相机、镜头、标签、评分和人脸筛选，支持排序和搜索。
 - **以文件夹为中心的工作流。** 支持多个媒体库、拖放或剪贴板导入导出、批量重命名和文件同步，支持安全地移动、复制和删除文件。
 - **本地 AI 搜索**：支持文本搜索、视觉相似搜索、主题、人脸聚类，以及可选的 50 多种语言搜索。
-- **元数据导入与 XMP 写回** · 读取内嵌的 EXIF、IPTC、XMP 和 XMP 附属文件中的评分、标签、收藏、选片标记、GPS 和日期等信息。可编辑文本字段并将整理信息写回 XMP 附属文件。
+- **元数据导入与 XMP 写回**：读取内嵌的 EXIF、IPTC、XMP 和 XMP 附属文件中的评分、标签、收藏、选片标记、GPS 和日期等信息，可编辑文本字段并将整理信息写回 XMP 附属文件。
 - **智能相册。** 支持自定义分组、排序、文件夹名称筛选和可搜索的值选择器。
 - **按日期整理导入**：支持按日、月、年或单一文件夹导入，保留原文件名并跳过重复内容。
-- **合集与标签**：批量整理所选文件，无需移动或复制原件。支持拖动和分支计数的标签树。
+- **合集与层级标签**：批量整理所选文件，无需移动或复制原件。支持可拖动排序和分支计数的标签树。
 - **重复照片清理。** 按文件夹、格式、大小或日期保留文件，显示可释放空间并支持批量删除。
 - **选片与对比工具。** 空格键快速预览、评分后自动切换、显示自动对焦区域、四窗格对比，以及重复文件保留规则。
 - **内置编辑**：支持裁剪、任意角度拉直、旋转、翻转、缩放和基础图像调整。
@@ -78,7 +77,7 @@ brew install --cask lap
 - **离线相册浏览**：未连接或网络存储上的相册仍会显示，并保留缓存的缩略图。
 - **仅云端文件。** 对 OneDrive 按需文件和 macOS 未下载的文件建立索引并显示，不会自动下载。
 - **浅色和深色主题。** 可跟随系统外观。
-- **广泛格式支持**：支持 60 多种图像、RAW 和视频格式。 Affinity 文档 (内嵌预览).
+- **广泛格式支持**：支持 60 多种图像、RAW 和视频格式，以及 Affinity 文档（内嵌预览）。
 
 ### 天地图 Token 申请与配置
 
@@ -92,23 +91,26 @@ brew install --cask lap
 
 申请类型可参考 [QGIS 天地图插件的说明](https://github.com/liuxspro/qgis-plugin-tianditu#使用说明)；控制台页面和认证要求以天地图官方为准。
 
-## 元数据、合集与文件移动
+## 元数据与数据自主权
 
-Lap 直接使用现有文件夹，显示的大多数信息都从文件中读取。您可以将整理信息写入标准 XMP 附属文件，供其他照片应用读取。
+Lap 直接使用现有文件夹，显示的大多数信息都从文件中读取。你可以将整理信息写入标准 XMP 附属文件，供其他照片应用读取。
 
 Lap 支持导入 Lightroom、digiKam、darktable 和 ACDSee 的兼容元数据。支持的字段因应用而异。
 
-### 会随文件保留的信息
+### 读取现有元数据
 
-- 您的原始照片和视频始终是现有文件夹中的普通文件。
+- 你的原始照片和视频始终是现有文件夹中的普通文件。
 - 建立索引时，Lap 读取内嵌的 EXIF、IPTC 和 XMP，包括拍摄日期、相机、镜头、GPS、方向、评分、收藏、关键词、选片标记、描述、标题、短标题、创作者和版权。在 **设置 → 元数据 → 导入元数据** 中开启导入后，整理信息会进入本地数据库，已有的本地编辑会保留。
 - 导入 XMP 附属文件时，受支持的字段优先使用附属文件中的值，包括 GPS 和拍摄日期。
+
+### 将支持的修改保存到 XMP
+
 - 标题、短标题、描述、创作者和版权可编辑，修改保存在本地数据库。
 - 执行「保存元数据到 XMP」可将这些字段以及标签（包括层级关键词）、评分、收藏和选片状态写入 XMP 附属文件。其他 XMP 属性和原始文件会保留。
-- 当您**在 Lap 中**重命名、移动、复制、删除或导入文件时，Lap 会同步更新本地资料库记录，并将 Apple 实况照片组件、XMP 和 AAE 附属文件和已启用的 RAW + JPEG/HEIC 配对等关联资源一并处理。删除 RAW 配对时可选择删除其中一个文件或同时删除两者。保留一个文件时，共用的 XMP 附属文件也会保留。
+- 当你**在 Lap 中**重命名、移动、复制、删除或导入文件时，Lap 会同步更新本地资料库记录，并将 Apple 实况照片组件、XMP 和 AAE 附属文件和已启用的 RAW + JPEG/HEIC 配对等关联资源一并处理。删除 RAW 配对时可选择删除其中一个文件或同时删除两者。保留一个文件时，共用的 XMP 附属文件也会保留。
 - 保存内置图片编辑时，生成的图片会写入所选目标位置。
 
-### Lap 在本地存储的信息
+### 保留在 Lap 数据库中的信息
 
 以下资料库数据保存在 Lap 的本地数据库或资料库配置中。
 
@@ -116,31 +118,31 @@ Lap 支持导入 Lightroom、digiKam、darktable 和 ACDSee 的兼容元数据�
 - AI 搜索数据、人脸数据、缩略图以及其他索引或缓存数据
 - 标签、评分、收藏、选片状态和可编辑文本字段保存在本地数据库，可按上述方式写入 XMP。
 
-默认情况下，在 Lap 外复制、导出或移动文件时，这些本地信息不会随文件转移，也不会自动提供给其他应用。
+在你选择将支持的字段保存到 XMP 之前，修改保留在 Lap 数据库中。合集、智能相册、AI 搜索数据和人脸数据仅保存在 Lap 中，不包含在 XMP 附属文件中。请备份数据库以保留这些整理成果；仅复制原始文件无法保留它们。
 
 ### 在 Lap 外管理文件
 
 Lap 可以重新扫描文件夹并发现许多文件系统变化。但在 Lap 外重命名、移动、替换或复制文件，可能影响仅保存在 Lap 中的整理信息。
 
-启用元数据导入后，Lap 也会检查 XMP 附属文件是否有变更。在 Lap 内移动或重命名文件可保留合集归属。请将 XMP 附属文件与原始文件放在一起。如果也在 Lap 外管理文件，请将 Lap 的数据库和配置与照片一同备份。您可以在 **设置 → 存储** 中管理数据库位置并创建备份。
+启用元数据导入后，Lap 也会检查 XMP 附属文件是否有变更。在 Lap 内移动或重命名文件可保留合集归属。如需与其他应用共享支持的元数据，请使用「保存元数据到 XMP」并将附属文件与文件保存在一起。如果也在 Lap 外管理文件，请将 Lap 的数据库和配置与照片一同备份。你可以在 **设置 → 存储** 中管理数据库位置并创建备份。
 
-删除 Lap 的数据库或配置会移除这些本地整理和索引数据，但不会删除您的原始媒体文件。
+删除 Lap 的数据库或配置会移除这些本地整理和索引数据，但不会删除你的原始媒体文件。
 
 ## 卸载 Lap
 
-Lap 直接使用您现有的照片文件夹。卸载 Lap 或删除其数据库和缓存文件，**不会**删除您的原始照片。
+Lap 直接使用你现有的照片文件夹。卸载 Lap 或删除其数据库和缓存文件，**不会**删除你的原始照片。
 
 常规卸载只会移除应用程序。如需彻底删除 Lap，请先退出 Lap，卸载应用程序，然后按照对应平台的命令删除本地数据库、缩略图缓存和配置文件。
 
 ### macOS
 
-如果您通过 Homebrew 安装了 Lap：
+如果你通过 Homebrew 安装了 Lap：
 
 ```bash
 brew uninstall --cask lap
 ```
 
-如果您手动安装了 Lap，请退出 Lap，并将 `Applications` 文件夹中的 `Lap.app` 移到废纸篓。
+如果你手动安装了 Lap，请退出 Lap，并将 `Applications` 文件夹中的 `Lap.app` 移到废纸篓。
 
 删除所有 Lap 数据库、缓存和配置文件：
 
@@ -170,7 +172,7 @@ Remove-Item -Recurse -Force -ErrorAction SilentlyContinue "$env:APPDATA\com.july
 sudo apt remove lap
 ```
 
-卸载本地安装的 Arch 软件包请使用 `sudo pacman -R lap`.
+卸载本地安装的 Arch 软件包请使用 `sudo pacman -R lap`。
 
 使用 AppImage 的用户，请退出 Lap 并删除下载的 `.AppImage` 文件。
 
@@ -182,11 +184,11 @@ rm -rf "$HOME/.local/share/com.julyx10.lap" \
        "$HOME/.config/com.julyx10.lap"
 ```
 
-如果您在 Lap 设置中选择了自定义数据库存储目录，请在确认其中仅包含 Lap 数据库文件后，单独删除该目录。
+如果你在 Lap 设置中选择了自定义数据库存储目录，请在确认其中仅包含 Lap 数据库文件后，单独删除该目录。
 
 ## 从源码构建
 
-编译要求: Node.js 20+, pnpm, Rust stable.
+编译要求：Node.js 20+、pnpm、Rust stable。
 
 ```bash
 # macOS 系统依赖
@@ -212,7 +214,7 @@ cargo tauri dev
 
 ### Arch Linux (x86_64)
 
-Arch 的实验性构建配方尚未发布到 AUR。可在本地构建和安装: [`contrib/aur`](../contrib/aur/README.md).
+Arch 的实验性构建配方尚未发布到 AUR，因此暂不可通过 `yay -S lap` 安装。在 Arch Linux 上本地构建和安装：[`contrib/aur`](../contrib/aur/README.md)。
 
 ```bash
 cd contrib/aur
@@ -220,7 +222,7 @@ makepkg -s
 sudo pacman -U lap-<version>-x86_64.pkg.tar.zst
 ```
 
-配方固定上游提交，并用校验和验证随附的 AI 模型和 FFmpeg。更新由 pacman 管理。
+配方固定上游提交，并用校验和验证随附的 AI 模型和 FFmpeg 工具。Arch 构建版本禁用应用内自动更新，由 pacman 负责升级；其他平台的构建版本保留原有更新器。构建详情和待完成的发布检查请参阅配方说明。
 
 ## 支持格式
 
@@ -228,14 +230,14 @@ Lap 支持 60+ 种图像、RAW 和视频格式。
 
 | 类型 | 格式清单 |
 | :--- | :--- |
-| 常规图片 | JPG/JPEG/JFIF, PNG, GIF, BMP, TIFF, WebP, HEIC/HEIF/HIF, AVIF, JXL, PSD, EXR, HDR/RGBE, TGA, JPEG 2000 (JP2/J2K/J2C/JPC/JPF/JPX), DDS, DPX, QOI |
+| 图像 | JPG/JPEG/JFIF, PNG, GIF, BMP, TIFF, WebP, HEIC/HEIF/HIF, AVIF, JXL, PSD, EXR, HDR/RGBE, TGA, JPEG 2000 (JP2/J2K/J2C/JPC/JPF/JPX), DDS, DPX, QOI |
 | RAW 照片 | CR2, CR3, CRW, NEF, NRW, ARW, SRF, SR2, RAF, RW2, ORF, PEF, DNG, SRW, RWL, MRW, 3FR, MOS, IIQ, DCR, KDC, ERF, MEF, RAW, MDC |
 | Affinity 文档 | AF, AFPHOTO, AFDESIGN, AFPUB (内嵌预览) |
 | 视频 | MP4, MOV, M4V, MKV, AVI, FLV, TS/MTS/M2TS, WMV, WebM, 3GP, MPG/MPEG, VOB, MOD/TOD, HEVC, ASF. 所有平台均支持 H.264 播放；在不支持原生播放时，系统会自动进行兼容性处理。macOS 原生支持 HEVC/H.265 和 VP9。 |
 
 ### Linux 视频播放
 
-Lap 使用系统 GStreamer 插件播放视频，AppImage 版本也不例外。如果在 Ubuntu、Debian 或 Linux Mint 上无法播放视频，请安装：
+如果视频无法播放，请安装 GStreamer 插件：
 
 ```bash
 sudo apt install gstreamer1.0-libav gstreamer1.0-plugins-good

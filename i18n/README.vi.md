@@ -14,8 +14,7 @@
 
 [English](../README.md) | [Česky](README.cs.md) | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | [Italiano](README.it.md) | [Magyar](README.hu.md) | [Nederlands](README.nl.md) | [Polski](README.pl.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [Українська](README.uk.md) | Tiếng Việt | [中文简体](README.zh-CN.md) | [中文繁體](README.zh-TW.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
-Lap là trình quản lý ảnh mã nguồn mở, ưu tiên cục bộ, dùng để duyệt album gia đình, tìm nhanh ảnh cũ và quản lý thư viện phương tiện cá nhân lớn khi ngoại tuyến.
-Không cần nhập trước, đăng ký trả phí hay tải lên. Mở thư mục hiện có trực tiếp trong Lap. Tệp giữ nguyên vị trí và định dạng. Lưu xếp hạng và thẻ vào tệp phụ XMP chuẩn để dùng trong ứng dụng tương thích. Tìm kiếm AI chạy trên thiết bị của bạn.
+Lap là trình quản lý ảnh miễn phí, mã nguồn mở, ưu tiên xử lý cục bộ cho macOS, Windows và Linux. Sắp xếp thư mục hiện có, tìm kiếm bằng AI trên thiết bị và quản lý thư viện lớn mà không cần tài khoản đám mây hay thuê bao.
 
 <div align="center">
   <p><strong><a href="https://julyx10.github.io/lap/">TRANG WEB CHÍNH THỨC</a> | <a href="https://julyx10.github.io/lap/demos/lap/index.html">DEMO</a></strong></p>
@@ -35,24 +34,24 @@ Mở [trang phát hành mới nhất](https://github.com/julyx10/lap/releases/la
 ### macOS với Homebrew
 
 ```bash
-brew tap julyx10/lap
 brew install --cask lap
 ```
+
+Đã cài qua tap `julyx10/lap`? Xem [hướng dẫn chuyển đổi](https://github.com/julyx10/lap/discussions/567).
 
 ## Ảnh chụp màn hình
 
 <p align="center">
   <img src="../docs/public/screenshots/lap_library.png" alt="Trình quản lý thư viện ảnh cục bộ Lap" width="900">
   <img src="../docs/public/screenshots/lap_map_view.png" alt="Chế độ xem bản đồ Lap" width="900">
-  <img src="../docs/public/screenshots/lap_montage.png" alt="Ảnh ghép Lap" width="900">
   <img src="../docs/public/screenshots/lap_preview.png" alt="Xem trước ảnh trong Lap" width="900">
 </p>
 
 ## Vì sao chọn Lap
 
-- **Quản lý thư viện theo thư mục.** Mở thư mục hiện có trực tiếp trong Lap. Tệp giữ nguyên vị trí và định dạng.
-- **Tìm kiếm AI cục bộ.** Mô tả ảnh, tìm ảnh tương tự hoặc duyệt theo khuôn mặt. Mọi xử lý diễn ra trên thiết bị.
-- **Xếp hạng và thẻ có thể chuyển đổi.** Lưu vào tệp phụ XMP để dùng trong ứng dụng tương thích.
+- **AI riêng tư trên thiết bị.** Mô tả ảnh, tìm ảnh tương tự hoặc duyệt theo khuôn mặt. Mọi xử lý diễn ra trên thiết bị.
+- **Thư mục của bạn, do bạn kiểm soát.** Mở thư mục hiện có trực tiếp trong Lap. Tệp giữ nguyên vị trí và định dạng.
+- **Siêu dữ liệu dùng giữa các ứng dụng.** Lap đọc EXIF, IPTC và XMP nhúng cùng các tệp phụ (xếp hạng, thẻ, mục yêu thích, trạng thái chọn lọc, GPS và ngày chụp). Có thể lưu siêu dữ liệu đã sửa vào tệp phụ XMP mà không thay đổi tệp gốc.
 - **Chọn lọc ảnh.** Xem nhanh bằng phím cách, tự chuyển sau khi xếp hạng, hiển thị vùng lấy nét, so sánh bốn khung và quy tắc giữ bản trùng.
 - **Cho thư viện hơn 100.000 ảnh và video.** Lõi Rust gốc xử lý việc duyệt, tìm kiếm và quét.
 - **Miễn phí và mã nguồn mở.** Không cần đăng ký trả phí hay tài khoản, có 17 ngôn ngữ trên macOS, Windows và Linux.
@@ -65,7 +64,7 @@ brew install --cask lap
 - **Nhập siêu dữ liệu và ghi vào XMP** · Lap đọc EXIF, IPTC và XMP nhúng cùng các tệp phụ (xếp hạng, thẻ, mục yêu thích, trạng thái chọn lọc, GPS và ngày chụp). Có thể sửa các trường văn bản và lưu dữ liệu tổ chức vào XMP.
 - **Album thông minh.** Nhóm và sắp xếp tùy chỉnh, lọc theo tên thư mục và bộ chọn có tìm kiếm.
 - **Nhập ảnh theo ngày** với bố cục theo ngày, tháng, năm hoặc một thư mục, giữ nguyên tên tệp gốc và bỏ qua tệp trùng.
-- **Bộ sưu tập và thẻ** để sắp xếp hàng loạt tệp đã chọn mà không di chuyển hay nhân bản bản gốc. Cây thẻ kéo thả với số lượng theo nhánh.
+- **Bộ sưu tập và thẻ phân cấp** để sắp xếp hàng loạt tệp đã chọn mà không di chuyển hay nhân bản bản gốc. Cây thẻ kéo để sắp xếp lại với số lượng theo nhánh.
 - **Dọn ảnh trùng lặp.** Quy tắc theo thư mục, định dạng, kích thước và ngày, dung lượng có thể thu hồi và xóa hàng loạt.
 - **Công cụ chọn và so sánh.** Xem nhanh bằng phím cách, tự chuyển sau khi xếp hạng, hiển thị vùng lấy nét, so sánh bốn khung và quy tắc giữ bản trùng.
 - **Chỉnh sửa tích hợp** cắt, làm thẳng góc tùy ý, xoay, lật, đổi kích thước và điều chỉnh ảnh cơ bản.
@@ -80,37 +79,40 @@ brew install --cask lap
 - **Giao diện sáng và tối.** Có thể theo giao diện hệ thống.
 - **Hỗ trợ nhiều định dạng** cho hơn 60 định dạng ảnh, RAW và video. Tài liệu Affinity (bản xem trước nhúng).
 
-## Siêu dữ liệu, bộ sưu tập và di chuyển tệp
+## Siêu dữ liệu và quyền kiểm soát dữ liệu
 
 Lap làm việc trực tiếp với các thư mục và đọc phần lớn thông tin hiển thị từ tệp. Bạn có thể lưu dữ liệu tổ chức vào tệp phụ XMP chuẩn để các ứng dụng ảnh khác đọc được.
 
 Lap đọc siêu dữ liệu tương thích từ Lightroom, digiKam, darktable và ACDSee. Các trường được hỗ trợ tùy theo ứng dụng.
 
-### Thông tin nào đi cùng tệp
+### Đọc siêu dữ liệu hiện có
 
 - Ảnh và video gốc của bạn luôn là tệp thông thường trong các thư mục hiện có.
-- Khi lập chỉ mục, Lap đọc EXIF, IPTC và XMP nhúng, gồm dữ liệu chụp và tổ chức. Bật **Cài đặt → Siêu dữ liệu → Nhập siêu dữ liệu** để nhập dữ liệu tổ chức vào cơ sở dữ liệu cục bộ. Các chỉnh sửa cục bộ được giữ lại.
+- Khi lập chỉ mục, Lap đọc EXIF, IPTC và XMP nhúng, gồm ngày chụp, máy ảnh, ống kính, GPS, hướng, xếp hạng, mục yêu thích, từ khóa, trạng thái chọn lọc, mô tả, tiêu đề, tiêu đề ngắn, tác giả và bản quyền. Bật **Cài đặt → Siêu dữ liệu → Nhập siêu dữ liệu** để nhập dữ liệu tổ chức vào cơ sở dữ liệu cục bộ. Các chỉnh sửa cục bộ được giữ lại.
 - Các giá trị được hỗ trợ trong tệp phụ XMP được ưu tiên hơn giá trị nhúng, bao gồm GPS và ngày chụp.
+
+### Lưu chỉnh sửa được hỗ trợ vào XMP
+
 - Có thể sửa tiêu đề, tiêu đề ngắn, mô tả, tác giả và bản quyền. Thay đổi được lưu trong cơ sở dữ liệu cục bộ.
 - Lưu vào XMP ghi các trường này cùng thẻ (bao gồm từ khóa phân cấp), xếp hạng, mục yêu thích và trạng thái chọn lọc vào tệp phụ, đồng thời giữ nguyên các thuộc tính XMP khác và tệp gốc.
 - Khi bạn đổi tên, di chuyển, sao chép, xóa hoặc nhập tệp **trong Lap**, Lap cập nhật danh mục cục bộ cùng lúc. Lap cũng giữ các thành phần được hỗ trợ đi cùng nhau, chẳng hạn như các thành phần Apple Live Photo, tệp phụ XMP và AAE và cặp RAW + JPEG/HEIC đã bật. Có thể xóa một hoặc cả hai tệp trong cặp RAW. Nếu giữ một tệp, tệp phụ XMP dùng chung cũng được giữ lại.
 - Lưu chỉnh sửa ảnh tích hợp sẽ ghi ảnh kết quả vào đích đã chọn.
 
-### Những gì Lap lưu cục bộ
+### Dữ liệu còn lại trong cơ sở dữ liệu Lap
 
 Lap lưu các dữ liệu thư viện này trong cơ sở dữ liệu cục bộ hoặc cấu hình thư viện.
 
-- Bộ sưu tập, album thông minh, quy tắc và tùy chọn hiển thị nằm trong cơ sở dữ liệu cục bộ hoặc cấu hình.
+- Bộ sưu tập, album thông minh cùng quy tắc, nhóm, sắp xếp và thứ tự của chúng
 - Dữ liệu tìm kiếm AI, dữ liệu khuôn mặt, ảnh thu nhỏ và dữ liệu chỉ mục/bộ nhớ đệm khác
 - Thẻ, xếp hạng, mục yêu thích, trạng thái chọn lọc và trường văn bản có thể sửa được lưu cục bộ và có thể ghi vào XMP.
 
-Theo mặc định, dữ liệu này không đi theo tệp khi thao tác bên ngoài Lap.
+Chỉnh sửa nằm trong cơ sở dữ liệu cho đến khi bạn chủ động lưu các trường được hỗ trợ vào XMP. Bộ sưu tập, album thông minh, dữ liệu AI và khuôn mặt không nằm trong XMP. Hãy sao lưu cơ sở dữ liệu; chỉ sao chép tệp gốc không giữ được cách tổ chức này.
 
 ### Làm việc với tệp ngoài Lap
 
 Lap có thể quét lại thư mục và phát hiện nhiều thay đổi hệ thống tệp. Tuy nhiên, các thay đổi thực hiện ngoài Lap—như đổi tên, di chuyển, thay thế hoặc sao chép tệp—có thể làm gián đoạn tổ chức chỉ được lưu trong Lap.
 
-Khi bật nhập siêu dữ liệu, Lap cũng kiểm tra thay đổi trong các tệp phụ XMP. Đổi tên và di chuyển tệp trong Lap để giữ nguyên bộ sưu tập. Đặt tệp phụ XMP cạnh tệp gốc. Nếu bạn cũng quản lý tệp ngoài Lap, hãy sao lưu cơ sở dữ liệu và cấu hình của Lap cùng với ảnh. Bạn có thể quản lý vị trí cơ sở dữ liệu và tạo bản sao lưu trong **Cài đặt → Lưu trữ**.
+Khi bật nhập siêu dữ liệu, Lap cũng kiểm tra thay đổi trong các tệp phụ XMP. Đổi tên và di chuyển tệp trong Lap để giữ nguyên bộ sưu tập. Dùng tính năng lưu siêu dữ liệu vào XMP và giữ tệp phụ cạnh tệp. Nếu bạn cũng quản lý tệp ngoài Lap, hãy sao lưu cơ sở dữ liệu và cấu hình của Lap cùng với ảnh. Bạn có thể quản lý vị trí cơ sở dữ liệu và tạo bản sao lưu trong **Cài đặt → Lưu trữ**.
 
 Xóa cơ sở dữ liệu hoặc cấu hình của Lap sẽ xóa dữ liệu tổ chức và chỉ mục cục bộ này, nhưng không xóa tệp phương tiện gốc.
 
@@ -160,8 +162,6 @@ sudo apt remove lap
 
 Để gỡ gói Arch cài cục bộ, dùng `sudo pacman -R lap`.
 
-Đối với gói Arch cài cục bộ, dùng `sudo pacman -R lap`.
-
 Đối với cài đặt AppImage, thoát Lap và xóa tệp `.AppImage` đã tải xuống.
 
 Sau đó xóa tất cả cơ sở dữ liệu, bộ nhớ đệm và tệp cấu hình của Lap:
@@ -202,7 +202,7 @@ Các gói phân phối có thể liên kết với libheif hệ thống (1.17 tr
 
 ### Arch Linux (x86_64)
 
-Công thức biên dịch thử nghiệm cho Arch chưa được đưa lên AUR. Cài đặt cục bộ: [`contrib/aur`](../contrib/aur/README.md).
+Công thức biên dịch thử nghiệm cho Arch chưa được đưa lên AUR, nên chưa thể cài qua `yay -S lap`. Để biên dịch và cài đặt cục bộ trên Arch Linux: [`contrib/aur`](../contrib/aur/README.md).
 
 ```bash
 cd contrib/aur
@@ -210,7 +210,7 @@ makepkg -s
 sudo pacman -U lap-<version>-x86_64.pkg.tar.zst
 ```
 
-Công thức cố định commit và xác minh tổng kiểm tra của mô hình AI và FFmpeg. Pacman quản lý cập nhật.
+Công thức cố định commit nguồn thượng nguồn và xác minh tổng kiểm tra của mô hình AI và công cụ FFmpeg đi kèm. Bản build Arch tắt tính năng tự cập nhật trong ứng dụng để pacman vẫn chịu trách nhiệm cập nhật; các bản build trên nền tảng khác giữ nguyên trình cập nhật hiện có. Xem hướng dẫn công thức để biết chi tiết build và các bước kiểm tra phát hành còn tồn đọng.
 
 ## Định dạng hỗ trợ
 
@@ -225,7 +225,7 @@ Lap hỗ trợ hơn 60 định dạng ảnh, RAW và video.
 
 ### Phát video trên Linux
 
-Lap sử dụng plugin GStreamer của hệ thống để phát video, kể cả trong AppImage. Nếu video không phát được trên Ubuntu, Debian hoặc Linux Mint, hãy cài:
+Nếu video không phát được, hãy cài plugin GStreamer:
 
 ```bash
 sudo apt install gstreamer1.0-libav gstreamer1.0-plugins-good

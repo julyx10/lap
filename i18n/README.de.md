@@ -14,8 +14,7 @@
 
 [English](../README.md) | [Česky](README.cs.md) | Deutsch | [Español](README.es.md) | [Français](README.fr.md) | [Italiano](README.it.md) | [Magyar](README.hu.md) | [Nederlands](README.nl.md) | [Polski](README.pl.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [Українська](README.uk.md) | [Tiếng Việt](README.vi.md) | [中文简体](README.zh-CN.md) | [中文繁體](README.zh-TW.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
-Lap ist ein quelloffener, lokal orientierter Fotomanager zum Durchsuchen von Familienalben, zum schnellen Finden alter Fotos und zum Offline-Verwalten großer persönlichen Medienbibliotheken.
-Kein Pflichtimport, kein Abo, kein Upload. Öffnen Sie vorhandene Ordner direkt in Lap. Ihre Dateien bleiben am ursprünglichen Ort und im ursprünglichen Format. Speichern Sie Bewertungen und Tags für kompatible Foto-Apps in XMP-Begleitdateien. Die KI-Suche läuft auf Ihrem Gerät.
+Lap ist ein kostenloser, quelloffener, lokal arbeitender Fotomanager für macOS, Windows und Linux. Organisieren Sie vorhandene Ordner, suchen Sie mit lokaler KI und verwalten Sie große Bibliotheken ohne Cloud-Konto oder Abonnement.
 
 <div align="center">
   <p><strong><a href="https://julyx10.github.io/lap/">OFFIZIELLE WEBSITE</a> | <a href="https://julyx10.github.io/lap/demos/lap/index.html">DEMO</a></strong></p>
@@ -28,31 +27,31 @@ Kein Pflichtimport, kein Abo, kein Upload. Öffnen Sie vorhandene Ordner direkt 
 | Plattform | Paket | Hinweis |
 | :-- | :-- | :-- |
 | **macOS (Apple Silicon / Intel)** | `_aarch64.dmg` / `_x64.dmg` | Von Apple notarisiert |
-| **Windows 10/11 (x64 / ARM64)** | `_x64_en-US.msi` / `_arm64_en-US.msi` | Nicht signiert. Wählen Sie im Browser **Trotzdem behalten** oder in SmartScreen **Weitere Informationen** → **Trotzdem ausführen**. |
+| **Windows 10/11 (x64 / ARM64)** | `_x64_en-US.msi` / `_arm64_en-US.msi` | Nicht signiert. Falls der Browser den Download blockiert, wählen Sie **Trotzdem behalten**. Falls SmartScreen das Installationsprogramm blockiert, wählen Sie **Weitere Informationen** → **Trotzdem ausführen**. |
 | **Linux (x64 / ARM64)** | `_amd64.deb` / `_arm64.deb` | Für Debian-basierte Distributionen (Ubuntu, Debian, Linux Mint, etc.) |
 | **Linux (x64 / ARM64)** | `_amd64.AppImage` / `_aarch64.AppImage` | Datei ausführbar machen und per Doppelklick starten |
 
 ### macOS mit Homebrew
 
 ```bash
-brew tap julyx10/lap
 brew install --cask lap
 ```
+
+Über den Tap `julyx10/lap` installiert? Siehe [Migrationsanleitung](https://github.com/julyx10/lap/discussions/567).
 
 ## Screenshots
 
 <p align="center">
   <img src="../docs/public/screenshots/lap_library.png" alt="Lokaler Fotobibliotheksmanager Lap" width="900">
   <img src="../docs/public/screenshots/lap_map_view.png" alt="Kartenansicht von Lap" width="900">
-  <img src="../docs/public/screenshots/lap_montage.png" alt="Fotocollage in Lap" width="900">
   <img src="../docs/public/screenshots/lap_preview.png" alt="Foto-Vorschau in Lap" width="900">
 </p>
 
 ## Warum Lap
 
-- **Ordnerbasierte Bibliotheksverwaltung.** Öffnen Sie vorhandene Ordner direkt in Lap. Ihre Dateien bleiben am ursprünglichen Ort und im ursprünglichen Format.
-- **Lokale KI-Suche.** Beschreiben Sie ein Foto, finden Sie ähnliche Bilder oder durchsuchen Sie Ihre Bibliothek nach Gesichtern. Alles läuft lokal.
-- **Übertragbare Bewertungen und Tags.** Speichern Sie Bewertungen und Tags für kompatible Foto-Apps in XMP-Begleitdateien.
+- **Private, lokale KI.** Beschreiben Sie ein Foto, finden Sie ähnliche Bilder oder durchsuchen Sie Ihre Bibliothek nach Gesichtern. Alles läuft lokal.
+- **Ihre Ordner unter Ihrer Kontrolle.** Öffnen Sie vorhandene Ordner direkt in Lap. Ihre Dateien bleiben am ursprünglichen Ort und im ursprünglichen Format.
+- **Metadaten für verschiedene Apps.** Lap liest eingebettetes EXIF, IPTC und XMP sowie Begleitdateien (Bewertungen, Tags, Favoriten, Auswahlstatus, GPS und Datumsangaben). Bearbeitete Metadaten können in XMP-Begleitdateien gespeichert werden, während die Originaldateien unverändert bleiben.
 - **Fotoauswahl.** Sofortvorschau mit der Leertaste, automatisches Weiterschalten nach der Bewertung, AF-Feldanzeige, Vierfachvergleich und Regeln zum Behalten von Duplikaten.
 - **Für Bibliotheken mit über 100.000 Fotos und Videos.** Ein nativer Rust-Kern übernimmt Durchsuchen, Suchen und Scannen.
 - **Kostenlos und quelloffen.** Ohne Abo oder Konto, in 17 Sprachen für macOS, Windows und Linux.
@@ -62,7 +61,7 @@ brew install --cask lap
 - **Flexible Bibliotheksansichten** nach Datum, Ordner, Ort, Kamera, Objektiv, Tags, Bewertungen und Gesichtern, mit Sortierung und Suche.
 - **Ordnerbasierter Workflow.** Mehrere Bibliotheken, Import und Export per Drag-and-drop oder Zwischenablage, Stapelumbenennung und Dateisynchronisierung, sicheres Verschieben, Kopieren und Löschen.
 - **Lokale KI-Suche** mit Textanfragen, visueller Ähnlichkeit, Motiven, Gesichtsgruppierung und optionaler Suche in über 50 Sprachen.
-- **Metadatenimport und XMP-Export** · Lap liest eingebettetes EXIF, IPTC und XMP sowie Begleitdateien (Bewertungen, Tags, Favoriten, Auswahlstatus, GPS und Datumsangaben). Textfelder lassen sich bearbeiten und Organisationsdaten in XMP speichern.
+- **Metadatenimport und Schreiben in XMP** · Lap liest eingebettetes EXIF, IPTC und XMP sowie Begleitdateien (Bewertungen, Tags, Favoriten, Auswahlstatus, GPS und Datumsangaben). Textfelder lassen sich bearbeiten und Organisationsdaten in XMP speichern.
 - **Intelligente Alben.** Eigene Gruppierung und Sortierung, Ordnernamenfilter und durchsuchbare Werteauswahl.
 - **Import nach Datum** in Tages-, Monats-, Jahres- oder einzelne Ordner, mit ursprünglichen Dateinamen und Überspringen von Duplikaten.
 - **Sammlungen und Tags** zum gemeinsamen Organisieren ausgewählter Dateien, ohne Originale zu verschieben oder zu kopieren. Verschlagwortung mit Tag-Baum, Drag-and-drop und Zählung je Teilbaum.
@@ -80,37 +79,40 @@ brew install --cask lap
 - **Helle und dunkle Designs.** Optional an das Systemdesign angepasst.
 - **Breite Formatunterstützung** für über 60 Bild-, RAW- und Videoformate. Affinity-Dokumente (eingebettete Vorschau).
 
-## Metadaten, Sammlungen und das Verschieben von Dateien
+## Metadaten und Datenhoheit
 
 Lap arbeitet direkt mit Ordnern. Die meisten angezeigten Informationen stammen aus den Dateien. Organisationsdaten lassen sich in standardisierte XMP-Begleitdateien schreiben und in anderen Foto-Apps lesen.
 
 Lap liest kompatible Metadaten aus Lightroom, digiKam, darktable und ACDSee. Die unterstützten Felder hängen von der Anwendung ab.
 
-### Was bei der Datei bleibt
+### Vorhandene Metadaten lesen
 
 - Ihre Originalfotos und -videos bleiben stets normale Dateien in ihren vorhandenen Ordnern.
 - Beim Indizieren liest Lap eingebettetes EXIF, IPTC und XMP mit Aufnahme- und Organisationsdaten. Unter **Einstellungen → Metadaten → Metadaten importieren** können Sie Organisationsdaten in die lokale Datenbank übernehmen. Lokale Änderungen bleiben erhalten.
 - Unterstützte Werte aus XMP-Begleitdateien haben Vorrang vor eingebetteten Werten, auch bei GPS und Aufnahmedatum.
+
+### Unterstützte Änderungen in XMP speichern
+
 - Titel, Überschrift, Beschreibung, Urheber und Copyright lassen sich bearbeiten und werden in der lokalen Datenbank gespeichert.
 - Der Befehl zum Speichern von Metadaten in XMP schreibt diese Felder sowie Tags (einschließlich hierarchischer Stichwörter), Bewertungen, Favoriten und Auswahlstatus in Begleitdateien. Andere XMP-Eigenschaften und die Originaldateien bleiben erhalten.
 - Wenn Sie Dateien **in Lap** umbenennen, verschieben, kopieren, löschen oder importieren, aktualisiert Lap gleichzeitig seinen lokalen Katalog. Unterstützte zusammengehörige Dateien wie Apple-Live-Photo-Komponenten, XMP- und AAE-Begleitdateien und aktivierte RAW- + JPEG/HEIC-Paare werden dabei zusammengehalten. Bei RAW-Paaren können Sie eine oder beide Dateien löschen. Bleibt eine Datei erhalten, bleibt auch die gemeinsame XMP-Begleitdatei erhalten.
 - Das Speichern einer integrierten Bildbearbeitung schreibt das resultierende Bild an den gewählten Speicherort.
 
-### Was Lap lokal speichert
+### Was in der Lap-Datenbank bleibt
 
 Diese Bibliotheksdaten speichert Lap in der lokalen Datenbank oder Bibliothekskonfiguration.
 
-- Sammlungen, Smart-Alben, deren Regeln und Ansichtseinstellungen bleiben in der lokalen Datenbank oder Konfiguration.
-- KI-Suchdaten, Gesichtsdaten, Thumbnails und weitere Index- bzw. Cache-Daten
+- Sammlungen, intelligente Alben, deren Regeln sowie Gruppierung, Sortierung und Anordnung
+- KI-Suchdaten, Gesichtsdaten, Miniaturen und weitere Index- bzw. Cache-Daten
 - Tags, Bewertungen, Favoriten, Auswahlstatus und bearbeitbare Textfelder werden lokal gespeichert und können in XMP geschrieben werden.
 
-Bei Dateioperationen außerhalb von Lap werden diese Daten standardmäßig nicht mitgeführt.
+Änderungen bleiben bis zum ausdrücklichen Speichern der unterstützten Felder in XMP in der Datenbank. Sammlungen, intelligente Alben, KI-Suchdaten und Gesichtsdaten sind nicht in XMP enthalten. Sichern Sie die Datenbank; das Kopieren der Originale allein bewahrt diese Organisation nicht.
 
 ### Arbeiten mit Dateien außerhalb von Lap
 
-Lap kann Ordner erneut scannen und viele Änderungen im Dateisystem erkennen. Werden Dateien jedoch außerhalb von Lap umbenannt, verschoben, ersetzt oder kopiert, können nur in Lap gespeicherte Organisationsdaten beeinträchtigt werden.
+Lap kann Ordner erneut scannen und viele Änderungen im Dateisystem erkennen. Bei aktiviertem Metadatenimport prüft Lap auch XMP-Begleitdateien auf Änderungen. Werden Dateien jedoch außerhalb von Lap umbenannt, verschoben, ersetzt oder kopiert, können nur in Lap gespeicherte Organisationsdaten beeinträchtigt werden.
 
-Bei aktiviertem Metadatenimport prüft Lap auch XMP-Begleitdateien auf Änderungen. Benennen und verschieben Sie Dateien in Lap, um die Sammlungszuordnung zu erhalten. Halten Sie XMP-Begleitdateien bei den jeweiligen Dateien. Wenn Sie Dateien auch außerhalb von Lap verwalten, sichern Sie die Datenbank und Konfiguration von Lap zusammen mit Ihren Fotos. Den Datenbankort können Sie in **Einstellungen → Speicher** verwalten und dort auch eine Sicherung erstellen.
+Benennen und verschieben Sie Dateien in Lap, um die Sammlungszuordnung zu erhalten. Halten Sie XMP-Begleitdateien bei den jeweiligen Dateien. Wenn Sie Dateien auch außerhalb von Lap verwalten, sichern Sie die Datenbank und Konfiguration von Lap zusammen mit Ihren Fotos. Den Datenbankort können Sie in **Einstellungen → Speicher** verwalten und dort auch eine Sicherung erstellen.
 
 Das Löschen der Datenbank oder Konfiguration von Lap entfernt diese lokale Organisation und Indexdaten, löscht jedoch nicht Ihre Originalmediendateien.
 
@@ -118,7 +120,7 @@ Das Löschen der Datenbank oder Konfiguration von Lap entfernt diese lokale Orga
 
 Lap arbeitet direkt mit Ihren vorhandenen Fotoordnern. Die Deinstallation von Lap oder das Löschen der Datenbank- und Cache-Dateien löscht **nicht** Ihre Originalfotos.
 
-Die normale Deinstallation entfernt die Anwendung. Um Lap vollständig zu entfernen, beenden Sie Lap zuerst, deinstallieren Sie die Anwendung und löschen Sie anschließend die lokale Datenbank, den Thumbnail-Cache und die Konfigurationsdateien mit den Befehlen für Ihre Plattform.
+Die normale Deinstallation entfernt die Anwendung. Um Lap vollständig zu entfernen, beenden Sie Lap zuerst, deinstallieren Sie die Anwendung und löschen Sie anschließend die lokale Datenbank, den Miniatur-Cache und die Konfigurationsdateien mit den Befehlen für Ihre Plattform.
 
 ### macOS
 
@@ -196,11 +198,11 @@ cd src-vite && pnpm install && cd ..
 cargo tauri dev
 ```
 
-Distributionspakete können das System-libheif (1.17 oder neuer) anstelle des gebündelten libheif und libde265 verwenden. Setze `LAP_SYSTEM_LIBHEIF=1` für den Build. Die Submodule `third_party/libheif` und `third_party/libde265` werden dann nicht benötigt. Die HEVC-Dekodierung hängt von den Codec-Plugins des System-libheif ab.
+Distributionspakete können das System-libheif (1.17 oder neuer) anstelle des gebündelten libheif und libde265 verwenden. Setzen Sie `LAP_SYSTEM_LIBHEIF=1` für den Build. Die Submodule `third_party/libheif` und `third_party/libde265` werden dann nicht benötigt. Die HEVC-Dekodierung hängt von den Codec-Plugins des System-libheif ab.
 
 ### Arch Linux (x86_64)
 
-Experimentelles Arch-Baurezept, noch nicht im AUR. Lokale Installation: [`contrib/aur`](../contrib/aur/README.md).
+Ein experimentelles Rezept für den Arch-Bau aus dem Quellcode befindet sich in [`contrib/aur`](../contrib/aur/README.md). Es wurde noch nicht im AUR veröffentlicht, daher ist `yay -S lap` noch nicht verfügbar. So bauen und installieren Sie es lokal unter Arch Linux:
 
 ```bash
 cd contrib/aur
@@ -208,7 +210,7 @@ makepkg -s
 sudo pacman -U lap-<version>-x86_64.pkg.tar.zst
 ```
 
-Das Rezept fixiert den Quellcommit und prüft KI-Modelle und FFmpeg per Prüfsumme. Pacman übernimmt die Aktualisierung.
+Das Rezept fixiert einen Upstream-Quellcommit und prüft die mitgelieferten KI-Modelle und FFmpeg-Werkzeuge per Prüfsumme. Der Arch-Build deaktiviert die In-App-Selbstaktualisierung, damit pacman weiterhin für Updates verantwortlich ist; die Builds anderer Plattformen behalten ihren vorhandenen Updater. Details zum Bau und ausstehende Release-Prüfungen finden Sie im Rezept-Leitfaden.
 
 ## Unterstützte Formate
 
@@ -223,7 +225,7 @@ Lap unterstützt über 60 Bild-, RAW- und Videoformate.
 
 ### Videowiedergabe unter Linux
 
-Lap verwendet die GStreamer-Plugins des Systems für die Videowiedergabe, auch im AppImage. Falls Videos unter Ubuntu, Debian oder Linux Mint nicht abgespielt werden, installieren Sie:
+Falls Videos nicht abgespielt werden, installieren Sie die GStreamer-Plugins:
 
 ```bash
 sudo apt install gstreamer1.0-libav gstreamer1.0-plugins-good
@@ -239,16 +241,16 @@ sudo apt install gstreamer1.0-libav gstreamer1.0-plugins-good
 
 | Bibliothek | Zweck |
 | :-- | :-- |
-| [LibRaw](https://github.com/LibRaw/LibRaw) | RAW-Bilddekodierung und Thumbnail-Extraktion |
+| [LibRaw](https://github.com/LibRaw/LibRaw) | RAW-Bilddekodierung und Extraktion von Miniaturen |
 | [libheif](https://github.com/strukturag/libheif) | HEIC/HEIF/HIF-Bilddekodierung und Vorschaugenerierung |
-| [libjpeg-turbo](https://libjpeg-turbo.org/) | Schnelle JPEG-Dekodierung und Thumbnail-Generierung |
-| [FFmpeg](https://ffmpeg.org/) | Videoverarbeitung und Thumbnail-Generierung |
+| [libjpeg-turbo](https://libjpeg-turbo.org/) | Schnelle JPEG-Dekodierung und Miniatur-Generierung |
+| [FFmpeg](https://ffmpeg.org/) | Videoverarbeitung und Miniatur-Generierung |
 | [exiftool-rs](https://github.com/Le-Syl21/exiftool-rs) | Rust-Portierung von ExifTool |
 | [Video.js](https://videojs.com/) | Plattformübergreifende Benutzeroberfläche für die Videowiedergabe |
 | [ONNX Runtime](https://onnxruntime.ai/) | Lokale KI-Modell-Inferenz-Engine |
 | [CLIP](https://github.com/openai/CLIP) | Bild-Text-Ähnlichkeitssuche |
 | [InsightFace](https://github.com/deepinsight/insightface) | Gesichtserkennung und -identifizierung |
-| [Leaflet](https://leafletjs.com/) | Interaktive Karte für Fotos mit GPS-Daten |
+| [Leaflet](https://leafletjs.com/) | Interaktive Karte für Fotos mit Geotags |
 | [daisyUI](https://daisyui.com/) | UI-Komponentenbibliothek |
 
 ## Lizenz

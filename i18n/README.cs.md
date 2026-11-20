@@ -14,8 +14,7 @@
 
 [English](../README.md) | Česky | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | [Italiano](README.it.md) | [Magyar](README.hu.md) | [Nederlands](README.nl.md) | [Polski](README.pl.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [Українська](README.uk.md) | [Tiếng Việt](README.vi.md) | [中文简体](README.zh-CN.md) | [中文繁體](README.zh-TW.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
-Lap je open-source správce fotografií se zaměřením na lokální provoz. Umožňuje procházet rodinná alba, rychle vyhledávat staré fotografie a spravovat offline rozsáhlé osobní knihovny médií.
-Bez povinného importu, předplatného nebo nahrávání. Otevřete stávající složky přímo v Lap. Soubory si zachovají umístění i formát. Uložte hodnocení a štítky do standardních doprovodných souborů XMP pro kompatibilní aplikace. Vyhledávání AI běží na vašem zařízení.
+Lap je bezplatný správce fotografií s otevřeným zdrojovým kódem pro macOS, Windows a Linux, který pracuje lokálně. Organizujte existující složky, vyhledávejte místní AI a spravujte velké knihovny bez cloudového účtu či předplatného.
 
 <div align="center">
   <p><strong><a href="https://julyx10.github.io/lap/">OFICIÁLNÍ WEB</a> | <a href="https://julyx10.github.io/lap/demos/lap/index.html">DEMO</a></strong></p>
@@ -28,31 +27,31 @@ Otevřete [stránku nejnovějšího vydání](https://github.com/julyx10/lap/rel
 | Platforma | Balíček | Poznámka |
 | :-- | :-- | :-- |
 | **macOS (Apple Silicon / Intel)** | `_aarch64.dmg` / `_x64.dmg` | Notářsky ověřeno společností Apple |
-| **Windows 10/11 (x64 / ARM64)** | `_x64_en-US.msi` / `_arm64_en-US.msi` | Nepodepsáno. V prohlížeči zvolte **Přesto ponechat** nebo v SmartScreenu **Další informace** → **Přesto spustit**. |
+| **Windows 10/11 (x64 / ARM64)** | `_x64_en-US.msi` / `_arm64_en-US.msi` | Nepodepsáno. Pokud prohlížeč stahování zablokuje, zvolte **Přesto ponechat**. Pokud instalátor zablokuje SmartScreen, zvolte **Další informace** → **Přesto spustit**. |
 | **Linux (x64 / ARM64)** | `_amd64.deb` / `_arm64.deb` | Pro distribuce založené na Debianu (Ubuntu, Debian, Linux Mint atd.) |
 | **Linux (x64 / ARM64)** | `_amd64.AppImage` / `_aarch64.AppImage` | Nastavte soubor jako spustitelný a potom jej spusťte dvojitým kliknutím |
 
 ### macOS s Homebrew
 
 ```bash
-brew tap julyx10/lap
 brew install --cask lap
 ```
+
+Instalovali jste přes tap `julyx10/lap`? Viz [pokyny k migraci](https://github.com/julyx10/lap/discussions/567).
 
 ## Snímky obrazovek
 
 <p align="center">
   <img src="../docs/public/screenshots/lap_library.png" alt="Správce místní knihovny fotografií Lap" width="900">
   <img src="../docs/public/screenshots/lap_map_view.png" alt="Zobrazení mapy v Lap" width="900">
-  <img src="../docs/public/screenshots/lap_montage.png" alt="Koláž fotografií v Lap" width="900">
   <img src="../docs/public/screenshots/lap_preview.png" alt="Náhled fotografie v Lap" width="900">
 </p>
 
 ## Proč Lap
 
-- **Správa knihovny podle složek.** Otevřete stávající složky přímo v Lap. Soubory si zachovají umístění i formát.
-- **Místní vyhledávání s AI.** Popište fotografii, vyhledejte podobné snímky nebo procházejte podle tváří. Vše se zpracovává místně.
-- **Přenosné hodnocení a štítky.** Uložte je do doprovodných souborů XMP pro použití v kompatibilních aplikacích.
+- **Soukromá AI na vašem zařízení.** Popište fotografii, vyhledejte podobné snímky nebo procházejte podle tváří. Vše se zpracovává místně.
+- **Vaše složky pod vaší kontrolou.** Otevřete stávající složky přímo v Lap. Soubory si zachovají umístění i formát.
+- **Metadata pro různé aplikace.** Lap čte vložené EXIF, IPTC a XMP i doprovodné soubory (hodnocení, štítky, oblíbené položky, stav výběru, GPS a data). Upravená metadata lze ukládat do doprovodných souborů XMP, přičemž původní soubory zůstávají beze změn.
 - **Výběr fotografií.** Náhled mezerníkem, posun po ohodnocení, zobrazení oblastí AF, porovnání ve čtyřech panelech a pravidla pro ponechání duplikátů.
 - **Pro knihovny s více než 100 000 fotografiemi a videi.** Nativní jádro v Rustu zajišťuje procházení, vyhledávání i skenování.
 - **Zdarma a s otevřeným kódem.** Bez předplatného a účtu, v 17 jazycích pro macOS, Windows a Linux.
@@ -80,37 +79,40 @@ brew install --cask lap
 - **Světlý a tmavý motiv.** Mohou se řídit vzhledem systému.
 - **Široká podpora formátů** pro více než 60 formátů obrázků, RAW a videa. Dokumenty Affinity (vložený náhled).
 
-## Metadata, kolekce a přesouvání souborů
+## Metadata a kontrola nad daty
 
 Lap pracuje přímo se složkami. Většinu zobrazených údajů čte ze souborů. Organizační údaje lze zapsat do standardních doprovodných souborů XMP a používat je v jiných aplikacích.
 
 Lap čte kompatibilní metadata z Lightroomu, digiKamu, darktable a ACDSee. Rozsah podporovaných polí závisí na aplikaci.
 
-### Co zůstává u souboru
+### Čtení existujících metadat
 
 - Vaše původní fotografie a videa zůstávají vždy běžnými soubory ve svých stávajících složkách.
 - Při indexování Lap čte vložené EXIF, IPTC a XMP, včetně údajů o snímku a organizačních polí. Organizační údaje importujete do místní databáze přes **Nastavení → Metadata → Import metadat**. Místní úpravy zůstanou zachovány.
 - Platné hodnoty z doprovodného souboru XMP mají přednost před vloženými hodnotami, včetně GPS a data pořízení.
+
+### Uložení podporovaných změn do XMP
+
 - Název, titulek, popis, autora a autorská práva lze upravit a uložit do místní databáze.
 - Uložení do XMP zapíše tato pole, štítky (včetně hierarchických klíčových slov), hodnocení, oblíbené položky a stav výběru do doprovodných souborů. Ostatní vlastnosti XMP a originály zůstanou zachovány.
 - Když v Lap přejmenujete, přesunete, zkopírujete, odstraníte nebo importujete soubory, Lap současně aktualizuje svůj místní katalog. Zároveň zachovává pohromadě podporované skupiny souborů, například součásti Apple Live Photo, doprovodné soubory XMP a AAE a zapnuté dvojice RAW + JPEG/HEIC. Z dvojice RAW lze odstranit jeden nebo oba soubory. Pokud jeden zachováte, zachová se i sdílený soubor XMP.
 - Uložení úprav obrázku pomocí vestavěných nástrojů zapíše výsledný obrázek do vybraného umístění.
 
-### Co Lap ukládá lokálně
+### Co zůstává v databázi Lap
 
 Tyto údaje Lap ukládá do místní databáze nebo konfigurace knihovny.
 
-- Kolekce, chytrá alba, pravidla a nastavení zobrazení zůstávají v místní databázi nebo konfiguraci.
+- **Kolekce, chytrá alba, jejich pravidla, seskupování, řazení a pořadí**
 - Data vyhledávání AI, data o tvářích, miniatury a další data indexu a mezipaměti
 - Štítky, hodnocení, oblíbené položky, stav výběru a upravitelná textová pole jsou uloženy lokálně a lze je zapsat do XMP.
 
-Při práci se soubory mimo Lap se tato data automaticky nepřenášejí.
+Úpravy zůstávají v databázi, dokud podporovaná pole výslovně neuložíte do XMP. Kolekce, chytrá alba, data AI a tváří nejsou součástí XMP. Zálohujte databázi; kopírování samotných originálů toto uspořádání nezachová.
 
 ### Práce se soubory mimo Lap
 
-Lap může znovu prohledat složky a zjistit mnoho změn v souborovém systému. Změny provedené mimo Lap – například přejmenování, přesun, nahrazení nebo kopírování souborů – však mohou narušit organizaci, která je uložena pouze v Lap.
+Lap může znovu prohledat složky a zjistit mnoho změn v souborovém systému. Při povoleném importu metadat Lap kontroluje také změny v doprovodných souborech XMP. Změny provedené mimo Lap – například přejmenování, přesun, nahrazení nebo kopírování souborů – však mohou narušit organizaci, která je uložena pouze v Lap.
 
-Při povoleném importu metadat Lap kontroluje také změny v doprovodných souborech XMP. Soubory přejmenovávejte a přesouvejte v Lap, aby zůstaly v kolekcích. Doprovodné soubory XMP ponechte u originálů. Pokud soubory spravujete také mimo Lap, zálohujte databázi a konfiguraci Lap společně s fotografiemi. Umístění databáze můžete spravovat a zálohu vytvořit v **Nastavení → Úložiště**.
+Soubory přejmenovávejte a přesouvejte v Lap, aby zůstaly v kolekcích. Doprovodné soubory XMP ponechte u originálů. Pokud soubory spravujete také mimo Lap, zálohujte databázi a konfiguraci Lap společně s fotografiemi. Umístění databáze můžete spravovat a zálohu vytvořit v **Nastavení → Úložiště**.
 
 Odstranění databáze nebo konfigurace Lap smaže tato místní organizační a indexová data, nikoli však původní mediální soubory.
 
@@ -200,7 +202,7 @@ Distribuční balíčky mohou místo přibalených knihoven libheif a libde265 o
 
 ### Arch Linux (x86_64)
 
-Experimentální recept pro Arch dosud není v AUR. Místní instalace: [`contrib/aur`](../contrib/aur/README.md).
+Experimentální recept pro sestavení Arch Linuxu ze zdrojového kódu je v [`contrib/aur`](../contrib/aur/README.md). Dosud nebyl publikován v AUR, takže `yay -S lap` zatím není k dispozici. K místnímu sestavení a instalaci na Arch Linuxu:
 
 ```bash
 cd contrib/aur
@@ -208,7 +210,7 @@ makepkg -s
 sudo pacman -U lap-<version>-x86_64.pkg.tar.zst
 ```
 
-Recept určuje konkrétní revizi zdrojů a kontroluje součty modelů AI a FFmpeg. Aktualizace spravuje pacman.
+Recept určuje konkrétní upstream commit zdrojového kódu a kontroluje součty přibalených modelů AI a nástrojů FFmpeg. Sestavení pro Arch vypíná automatické aktualizace v aplikaci, aby o aktualizace staral pacman; sestavení ostatních platforem si zachovávají stávající aktualizátor. Podrobnosti a zbývající kontroly před vydáním popisuje průvodce receptem.
 
 ## Podporované formáty
 
@@ -223,7 +225,7 @@ Lap podporuje více než 60 formátů obrázků, RAW a videa.
 
 ### Přehrávání videa v Linuxu
 
-Lap používá pro přehrávání videa systémové zásuvné moduly GStreamer, a to i v AppImage. Pokud se videa v Ubuntu, Debianu nebo Linux Mint nepřehrávají, nainstalujte:
+Pokud se videa nepřehrávají, nainstalujte zásuvné moduly GStreamer:
 
 ```bash
 sudo apt install gstreamer1.0-libav gstreamer1.0-plugins-good

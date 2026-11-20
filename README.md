@@ -14,8 +14,7 @@
 
 English | [Česky](i18n/README.cs.md) | [Deutsch](i18n/README.de.md) | [Español](i18n/README.es.md) | [Français](i18n/README.fr.md) | [Italiano](i18n/README.it.md) | [Magyar](i18n/README.hu.md) | [Nederlands](i18n/README.nl.md) | [Polski](i18n/README.pl.md) | [Português](i18n/README.pt.md) | [Русский](i18n/README.ru.md) | [Українська](i18n/README.uk.md) | [Tiếng Việt](i18n/README.vi.md) | [中文简体](i18n/README.zh-CN.md) | [中文繁體](i18n/README.zh-TW.md) | [日本語](i18n/README.ja.md) | [한국어](i18n/README.ko.md)
 
-Lap is an open-source, local-first photo manager for browsing family albums, finding old photos quickly, and managing large personal media libraries offline.
-No import step, no subscription, no upload: your folders stay as they are, AI search runs on your machine, and you can save your ratings and tags to standard XMP sidecars.
+Lap is a free, open-source, local-first photo manager for macOS, Windows, and Linux. Browse and organize your existing photo folders, search with on-device AI, and manage large libraries without a cloud account or subscription.
 
 <div align="center">
   <p><strong><a href="https://julyx10.github.io/lap/">OFFICIAL WEBSITE</a> | <a href="https://julyx10.github.io/lap/demos/lap/index.html">DEMO</a></strong></p>
@@ -35,24 +34,24 @@ Open the [latest release page](https://github.com/julyx10/lap/releases/latest), 
 ### macOS with Homebrew
 
 ```bash
-brew tap julyx10/lap
 brew install --cask lap
 ```
+
+Previously installed via the `julyx10/lap` tap? See the [migration instructions](https://github.com/julyx10/lap/discussions/567).
 
 ## Screenshots
 
 <p align="center">
   <img src="docs/public/screenshots/lap_library.png" alt="Lap local photo library manager" width="900">
   <img src="docs/public/screenshots/lap_map_view.png" alt="Lap map view" width="900">
-  <img src="docs/public/screenshots/lap_montage.png" alt="Lap photo collage" width="900">
   <img src="docs/public/screenshots/lap_preview.png" alt="Photo preview in Lap" width="900">
 </p>
 
 ## Why Lap
 
-- **Folder-based library management.** Open your existing folders directly in Lap. Your files stay where they are, in their original formats.
-- **AI search that never leaves your machine.** Describe a photo ("sunset at the beach"), find similar shots, or browse by face. Everything is computed locally.
-- **Portable ratings and tags.** Save your ratings and tags to XMP sidecars to use them in compatible photo apps.
+- **Private, on-device AI.** Search by description, find similar photos, and browse by face with processing performed locally.
+- **Your folders, under your control.** Open existing folders directly. Your originals stay in place, with no required upload or library import.
+- **Metadata that works across apps.** Read embedded EXIF/IPTC/XMP and existing sidecars, with support for saving edited metadata to XMP sidecars while leaving original files untouched.
 - **Culling built for photographers.** Instant Space-bar preview, auto-advance after rating, autofocus area overlay, four-pane comparison, and duplicate keep rules.
 - **Built for libraries with 100,000+ photos and videos.** A native Rust core powers browsing, search, and scanning.
 - **Free and open source.** No subscription, no account, no forced ecosystem. 17 languages, on macOS, Windows, and Linux.
@@ -80,23 +79,26 @@ brew install --cask lap
 - **Light and dark themes**, optionally following the system appearance.
 - **Broad format support** for 60+ image, RAW, and video formats, plus Affinity document previews.
 
-## Metadata, Collections, and Moving Files
+## Metadata and Data Ownership
 
 Lap is folder-first. Most of the information shown in Lap is read from your files, and you can choose to write your organization back to standard XMP sidecars so it travels with the files and stays readable by other photo apps.
 
 Lap imports compatible metadata from Lightroom, digiKam, darktable, and ACDSee. Supported fields vary by application.
 
-### What stays with the file
+### Read existing metadata
 
 - Your original photos and videos always remain ordinary files in their existing folders.
 - Embedded EXIF, IPTC, and XMP metadata is read when Lap indexes the file: capture date, camera, lens, GPS, orientation, ratings, favorites, keywords, culling flags, descriptions, title, headline, creator, copyright. Turn on **Settings → Metadata → Import metadata** to import the organization fields into the local database; your local edits are preserved.
 - When Lap imports metadata from an XMP sidecar, supported sidecar values take precedence over embedded values, including GPS and capture dates.
+
+### Save supported edits to XMP
+
 - Title, headline, description, creator, and copyright are editable in Lap. Edits are saved to the local database.
 - **Save Metadata to XMP** writes tags (including hierarchical keywords), ratings, favorites, culling states, title, headline, description, creator, and copyright to sidecars. It preserves unrelated XMP properties and leaves the original files untouched.
 - When you rename, move, copy, delete, or import files **in Lap**, Lap updates its local database and keeps XMP sidecars and supported grouped assets — Apple Live Photo components, AAE sidecars, and enabled RAW + JPEG/HEIC pairs — together with the files. When deleting a RAW pair, you can delete either file or both. The shared XMP sidecar stays with the remaining file if you keep one.
 - Saving a built-in image edit writes the resulting image to the selected destination.
 
-### What is stored locally by Lap
+### What stays in Lap’s database
 
 The following are Lap library data. They are stored in Lap's local database or library configuration:
 
@@ -104,7 +106,7 @@ The following are Lap library data. They are stored in Lap's local database or l
 - AI search data, face data, thumbnails, and other index/cache data
 - Tags, ratings, favorites, culling states (picks and rejects), and editable text fields are stored in the local database and can be written to XMP as described above.
 
-By default, this data does not travel with a file when it is copied, exported, or moved outside Lap, and it is not available automatically to other applications.
+Edits stay in Lap’s database until you choose **Save Metadata to XMP** for the supported fields. Collections, Smart Albums, AI search data, and face data remain local to Lap and are not included in XMP sidecars. Back up your database to preserve this organization; copying your original files alone does not preserve it.
 
 ### Working with files outside Lap
 

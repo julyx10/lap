@@ -14,8 +14,7 @@
 
 [English](../README.md) | [Česky](README.cs.md) | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | [Italiano](README.it.md) | [Magyar](README.hu.md) | Nederlands | [Polski](README.pl.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [Українська](README.uk.md) | [Tiếng Việt](README.vi.md) | [中文简体](README.zh-CN.md) | [中文繁體](README.zh-TW.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
-Lap is een open-source, local-first fotobeheerder om door familiealbums te bladeren, oude foto's snel terug te vinden en grote persoonlijke mediabibliotheken offline te beheren.
-Geen verplichte import, abonnement of upload. Open bestaande mappen rechtstreeks in Lap. Bestanden behouden hun locatie en formaat. Sla ze op in XMP-nevenbestanden voor gebruik in compatibele foto-apps. AI-zoeken draait op je eigen apparaat.
+Lap is een gratis, opensource fotobeheerder voor macOS, Windows en Linux die lokaal werkt. Orden bestaande mappen, zoek met lokale AI en beheer grote bibliotheken zonder cloudaccount of abonnement.
 
 <div align="center">
   <p><strong><a href="https://julyx10.github.io/lap/">OFFICIËLE WEBSITE</a> | <a href="https://julyx10.github.io/lap/demos/lap/index.html">DEMO</a></strong></p>
@@ -35,25 +34,25 @@ Open de [pagina met de nieuwste release](https://github.com/julyx10/lap/releases
 ### macOS met Homebrew
 
 ```bash
-brew tap julyx10/lap
 brew install --cask lap
 ```
+
+Geïnstalleerd via de tap `julyx10/lap`? Bekijk de [migratie-instructies](https://github.com/julyx10/lap/discussions/567).
 
 ## Schermafbeeldingen
 
 <p align="center">
   <img src="../docs/public/screenshots/lap_library.png" alt="Lap, lokale beheerder voor fotobibliotheken" width="900">
   <img src="../docs/public/screenshots/lap_map_view.png" alt="Kaartweergave in Lap" width="900">
-  <img src="../docs/public/screenshots/lap_montage.png" alt="Fotocollage in Lap" width="900">
   <img src="../docs/public/screenshots/lap_preview.png" alt="Fotovoorbeeld in Lap" width="900">
 </p>
 
 ## Waarom Lap
 
-- **Bibliotheekbeheer op basis van mappen.** Open bestaande mappen rechtstreeks in Lap. Bestanden behouden hun locatie en formaat.
-- **Lokale AI-zoekfunctie.** Beschrijf een foto, vind vergelijkbare beelden of blader op gezicht. Alles wordt lokaal verwerkt.
-- **Overdraagbare beoordelingen en tags.** Sla ze op in XMP-nevenbestanden voor gebruik in compatibele foto-apps.
-- **Fotoselectie.** Voorvertoning met de spatiebalk, automatisch doorgaan na beoordeling, AF-gebieden, vergelijking in vier panelen en bewaarregels voor duplicaten.
+- **Privé-AI op je apparaat.** Beschrijf een foto, vind vergelijkbare beelden of blader op gezicht. Alles wordt lokaal verwerkt.
+- **Jouw mappen, onder jouw controle.** Open bestaande mappen rechtstreeks in Lap. Bestanden behouden hun locatie en formaat.
+- **Metadata die werkt tussen apps.** Lap leest ingebedde EXIF-, IPTC- en XMP-gegevens en bestaande XMP-sidecars (beoordelingen, tags, favorieten, selectiestatus, GPS en datums). Er is ondersteuning voor het opslaan van gewijzigde metagegevens in XMP-sidecars, waarbij de originele bestanden onaangetast blijven.
+- **Schiften.** Voorvertoning met de spatiebalk, automatisch doorgaan na beoordeling, AF-gebieden, vergelijking in vier panelen en bewaarregels voor duplicaten.
 - **Voor bibliotheken met meer dan 100.000 foto's en video's.** Een native Rust-kern verzorgt bladeren, zoeken en scannen.
 - **Gratis en opensource.** Zonder abonnement of account, in 17 talen voor macOS, Windows en Linux.
 
@@ -62,7 +61,7 @@ brew install --cask lap
 - **Flexibel bladeren door je bibliotheek** op datum, map, locatie, camera, objectief, tags, beoordelingen en gezichten, met sortering en zoeken.
 - **Werken vanuit mappen.** Meerdere bibliotheken, import en export via slepen of klembord, batchgewijs hernoemen en synchronisatie, veilig verplaatsen, kopiëren en verwijderen.
 - **Lokaal zoeken met AI** op tekst, visuele overeenkomst, onderwerpen, gezichtsgroepering en optioneel meertalig zoeken in meer dan 50 talen.
-- **Metadata importeren en naar XMP schrijven** · Lap leest ingebedde EXIF-, IPTC- en XMP-gegevens en sidecars (beoordelingen, tags, favorieten, selectiestatus, GPS en datums). Je kunt tekstvelden bewerken en organisatiegegevens naar XMP schrijven.
+- **Metadata importeren en naar XMP schrijven.** Lap leest ingebedde EXIF-, IPTC- en XMP-gegevens en bestaande XMP-sidecars (beoordelingen, tags, favorieten, selectiestatus, GPS en datums). Je kunt tekstvelden bewerken en je organisatiegegevens expliciet naar XMP-sidecars schrijven, waarbij de originele bestanden onaangetast blijven.
 - **Slimme albums.** Aangepaste groepering en sortering, filters op mapnaam en doorzoekbare keuzelijsten.
 - **Importeren op datum** met een indeling per dag, maand, jaar of in één map, met behoud van originele bestandsnamen en het overslaan van duplicaten.
 - **Collecties en tags** om geselecteerde bestanden in bulk te ordenen zonder de originelen te verplaatsen of te dupliceren. Tagboom met slepen en aantallen per tak.
@@ -77,40 +76,43 @@ brew install --cask lap
 - **Interactieve kaartweergave** om foto's en video's met locatiegegevens te verkennen in clusters die je huidige filters volgen.
 - **Offline door albums bladeren** waardoor albums op ontkoppelde of netwerkopslag zichtbaar blijven met miniaturen in de cache.
 - **Bestanden die alleen online staan.** OneDrive-bestanden op aanvraag en macOS-placeholders worden zonder automatische download geïndexeerd en weergegeven.
-- **Licht en donker thema.** Kunnen de systeemweergave volgen.
+- **Licht en donker thema.** Met de optie om de systeemweergave te volgen.
 - **Brede formaatondersteuning** voor meer dan 60 afbeeldings-, RAW- en videoformaten. Affinity-documenten (ingesloten voorvertoning).
 
-## Metadata, collecties en het verplaatsen van bestanden
+## Metadata en zeggenschap over gegevens
 
-Lap werkt rechtstreeks met je mappen en leest de meeste getoonde informatie uit de bestanden. Je kunt organisatiegegevens bewaren in standaard XMP-sidecars die andere foto-apps kunnen lezen.
+Lap werkt rechtstreeks met je mappen en leest de meeste getoonde informatie uit de bestanden. Je kunt je organisatiegegevens bewaren in standaard XMP-sidecars, zodat ze met de bestanden meereizen en door andere foto-apps leesbaar blijven.
 
 Lap leest compatibele metadata van Lightroom, digiKam, darktable en ACDSee. Welke velden worden ondersteund, verschilt per app.
 
-### Wat bij het bestand blijft
+### Bestaande metadata lezen
 
 - Je originele foto's en video's blijven altijd gewone bestanden in hun bestaande mappen.
-- Bij het indexeren leest Lap ingebedde EXIF-, IPTC- en XMP-gegevens, waaronder opname- en organisatiegegevens. Schakel **Instellingen → Metadata → Metadata importeren** in om organisatiegegevens in de lokale database op te nemen. Lokale bewerkingen blijven behouden.
+- Bij het indexeren leest Lap ingebedde EXIF-, IPTC- en XMP-gegevens: opnamedatum, camera, objectief, GPS, oriëntatie, beoordelingen, favorieten, trefwoorden, selectiestatus, beschrijvingen, titel, kopregel, maker en copyright. Schakel **Instellingen → Metadata → Metadata importeren** in om de organisatievelden in de lokale database op te nemen. Lokale bewerkingen blijven behouden.
 - Ondersteunde waarden uit XMP-sidecars gaan vóór ingebedde waarden, ook voor GPS en opnamedatum.
+
+### Ondersteunde wijzigingen opslaan in XMP
+
 - Titel, kopregel, beschrijving, maker en copyright zijn bewerkbaar en worden lokaal in de database opgeslagen.
-- Opslaan naar XMP schrijft deze velden, tags (inclusief hiërarchische trefwoorden), beoordelingen, favorieten en selectiestatussen naar nevenbestanden. Andere XMP-eigenschappen en originelen blijven behouden.
-- Als je bestanden **in Lap** hernoemt, verplaatst, kopieert, verwijdert of importeert, werkt Lap tegelijk zijn lokale catalogus bij. Ook ondersteunde gegroepeerde bestanden blijven bij elkaar, zoals de onderdelen van een Apple Live Photo, XMP- en AAE-sidecars en ingeschakelde RAW + JPEG/HEIC-paren. Bij een RAW-paar kunt u één bestand of beide verwijderen. Als één bestand blijft, blijft ook het gedeelde XMP-bestand behouden.
+- **Metagegevens opslaan in XMP** schrijft titel, kopregel, beschrijving, maker en copyright, plus tags (inclusief hiërarchische trefwoorden), beoordelingen, favorieten en selectiestatussen naar de XMP-sidecars. Andere XMP-eigenschappen blijven behouden en de originele bestanden blijven onaangetast.
+- Als je bestanden **in Lap** hernoemt, verplaatst, kopieert, verwijdert of importeert, werkt Lap tegelijk zijn lokale database bij. Ook ondersteunde gegroepeerde bestanden blijven bij elkaar, zoals de onderdelen van een Apple Live Photo, XMP- en AAE-sidecars en ingeschakelde RAW + JPEG/HEIC-paren. Bij een RAW-paar kunt u één bestand of beide verwijderen. Als één bestand blijft, blijft ook de gedeelde XMP-sidecar bij het resterende bestand.
 - Als je een bewerking in de ingebouwde editor opslaat, wordt de bewerkte afbeelding naar de gekozen bestemming geschreven.
 
-### Wat Lap lokaal opslaat
+### Wat in de Lap-database blijft
 
 Lap bewaart deze bibliotheekgegevens in de lokale database of bibliotheekconfiguratie.
 
-- Collecties, slimme albums, regels en weergave-instellingen blijven in de lokale database of configuratie.
+- Collecties, slimme albums en hun regels, groepering, sortering en volgorde
 - AI-zoekgegevens, gezichtsgegevens, miniaturen en andere index- en cachegegevens
 - Tags, beoordelingen, favorieten, selectiestatus en bewerkbare tekstvelden worden lokaal opgeslagen en kunnen naar XMP worden geschreven.
 
-Standaard gaan deze gegevens niet mee met bestanden buiten Lap.
+Wijzigingen blijven in de database totdat je ondersteunde velden expliciet opslaat in XMP. Collecties, slimme albums, AI-zoekgegevens en gezichtsgegevens worden niet in XMP opgenomen. Maak een databaseback-up; alleen de originelen kopiëren bewaart deze organisatie niet.
 
 ### Werken met bestanden buiten Lap
 
 Lap kan mappen opnieuw scannen en veel wijzigingen in het bestandssysteem herkennen. Maar wijzigingen buiten Lap — zoals bestanden hernoemen, verplaatsen, vervangen of kopiëren — kunnen de ordening verstoren die alleen in Lap is opgeslagen.
 
-Als metadata-import is ingeschakeld, controleert Lap ook op wijzigingen in XMP-nevenbestanden. Hernoem en verplaats bestanden in Lap om collecties te behouden. Houd XMP-nevenbestanden bij de originelen. Beheer je bestanden ook buiten Lap, maak dan samen met je foto's een back-up van de database en configuratie van Lap. De databaselocatie beheren en een back-up maken doe je via **Instellingen → Opslag**.
+Als metadata-import is ingeschakeld, controleert Lap ook op wijzigingen in XMP-sidecars. Hernoem en verplaats bestanden in Lap om collecties te behouden. Houd de XMP-sidecar bij het bestand. Beheer je bestanden ook buiten Lap, maak dan samen met je foto's een back-up van de database en configuratie van Lap. De databaselocatie beheren en een back-up maken doe je via **Instellingen → Opslag**.
 
 Als je de database of configuratie van Lap verwijdert, verdwijnen deze lokale ordening en indexgegevens, maar je originele mediabestanden worden niet verwijderd.
 
@@ -128,7 +130,7 @@ Als je Lap met Homebrew hebt geïnstalleerd:
 brew uninstall --cask lap
 ```
 
-Bij een handmatige installatie sluit je Lap af en sleep je `Lap.app` uit de map `Apps` naar de prullenmand.
+Bij een handmatige installatie sluit je Lap af en sleep je `Lap.app` uit de map `Applications` naar de prullenmand.
 
 Om alle database-, cache- en configuratiebestanden van Lap te verwijderen:
 
@@ -200,7 +202,7 @@ Distributiepakketten kunnen de libheif van het systeem (1.17 of nieuwer) gebruik
 
 ### Arch Linux (x86_64)
 
-Experimenteel bouwrecept voor Arch, nog niet in de AUR. Lokale installatie: [`contrib/aur`](../contrib/aur/README.md).
+Experimenteel bouwrecept voor Arch in [`contrib/aur`](../contrib/aur/README.md). Het is nog niet gepubliceerd in de AUR, dus `yay -S lap` is nog niet beschikbaar. Lokale installatie op Arch Linux:
 
 ```bash
 cd contrib/aur
@@ -208,7 +210,7 @@ makepkg -s
 sudo pacman -U lap-<version>-x86_64.pkg.tar.zst
 ```
 
-Het recept legt de commit vast en controleert AI-modellen en FFmpeg met checksums. Pacman beheert updates.
+Het recept legt een upstream-sourcecommit vast en controleert de meegeleverde AI-modellen en FFmpeg-hulpmiddelen met checksums. De Arch-build schakelt automatische zelfupdates in de app uit, zodat pacman verantwoordelijk blijft voor updates; builds voor andere platforms behouden hun bestaande updater. Zie de receptengids voor bouwdetails en nog openstaande releasecontroles.
 
 ## Ondersteunde formaten
 
@@ -219,11 +221,11 @@ Lap ondersteunt meer dan 60 afbeeldings-, RAW- en videoformaten.
 | Afbeeldingen | JPG/JPEG/JFIF, PNG, GIF, BMP, TIFF, WebP, HEIC/HEIF/HIF, AVIF, JXL, PSD, EXR, HDR/RGBE, TGA, JPEG 2000 (JP2/J2K/J2C/JPC/JPF/JPX), DDS, DPX, QOI |
 | RAW-foto's | CR2, CR3, CRW, NEF, NRW, ARW, SRF, SR2, RAF, RW2, ORF, PEF, DNG, SRW, RWL, MRW, 3FR, MOS, IIQ, DCR, KDC, ERF, MEF, RAW, MDC |
 | Affinity-documenten | AF, AFPHOTO, AFDESIGN, AFPUB (ingesloten voorvertoning) |
-| Video's | MP4, MOV, M4V, MKV, AVI, FLV, TS/MTS/M2TS, WMV, WebM, 3GP, MPG/MPEG, VOB, MOD/TOD, HEVC, ASF. Afspelen van H.264 wordt op alle platforms ondersteund, met automatische compatibiliteitsverwerking als afspelen zonder omzetting niet lukt. HEVC/H.265 en VP9 worden op macOS rechtstreeks ondersteund. |
+| Video's | MP4, MOV, M4V, MKV, AVI, FLV, TS/MTS/M2TS, WMV, WebM, 3GP, MPG/MPEG, VOB, MOD/TOD, HEVC, ASF. Afspelen van H.264 wordt op alle platforms ondersteund, met automatische compatibiliteitsverwerking als native afspelen niet beschikbaar is. HEVC/H.265 en VP9 worden op macOS rechtstreeks ondersteund. |
 
 ### Video afspelen op Linux
 
-Lap gebruikt de GStreamer-plug-ins van het systeem om video's af te spelen, ook in de AppImage. Als video's niet afspelen op Ubuntu, Debian of Linux Mint, installeer dan:
+Als video's niet afspelen, installeer dan de GStreamer-plug-ins:
 
 ```bash
 sudo apt install gstreamer1.0-libav gstreamer1.0-plugins-good

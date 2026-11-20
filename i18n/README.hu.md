@@ -14,8 +14,7 @@
 
 [English](../README.md) | [Česky](README.cs.md) | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | [Italiano](README.it.md) | Magyar | [Nederlands](README.nl.md) | [Polski](README.pl.md) | [Português](README.pt.md) | [Русский](README.ru.md) | [Українська](README.uk.md) | [Tiếng Việt](README.vi.md) | [中文简体](README.zh-CN.md) | [中文繁體](README.zh-TW.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
-A Lap egy nyílt forráskódú, helyi alapú fotókezelő családi albumok böngészéséhez, régi fényképek gyors megtalálásához és nagy személyes médiakönyvtárak offline kezeléséhez.
-Nincs kötelező importálás, előfizetés vagy feltöltés. Nyissa meg meglévő mappáit közvetlenül a Lapban. A fájlok helye és formátuma megmarad. Mentse őket XMP-kísérőfájlokba kompatibilis alkalmazásokhoz. A mesterséges intelligenciával végzett keresés a saját gépeden fut.
+A Lap ingyenes, nyílt forráskódú, helyi működésre épülő fényképkezelő macOS, Windows és Linux rendszerekre. Rendezze meglévő mappáit, keressen helyi AI-val, és kezeljen nagy könyvtárakat felhőfiók vagy előfizetés nélkül.
 
 <div align="center">
   <p><strong><a href="https://julyx10.github.io/lap/">HIVATALOS WEBOLDAL</a> | <a href="https://julyx10.github.io/lap/demos/lap/index.html">DEMÓ</a></strong></p>
@@ -35,24 +34,24 @@ Nyissa meg a [legújabb kiadás oldalát](https://github.com/julyx10/lap/release
 ### macOS Homebrew-val
 
 ```bash
-brew tap julyx10/lap
 brew install --cask lap
 ```
+
+A `julyx10/lap` tap segítségével telepítette? Lásd az [átállási útmutatót](https://github.com/julyx10/lap/discussions/567).
 
 ## Képernyőképek
 
 <p align="center">
   <img src="../docs/public/screenshots/lap_library.png" alt="A Lap helyi fotókönyvtár-kezelője" width="900">
   <img src="../docs/public/screenshots/lap_map_view.png" alt="A Lap térképnézete" width="900">
-  <img src="../docs/public/screenshots/lap_montage.png" alt="Lap fotókollázs" width="900">
   <img src="../docs/public/screenshots/lap_preview.png" alt="Fénykép előnézete a Lapban" width="900">
 </p>
 
 ## Miért a Lap?
 
-- **Mappaalapú könyvtárkezelés.** Nyissa meg meglévő mappáit közvetlenül a Lapban. A fájlok helye és formátuma megmarad.
-- **Helyi AI-keresés.** Írjon le egy fotót, keressen hasonló képeket vagy böngésszen arcok szerint. Minden feldolgozás helyben történik.
-- **Hordozható értékelések és címkék.** Mentse őket XMP-kísérőfájlokba kompatibilis alkalmazásokhoz.
+- **Privát AI az eszközén.** Írjon le egy fotót, keressen hasonló képeket vagy böngésszen arcok szerint. Minden feldolgozás helyben történik.
+- **Saját mappák, saját irányítás.** Nyissa meg meglévő mappáit közvetlenül a Lapban. Az eredeti fájlok a helyükön maradnak; feltöltés vagy könyvtár-importálás nem szükséges.
+- **Alkalmazások között használható metaadatok.** A Lap beágyazott EXIF-, IPTC- és XMP-adatokat és kísérőfájlokat olvas (értékelések, címkék, kedvencek, válogatási állapotok, GPS és dátumok). A módosított metaadatok XMP-kísérőfájlokba menthetők, miközben az eredeti fájlok érintetlenek maradnak.
 - **Fotóválogatás.** Előnézet szóközzel, automatikus továbblépés értékelés után, AF-területek, négypaneles összehasonlítás és duplikátum-megtartási szabályok.
 - **Több mint 100 000 fotót és videót tartalmazó könyvtárakhoz.** Natív Rust-mag végzi a böngészést, keresést és beolvasást.
 - **Ingyenes és nyílt forráskódú.** Előfizetés és fiók nélkül, 17 nyelven, macOS, Windows és Linux rendszeren.
@@ -65,38 +64,41 @@ brew install --cask lap
 - **Metaadat-importálás és XMP-írás** · A Lap beágyazott EXIF-, IPTC- és XMP-adatokat és kísérőfájlokat olvas (értékelések, címkék, kedvencek, válogatási állapotok, GPS és dátumok). A szövegmezők szerkeszthetők, a rendszerezési adatok XMP-be menthetők.
 - **Intelligens albumok.** Egyéni csoportosítás és rendezés, mappanévszűrők és kereshető értékválasztók.
 - **Dátum szerinti importálás** napi, havi, éves vagy egyetlen mappás elrendezéssel, eredeti fájlnevekkel és a duplikátumok kihagyásával.
-- **Gyűjtemények és címkék** a kiválasztott fájlok tömeges rendszerezéséhez, az eredeti fájlok áthelyezése vagy duplikálása nélkül. Címkefa húzással és ágankénti elemszámmal.
+- **Gyűjtemények és hierarchikus címkék** a fájlok tömeges rendszerezéséhez, húzással átrendezhető címkefával és részfa-elemszámmal.
 - **Duplikátum-tisztítás.** Szabályok mappa, formátum, méret és dátum szerint, felszabadítható hely és tömeges törlés.
 - **Válogatási és összehasonlítási eszközök.** Előnézet szóközzel, automatikus továbblépés értékelés után, AF-területek, négypaneles összehasonlítás és duplikátum-megtartási szabályok.
 - **Beépített szerkesztés** vágáshoz, tetszőleges szögű kiegyenesítéshez, forgatáshoz, tükrözéshez, átméretezéshez és alapvető képmódosításokhoz.
 - **Fotókollázs** a kiválasztott fényképek rácsos, sorkizárt mozaik vagy képhalom elrendezésű összeállításához.
-- **Apple Live Photos és Google Motion Photos** mozgáslejátszással és egységes intelligensalbum-szűrővel.
+- **Apple Live Photos és Google Motion Photos** mozgáslejátszással és egységes intelligens album szűrővel.
 - **RAW + JPEG/HEIC párok** egyetlen elemként megjelenítve, a kapcsolódó fájlok a fájlműveletek során együtt maradnak. RAW-pár esetén az egyik vagy mindkét fájl törölhető. Ha az egyik megmarad, a közös XMP-fájl is megmarad.
 - **Konfigurálható RAW-bélyegképek és előnézetek** RAW-rendereléssel vagy a fényképezőgép beágyazott előnézetének használatával, állítható fényerővel és RAW+JPEG páros megjelenítéssel.
 - **Testreszabható fájlinformációk.** Választható mezők, igény szerint betöltött részletek és AF-területek a nézőben.
 - **Interaktív térképnézet** a földrajzi címkével ellátott fényképek és videók felfedezéséhez, az aktuális szűrők szerinti csoportosításban.
 - **Offline albumböngészés**, amely a gyorsítótárazott bélyegképeknek köszönhetően láthatóan tartja a leválasztott vagy hálózati tárolókon lévő albumokat.
-- **Csak a felhőben elérhető fájlok.** A OneDrive igény szerinti fájljai és a macOS helyőrzői automatikus letöltés nélkül jelennek meg és kerülnek az indexbe.
+- **Csak a felhőben elérhető fájlok.** A OneDrive igény szerinti fájljai és a macOS helyőrzői automatikus letöltés nélkül jelennek meg és kerülnek az indexbe. A Lap soha nem tölti le őket automatikusan.
 - **Világos és sötét téma.** Követhetik a rendszer megjelenését.
 - **Széles körű formátumtámogatás** több mint 60 kép-, RAW- és videoformátumhoz. Affinity-dokumentumok (beágyazott előnézet).
 
-## Metaadatok, gyűjtemények és fájlok áthelyezése
+## Metaadatok és az adatok feletti rendelkezés
 
 A Lap közvetlenül a mappákkal dolgozik. A megjelenített adatok többségét a fájlokból olvassa. A rendszerezési adatok szabványos XMP-kísérőfájlba írhatók, amelyet más fotóalkalmazások is olvashatnak.
 
 A Lap beolvassa a Lightroom, a digiKam, a darktable és az ACDSee kompatibilis metaadatait. A támogatott mezők alkalmazásonként eltérnek.
 
-### Mi marad a fájllal
+### Meglévő metaadatok olvasása
 
 - Eredeti fényképei és videói mindig szokásos fájlok maradnak a meglévő mappáikban.
-- Indexeléskor a Lap beolvassa a beágyazott EXIF-, IPTC- és XMP-adatokat, beleértve a felvételi és rendszerezési adatokat. A rendszerezési adatok helyi importálásához kapcsold be a **Beállítások → Metaadatok → Metaadatok importálása** lehetőséget. A helyi módosítások megmaradnak.
+- Indexeléskor a Lap beolvassa a beágyazott EXIF-, IPTC- és XMP-adatokat, beleértve a felvételi és rendszerezési adatokat. A rendszerezési adatok helyi importálásához kapcsolja be a **Beállítások → Metaadatok → Metaadatok importálása** lehetőséget. A helyi módosítások megmaradnak.
 - Az XMP-kísérőfájl támogatott értékei elsőbbséget élveznek a beágyazott értékekkel szemben, ideértve a GPS-t és a felvétel dátumát.
+
+### Támogatott módosítások mentése XMP-be
+
 - A cím, címsor, leírás, készítő és szerzői jog szerkeszthető és a helyi adatbázisban tárolódik.
 - Az XMP-mentés ezeket a mezőket, a címkéket (a hierarchikus kulcsszavakkal együtt), az értékeléseket, a kedvenceket és a válogatási állapotokat kísérőfájlba írja. A többi XMP-adat és az eredeti megmarad.
 - Amikor fájlokat nevez át, helyez át, másol, töröl vagy importál **a Lapban**, a Lap ezzel egyidejűleg frissíti a helyi katalógusát. A támogatott csoportosított elemeket – például az Apple Live Photo összetevőit, az XMP- és AAE-kísérőfájlokat és az engedélyezett RAW + JPEG/HEIC párokat – együtt tartja. RAW-pár esetén az egyik vagy mindkét fájl törölhető. Ha az egyik megmarad, a közös XMP-fájl is megmarad.
 - Egy beépített képszerkesztés mentése az eredményül kapott képet a kiválasztott célhelyre írja.
 
-### Mit tárol a Lap helyileg
+### Mi marad a Lap adatbázisában
 
 A Lap ezeket a helyi adatbázisban vagy a könyvtár beállításaiban tárolja.
 
@@ -104,7 +106,7 @@ A Lap ezeket a helyi adatbázisban vagy a könyvtár beállításaiban tárolja.
 - AI-keresési adatok, arcadatok, bélyegképek és egyéb index- vagy gyorsítótár-adatok
 - A címkék, értékelések, kedvencek, válogatási állapotok és szerkeszthető szövegmezők helyben tárolódnak és XMP-be írhatók.
 
-A Lap alkalmazáson kívül ezek az adatok alapértelmezés szerint nem követik a fájlokat.
+A módosítások az adatbázisban maradnak, amíg a támogatott mezőket kifejezetten XMP-be nem menti. A gyűjtemények, intelligens albumok, AI- és arcadatok nem kerülnek XMP-be. Készítsen adatbázis-mentést; az eredetik másolása önmagában nem őrzi meg ezt a rendszerezést.
 
 ### Munka a Lapon kívüli fájlokkal
 
@@ -200,7 +202,7 @@ A terjesztési csomagok a rendszer libheif könyvtárát (1.17 vagy újabb) hasz
 
 ### Arch Linux (x86_64)
 
-A kísérleti Arch recept még nem érhető el az AUR-ban. Helyi telepítés: [`contrib/aur`](../contrib/aur/README.md).
+A kísérleti Arch recept még nem érhető el az AUR-ban, így a `yay -S lap` sem használható még. Helyi build és telepítés Arch Linuxon: [`contrib/aur`](../contrib/aur/README.md).
 
 ```bash
 cd contrib/aur
@@ -208,7 +210,7 @@ makepkg -s
 sudo pacman -U lap-<version>-x86_64.pkg.tar.zst
 ```
 
-A recept rögzíti a forrásverziót, és ellenőrzőösszeggel vizsgálja az AI-modelleket és az FFmpeg-et. A frissítést a pacman kezeli.
+A recept rögzíti az upstream forrásverziót, és ellenőrzőösszeggel vizsgálja a csomagolt AI-modelleket és FFmpeg-eszközöket. Az Arch build letiltja az alkalmazáson belüli önfrissítést, hogy a frissítéseket a pacman kezelje; a más platformok buildjei megtartják a meglévő frissítőjüket. A build részleteiért és a hátralévő kiadási ellenőrzésekért lásd a recept útmutatóját.
 
 ## Támogatott formátumok
 
@@ -223,7 +225,7 @@ A Lap több mint 60 kép-, RAW- és videoformátumot támogat.
 
 ### Videolejátszás Linuxon
 
-A Lap a rendszer GStreamer-bővítményeit használja a videolejátszáshoz, az AppImage-ban is. Ha a videók nem játszódnak le Ubuntun, Debianon vagy Linux Minten, telepítse a következőt:
+Ha a videók nem játszódnak le, telepítse a GStreamer-bővítményeket:
 
 ```bash
 sudo apt install gstreamer1.0-libav gstreamer1.0-plugins-good

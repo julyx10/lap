@@ -14,8 +14,7 @@
 
 [English](../README.md) | [Česky](README.cs.md) | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | [Italiano](README.it.md) | [Magyar](README.hu.md) | [Nederlands](README.nl.md) | Polski | [Português](README.pt.md) | [Русский](README.ru.md) | [Українська](README.uk.md) | [Tiếng Việt](README.vi.md) | [中文简体](README.zh-CN.md) | [中文繁體](README.zh-TW.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
-Lap to menedżer zdjęć o otwartym kodzie źródłowym, działający w modelu lokalnym (local-first), służący do przeglądania rodzinnych albumów, szybkiego wyszukiwania starych zdjęć i zarządzania dużymi osobistymi bibliotekami multimediów w trybie offline.
-Bez obowiązkowego importu, subskrypcji ani przesyłania. Otwieraj istniejące foldery bezpośrednio w Lap. Pliki zachowują lokalizację i format. Zapisuj je w plikach towarzyszących XMP dla zgodnych aplikacji. Wyszukiwanie AI działa na Twoim urządzeniu.
+Lap to bezpłatny, otwarty menedżer zdjęć działający lokalnie na macOS, Windows i Linux. Organizuj istniejące foldery, wyszukuj za pomocą lokalnej AI i zarządzaj dużymi bibliotekami bez konta w chmurze ani subskrypcji.
 
 <div align="center">
   <p><strong><a href="https://julyx10.github.io/lap/">OFICJALNA STRONA</a> | <a href="https://julyx10.github.io/lap/demos/lap/index.html">DEMO</a></strong></p>
@@ -35,24 +34,24 @@ Otwórz [stronę najnowszego wydania](https://github.com/julyx10/lap/releases/la
 ### macOS z Homebrew
 
 ```bash
-brew tap julyx10/lap
 brew install --cask lap
 ```
+
+Instalacja przez tap `julyx10/lap`? Zobacz [instrukcję migracji](https://github.com/julyx10/lap/discussions/567).
 
 ## Zrzuty ekranu
 
 <p align="center">
   <img src="../docs/public/screenshots/lap_library.png" alt="Lap — lokalny menedżer biblioteki zdjęć" width="900">
   <img src="../docs/public/screenshots/lap_map_view.png" alt="Widok mapy w Lap" width="900">
-  <img src="../docs/public/screenshots/lap_montage.png" alt="Kolaż zdjęć w Lap" width="900">
   <img src="../docs/public/screenshots/lap_preview.png" alt="Podgląd zdjęcia w Lap" width="900">
 </p>
 
 ## Dlaczego Lap
 
-- **Zarządzanie biblioteką według folderów.** Otwieraj istniejące foldery bezpośrednio w Lap. Pliki zachowują lokalizację i format.
-- **Lokalne wyszukiwanie AI.** Opisz zdjęcie, znajdź podobne ujęcia lub przeglądaj według twarzy. Wszystko jest przetwarzane lokalnie.
-- **Przenośne oceny i tagi.** Zapisuj je w plikach towarzyszących XMP dla zgodnych aplikacji.
+- **Prywatna AI na urządzeniu.** Opisz zdjęcie, znajdź podobne ujęcia lub przeglądaj według twarzy. Wszystko jest przetwarzane lokalnie.
+- **Twoje foldery pod Twoją kontrolą.** Otwieraj istniejące foldery bezpośrednio w Lap. Pliki zachowują lokalizację i format.
+- **Metadane działające między aplikacjami.** Lap odczytuje osadzone dane EXIF, IPTC i XMP oraz istniejące pliki sidecar XMP (oceny, tagi, ulubione, stany selekcji, GPS i daty). Zmodyfikowane metadane można zapisywać do sidecarów XMP, pozostawiając oryginalne pliki bez zmian.
 - **Selekcja zdjęć.** Podgląd spacją, przejście po ocenie, pola AF, porównanie w czterech panelach i reguły zachowywania duplikatów.
 - **Dla bibliotek z ponad 100 000 zdjęć i filmów.** Natywny rdzeń w Rust obsługuje przeglądanie, wyszukiwanie i skanowanie.
 - **Bezpłatny i otwartoźródłowy.** Bez subskrypcji i konta, w 17 językach na macOS, Windows i Linux.
@@ -62,7 +61,7 @@ brew install --cask lap
 - **Elastyczne przeglądanie biblioteki** według daty, folderu, lokalizacji, aparatu, obiektywu, tagów, ocen i twarzy, z sortowaniem i wyszukiwaniem.
 - **Praca oparta na folderach.** Wiele bibliotek, import i eksport przez przeciąganie lub schowek, zbiorcza zmiana nazw i synchronizacja, bezpieczne przenoszenie, kopiowanie i usuwanie.
 - **Lokalne wyszukiwanie AI** dla zapytań tekstowych, podobieństwa wizualnego, tematów, grupowania twarzy oraz opcjonalnego wyszukiwania wielojęzycznego w ponad 50 językach.
-- **Import metadanych i zapis do XMP** · Lap odczytuje osadzone dane EXIF, IPTC i XMP oraz pliki towarzyszące (oceny, tagi, ulubione, stany selekcji, GPS i daty). Pola tekstowe można edytować, a dane organizacyjne zapisać do XMP.
+- **Import metadanych i zapis do XMP**: Lap odczytuje osadzone dane EXIF, IPTC i XMP oraz istniejące pliki sidecar XMP (oceny, tagi, ulubione, stany selekcji, GPS i daty). Pola tekstowe można edytować, a swoją organizację zapisywać jawnie do sidecarów XMP, pozostawiając oryginalne pliki bez zmian.
 - **Inteligentne albumy.** Własne grupowanie i sortowanie, filtry nazw folderów i wyszukiwalne listy wartości.
 - **Import z organizacją wg dat** z układami dziennym, miesięcznym, rocznym lub jednym folderem, oryginalnymi nazwami plików i pomijaniem duplikatów.
 - **Kolekcje i tagi** do masowego porządkowania wybranych plików bez przenoszenia lub duplikowania oryginałów. Drzewo tagów z przeciąganiem i licznikami gałęzi.
@@ -71,46 +70,49 @@ brew install --cask lap
 - **Wbudowana edycja** do kadrowania, prostowania pod dowolnym kątem, obracania, odbijania, zmiany rozmiaru i podstawowych korekt zdjęć.
 - **Kolaż zdjęć** do komponowania wybranych zdjęć w kolaże: siatkę, wyrównaną mozaikę lub stos zdjęć.
 - **Apple Live Photos i Google Motion Photos** z odtwarzaniem ruchu oraz ujednoliconym filtrem inteligentnych albumów.
-- **Pary RAW + JPEG/HEIC** wyświetlane jako jeden element, z powiązanymi plikami utrzymywanymi razem podczas operacji na plikach. Z pary RAW można usunąć jeden plik lub oba. Gdy jeden zostaje, zachowywany jest wspólny plik XMP.
+- **Pary RAW + JPEG/HEIC** wyświetlane jako jeden element, z powiązanymi plikami utrzymywanymi razem podczas operacji na plikach. Z pary RAW można usunąć jeden plik lub oba. Gdy jeden plik zostaje, wspólny sidecar XMP pozostaje z pozostałym plikiem.
 - **Konfigurowalne miniatury i podglądy RAW** przy użyciu renderowania RAW lub osadzonego podglądu z aparatu, z regulowaną jasnością i wyświetlaniem par RAW+JPEG.
 - **Konfigurowalne informacje o pliku.** Wybierane pola, szczegóły na żądanie i pola AF w podglądzie.
 - **Interaktywny widok mapy** do eksplorowania zdjęć i filmów z geotagami w klastrach zgodnych z bieżącymi filtrami.
 - **Przeglądanie albumów offline**, dzięki któremu albumy na odłączonych lub sieciowych nośnikach pozostają widoczne wraz z buforowanymi miniaturami.
 - **Pliki dostępne tylko w chmurze.** Pliki OneDrive na żądanie i pliki zastępcze macOS są indeksowane i wyświetlane bez automatycznego pobierania.
-- **Jasny i ciemny motyw.** Mogą stosować wygląd systemowy.
+- **Jasny i ciemny motyw.** Opcjonalnie zgodny z wyglądem systemu.
 - **Szeroka obsługa formatów** — ponad 60 formatów obrazów, RAW i wideo. Dokumenty Affinity (osadzony podgląd).
 
-## Metadane, kolekcje i przenoszenie plików
+## Metadane i kontrola nad danymi
 
-Lap pracuje bezpośrednio z folderami i odczytuje większość wyświetlanych informacji z plików. Dane organizacyjne można zapisać w standardowych plikach XMP, które odczytują inne aplikacje fotograficzne.
+Lap pracuje bezpośrednio z folderami i odczytuje większość wyświetlanych informacji z plików. Możesz zapisać swoją organizację w standardowych sidecarach XMP, aby podróżowała razem z plikami i pozostała czytelna dla innych aplikacji fotograficznych.
 
 Lap odczytuje zgodne metadane z Lightrooma, digiKama, darktable i ACDSee. Obsługiwane pola zależą od aplikacji.
 
-### Co pozostaje z plikiem
+### Odczytywanie istniejących metadanych
 
 - Twoje oryginalne zdjęcia i filmy są zawsze zwykłymi plikami w istniejących folderach.
-- Podczas indeksowania Lap odczytuje osadzone dane EXIF, IPTC i XMP, w tym dane zdjęcia i informacje organizacyjne. Włącz **Ustawienia → Metadane → Importuj metadane**, aby zaimportować dane organizacyjne do lokalnej bazy. Lokalne zmiany zostają zachowane.
-- Obsługiwane wartości z plików XMP mają pierwszeństwo przed osadzonymi, również w przypadku GPS i daty wykonania.
+- Podczas indeksowania Lap odczytuje osadzone dane EXIF, IPTC i XMP: datę wykonania, aparat, obiektyw, GPS, orientację, oceny, ulubione, słowa kluczowe, stany selekcji, opisy, tytuł, nagłówek, twórcę i prawa autorskie. Włącz **Ustawienia → Metadane → Importuj metadane**, aby zaimportować pola organizacyjne do lokalnej bazy. Lokalne zmiany zostają zachowane.
+- Obsługiwane wartości z sidecarów XMP mają pierwszeństwo przed osadzonymi, również w przypadku GPS i daty wykonania.
+
+### Zapisywanie obsługiwanych zmian do XMP
+
 - Tytuł, nagłówek, opis, twórcę i prawa autorskie można edytować i zapisywać w lokalnej bazie danych.
-- Zapis do XMP obejmuje również tagi (w tym hierarchiczne słowa kluczowe), oceny, ulubione i stany selekcji. Pozostałe właściwości XMP i oryginały pozostają bez zmian.
-- Gdy zmieniasz nazwę, przenosisz, kopiujesz, usuwasz lub importujesz pliki **w Lap**, Lap aktualizuje jednocześnie swój lokalny katalog. Utrzymuje też razem obsługiwane powiązane zasoby, takie jak składniki Apple Live Photo, pliki towarzyszące XMP i AAE oraz włączone pary RAW + JPEG/HEIC. Z pary RAW można usunąć jeden plik lub oba. Gdy jeden zostaje, zachowywany jest wspólny plik XMP.
+- **Zapisz metadane do XMP** zapisuje do sidecarów tytuł, nagłówek, opis, twórcę i prawa autorskie, a także tagi (w tym hierarchiczne słowa kluczowe), oceny, ulubione i stany selekcji. Zachowuje pozostałe właściwości XMP i pozostawia oryginalne pliki bez zmian.
+- Gdy zmieniasz nazwę, przenosisz, kopiujesz, usuwasz lub importujesz pliki **w Lap**, Lap aktualizuje jednocześnie swoją lokalną bazę danych. Utrzymuje też razem obsługiwane powiązane zasoby, takie jak składniki Apple Live Photo, sidecary XMP i AAE oraz włączone pary RAW + JPEG/HEIC. Z pary RAW można usunąć jeden plik lub oba. Gdy jeden plik zostaje, wspólny sidecar XMP pozostaje z pozostałym plikiem.
 - Zapisanie edycji wykonanej wbudowanym edytorem zapisuje wynikowy obraz do wybranego miejsca docelowego.
 
-### Co Lap przechowuje lokalnie
+### Co pozostaje w bazie danych Lap
 
 Lap przechowuje te dane w lokalnej bazie danych lub konfiguracji biblioteki.
 
-- Kolekcje, inteligentne albumy, reguły i ustawienia widoku pozostają w lokalnej bazie danych lub konfiguracji.
+- Kolekcje, inteligentne albumy i ich reguły, grupowanie, sortowanie i kolejność
 - Dane wyszukiwania AI, dane twarzy, miniatury oraz inne dane indeksów/cache
 - Tagi, oceny, ulubione, stany selekcji i edytowalne pola tekstowe są przechowywane lokalnie i mogą zostać zapisane do XMP.
 
-Domyślnie dane te nie są przenoszone razem z plikami poza Lap.
+Zmiany pozostają w bazie, dopóki jawnie nie zapiszesz obsługiwanych pól do XMP. Kolekcje, inteligentne albumy oraz dane AI i twarzy nie trafiają do XMP. Wykonaj kopię zapasową bazy danych; skopiowanie samych oryginałów nie zachowa tej organizacji.
 
 ### Praca z plikami poza Lap
 
 Lap może ponownie skanować foldery i wykrywać wiele zmian w systemie plików. Jednak zmiany dokonane poza Lap — takie jak zmiana nazwy, przenoszenie, zastępowanie lub kopiowanie plików — mogą zakłócić porządek przechowywany wyłącznie w Lap.
 
-Po włączeniu importu metadanych Lap sprawdza też zmiany w plikach XMP. Zmieniaj nazwy i przenoś pliki w Lap, aby zachować kolekcje. Przechowuj pliki XMP obok oryginałów. Jeśli zarządzasz plikami również poza Lap, twórz kopie zapasowe bazy danych i konfiguracji Lap razem ze zdjęciami. Lokalizacją bazy danych możesz zarządzać, a kopię zapasową utworzyć w **Ustawienia → Przechowywanie**.
+Po włączeniu importu metadanych Lap sprawdza też zmiany w sidecarach XMP. Zmieniaj nazwy i przenoś pliki w Lap, aby zachować ich dane w lokalnej bazie, w tym przynależność do kolekcji. Aby udostępnić obsługiwane metadane innym aplikacjom, użyj funkcji **Zapisz metadane do XMP** i zachowaj sidecar razem z plikiem. Jeśli zarządzasz plikami również poza Lap, twórz kopie zapasowe bazy danych i konfiguracji Lap razem ze zdjęciami. Lokalizacją bazy danych możesz zarządzać, a kopię zapasową utworzyć w **Ustawienia → Przechowywanie**.
 
 Usunięcie bazy danych lub konfiguracji Lap usuwa te lokalne dane porządkowania i indeksów, ale nie usuwa oryginalnych plików multimedialnych.
 
@@ -200,7 +202,7 @@ Pakiety dystrybucyjne mogą linkować z systemową biblioteką libheif (1.17 lub
 
 ### Arch Linux (x86_64)
 
-Eksperymentalny przepis dla Arch nie jest jeszcze dostępny w AUR. Instalacja lokalna: [`contrib/aur`](../contrib/aur/README.md).
+Eksperymentalny przepis budowania dla Arch znajduje się w [`contrib/aur`](../contrib/aur/README.md). Nie został jeszcze opublikowany w AUR, więc `yay -S lap` nie jest jeszcze dostępne. Aby zbudować i zainstalować go lokalnie na Arch Linux:
 
 ```bash
 cd contrib/aur
@@ -208,7 +210,7 @@ makepkg -s
 sudo pacman -U lap-<version>-x86_64.pkg.tar.zst
 ```
 
-Przepis ustala wersję źródeł i weryfikuje sumy kontrolne modeli AI oraz FFmpeg. Aktualizacje obsługuje pacman.
+Przepis przypina commit źródłowy z górnego repozytorium i weryfikuje sumami kontrolnymi dołączone modele AI oraz narzędzia FFmpeg. Build na Arch wyłącza samodzielne aktualizacje w aplikacji, aby aktualizacjami dalej zarządzał pacman; buildy na innych platformach zachowują dotychczasowy mechanizm aktualizacji. Szczegóły budowania i otwarte punkty kontroli wydania opisuje przewodnik przepisu.
 
 ## Obsługiwane formaty
 
@@ -223,7 +225,7 @@ Lap obsługuje ponad 60 formatów obrazów, RAW i wideo.
 
 ### Odtwarzanie wideo w Linuksie
 
-Lap używa systemowych wtyczek GStreamer do odtwarzania wideo, również w AppImage. Jeśli filmy nie odtwarzają się w Ubuntu, Debianie lub Linux Mint, zainstaluj:
+Jeśli filmy się nie odtwarzają, zainstaluj wtyczki GStreamer:
 
 ```bash
 sudo apt install gstreamer1.0-libav gstreamer1.0-plugins-good
