@@ -357,7 +357,12 @@
     "rejected": "Abgelehnt",
     "unreviewed": "Nicht geprüft"
   },
+  "assign_tags": {
+    "recent_link": "Zuletzt verwendet",
+    "title": "Tags zuweisen"
+  },
   "tag": {
+    "selected_files": "{count} ausgewählte Dateien",
     "no_selected_tags": "Keine ausgewählten Tags",
     "show_selected_only": "Nur ausgewählte Tags anzeigen",
     "title": "Tags",
@@ -370,7 +375,7 @@
     "name_save_failed": "Tag-Name konnte nicht gespeichert werden",
     "move_failed": "Tag konnte nicht verschoben werden",
     "delete_failed": "Tag konnte nicht gelöscht werden",
-    "load_failed": "Tag-Status konnte nicht geladen werden. Schließen Sie diesen Dialog und versuchen Sie es erneut.",
+    "load_failed": "Tag-Status konnte nicht geladen werden. Erneut versuchen.",
     "root": "Oberste Ebene",
     "add_child": "Neues Untertag",
     "invalid_name": "Tag-Namen dürfen kein , ; oder {'|'} enthalten.",

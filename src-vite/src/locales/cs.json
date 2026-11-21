@@ -357,7 +357,12 @@
     "rejected": "Odmítnuté",
     "unreviewed": "Nezkontrolované"
   },
+  "assign_tags": {
+    "recent_link": "Nedávné",
+    "title": "Přiřadit štítky"
+  },
   "tag": {
+    "selected_files": "Vybrané soubory: {count}",
     "no_selected_tags": "Žádné vybrané štítky",
     "show_selected_only": "Zobrazit jen vybrané štítky",
     "title": "Štítky",
@@ -370,7 +375,7 @@
     "name_save_failed": "Nepodařilo se uložit název štítku",
     "move_failed": "Štítek se nepodařilo přesunout",
     "delete_failed": "Štítek se nepodařilo odstranit",
-    "load_failed": "Nepodařilo se načíst stavy štítků. Zavřete tento dialog a zkuste to znovu.",
+    "load_failed": "Nepodařilo se načíst stav štítků. Zkuste to znovu.",
     "root": "Nejvyšší úroveň",
     "add_child": "Nový podřízený štítek",
     "invalid_name": "Název štítku nesmí obsahovat , ; ani {'|'}.",

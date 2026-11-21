@@ -357,7 +357,12 @@
     "rejected": "Đã loại",
     "unreviewed": "Chưa xem xét"
   },
+  "assign_tags": {
+    "recent_link": "Gần đây",
+    "title": "Gán thẻ"
+  },
   "tag": {
+    "selected_files": "Đã chọn {count} tệp",
     "no_selected_tags": "Không có thẻ nào được chọn",
     "show_selected_only": "Chỉ hiển thị các thẻ đã chọn",
     "title": "Thẻ",
@@ -370,7 +375,7 @@
     "name_save_failed": "Không thể lưu tên thẻ",
     "move_failed": "Không thể di chuyển thẻ",
     "delete_failed": "Không thể xóa thẻ",
-    "load_failed": "Không thể tải trạng thái thẻ. Hãy đóng hộp thoại này và thử lại.",
+    "load_failed": "Không thể tải trạng thái thẻ. Vui lòng thử lại.",
     "root": "Cấp gốc",
     "add_child": "Thẻ con mới",
     "invalid_name": "Tên thẻ không được chứa , ; hoặc {'|'}.",

@@ -1,9 +1,6 @@
 <template>
   <ModalDialog
-    :title="
-      $t('tag.edit_tag') +
-      (allTags.length ? ` (${allTags.length.toLocaleString()})` : '')
-    "
+    :title="dialogTitle"
     :width="500"
     :position-key="positionKey"
     @cancel="clickCancel"
@@ -14,7 +11,7 @@
         :disabled="!canEditTags"
         @click="edit()"
       >
-        <IconAdd class="size-4" />{{ $t("msgbox.new_tag.title") }}
+        <IconTagAdd class="size-4" />{{ $t("msgbox.new_tag.title") }}
       </button></template
     >
     <section class="space-y-3">
@@ -39,7 +36,7 @@
           :class="showSelectedOnly ? 'text-primary' : 'text-base-content/40 hover:text-base-content'"
           :title="$t('tag.show_selected_only')" :aria-label="$t('tag.show_selected_only')"
           :aria-pressed="showSelectedOnly" @click="showSelectedOnly = !showSelectedOnly">
-          <IconTag class="size-4" />
+          <IconFilter class="size-4" />
         </button>
       </div>
       <div
@@ -205,14 +202,13 @@ import {
   getTagSubtreeInfo,
 } from "@/common/api";
 import {
-  IconAdd,
   IconTagAdd,
   IconClose,
   IconRename,
   IconSearch,
-  IconTag,
   IconTrash,
   IconRight,
+  IconFilter
 } from "@/common/icons";
 import {
   tagRows,
@@ -226,17 +222,26 @@ import { useUIStore } from "@/stores/uiStore";
 import MessageBox from "./MessageBox.vue";
 import TagNameInput from "./TagNameInput.vue";
 import ModalDialog from "./ModalDialog.vue";
+import { shortenFilename } from "@/common/utils";
 import VirtualScroll from "./VirtualScroll.vue";
 
 const props = defineProps({
   fileIds: { type: Array as () => number[], default: () => [] },
   positionKey: { type: String, default: "" },
+  fileName: { type: String, default: "" },
 });
 const emit = defineEmits(["ok", "cancel", "states-changed"]);
 const uiStore = useUIStore();
 const toast = useToast();
 const { t } = useI18n();
 const allTags = ref<LibraryTag[]>([]);
+const dialogTitle = computed(() => {
+  const title = t('tag.edit_tag');
+  if (props.fileIds.length === 1) {
+    return props.fileName ? `${title} - ${shortenFilename(props.fileName, 32)}` : title;
+  }
+  return `${title} - ${t('tag.selected_files', { count: props.fileIds.length.toLocaleString() })}`;
+});
 const tagSearch = ref("");
 const showSelectedOnly = ref(false);
 const tagSearchInputRef = ref<HTMLInputElement | null>(null);

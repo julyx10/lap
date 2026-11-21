@@ -44,6 +44,7 @@ export const useConfigStore = defineStore('configStore', {
     },
 
     infoPanel: {
+      assignTagsListHeight: 240, // inline tag list height in pixels (minimum four rows)
       fields: [...defaultFileInfoFields],
       hideEmptyFields: false,
       showPreview: true,         // show preview thumbnail

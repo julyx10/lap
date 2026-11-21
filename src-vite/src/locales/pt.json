@@ -357,7 +357,12 @@
     "rejected": "Rejeitadas",
     "unreviewed": "Não revisadas"
   },
+  "assign_tags": {
+    "recent_link": "Recentes",
+    "title": "Atribuir etiquetas"
+  },
   "tag": {
+    "selected_files": "{count} arquivos selecionados",
     "no_selected_tags": "Nenhuma etiqueta selecionada",
     "show_selected_only": "Mostrar apenas etiquetas selecionadas",
     "title": "Tags",
@@ -370,7 +375,7 @@
     "name_save_failed": "Não foi possível salvar o nome da tag",
     "move_failed": "Não foi possível mover a etiqueta",
     "delete_failed": "Não foi possível eliminar a etiqueta",
-    "load_failed": "Não foi possível carregar o estado das tags. Feche esta caixa de diálogo e tente novamente.",
+    "load_failed": "Não foi possível carregar o estado das etiquetas. Tente novamente.",
     "root": "Nível raiz",
     "add_child": "Nova etiqueta filha",
     "invalid_name": "Os nomes das etiquetas não podem conter , ; ou {'|'}.",

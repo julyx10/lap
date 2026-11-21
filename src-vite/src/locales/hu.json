@@ -357,7 +357,12 @@
     "rejected": "Elutasítottak",
     "unreviewed": "Átnézendőek"
   },
+  "assign_tags": {
+    "recent_link": "Legutóbbi",
+    "title": "Címkék hozzárendelése"
+  },
   "tag": {
+    "selected_files": "{count} kijelölt fájl",
     "no_selected_tags": "Nincsenek kijelölt címkék",
     "show_selected_only": "Csak a kijelölt címkék megjelenítése",
     "title": "Címkék",
@@ -370,7 +375,7 @@
     "name_save_failed": "A címkenév nem menthető",
     "move_failed": "A címkét nem sikerült áthelyezni",
     "delete_failed": "A címkét nem sikerült törölni",
-    "load_failed": "A címkeállapotok nem tölthetők be. Zárja be az ablakot, majd próbálja újra.",
+    "load_failed": "Nem sikerült betölteni a címkék állapotát. Próbálja újra.",
     "root": "Gyökérszint",
     "add_child": "Új gyermekcímke",
     "invalid_name": "A címkenév nem tartalmazhat , ; vagy {'|'} karaktert.",

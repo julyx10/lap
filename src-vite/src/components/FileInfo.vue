@@ -30,7 +30,7 @@
     <!-- Info Content -->
     <div v-if="fileInfo" :class="{ invisible: !infoReady && (!hasDisplayedInfo || showDelayedLoading) }" :inert="!infoReady || undefined" :aria-hidden="!infoReady || undefined" class="mb-2 px-2 flex-1 overflow-y-auto overflow-x-hidden flex flex-col [overflow-anchor:none]">
 
-      <div v-memo="[renderInfoRevision()]" class="contents">
+      <div v-memo="[renderInfoRevision(), tagsExpanded, focusTagId]" class="contents">
       <!-- Preview Section -->
       <div class="group/thumbnail shrink-0 border-t border-base-content/5 px-1 py-3">
         <div
@@ -170,15 +170,20 @@
             <!-- Tags -->
             <template v-if="displayTags.length">
               <div class="pl-4 flex items-center min-h-8 gap-1">
-                <div class="text-[12px] text-base-content/70 flex flex-wrap gap-1 flex-1 min-w-0 cursor-pointer" @click.stop="emit('quickEditTag')">
-                  <span
-                    v-for="tag in displayTags"
-                    :key="tag.id"
-                    class="badge badge-sm badge-outline border-base-content/5 bg-base-content/5 font-medium text-base-content/70 hover:text-base-content"
-                  >{{ tag.name }}</span>
+                <div class="text-[12px] text-base-content/70 flex flex-wrap gap-1 flex-1 min-w-0">
+                  <button v-for="tag in displayTags" :key="tag.id" type="button"
+                    class="badge badge-sm badge-outline max-w-full min-w-0 border-base-content/5 bg-base-content/5 font-medium text-base-content/70 hover:text-base-content cursor-pointer"
+                    :title="tag.path || tag.name" @click.stop="openTags(tag.id)"><span class="min-w-0 truncate">{{ tag.name }}</span></button>
                 </div>
               </div>
             </template>
+            <div v-if="!displayTags.length && !tagsExpanded" class="pl-4">
+              <PanelActionButton :icon="IconTag" @click="openTags()">{{ $t('assign_tags.title') }}</PanelActionButton>
+            </div>
+            <AssignTagsPanel v-if="tagsExpanded"
+              :file-ids="fileInfo?.id ? [Number(fileInfo.id)] : []" :focus-tag-id="focusTagId"
+              @close="tagsExpanded = false" @changed="(states, context) => emit('tagStatesChanged', states, context)" />
+
 
           <div class="pl-4 grid grid-cols-[84px_minmax(0,1fr)] gap-y-1.5 gap-x-4 text-xs">
             <!-- Collections -->
@@ -525,6 +530,8 @@
 </template>
 
 <script setup lang="ts">
+import PanelActionButton from './PanelActionButton.vue';
+import AssignTagsPanel from './AssignTagsPanel.vue';
 import FileInfoFieldsDialog from '@/components/FileInfoFieldsDialog.vue';
 import { getShortcutLabel } from '@/common/shortcuts';
 import { editableMetadataFields, normalizeFileInfoFields } from '@/common/fileInfoFields';
@@ -566,6 +573,7 @@ import {
   IconCloud,
   IconRefresh,
   IconEdit,
+  IconTag,
   IconAdjustments,
   IconRight,
   IconFile,
@@ -611,7 +619,7 @@ const emit = defineEmits([
   'setRating',
   'setCulling',
   'rotate',
-  'quickEditTag',
+  'tagStatesChanged',
   'quickEditCollection',
   'editMetadata',
   'navigateFolder',
@@ -626,6 +634,13 @@ const hideEmptyFields = computed(() => config.infoPanel.hideEmptyFields === true
 const displayField = (key: string, value: unknown) => fieldVisible(key)
   && (!hideEmptyFields.value || (value != null && String(value).trim() !== ''));
 const hasVisibleFields = (section: string) => [...visibleFields.value].some(key => key.startsWith(`${section}.`));
+const tagsExpanded = ref(false);
+const focusTagId = ref(0);
+function openTags(id = 0) {
+  if (tagsExpanded.value && focusTagId.value === id) { tagsExpanded.value = false; return; }
+  focusTagId.value = id;
+  tagsExpanded.value = true;
+}
 const displayTags = ref<any[]>([]);
 let tagsRequest = 0;
 let tagsDisposed = false;
@@ -636,8 +651,15 @@ async function refreshTags() {
   const tags = await getTagsForFile(id);
   if (!tagsDisposed && request === tagsRequest && props.fileInfo?.id === id && libConfig._libraryId === library && tags) displayTags.value = tags;
 }
-watch(() => [props.fileInfo?.id, props.fileInfo?.tags, libConfig._libraryId], () => {
-  displayTags.value = props.fileInfo?.tags || []; void refreshTags();
+watch(() => [props.fileInfo?.id, props.fileInfo?.tags, libConfig._libraryId], (current, previous) => {
+  // Membership refreshes temporarily invalidate tags; keep the same file's badges
+  // until replacement data arrives so the editor below them does not jump.
+  if (!previous || current[0] !== previous[0] || current[2] !== previous[2]) {
+    displayTags.value = props.fileInfo?.tags || [];
+  } else if (Array.isArray(props.fileInfo?.tags)) {
+    displayTags.value = props.fileInfo.tags;
+  }
+  void refreshTags();
 }, { immediate: true });
 onMounted(async () => { const stop = await listen('tags-changed', refreshTags); if (tagsDisposed) stop(); else stopTags = stop; });
 onBeforeUnmount(() => { tagsDisposed = true; tagsRequest++; stopTags?.(); });

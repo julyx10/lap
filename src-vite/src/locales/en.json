@@ -357,7 +357,12 @@
     "rejected": "Rejected",
     "unreviewed": "Unreviewed"
   },
+  "assign_tags": {
+    "recent_link": "Recent",
+    "title": "Assign tags"
+  },
   "tag": {
+    "selected_files": "{count} selected files",
     "no_selected_tags": "No selected tags",
     "show_selected_only": "Show selected tags only",
     "title": "Tags",
@@ -370,7 +375,7 @@
     "name_save_failed": "Could not save tag name",
     "move_failed": "Could not move tag",
     "delete_failed": "Could not delete tag",
-    "load_failed": "Failed to load tag states. Close this dialog and try again.",
+    "load_failed": "Failed to load tag states. Try again.",
     "root": "Root level",
     "add_child": "New child tag",
     "invalid_name": "Tag names cannot contain , ; or {'|'}.",

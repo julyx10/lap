@@ -542,7 +542,7 @@
             @setRating="setSelectedFileRating"
             @setCulling="setSelectedFileCullingFlag"
             @rotate="rotateSelected(90, true)"
-            @quick-edit-tag="clickTag(true)"
+            @tag-states-changed="handleInlineTagsChanged"
             @quick-edit-collection="clickAddToCollection(true)"
             @edit-metadata="field => openCommentEditor(true, field)"
             @navigate-folder="handleInfoNavigateFolder"
@@ -703,6 +703,7 @@
   <TaggingDialog 
     v-if="showTaggingDialog"
     :fileIds="fileIdsToTag"
+    :file-name="fileList.find(file => file?.id === fileIdsToTag[0])?.name || ''"
     position-key="edit-tag"
     @ok="updateFileHasTags"
     @states-changed="syncTagStates"
@@ -10638,7 +10639,6 @@ const rotateSelected = async (rotateDelta: number, singleFile = false) => {
 
 // set file tag
 const clickTag = async (singleFile = false) => {
-  console.log('clickTag');
   if (singleFile !== true && selectMode.value && selectedCount.value === 0) return;
   if (singleFile !== true && selectMode.value) {
     const items = await getActionableSelectedItemsForAction();
@@ -10651,7 +10651,7 @@ const clickTag = async (singleFile = false) => {
   } else {
     fileIdsToTag.value = [];
   }
-  showTaggingDialog.value = true;
+  showTaggingDialog.value = fileIdsToTag.value.length > 0;
 }
 
 const clickAddToCollection = async (singleFile = false) => {
@@ -11241,7 +11241,20 @@ function isTagRemovalView({ library, tagId }: TagRemovalContext) {
     && Number(libConfig.tag.id) === tagId;
 }
 
-async function updateFileHasTags(fileStates: TagFileState[], removal?: TagRemovalContext | null) {
+async function handleInlineTagsChanged(states: TagFileState[], context: TagRemovalContext & { source: string; add: boolean }) {
+  if (context.library !== libConfig._libraryId) return;
+  if (!context.add) {
+    await updateFileHasTags(states, context, context.source);
+    return;
+  }
+  await syncTagStates(states);
+  if (context.library !== libConfig._libraryId) return;
+  void tauriEmit('tags-changed', {
+    source: context.source, library: context.library,
+  });
+}
+
+async function updateFileHasTags(fileStates: TagFileState[], removal?: TagRemovalContext | null, source?: string) {
   const version = ++tagRemovalRestoreVersion;
   pendingTagRemovalAnchor = null;
   let patched = false;
@@ -11263,7 +11276,9 @@ async function updateFileHasTags(fileStates: TagFileState[], removal?: TagRemova
     }
   } finally {
     showTaggingDialog.value = false;
-    void tauriEmit('tags-changed', patched && removal ? { library: removal.library, patchedTagId: removal.tagId } : undefined);
+    void tauriEmit('tags-changed', patched && removal
+      ? { ...(source ? { source } : {}), library: removal.library, patchedTagId: removal.tagId }
+      : source ? { source } : undefined);
   }
 }
 

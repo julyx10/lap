@@ -357,7 +357,12 @@
     "rejected": "剔除",
     "unreviewed": "未檢視"
   },
+  "assign_tags": {
+    "recent_link": "最近",
+    "title": "新增標籤"
+  },
   "tag": {
+    "selected_files": "已選取 {count} 個檔案",
     "no_selected_tags": "沒有已選標籤",
     "show_selected_only": "僅顯示已選標籤",
     "title": "標籤",
@@ -370,7 +375,7 @@
     "name_save_failed": "無法儲存標籤名稱",
     "move_failed": "無法移動標籤",
     "delete_failed": "無法刪除標籤",
-    "load_failed": "無法載入標籤狀態。請關閉此對話框再試一次。",
+    "load_failed": "無法載入標籤狀態，請重試。",
     "root": "根層級標籤",
     "add_child": "新增子標籤",
     "invalid_name": "標籤名稱不能包含 , ; {'|'}。",

@@ -357,7 +357,12 @@
     "rejected": "제외됨",
     "unreviewed": "미선별"
   },
+  "assign_tags": {
+    "recent_link": "최근",
+    "title": "태그 지정"
+  },
   "tag": {
+    "selected_files": "파일 {count}개 선택됨",
     "no_selected_tags": "선택한 태그가 없습니다",
     "show_selected_only": "선택한 태그만 표시",
     "title": "태그",
@@ -370,7 +375,7 @@
     "name_save_failed": "태그 이름을 저장할 수 없습니다",
     "move_failed": "태그를 이동할 수 없습니다",
     "delete_failed": "태그를 삭제할 수 없습니다",
-    "load_failed": "태그 상태를 불러오지 못했습니다. 대화 상자를 닫고 다시 시도하세요.",
+    "load_failed": "태그 상태를 불러오지 못했습니다. 다시 시도하세요.",
     "root": "최상위",
     "add_child": "하위 태그 만들기",
     "invalid_name": "태그 이름에 , ; {'|'} 문자를 사용할 수 없습니다.",

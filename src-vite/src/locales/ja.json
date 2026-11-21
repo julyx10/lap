@@ -357,7 +357,12 @@
     "rejected": "除外",
     "unreviewed": "未選別"
   },
+  "assign_tags": {
+    "recent_link": "最近",
+    "title": "タグを追加"
+  },
   "tag": {
+    "selected_files": "{count} 個のファイルを選択中",
     "no_selected_tags": "選択したタグはありません",
     "show_selected_only": "選択したタグのみ表示",
     "title": "タグ",
@@ -370,7 +375,7 @@
     "name_save_failed": "タグ名を保存できませんでした",
     "move_failed": "タグを移動できませんでした",
     "delete_failed": "タグを削除できませんでした",
-    "load_failed": "タグの状態を読み込めませんでした。ダイアログを閉じて再試行してください。",
+    "load_failed": "タグの状態を読み込めませんでした。もう一度お試しください。",
     "root": "最上位",
     "add_child": "子タグを作成",
     "invalid_name": "タグ名に , ; {'|'} は使えません。",

@@ -178,6 +178,7 @@
     <TaggingDialog
       v-if="showTaggingDialog"
       :fileIds="taggingFileIds"
+      :file-name="activeFileInfo?.name || ''"
       @ok="updateFileHasTags"
       @states-changed="syncTagStates"
       @cancel="showTaggingDialog = false"

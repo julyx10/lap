@@ -357,7 +357,12 @@
     "rejected": "已排除",
     "unreviewed": "待筛选"
   },
+  "assign_tags": {
+    "recent_link": "最近",
+    "title": "添加标签"
+  },
   "tag": {
+    "selected_files": "已选择 {count} 个文件",
     "no_selected_tags": "没有已选标签",
     "show_selected_only": "仅显示已选标签",
     "title": "标签",
@@ -370,7 +375,7 @@
     "name_save_failed": "无法保存标签名称",
     "move_failed": "无法移动标签",
     "delete_failed": "无法删除标签",
-    "load_failed": "无法加载标签状态，请关闭对话框后重试。",
+    "load_failed": "无法加载标签状态，请重试。",
     "root": "根级标签",
     "add_child": "新建子标签",
     "invalid_name": "标签名称不能包含 , ; {'|'}。",

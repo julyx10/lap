@@ -357,7 +357,12 @@
     "rejected": "Odrzucone",
     "unreviewed": "Niesprawdzone"
   },
+  "assign_tags": {
+    "recent_link": "Ostatnie",
+    "title": "Przypisz tagi"
+  },
   "tag": {
+    "selected_files": "Wybrane pliki: {count}",
     "no_selected_tags": "Brak wybranych tagów",
     "show_selected_only": "Pokaż tylko wybrane tagi",
     "title": "Tagi",
@@ -370,7 +375,7 @@
     "name_save_failed": "Nie udało się zapisać nazwy taga",
     "move_failed": "Nie udało się przenieść tagu",
     "delete_failed": "Nie udało się usunąć tagu",
-    "load_failed": "Nie udało się wczytać stanu tagów. Zamknij to okno i spróbuj ponownie.",
+    "load_failed": "Nie udało się wczytać stanu tagów. Spróbuj ponownie.",
     "root": "Poziom główny",
     "add_child": "Nowy tag podrzędny",
     "invalid_name": "Nazwy tagów nie mogą zawierać , ; ani {'|'}.",

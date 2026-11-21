@@ -357,7 +357,12 @@
     "rejected": "Scartate",
     "unreviewed": "Non revisionate"
   },
+  "assign_tags": {
+    "recent_link": "Recenti",
+    "title": "Assegna tag"
+  },
   "tag": {
+    "selected_files": "{count} file selezionati",
     "no_selected_tags": "Nessun tag selezionato",
     "show_selected_only": "Mostra solo i tag selezionati",
     "title": "Tag",
@@ -370,7 +375,7 @@
     "name_save_failed": "Impossibile salvare il nome del tag",
     "move_failed": "Impossibile spostare il tag",
     "delete_failed": "Impossibile eliminare il tag",
-    "load_failed": "Impossibile caricare gli stati dei tag. Chiudi questa finestra e riprova.",
+    "load_failed": "Impossibile caricare lo stato dei tag. Riprova.",
     "root": "Livello principale",
     "add_child": "Nuovo tag figlio",
     "invalid_name": "I nomi dei tag non possono contenere , ; o {'|'}.",

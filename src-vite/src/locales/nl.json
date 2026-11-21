@@ -357,7 +357,12 @@
     "rejected": "Afgewezen",
     "unreviewed": "Niet bekeken"
   },
+  "assign_tags": {
+    "recent_link": "Recent",
+    "title": "Tags toewijzen"
+  },
   "tag": {
+    "selected_files": "{count} geselecteerde bestanden",
     "no_selected_tags": "Geen geselecteerde tags",
     "show_selected_only": "Alleen geselecteerde tags tonen",
     "title": "Tags",
@@ -370,7 +375,7 @@
     "name_save_failed": "Kan de tagnaam niet opslaan",
     "move_failed": "Tag kon niet worden verplaatst",
     "delete_failed": "Tag kon niet worden verwijderd",
-    "load_failed": "Kan de tagstatus niet laden. Sluit dit venster en probeer het opnieuw.",
+    "load_failed": "Kan tagstatus niet laden. Probeer het opnieuw.",
     "root": "Hoofdniveau",
     "add_child": "Nieuwe subtag",
     "invalid_name": "Tagnamen mogen geen , ; of {'|'} bevatten.",
