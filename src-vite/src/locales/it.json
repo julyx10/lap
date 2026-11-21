@@ -1200,6 +1200,7 @@
     }
   },
   "file_info": {
+    "click_to_add": "Fai clic per aggiungere…",
     "metadata_placeholders": {
       "e_title": "Titolo breve",
       "e_headline": "Titolo per la pubblicazione",

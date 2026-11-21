@@ -173,6 +173,7 @@ const handleKeyDown = (event) => {
   if (
     uiStore.isInputActive('MessageBox') ||
     uiStore.isInputActive('FileInfo-rename') ||
+    uiStore.isInputActive('FileInfo-metadata') ||
     uiStore.isInputActive('AlbumFolder-new') ||
     uiStore.isInputActive('AlbumFolder-rename')
   ) return;

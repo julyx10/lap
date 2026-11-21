@@ -30,7 +30,7 @@
     <!-- Info Content -->
     <div v-if="fileInfo" :class="{ invisible: !infoReady && (!hasDisplayedInfo || showDelayedLoading) }" :inert="!infoReady || undefined" :aria-hidden="!infoReady || undefined" class="mb-2 px-2 flex-1 overflow-y-auto overflow-x-hidden flex flex-col [overflow-anchor:none]">
 
-      <div v-memo="[renderInfoRevision(), tagsExpanded, focusTagId]" class="contents">
+      <div v-memo="[renderInfoRevision(), tagsExpanded, focusTagId, metadataEdit, metadataDraft, savingMetadata]" class="contents">
       <!-- Preview Section -->
       <div class="group/thumbnail shrink-0 border-t border-base-content/5 px-1 py-3">
         <div
@@ -233,8 +233,13 @@
             <!-- Metadata -->
             <template v-for="field in organizationMetadata" :key="field.key">
               <div class="text-[11px] text-base-content/30 min-h-6 py-1">{{ $t(field.label) }}</div>
-              <button type="button" class="min-h-6 py-1 text-left text-[12px] text-base-content/70 whitespace-pre-wrap wrap-break-word cursor-pointer hover:text-base-content"
-                @click.stop="emit('editMetadata', field.key)">{{ field.value || '\u00a0' }}</button>
+              <component v-if="metadataEdit?.key === field.key" :is="['comments', 'e_artist'].includes(field.key) ? 'textarea' : 'input'"
+                :ref="setMetadataInput" :value="metadataDraft" @input="metadataDraft = $event.target.value"
+                class="text-[12px] text-base-content input input-xs input-bordered p-1 leading-6 w-full min-w-0 resize-none"
+                :class="['comments', 'e_artist'].includes(field.key) ? 'h-12' : 'h-6'"
+                @blur="saveInlineMetadata" @keydown.stop="handleInlineMetadataKeydown" @click.stop />
+              <button v-else type="button" class="min-h-6 py-1 text-left text-[12px] text-base-content/70 whitespace-pre-wrap wrap-break-word cursor-pointer hover:text-base-content"
+                :disabled="savingMetadata || fileInfoBusy" @click.stop="startInlineMetadata(field.key)"><span :class="{ 'text-base-content/30': !field.value }">{{ field.value || $t('file_info.click_to_add') }}</span></button>
             </template>
 
           </div>
@@ -285,8 +290,8 @@
                   v-model="renamingName"
                   class="text-[12px] text-base-content input input-xs input-bordered p-1 h-6 leading-6 w-full min-w-0"
                   @blur="finishRename"
-                  @keydown.enter.stop="finishRename"
-                  @keydown.esc.stop="cancelRename"
+                  @keydown.enter.stop.prevent="finishRename"
+                  @keydown.esc.stop.prevent="cancelRename"
                   @click.stop
                 />
                 <span
@@ -298,7 +303,7 @@
                 <span
                   class="flex flex-1 min-w-0 items-center gap-1 text-[12px] font-medium text-base-content/70"
                   :class="{ 'cursor-text hover:text-base-content': canRenameGeneralFile }"
-                  @dblclick.stop="startRename"
+                  @click.stop="startRename"
                 >
                   <span class="min-w-0 break-all">{{ generalFileInfo?.name }}</span>
                   <span
@@ -546,7 +551,7 @@ import { useUIStore } from '@/stores/uiStore';
 import { config, libConfig } from '@/common/config';
 import { isWebViewVideoPlaybackDisabled, getGStreamerAvailability } from '@/common/video';
 import { isOriginalUnavailable } from '@/common/availability';
-import { getTagsForFile, renameFile, editImage, getAlbum, getFileCollections, getFileInfo, getMotionPhotoVideoPath, revealPath, getFacesForFile, getPersonThumbnail, isCloudOnlyFile } from '@/common/api';
+import { getTagsForFile, editFileMetadata, renameFile, editImage, getAlbum, getFileCollections, getFileInfo, getMotionPhotoVideoPath, revealPath, getFacesForFile, getPersonThumbnail, isCloudOnlyFile } from '@/common/api';
 import { 
   copyFilePaths,
   extractFileName, 
@@ -622,6 +627,7 @@ const emit = defineEmits([
   'tagStatesChanged',
   'quickEditCollection',
   'editMetadata',
+  'metadataSaved',
   'navigateFolder',
   'navigateMetadata',
   'navigatePerson',
@@ -1317,6 +1323,63 @@ async function copyInfoFilePath() {
     toast.error(t('file_info.copy_path_failed'));
   }
 }
+
+const metadataEdit = ref<{ key: string; file: Record<string, any>; library: string } | null>(null);
+const metadataDraft = ref('');
+const savingMetadata = ref(false);
+let metadataInput: HTMLInputElement | HTMLTextAreaElement | null = null;
+function setMetadataInput(el: any) { metadataInput = el; }
+async function startInlineMetadata(key: string) {
+  if (!props.fileInfo || savingMetadata.value || fileInfoBusy.value) return;
+  metadataEdit.value = { key, file: props.fileInfo, library: libConfig._libraryId };
+  metadataDraft.value = props.fileInfo[key] ?? '';
+  uiStore.pushInputHandler('FileInfo-metadata');
+  await nextTick();
+  metadataInput?.focus();
+  metadataInput?.select();
+}
+function handleInlineMetadataKeydown(event: KeyboardEvent) {
+  if (event.isComposing || event.keyCode === 229) return;
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    cancelInlineMetadata();
+  } else if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey && !event.altKey && !event.metaKey) {
+    event.preventDefault();
+    void saveInlineMetadata();
+  }
+}
+function cancelInlineMetadata() {
+  metadataEdit.value = null;
+  uiStore.removeInputHandler('FileInfo-metadata');
+}
+async function saveInlineMetadata() {
+  const edit = metadataEdit.value;
+  if (!edit || savingMetadata.value) return;
+  const draft = metadataDraft.value;
+  const value = draft.trim();
+  cancelInlineMetadata();
+  if (edit.library !== libConfig._libraryId || value === (edit.file[edit.key] ?? '')) return;
+  savingMetadata.value = true;
+  try {
+    await editFileMetadata(edit.library, [Number(edit.file.id)], { [edit.key]: value });
+  } catch (error) {
+    console.error('Inline metadata save failed', { libraryId: edit.library, fileId: edit.file.id, field: edit.key, error });
+    const reason = error instanceof Error ? error.message : String(error);
+    toast.error(`${t('file_info.metadata_save_failed')}: ${reason}`);
+    if (!metadataDisposed && edit.library === libConfig._libraryId && props.fileInfo?.id === edit.file.id) {
+      metadataEdit.value = edit;
+      metadataDraft.value = draft;
+      uiStore.pushInputHandler('FileInfo-metadata');
+      await nextTick();
+      metadataInput?.focus();
+    }
+    return;
+  } finally { savingMetadata.value = false; }
+  if (edit.library === libConfig._libraryId) emit('metadataSaved', [edit.file], { [edit.key]: value });
+}
+watch(() => [props.fileInfo?.id, libConfig._libraryId], cancelInlineMetadata);
+let metadataDisposed = false;
+onBeforeUnmount(() => { metadataDisposed = true; cancelInlineMetadata(); });
 
 // Rename logic
 const isRenaming = ref(false);

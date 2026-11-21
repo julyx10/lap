@@ -416,3 +416,79 @@ test('StatusBar shows a Live Photo as one item with the combined size', async ()
   assert.match(html, /2 \/ 4 items \(500 B\)/);
   assert.match(html, /IMG\.HEIC.*LIVE.*300 B/s);
 });
+
+test('inline metadata saves the captured file once and Escape discards edits', async () => {
+  const start = source.indexOf('const metadataEdit ='), end = source.indexOf('// Rename logic', start);
+  const calls = [], events = [];
+  const props = {fileInfo:{id:10,e_title:'Old'}};
+  const deps = {ref,props,libConfig:{_libraryId:'library'},fileInfoBusy:ref(false),uiStore:{pushInputHandler(){},removeInputHandler(){}},
+    nextTick:async()=>{},watch(){},onBeforeUnmount(){},toast:{error(){}},t:key=>key,
+    editFileMetadata:async(...args)=>{calls.push(args);},emit:(...args)=>events.push(args)};
+  const editor = new Function(...Object.keys(deps),ts.transpile(source.slice(start,end),{target:ts.ScriptTarget.ES2022})+';return {startInlineMetadata,saveInlineMetadata,cancelInlineMetadata,metadataDraft};')(...Object.values(deps));
+  await editor.startInlineMetadata('e_title');
+  editor.metadataDraft.value='New';
+  props.fileInfo={id:20,e_title:'Other'};
+  await editor.saveInlineMetadata();await editor.saveInlineMetadata();
+  assert.deepEqual(calls,[['library',[10],{e_title:'New'}]]);
+  assert.equal(events[0][1][0].id,10);
+  await editor.startInlineMetadata('e_title');editor.metadataDraft.value='Discard';
+  editor.cancelInlineMetadata();await editor.saveInlineMetadata();
+  assert.equal(calls.length,1);
+});
+
+test('metadata inline Enter is not forwarded to the global rename shortcut', async () => {
+  const app = await readFile(new URL('../src/App.vue', import.meta.url), 'utf8');
+  const start = app.indexOf('const handleKeyDown ='), end = app.indexOf('function normalizeScale', start);
+  const events = [];
+  const deps = {handleMainWindowScaleShortcut:()=>false,isMac:true,matchesShortcut:()=>false,
+    useUIStore:()=>({isInputActive:name=>name==='FileInfo-metadata'}),emit:(...args)=>events.push(args)};
+  const handler = new Function(...Object.keys(deps),ts.transpile(app.slice(start,end),{target:ts.ScriptTarget.ES2022})+';return handleKeyDown;')(...Object.values(deps));
+  handler({key:'Enter'});
+  assert.deepEqual(events,[]);
+});
+
+test('dynamic metadata inputs display their draft and update it on native input events', () => {
+  const start = source.indexOf('<component v-if="metadataEdit?.key === field.key"');
+  const end = source.indexOf('/>',start)+2;
+  const render = compile(source.slice(start,end));
+  for (const key of ['e_title','comments']) {
+    const context = {metadataEdit:{key},field:{key},metadataDraft:'Existing value',setMetadataInput(){},handleInlineMetadataKeydown(){},saveInlineMetadata(){},cancelInlineMetadata(){}};
+    const vnode = render.call(context,context,[]);
+    assert.equal(vnode.type,key==='comments'?'textarea':'input');
+    assert.equal(vnode.props.value,'Existing value');
+    vnode.props.onInput({target:{value:'Changed value'}});
+    assert.equal(context.metadataDraft,'Changed value');
+  }
+});
+
+test('inline metadata keys ignore IME composition and preserve modified Enter', () => {
+  const start = source.indexOf('function handleInlineMetadataKeydown('), end = source.indexOf('function cancelInlineMetadata(', start);
+  let saved=0, cancelled=0, prevented=0;
+  const handler = new Function('saveInlineMetadata','cancelInlineMetadata',ts.transpile(source.slice(start,end),{target:ts.ScriptTarget.ES2022})+';return handleInlineMetadataKeydown;')(()=>{saved++;},()=>{cancelled++;});
+  const event = (key, extra={}) => ({key,preventDefault(){prevented++;},...extra});
+  handler(event('Enter',{isComposing:true}));
+  handler(event('Escape',{isComposing:true}));
+  handler(event('Enter',{keyCode:229}));
+  handler(event('Escape',{keyCode:229}));
+  handler(event('Enter',{shiftKey:true}));
+  assert.deepEqual([saved,cancelled,prevented],[0,0,0]);
+  handler(event('Enter'));
+  handler(event('Escape'));
+  assert.deepEqual([saved,cancelled,prevented],[1,1,2]);
+});
+
+test('failed inline metadata saves restore the original draft for retry', async () => {
+  const start = source.indexOf('const metadataEdit ='), end = source.indexOf('// Rename logic', start);
+  let fail=true; const calls=[];
+  const props={fileInfo:{id:10,e_title:'Old'}};
+  const deps={ref,props,libConfig:{_libraryId:'library'},fileInfoBusy:ref(false),uiStore:{pushInputHandler(){},removeInputHandler(){}},nextTick:async()=>{},watch(){},onBeforeUnmount(){},toast:{error(){}},t:key=>key,
+    editFileMetadata:async(...args)=>{calls.push(args);if(fail)throw new Error('test failure');},emit(){},console:{error(){}}};
+  const editor=new Function(...Object.keys(deps),ts.transpile(source.slice(start,end),{target:ts.ScriptTarget.ES2022})+';return {startInlineMetadata,saveInlineMetadata,metadataEdit,metadataDraft};')(...Object.values(deps));
+  await editor.startInlineMetadata('e_title');editor.metadataDraft.value='  Draft  ';
+  await editor.saveInlineMetadata();
+  assert.equal(editor.metadataEdit.value.key,'e_title');
+  assert.equal(editor.metadataDraft.value,'  Draft  ');
+  fail=false;await editor.saveInlineMetadata();
+  assert.equal(editor.metadataEdit.value,null);
+  assert.deepEqual(calls[1],['library',[10],{e_title:'Draft'}]);
+});

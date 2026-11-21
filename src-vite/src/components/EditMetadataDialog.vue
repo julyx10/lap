@@ -5,13 +5,13 @@
         <p v-if="!visibleFields.length" class="px-1 text-sm text-base-content/70">
           {{ $t('file_info.edit_metadata_no_fields') }}
         </p>
-        <div v-else class="grid grid-cols-2 gap-x-3 gap-y-3 px-1">
+        <div v-else class="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)] gap-x-3 gap-y-3 px-1">
           <label
             v-for="field in visibleFields"
             :key="field.key"
             :for="'metadata-' + field.key"
             class="min-w-0 flex flex-col gap-1"
-            :class="{ 'col-span-2': ['comments', 'e_artist', 'e_copyright'].includes(field.key) }"
+            :class="{ 'col-span-2': !showTitleAndHeadline || !['e_title', 'e_headline'].includes(field.key) }"
           >
             <span class="flex items-center justify-between gap-2 text-[11px] text-base-content/30">
               <span>{{ $t(field.label) }}</span>
@@ -64,6 +64,9 @@ const values = reactive(Object.fromEntries(editableMetadataFields.map(({ key }) 
   return [key, files.every(file => (file[key] ?? '') === first) ? first : ''];
 })));
 const visibleFields = computed(() => getVisibleEditableMetadataFields(config.infoPanel.fields));
+const showTitleAndHeadline = computed(() => ['e_title', 'e_headline'].every(key =>
+  visibleFields.value.some(field => field.key === key),
+));
 const touched = new Set<string>();
 const inputs: Record<string, HTMLElement> = {};
 const saving = ref(false);

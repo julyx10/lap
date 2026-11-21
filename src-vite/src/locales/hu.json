@@ -1200,6 +1200,7 @@
     }
   },
   "file_info": {
+    "click_to_add": "Kattintson a hozzáadáshoz…",
     "metadata_placeholders": {
       "e_title": "Rövid cím",
       "e_headline": "Közzétételi cím",

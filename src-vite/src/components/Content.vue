@@ -545,6 +545,7 @@
             @tag-states-changed="handleInlineTagsChanged"
             @quick-edit-collection="clickAddToCollection(true)"
             @edit-metadata="field => openCommentEditor(true, field)"
+            @metadata-saved="onMetadataSaved"
             @navigate-folder="handleInfoNavigateFolder"
             @navigate-metadata="handleNavigateMetadata"
             @navigate-person="handleNavigatePerson"
