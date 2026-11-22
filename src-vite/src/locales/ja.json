@@ -1200,7 +1200,7 @@
     }
   },
   "file_info": {
-    "click_to_add": "クリックして追加…",
+    "add_metadata": "{field}を追加…",
     "metadata_placeholders": {
       "e_title": "短いタイトル",
       "e_headline": "公開用の見出し",

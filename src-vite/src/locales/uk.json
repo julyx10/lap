@@ -1200,7 +1200,7 @@
     }
   },
   "file_info": {
-    "click_to_add": "Натисніть, щоб додати…",
+    "add_metadata": "Додати: {field}…",
     "metadata_placeholders": {
       "e_title": "Короткий заголовок",
       "e_headline": "Заголовок для публікації",

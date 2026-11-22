@@ -1200,7 +1200,7 @@
     }
   },
   "file_info": {
-    "click_to_add": "Nhấp để thêm…",
+    "add_metadata": "Thêm {field}…",
     "metadata_placeholders": {
       "e_title": "Tiêu đề ngắn",
       "e_headline": "Tiêu đề xuất bản",

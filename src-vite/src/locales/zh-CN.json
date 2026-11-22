@@ -1200,7 +1200,7 @@
     }
   },
   "file_info": {
-    "click_to_add": "点击添加…",
+    "add_metadata": "添加{field}…",
     "metadata_placeholders": {
       "e_title": "简短标题",
       "e_headline": "用于发布的标题",

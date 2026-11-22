@@ -2510,7 +2510,7 @@ const checkUnsavedChanges = (action: () => void) => {
 // Open a temporary view filtered by the clicked metadata (camera/lens/location).
 // Like "find related photos", the back button returns to the previous view.
 function enterMetadataTempView(
-  mode: 'camera' | 'lens' | 'location',
+  mode: 'camera' | 'lens' | 'location' | 'tag',
   title: string,
   params: Record<string, any>,
 ) {
@@ -2533,6 +2533,11 @@ function enterMetadataTempView(
 
 function handleNavigateMetadata(payload: { type: string; [key: string]: any }) {
   switch (payload?.type) {
+    case 'tag': {
+      const tagId = Number(payload.tagId);
+      if (tagId > 0) enterMetadataTempView('tag', payload.name || '', { tagId, searchFileType: 0 });
+      break;
+    }
     case 'camera': {
       const make = payload.make || '';
       const model = payload.model || '';
@@ -4158,7 +4163,7 @@ function showLoadingContent(requestId: number) {
 }
 
 // Similar Search Mode State
-const tempViewMode = ref<'none' | 'similar' | 'album' | 'person' | 'camera' | 'lens' | 'location' | 'map'>('none');
+const tempViewMode = ref<'none' | 'similar' | 'album' | 'person' | 'camera' | 'lens' | 'location' | 'tag' | 'map'>('none');
 let suppressPersonContextRefresh = false;
 const dedupQueryParams = computed(() => {
   return { ...currentQueryParams.value };
@@ -4236,6 +4241,7 @@ const currentTitleIcon = computed(() => {
     case 'camera': return IconCamera;
     case 'lens': return IconCameraAperture;
     case 'location': return IconLocation;
+    case 'tag': return IconTag;
     default: return null;
   }
 });
@@ -9058,6 +9064,7 @@ function handleTitleClick() {
     case 'camera':
     case 'lens':
     case 'location':
+    case 'tag':
       exitTempViewMode();
       break;
     case 'person':

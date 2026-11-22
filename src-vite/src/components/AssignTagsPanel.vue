@@ -2,7 +2,7 @@
   <section class="w-full rounded-box bg-base-200 flex flex-col overflow-hidden shrink-0 border border-base-content/10">
     <header class="my-1 px-3 flex items-center gap-2 shrink-0">
       <span class="flex-1 text-xs font-normal text-primary/70">{{ $t('assign_tags.title') }}</span>
-      <button type="button" class="cursor-pointer" :aria-label="$t('msgbox.close')" :disabled="busy" @click="$emit('close')"><IconClose class="size-4" /></button>
+      <button type="button" class="cursor-pointer" :aria-label="$t('msgbox.close')" :disabled="busy" @mousedown.prevent @click.stop="$emit('close')"><IconClose class="size-4" /></button>
     </header>
     <div class="px-3 pb-0 pt-1 flex-1 min-h-0 flex flex-col gap-2">
       <div class="flex items-center gap-2 shrink-0">

@@ -168,17 +168,15 @@
             />
 
             <!-- Tags -->
-            <template v-if="displayTags.length">
-              <div class="pl-4 flex items-center min-h-8 gap-1">
-                <div class="text-[12px] text-base-content/70 flex flex-wrap gap-1 flex-1 min-w-0">
-                  <button v-for="tag in displayTags" :key="tag.id" type="button"
-                    class="badge badge-sm badge-outline max-w-full min-w-0 border-base-content/5 bg-base-content/5 font-medium text-base-content/70 hover:text-base-content cursor-pointer"
-                    :title="tag.path || tag.name" @click.stop="openTags(tag.id)"><span class="min-w-0 truncate">{{ tag.name }}</span></button>
-                </div>
+            <div class="pl-4 flex items-center min-h-8 gap-1">
+              <div class="text-[12px] text-base-content/70 flex flex-wrap gap-1 flex-1 min-w-0">
+                <button v-for="tag in displayTags" :key="tag.id" type="button"
+                  class="badge badge-sm badge-outline max-w-full min-w-0 border-base-content/5 bg-base-content/5 font-medium text-base-content/70 hover:text-base-content cursor-pointer"
+                  :title="tag.path || tag.name" @click.stop="emit('navigateMetadata', { type: 'tag', tagId: tag.id, name: tag.path || tag.name })"><span class="min-w-0 truncate">{{ tag.name }}</span></button>
+                <button type="button"
+                  class="badge badge-sm badge-outline max-w-full min-w-0 border-base-content/5 bg-base-content/5 font-medium text-base-content/70 hover:text-base-content cursor-pointer gap-1"
+                  @click.stop="openTags()"><IconAdd class="size-3 shrink-0" /><span class="min-w-0 truncate">{{ $t('assign_tags.title') }}</span></button>
               </div>
-            </template>
-            <div v-if="!displayTags.length && !tagsExpanded" class="pl-4">
-              <PanelActionButton :icon="IconTag" @click="openTags()">{{ $t('assign_tags.title') }}</PanelActionButton>
             </div>
             <AssignTagsPanel v-if="tagsExpanded"
               :file-ids="fileInfo?.id ? [Number(fileInfo.id)] : []" :focus-tag-id="focusTagId"
@@ -234,12 +232,12 @@
             <template v-for="field in organizationMetadata" :key="field.key">
               <div class="text-[11px] text-base-content/30 min-h-6 py-1">{{ $t(field.label) }}</div>
               <component v-if="metadataEdit?.key === field.key" :is="['comments', 'e_artist'].includes(field.key) ? 'textarea' : 'input'"
-                :ref="setMetadataInput" :value="metadataDraft" @input="metadataDraft = $event.target.value"
+                :ref="setMetadataInput" :value="metadataDraft" :placeholder="$t('file_info.add_metadata', { field: $t(field.label) })" @input="metadataDraft = $event.target.value"
                 class="text-[12px] text-base-content input input-xs input-bordered p-1 leading-6 w-full min-w-0 resize-none"
                 :class="['comments', 'e_artist'].includes(field.key) ? 'h-12' : 'h-6'"
                 @blur="saveInlineMetadata" @keydown.stop="handleInlineMetadataKeydown" @click.stop />
               <button v-else type="button" class="min-h-6 py-1 text-left text-[12px] text-base-content/70 whitespace-pre-wrap wrap-break-word cursor-pointer hover:text-base-content"
-                :disabled="savingMetadata || fileInfoBusy" @click.stop="startInlineMetadata(field.key)"><span :class="{ 'text-base-content/30': !field.value }">{{ field.value || $t('file_info.click_to_add') }}</span></button>
+                :disabled="savingMetadata || fileInfoBusy" @click.stop="startInlineMetadata(field.key)"><span :class="{ 'text-base-content/30': !field.value }">{{ field.value || $t('file_info.add_metadata', { field: $t(field.label) }) }}</span></button>
             </template>
 
           </div>
@@ -535,7 +533,6 @@
 </template>
 
 <script setup lang="ts">
-import PanelActionButton from './PanelActionButton.vue';
 import AssignTagsPanel from './AssignTagsPanel.vue';
 import FileInfoFieldsDialog from '@/components/FileInfoFieldsDialog.vue';
 import { getShortcutLabel } from '@/common/shortcuts';
@@ -578,7 +575,7 @@ import {
   IconCloud,
   IconRefresh,
   IconEdit,
-  IconTag,
+  IconAdd,
   IconAdjustments,
   IconRight,
   IconFile,

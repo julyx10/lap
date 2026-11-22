@@ -1200,7 +1200,7 @@
     }
   },
   "file_info": {
-    "click_to_add": "Нажмите, чтобы добавить…",
+    "add_metadata": "Добавить: {field}…",
     "metadata_placeholders": {
       "e_title": "Краткий заголовок",
       "e_headline": "Заголовок для публикации",

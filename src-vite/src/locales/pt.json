@@ -1200,7 +1200,7 @@
     }
   },
   "file_info": {
-    "click_to_add": "Clique para adicionar…",
+    "add_metadata": "Adicionar {field}…",
     "metadata_placeholders": {
       "e_title": "Título curto",
       "e_headline": "Manchete para publicação",

@@ -543,3 +543,14 @@ test('shared tag menu action respects selection mode and single-file mode', asyn
   await dispatch();
   assert.equal(deps.showTaggingDialog.value,false);
 });
+
+test('File Info tag navigation opens a temporary view with a tag filter', async () => {
+  const content=await readFile(new URL('../src/components/Content.vue',import.meta.url),'utf8');
+  const start=content.indexOf('function handleNavigateMetadata('),end=content.indexOf('async function removeFileFromCurrentCollection',start);
+  const calls=[];
+  const handler=new Function('enterMetadataTempView',ts.transpile(content.slice(start,end),{target:ts.ScriptTarget.ES2022})+';return handleNavigateMetadata;')((...args)=>calls.push(args));
+  handler({type:'tag',tagId:7,name:'Travel/Paris'});
+  assert.deepEqual(calls,[['tag','Travel/Paris',{tagId:7,searchFileType:0}]]);
+  handler({type:'tag',tagId:0});
+  assert.equal(calls.length,1);
+});

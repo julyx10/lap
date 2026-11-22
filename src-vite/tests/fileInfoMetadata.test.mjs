@@ -452,7 +452,7 @@ test('dynamic metadata inputs display their draft and update it on native input 
   const end = source.indexOf('/>',start)+2;
   const render = compile(source.slice(start,end));
   for (const key of ['e_title','comments']) {
-    const context = {metadataEdit:{key},field:{key},metadataDraft:'Existing value',setMetadataInput(){},handleInlineMetadataKeydown(){},saveInlineMetadata(){},cancelInlineMetadata(){}};
+    const context = {$t:key=>key,metadataEdit:{key},field:{key},metadataDraft:'Existing value',setMetadataInput(){},handleInlineMetadataKeydown(){},saveInlineMetadata(){},cancelInlineMetadata(){}};
     const vnode = render.call(context,context,[]);
     assert.equal(vnode.type,key==='comments'?'textarea':'input');
     assert.equal(vnode.props.value,'Existing value');

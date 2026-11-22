@@ -1200,7 +1200,7 @@
     }
   },
   "file_info": {
-    "click_to_add": "Kliknij, aby dodać…",
+    "add_metadata": "Dodaj: {field}…",
     "metadata_placeholders": {
       "e_title": "Krótki tytuł",
       "e_headline": "Nagłówek do publikacji",

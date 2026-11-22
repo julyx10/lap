@@ -1200,7 +1200,7 @@
     }
   },
   "file_info": {
-    "click_to_add": "Klik om toe te voegen…",
+    "add_metadata": "{field} toevoegen…",
     "metadata_placeholders": {
       "e_title": "Korte titel",
       "e_headline": "Kop voor publicatie",

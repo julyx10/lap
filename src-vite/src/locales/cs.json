@@ -1200,7 +1200,7 @@
     }
   },
   "file_info": {
-    "click_to_add": "Kliknutím přidat…",
+    "add_metadata": "Přidat: {field}…",
     "metadata_placeholders": {
       "e_title": "Krátký název",
       "e_headline": "Titulek pro publikaci",
