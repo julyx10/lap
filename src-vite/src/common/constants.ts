@@ -101,7 +101,6 @@ export const SETTINGS_TAB = {
 export type SettingsTab = (typeof SETTINGS_TAB)[keyof typeof SETTINGS_TAB];
 
 // UI limits, dimensions and interaction timing
-export const SELECTED_THUMBNAIL_LIMIT = 15;
 export const RIGHT_PANEL_MIN_WIDTH = 160;
 export const PANEL_ANIMATION_MS = 200;
 export const MONTAGE_MAX_PHOTOS = 100;

@@ -496,6 +496,7 @@
             v-else-if="renderedRightPanelContent === 'selection'"
             :file-count="fileList.length"
             :selected-files="selectionPreviewFiles"
+            @preview-capacity="selectionPreviewCapacity = $event"
             :selected-count="selectedCount"
             :originals-unavailable="selectionHasUnavailable"
             :clipboard-unavailable="selectionStorageUnavailable"
@@ -520,6 +521,7 @@
             @tag-all="clickTag"
             @add-to-collection="clickAddToCollection"
             @unselect-file="unselectFileFromSelection"
+            @focus-file="focusSelectionPreview"
             @more-action="action => action()"
             @more-action-menu="handleMoreActionMenu"
           />
@@ -839,7 +841,7 @@ import { handleVideoPlaybackShortcut, handleVideoEscapeShortcut } from '@/common
 import { clearFolderFileCounts, setFolderFileCount, getCountedFolderPaths } from '@/composables/useAlbumSelection';
 import { createEmptyLibraryCounts } from '@/stores/libraryStore';
 import { getAlbumScanState, getAlbumScanIcon, shouldAnimateAlbumScanIcon } from '@/common/scanStatus';
-import { CULLING, DATE_SORT, GROUP, LIB_ITEM, RATE, SIDEBAR, SELECTED_THUMBNAIL_LIMIT, RIGHT_PANEL_MIN_WIDTH, PANEL_ANIMATION_MS, MONTAGE_MAX_PHOTOS, LARGE_BATCH_CONFIRM_THRESHOLD, EXTERNAL_OPEN_WARNING_THRESHOLD } from '@/common/constants';
+import { CULLING, DATE_SORT, GROUP, LIB_ITEM, RATE, SIDEBAR, RIGHT_PANEL_MIN_WIDTH, PANEL_ANIMATION_MS, MONTAGE_MAX_PHOTOS, LARGE_BATCH_CONFIRM_THRESHOLD, EXTERNAL_OPEN_WARNING_THRESHOLD } from '@/common/constants';
 import { isWin, isMac, isLinux, separator,
          formatFileSize, formatDate, getCalendarDateRange, formatFolderBreadcrumb, getThumbnailDataUrl, getAssetSrc, getPreviewUrl,
          getCachedThumbnailDataUrl,
@@ -1099,6 +1101,7 @@ const selectedFileIds = markRaw(new Set<number>());
 const selectionVersion = ref(0);
 const selectedFilesVersion = ref(0);
 const selectionPreviewFiles = ref<any[]>([]);
+const selectionPreviewCapacity = ref(4);
 
 let selectionPreviewRequestId = 0;
 type SelectionRestoreState = {
@@ -1144,7 +1147,7 @@ async function refreshSelectionPanelPreviews() {
     return;
   }
 
-  const previewIds = Array.from(selectedFileIds).slice(0, SELECTED_THUMBNAIL_LIMIT);
+  const previewIds = Array.from(selectedFileIds).slice(0, selectionPreviewCapacity.value);
   const filesById = new Map(getActionableSelectedItems().map(file => [Number(file.id), file]));
   const missingIds = previewIds.filter(id => !filesById.has(id));
   if (missingIds.length > 0) {
@@ -1162,7 +1165,7 @@ async function refreshSelectionPanelPreviews() {
   await getFileListThumb(previews, { viewportBound: false });
 }
 
-watch([selectMode, selectedFilesVersion], () => {
+watch([selectMode, selectedFilesVersion, selectionPreviewCapacity], () => {
   void refreshSelectionPanelPreviews();
 });
 const getMediaKind = (items: any[]): 'image' | 'video' | 'mixed' | 'empty' => {
@@ -4695,6 +4698,17 @@ async function getCachedGroupFileIds(groupId: string) {
   groupFileIdsCache.set(groupId, normalized);
   for (const id of normalized) fileIdToGroupId.set(id, groupId);
   return normalized;
+}
+
+let selectionFocusRequest = 0;
+async function focusSelectionPreview(fileId: number) {
+  const request = ++selectionFocusRequest;
+  const contentRequest = currentContentRequestId;
+  const stillCurrent = () => request === selectionFocusRequest
+    && contentRequest === currentContentRequestId && selectMode.value;
+  const index = await resolveFileIndexForDedup(Number(fileId));
+  if (!stillCurrent() || index < 0) return;
+  await restoreRefreshedFileSelection(index, stillCurrent);
 }
 
 function unselectFileFromSelection(fileId: number) {

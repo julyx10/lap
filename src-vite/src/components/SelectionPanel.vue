@@ -44,16 +44,18 @@
           </PanelActionButton>
         </div>
         <div
+          ref="thumbnailArea"
           class="min-h-20 flex items-center justify-center overflow-hidden"
         >
           <template v-if="selectedFiles.length > 0">
-            <div class="grid grid-cols-[repeat(auto-fill,minmax(5rem,1fr))] gap-1.5 w-full">
+            <div class="grid gap-1.5 w-full"
+              :style="{ gridTemplateColumns: `repeat(${thumbnailColumns}, 80px)` }">
               <div
                 v-for="file in visibleSelectedFiles"
                 :key="file.id"
-                class="group/thumb relative h-20 min-w-0 overflow-hidden rounded-box border border-base-content/5 cursor-pointer"
+                class="group/thumb relative h-20 min-w-0 overflow-hidden rounded-box border border-base-content/5"
                 :title="file.name || file.file_path"
-                @click="$emit('unselectFile', file.id)"
+                @click="$emit('focusFile', file.id)"
               >
                 <img
                   v-if="file.thumbnail"
@@ -63,9 +65,16 @@
                   loading="lazy"
                 />
                 <div v-else class="h-full w-full skeleton"></div>
-                <div class="absolute inset-0 flex items-center justify-center bg-base-content/5 opacity-0 transition-opacity group-hover/thumb:opacity-100">
-                  <span class="badge badge-sm badge-primary">{{ $t('info_panel.deselect') }}</span>
-                </div>
+                <IconClose
+                  class="absolute right-0.5 top-0.5 size-6 p-1.5 rounded-full cursor-pointer bg-base-100/30 text-base-content/70 opacity-0 transition-opacity hover:text-base-content hover:bg-base-100/70 group-hover/thumb:opacity-100 focus:opacity-100"
+                  role="button"
+                  tabindex="0"
+                  :title="$t('info_panel.deselect')"
+                  :aria-label="$t('info_panel.deselect')"
+                  @click.stop="$emit('unselectFile', file.id)"
+                  @keydown.enter.stop.prevent="$emit('unselectFile', file.id)"
+                  @keydown.space.stop.prevent="$emit('unselectFile', file.id)"
+                />
               </div>
               <div
                 v-if="hiddenSelectedCount > 0"
@@ -201,8 +210,7 @@
 
 <script setup lang="ts">
 import { config } from '@/common/config';
-import { SELECTED_THUMBNAIL_LIMIT } from '@/common/constants';
-import { computed, type CSSProperties } from 'vue';
+import { computed, ref, watch, onMounted, onBeforeUnmount, type CSSProperties } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { formatFileSize, formatTimestamp, isMac } from '@/common/utils';
 import {
@@ -250,6 +258,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits([
+  'previewCapacity',
   'close',
   'selectAll',
   'selectNone',
@@ -268,6 +277,7 @@ const emit = defineEmits([
   'copyToClipboard',
   'removeFromCollection',
   'unselectFile',
+  'focusFile',
   'moreAction',
   'moreActionMenu',
 ]);
@@ -275,7 +285,24 @@ const emit = defineEmits([
 const { locale, messages, t } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value] as any);
 
-const visibleSelectedFiles = computed(() => props.selectedFiles.slice(0, SELECTED_THUMBNAIL_LIMIT));
+const thumbnailArea = ref<HTMLElement | null>(null);
+const thumbnailColumns = ref(1);
+let thumbnailResizeObserver: ResizeObserver | null = null;
+onMounted(() => {
+  thumbnailResizeObserver = new ResizeObserver(([entry]) => {
+    thumbnailColumns.value = Math.max(1, Math.floor((entry.contentRect.width + 6) / 86));
+  });
+  if (thumbnailArea.value) thumbnailResizeObserver.observe(thumbnailArea.value);
+});
+onBeforeUnmount(() => thumbnailResizeObserver?.disconnect());
+
+watch(thumbnailColumns, columns => emit('previewCapacity', columns * 4), { immediate: true });
+
+const visibleSelectedFiles = computed(() => {
+  const capacity = thumbnailColumns.value * 4;
+  const needsOverflow = props.selectedCount > Math.min(props.selectedFiles.length, capacity);
+  return props.selectedFiles.slice(0, Math.max(0, capacity - (needsOverflow ? 1 : 0)));
+});
 const hiddenSelectedCount = computed(() => Math.max(0, props.selectedCount - visibleSelectedFiles.value.length));
 const selectionSummaryText = computed(() => {
   if (props.selectedCount <= 0) return '';
