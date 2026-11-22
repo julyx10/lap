@@ -7163,8 +7163,10 @@ async function getSearchSidebarCountAndSum() {
   const textParams = { ...currentQueryParams.value, searchFileType: 0 };
   const imageParams = { ...currentImageSearchParams.value, fileType: 0 };
   const visualDisabled = imageSearchLanguageUnsupported.value;
+  const subjectsOnly = config.main.sidebarIndex === SIDEBAR.LIBRARY
+    && libConfig.library.item === LIB_ITEM.SUBJECTS;
   const [textResult, visualResult] = await Promise.all([
-    getQueryFiles(textParams, 0, 0),
+    subjectsOnly ? Promise.resolve([]) : getQueryFiles(textParams, 0, 0),
     visualDisabled ? Promise.resolve([]) : searchSimilarImages(imageParams),
   ]);
   // A failed query must not overwrite the previous authoritative history count.
@@ -8616,6 +8618,9 @@ async function updateContent(force = false, preserveMultiSelection = selectMode.
           showEmptyContent(requestId);
           break;
         }
+        // Reloads (including catalog changes) refresh counts through the same
+        // unfiltered query and guarded commit path as explicit sidebar clicks.
+        uiStore.requestCountUpdate({ source: 'library', item: LIB_ITEM.SUBJECTS, smartId });
         const smartTagLabel = localeMsg.value.subject.items?.[smartTag.id] || smartTag.id;
         contentTitle.value = `${localeMsg.value.subject.title} > ${smartTagLabel}`;
         getImageSearchFileList(
