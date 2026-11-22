@@ -467,6 +467,10 @@ async fn main() {
                     }
                 }
                 tauri::RunEvent::Exit { .. } => {
+                    t_sqlite::clear_conn_pool();
+                    if let Err(e) = t_storage::checkpoint_current_db_on_exit() {
+                        eprintln!("Failed to checkpoint database on exit: {}", e);
+                    }
                     if aptabase_enabled {
                         let _ = app_handle.track_event("app_exited", None);
                         app_handle.flush_events_blocking();

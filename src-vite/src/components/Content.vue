@@ -10491,13 +10491,14 @@ const setSelectedFileCullingFlag = async (cullingFlag: number, advance = false) 
   const requestId = currentContentRequestId;
   if (selectedItemIndex.value < 0) return;
   const item = fileList.value[selectedItemIndex.value];
-  if (!item) return;
+  if (!item || typeof item.id !== 'number' || item.id <= 0) return;
   const normalized = Math.max(0, Math.min(2, cullingFlag));
   const previous = Number(item.culling_flag ?? item.cullingFlag ?? 0);
   item.culling_flag = normalized;
   const result = await setFileCullingFlag(item.id, normalized);
   if (result === null) {
     item.culling_flag = previous;
+    toast.error(t('file_info.metadata_save_failed'));
     return;
   }
   syncFileMetaToImageViewer(item.id, { culling_flag: normalized });

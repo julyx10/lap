@@ -213,6 +213,7 @@ import { useUIStore } from '@/stores/uiStore';
 import { config, libConfig } from '@/common/config';
 import { isWin, isMac, isLinux, copyFilePaths, getClipboardItemPaths, getMediaItemSize, getSlideShowInterval, SCALE_VALUES } from '@/common/utils';
 import { matchesShortcut, ShortcutActionId, ShortcutPlatform, VIEW_BACKGROUND_SHORTCUTS } from '@/common/shortcuts';
+import { createCullingSyncTracker, getMatchingPaneFileInfo } from '@/common/cullingSync';
 import { handleVideoPlaybackShortcut, handleVideoEscapeShortcut } from '@/common/video';
 import {
   checkFileAccessibility,
@@ -261,6 +262,7 @@ const mediaViewerRef = ref<any>(null); // media viewer reference
 const rightMediaViewerRef = ref<any>(null); // right media viewer reference (split mode)
 type Pane = 'left' | 'right' | 'bottomLeft' | 'bottomRight';
 const allPanes: Pane[] = ['left', 'right', 'bottomLeft', 'bottomRight'];
+const cullingSync = createCullingSyncTracker();
 const paneViewerRefs = new Map<Pane, any>();
 const isFullScreen = ref(false);
 const wasMaximizedBeforeFullScreen = ref(false);
@@ -484,12 +486,7 @@ onMounted(async() => {
         }
         break;
       case 'update-file-meta':
-        for (const pane of allPanes) {
-          const target = getFileInfoByPane(pane);
-          if (targetFileId === getFileIdByPane(pane) && target) {
-            Object.assign(target, changes || {});
-          }
-        }
+        applyFileMetaToPanes(targetFileId, changes || {});
         break;
       default:
         break;
@@ -1012,27 +1009,50 @@ watch(() => isSyncViewport.value, (isSync) => {
   config.imageViewer.isSyncViewport = isSync;
 });
 
-// watch file changed
-watch(() => fileId.value, async () => {
-  fileInfo.value = await getFileInfo(fileId.value);
-  iconRotate.value = fileInfo.value.rotate || 0;
-  console.log('fileInfo:', fileInfo.value);
-  if (isSlideShow.value) {
-    scheduleNextSlide();
+async function loadPaneFileInfo(pane: Pane, targetId: number) {
+  const requestId = cullingSync.beginFileInfoLoad(pane);
+  if (getFileInfoByPane(pane) && Number(getFileInfoByPane(pane).id) !== targetId) {
+    setFileInfoByPane(pane, null);
   }
+  const loaded = targetId > 0 ? await getFileInfo(targetId) : null;
+  if (!cullingSync.isCurrentFileInfoLoad(pane, requestId, getFileIdByPane(pane), targetId)) {
+    return;
+  }
+  const resolved = cullingSync.applyPendingCulling(loaded, requestId);
+  setFileInfoByPane(pane, resolved);
+  if (pane === 'left') {
+    iconRotate.value = resolved?.rotate || 0;
+    console.log('fileInfo:', resolved);
+    if (isSlideShow.value) {
+      scheduleNextSlide();
+    }
+  }
+}
+
+function setFileInfoByPane(pane: Pane, info: any) {
+  if (pane === 'right') {
+    rightFileInfo.value = info;
+    return;
+  }
+  if (pane === 'bottomLeft' || pane === 'bottomRight') {
+    extraPaneState[pane].fileInfo = info;
+    return;
+  }
+  fileInfo.value = info;
+}
+
+// watch file changed
+watch(() => fileId.value, async (newFileId) => {
+  await loadPaneFileInfo('left', newFileId);
 });
 
-watch(() => rightFileId.value, async () => {
-  if (rightFileId.value > 0) {
-    rightFileInfo.value = await getFileInfo(rightFileId.value);
-  } else {
-    rightFileInfo.value = null;
-  }
+watch(() => rightFileId.value, async (newFileId) => {
+  await loadPaneFileInfo('right', newFileId);
 });
 
 for (const pane of ['bottomLeft', 'bottomRight'] as const) {
   watch(() => extraPaneState[pane].fileId, async (newFileId) => {
-    extraPaneState[pane].fileInfo = newFileId > 0 ? await getFileInfo(newFileId) : null;
+    await loadPaneFileInfo(pane, newFileId);
   });
 }
 
@@ -1220,7 +1240,7 @@ function syncFileMetaToContent(targetFileId: number, changes: Record<string, any
 
 function applyFileMetaToPanes(targetFileId: number, changes: Record<string, any>) {
   for (const pane of allPanes) {
-    const target = getFileInfoByPane(pane);
+    const target = getMatchingPaneFileInfo(getFileInfoByPane(pane), targetFileId);
     if (targetFileId === getFileIdByPane(pane) && target) {
       Object.assign(target, changes);
     }
@@ -1372,18 +1392,27 @@ const setCurrentFileRating = async (rating: number, pane: Pane = 'left', advance
 };
 
 const setCurrentFileCullingFlag = async (cullingFlag: number, pane: Pane = 'left', advance = false) => {
-  const target = getFileInfoByPane(pane);
   const currentFileId = getFileIdByPane(pane);
-  if (!target || currentFileId <= 0) return;
+  if (currentFileId <= 0) return;
 
-  const normalized = Math.max(0, Math.min(2, cullingFlag));
-  const previous = Number(target.culling_flag ?? target.cullingFlag ?? 0);
+  const target = getMatchingPaneFileInfo(getFileInfoByPane(pane), currentFileId);
+  const knownPrevious = target ? Number(target.culling_flag ?? target.cullingFlag ?? 0) : null;
+  const { seq, normalized } = cullingSync.beginCullingUpdate(currentFileId, cullingFlag, knownPrevious);
   applyFileMetaToPanes(currentFileId, { culling_flag: normalized });
+
   const result = await setFileCullingFlag(currentFileId, normalized);
+  const finished = cullingSync.finishCullingUpdate(currentFileId, seq, result !== null);
+  if (!finished.isLatest) return;
+
   if (result === null) {
-    applyFileMetaToPanes(currentFileId, { culling_flag: previous });
+    if (finished.previous !== null) {
+      applyFileMetaToPanes(currentFileId, { culling_flag: finished.previous });
+    }
+    toast.error(t('file_info.metadata_save_failed'));
     return;
   }
+
+  applyFileMetaToPanes(currentFileId, { culling_flag: normalized });
   syncFileMetaToContent(currentFileId, { culling_flag: normalized });
   void emit('culling-status-updated');
   if (advance) advanceAfterMetadataShortcut(currentFileId, pane);
