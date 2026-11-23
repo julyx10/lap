@@ -229,7 +229,17 @@ impl Default for CullingState {
 pub struct TagState {
     pub id: Option<i64>,
     #[serde(default)]
+    pub multi: bool,
+    #[serde(default)]
+    pub previous_id: Option<i64>,
+    #[serde(default)]
+    pub selected_ids: Vec<i64>,
+    #[serde(default)]
+    pub match_any: bool,
+    #[serde(default)]
     pub collapsed_tag_ids: Vec<i64>,
+    #[serde(default)]
+    pub assign_collapsed_tag_ids: Vec<i64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -253,7 +263,12 @@ impl Default for TagState {
     fn default() -> Self {
         Self {
             id: None,
+            multi: false,
+            previous_id: None,
+            selected_ids: Vec::new(),
+            match_any: false,
             collapsed_tag_ids: Vec::new(),
+            assign_collapsed_tag_ids: Vec::new(),
         }
     }
 }
@@ -1034,11 +1049,12 @@ mod config_update_tests {
         let state = TagState {
             id: Some(10),
             collapsed_tag_ids: vec![10, 20],
+            ..TagState::default()
         };
         let saved = serde_json::to_value(&state).unwrap();
         assert_eq!(
             saved,
-            serde_json::json!({"id": 10, "collapsedTagIds": [10, 20]})
+            serde_json::json!({"id": 10, "collapsedTagIds": [10, 20], "assignCollapsedTagIds": [], "multi":false,"previousId":null,"selectedIds":[],"matchAny":false})
         );
         let restored: TagState = serde_json::from_value(saved).unwrap();
         assert_eq!(restored.collapsed_tag_ids, state.collapsed_tag_ids);

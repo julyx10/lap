@@ -362,6 +362,8 @@
     "title": "タグを追加"
   },
   "tag": {
+    "multi_filter": "複数タグで絞り込み",
+    "exit_multi_filter": "複数タグの絞り込みを終了",
     "selected_files": "{count} 個のファイルを選択中",
     "no_selected_tags": "選択したタグはありません",
     "show_selected_only": "選択したタグのみ表示",

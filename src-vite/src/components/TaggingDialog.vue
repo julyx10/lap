@@ -64,16 +64,6 @@
           }"
           @click="toggleTag(tag.id)"
         >
-          <input
-            type="checkbox"
-            class="checkbox checkbox-xs mx-1 shrink-0"
-            :class="{ 'checkbox-primary': selectedTags.has(tag.id) || intermediateTags.has(tag.id) }"
-            :disabled="!canEditTags || !!editor"
-            :checked="selectedTags.has(tag.id)"
-            :indeterminate="intermediateTags.has(tag.id)"
-            @click.stop
-            @change="toggleTag(tag.id)"
-          />
           <div class="flex items-center flex-1 min-w-0" :style="{ paddingLeft: `${tag.depth * 16}px` }">
           <button
             v-if="tag.hasChildren"
@@ -86,6 +76,17 @@
             />
           </button>
           <span v-else class="size-5 shrink-0" aria-hidden="true" />
+          <input
+            type="checkbox"
+            class="checkbox checkbox-xs mx-1 shrink-0"
+            :class="{ 'checkbox-primary': selectedTags.has(tag.id) || intermediateTags.has(tag.id) }"
+            :disabled="!canEditTags || !!editor"
+            :checked="selectedTags.has(tag.id)"
+            :indeterminate="intermediateTags.has(tag.id)"
+            @click.stop
+            @change="toggleTag(tag.id)"
+          />
+          <IconTag class="w-5 h-5 pr-1 shrink-0" />
           <TagNameInput
             v-if="editor && tag.id === (editor.id ?? -1)"
             :key="tag.id"
@@ -203,6 +204,7 @@ import {
 } from "@/common/api";
 import {
   IconTagAdd,
+  IconTag,
   IconClose,
   IconRename,
   IconSearch,

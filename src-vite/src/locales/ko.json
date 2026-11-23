@@ -362,6 +362,8 @@
     "title": "태그 지정"
   },
   "tag": {
+    "multi_filter": "다중 태그 필터",
+    "exit_multi_filter": "다중 태그 필터 종료",
     "selected_files": "파일 {count}개 선택됨",
     "no_selected_tags": "선택한 태그가 없습니다",
     "show_selected_only": "선택한 태그만 표시",

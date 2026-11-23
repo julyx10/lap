@@ -362,6 +362,8 @@
     "title": "Atribuir etiquetas"
   },
   "tag": {
+    "multi_filter": "Filtro de várias etiquetas",
+    "exit_multi_filter": "Sair do filtro de várias etiquetas",
     "selected_files": "{count} arquivos selecionados",
     "no_selected_tags": "Nenhuma etiqueta selecionada",
     "show_selected_only": "Mostrar apenas etiquetas selecionadas",

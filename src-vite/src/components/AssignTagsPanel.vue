@@ -28,11 +28,12 @@
           class="group h-full flex items-center text-sm py-1 pl-1 pr-1 rounded-box hover:bg-base-content/5 cursor-pointer select-none"
           :class="{ 'text-primary': selected.has(tag.id) }"
           @click="change(tag.id, !selected.has(tag.id))">
-          <input type="checkbox" class="checkbox checkbox-xs mx-1 shrink-0" :class="{ 'checkbox-primary': selected.has(tag.id) || partial.has(tag.id) }" @click.stop :checked="selected.has(tag.id)" :indeterminate="partial.has(tag.id)"
-            :disabled="loading || busy || failed || !fileIds.length" @change="change(tag.id, !selected.has(tag.id))" />
           <div class="flex items-center flex-1 min-w-0" :style="{ paddingLeft: `${tag.depth * 16}px` }">
             <button v-if="tag.hasChildren" type="button" class="size-5 shrink-0 flex items-center justify-center cursor-pointer" @click.stop="toggleBranch(tag.id)"><IconRight class="size-5 p-0.5" :class="{ 'rotate-90': search || !collapsed.includes(tag.id) }" /></button>
             <span v-else class="size-5 shrink-0" aria-hidden="true" />
+            <input type="checkbox" class="checkbox checkbox-xs mx-1 shrink-0" :class="{ 'checkbox-primary': selected.has(tag.id) || partial.has(tag.id) }" @click.stop :checked="selected.has(tag.id)" :indeterminate="partial.has(tag.id)"
+              :disabled="loading || busy || failed || !fileIds.length" @change="change(tag.id, !selected.has(tag.id))" />
+            <IconTag class="w-5 h-5 pr-1 shrink-0" />
             <span class="min-w-0 flex-1 truncate" :title="tag.path">{{ search && !showSelectedOnly ? tag.path : tag.name }}</span>
           </div>
         </div>
@@ -56,15 +57,15 @@ import { getAllTags, getTagSelectionCounts, applyTagsToFiles } from '@/common/ap
 import { tagRows, ancestorIds, subtreeIds, type LibraryTag } from '@/common/tagTree';
 import { config, libConfig } from '@/common/config';
 import { useUIStore } from '@/stores/uiStore';
-import { IconClose, IconRight, IconFilter } from '@/common/icons';
+import { IconClose, IconRight, IconFilter, IconTag } from '@/common/icons';
 import VirtualScroll from './VirtualScroll.vue';
 const props = defineProps<{ fileIds: number[]; focusTagId?: number }>();
 const emit = defineEmits(['close', 'changed']);
 const ui = useUIStore();
 const tags = ref<LibraryTag[]>([]), search = ref('');
 const collapsed = computed<number[]>({
-  get: () => libConfig.tag.collapsedTagIds || [],
-  set: ids => { libConfig.tag.collapsedTagIds = ids; },
+  get: () => libConfig.tag.assignCollapsedTagIds || [],
+  set: ids => { libConfig.tag.assignCollapsedTagIds = ids; },
 });
 const selected = ref(new Set<number>()), partial = ref(new Set<number>());
 function updateTagCount(tagId: number, count: number) {

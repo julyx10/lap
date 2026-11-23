@@ -362,6 +362,8 @@
     "title": "Assign tags"
   },
   "tag": {
+    "multi_filter": "Multi-tag filter",
+    "exit_multi_filter": "Exit multi-tag filtering",
     "selected_files": "{count} selected files",
     "no_selected_tags": "No selected tags",
     "show_selected_only": "Show selected tags only",

@@ -362,6 +362,8 @@
     "title": "Assegna tag"
   },
   "tag": {
+    "multi_filter": "Filtro multi-tag",
+    "exit_multi_filter": "Esci dal filtro multi-tag",
     "selected_files": "{count} file selezionati",
     "no_selected_tags": "Nessun tag selezionato",
     "show_selected_only": "Mostra solo i tag selezionati",

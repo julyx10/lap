@@ -362,6 +362,8 @@
     "title": "Przypisz tagi"
   },
   "tag": {
+    "multi_filter": "Filtr wielu tagów",
+    "exit_multi_filter": "Zakończ filtrowanie wieloma tagami",
     "selected_files": "Wybrane pliki: {count}",
     "no_selected_tags": "Brak wybranych tagów",
     "show_selected_only": "Pokaż tylko wybrane tagi",

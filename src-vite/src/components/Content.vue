@@ -3852,6 +3852,7 @@ const currentQueryParams = ref({
   rating: -1,
   cullingFlag: -1,
   tagId: 0,
+  tagFilter: null as { ids: number[]; any: boolean } | null,
   personId: 0,
 });
 const currentQuerySource = ref<'query' | 'smart' | 'collection' | 'search'>('query');
@@ -4013,7 +4014,7 @@ function matchesRequestedSidebarCount(request: any) {
       return libConfig.activePane === 'collection'
         && Number(libConfig.collection.selectedId) === Number(request.id);
     case 'tag':
-      return config.main.sidebarIndex === SIDEBAR.TAG && Number(libConfig.tag.id) === Number(request.id);
+      return config.main.sidebarIndex === SIDEBAR.TAG && !libConfig.tag.multi && Number(libConfig.tag.id) === Number(request.id);
     case 'smart-album':
       return config.main.sidebarIndex === SIDEBAR.SMART_ALBUM
         && libConfig.smartAlbum.type === 'custom'
@@ -5902,6 +5903,7 @@ function buildScanStreamQueryParams() {
     isFavorite: false,
     rating: -1,
     tagId: 0,
+    tagFilter: null,
     personId: 0,
   };
 }
@@ -6867,6 +6869,7 @@ watch(
     personId: libConfig.person.id,
     calendar: [config.calendar.view, libConfig.calendar.year, libConfig.calendar.month, libConfig.calendar.date],
     tagId: libConfig.tag.id,
+    tagFilter: [libConfig.tag.multi, libConfig.tag.matchAny, libConfig.tag.selectedIds],
     location: [libConfig.location.cc, libConfig.location.admin1, libConfig.location.name],
     camera: [config.camera.isCamera, libConfig.camera.make, libConfig.camera.model, (libConfig.camera as any).lensMake, (libConfig.camera as any).lensModel],
   }),
@@ -6903,7 +6906,7 @@ watch(
     config.settings.folderSort, config.settings.calendarSort, config.settings.locationSort, config.settings.cameraSort, config.search.groupBy, // group sorting and filtering (tag/person sorts only affect their sidebars, not content grouping)
     libConfig.person.id,                                                              // person
     config.calendar.view, libConfig.calendar.year, libConfig.calendar.month, libConfig.calendar.date, // calendar
-    libConfig.tag.id, libConfig.tag.activateTick, // tag
+    libConfig.tag.id, libConfig.tag.activateTick, libConfig.tag.multi, libConfig.tag.matchAny, JSON.stringify(libConfig.tag.selectedIds || []), // tag
     libConfig.location.cc, libConfig.location.admin1, libConfig.location.name,                               // location
     libConfig.camera.make, libConfig.camera.model,                                    // camera 
     config.camera.isCamera, (libConfig.camera as any).lensMake, (libConfig.camera as any).lensModel, // lens
@@ -7880,6 +7883,7 @@ async function getFileList(
     rating = -1,
     cullingFlag = -1,
     tagId = 0,
+    tagFilter = null as { ids: number[]; any: boolean } | null,
     personId = 0,
     gpsMinLat = null,
     gpsMaxLat = null,
@@ -7923,6 +7927,7 @@ async function getFileList(
     rating,
     cullingFlag,
     tagId,
+    tagFilter,
     personId,
     gpsMinLat,
     gpsMaxLat,
@@ -8789,19 +8794,18 @@ async function updateContent(force = false, preserveMultiSelection = selectMode.
     }
   } 
   else if(newIndex === SIDEBAR.TAG) {
-    if (libConfig.tag.id === null) {
-      contentTitle.value = "";
-      showEmptyContent(requestId);
+    const multi = !!libConfig.tag.multi;
+    const ids = multi ? [...(libConfig.tag.selectedIds || [])] : (libConfig.tag.id ? [libConfig.tag.id] : []);
+    const any = !!libConfig.tag.matchAny;
+    if (!ids.length) {
+      contentTitle.value = multi ? localeMsg.value.tag.title : '';
+      if (multi) getFileList({ tagFilter: { ids: [], any } }, requestId);
+      else showEmptyContent(requestId);
     } else {
-      getTagName(libConfig.tag.id).then(tagName => {
+      Promise.all(ids.map(id => getTagName(id))).then(names => {
         if (requestId !== currentContentRequestId) return;
-        if (tagName) {
-          contentTitle.value = tagName;
-          getFileList({ tagId: libConfig.tag.id || 0 }, requestId);
-        } else {
-          contentTitle.value = "";
-          showEmptyContent(requestId);
-        }
+        contentTitle.value = names.filter(Boolean).join(any && multi ? ' OR ' : ' AND ');
+        getFileList(multi ? { tagFilter: { ids, any } } : { tagId: ids[0] }, requestId);
       });
     }
   }
@@ -11259,7 +11263,7 @@ type TagFileState = { file_id: number; has_tags: boolean };
 type TagRemovalContext = { library: string; tagId: number; branch: Set<number> };
 
 function isTagRemovalView({ library, tagId }: TagRemovalContext) {
-  return library === libConfig._libraryId && config.main.sidebarIndex === SIDEBAR.TAG
+  return !libConfig.tag.multi && library === libConfig._libraryId && config.main.sidebarIndex === SIDEBAR.TAG
     && currentQuerySource.value === 'query' && Number(currentQueryParams.value.tagId) === tagId
     && Number(libConfig.tag.id) === tagId;
 }

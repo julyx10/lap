@@ -362,6 +362,8 @@
     "title": "添加标签"
   },
   "tag": {
+    "multi_filter": "多标签筛选",
+    "exit_multi_filter": "退出多标签筛选",
     "selected_files": "已选择 {count} 个文件",
     "no_selected_tags": "没有已选标签",
     "show_selected_only": "仅显示已选标签",

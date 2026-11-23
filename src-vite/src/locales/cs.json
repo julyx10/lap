@@ -362,6 +362,8 @@
     "title": "Přiřadit štítky"
   },
   "tag": {
+    "multi_filter": "Filtr více štítků",
+    "exit_multi_filter": "Ukončit filtrování více štítky",
     "selected_files": "Vybrané soubory: {count}",
     "no_selected_tags": "Žádné vybrané štítky",
     "show_selected_only": "Zobrazit jen vybrané štítky",

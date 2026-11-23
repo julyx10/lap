@@ -362,6 +362,8 @@
     "title": "Tags zuweisen"
   },
   "tag": {
+    "multi_filter": "Mehrfach-Tag-Filter",
+    "exit_multi_filter": "Mehrfach-Tag-Filter beenden",
     "selected_files": "{count} ausgewählte Dateien",
     "no_selected_tags": "Keine ausgewählten Tags",
     "show_selected_only": "Nur ausgewählte Tags anzeigen",

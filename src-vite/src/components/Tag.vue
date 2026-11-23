@@ -1,5 +1,5 @@
 <template>
-  <div class="sidebar-panel">
+  <div class="sidebar-panel" @pointerdown.capture="activateTagPanel" @focusin="activateTagPanel">
     <div class="sidebar-panel-header">
       <span class="sidebar-panel-header-title flex-1"
         >{{ $t("tag.title")
@@ -13,6 +13,24 @@
       :tooltip="$t('msgbox.new_tag.title')"
       @click="clickAddTag()"
       />
+      <div class="inline-flex shrink-0 items-center gap-0 overflow-hidden rounded-box"
+        :class="{ 'border border-base-content/5': libConfig.tag.multi }">
+        <TButton :icon="IconMultiSelect" buttonSize="small" :selected="libConfig.tag.multi"
+          :buttonClasses="libConfig.tag.multi ? 'h-6! w-6! min-h-0!' : ''"
+          :disabled="!tags.length" :tooltip="$t(libConfig.tag.multi ? 'tag.exit_multi_filter' : 'tag.multi_filter')"
+          @click="libConfig.tag.multi ? exitMultiFilter() : enterTagFilter(libConfig.tag)" />
+        <Transition name="tag-filter-modes">
+          <div v-if="libConfig.tag.multi" class="tag-filter-modes-slot shrink-0 overflow-hidden">
+            <div class="flex w-16 items-center">
+              <button v-for="any in [false, true]" :key="String(any)"
+                class="h-6 w-8 shrink-0 rounded-box text-[10px] cursor-pointer hover:bg-base-100/30"
+                :class="libConfig.tag.matchAny === any ? 'text-primary bg-primary/15' : 'text-base-content/50'"
+                :aria-pressed="libConfig.tag.matchAny === any"
+                @click="libConfig.tag.matchAny = any">{{ any ? 'OR' : 'AND' }}</button>
+            </div>
+          </div>
+        </Transition>
+      </div>
       <SortMenuButton v-model="config.settings.tagSort" kind="category" />
     </div>
     <div v-if="tags.length > 0" class="mx-1 mb-2 px-1 shrink-0">
@@ -55,20 +73,20 @@
     </div>
 
     <div ref="tagList" class="grow min-h-0 overflow-y-auto overflow-x-hidden">
-      <ul role="tree">
+      <ul role="tree" :aria-multiselectable="!!libConfig.tag.multi">
         <li
           v-for="tag in rows"
           :key="tag.id"
           role="treeitem"
           :aria-level="tag.depth + 1"
           :aria-expanded="tag.hasChildren ? expanded(tag.id) : undefined"
-          :aria-selected="libConfig.tag.id === tag.id"
+          :aria-selected="isTagSelected(tag.id)"
         >
           <div
             :id="`tag-${tag.id}`"
-            class="sidebar-item group select-none"
+            class="sidebar-item group select-none focus:outline-none"
             :class="[
-              libConfig.tag.id === tag.id ? 'sidebar-item-selected' : 'sidebar-item-hover',
+              isTagSelected(tag.id) ? 'sidebar-item-selected' : 'sidebar-item-hover',
               {
                 'opacity-50': dragged === tag.id,
                 'bg-primary/10 ring-1 ring-inset ring-primary/40':
@@ -82,8 +100,8 @@
             @keydown.space.stop.prevent="selectTag(tag)"
             @pointerdown="startDrag($event, tag)"
             @dragstart.prevent
-            @click="selectTag(tag)"
-            @dblclick.stop="edit(tag)"
+            @click="selectTag(tag, $event)"
+            @dblclick.stop="!libConfig.tag.multi && edit(tag)"
           >
             <button
               v-if="tag.hasChildren"
@@ -97,6 +115,10 @@
               />
             </button>
             <span v-else class="size-6 shrink-0" aria-hidden="true" />
+            <input v-if="libConfig.tag.multi" type="checkbox" class="checkbox checkbox-xs mr-1 shrink-0"
+              :class="{ 'checkbox-primary': isTagSelected(tag.id) }"
+              :checked="isTagSelected(tag.id)" :aria-label="tag.path || tag.name"
+              @click.stop="selectTag(tag)" />
             <IconTag class="w-5 h-5 pr-1 shrink-0" />
             <TagNameInput
               v-if="editor && tag.id === (editor.id ?? -1)"
@@ -167,6 +189,7 @@ import { emit as emitEvent, listen } from "@tauri-apps/api/event";
 import { useI18n } from "vue-i18n";
 import { useToast } from "@/common/toast";
 import { useUIStore } from "@/stores/uiStore";
+import { selectFilterTag, exitTagFilter, enterTagFilter } from '@/common/tagFilter';
 import { useLibraryChangeRefresh } from "@/composables/useLibraryChangeRefresh";
 import { config, libConfig } from "@/common/config";
 import { SIDEBAR } from "@/common/constants";
@@ -188,6 +211,7 @@ import {
 } from "@/common/tagTree";
 import {
   IconClose,
+  IconMultiSelect,
   IconMore,
   IconSearch,
   IconTag,
@@ -255,9 +279,40 @@ function toggle(id: number) {
     ? closed.filter((value: number) => value !== id)
     : [...closed, id];
 }
-function selectTag(tag: LibraryTag) {
+function activateTagPanel() {
+  uiStore.setActivePane('left-sidebar');
+  libConfig.activePane = 'main';
+}
+function isTagSelected(id: number) {
+  return libConfig.tag.multi ? (libConfig.tag.selectedIds || []).includes(id) : libConfig.tag.id === id;
+}
+async function exitMultiFilter() {
+  exitTagFilter(libConfig.tag);
+  const id = libConfig.tag.id;
+  if (id == null) return;
+  search.value = '';
+  reveal(id);
+  libConfig.tag.activateTick++;
+  await nextTick();
+  if (libConfig.tag.multi || libConfig.tag.id !== id) return;
+  const row = document.getElementById(`tag-${id}`);
+  row?.scrollIntoView({ block: 'nearest' });
+}
+async function handleFilterEscape(event: KeyboardEvent) {
+  if (event.key !== 'Escape' || event.isComposing) return;
+  const canHandle = () => !disposed && !event.defaultPrevented && libConfig.tag.multi && !editor.value
+    && uiStore.activePane === 'left-sidebar' && config.main.sidebarIndex === SIDEBAR.TAG && libConfig.activePane === 'main'
+    && !uiStore.inputStack.length && !document.fullscreenElement && !document.querySelector('[role="dialog"]');
+  if (!canHandle()) return;
+  // A new task lets preview/fullscreen handlers consume Escape before we recheck.
+  await new Promise<void>(resolve => setTimeout(resolve, 0));
+  if (!canHandle()) return;
+  if (search.value && searchInputRef.value === document.activeElement) search.value = '';
+  else exitMultiFilter();
+}
+function selectTag(tag: LibraryTag, event?: MouseEvent) {
   if (suppressDragClick) return;
-  libConfig.tag.id = tag.id;
+  selectFilterTag(libConfig.tag, tag.id, !!(event?.metaKey || event?.ctrlKey));
 }
 function reveal(id: number) {
   const ancestors = new Set(ancestorIds(tags.value, id));
@@ -370,6 +425,7 @@ let dragStart: {
 let excludedDropIds = new Set<number>();
 let suppressDragClick = false;
 function startDrag(event: PointerEvent, tag: LibraryTag) {
+  if (libConfig.tag.multi || event.metaKey || event.ctrlKey) return;
   if (
     event.button !== 0 ||
     !event.isPrimary ||
@@ -512,6 +568,9 @@ async function load() {
       count: Number(counts[String(tag.id)] || 0),
     }));
     libConfig.tag.counts = counts;
+    const validIds = new Set(tags.value.map(tag => tag.id));
+    if (libConfig.tag.previousId != null && !validIds.has(libConfig.tag.previousId)) libConfig.tag.previousId = null;
+    libConfig.tag.selectedIds = (libConfig.tag.selectedIds || []).filter((id: number) => validIds.has(id));
     if (!tags.value.some((tag) => tag.id === libConfig.tag.id))
       libConfig.tag.id = tags.value[0]?.id ?? null;
     failed.value = false;
@@ -523,6 +582,7 @@ async function load() {
 }
 useLibraryChangeRefresh(load);
 onMounted(async () => {
+  window.addEventListener("keydown", handleFilterEscape, true);
   const stop = await listen<{ source?: string; patchedTagId?: number; library?: string }>(
     "tags-changed",
     async (event) => {
@@ -539,6 +599,7 @@ onMounted(async () => {
   if (libConfig.tag.id != null) reveal(libConfig.tag.id);
 });
 onBeforeUnmount(() => {
+  window.removeEventListener("keydown", handleFilterEscape, true);
   stopDrag();
   disposed = true;
   request++;
@@ -561,3 +622,15 @@ watch(
 );
 defineExpose({ clickAddTag });
 </script>
+
+<style scoped>
+.tag-filter-modes-slot { width: 64px; }
+.tag-filter-modes-enter-active,
+.tag-filter-modes-leave-active { transition: width 200ms ease, opacity 200ms ease; }
+.tag-filter-modes-enter-from,
+.tag-filter-modes-leave-to { width: 0; opacity: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .tag-filter-modes-enter-active,
+  .tag-filter-modes-leave-active { transition: none; }
+}
+</style>

@@ -2118,6 +2118,13 @@ pub struct ATimeLine {
     pub position: i64, // Row index in the sorted fileList
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct TagFilter {
+    pub ids: Vec<i64>,
+    #[serde(default)]
+    pub any: bool,
+}
+
 /// Define the query parameters struct for file queries
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -2152,6 +2159,8 @@ pub struct QueryParams {
     #[serde(default = "default_culling_flag")]
     pub culling_flag: i64,
     pub tag_id: i64,
+    #[serde(default)]
+    pub tag_filter: Option<TagFilter>,
     #[serde(default)]
     pub person_id: i64,
     // GPS bounding box filter (e.g. for "photos in this map area")
@@ -5609,8 +5618,20 @@ impl AFile {
             sql_params.push(Box::new(params.culling_flag));
         }
 
-        if params.tag_id > 0 {
-            conditions.push("EXISTS (WITH RECURSIVE descendants(id) AS (SELECT id FROM atags WHERE id=? UNION ALL SELECT t.id FROM atags t JOIN descendants d ON t.parent_id=d.id) SELECT 1 FROM afile_tags ft JOIN descendants d ON d.id=ft.tag_id WHERE ft.file_id=a.id)".to_string());
+        const TAG_SUBTREE_MATCH: &str = "EXISTS (WITH RECURSIVE descendants(id) AS (SELECT id FROM atags WHERE id=? UNION ALL SELECT t.id FROM atags t JOIN descendants d ON t.parent_id=d.id) SELECT 1 FROM afile_tags ft JOIN descendants d ON d.id=ft.tag_id WHERE ft.file_id=a.id)";
+        if let Some(filter) = &params.tag_filter {
+            let ids: std::collections::BTreeSet<i64> = filter.ids.iter().copied().filter(|id| *id > 0).collect();
+            if ids.is_empty() {
+                conditions.push("0".to_string());
+            } else {
+                let parts: Vec<&str> = ids.iter().map(|id| {
+                    sql_params.push(Box::new(*id));
+                    TAG_SUBTREE_MATCH
+                }).collect();
+                conditions.push(format!("({})", parts.join(if filter.any { " OR " } else { " AND " })));
+            }
+        } else if params.tag_id > 0 {
+            conditions.push(TAG_SUBTREE_MATCH.to_string());
             sql_params.push(Box::new(params.tag_id));
         }
 
@@ -12108,5 +12129,46 @@ mod location_group_tests {
                 ),
             ]
         );
+    }
+}
+
+
+#[cfg(test)]
+mod multi_tag_filter_tests {
+    use super::*;
+
+    #[test]
+    fn all_any_empty_and_subtree_filters() {
+        let conn = Connection::open_in_memory().unwrap();
+        conn.execute_batch("CREATE TABLE albums(id INTEGER PRIMARY KEY, path TEXT, file_types INTEGER, small_image_filter INTEGER, excluded_folders TEXT);
+            INSERT INTO albums VALUES(1,'/',7,NULL,'[]');
+            CREATE TABLE afolders(id INTEGER PRIMARY KEY, album_id INTEGER, path TEXT, is_excluded_from_search INTEGER);
+            INSERT INTO afolders VALUES(1,1,'/photos',0);
+            CREATE TABLE afiles(id INTEGER PRIMARY KEY, folder_id INTEGER, live_photo_video_id INTEGER, width INTEGER, height INTEGER, file_type INTEGER);
+            INSERT INTO afiles VALUES(1,1,NULL,1000,1000,1),(2,1,NULL,1000,1000,1),(3,1,NULL,1000,1000,1);
+            CREATE TABLE atags(id INTEGER PRIMARY KEY,parent_id INTEGER);
+            INSERT INTO atags VALUES(10,NULL),(11,10),(20,NULL);
+            CREATE TABLE afile_tags(file_id INTEGER, tag_id INTEGER, PRIMARY KEY(file_id,tag_id));
+            INSERT INTO afile_tags VALUES(1,11),(1,20),(2,10),(3,20);").unwrap();
+        let mut params: QueryParams = serde_json::from_value(serde_json::json!({
+            "searchFileName":"","searchFileType":0,"sortType":0,"sortOrder":0,
+            "searchAllSubfolders":"","searchFolder":"","startDate":0,"endDate":0,
+            "calendarSort":0,"make":"","model":"","lensMake":"","lensModel":"",
+            "locationAdmin1":"","locationName":"","isFavorite":false,"rating":-1,"tagId":0
+        })).unwrap();
+        for (ids, any, expected) in [
+            (vec![10,20],false,vec![1_i64]),
+            (vec![10,20],true,vec![1,2,3]),
+            (vec![10,11],false,vec![1]),
+            (vec![10,10],true,vec![1,2]),
+            (vec![],false,vec![]),
+            (vec![],true,vec![]),
+        ] {
+            params.tag_filter = Some(TagFilter { ids, any });
+            let (joins, conditions, values) = AFile::build_search_query_parts(&params);
+            let mut stmt = conn.prepare(&format!("SELECT a.id FROM afiles a JOIN afolders b ON b.id=a.folder_id {joins}{conditions} ORDER BY a.id")).unwrap();
+            let actual = stmt.query_map(rusqlite::params_from_iter(values.iter()), |row| row.get::<_,i64>(0)).unwrap().collect::<Result<Vec<_>,_>>().unwrap();
+            assert_eq!(actual, expected);
+        }
     }
 }

@@ -362,6 +362,8 @@
     "title": "Призначити теги"
   },
   "tag": {
+    "multi_filter": "Фільтр за кількома тегами",
+    "exit_multi_filter": "Вийти з фільтра за кількома тегами",
     "selected_files": "Вибрано файлів: {count}",
     "no_selected_tags": "Немає вибраних тегів",
     "show_selected_only": "Показати лише вибрані теги",

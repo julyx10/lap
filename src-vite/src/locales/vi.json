@@ -362,6 +362,8 @@
     "title": "Gán thẻ"
   },
   "tag": {
+    "multi_filter": "Lọc nhiều thẻ",
+    "exit_multi_filter": "Thoát lọc nhiều thẻ",
     "selected_files": "Đã chọn {count} tệp",
     "no_selected_tags": "Không có thẻ nào được chọn",
     "show_selected_only": "Chỉ hiển thị các thẻ đã chọn",

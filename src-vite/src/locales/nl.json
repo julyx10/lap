@@ -362,6 +362,8 @@
     "title": "Tags toewijzen"
   },
   "tag": {
+    "multi_filter": "Filter op meerdere tags",
+    "exit_multi_filter": "Filter met meerdere tags sluiten",
     "selected_files": "{count} geselecteerde bestanden",
     "no_selected_tags": "Geen geselecteerde tags",
     "show_selected_only": "Alleen geselecteerde tags tonen",
