@@ -37,7 +37,7 @@
           @click="triggerNext" 
         />
         <div class="inline-flex shrink-0 items-center gap-0 overflow-hidden rounded-box border transition-colors duration-200"
-          :class="isSlideShow && canSlideShow ? 'border-base-content/15' : 'border-transparent'"
+          :class="isSlideShow && canSlideShow ? 'border-base-content/5' : 'border-transparent'"
           role="group" :aria-label="$t('image_viewer.toolbar.slide_show')">
           <TButton
             :icon="isSlideShow ? IconPause : IconPlay"
@@ -77,7 +77,7 @@
           </div>
           </Transition>
         </div>
-        <div class="mx-1 inline-flex shrink-0 items-center gap-0 overflow-hidden rounded-box border border-base-content/15" role="group" :aria-label="$t('image_viewer.toolbar.zoom_fit')">
+        <div class="mx-1 inline-flex shrink-0 items-center gap-0 overflow-hidden rounded-box border border-base-content/5" role="group" :aria-label="$t('image_viewer.toolbar.zoom_fit')">
           <TButton
             :icon="IconZoomOut"
             buttonClasses="h-7! w-7! min-h-0!"

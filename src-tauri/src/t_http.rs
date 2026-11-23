@@ -235,6 +235,7 @@ async fn handle_connection(
         .to_ascii_lowercase()
         .as_str()
     {
+        "jxl" => "image/jxl".into(),
         "mp4" | "m4v" => "video/mp4".into(),
         "mov" => "video/quicktime".into(),
         "webm" => "video/webm".into(),
@@ -363,6 +364,20 @@ mod tests {
         )
         .await;
         assert!(headers.starts_with("HTTP/1.1 403"));
+
+        // Original JXL bytes must be served without a JPEG preview conversion.
+        let jxl_path = path.with_extension("jxl");
+        let jxl_bytes = b"\xff\x0aJXL test payload";
+        std::fs::write(&jxl_path, jxl_bytes).unwrap();
+        let jxl_encoded = percent_encoding::utf8_percent_encode(
+            jxl_path.to_str().unwrap(), percent_encoding::NON_ALPHANUMERIC,
+        );
+        let jxl_target = format!("/media/test/{jxl_encoded}?v=1");
+        let (headers, body) = request(&jxl_target, "GET", "", Some(jxl_path.clone())).await;
+        assert!(headers.starts_with("HTTP/1.1 200"));
+        assert!(headers.contains("Content-Type: image/jxl"));
+        assert_eq!(body, jxl_bytes);
+        std::fs::remove_file(jxl_path).unwrap();
 
         std::fs::write(&path, b"").unwrap();
         let (headers, body) = request(&target, "GET", "", Some(path.clone())).await;

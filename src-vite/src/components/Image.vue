@@ -202,6 +202,7 @@
 </template>
 
 <script setup lang="ts">
+import { loadNativeJxl, loadBrowserImage } from '@/common/nativeJxl';
 import { ref, shallowRef, triggerRef, watch, onMounted, onBeforeUnmount, computed, nextTick } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
 import { useUIStore } from '@/stores/uiStore';
@@ -800,6 +801,17 @@ function loadImageResource(filePath?: string) {
   const cached = preloadCache.get(filePath);
   if (cached) {
     return cached;
+  }
+
+  if (/\.jxl$/i.test(filePath)) {
+    const previewUrl = getPreviewUrl(props.fileId, filePath, false, props.fileVersion);
+    const loadPromise = loadNativeJxl(
+      getAssetSrc(filePath, props.fileVersion),
+      () => previewUrl,
+      loadBrowserImage,
+    ).catch(error => { preloadCache.delete(filePath); throw error; });
+    preloadCache.set(filePath, loadPromise);
+    return loadPromise;
   }
 
   const loadPromise = new Promise<{ src: string; naturalWidth: number; naturalHeight: number }>((resolve, reject) => {
@@ -1527,6 +1539,7 @@ watch(displayThumbnailSrc, async (newThumbSrc) => {
 
   const usesBackendPreview = shouldUseBackendPreview(currentFilePath, Number(props.fileType || 0));
   const ffmpegExtensions = await getFfmpegBackedPreviewExtensions();
+  if (loadingId !== currentLoadingId.value || props.filePath !== currentFilePath) return;
   if (!usesBackendPreview || ffmpegExtensions.has(getFileExtension(currentFilePath).toLowerCase())) return;
 
   // Only update if we are still waiting for the full image OR if we are currently showing a stale placeholder
@@ -1540,14 +1553,17 @@ watch(displayThumbnailSrc, async (newThumbSrc) => {
     false,
     props.fileVersion,
   );
-  const isCurrentlyShowingFullImage = imageSrc.value[activeIndex] === fullImageSrc;
+  const originalJxlSrc = /\.jxl$/i.test(currentFilePath)
+    ? getAssetSrc(currentFilePath, props.fileVersion) : '';
+  const hasFullImage = () => imageSrc.value.includes(fullImageSrc)
+    || (!!originalJxlSrc && imageSrc.value.includes(originalJxlSrc));
   
-  if (isCurrentlyShowingFullImage) return;
+  if (hasFullImage()) return;
 
   try {
     const placeholder = await loadPlaceholderResource(newThumbSrc);
     // Never downgrade a full image that finished loading while the placeholder was decoding.
-    if (loadingId !== currentLoadingId.value || offlinePreview.value || imageSrc.value.includes(fullImageSrc)) return;
+    if (loadingId !== currentLoadingId.value || props.filePath !== currentFilePath || offlinePreview.value || hasFullImage()) return;
     const layout = getCompatibleLayout(
       placeholder.naturalWidth,
       placeholder.naturalHeight,
