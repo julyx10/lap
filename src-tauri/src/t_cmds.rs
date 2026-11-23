@@ -4439,10 +4439,22 @@ pub fn set_folder_search_excluded(
         .map_err(|e| format!("Error while setting folder search exclusion: {}", e))
 }
 
+fn update_file_metadata_column(
+    file_id: i64,
+    column: &str,
+    value: &dyn rusqlite::ToSql,
+) -> Result<usize, String> {
+    let updated = AFile::update_column(file_id, column, value)?;
+    if updated == 0 {
+        return Err(format!("No file record found for id {}", file_id));
+    }
+    Ok(updated)
+}
+
 /// set a file's favorite status (true or false)
 #[tauri::command]
 pub fn set_file_favorite(file_id: i64, is_favorite: bool) -> Result<usize, String> {
-    AFile::update_column(file_id, "is_favorite", &is_favorite)
+    update_file_metadata_column(file_id, "is_favorite", &is_favorite)
         .map_err(|e| format!("Error while setting file favorite: {}", e))
 }
 
@@ -4450,7 +4462,7 @@ pub fn set_file_favorite(file_id: i64, is_favorite: bool) -> Result<usize, Strin
 #[tauri::command]
 pub fn set_file_rating(file_id: i64, rating: i32) -> Result<usize, String> {
     let clamped = rating.clamp(0, 5);
-    AFile::update_column(file_id, "rating", &clamped)
+    update_file_metadata_column(file_id, "rating", &clamped)
         .map_err(|e| format!("Error while setting file rating: {}", e))
 }
 
@@ -4458,12 +4470,8 @@ pub fn set_file_rating(file_id: i64, rating: i32) -> Result<usize, String> {
 #[tauri::command]
 pub fn set_file_culling_flag(file_id: i64, culling_flag: i32) -> Result<usize, String> {
     let clamped = culling_flag.clamp(0, 2);
-    let updated = AFile::update_column(file_id, "culling_flag", &clamped)
-        .map_err(|e| format!("Error while setting file culling flag: {}", e))?;
-    if updated == 0 {
-        return Err(format!("No file record found for id {}", file_id));
-    }
-    Ok(updated)
+    update_file_metadata_column(file_id, "culling_flag", &clamped)
+        .map_err(|e| format!("Error while setting file culling flag: {}", e))
 }
 
 #[derive(Debug, Deserialize)]
@@ -5206,7 +5214,7 @@ mod raw_display_library_tests {
 
 #[cfg(test)]
 mod culling_persistence_tests {
-    use super::set_file_culling_flag;
+    use super::{set_file_culling_flag, set_file_rating, set_file_favorite};
     use crate::t_sqlite::{TEST_DB_PATH, clear_conn_pool, open_conn};
 
     struct TestDbDir(std::path::PathBuf);
@@ -5232,13 +5240,17 @@ mod culling_persistence_tests {
         {
             let conn = open_conn().unwrap();
             conn.execute_batch(
-                "CREATE TABLE afiles(id INTEGER PRIMARY KEY, culling_flag INTEGER NOT NULL DEFAULT 0);
+                "CREATE TABLE afiles(id INTEGER PRIMARY KEY, culling_flag INTEGER NOT NULL DEFAULT 0, rating INTEGER NOT NULL DEFAULT 0, is_favorite INTEGER NOT NULL DEFAULT 0);
                  INSERT INTO afiles(id, culling_flag) VALUES (42, 0);",
             )
             .unwrap();
         }
 
         assert!(set_file_culling_flag(999, 2).is_err());
+        assert!(set_file_rating(999, 5).is_err());
+        assert!(set_file_favorite(999, true).is_err());
+        assert_eq!(set_file_rating(42, 99).unwrap(), 1);
+        assert_eq!(set_file_favorite(42, true).unwrap(), 1);
         assert_eq!(set_file_culling_flag(42, 2).unwrap(), 1);
         assert_eq!(set_file_culling_flag(42, 99).unwrap(), 1);
 
@@ -5247,5 +5259,10 @@ mod culling_persistence_tests {
             .query_row("SELECT culling_flag FROM afiles WHERE id = 42", [], |row| row.get(0))
             .unwrap();
         assert_eq!(persisted, 2);
+        let (rating, favorite): (i32, bool) = verify_conn
+            .query_row("SELECT rating, is_favorite FROM afiles WHERE id = 42", [], |row| Ok((row.get(0)?, row.get(1)?)))
+            .unwrap();
+        assert_eq!(rating, 5);
+        assert!(favorite);
     }
 }

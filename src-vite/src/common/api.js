@@ -1590,9 +1590,10 @@ export async function setFolderSearchExcluded(albumId, folderPath, isExcluded) {
 
 // set file favorite
 export async function setFileFavorite(fileId, isFavorite) {
+  if (!Number.isInteger(fileId) || fileId <= 0) return null;
   try {
     const result = await invoke('set_file_favorite', { fileId, isFavorite });
-    if(result) {
+    if (typeof result === 'number' && result > 0) {
       return result;
     };
   } catch (error) {
@@ -1603,9 +1604,10 @@ export async function setFileFavorite(fileId, isFavorite) {
 
 // set file rating
 export async function setFileRating(fileId, rating) {
+  if (!Number.isInteger(fileId) || fileId <= 0) return null;
   try {
     const result = await invoke('set_file_rating', { fileId, rating });
-    if(result !== null && result !== undefined) {
+    if (typeof result === 'number' && result > 0) {
       return result;
     };
   } catch (error) {

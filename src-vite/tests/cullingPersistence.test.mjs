@@ -12,15 +12,15 @@ function createApiSetCullingFlag(invokeImpl) {
   return new Function('invoke', `${apiSnippet}; return setFileCullingFlag;`)(invokeImpl);
 }
 
-const syncSource = fs.readFileSync(new URL('../src/common/cullingSync.ts', import.meta.url), 'utf8');
+const syncSource = fs.readFileSync(new URL('../src/common/metadataSync.ts', import.meta.url), 'utf8');
 const syncJs = ts.transpile(
   syncSource.replace(/export /g, ''),
   { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext },
 );
 const {
-  createCullingSyncTracker,
+  createMetadataSyncTracker,
   getMatchingPaneFileInfo,
-} = new Function(`${syncJs}; return { createCullingSyncTracker, getMatchingPaneFileInfo };`)();
+} = new Function(`${syncJs}; return { createMetadataSyncTracker, getMatchingPaneFileInfo };`)();
 
 test('setFileCullingFlag rejects invalid/placeholder IDs and treats 0 updated rows as failure', async () => {
   const invoked = [];
@@ -48,7 +48,7 @@ test('setFileCullingFlag rejects invalid/placeholder IDs and treats 0 updated ro
 });
 
 test('cullingSync preserves reject pressed before getFileInfo resolves and ignores stale loads', async () => {
-  const sync = createCullingSyncTracker();
+  const sync = createMetadataSyncTracker();
   let activeFileId = 100;
   let leftFileInfo = { id: 100, culling_flag: 0, rotate: 0 };
   const synced = [];
@@ -68,16 +68,16 @@ test('cullingSync preserves reject pressed before getFileInfo resolves and ignor
     if (!sync.isCurrentFileInfoLoad('left', req, activeFileId, targetId)) {
       return;
     }
-    leftFileInfo = sync.applyPendingCulling(loaded, req);
+    leftFileInfo = sync.applyPendingMetadata(loaded, req);
   }
 
   async function setCurrentFlag(flag, persistFn) {
     const currentId = activeFileId;
     const matching = getMatchingPaneFileInfo(leftFileInfo, currentId);
     const knownConfirmed = matching ? Number(matching.culling_flag ?? 0) : null;
-    await sync.enqueueCullingUpdate({
+    await sync.enqueueMetadataUpdate({
       fileId: currentId,
-      cullingFlag: flag,
+      value: flag,
       knownConfirmed,
       pane: 'left',
       advance: false,
@@ -123,7 +123,7 @@ test('cullingSync preserves reject pressed before getFileInfo resolves and ignor
 });
 
 test('consecutive updates serialize per file and roll back to last confirmed Reject when subsequent Pick fails', async () => {
-  const sync = createCullingSyncTracker();
+  const sync = createMetadataSyncTracker();
   const fileId = 200;
   const info = { id: fileId, culling_flag: 0 };
   const synced = [];
@@ -134,9 +134,9 @@ test('consecutive updates serialize per file and roll back to last confirmed Rej
   function triggerFlag(flag) {
     const matching = getMatchingPaneFileInfo(info, fileId);
     const knownConfirmed = matching ? Number(matching.culling_flag ?? 0) : null;
-    return sync.enqueueCullingUpdate({
+    return sync.enqueueMetadataUpdate({
       fileId,
-      cullingFlag: flag,
+      value: flag,
       knownConfirmed,
       pane: 'left',
       advance: false,
@@ -182,7 +182,7 @@ test('consecutive updates serialize per file and roll back to last confirmed Rej
 });
 
 test('failed earlier write does not flash error or revert when a newer queued intent succeeds', async () => {
-  const sync = createCullingSyncTracker();
+  const sync = createMetadataSyncTracker();
   const fileId = 201;
   const info = { id: fileId, culling_flag: 0 };
   const toasts = [];
@@ -192,9 +192,9 @@ test('failed earlier write does not flash error or revert when a newer queued in
   function triggerFlag(flag) {
     const matching = getMatchingPaneFileInfo(info, fileId);
     const knownConfirmed = matching ? Number(matching.culling_flag ?? 0) : null;
-    return sync.enqueueCullingUpdate({
+    return sync.enqueueMetadataUpdate({
       fileId,
-      cullingFlag: flag,
+      value: flag,
       knownConfirmed,
       pane: 'left',
       advance: false,
@@ -237,24 +237,127 @@ test('failed earlier write does not flash error or revert when a newer queued in
 
 test('same-value updates use the latest auto-advance intent and pane', async () => {
   for (const [firstAdvance, latestAdvance] of [[false, true], [true, false]]) {
-    const sync = createCullingSyncTracker();
+    const sync = createMetadataSyncTracker();
     const commits = [];
     let finish;
     let writes = 0;
     const options = {
-      fileId: 300, cullingFlag: 2, knownConfirmed: 0,
+      fileId: 300, value: 2, knownConfirmed: 0,
       pane: 'left', advance: firstAdvance,
       applyOptimistic: () => {},
       persist: () => { writes++; return new Promise(resolve => { finish = resolve; }); },
       onCommit: (_id, _flag, settled, advanceInfo) => commits.push({ settled, advanceInfo }),
       onError: () => assert.fail('write should succeed'),
     };
-    const first = sync.enqueueCullingUpdate(options);
-    const latest = sync.enqueueCullingUpdate({ ...options, pane: 'right', advance: latestAdvance });
+    const first = sync.enqueueMetadataUpdate(options);
+    const latest = sync.enqueueMetadataUpdate({ ...options, pane: 'right', advance: latestAdvance });
     assert.equal(writes, 1);
     finish(1);
     await Promise.all([first, latest]);
     assert.equal(writes, 1);
     assert.deepEqual(commits, [{ settled: true, advanceInfo: { pane: 'right', advance: latestAdvance } }]);
   }
+});
+
+
+for (const [field, firstValue, latestValue] of [['rating', 3, 5], ['is_favorite', 1, 0]]) {
+  test(`${field}: serial writes, failed rollback and stale read protection`, async () => {
+    const sync = createMetadataSyncTracker(field);
+    const load = sync.beginFileInfoLoad('left');
+    const info = { id: 500, [field]: field === 'is_favorite' ? false : 0 };
+    const gates = [];
+    const calls = [];
+    const options = {
+      fileId: 500, knownConfirmed: 0, pane: 'left', advance: false,
+      applyOptimistic: (_id, value) => { info[field] = value; },
+      persist: (_id, value) => { calls.push(value); return new Promise(resolve => gates.push(resolve)); },
+      onCommit: () => {},
+      onError: (_id, value) => { info[field] = value; },
+    };
+    const first = sync.enqueueMetadataUpdate({ ...options, value: firstValue });
+    const second = sync.enqueueMetadataUpdate({ ...options, value: latestValue });
+    assert.deepEqual(calls, [firstValue]);
+    gates[0](1);
+    await Promise.resolve(); await Promise.resolve(); await Promise.resolve();
+    assert.deepEqual(calls, [firstValue, latestValue]);
+    gates[1](null);
+    await Promise.all([first, second]);
+    assert.equal(info[field], firstValue);
+    const loaded = sync.applyPendingMetadata({ id: 500, [field]: 0 }, load);
+    assert.equal(loaded[field], field === 'is_favorite' ? Boolean(firstValue) : firstValue);
+  });
+}
+
+test('rejected persistence rolls back and allows a later retry', async () => {
+  const sync = createMetadataSyncTracker('rating');
+  const errors = [];
+  const options = { fileId: 600, value: 5, knownConfirmed: 2, pane: 'left', advance: false,
+    applyOptimistic: () => {}, persist: async () => { throw Error('write failed'); },
+    onCommit: () => {}, onError: (_id, value) => errors.push(value) };
+  await sync.enqueueMetadataUpdate(options);
+  assert.deepEqual(errors, [2]);
+  let committed;
+  await sync.enqueueMetadataUpdate({ ...options, persist: async () => 1, onCommit: (_id, value) => { committed = value; } });
+  assert.equal(committed, 5);
+});
+
+
+for (const name of ['setFileRating', 'setFileFavorite']) {
+  test(`${name} rejects invalid IDs and zero-row writes`, async () => {
+    const start = apiSource.indexOf(`export async function ${name}`);
+    const end = apiSource.indexOf('\n}\n', start) + 3;
+    const snippet = apiSource.slice(start, end).replace('export async function ', 'async function ');
+    const calls = [];
+    let result = 0;
+    const api = new Function('invoke', `${snippet}; return ${name};`)(async (...args) => { calls.push(args); return result; });
+    assert.equal(await api(0, 1), null);
+    assert.equal(await api('5', 1), null);
+    assert.equal(calls.length, 0);
+    assert.equal(await api(5, 1), null);
+    result = 1;
+    assert.equal(await api(5, 1), 1);
+  });
+}
+
+
+test('grid rollback updates the current file object after list replacement', async () => {
+  const source = fs.readFileSync(new URL('../src/components/Content.vue', import.meta.url), 'utf8');
+  const start = source.indexOf('async function setSelectedMetadata(');
+  const end = source.indexOf('\nconst toggleFavorite', start);
+  const snippet = ts.transpile(source.slice(start, end), { target: ts.ScriptTarget.ES2022 });
+  const fileList = { value: [{ id: 42, rating: 0 }] };
+  const libConfig = { _libraryId: 'library-a' };
+  const gates = [];
+  const metadataWriters = { rating: { tracker: createMetadataSyncTracker('rating'),
+    persist: () => new Promise(resolve => gates.push(resolve)) } };
+  const set = new Function('metadataWriters', 'fileList', 'libConfig', 'selectedItemIndex', 'isRealFileItem',
+    'currentContentRequestId', 'syncFileMetaToImageViewer', 'tauriEmit', 'advanceAfterMetadataShortcut', 'toast', 't',
+    `${snippet}; return setSelectedMetadata;`)(metadataWriters, fileList, libConfig, { value: 0 }, file => file?.id > 0,
+      1, () => {}, () => {}, () => {}, { error: () => {} }, key => key);
+  const first = set('rating', 3, false);
+  const old = fileList.value[0];
+  fileList.value = [{ id: 42, rating: 0 }];
+  const second = set('rating', 5, false);
+  assert.equal(fileList.value[0].rating, 5);
+  gates[0](1);
+  await Promise.resolve(); await Promise.resolve(); await Promise.resolve();
+  gates[1](null);
+  await Promise.all([first, second]);
+  assert.equal(fileList.value[0].rating, 3);
+  assert.notEqual(old, fileList.value[0]);
+});
+
+
+test('auto-advance uses the latest list request after refresh', async () => {
+  const sync = createMetadataSyncTracker('rating');
+  let finish;
+  const intents = [];
+  const options = { fileId: 700, value: 3, knownConfirmed: 0, pane: 'left', advance: false, requestId: 10,
+    applyOptimistic: () => {}, persist: () => new Promise(resolve => { finish = resolve; }),
+    onCommit: (_id, _value, _settled, intent) => intents.push(intent), onError: () => assert.fail('unexpected failure') };
+  const first = sync.enqueueMetadataUpdate(options);
+  const latest = sync.enqueueMetadataUpdate({ ...options, advance: true, requestId: 11 });
+  finish(1);
+  await Promise.all([first, latest]);
+  assert.deepEqual(intents, [{ pane: 'left', advance: true, requestId: 11 }]);
 });

@@ -216,7 +216,7 @@ import { useUIStore } from '@/stores/uiStore';
 import { config, libConfig } from '@/common/config';
 import { isWin, isMac, isLinux, copyFilePaths, getClipboardItemPaths, getMediaItemSize, getSlideShowInterval, SCALE_VALUES } from '@/common/utils';
 import { matchesShortcut, ShortcutActionId, ShortcutPlatform, VIEW_BACKGROUND_SHORTCUTS } from '@/common/shortcuts';
-import { createCullingSyncTracker, getMatchingPaneFileInfo } from '@/common/cullingSync';
+import { createMetadataSyncTracker, getMatchingPaneFileInfo } from '@/common/metadataSync';
 import { handleVideoPlaybackShortcut, handleVideoEscapeShortcut } from '@/common/video';
 import {
   checkFileAccessibility,
@@ -265,7 +265,9 @@ const mediaViewerRef = ref<any>(null); // media viewer reference
 const rightMediaViewerRef = ref<any>(null); // right media viewer reference (split mode)
 type Pane = 'left' | 'right' | 'bottomLeft' | 'bottomRight';
 const allPanes: Pane[] = ['left', 'right', 'bottomLeft', 'bottomRight'];
-const cullingSync = createCullingSyncTracker();
+const cullingSync = createMetadataSyncTracker();
+const ratingSync = createMetadataSyncTracker('rating');
+const favoriteSync = createMetadataSyncTracker('is_favorite');
 const paneViewerRefs = new Map<Pane, any>();
 const isFullScreen = ref(false);
 const wasMaximizedBeforeFullScreen = ref(false);
@@ -491,8 +493,10 @@ onMounted(async() => {
       case 'update-file-meta': {
         const incomingCulling = changes?.culling_flag ?? changes?.cullingFlag;
         if (incomingCulling !== undefined) {
-          cullingSync.recordExternalCulling(targetFileId, Number(incomingCulling));
+          cullingSync.recordExternalMetadata(targetFileId, Number(incomingCulling));
         }
+        if (changes?.rating !== undefined) ratingSync.recordExternalMetadata(targetFileId, Number(changes.rating));
+        if (changes?.is_favorite !== undefined) favoriteSync.recordExternalMetadata(targetFileId, Number(changes.is_favorite));
         applyFileMetaToPanes(targetFileId, changes || {});
         break;
       }
@@ -1021,6 +1025,8 @@ watch(() => isSyncViewport.value, (isSync) => {
 
 async function loadPaneFileInfo(pane: Pane, targetId: number) {
   const requestId = cullingSync.beginFileInfoLoad(pane);
+  ratingSync.beginFileInfoLoad(pane);
+  favoriteSync.beginFileInfoLoad(pane);
   if (getFileInfoByPane(pane) && Number(getFileInfoByPane(pane).id) !== targetId) {
     setFileInfoByPane(pane, null);
   }
@@ -1028,7 +1034,9 @@ async function loadPaneFileInfo(pane: Pane, targetId: number) {
   if (!cullingSync.isCurrentFileInfoLoad(pane, requestId, getFileIdByPane(pane), targetId)) {
     return;
   }
-  const resolved = cullingSync.applyPendingCulling(loaded, requestId);
+  const resolved = cullingSync.applyPendingMetadata(loaded, requestId);
+  ratingSync.applyPendingMetadata(resolved, requestId);
+  favoriteSync.applyPendingMetadata(resolved, requestId);
   setFileInfoByPane(pane, resolved);
   if (pane === 'left') {
     iconRotate.value = resolved?.rotate || 0;
@@ -1368,68 +1376,51 @@ function advanceAfterMetadataShortcut(fileId: number, pane: Pane) {
   }
 }
 
-const toggleFavorite = async (pane: Pane = 'left', advance = false) => {
-  const target = getFileInfoByPane(pane);
-  const currentFileId = getFileIdByPane(pane);
-  if (!target || currentFileId <= 0) return;
-
-  const previous = target.is_favorite;
-  const isFavorite = !previous;
-  applyFileMetaToPanes(currentFileId, { is_favorite: isFavorite });
-  if (await setFileFavorite(currentFileId, isFavorite) === null) {
-    applyFileMetaToPanes(currentFileId, { is_favorite: previous });
-    return;
-  }
-  syncFileMetaToContent(currentFileId, { is_favorite: isFavorite });
-  if (advance) advanceAfterMetadataShortcut(currentFileId, pane);
+const toggleFavorite = (pane: Pane = 'left', advance = false) => {
+  const target = getMatchingPaneFileInfo(getFileInfoByPane(pane), getFileIdByPane(pane));
+  if (!target) return;
+  return setCurrentMetadata('is_favorite', Number(!target.is_favorite), pane, advance);
 };
+const setCurrentFileRating = (rating: number, pane: Pane = 'left', advance = false) =>
+  setCurrentMetadata('rating', rating, pane, advance);
+const setCurrentFileCullingFlag = (flag: number, pane: Pane = 'left', advance = false) =>
+  setCurrentMetadata('culling_flag', flag, pane, advance);
 
-const setCurrentFileRating = async (rating: number, pane: Pane = 'left', advance = false) => {
-  const target = getFileInfoByPane(pane);
-  const currentFileId = getFileIdByPane(pane);
-  if (!target || currentFileId <= 0) return;
-
-  const previous = Number(target.rating || 0);
-  const normalized = Math.max(0, Math.min(5, rating));
-  applyFileMetaToPanes(currentFileId, { rating: normalized });
-  if (await setFileRating(currentFileId, normalized) === null) {
-    applyFileMetaToPanes(currentFileId, { rating: previous });
-    return;
-  }
-  syncFileMetaToContent(currentFileId, { rating: normalized });
-  if (advance) advanceAfterMetadataShortcut(currentFileId, pane);
+const metadataWriters = {
+  culling_flag: { tracker: cullingSync, persist: setFileCullingFlag },
+  rating: { tracker: ratingSync, persist: setFileRating },
+  is_favorite: { tracker: favoriteSync, persist: (id: number, value: number) => setFileFavorite(id, Boolean(value)) },
 };
-
-const setCurrentFileCullingFlag = async (cullingFlag: number, pane: Pane = 'left', advance = false) => {
+async function setCurrentMetadata(field: keyof typeof metadataWriters, value: number, pane: Pane, advance: boolean) {
   const currentFileId = getFileIdByPane(pane);
   if (currentFileId <= 0) return;
 
   const target = getMatchingPaneFileInfo(getFileInfoByPane(pane), currentFileId);
-  const knownConfirmed = target ? Number(target.culling_flag ?? target.cullingFlag ?? 0) : null;
+  const knownConfirmed = target ? Number(target[field] ?? 0) : null;
 
-  await cullingSync.enqueueCullingUpdate({
+  await metadataWriters[field].tracker.enqueueMetadataUpdate({
     fileId: currentFileId,
-    cullingFlag,
+    value,
     knownConfirmed,
     pane,
     advance,
     applyOptimistic: (id, flag) => {
-      applyFileMetaToPanes(id, { culling_flag: flag });
+      applyFileMetaToPanes(id, { [field]: field === 'is_favorite' ? Boolean(flag) : flag });
     },
-    persist: (id, flag) => setFileCullingFlag(id, flag),
+    persist: (id, flag) => metadataWriters[field].persist(id, flag),
     onCommit: (id, flag, settled, advanceInfo) => {
       if (settled) {
-        applyFileMetaToPanes(id, { culling_flag: flag });
+        applyFileMetaToPanes(id, { [field]: field === 'is_favorite' ? Boolean(flag) : flag });
       }
-      syncFileMetaToContent(id, { culling_flag: flag });
-      void emit('culling-status-updated');
+      syncFileMetaToContent(id, { [field]: field === 'is_favorite' ? Boolean(flag) : flag });
+      if (field === 'culling_flag') void emit('culling-status-updated');
       if (advanceInfo?.advance) {
         advanceAfterMetadataShortcut(id, advanceInfo.pane);
       }
     },
     onError: (id, rollbackFlag) => {
       if (rollbackFlag !== null) {
-        applyFileMetaToPanes(id, { culling_flag: rollbackFlag });
+        applyFileMetaToPanes(id, { [field]: field === 'is_favorite' ? Boolean(rollbackFlag) : rollbackFlag });
       }
       toast.error(t('file_info.metadata_save_failed'));
     },

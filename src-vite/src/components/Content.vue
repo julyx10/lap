@@ -874,6 +874,7 @@ import FileInfo from '@/components/FileInfo.vue';
 import Breadcrumb from '@/components/Breadcrumb.vue';
 import DedupPane from '@/components/DedupPane.vue';
 import { getAspectRatio } from '@/common/layout';
+import { createMetadataSyncTracker } from '@/common/metadataSync';
 import SelectionPanel from '@/components/SelectionPanel.vue';
 import FileConflictDialog from '@/components/FileConflictDialog.vue';
 import ScrollBar from '@/components/ScrollBar.vue';
@@ -10415,20 +10416,49 @@ function advanceAfterMetadataShortcut(fileId: number, requestId: number) {
 }
 
 // toggle the selected file's favorite status (selectMode = false)
-const toggleFavorite = async (advance = false) => {
-  const requestId = currentContentRequestId;
-  if (selectedItemIndex.value >= 0) {
-    const item = fileList.value[selectedItemIndex.value];
-    const previous = item.is_favorite;
-    item.is_favorite = !previous;
-    // update the favorite status in the database
-    if (await setFileFavorite(item.id, item.is_favorite) === null) {
-      item.is_favorite = previous;
-      return;
-    }
-    syncFileMetaToImageViewer(item.id, { is_favorite: item.is_favorite });
-    if (advance) advanceAfterMetadataShortcut(item.id, requestId);
+const metadataWriters = {
+  culling_flag: { tracker: createMetadataSyncTracker(), persist: setFileCullingFlag },
+  rating: { tracker: createMetadataSyncTracker('rating'), persist: setFileRating },
+  is_favorite: { tracker: createMetadataSyncTracker('is_favorite'), persist: (id: number, value: number) => setFileFavorite(id, Boolean(value)) },
+};
+watch(() => libConfig._libraryId, () => {
+  for (const field of Object.keys(metadataWriters) as (keyof typeof metadataWriters)[]) {
+    metadataWriters[field].tracker = createMetadataSyncTracker(field);
   }
+});
+async function setSelectedMetadata(field: keyof typeof metadataWriters, value: number, advance: boolean) {
+  const requestId = currentContentRequestId;
+  const libraryId = libConfig._libraryId;
+  const item = fileList.value[selectedItemIndex.value];
+  if (!isRealFileItem(item)) return;
+  const patch = (flag: number) => ({ [field]: field === 'is_favorite' ? Boolean(flag) : flag });
+  const applyCurrent = (id: number, flag: number) => {
+    if (libraryId !== libConfig._libraryId) return;
+    const current = fileList.value.find(file => isRealFileItem(file) && Number(file.id) === Number(id));
+    if (current) Object.assign(current, patch(flag));
+  };
+  await metadataWriters[field].tracker.enqueueMetadataUpdate({
+    fileId: item.id, value, knownConfirmed: Number(item[field] ?? 0), pane: 'left', advance, requestId,
+    applyOptimistic: applyCurrent,
+    persist: (id, flag) => libraryId === libConfig._libraryId
+      ? metadataWriters[field].persist(id, flag) : Promise.resolve(null),
+    onCommit: (id, flag, settled, intent) => {
+      if (libraryId !== libConfig._libraryId) return;
+      if (settled) applyCurrent(id, flag);
+      syncFileMetaToImageViewer(id, patch(flag));
+      if (field === 'culling_flag') void tauriEmit('culling-status-updated', { fileIds: [id], cullingFlag: flag });
+      if (intent?.advance && intent.requestId !== undefined) advanceAfterMetadataShortcut(id, intent.requestId);
+    },
+    onError: (id, confirmed) => {
+      if (libraryId !== libConfig._libraryId) return;
+      if (confirmed !== null) applyCurrent(id, confirmed);
+      toast.error(t('file_info.metadata_save_failed'));
+    },
+  });
+}
+const toggleFavorite = (advance = false) => {
+  const item = fileList.value[selectedItemIndex.value];
+  if (isRealFileItem(item)) return setSelectedMetadata('is_favorite', Number(!item.is_favorite), advance);
 };
 
 // set selected files' favorite status (selectMode = true)
@@ -10460,21 +10490,7 @@ const toggleSelectModeFavorite = async () => {
   await selectModeSetFavorites(shouldFavorite);
 };
 
-const setSelectedFileRating = async (rating: number, advance = false) => {
-  const requestId = currentContentRequestId;
-  if (selectedItemIndex.value >= 0) {
-    const item = fileList.value[selectedItemIndex.value];
-    const previous = item.rating;
-    const normalized = Math.max(0, Math.min(5, rating));
-    item.rating = normalized;
-    if (await setFileRating(item.id, normalized) === null) {
-      item.rating = previous;
-      return;
-    }
-    syncFileMetaToImageViewer(item.id, { rating: normalized });
-    if (advance) advanceAfterMetadataShortcut(item.id, requestId);
-  }
-};
+const setSelectedFileRating = (rating: number, advance = false) => setSelectedMetadata('rating', rating, advance);
 
 const selectModeSetRatings = async (rating: number) => {
   if (selectMode.value && selectedCount.value > 0) {
@@ -10497,24 +10513,7 @@ const selectModeSetRatings = async (rating: number) => {
   }
 }
 
-const setSelectedFileCullingFlag = async (cullingFlag: number, advance = false) => {
-  const requestId = currentContentRequestId;
-  if (selectedItemIndex.value < 0) return;
-  const item = fileList.value[selectedItemIndex.value];
-  if (!item || typeof item.id !== 'number' || item.id <= 0) return;
-  const normalized = Math.max(0, Math.min(2, cullingFlag));
-  const previous = Number(item.culling_flag ?? item.cullingFlag ?? 0);
-  item.culling_flag = normalized;
-  const result = await setFileCullingFlag(item.id, normalized);
-  if (result === null) {
-    item.culling_flag = previous;
-    toast.error(t('file_info.metadata_save_failed'));
-    return;
-  }
-  syncFileMetaToImageViewer(item.id, { culling_flag: normalized });
-  void tauriEmit('culling-status-updated', { fileIds: [item.id], cullingFlag: normalized });
-  if (advance) advanceAfterMetadataShortcut(item.id, requestId);
-};
+const setSelectedFileCullingFlag = (flag: number, advance = false) => setSelectedMetadata('culling_flag', flag, advance);
 
 const selectModeSetCullingFlags = async (cullingFlag: number) => {
   if (!selectMode.value || selectedCount.value === 0) return;

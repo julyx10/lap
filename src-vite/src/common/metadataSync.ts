@@ -1,39 +1,39 @@
-export type CullingPane = 'left' | 'right' | 'bottomLeft' | 'bottomRight';
+export type MetadataPane = 'left' | 'right' | 'bottomLeft' | 'bottomRight';
 
-export interface CullingAdvanceInfo {
-  pane: CullingPane;
+export interface MetadataAdvanceInfo {
+  pane: MetadataPane;
   advance: boolean;
+  requestId?: number;
 }
 
-export interface EnqueueCullingUpdateOptions {
+export interface EnqueueMetadataUpdateOptions {
   fileId: number;
-  cullingFlag: number;
+  value: number;
   knownConfirmed: number | null;
-  pane: CullingPane;
+  requestId?: number;
+  pane: MetadataPane;
   advance: boolean;
-  applyOptimistic: (fileId: number, cullingFlag: number) => void;
-  persist: (fileId: number, cullingFlag: number) => Promise<number | null>;
+  applyOptimistic: (fileId: number, value: number) => void;
+  persist: (fileId: number, value: number) => Promise<number | null>;
   onCommit: (
     fileId: number,
-    cullingFlag: number,
+    value: number,
     settled: boolean,
-    advanceInfo: CullingAdvanceInfo | null,
+    advanceInfo: MetadataAdvanceInfo | null,
   ) => void;
   onError: (fileId: number, rollbackFlag: number | null) => void;
 }
 
-interface FileCullingState {
+interface FileMetadataState {
   confirmed: number | null;
   committedAtLoadSeq: number | null;
   desired: number | null;
-  pendingAdvance: CullingAdvanceInfo | null;
+  pendingAdvance: MetadataAdvanceInfo | null;
   inFlight: boolean;
   activePromise: Promise<void> | null;
 }
 
-export function normalizeCullingFlag(flag: number): number {
-  return Math.max(0, Math.min(2, flag));
-}
+export type MetadataField = 'culling_flag' | 'rating' | 'is_favorite';
 
 export function getMatchingPaneFileInfo<T extends { id?: unknown }>(
   info: T | null | undefined,
@@ -43,17 +43,18 @@ export function getMatchingPaneFileInfo<T extends { id?: unknown }>(
   return Number(info.id) === expectedFileId ? info : null;
 }
 
-export function createCullingSyncTracker() {
-  const paneRequestIds: Record<CullingPane, number> = {
+export function createMetadataSyncTracker(field: MetadataField = 'culling_flag') {
+  const max = { culling_flag: 2, rating: 5, is_favorite: 1 }[field];
+  const paneRequestIds: Record<MetadataPane, number> = {
     left: 0,
     right: 0,
     bottomLeft: 0,
     bottomRight: 0,
   };
-  const stateByFileId = new Map<number, FileCullingState>();
+  const stateByFileId = new Map<number, FileMetadataState>();
   let loadSeq = 0;
 
-  function getOrCreateState(fileId: number): FileCullingState {
+  function getOrCreateState(fileId: number): FileMetadataState {
     let state = stateByFileId.get(fileId);
     if (!state) {
       state = {
@@ -69,14 +70,14 @@ export function createCullingSyncTracker() {
     return state;
   }
 
-  function beginFileInfoLoad(pane: CullingPane): number {
+  function beginFileInfoLoad(pane: MetadataPane): number {
     loadSeq += 1;
     paneRequestIds[pane] = loadSeq;
     return loadSeq;
   }
 
   function isCurrentFileInfoLoad(
-    pane: CullingPane,
+    pane: MetadataPane,
     requestId: number,
     activeFileId: number,
     requestedFileId: number,
@@ -84,7 +85,7 @@ export function createCullingSyncTracker() {
     return paneRequestIds[pane] === requestId && activeFileId === requestedFileId;
   }
 
-  function applyPendingCulling<T extends Record<string, any>>(
+  function applyPendingMetadata<T extends Record<string, any>>(
     fileInfo: T | null,
     loadRequestId?: number,
   ): T | null {
@@ -95,43 +96,44 @@ export function createCullingSyncTracker() {
     const state = stateByFileId.get(id);
     if (!state) return fileInfo;
 
-    const loadedFlag = Number(fileInfo.culling_flag ?? fileInfo.cullingFlag ?? 0);
+    const loadedFlag = Number(fileInfo[field] ?? 0);
     const isStaleLoad =
       state.committedAtLoadSeq !== null &&
       (loadRequestId === undefined || loadRequestId <= state.committedAtLoadSeq);
 
     if (isStaleLoad && state.confirmed !== null) {
-      fileInfo.culling_flag = state.confirmed;
+      (fileInfo as Record<string, any>)[field] = field === 'is_favorite' ? Boolean(state.confirmed) : state.confirmed;
     } else if (!state.inFlight || state.confirmed === null) {
       state.confirmed = loadedFlag;
     }
 
     if (state.desired !== null) {
-      fileInfo.culling_flag = state.desired;
+      (fileInfo as Record<string, any>)[field] = field === 'is_favorite' ? Boolean(state.desired) : state.desired;
     }
     return fileInfo;
   }
 
-  function recordExternalCulling(fileId: number, cullingFlag: number) {
+  function recordExternalMetadata(fileId: number, value: number) {
     if (!Number.isInteger(fileId) || fileId <= 0) return;
     const state = getOrCreateState(fileId);
     if (!state.inFlight) {
-      state.confirmed = normalizeCullingFlag(cullingFlag);
+      state.confirmed = Math.max(0, Math.min(max, value));
       state.committedAtLoadSeq = loadSeq;
     }
   }
 
-  function enqueueCullingUpdate(options: EnqueueCullingUpdateOptions): Promise<void> {
+  function enqueueMetadataUpdate(options: EnqueueMetadataUpdateOptions): Promise<void> {
     const { fileId } = options;
-    const normalized = normalizeCullingFlag(options.cullingFlag);
+    const normalized = Math.max(0, Math.min(max, options.value));
     const state = getOrCreateState(fileId);
 
-    if (state.confirmed === null && options.knownConfirmed !== null) {
-      state.confirmed = normalizeCullingFlag(options.knownConfirmed);
+    if (!state.inFlight && options.knownConfirmed !== null) {
+      state.confirmed = Math.max(0, Math.min(max, options.knownConfirmed));
     }
 
     state.desired = normalized;
     state.pendingAdvance = { pane: options.pane, advance: options.advance };
+    if (options.requestId !== undefined) state.pendingAdvance.requestId = options.requestId;
     options.applyOptimistic(fileId, normalized);
 
     if (state.inFlight && state.activePromise) {
@@ -143,7 +145,7 @@ export function createCullingSyncTracker() {
       try {
         while (state.desired !== null) {
           const target = state.desired;
-          const result = await options.persist(fileId, target);
+          const result = await options.persist(fileId, target).catch(() => null);
 
           if (result !== null) {
             state.confirmed = target;
@@ -154,7 +156,7 @@ export function createCullingSyncTracker() {
               state.desired = null;
               state.pendingAdvance = null;
             }
-            options.onCommit(fileId, target, settled, settled ? advanceInfo : null);
+            options.onCommit(fileId, target, settled, advanceInfo);
             continue;
           }
 
@@ -178,8 +180,8 @@ export function createCullingSyncTracker() {
   return {
     beginFileInfoLoad,
     isCurrentFileInfoLoad,
-    applyPendingCulling,
-    recordExternalCulling,
-    enqueueCullingUpdate,
+    applyPendingMetadata,
+    recordExternalMetadata,
+    enqueueMetadataUpdate,
   };
 }
