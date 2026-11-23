@@ -167,24 +167,7 @@
           <div class="font-semibold text-base-content/80">{{ $t('msgbox.montage.style') }}</div>
           <div class="flex items-center justify-between gap-2">
             <span>{{ $t('msgbox.montage.background') }}</span>
-            <div class="flex gap-2">
-              <button
-                v-for="color in backgroundSwatches"
-                :key="color"
-                class="size-5.5 rounded-md border border-base-content/15 cursor-pointer"
-                :class="{ 'outline-2 outline-offset-2 outline-primary': background === color }"
-                :style="{ backgroundColor: color }"
-                @click="background = color"
-              ></button>
-              <label
-                class="relative size-5.5 rounded-md border border-base-content/15 cursor-pointer overflow-hidden"
-                style="background: conic-gradient(red, yellow, lime, cyan, blue, magenta, red)"
-              >
-                <input :value="background" type="color" class="absolute inset-0 opacity-0 cursor-pointer"
-                  @input="background = ($event.target as HTMLInputElement).value" @change="rememberCustomBackground"
-                  @keydown.esc.stop="($event.target as HTMLInputElement).blur()" />
-              </label>
-            </div>
+            <MontageColorSwatches v-model="background" v-model:recent="config.montage.lastCustomBackground" :presets="MONTAGE_BACKGROUND_PRESETS" />
           </div>
 
           <div v-if="mode === 'pile'" class="space-y-1">
@@ -206,10 +189,14 @@
             <span>{{ $t('msgbox.montage.border') }}</span>
             <input v-model="borderOn" type="checkbox" class="toggle toggle-xs toggle-primary" />
           </label>
+          <div class="flex items-center justify-between gap-2" :class="{ 'opacity-50 pointer-events-none': !borderOn }" :inert="!borderOn">
+            <span>{{ $t('msgbox.montage.border_color') }}</span>
+            <MontageColorSwatches v-model="borderColor" v-model:recent="config.montage.lastCustomBorderColor" :presets="MONTAGE_BACKGROUND_PRESETS" />
+          </div>
           <div :class="{ 'opacity-50': !borderOn }" class="space-y-1">
             <div class="flex items-center justify-between gap-2">
               <label for="montage-border">{{ $t('msgbox.montage.border_width') }}</label>
-              <span class="text-base-content/30 tabular-nums whitespace-nowrap">{{ toExportPx(border) }} px</span>
+              <span class="text-base-content/30 tabular-nums whitespace-nowrap">{{ border }}%</span>
             </div>
             <SliderInput id="montage-border" v-model="border" :min="0" :max="4" :step="0.25" class="w-full!" :disabled="!borderOn" />
           </div>
@@ -297,6 +284,7 @@ import PrintImage from '@/components/PrintImage.vue';
 import TitleBar from '@/components/TitleBar.vue';
 import TButton from '@/components/TButton.vue';
 import SliderInput from '@/components/SliderInput.vue';
+import MontageColorSwatches from '@/components/MontageColorSwatches.vue';
 import ModalDialog from '@/components/ModalDialog.vue';
 
 import { IconCard, IconTile, IconJustified, IconCollage, IconSortingShuffle, IconFolder, IconClose, IconRotate, IconCropLandscape, IconCropPortrait, IconPrint } from '@/common/icons';
@@ -312,22 +300,10 @@ const showDesktopTitleBar = isWin || isLinux;
 
 const files = ref<any[]>([]); // montage order
 const { mode, captionField, pageKey, landscape, background, spacing,
-  borderOn, border, scaling, maxRotation, shadow } = toRefs(config.montage);
+  borderOn, border, borderColor, scaling, maxRotation, shadow } = toRefs(config.montage);
 watch(() => config.montage, (preferences) => {
   void tauriEmit('montage-config-changed', JSON.parse(JSON.stringify(preferences)));
 }, { deep: true });
-const backgroundSwatches = computed(() => {
-  const saved = String(config.montage.lastCustomBackground).toLowerCase();
-  const recent = /^#[0-9a-f]{6}$/.test(saved) && !MONTAGE_BACKGROUND_PRESETS.includes(saved) ? saved : '#7c2d12';
-  return [...MONTAGE_BACKGROUND_PRESETS, MONTAGE_BACKGROUND_PRESETS.includes(background.value) ? recent : background.value];
-});
-function rememberCustomBackground(event: Event) {
-  const color = (event.target as HTMLInputElement).value.toLowerCase();
-  background.value = color;
-  if (!MONTAGE_BACKGROUND_PRESETS.includes(color)) {
-    config.montage.lastCustomBackground = color;
-  }
-}
 const photoScaling = computed(() => mode.value === 'card' || mode.value === 'grid' ? scaling.value : 1);
 const seed = ref(1);        // pile placement
 const isProcessing = ref(false);
@@ -586,15 +562,6 @@ const pageBox = computed(() => {
   return scale > 0
     ? { width: pageSize.value[0] * scale, height: pageSize.value[1] * scale }
     : { width: 0, height: 0 };
-});
-
-// white borders, unless the background is too light for white to show:
-// then a shade of the background, close to it but visible
-const borderColor = computed(() => {
-  const rgb = [1, 3, 5].map(i => parseInt(background.value.slice(i, i + 2), 16));
-  const luminance = (0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]) / 255;
-  if (luminance < 0.85) return '#ffffff';
-  return '#' + rgb.map(c => Math.round(c * 0.88).toString(16).padStart(2, '0')).join('');
 });
 
 // drop shadow, relative to the page width (same values as t_montage.rs);

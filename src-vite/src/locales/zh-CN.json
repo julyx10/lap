@@ -1178,6 +1178,7 @@
       "style": "样式",
       "export": "导出：{size}",
       "random_rotation": "随机旋转",
+      "border_color": "边框颜色",
       "border_width": "边框宽度",
       "page": "页面",
       "page_size": "尺寸",

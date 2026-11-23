@@ -1178,6 +1178,7 @@
       "style": "Styl",
       "export": "Exportovat: {size}",
       "random_rotation": "Náhodné otočení",
+      "border_color": "Barva rámečku",
       "border_width": "Šířka okraje",
       "page": "Stránka",
       "page_size": "Velikost",

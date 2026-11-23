@@ -1178,6 +1178,7 @@
       "style": "樣式",
       "export": "匯出：{size}",
       "random_rotation": "隨機旋轉",
+      "border_color": "邊框顏色",
       "border_width": "邊框寬度",
       "page": "頁面",
       "page_size": "尺寸",

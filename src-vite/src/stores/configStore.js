@@ -113,6 +113,8 @@ export const useConfigStore = defineStore('configStore', {
       lastCustomBackground: '#7c2d12', // last custom swatch in #RRGGBB; default: #7c2d12
       spacing: 1,              // non-pile spacing: 0–5% of page width, step: 0.25%; default: 1%
       borderOn: true,          // border enabled: true | false; default: true
+      borderColor: '#ffffff',
+      lastCustomBorderColor: '#7c2d12',
       border: 1.5,             // border width: 0–4% of page width, step: 0.25%; default: 1.5%
       scaling: 1,              // card/grid: 0: Fit, 1: Crop to fill, 2: Stretch; default: 1
       captionField: 1,         // card caption: 0: None, 1: Name, 2: Size, 3: Dimension, 4: Time,

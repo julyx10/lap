@@ -1178,6 +1178,7 @@
       "style": "스타일",
       "export": "내보내기: {size}",
       "random_rotation": "무작위 회전",
+      "border_color": "테두리 색상",
       "border_width": "테두리 두께",
       "page": "페이지",
       "page_size": "크기",

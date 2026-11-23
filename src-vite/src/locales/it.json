@@ -1178,6 +1178,7 @@
       "style": "Stile",
       "export": "Esporta: {size}",
       "random_rotation": "Rotazione casuale",
+      "border_color": "Colore bordo",
       "border_width": "Spessore del bordo",
       "page": "Pagina",
       "page_size": "Formato",

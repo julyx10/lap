@@ -1178,6 +1178,7 @@
       "style": "スタイル",
       "export": "書き出し: {size}",
       "random_rotation": "ランダム回転",
+      "border_color": "枠線の色",
       "border_width": "枠の太さ",
       "page": "ページ",
       "page_size": "サイズ",

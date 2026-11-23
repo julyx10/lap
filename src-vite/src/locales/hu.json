@@ -1178,6 +1178,7 @@
       "style": "Stílus",
       "export": "Exportálás: {size}",
       "random_rotation": "Véletlen forgatás",
+      "border_color": "Szegélyszín",
       "border_width": "Keret vastagsága",
       "page": "Oldal",
       "page_size": "Méret",

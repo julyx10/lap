@@ -1178,6 +1178,7 @@
       "style": "Стиль",
       "export": "Экспорт: {size}",
       "random_rotation": "Случайный поворот",
+      "border_color": "Цвет рамки",
       "border_width": "Толщина рамки",
       "page": "Страница",
       "page_size": "Размер",

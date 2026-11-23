@@ -1178,6 +1178,7 @@
       "style": "Kiểu",
       "export": "Xuất: {size}",
       "random_rotation": "Xoay ngẫu nhiên",
+      "border_color": "Màu viền",
       "border_width": "Độ rộng viền",
       "page": "Trang",
       "page_size": "Kích thước",

@@ -1178,6 +1178,7 @@
       "style": "Stijl",
       "export": "Exporteren: {size}",
       "random_rotation": "Willekeurig draaien",
+      "border_color": "Randkleur",
       "border_width": "Randdikte",
       "page": "Pagina",
       "page_size": "Formaat",
