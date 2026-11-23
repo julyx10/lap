@@ -233,3 +233,28 @@ test('failed earlier write does not flash error or revert when a newer queued in
   assert.equal(info.culling_flag, 1);
   assert.equal(toasts.length, 0);
 });
+
+
+test('same-value updates use the latest auto-advance intent and pane', async () => {
+  for (const [firstAdvance, latestAdvance] of [[false, true], [true, false]]) {
+    const sync = createCullingSyncTracker();
+    const commits = [];
+    let finish;
+    let writes = 0;
+    const options = {
+      fileId: 300, cullingFlag: 2, knownConfirmed: 0,
+      pane: 'left', advance: firstAdvance,
+      applyOptimistic: () => {},
+      persist: () => { writes++; return new Promise(resolve => { finish = resolve; }); },
+      onCommit: (_id, _flag, settled, advanceInfo) => commits.push({ settled, advanceInfo }),
+      onError: () => assert.fail('write should succeed'),
+    };
+    const first = sync.enqueueCullingUpdate(options);
+    const latest = sync.enqueueCullingUpdate({ ...options, pane: 'right', advance: latestAdvance });
+    assert.equal(writes, 1);
+    finish(1);
+    await Promise.all([first, latest]);
+    assert.equal(writes, 1);
+    assert.deepEqual(commits, [{ settled: true, advanceInfo: { pane: 'right', advance: latestAdvance } }]);
+  }
+});

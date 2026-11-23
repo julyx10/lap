@@ -143,13 +143,13 @@ export function createCullingSyncTracker() {
       try {
         while (state.desired !== null) {
           const target = state.desired;
-          const advanceInfo = state.pendingAdvance;
           const result = await options.persist(fileId, target);
 
           if (result !== null) {
             state.confirmed = target;
             state.committedAtLoadSeq = loadSeq;
             const settled = state.desired === target;
+            const advanceInfo = settled ? state.pendingAdvance : null;
             if (settled) {
               state.desired = null;
               state.pendingAdvance = null;
