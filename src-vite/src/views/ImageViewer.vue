@@ -485,9 +485,14 @@ onMounted(async() => {
           iconRotate.value += rotateDelta;
         }
         break;
-      case 'update-file-meta':
+      case 'update-file-meta': {
+        const incomingCulling = changes?.culling_flag ?? changes?.cullingFlag;
+        if (incomingCulling !== undefined) {
+          cullingSync.recordExternalCulling(targetFileId, Number(incomingCulling));
+        }
         applyFileMetaToPanes(targetFileId, changes || {});
         break;
+      }
       default:
         break;
     }
@@ -1396,26 +1401,35 @@ const setCurrentFileCullingFlag = async (cullingFlag: number, pane: Pane = 'left
   if (currentFileId <= 0) return;
 
   const target = getMatchingPaneFileInfo(getFileInfoByPane(pane), currentFileId);
-  const knownPrevious = target ? Number(target.culling_flag ?? target.cullingFlag ?? 0) : null;
-  const { seq, normalized } = cullingSync.beginCullingUpdate(currentFileId, cullingFlag, knownPrevious);
-  applyFileMetaToPanes(currentFileId, { culling_flag: normalized });
+  const knownConfirmed = target ? Number(target.culling_flag ?? target.cullingFlag ?? 0) : null;
 
-  const result = await setFileCullingFlag(currentFileId, normalized);
-  const finished = cullingSync.finishCullingUpdate(currentFileId, seq, result !== null);
-  if (!finished.isLatest) return;
-
-  if (result === null) {
-    if (finished.previous !== null) {
-      applyFileMetaToPanes(currentFileId, { culling_flag: finished.previous });
-    }
-    toast.error(t('file_info.metadata_save_failed'));
-    return;
-  }
-
-  applyFileMetaToPanes(currentFileId, { culling_flag: normalized });
-  syncFileMetaToContent(currentFileId, { culling_flag: normalized });
-  void emit('culling-status-updated');
-  if (advance) advanceAfterMetadataShortcut(currentFileId, pane);
+  await cullingSync.enqueueCullingUpdate({
+    fileId: currentFileId,
+    cullingFlag,
+    knownConfirmed,
+    pane,
+    advance,
+    applyOptimistic: (id, flag) => {
+      applyFileMetaToPanes(id, { culling_flag: flag });
+    },
+    persist: (id, flag) => setFileCullingFlag(id, flag),
+    onCommit: (id, flag, settled, advanceInfo) => {
+      if (settled) {
+        applyFileMetaToPanes(id, { culling_flag: flag });
+      }
+      syncFileMetaToContent(id, { culling_flag: flag });
+      void emit('culling-status-updated');
+      if (advanceInfo?.advance) {
+        advanceAfterMetadataShortcut(id, advanceInfo.pane);
+      }
+    },
+    onError: (id, rollbackFlag) => {
+      if (rollbackFlag !== null) {
+        applyFileMetaToPanes(id, { culling_flag: rollbackFlag });
+      }
+      toast.error(t('file_info.metadata_save_failed'));
+    },
+  });
 };
 
 const clickRotate = async (pane: Pane = 'left', rotateDelta = 90) => {

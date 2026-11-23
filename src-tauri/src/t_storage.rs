@@ -123,21 +123,7 @@ pub fn get_current_db_path() -> Result<String, String> {
     get_library_db_path_from_config(&config, &config.current_library_id)
 }
 
-/// Checkpoint the active library database WAL before process shutdown.
-pub(crate) fn checkpoint_current_db_on_exit() -> Result<(), String> {
-    if is_db_migration_in_progress() {
-        return Ok(());
-    }
-    let Ok(config) = t_config::load_app_config() else {
-        return Ok(());
-    };
-    let Ok(db_path) = get_library_db_path_from_config(&config, &config.current_library_id) else {
-        return Ok(());
-    };
-    checkpoint_db(Path::new(&db_path))
-}
-
-pub(crate) fn checkpoint_db(path: &Path) -> Result<(), String> {
+fn checkpoint_db(path: &Path) -> Result<(), String> {
     if !path
         .try_exists()
         .map_err(|e| format!("Failed to inspect database '{}': {}", path.display(), e))?

@@ -5208,7 +5208,6 @@ mod raw_display_library_tests {
 mod culling_persistence_tests {
     use super::set_file_culling_flag;
     use crate::t_sqlite::{TEST_DB_PATH, clear_conn_pool, open_conn};
-    use crate::t_storage::checkpoint_db;
 
     struct TestDbDir(std::path::PathBuf);
     impl Drop for TestDbDir {
@@ -5220,7 +5219,7 @@ mod culling_persistence_tests {
     }
 
     #[test]
-    fn set_file_culling_flag_rejects_missing_id_and_checkpoints_into_main_db() {
+    fn set_file_culling_flag_rejects_missing_id_and_persists_valid_updates() {
         let unique = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
@@ -5241,14 +5240,7 @@ mod culling_persistence_tests {
 
         assert!(set_file_culling_flag(999, 2).is_err());
         assert_eq!(set_file_culling_flag(42, 2).unwrap(), 1);
-
-        clear_conn_pool();
-        checkpoint_db(&db_path).unwrap();
-
-        let wal_path = dir.0.join("catalog.db-wal");
-        if wal_path.exists() {
-            assert_eq!(std::fs::metadata(&wal_path).unwrap().len(), 0);
-        }
+        assert_eq!(set_file_culling_flag(42, 99).unwrap(), 1);
 
         let verify_conn = rusqlite::Connection::open(&db_path).unwrap();
         let persisted: i32 = verify_conn

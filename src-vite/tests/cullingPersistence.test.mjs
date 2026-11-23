@@ -71,25 +71,34 @@ test('cullingSync preserves reject pressed before getFileInfo resolves and ignor
     leftFileInfo = sync.applyPendingCulling(loaded, req);
   }
 
-  async function rejectCurrent(persistFn) {
+  async function setCurrentFlag(flag, persistFn) {
     const currentId = activeFileId;
     const matching = getMatchingPaneFileInfo(leftFileInfo, currentId);
-    const knownPrev = matching ? Number(matching.culling_flag ?? 0) : null;
-    const { seq, normalized } = sync.beginCullingUpdate(currentId, 2, knownPrev);
-    if (matching) matching.culling_flag = normalized;
-
-    const result = await persistFn(currentId, normalized);
-    const finished = sync.finishCullingUpdate(currentId, seq, result !== null);
-    if (!finished.isLatest) return;
-    if (result === null) {
-      const curr = getMatchingPaneFileInfo(leftFileInfo, currentId);
-      if (curr && finished.previous !== null) curr.culling_flag = finished.previous;
-      toasts.push('error');
-      return;
-    }
-    const curr = getMatchingPaneFileInfo(leftFileInfo, currentId);
-    if (curr) curr.culling_flag = normalized;
-    synced.push([currentId, normalized]);
+    const knownConfirmed = matching ? Number(matching.culling_flag ?? 0) : null;
+    await sync.enqueueCullingUpdate({
+      fileId: currentId,
+      cullingFlag: flag,
+      knownConfirmed,
+      pane: 'left',
+      advance: false,
+      applyOptimistic: (id, nextFlag) => {
+        const curr = getMatchingPaneFileInfo(leftFileInfo, id);
+        if (curr) curr.culling_flag = nextFlag;
+      },
+      persist: persistFn,
+      onCommit: (id, nextFlag, settled) => {
+        if (settled) {
+          const curr = getMatchingPaneFileInfo(leftFileInfo, id);
+          if (curr) curr.culling_flag = nextFlag;
+        }
+        synced.push([id, nextFlag]);
+      },
+      onError: (id, rollbackFlag) => {
+        const curr = getMatchingPaneFileInfo(leftFileInfo, id);
+        if (curr && rollbackFlag !== null) curr.culling_flag = rollbackFlag;
+        toasts.push('error');
+      },
+    });
   }
 
   // Navigate to 100 (slow), then immediately to 101
@@ -97,12 +106,11 @@ test('cullingSync preserves reject pressed before getFileInfo resolves and ignor
   activeFileId = 101;
   const load101 = loadLeft(101);
 
-  // User presses Reject on 101 BEFORE getFileInfo(101) resolves, and persistence completes first!
-  const write101 = rejectCurrent(async () => 1);
-  await write101;
+  // User presses Reject on 101 BEFORE getFileInfo(101) resolves, and persistence completes first
+  await setCurrentFlag(2, async () => 1);
   assert.deepEqual(synced, [[101, 2]]);
 
-  // Now delayed getFileInfo(100) resolves, then delayed getFileInfo(101) resolves with stale DB snapshot 0
+  // Delayed getFileInfo(100) resolves, then delayed getFileInfo(101) resolves with stale DB snapshot 0
   pendingGets.get(100)({ id: 100, culling_flag: 0 });
   await load100;
   assert.equal(leftFileInfo, null, 'stale file 100 load must not populate active pane');
@@ -114,41 +122,114 @@ test('cullingSync preserves reject pressed before getFileInfo resolves and ignor
   assert.equal(toasts.length, 0);
 });
 
-test('cullingSync rolls back on failed persistence and avoids clobbering newer updates', async () => {
+test('consecutive updates serialize per file and roll back to last confirmed Reject when subsequent Pick fails', async () => {
   const sync = createCullingSyncTracker();
-  const activeFileId = 200;
-  const info = { id: 200, culling_flag: 0 };
+  const fileId = 200;
+  const info = { id: fileId, culling_flag: 0 };
+  const synced = [];
   const toasts = [];
+  const calls = [];
   const gates = [];
 
-  async function setFlag(flag) {
-    const matching = getMatchingPaneFileInfo(info, activeFileId);
-    const knownPrev = matching ? Number(matching.culling_flag ?? 0) : null;
-    const { seq, normalized } = sync.beginCullingUpdate(activeFileId, flag, knownPrev);
-    if (matching) matching.culling_flag = normalized;
-
-    const result = await new Promise((resolve) => gates.push(resolve));
-    const finished = sync.finishCullingUpdate(activeFileId, seq, result !== null);
-    if (!finished.isLatest) return;
-    if (result === null) {
-      if (finished.previous !== null) matching.culling_flag = finished.previous;
-      toasts.push('error');
-    }
+  function triggerFlag(flag) {
+    const matching = getMatchingPaneFileInfo(info, fileId);
+    const knownConfirmed = matching ? Number(matching.culling_flag ?? 0) : null;
+    return sync.enqueueCullingUpdate({
+      fileId,
+      cullingFlag: flag,
+      knownConfirmed,
+      pane: 'left',
+      advance: false,
+      applyOptimistic: (_id, nextFlag) => {
+        info.culling_flag = nextFlag;
+      },
+      persist: (_id, nextFlag) => {
+        calls.push(nextFlag);
+        return new Promise((resolve) => gates.push(resolve));
+      },
+      onCommit: (id, nextFlag, settled) => {
+        if (settled) info.culling_flag = nextFlag;
+        synced.push([id, nextFlag]);
+      },
+      onError: (_id, rollbackFlag) => {
+        if (rollbackFlag !== null) info.culling_flag = rollbackFlag;
+        toasts.push(rollbackFlag);
+      },
+    });
   }
 
-  const first = setFlag(2);
-  const second = setFlag(1);
+  // Start from Unreviewed (0): trigger Reject (2), then Pick (1) while Reject is still in flight
+  const first = triggerFlag(2);
+  const second = triggerFlag(1);
+
+  assert.equal(info.culling_flag, 1, 'UI reflects latest user intent immediately');
+  assert.deepEqual(calls, [2], 'Pick must wait until Reject finishes (serialized per file)');
+
+  // Reject (2) succeeds; Pick (1) should now be dispatched next
+  gates[0](1);
+  await Promise.resolve();
+  await Promise.resolve();
+  assert.deepEqual(synced, [[fileId, 2]]);
+  assert.deepEqual(calls, [2, 1]);
+  assert.equal(info.culling_flag, 1, 'UI still reflects pending Pick while Pick is in flight');
+
+  // Subsequent Pick (1) fails: UI must roll back to confirmed Reject (2), NOT Unreviewed (0)
+  gates[1](null);
+  await Promise.all([first, second]);
+
+  assert.equal(info.culling_flag, 2, 'rollback restores last confirmed Reject state');
+  assert.deepEqual(toasts, [2]);
+});
+
+test('failed earlier write does not flash error or revert when a newer queued intent succeeds', async () => {
+  const sync = createCullingSyncTracker();
+  const fileId = 201;
+  const info = { id: fileId, culling_flag: 0 };
+  const toasts = [];
+  const calls = [];
+  const gates = [];
+
+  function triggerFlag(flag) {
+    const matching = getMatchingPaneFileInfo(info, fileId);
+    const knownConfirmed = matching ? Number(matching.culling_flag ?? 0) : null;
+    return sync.enqueueCullingUpdate({
+      fileId,
+      cullingFlag: flag,
+      knownConfirmed,
+      pane: 'left',
+      advance: false,
+      applyOptimistic: (_id, nextFlag) => {
+        info.culling_flag = nextFlag;
+      },
+      persist: (_id, nextFlag) => {
+        calls.push(nextFlag);
+        return new Promise((resolve) => gates.push(resolve));
+      },
+      onCommit: (_id, nextFlag, settled) => {
+        if (settled) info.culling_flag = nextFlag;
+      },
+      onError: (_id, rollbackFlag) => {
+        if (rollbackFlag !== null) info.culling_flag = rollbackFlag;
+        toasts.push(rollbackFlag);
+      },
+    });
+  }
+
+  const first = triggerFlag(2);
+  const second = triggerFlag(1);
+  assert.deepEqual(calls, [2]);
+
+  // First write (2) fails while newer intent (1) is queued
+  gates[0](null);
+  await Promise.resolve();
+  await Promise.resolve();
+  assert.deepEqual(calls, [2, 1]);
+  assert.equal(toasts.length, 0);
   assert.equal(info.culling_flag, 1);
 
-  // Older write fails after newer write was queued; must NOT revert newer flag 1 or toast
-  gates[0](null);
-  await first;
+  // Second write (1) succeeds
+  gates[1](1);
+  await Promise.all([first, second]);
   assert.equal(info.culling_flag, 1);
   assert.equal(toasts.length, 0);
-
-  // Newer write fails; rolls back to original DB value 0 and shows error toast
-  gates[1](null);
-  await second;
-  assert.equal(info.culling_flag, 0);
-  assert.equal(toasts.length, 1);
 });
