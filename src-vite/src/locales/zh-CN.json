@@ -1354,6 +1354,7 @@
       "zoom_in": "放大",
       "zoom_out": "缩小",
       "zoom_fit": "适应窗口",
+      "zoom_fit_short": "适应",
       "zoom_actual": "实际大小",
       "af_area": "显示自动对焦区域",
       "fullscreen": "全屏",

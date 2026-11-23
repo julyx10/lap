@@ -36,9 +36,12 @@
           :tooltip="$t('image_viewer.toolbar.next')"
           @click="triggerNext" 
         />
-        <div class="flex items-center gap-0.5">
+        <div class="inline-flex shrink-0 items-center gap-0 overflow-hidden rounded-box border transition-colors duration-200"
+          :class="isSlideShow && canSlideShow ? 'border-base-content/15' : 'border-transparent'"
+          role="group" :aria-label="$t('image_viewer.toolbar.slide_show')">
           <TButton
             :icon="isSlideShow ? IconPause : IconPlay"
+            buttonClasses="h-7! w-7! min-h-0!"
             :disabled="fileIndex < 0 || !canSlideShow || !canInteract"
             :selected="isSlideShow && canSlideShow"
             :tooltip="!canSlideShow
@@ -46,7 +49,9 @@
               : (isSlideShow ? $t('image_viewer.toolbar.pause') : $t('image_viewer.toolbar.slide_show'))"
             @click="handleToggleSlideShow"
           />
-          <ContextMenu v-if="isSlideShow && canSlideShow"
+          <Transition name="play-interval">
+          <div v-if="isSlideShow && canSlideShow" class="play-interval-slot shrink-0">
+          <ContextMenu
             :menuItems="slideShowIntervalMenuItems"
             :disabled="fileIndex < 0 || !canSlideShow || !canInteract"
             @open-change="handleMenuOpenChange"
@@ -54,7 +59,7 @@
           >
             <template #trigger="{ toggle }">
               <button
-                class="h-8 min-w-8 px-1 inline-flex items-center justify-center gap-0.5 rounded-box text-xs cursor-pointer"
+                class="h-7 w-14 px-1 inline-flex items-center justify-center gap-0.5 rounded-box text-xs cursor-pointer"
                 :class="[
                   fileIndex < 0 || !canSlideShow || !canInteract
                     ? 'cursor-default text-base-content/30'
@@ -69,28 +74,35 @@
               </button>
             </template>
           </ContextMenu>
+          </div>
+          </Transition>
         </div>
-        <TButton
-          :icon="IconZoomOut"
-          :disabled="fileIndex < 0 || imageScale <= imageMinScale || isSlideShow || !canInteract"
-          :tooltip="$t('image_viewer.toolbar.zoom_out')"
-          :shortcut="shortcut('view.zoomOut')"
-          @click="handleZoomOut"
-        />
-        <TButton
-          :icon="IconZoomIn"
-          :disabled="fileIndex < 0 || imageScale >= imageMaxScale || isSlideShow || !canInteract"
-          :tooltip="$t('image_viewer.toolbar.zoom_in')"
-          :shortcut="shortcut('view.zoomIn')"
-          @click="handleZoomIn" 
-        />
-        <TButton
-          :icon="!isZoomFit ? IconZoomFit : IconZoomActual"
-          :disabled="fileIndex < 0 || isSlideShow || !canInteract"
-          :tooltip="!isZoomFit ? $t('image_viewer.toolbar.zoom_fit') : $t('image_viewer.toolbar.zoom_actual')"
-          :shortcut="shortcut('view.zoomFit')"
-          @click="$emit('update:isZoomFit', !isZoomFit)"
-        />
+        <div class="mx-1 inline-flex shrink-0 items-center gap-0 overflow-hidden rounded-box border border-base-content/15" role="group" :aria-label="$t('image_viewer.toolbar.zoom_fit')">
+          <TButton
+            :icon="IconZoomOut"
+            buttonClasses="h-7! w-7! min-h-0!"
+            :disabled="fileIndex < 0 || imageScale <= imageMinScale || isSlideShow || !canInteract"
+            :tooltip="$t('image_viewer.toolbar.zoom_out')"
+            :shortcut="shortcut('view.zoomOut')"
+            @click="handleZoomOut"
+          />
+          <ContextMenu :menuItems="zoomPercentMenuItems" :disabled="fileIndex < 0 || isSlideShow || !canInteract" @open-change="handleMenuOpenChange" @click.stop>
+            <template #trigger="{ toggle }">
+              <button class="h-7 w-14 rounded-box inline-flex items-center justify-center gap-0.5 text-xs tabular-nums text-base-content/70 hover:bg-base-100/30 cursor-pointer"
+                :disabled="fileIndex < 0 || isSlideShow || !canInteract" @click.stop="toggle">
+                {{ zoomScaleLabel }}<IconArrowDown class="size-3" />
+              </button>
+            </template>
+          </ContextMenu>
+          <TButton
+            :icon="IconZoomIn"
+            buttonClasses="h-7! w-7! min-h-0!"
+            :disabled="fileIndex < 0 || imageScale >= imageMaxScale || isSlideShow || !canInteract"
+            :tooltip="$t('image_viewer.toolbar.zoom_in')"
+            :shortcut="shortcut('view.zoomIn')"
+            @click="handleZoomIn"
+          />
+        </div>
         <TButton
           :icon="IconRotate"
           :disabled="fileIndex < 0 || isSlideShow || !canInteract"
@@ -379,8 +391,8 @@
           :isSlideShow="isSlideShow"
           :slideShowTransitionMode="slideShowTransitionMode"
           @update:isZoomFit="(val: boolean) => $emit('update:isZoomFit', val)"
-          @scale="(e) => $emit('scale', e)"
-          @viewport-change="(e) => $emit('viewport-change', e)"
+          @scale="handleScale"
+          @viewport-change="handleViewportChange"
           @message-from-image-viewer="handleMessageFromImageViewer"
           @context-menu="handleContextMenu"
           @pointerdown.capture="handleOverlayPointerDown"
@@ -416,10 +428,11 @@
           :originalUnavailable="originalUnavailable"
           :rotate="file?.rotate ?? 0"
           :isZoomFit="isZoomFit"
+          @update:isZoomFit="(val: boolean) => $emit('update:isZoomFit', val)"
           :isSlideShow="isSlideShow"
           :isActive="isPlaybackActive"
-          @scale="(e) => $emit('scale', e)"
-          @viewport-change="(e) => $emit('viewport-change', e)"
+          @scale="handleScale"
+          @viewport-change="handleViewportChange"
           @message-from-video-viewer="handleMessageFromImageViewer"
           @slideshow-next="emit('slideshow-next')"
           @context-menu="handleContextMenu"
@@ -470,8 +483,6 @@ import {
   IconArrowDown,
   IconZoomIn,
   IconZoomOut,
-  IconZoomFit,
-  IconZoomActual,
   IconFullScreen,
   IconRestoreScreen,
   IconPin,
@@ -563,6 +574,7 @@ const props = defineProps({
     type: Boolean,
     default: true
   },
+  displayZoomFit: { type: Boolean, default: null },
   imageScale: {
     type: Number,
     default: 1
@@ -671,7 +683,9 @@ const emit = defineEmits([
   'update:slideShowIntervalIndex',
   'close', 
   'scale', 
-  'update:isZoomFit', 
+  'update:isZoomFit',
+  'zoom-percent',
+  'zoom-fit',
   'item-action', 
   'toggle-full-screen', 
   'slideshow-next', 
@@ -690,6 +704,30 @@ const backgroundContextMenuRef = ref<any>(null);
 const containerRef = ref<HTMLElement | null>(null);
 const mediaAreaRef = ref<HTMLElement | null>(null);
 const mediaRef = ref<any>(null);
+const reportedDisplayScale = ref<number | null>(null);
+const reportedFit = ref<boolean | null>(null);
+const displayIsFit = computed(() => (props.toolbarOnly ? props.displayZoomFit : reportedFit.value) ?? props.isZoomFit);
+const zoomScaleLabel = computed(() => {
+  if (!props.file || props.fileIndex < 0) return '—';
+  if (displayIsFit.value) return t('image_viewer.toolbar.zoom_fit_short');
+  const displayScale = !props.toolbarOnly && reportedDisplayScale.value !== null
+    ? reportedDisplayScale.value
+    : props.imageScale * (props.file.file_type === 2 ? 1 : (window.devicePixelRatio || 1));
+  return `${Math.round(displayScale * 100)}%`;
+});
+function handleViewportChange(viewport: any) {
+  reportedFit.value = viewport.isZoomFit ?? null;
+  emit('viewport-change', viewport);
+}
+function handleScale(event: any) {
+  reportedDisplayScale.value = Number(event.displayScale ?? event.scale);
+  emit('scale', event);
+}
+watch(() => props.file?.id, () => {
+  reportedDisplayScale.value = null;
+  reportedFit.value = null;
+});
+
 const toast = useToast();
 const showAfAreas = computed({
   get: () => Boolean(config.mediaViewer.showAfAreas),
@@ -1275,13 +1313,42 @@ const handleMenuOpenChange = (isOpen: boolean) => {
 };
 
 // Expose methods for parent component (ImageViewer)
+const zoomToPercent = (percent: number) => {
+  if (props.toolbarOnly) emit('zoom-percent', percent);
+  else mediaRef.value?.zoomToPercent?.(percent);
+};
+const zoomToFit = () => {
+  if (props.toolbarOnly) emit('zoom-fit');
+  else mediaRef.value?.zoomToFit?.();
+};
+const zoomPercentMenuItems = computed(() => [
+  { label: t('image_viewer.toolbar.zoom_fit'), icon: displayIsFit.value ? IconDot : null, shortcut: shortcut('view.zoomFit'), action: zoomToFit },
+  { label: '-' },
+  ...[10, 25, 50, 75, 100, 125, 150, 200, 400, 800].map(percent => ({
+    label: `${percent}%`, icon: zoomScaleLabel.value === `${percent}%` ? IconDot : null,
+    action: () => zoomToPercent(percent),
+  })),
+]);
+const toggleZoomFit = () => {
+  if (mediaRef.value?.toggleZoomFit) mediaRef.value.toggleZoomFit();
+  else emit('update:isZoomFit', !props.isZoomFit);
+};
+
 const zoomIn = () => mediaRef.value?.zoomIn();
 const zoomOut = () => mediaRef.value?.zoomOut();
 const zoomActual = () => mediaRef.value?.zoomActual();
 const rotateView = (delta = 90) => mediaRef.value?.rotateView(delta);
 const togglePlay = () => mediaRef.value?.togglePlay?.();
 const getViewportState = () => mediaRef.value?.getViewportState?.();
-const applyViewportState = (viewport: any, silent = false) => mediaRef.value?.applyViewportState?.(viewport, silent);
+const applyViewportState = (viewport: any, silent = false) => {
+  mediaRef.value?.applyViewportState?.(viewport, silent);
+  // Silent synchronization suppresses renderer events; publish its resulting
+  // mode so the local toolbar and the active-pane toolbar stay up to date.
+  if (silent) {
+    const applied = mediaRef.value?.getViewportState?.();
+    if (applied) handleViewportChange(applied);
+  }
+};
 const getCurrentImageSrc = () => mediaRef.value?.getCurrentImageSrc?.() || '';
 const clearPreloadCache = (filePath?: string) => mediaRef.value?.clearPreloadCache?.(filePath);
 const showMessage = (message: string, isWarning: boolean = false) => {
@@ -1419,7 +1486,9 @@ defineExpose({
   applyViewportState,
   navigateImage: (point: { normX: number; normY: number }) => mediaRef.value?.navigateImage?.(point),
   zoomNavigator: (factor: number) => mediaRef.value?.zoomNavigator?.(factor),
-  toggleZoomFit: () => mediaRef.value?.toggleZoomFit?.(),
+  toggleZoomFit,
+  zoomToPercent,
+  zoomToFit,
   getCurrentImageSrc,
   clearPreloadCache,
   showMessage,
@@ -1460,6 +1529,16 @@ const singleFileMenuItems = computed(() => {
 </script>
 
 <style scoped>
+.play-interval-slot { width: 56px; overflow: hidden; }
+.play-interval-enter-active,
+.play-interval-leave-active { transition: width 200ms ease, opacity 200ms ease; }
+.play-interval-enter-from,
+.play-interval-leave-to { width: 0; opacity: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .play-interval-enter-active,
+  .play-interval-leave-active { transition: none; }
+}
+
 /* Disable text selection while dragging */
 * {
   user-select: none;

@@ -1354,6 +1354,7 @@
       "zoom_in": "拡大",
       "zoom_out": "縮小",
       "zoom_fit": "ウィンドウに合わせる",
+      "zoom_fit_short": "フィット",
       "zoom_actual": "実際のサイズ",
       "af_area": "AFエリアを表示",
       "fullscreen": "全画面",

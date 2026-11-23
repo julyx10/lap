@@ -5330,11 +5330,7 @@ function handleLocalKeyDown(event: KeyboardEvent) {
   if (getActivePreviewMode() !== 'none' && matchesShortcut('view.zoomFit', event, shortcutPlatform)) {
     event.preventDefault();
     if (!event.repeat) {
-      if (getActivePreviewMode() === 'quick-view') {
-        quickViewZoomFit.value = !quickViewZoomFit.value;
-      } else {
-        filmStripZoomFit.value = !filmStripZoomFit.value;
-      }
+      getActivePreviewMediaRef()?.toggleZoomFit?.();
     }
     return;
   }

@@ -114,7 +114,7 @@ const props = defineProps({
   showPlayOverlay: { type: Boolean, default: true },
 });
 
-const emit = defineEmits(['message-from-video-viewer', 'slideshow-next', 'scale', 'viewport-change', 'context-menu']);
+const emit = defineEmits(['update:isZoomFit', 'message-from-video-viewer', 'slideshow-next', 'scale', 'viewport-change', 'context-menu']);
 const { t: $t } = useI18n();
 const toast = useToast();
 
@@ -377,7 +377,7 @@ const updateTransform = (options: boolean | { resetRotation?: boolean, recalcSca
 
   video.style.transform = `translate(calc(-50% + ${viewportOffset.value.x}px), calc(-50% + ${viewportOffset.value.y}px)) rotate(${rotate.value}deg) scale(${scale.value})`;
 
-  emit('scale', { scale: scale.value, displayScale: scale.value, minScale: 0.1, maxScale: 10 });
+  emit('scale', { scale: scale.value, displayScale: scale.value, minScale: 0.1, maxScale: 8 });
   emit('viewport-change', { scale: scale.value, isZoomFit: isFit.value, fileType: 2 });
 };
 
@@ -858,7 +858,7 @@ function handlePinchPointerMove(event: PointerEvent) {
   const pts = Array.from(activeTouchPointers.values());
   const distance = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
   if (distance < 1) return;
-  const newScale = Math.max(0.1, Math.min(10, pinchStartScale * (distance / pinchStartDistance)));
+  const newScale = Math.max(0.1, Math.min(8, pinchStartScale * (distance / pinchStartDistance)));
   scale.value = newScale;
   isFit.value = false;
   updateTransform();
@@ -901,11 +901,11 @@ function applyZoomFromWheel(event: WheelEvent) {
   let newScale: number;
   const isPinch = event.ctrlKey && event.deltaMode === 0 && Math.abs(event.deltaY) < 50;
   if (isPinch) {
-    newScale = Math.max(0.1, Math.min(10, scale.value * Math.exp(-event.deltaY / 96)));
+    newScale = Math.max(0.1, Math.min(8, scale.value * Math.exp(-event.deltaY / 96)));
   } else {
     const zoomFactor = 0.1;
     newScale = event.deltaY < 0
-      ? Math.min(scale.value * (1 + zoomFactor), 10)
+      ? Math.min(scale.value * (1 + zoomFactor), 8)
       : Math.max(scale.value * (1 - zoomFactor), 0.1);
   }
   zoomAtCursor(event, newScale);
@@ -928,6 +928,7 @@ function zoomAtCursor(event: WheelEvent, newScale: number) {
 
 // Coordinates are relative to the viewport center; buttons use (0, 0).
 function zoomAtPosition(x: number, y: number, newScale: number) {
+  newScale = Math.max(0.1, Math.min(8, newScale));
   const ratio = newScale / scale.value;
   viewportOffset.value = {
     x: x - (x - viewportOffset.value.x) * ratio,
@@ -1043,11 +1044,30 @@ watch(() => props.isActive, (isActive) => {
 });
 
 const zoomIn = () => {
-  zoomAtPosition(0, 0, Math.min(scale.value * 2, 10));
+  zoomAtPosition(0, 0, Math.min(scale.value * 2, 8));
 };
 const zoomOut = () => {
   zoomAtPosition(0, 0, Math.max(scale.value / 2, 0.1));
 };
+const toggleZoomFit = () => {
+  if (props.isSlideShow) return;
+  const nextFit = !isFit.value;
+  if (nextFit === props.isZoomFit) {
+    isFit.value = nextFit;
+    viewportOffset.value = { x: 0, y: 0 };
+    updateTransform({ recalcScale: true });
+  } else {
+    emit('update:isZoomFit', nextFit);
+  }
+};
+const zoomToFit = () => {
+  if (props.isZoomFit) {
+    isFit.value = true;
+    viewportOffset.value = { x: 0, y: 0 };
+    updateTransform({ recalcScale: true });
+  } else emit('update:isZoomFit', true);
+};
+const zoomToPercent = (percent: number) => zoomAtPosition(0, 0, Math.min(8, Math.max(0.1, percent / 100)));
 const zoomActual = () => {
   zoomAtPosition(0, 0, 1);
 };
@@ -1106,10 +1126,16 @@ function applyViewportState(
     ? sourceWidth / videoWidth
     : (sourceHeight > 0 && videoHeight ? sourceHeight / videoHeight : 1);
 
-  scale.value = Math.max(0.1, Math.min(10, nextScale * sourceScale));
-  if (typeof viewport.isZoomFit !== 'boolean') {
-    isFit.value = false;
-  }
+  scale.value = Math.max(0.1, Math.min(8, nextScale * sourceScale));
+  // A source pane's Fit scale may not fit this video's dimensions.
+  const isRotatedForFit = rotate.value % 180 !== 0;
+  const fitWidth = isRotatedForFit ? videoHeight : videoWidth;
+  const fitHeight = isRotatedForFit ? videoWidth : videoHeight;
+  const fitScale = fitWidth && fitHeight && containerWidth && containerHeight
+    ? Math.min(containerWidth / fitWidth, containerHeight / fitHeight)
+    : NaN;
+  isFit.value = viewport.isZoomFit === true && Number.isFinite(fitScale)
+    && Math.abs(scale.value - fitScale) <= fitScale * 0.001;
 
   if (hasPosition && videoWidth && videoHeight && containerWidth && containerHeight) {
     const isRotated = rotate.value % 180 !== 0;
@@ -1140,9 +1166,12 @@ function applyViewportState(
 }
 
 defineExpose({
+  toggleZoomFit,
   zoomIn,
   zoomOut,
   zoomActual,
+  zoomToPercent,
+  zoomToFit,
   rotateView,
   togglePlay,
   getViewportState,
@@ -1212,7 +1241,7 @@ function handleWheel(event: WheelEvent) {
     if (gestureType.value === 'zoom' || Math.abs(event.deltaY) > Math.abs(event.deltaX)) {
       const zoomFactor = 0.01;
       const delta = -event.deltaY * zoomFactor;
-      zoomAtCursor(event, Math.max(0.1, Math.min(10, scale.value + delta)));
+      zoomAtCursor(event, Math.max(0.1, Math.min(8, scale.value + delta)));
     }
   } else {
     if (config.settings.mouseWheelMode === 0) {

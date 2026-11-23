@@ -1354,6 +1354,7 @@
       "zoom_in": "Zoom in",
       "zoom_out": "Zoom out",
       "zoom_fit": "Fit to window",
+      "zoom_fit_short": "Fit",
       "zoom_actual": "Actual size",
       "af_area": "Show AF areas",
       "fullscreen": "Fullscreen",

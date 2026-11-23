@@ -81,6 +81,7 @@
             :canSlideShow="false"
             :canInteract="true"
             :imageScale="getPaneScale(activePane).scale"
+            :displayZoomFit="paneDisplayFit[activePane] ?? getZoomFitByPane(activePane)"
             :imageMinScale="getPaneScale(activePane).min"
             :imageMaxScale="getPaneScale(activePane).max"
             :isZoomFit="getZoomFitByPane(activePane)"
@@ -94,6 +95,8 @@
             @item-action="handleItemAction"
             @scale="clickScale($event, activePane)"
             @update:isZoomFit="(val) => handleZoomFitUpdate(val, activePane)"
+            @zoom-percent="getViewerRef(activePane)?.zoomToPercent?.($event)"
+            @zoom-fit="getViewerRef(activePane)?.zoomToFit?.()"
             @toggle-full-screen="toggleNativeFullScreen"
             @close="closeWindow"
             @slideshow-next="handleSlideshowNext"
@@ -893,7 +896,9 @@ function syncViewportFrom(pane: Pane, animate = false) {
   syncingPane.value = '';
 }
 
+const paneDisplayFit = reactive<Partial<Record<Pane, boolean>>>({});
 function handleViewportChange(viewport: any, pane: Pane) {
+  paneDisplayFit[pane] = viewport.isZoomFit ?? false;
   if (splitCount.value === 1 || !isSyncViewport.value) return;
   if (syncingPane.value) return;
 
@@ -1292,8 +1297,7 @@ const clickZoomActual = (pane: Pane = 'left') => {
 };
 
 const toggleZoomFit = (pane: Pane = 'left') => {
-  const current = getZoomFitByPane(pane);
-  handleZoomFitUpdate(!current, pane);
+  getViewerRef(pane)?.toggleZoomFit?.();
 };
 
 const toggleNativeFullScreen = () => {

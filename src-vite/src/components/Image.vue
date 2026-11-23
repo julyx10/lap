@@ -357,6 +357,7 @@ const uiStore = useUIStore();
 const container = ref(null);
 const containerSize = ref({ width: 0, height: 0 });
 const containerPos = ref({ x: 0, y: 0 });
+let hasManualZoom = false;
 const isZoomFit = ref(props.isZoomFit);     // Zoom to fit image in container
 
 // image
@@ -365,8 +366,8 @@ const imageSrc = ref(['', '']);             // image source
 const imageFilePath = ref(['', '']);        // source file path for each buffer image
 const position = shallowRef([{ x: 0, y: 0 }, { x: 0, y: 0 }]); // Image position (top-left corner)
 const scale = ref([1, 1]);                  // Image scale (zoom level)
-const minScale = ref(0.1);                    // Minimum zoom level
-const maxScale = ref(10);                   // Maximum zoom level
+const minScale = ref(0.1 / (window.devicePixelRatio || 1));                    // Minimum zoom level
+const maxScale = ref(8 / (window.devicePixelRatio || 1));                   // Maximum zoom level
 const getActualSizeScale = () => 1 / (window.devicePixelRatio || 1);
 const getDisplayScale = (scaleValue: number) => scaleValue * (window.devicePixelRatio || 1);
 const imageRotate = ref([0, 0]);            // Image rotation
@@ -1308,7 +1309,7 @@ watch([
   loadError.value = false; // Reset error state
   cloudLoadError.value = false;
   offlinePreview.value = false;
-  maxScale.value = 10;
+  maxScale.value = 8 / (window.devicePixelRatio || 1);
 
   if (!newFilePath) {
     isLoading.value = false;
@@ -1836,7 +1837,16 @@ const rotateView = (delta = 90) => {
 
 const toggleZoomFit = () => {
   if (props.isSlideShow) return;
-  emit('update:isZoomFit', !props.isZoomFit);
+  const nextFit = hasManualZoom || !isZoomFit.value;
+  hasManualZoom = false;
+  if (nextFit === props.isZoomFit) {
+    // The parent already says Fit after manual zoom: restore it locally once.
+    isZoomFit.value = nextFit;
+    updateZoomFit();
+  } else {
+    // Keep the original single prop-watcher path for Fit/Actual transitions.
+    emit('update:isZoomFit', nextFit);
+  }
 };
 
 const updateZoomFit = (force: boolean = false) => {
@@ -1851,6 +1861,7 @@ const updateZoomFit = (force: boolean = false) => {
 
 // Zoom to fit image in container
 const zoomFit = (force: boolean = false) => {
+  hasManualZoom = false;
   console.log('zoomFit');
   const container = containerSize.value;
   const imgRotatedSize = imageSizeRotated.value[activeImage.value];
@@ -1863,7 +1874,7 @@ const zoomFit = (force: boolean = false) => {
     : container.width / imgRotatedSize.width;
 
   // set position to center
-  zoomImage(container.width / 2, container.height / 2, scale, force);
+  zoomImage(container.width / 2, container.height / 2, scale, force, false);
 };
 
 // Reset zoom level and position
@@ -1872,7 +1883,7 @@ const zoomReset = (force: boolean = false) => {
   updatePosition();
   const mousePos = mousePosition.value;
   const containerPosVal = containerPos.value;
-  zoomImage(mousePos.x - containerPosVal.x, mousePos.y - containerPosVal.y, getActualSizeScale(), force);
+  zoomImage(mousePos.x - containerPosVal.x, mousePos.y - containerPosVal.y, getActualSizeScale(), force, false);
 };
 
 let dragOutStart: { x: number; y: number; path: string; preview: number[] } | null = null;
@@ -2188,37 +2199,32 @@ const zoomIn = () => {
 
 const zoomOut = () => {
   const container = containerSize.value;
-  const imgRotatedSize = imageSizeRotated.value[activeImage.value];
-  
-  // Calculate potential min scale based on fit, but respect hard floor of 0.1 if desired?
-  // User asked for "lowest scale 10%". 
-  // We'll prioritize 0.1, but if fitting requires less, we might have a conflict.
-  // Assuming 0.1 is the hard floor relevant to the user's request.
-  
-  const fitScale = Math.min(
-    container.width / imgRotatedSize.width, 
-    container.height / imgRotatedSize.height
-  );
-  
-  // Update minScale to be at least 0.1. 
-  // If we want to allow "Overview mode" smaller than 0.1 we can adjust.
-  // But given the "bug report" of 0%, we stick to 0.1.
-  minScale.value = 0.1;
-
   const newScale = Math.max(scale.value[activeImage.value] / 2, minScale.value);
   const containerPosVal = containerPos.value;
   zoomImage(container.width / 2, container.height / 2, newScale);
 };
 
+const zoomToFit = () => {
+  if (props.isZoomFit) { isZoomFit.value = true; zoomFit(); }
+  else emit('update:isZoomFit', true);
+};
+const zoomToPercent = (percent: number) => {
+  const size = containerSize.value;
+  zoomImage(size.width / 2, size.height / 2, Math.max(minScale.value, Math.min(maxScale.value, percent / 100 / (window.devicePixelRatio || 1))));
+};
 const zoomActual = () => {
   const container = containerSize.value;
   zoomImage(container.width / 2, container.height / 2, getActualSizeScale());
 };
 
 // Zoom image at cursor position
-function zoomImage(cursorX: number, cursorY: number, newScale: number, force: boolean = false) {
+function zoomImage(cursorX: number, cursorY: number, newScale: number, force: boolean = false, manual = true) {
   const imgIndex = activeImage.value;
   const currentScale = scale.value[imgIndex];
+  if (manual) {
+    newScale = Math.min(maxScale.value, Math.max(minScale.value, newScale));
+    hasManualZoom = true;
+  }
   const pos = position.value[imgIndex];
   const imgSize = imageSize.value[imgIndex];
   
@@ -2251,6 +2257,7 @@ function getViewportState() {
 
   return {
     scale: scaleVal,
+    isZoomFit: isZoomFit.value && !hasManualZoom,
     normX: Math.min(Math.max(contentX / imgSize.width, 0), 1),
     normY: Math.min(Math.max(contentY / imgSize.height, 0), 1),
     sourceWidth: imgSize.width,
@@ -2263,7 +2270,7 @@ function getViewportState() {
   };
 }
 
-function applyViewportState(viewport: { scale?: number; normX?: number; normY?: number }, silent = false) {
+function applyViewportState(viewport: { scale?: number; normX?: number; normY?: number; isZoomFit?: boolean }, silent = false) {
   if (!viewport || typeof viewport.scale !== 'number') return;
 
   const imgIndex = activeImage.value;
@@ -2272,6 +2279,11 @@ function applyViewportState(viewport: { scale?: number; normX?: number; normY?: 
   const safeScale = Math.min(Math.max(viewport.scale, minScale.value), maxScale.value);
 
   scale.value[imgIndex] = safeScale;
+  const rotatedSize = imageSizeRotated.value[imgIndex];
+  const fitScale = Math.min(container.width / rotatedSize.width, container.height / rotatedSize.height);
+  isZoomFit.value = viewport.isZoomFit === true && Number.isFinite(fitScale)
+    && Math.abs(safeScale - fitScale) <= fitScale * 0.001;
+  hasManualZoom = !isZoomFit.value;
 
   const normX = Math.min(Math.max(viewport.normX ?? 0.5, 0), 1);
   const normY = Math.min(Math.max(viewport.normY ?? 0.5, 0), 1);
@@ -2345,6 +2357,8 @@ defineExpose({
   zoomIn, 
   zoomOut,
   zoomActual,
+  zoomToPercent,
+  zoomToFit,
   rotateView,
   getViewportState,
   applyViewportState,
