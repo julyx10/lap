@@ -1616,9 +1616,12 @@ export async function setFileRating(fileId, rating) {
 
 // set file culling status (0: unreviewed, 1: pick, 2: reject)
 export async function setFileCullingFlag(fileId, cullingFlag) {
+  if (!Number.isInteger(fileId) || fileId <= 0) {
+    return null;
+  }
   try {
     const result = await invoke('set_file_culling_flag', { fileId, cullingFlag });
-    if (result !== null && result !== undefined) {
+    if (typeof result === 'number' && result > 0) {
       return result;
     }
   } catch (error) {

@@ -4458,8 +4458,12 @@ pub fn set_file_rating(file_id: i64, rating: i32) -> Result<usize, String> {
 #[tauri::command]
 pub fn set_file_culling_flag(file_id: i64, culling_flag: i32) -> Result<usize, String> {
     let clamped = culling_flag.clamp(0, 2);
-    AFile::update_column(file_id, "culling_flag", &clamped)
-        .map_err(|e| format!("Error while setting file culling flag: {}", e))
+    let updated = AFile::update_column(file_id, "culling_flag", &clamped)
+        .map_err(|e| format!("Error while setting file culling flag: {}", e))?;
+    if updated == 0 {
+        return Err(format!("No file record found for id {}", file_id));
+    }
+    Ok(updated)
 }
 
 #[derive(Debug, Deserialize)]
@@ -5197,5 +5201,51 @@ mod raw_display_library_tests {
         *current.lock().unwrap() = "library-b".into();
         drop(guard);
         assert!(with_library_context(&lock, "library-a", || Ok(current.lock().unwrap().clone()), || Ok(())).is_err());
+    }
+}
+
+#[cfg(test)]
+mod culling_persistence_tests {
+    use super::set_file_culling_flag;
+    use crate::t_sqlite::{TEST_DB_PATH, clear_conn_pool, open_conn};
+
+    struct TestDbDir(std::path::PathBuf);
+    impl Drop for TestDbDir {
+        fn drop(&mut self) {
+            clear_conn_pool();
+            TEST_DB_PATH.with(|path| path.replace(None));
+            let _ = std::fs::remove_dir_all(&self.0);
+        }
+    }
+
+    #[test]
+    fn set_file_culling_flag_rejects_missing_id_and_persists_valid_updates() {
+        let unique = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let dir = TestDbDir(std::env::temp_dir().join(format!("lap-culling-test-{unique}")));
+        std::fs::create_dir(&dir.0).unwrap();
+        let db_path = dir.0.join("catalog.db");
+        TEST_DB_PATH.with(|path| path.replace(Some(db_path.to_str().unwrap().into())));
+
+        {
+            let conn = open_conn().unwrap();
+            conn.execute_batch(
+                "CREATE TABLE afiles(id INTEGER PRIMARY KEY, culling_flag INTEGER NOT NULL DEFAULT 0);
+                 INSERT INTO afiles(id, culling_flag) VALUES (42, 0);",
+            )
+            .unwrap();
+        }
+
+        assert!(set_file_culling_flag(999, 2).is_err());
+        assert_eq!(set_file_culling_flag(42, 2).unwrap(), 1);
+        assert_eq!(set_file_culling_flag(42, 99).unwrap(), 1);
+
+        let verify_conn = rusqlite::Connection::open(&db_path).unwrap();
+        let persisted: i32 = verify_conn
+            .query_row("SELECT culling_flag FROM afiles WHERE id = 42", [], |row| row.get(0))
+            .unwrap();
+        assert_eq!(persisted, 2);
     }
 }
