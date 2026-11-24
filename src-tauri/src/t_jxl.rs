@@ -73,6 +73,14 @@ pub fn get_jxl_dimensions(file_path: &str) -> Result<(u32, u32), String> {
     Ok((width, height))
 }
 
+pub fn get_jxl_preview_from_bytes(data: &[u8], max_edge: u32) -> Result<Option<Vec<u8>>, String> {
+    let decoder = JxlDecoder::new(std::io::Cursor::new(data))
+        .map_err(|e| format!("Failed to initialize embedded JXL decoder: {}", e))?;
+    let image = DynamicImage::from_decoder(decoder)
+        .map_err(|e| format!("Failed to decode embedded JXL preview: {}", e))?;
+    crate::t_image::resize_dynamic_image_to_jpeg(image, 1, max_edge).map(Some)
+}
+
 pub fn get_jxl_preview_image(file_path: &str, max_edge: u32) -> Result<Option<Vec<u8>>, String> {
     let image = decode_jxl_image(file_path)?;
     crate::t_image::resize_dynamic_image_to_jpeg(image, 1, max_edge).map(Some)

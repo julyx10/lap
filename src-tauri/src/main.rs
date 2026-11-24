@@ -29,6 +29,7 @@ mod t_heif;
 mod t_http;
 mod t_affinity;
 mod t_image;
+mod t_dng_preview;
 mod t_af_area;
 mod t_jpeg;
 mod t_jxl;

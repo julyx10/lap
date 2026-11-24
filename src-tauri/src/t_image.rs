@@ -856,6 +856,14 @@ pub fn get_raw_thumbnail(
         return Ok(Some(data));
     }
 
+    // DNG 1.7 RGB previews can be JPEG XL. Decode the largest embedded
+    // preview before giving up on thumbnail generation.
+    if let Some(data) = crate::t_dng_preview::get_embedded_jxl_preview(file_path) {
+        if let Ok(Some(jpeg)) = crate::t_jxl::get_jxl_preview_from_bytes(&data, thumbnail_size) {
+            return Ok(Some(jpeg));
+        }
+    }
+
     // Fallback: EXIF-based embedded JPEG extraction
     if let Ok(Some(preview)) = select_embedded_jpeg_for_thumbnail(file_path, thumbnail_size) {
         if let Ok(img) = image::load_from_memory(&preview.data) {
@@ -1956,6 +1964,13 @@ pub async fn get_file_image_bytes_cached(
 fn get_embedded_preview(path: &str) -> Option<Vec<u8>> {
     if let Ok(Some(data)) = t_libraw::get_embedded_raw_preview_image(path) {
         return Some(data);
+    }
+    // DNG 1.7 stores embedded RGB previews as JPEG XL. LibRaw without the
+    // Adobe DNG SDK cannot read those preview IFDs, but jxl-oxide can.
+    if let Some(data) = crate::t_dng_preview::get_embedded_jxl_preview(path) {
+        if let Ok(Some(jpeg)) = crate::t_jxl::get_jxl_preview_from_bytes(&data, 4096) {
+            return Some(jpeg);
+        }
     }
     // Some cameras expose previews that LibRaw cannot extract. Preserve the
     // existing JPEG extraction fallback, with accurate source metadata.
