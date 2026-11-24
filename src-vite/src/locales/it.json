@@ -532,6 +532,7 @@
     "select_hint": "Nessun elemento selezionato",
     "deselect": "Deseleziona",
     "selection_load_failed": "Impossibile caricare tutti gli elementi per la selezione. Riprova.",
+    "file_action_unavailable": "Questo file non è più disponibile nella finestra principale.",
     "large_batch": {
       "title": "Conferma operazione in blocco",
       "content": "Questa operazione elaborerà {count} elementi e potrebbe richiedere del tempo. Continuare?",
@@ -551,6 +552,7 @@
     "unfavorite_all": "Rimuovi preferito",
     "action": "Azione",
     "file_actions": "Azioni sui file",
+    "more": "Altro…",
     "organize": "Organizza",
     "more_actions": "Altre azioni",
     "tag_all": "Tag",

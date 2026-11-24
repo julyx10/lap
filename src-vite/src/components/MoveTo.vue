@@ -126,4 +126,6 @@ const clickCancel = () => {
   emit('cancel');
 };
 
+defineExpose({ clickOk, clickCancel });
+
 </script>

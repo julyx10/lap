@@ -532,6 +532,7 @@
     "select_hint": "Nie wybrano elementów",
     "deselect": "Anuluj zaznaczenie",
     "selection_load_failed": "Nie udało się wczytać wszystkich elementów dla zaznaczenia. Spróbuj ponownie.",
+    "file_action_unavailable": "Ten plik nie jest już dostępny w głównym oknie.",
     "large_batch": {
       "title": "Potwierdź operację masową",
       "content": "Ta operacja przetworzy {count} elementów i może chwilę potrwać. Kontynuować?",
@@ -551,6 +552,7 @@
     "unfavorite_all": "Usuń z ulubionych",
     "action": "Akcja",
     "file_actions": "Akcje plików",
+    "more": "Więcej…",
     "organize": "Organizuj",
     "more_actions": "Więcej akcji",
     "tag_all": "Otaguj",

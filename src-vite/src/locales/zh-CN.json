@@ -532,6 +532,7 @@
     "select_hint": "未选择项目",
     "deselect": "取消选择",
     "selection_load_failed": "无法加载全部项目进行选择，请重试。",
+    "file_action_unavailable": "此文件在主窗口中已不可用。",
     "large_batch": {
       "title": "确认批量操作",
       "content": "此操作将处理 {count} 个项目，可能需要一些时间。是否继续？",
@@ -551,6 +552,7 @@
     "unfavorite_all": "取消收藏",
     "action": "操作",
     "file_actions": "文件操作",
+    "more": "更多…",
     "organize": "整理",
     "more_actions": "更多操作",
     "tag_all": "标签",

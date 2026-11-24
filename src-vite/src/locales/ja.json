@@ -532,6 +532,7 @@
     "select_hint": "項目が選択されていません",
     "deselect": "選択解除",
     "selection_load_failed": "選択するすべての項目を読み込めませんでした。再試行してください。",
+    "file_action_unavailable": "このファイルはメインウィンドウで利用できなくなりました。",
     "large_batch": {
       "title": "一括操作の確認",
       "content": "{count} 個の項目を処理します。時間がかかる場合があります。続行しますか？",
@@ -551,6 +552,7 @@
     "unfavorite_all": "お気に入り解除",
     "action": "操作",
     "file_actions": "ファイル操作",
+    "more": "その他…",
     "organize": "整理",
     "more_actions": "その他の操作",
     "tag_all": "タグ",

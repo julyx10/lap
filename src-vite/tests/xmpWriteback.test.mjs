@@ -41,6 +41,15 @@ test('single and selection menus offer XMP save without an overwrite-import acti
   }
 });
 
+const actionsSource = fs.readFileSync(new URL('../src/common/fileActions.ts', import.meta.url), 'utf8');
+const renameHelperStart = actionsSource.indexOf('export async function renameSingleFile');
+const renameHelperEnd = actionsSource.indexOf('export interface FileDeleteTarget', renameHelperStart);
+assert.ok(renameHelperStart >= 0 && renameHelperEnd > renameHelperStart);
+const renameHelperCode = ts.transpile(
+  actionsSource.slice(renameHelperStart, renameHelperEnd).replace(/export /g, ''),
+  { target: ts.ScriptTarget.ES2022 },
+);
+
 const content = fs.readFileSync(new URL('../src/components/Content.vue', import.meta.url), 'utf8');
 const actionCode = content.slice(content.indexOf("    'save-xmp': async () => {"), content.indexOf("    'favorite':", content.indexOf("    'save-xmp': async () => {")));
 test('XMP save sends the complete selection and library identity, reporting partial failure', async () => {
@@ -148,11 +157,13 @@ test('content rename displays the backend reason and keeps the dialog open', asy
   assert.ok(start >= 0 && end > start);
   const error = 'XMP sidecar is not a regular file: /source/photo.xmp';
   const f = transferFixture({ commandError: error });
+  const combineFileName = (name, ext) => `${name}.${ext}`;
+  const renameSingleFile = new Function('renameFile', 'combineFileName', renameHelperCode + '; return renameSingleFile;')(f.renameFile, combineFileName);
   const values = {
     requireCurrentOriginals: async () => true, selectedItemIndex: ref(0),
     fileList: ref([{ id: 1, name: 'photo.jpg', file_path: '/source/photo.jpg' }]),
-    renamingFileName: ref({ ext: 'jpg' }), combineFileName: (name, ext) => `${name}.${ext}`,
-    renameFile: f.renameFile, showRenameMsgbox: ref(true), errorMessage: ref(''),
+    renamingFileName: ref({ ext: 'jpg' }), combineFileName,
+    renameFile: f.renameFile, renameSingleFile, showRenameMsgbox: ref(true), errorMessage: ref(''),
     localeMsg: ref({ msgbox: { rename_file: { error: 'Rename failed' } } }),
   };
   const rename = new Function(...Object.keys(values), ts.transpile(content.slice(start, end), { target: ts.ScriptTarget.ES2022 }) +

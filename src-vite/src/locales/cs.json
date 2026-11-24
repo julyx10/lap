@@ -532,6 +532,7 @@
     "select_hint": "Nejsou vybrány žádné položky",
     "deselect": "Zrušit výběr",
     "selection_load_failed": "Nepodařilo se načíst všechny položky z výběru. Zkuste to znovu.",
+    "file_action_unavailable": "Tento soubor už není v hlavním okně dostupný.",
     "large_batch": {
       "title": "Potvrdit hromadnou operaci",
       "content": "Tato operace zpracuje {count} položek a může chvíli trvat. Chcete pokračovat?",
@@ -551,6 +552,7 @@
     "unfavorite_all": "Odebrat z oblíbených",
     "action": "Akce",
     "file_actions": "Operace se soubory",
+    "more": "Více…",
     "organize": "Uspořádat",
     "more_actions": "Další akce",
     "tag_all": "Štítek",

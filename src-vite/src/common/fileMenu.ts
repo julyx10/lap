@@ -53,6 +53,8 @@ export const useFileMenuItems = (
     selectionStorageUnavailable?: Ref<boolean>;
     selectionInCollection?: Ref<boolean>;
     selectionFirstFavorite?: Ref<boolean>;
+    /** Hide "View in new window" instead of only disabling it. */
+    hideViewInNewWindow?: boolean;
   }
 ) => {
   const requiresAvailableFile = (action: string) => action === 'copy' || requiresOriginalAction(action) || requiresLocalContent(action);
@@ -202,6 +204,7 @@ export const useFileMenuItems = (
         label: localeMsg.value.menu.file.view_in_new_window,
         icon: markRaw(IconMonitor),
         shortcut: shortcut('file.openNewWindow'),
+        hidden: options?.hideViewInNewWindow === true,
         action: createAction('open')
       },
       { ...externalAppMenu(isVideo ? 'video' : 'image'), hidden: !isImage && !isVideo },

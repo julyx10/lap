@@ -7,6 +7,7 @@
     ]"
     @mousemove="handleRootMouseMove"
     @mouseleave="handleRootMouseLeave"
+    @contextmenu.prevent="openViewerContextMenu"
   >
 
     <div
@@ -38,6 +39,7 @@
           :isZoomFit="isZoomFit"
           :isSyncViewport="isSyncViewport"
           :showWindowControls="true"
+          :showViewerMenu="true"
           @prev="clickPrev()"
           @next="clickNext()"
           @toggle-slide-show="clickSlideShow()"
@@ -50,6 +52,8 @@
           @toggle-full-screen="toggleNativeFullScreen"
           @close="closeWindow"
           @slideshow-next="handleSlideshowNext"
+          @context-menu="openPaneContextMenu('left', $event)"
+          @viewer-more="openViewerMoreMenu"
         />
 
         <!--
@@ -88,6 +92,7 @@
             :isSyncViewport="isSyncViewport"
             :showSyncViewportControl="isCompareModeSession"
             :forceToolbarVisible="isFullScreen && splitToolbarVisible"
+            :showViewerMenu="true"
             @toggle-af-areas="getViewerRef(activePane)?.toggleAfAreas?.()"
             @prev="clickPrev(activePane)"
             @next="clickNext(activePane)"
@@ -100,6 +105,7 @@
             @toggle-full-screen="toggleNativeFullScreen"
             @close="closeWindow"
             @slideshow-next="handleSlideshowNext"
+            @viewer-more="openViewerMoreMenu"
           />
 
           <!-- Split Panes -->
@@ -148,6 +154,7 @@
                 @toggle-full-screen="toggleNativeFullScreen"
                 @close="closeWindow"
                 @slideshow-next="handleSlideshowNext"
+                @context-menu="openPaneContextMenu(pane, $event)"
               />
               <div
                 v-if="isPaneAvailable(pane) && activePane === pane"
@@ -158,10 +165,26 @@
         </div>
       </template>
 
-      <!-- no image selected -->
-      <div v-else class="flex flex-col items-center justify-center w-full h-full text-base-content/30">
-        <IconSearch class="w-8 h-8" />
-        <span>{{ $t('tooltip.not_found.files') }}</span>
+      <!-- no image selected: keep the full MediaViewer/image container mounted -->
+      <div v-else class="relative w-full h-full">
+        <MediaViewer
+          :mode="2"
+          :showToolbar="true"
+          :showWindowControls="true"
+          :isFullScreen="isFullScreen"
+          :file="null"
+          :fileIndex="-1"
+          :fileCount="0"
+          :canInteract="false"
+          :isZoomFit="true"
+          :showViewerMenu="false"
+          @toggle-full-screen="toggleNativeFullScreen"
+          @close="closeWindow"
+        />
+        <div class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 pt-10 text-base-content/30">
+          <IconSearch class="w-8 h-8" />
+          <span>{{ $t('tooltip.not_found.files') }}</span>
+        </div>
       </div>
     </div>
 
@@ -178,8 +201,31 @@
       />
     </div>
 
+    <div class="hidden">
+      <ContextMenu
+        ref="viewerContextMenuRef"
+        :menuItems="viewerContextMenuItems"
+      >
+        <template #trigger><span></span></template>
+      </ContextMenu>
+    </div>
+
+    <PrintImage ref="printImageView" />
+
+    <MoveTo
+      ref="moveToRef"
+      v-if="showMoveTo"
+      :title="$t(moveMode === 'copy' ? 'msgbox.copy_to.title' : 'msgbox.move_to.title', { source: moveTarget?.name || '' })"
+      :message="$t(moveMode === 'copy' ? 'msgbox.copy_to.content' : 'msgbox.move_to.content')"
+      :OkText="$t(moveMode === 'copy' ? 'msgbox.copy_to.ok' : 'msgbox.move_to.ok')"
+      :cancelText="$t('msgbox.cancel')"
+      @ok="onMoveTo"
+      @cancel="showMoveTo = false"
+    />
+
     <TaggingDialog
       v-if="showTaggingDialog"
+      position-key="edit-tag"
       :fileIds="taggingFileIds"
       :file-name="activeFileInfo?.name || ''"
       @ok="updateFileHasTags"
@@ -189,6 +235,7 @@
 
     <AddToCollectionDialog
       v-if="showAddToCollectionDialog"
+      position-key="edit-collection"
       :fileIds="collectionFileIds"
       @applied="handleCollectionsAdded"
       @deleted="handleCollectionDeleted"
@@ -197,6 +244,46 @@
 
     <EditMetadataDialog v-if="showCommentMsgbox && metadataFiles.length" :files="metadataFiles" :focus-field="metadataFocus"
     @saved="onMetadataSaved" @cancel="showCommentMsgbox = false" />
+
+    <FileConflictDialog
+      v-if="fileConflictDialog.show"
+      :name="fileConflictDialog.name"
+      :destination="fileConflictDialog.destination"
+      :showApplyAll="fileConflictDialog.showApplyAll"
+      :allowReplace="fileConflictDialog.allowReplace"
+      @resolve="resolveFileConflict"
+    />
+
+    <FileDeleteDialog
+      v-if="showDeleteDialog"
+      :plan="deletePlan"
+      :permanently="deletePermanently"
+      :confirmation-count="deleteConfirmationCount"
+      :subtitle="deleteSubtitle"
+      :trash-message="''"
+      :preview-files="deletePlan?.files || []"
+      :preview-item-count="deletePlan?.files.length || 0"
+      :preview-limit="5"
+      :thumbnails="deleteThumbnails"
+      :raw-pair-delete-count="rawPairDeleteCount"
+      :single-delete-count="singleDeleteCount"
+      :raw-pair-delete-choices="rawPairDeleteChoices"
+      :raw-pair-scope="rawPairScope"
+      :is-deleting="isDeleting"
+      @update:rawPairScope="rawPairScope = $event"
+      @ok="confirmDelete"
+      @cancel="showDeleteDialog = false"
+    />
+
+    <RenameFileDialog
+      v-if="showRenameDialog"
+      :name="renameName"
+      :extension="renameExtension"
+      :error-message="renameError"
+      @ok="submitRename"
+      @cancel="showRenameDialog = false"
+      @reset="renameError = ''"
+    />
 
   </div>
 
@@ -207,35 +294,62 @@
 import { getVisibleEditableMetadataFields } from '@/common/fileInfoFields';
 import EditMetadataDialog from "@/components/EditMetadataDialog.vue";
 import { isOriginalStorageUnavailable, isOriginalUnavailable, setAlbumAccessibility, resetFileAccessibility } from '@/common/availability';
-import { ref, watch, computed, onMounted, onUnmounted, reactive } from 'vue';
-import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
+import { ref, shallowRef, watch, computed, nextTick, onMounted, onUnmounted, reactive } from 'vue';
+import { getCurrentWebviewWindow, WebviewWindow } from '@tauri-apps/api/webviewWindow';
+import { ask, open as openDialog } from '@tauri-apps/plugin-dialog';
 import { emit, listen } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { useToast } from '@/common/toast';
 import { useUIStore } from '@/stores/uiStore';
 import { config, libConfig } from '@/common/config';
-import { isWin, isMac, isLinux, copyFilePaths, getClipboardItemPaths, getMediaItemSize, getSlideShowInterval, SCALE_VALUES } from '@/common/utils';
+import { isWin, isMac, isLinux, extractFileName, getAssetSrc, getFolderName, getFullPath, getMediaItemSize, getPreviewUrl, getSlideShowInterval, getThumbnailDataUrl, isPreviewOnlyDocument, isWithinRootPath, normalizePathForCompare, shouldUseBackendPreview, SCALE_VALUES } from '@/common/utils';
 import { matchesShortcut, ShortcutActionId, ShortcutPlatform, VIEW_BACKGROUND_SHORTCUTS } from '@/common/shortcuts';
 import { createMetadataSyncTracker, getMatchingPaneFileInfo } from '@/common/metadataSync';
 import { handleVideoPlaybackShortcut, handleVideoEscapeShortcut } from '@/common/video';
 import {
-  checkFileAccessibility,
-  copyImages,
+  batchDeleteFiles,
   getFileCollections,
+  addFileToDb,
+  checkFileExists,
+  getAllAlbums,
+  copyFile,
   getFileInfo,
+  getFileThumbById,
+  isCloudOnlyFile,
+  moveFile,
+  moveFileOutsideLibrary,
+  openFilesWithApp,
+  selectFolder,
+  saveXmpMetadata,
   getTagsForFile,
+  refreshFileInfo,
+  setAlbumCover,
+  setDesktopWallpaper,
   setFileFavorite,
   setFileRating,
   setFileCullingFlag,
   setFileRotate,
 } from '@/common/api';
 
+import {
+  buildDeleteRetryTargets, buildFileDeleteTargets, copyFilePathsForFiles, copyFilesToClipboard,
+  countDeleteTargets, countRawPairTargets, countSingleTargets, isOriginalUnavailableActionError,
+  rawPairCompanionFormat, renameSingleFile, resolveExternalAppTarget, revealFile, shouldConfirmDelete,
+  type FileDeletePlan,
+} from '@/common/fileActions';
+import ContextMenu from '@/components/ContextMenu.vue';
+import { useFileMenuItems } from '@/common/fileMenu';
 import MediaViewer from '@/components/MediaViewer.vue';
 import MessageBox from '@/components/MessageBox.vue';
 import TButton from '@/components/TButton.vue';
 import StatusBar from '@/components/StatusBar.vue';
 import TaggingDialog from '@/components/TaggingDialog.vue';
 import AddToCollectionDialog from '@/components/AddToCollectionDialog.vue';
+import RenameFileDialog from '@/components/RenameFileDialog.vue';
+import FileDeleteDialog from '@/components/FileDeleteDialog.vue';
+import MoveTo from '@/components/MoveTo.vue';
+import FileConflictDialog from '@/components/FileConflictDialog.vue';
+import PrintImage from '@/components/PrintImage.vue';
 
 import { 
   IconSearch,
@@ -257,6 +371,29 @@ const fileIndex = ref(0);       // Index of the current file
 const fileCount = ref(0);       // Total number of files
 
 const fileInfo = ref<any>(null);
+const viewerContextMenuRef = ref<InstanceType<typeof ContextMenu> | null>(null);
+const contextMenuFile = ref<any>(null);
+const showRenameDialog = ref(false);
+const renameTarget = ref<any>(null);
+const renameName = ref('');
+const renameExtension = ref('');
+const renameError = ref('');
+const showDeleteDialog = ref(false);
+const deletePlan = shallowRef<FileDeletePlan | null>(null);
+const deletePermanently = ref(false);
+const rawPairScope = ref<'both' | 'raw' | 'companion'>('both');
+// Viewer file info has no `thumbnail` URL (AFile doesn't carry one), so the
+// delete dialog's previews are built from the thumb protocol directly.
+const deleteThumbnails = ref<Record<number, string>>({});
+const isDeleting = ref(false);
+const showMoveTo = ref(false);
+const moveTarget = ref<any>(null);
+const moveMode = ref<'move' | 'copy'>('move');
+const printImageView = ref<InstanceType<typeof PrintImage> | null>(null);
+const moveToRef = ref<InstanceType<typeof MoveTo> | null>(null);
+type FileConflictPolicy = 'skip' | 'keep_both' | 'replace';
+const fileConflictDialog = ref({ show: false, name: '', destination: '', showApplyAll: false, allowReplace: true });
+let fileConflictResolver: ((result: { policy: FileConflictPolicy; applyAll: boolean }) => void) | null = null;
 const nextFilePath = ref('');
 const iconRotate = ref(0);      // icon rotation angle
 const isTransitionDisabled = ref(true);
@@ -490,6 +627,22 @@ onMounted(async() => {
           iconRotate.value += rotateDelta;
         }
         break;
+      case 'file-saved': {
+        const savedFile = (event.payload as any).file;
+        const savedId = Number((event.payload as any).fileId || savedFile?.id || 0);
+        if (savedId > 0 && savedFile) {
+          applyFileMetaToPanes(savedId, savedFile);
+          for (const pane of allPanes) {
+            const paneFile = getFileInfoByPane(pane);
+            if (!paneFile || Number(paneFile.id) !== savedId) continue;
+            if (savedFile.file_path) uiStore.updateFileVersion(savedFile.file_path);
+            const savedPath = paneFile.file_path;
+            paneFile.file_path = '';
+            void nextTick(() => { paneFile.file_path = savedPath; });
+          }
+        }
+        break;
+      }
       case 'update-file-meta': {
         const incomingCulling = changes?.culling_flag ?? changes?.cullingFlag;
         if (incomingCulling !== undefined) {
@@ -506,9 +659,18 @@ onMounted(async() => {
   });
 
   unlistenFilesDeleted = await listen('files-deleted', (event: any) => {
+    // Content re-broadcasts the settled list; ignore our own normal-mode
+    // event so navigation never uses the pre-removal file count.
+    if (event?.payload?.source === 'image-viewer' && !isCompareModeSession.value) return;
     const deletedIds = Array.isArray(event?.payload?.fileIds)
       ? event.payload.fileIds.map((id: any) => Number(id)).filter((id: number) => id > 0)
       : [];
+    const updatedFiles = event?.payload?.updatedFiles;
+    if (Array.isArray(updatedFiles)) {
+      for (const updatedFile of updatedFiles) {
+        if (updatedFile?.id) applyFileMetaToPanes(Number(updatedFile.id), updatedFile);
+      }
+    }
     const comparisonNextCount = Number(event?.payload?.compareFileCount);
     // An external deletion arrives before Content has updated and rebroadcast
     // the comparison snapshot. Ignore that first event instead of applying the
@@ -554,6 +716,26 @@ onMounted(async() => {
         extraPaneState[pane].nextFilePath = '';
       }
       return;
+    }
+
+    const deletedIndices = Array.isArray(event?.payload?.deletedIndices)
+      ? event.payload.deletedIndices.map((index: any) => Number(index)).filter((index: number) => index >= 0)
+      : [];
+    const shiftForIndex = (index: number) =>
+      deletedIndices.reduce((shift, deletedIndex) => shift + (deletedIndex < index ? 1 : 0), 0);
+    if (!isCompareModeSession.value) {
+      if (fileIndex.value >= 0 && !deletedIds.includes(fileId.value)) {
+        fileIndex.value = Math.max(0, fileIndex.value - shiftForIndex(fileIndex.value));
+      }
+      if (rightFileIndex.value >= 0 && !deletedIds.includes(rightFileId.value)) {
+        rightFileIndex.value = Math.max(0, rightFileIndex.value - shiftForIndex(rightFileIndex.value));
+      }
+      for (const pane of ['bottomLeft', 'bottomRight'] as const) {
+        const state = extraPaneState[pane];
+        if (state.fileIndex >= 0 && !deletedIds.includes(state.fileId)) {
+          state.fileIndex = Math.max(0, state.fileIndex - shiftForIndex(state.fileIndex));
+        }
+      }
     }
 
     const leftDeleted = deletedIds.includes(fileId.value);
@@ -608,7 +790,7 @@ onUnmounted(() => {
 
 async function copyActiveFilePath() {
   try {
-    const count = await copyFilePaths([getFileInfoByPane(getActivePane())], config.settings.groupRawJpegPairs);
+    const count = await copyFilePathsForFiles([getFileInfoByPane(getActivePane())], config.settings.groupRawJpegPairs);
     if (count > 0) toast.success(t('file_info.paths_copied', { count }));
   } catch (error) {
     console.error('Failed to copy file path:', error);
@@ -620,26 +802,248 @@ async function copyActiveFiles(pane = getActiveFilePane()) {
   const file = getFileInfoByPane(pane);
   if (!file) return;
   try {
-    if (isOriginalStorageUnavailable(file)) {
+    const result = await copyFilesToClipboard([file], {
+      groupRawJpegPairs: config.settings.groupRawJpegPairs,
+    });
+    if (result.offline) {
       toast.warning(t('offline.requires_original'));
       return;
     }
-    const paths = getClipboardItemPaths(file, config.settings.groupRawJpegPairs);
-    if (!paths.length) return;
-    const available = await Promise.all(paths.map(path => checkFileAccessibility(path)));
-    if (available.some(value => !value)) {
-      toast.warning(t('offline.requires_original'));
-      return;
-    }
-    const count = await copyImages(paths, paths.length === 2);
-    if (count > 0) {
-      toast.success(t('tooltip.copy_image.success', { count: count.toLocaleString() }));
+    if (result.copiedCount > 0) {
+      toast.success(t('tooltip.copy_image.success', { count: result.copiedCount.toLocaleString() }));
       return;
     }
   } catch (error) {
     console.error('Failed to copy files to clipboard:', error);
   }
   toast.error(t('tooltip.copy_image.failed'));
+}
+
+
+const viewerContextMenuItems = useFileMenuItems(
+  contextMenuFile,
+  localeMsg,
+  isMac,
+  t,
+  (action: string) => { void handleItemAction({ action }); },
+  { hideViewInNewWindow: true },
+);
+
+async function openExternalApp(pane: Pane, appId?: string) {
+  const file = getFileInfoByPane(pane);
+  if (!file) return;
+  if (isOriginalUnavailable(file)) {
+    toast.warning(t('offline.requires_original'));
+    return;
+  }
+  const target = resolveExternalAppTarget([file], appId, config);
+  if (target.kind === 'empty' || target.kind === 'mixed' || target.kind === 'no-files') return;
+  if (target.kind === 'no-app') {
+    toast.warning(t('tooltip.open_external.no_app'));
+    return;
+  }
+  try {
+    await openFilesWithApp(target.paths, target.appPath);
+  } catch (error) {
+    toast.error(String(error).includes('File is online-only')
+      ? t('offline.requires_original')
+      : t('tooltip.open_external.failed'));
+  }
+}
+
+const rawPairDeleteCount = computed(() => countRawPairTargets(deletePlan.value));
+const singleDeleteCount = computed(() => countSingleTargets(deletePlan.value));
+const deleteConfirmationCount = computed(() => countDeleteTargets(deletePlan.value, rawPairScope.value));
+const deleteSubtitle = computed(() => t(deletePermanently.value
+  ? 'msgbox.file_delete.permanent_summary' : 'msgbox.file_delete.trash_summary', deleteConfirmationCount.value));
+const rawPairDeleteChoices = computed(() => {
+  const format = rawPairCompanionFormat(deletePlan.value);
+  return [
+    { value: 'both', label: t('msgbox.raw_pair_delete.both') },
+    { value: 'raw', label: t('msgbox.raw_pair_delete.raw') },
+    { value: 'companion', label: format
+      ? t('msgbox.raw_pair_delete.format', { format })
+      : t('msgbox.raw_pair_delete.companion') },
+  ];
+});
+
+function showActionError(error: unknown) {
+  if (isOriginalUnavailableActionError(error)) {
+    toast.warning(t('offline.requires_original'));
+  } else {
+    toast.error(String(error));
+  }
+}
+
+function loadDeleteThumbnails(plan: FileDeletePlan) {
+  for (const target of plan.files.slice(0, 5)) {
+    void getFileThumbById(target.id, config.settings.thumbnailSize).then(thumb => {
+      if (!thumb || deletePlan.value !== plan) return;
+      const url = getThumbnailDataUrl(thumb, '', false, config.settings.thumbnailSize);
+      if (url) deleteThumbnails.value[target.id] = url;
+    });
+  }
+}
+
+function requestDelete(pane: Pane, permanently = config.settings.fileDeleteBehavior === 'permanent') {
+  const file = getFileInfoByPane(pane);
+  if (!file) return;
+  if (isOriginalUnavailable(file)) {
+    toast.warning(t('offline.requires_original'));
+    return;
+  }
+  const plan: FileDeletePlan = {
+    libraryId: libConfig._libraryId,
+    requestId: 0,
+    files: buildFileDeleteTargets([file], Boolean(config.settings.groupRawJpegPairs)),
+  };
+  if (!plan.files.length) return;
+  deletePlan.value = plan;
+  deleteThumbnails.value = {};
+  loadDeleteThumbnails(plan);
+  deletePermanently.value = permanently;
+  rawPairScope.value = 'both';
+  if (shouldConfirmDelete(plan, permanently)) {
+    showDeleteDialog.value = true;
+    return;
+  }
+  void confirmDelete();
+}
+
+async function confirmDelete() {
+  const plan = deletePlan.value;
+  if (!plan || isDeleting.value) return;
+  isDeleting.value = true;
+  try {
+    const result = await batchDeleteFiles(
+      plan.files.map(file => ({ fileId: file.id, filePath: file.file_path })),
+      deletePermanently.value,
+      {
+        libraryId: plan.libraryId,
+        scope: rawPairScope.value,
+        companions: plan.files.map(file => file.companion
+          ? { fileId: file.companion.id, filePath: file.companion.file_path } : null),
+      },
+    );
+    if (!result) {
+      toast.error(t('msgbox.trash_failed.title'));
+      return;
+    }
+    const deletedIds = Array.isArray(result?.deletedFileIds)
+      ? result.deletedFileIds.map((id: any) => Number(id)).filter((id: number) => id > 0)
+      : [];
+    const failedIds = Array.isArray(result?.trashFailedFileIds)
+      ? result.trashFailedFileIds.map((id: any) => Number(id)).filter((id: number) => id > 0)
+      : [];
+    if (deletedIds.length) {
+      emit('files-deleted', {
+        source: 'image-viewer',
+        fileIds: deletedIds,
+        fileCount: isCompareModeSession.value
+          ? undefined
+          : Math.max(0, fileCount.value - deletedIds.length),
+      });
+    }
+    const failedCount = Math.max(0, Number(result.failedCount || 0));
+    const retryFailures = failedIds.length;
+    if (failedIds.length) {
+      const retryFiles = buildDeleteRetryTargets(plan.files, failedIds);
+      if (retryFiles.length) {
+        deletePlan.value = { ...plan, files: retryFiles };
+        loadDeleteThumbnails(deletePlan.value);
+        deletePermanently.value = true;
+        rawPairScope.value = 'both';
+        showDeleteDialog.value = true;
+        toast.error(t('msgbox.trash_failed.title'));
+        const unhandledFailures = Math.max(0, failedCount - retryFailures);
+        if (unhandledFailures > 0) toast.error(t('msgbox.raw_pair_delete.failed', unhandledFailures));
+        return;
+      }
+    }
+    if (failedCount > 0) {
+      toast.error(t('msgbox.raw_pair_delete.failed', failedCount));
+    }
+    showDeleteDialog.value = false;
+    deletePlan.value = null;
+  } catch (error) {
+    showActionError(error);
+  } finally {
+    isDeleting.value = false;
+  }
+}
+
+function clickRename(pane: Pane) {
+  const file = getFileInfoByPane(pane);
+  if (!file) return;
+  renameTarget.value = file;
+  const parsed = extractFileName(file.name);
+  renameName.value = parsed.name || '';
+  renameExtension.value = parsed.ext || '';
+  renameError.value = '';
+  showRenameDialog.value = true;
+}
+
+async function submitRename(newName: string) {
+  const target = renameTarget.value;
+  if (!target) return;
+  try {
+    const result = await renameSingleFile(target, newName, renameExtension.value);
+    if (!result) {
+      renameError.value = t('msgbox.rename_file.error');
+      return;
+    }
+    if (!result.unchanged) {
+      // rename_file also renames the paired companion. Refresh the whole row
+      // so live_photo_video_path / companion metadata do not stay stale.
+      const refreshed = await getFileInfo(target.id).catch(() => null);
+      const updatedFile = refreshed || {
+        ...target,
+        name: result.fileName,
+        file_path: result.filePath,
+      };
+      Object.assign(target, updatedFile);
+      applyFileMetaToPanes(Number(target.id), updatedFile);
+      emit('message-from-image-viewer', {
+        message: 'file-renamed',
+        fileId: Number(target.id),
+        name: result.fileName,
+        filePath: result.filePath,
+        file: updatedFile,
+      });
+    }
+    showRenameDialog.value = false;
+  } catch (error) {
+    renameError.value = `${t('msgbox.rename_file.error')}: ${String(error)}`;
+  }
+}
+
+async function openViewerMoreMenu(event: MouseEvent) {
+  if (uiStore.inputStack.length > 0) return;
+  const pane = getActiveFilePane();
+  const file = getFileInfoByPane(pane);
+  if (!file) return;
+  const rect = (event.currentTarget as HTMLElement | null)?.getBoundingClientRect();
+  contextMenuFile.value = file;
+  await nextTick();
+  await viewerContextMenuRef.value?.open(
+    rect?.left ?? event.clientX,
+    rect?.bottom ?? event.clientY,
+  );
+}
+
+async function openPaneContextMenu(pane: Pane, event: MouseEvent) {
+  setActivePane(pane);
+  await openViewerContextMenu(event);
+}
+
+async function openViewerContextMenu(event: MouseEvent) {
+  if (uiStore.inputStack.length > 0) return;
+  const pane = getActivePane();
+  const file = getFileInfoByPane(pane);
+  if (!file) return;
+  contextMenuFile.value = file;
+  await nextTick();
+  await viewerContextMenuRef.value?.open(event.clientX, event.clientY);
 }
 
 // Handle keyboard shortcuts
@@ -651,12 +1055,39 @@ function handleVideoSpaceKeyDown(event: KeyboardEvent) {
 }
 
 function handleKeyDown(event: KeyboardEvent) {
+  if (uiStore.isInputActive('MoveTo') && event.key === 'Escape') {
+    event.preventDefault();
+    showMoveTo.value = false;
+    return;
+  }
+  if (uiStore.isInputActive('MoveTo') && event.key === 'Enter') {
+    const target = event.target as HTMLElement | null;
+    if (target?.closest('button, [role="button"], input, select, textarea')) return;
+    event.preventDefault();
+    moveToRef.value?.clickOk();
+    return;
+  }
   if(uiStore.inputStack.length > 0) {
     return;
   }
 
   const isEditingText = event.target instanceof HTMLElement
     && (event.target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target.tagName));
+  if (!isEditingText && matchesShortcut('file.rename', event, shortcutPlatform)) {
+    event.preventDefault();
+    clickRename(getActivePane());
+    return;
+  }
+  if (!isEditingText && matchesShortcut('file.trash', event, shortcutPlatform)) {
+    event.preventDefault();
+    requestDelete(getActivePane(), config.settings.fileDeleteBehavior === 'permanent');
+    return;
+  }
+  if (!isEditingText && matchesShortcut('file.deletePermanently', event, shortcutPlatform)) {
+    event.preventDefault();
+    requestDelete(getActivePane(), true);
+    return;
+  }
   if (!isEditingText && matchesShortcut('view.toggleFullscreen', event, shortcutPlatform)) {
     event.preventDefault();
     if (!event.repeat) toggleNativeFullScreen();
@@ -1541,12 +1972,364 @@ async function syncTagStates(fileStates: Array<{ file_id: number; has_tags: bool
   }
 }
 
+function openMoveDialog(pane: Pane, mode: 'move' | 'copy') {
+  const file = getFileInfoByPane(pane);
+  if (!file) return;
+  moveTarget.value = file;
+  moveMode.value = mode;
+  showMoveTo.value = true;
+}
+
+function requestFileConflict(name: string, destination: string, allowReplace = true) {
+  fileConflictDialog.value = { show: true, name, destination, showApplyAll: false, allowReplace };
+  return new Promise<{ policy: FileConflictPolicy; applyAll: boolean }>(resolve => {
+    fileConflictResolver = resolve;
+  });
+}
+
+function resolveFileConflict(result: { policy: FileConflictPolicy; applyAll: boolean }) {
+  fileConflictDialog.value.show = false;
+  fileConflictResolver?.(result);
+  fileConflictResolver = null;
+}
+
+async function selectSystemDestination(title: string): Promise<string | null> {
+  const destination = await openDialog({ title, multiple: false, directory: true });
+  return !destination || Array.isArray(destination) ? null : String(destination);
+}
+
+async function resolveLibraryDestination(destPath: string) {
+  const albums = await getAllAlbums();
+  const album = Array.isArray(albums) ? albums.find(item => isWithinRootPath(destPath, item.path)) : null;
+  if (!album) return null;
+  const folder = await selectFolder(album.id, destPath);
+  return folder?.id ? { albumId: Number(album.id), folderId: Number(folder.id) } : null;
+}
+
+async function applyMovedFile(
+  file: any,
+  movedPath: string,
+  fallback: { folderId?: number; albumId?: number },
+) {
+  const refreshed = await getFileInfo(file.id).catch(() => null);
+  const updatedFile = refreshed || {
+    ...file,
+    file_path: movedPath,
+    folder_id: fallback.folderId ?? file.folder_id,
+    album_id: fallback.albumId ?? file.album_id,
+  };
+  Object.assign(file, updatedFile);
+  applyFileMetaToPanes(Number(file.id), updatedFile);
+  emit('message-from-image-viewer', {
+    message: 'file-moved',
+    fileId: file.id,
+    path: movedPath,
+    albumId: Number(updatedFile.album_id || 0),
+    file: updatedFile,
+  });
+  return updatedFile;
+}
+
+async function transferFileToFolder(pane: Pane, mode: 'move' | 'copy') {
+  const file = getFileInfoByPane(pane);
+  if (!file) return;
+  if (isOriginalUnavailable(file)) {
+    toast.warning(t('offline.requires_original'));
+    return;
+  }
+  const destPath = await selectSystemDestination(t(mode === 'copy' ? 'msgbox.copy_to_folder.title' : 'msgbox.move_to_folder.title'));
+  if (!destPath) return;
+
+  const destinationPath = getFullPath(destPath, file.name);
+  if (normalizePathForCompare(file.file_path) === normalizePathForCompare(destinationPath)) {
+    toast.info(t('msgbox.file_conflict.same_folder'));
+    return;
+  }
+
+  const libraryDestination = await resolveLibraryDestination(destPath);
+  if (mode === 'move' && !libraryDestination) {
+    const confirmed = await ask(
+      t('msgbox.move_to_folder.warning', { source: file.name, dest: destPath }),
+      {
+        title: t('msgbox.move_to_folder.confirm_title'),
+        kind: 'warning',
+        okLabel: t('msgbox.move_to_folder.ok'),
+        cancelLabel: t('msgbox.cancel'),
+      },
+    );
+    if (!confirmed) return;
+  }
+
+  let conflictPolicy: FileConflictPolicy = 'keep_both';
+  if (await checkFileExists(destinationPath)) {
+    const conflict = await requestFileConflict(file.name, destPath);
+    if (conflict.policy === 'skip') return;
+    conflictPolicy = conflict.policy;
+  }
+
+  const destLabel = getFolderName(destPath) || destPath;
+  try {
+    if (mode === 'move') {
+      const movedPath = libraryDestination
+        ? await moveFile(file.id, file.file_path, libraryDestination.folderId, destPath, conflictPolicy)
+        : await moveFileOutsideLibrary(file.id, file.file_path, destPath, conflictPolicy);
+      if (movedPath) {
+        if (!libraryDestination) {
+          // move_file_outside_library removes the database row. Drop the
+          // viewer's stale file identity so follow-up metadata actions cannot
+          // target a deleted record.
+          emit('files-deleted', {
+            source: 'image-viewer',
+            fileIds: [file.id],
+            fileCount: isCompareModeSession.value ? undefined : Math.max(0, fileCount.value - 1),
+            albumId: Number(file.album_id || 0),
+          });
+        } else {
+          await applyMovedFile(file, movedPath, {
+            folderId: libraryDestination.folderId,
+            albumId: libraryDestination.albumId,
+          });
+        }
+        toast.success(t('msgbox.move_to_folder.success', { source: file.name, dest: destLabel }));
+      } else {
+        toast.error(t('msgbox.move_to_folder.error', { source: file.name, dest: destLabel }));
+      }
+    } else {
+      const copiedPath = await copyFile(file.file_path, destPath, conflictPolicy);
+      if (copiedPath) {
+        if (libraryDestination) await addFileToDb(libraryDestination.folderId, copiedPath);
+        emit('message-from-image-viewer', { message: 'file-copied', fileId: file.id, path: copiedPath, albumId: libraryDestination?.albumId });
+        toast.success(t('msgbox.copy_to_folder.success', { source: file.name, dest: destLabel }));
+      } else {
+        toast.error(t('msgbox.copy_to_folder.error', { source: file.name, dest: destLabel }));
+      }
+    }
+  } catch (error) {
+    showActionError(error);
+  }
+}
+
+async function onMoveTo() {
+  const file = moveTarget.value;
+  if (!file) return;
+  if (isOriginalUnavailable(file)) {
+    toast.warning(t('offline.requires_original'));
+    return;
+  }
+  const destPath = String(libConfig.destFolder.folderPath || '');
+  const destAlbumId = Number(libConfig.destFolder.albumId || 0);
+  let destFolderId = Number(libConfig.destFolder.folderId || 0);
+  if (!destPath) return;
+  if (destFolderId <= 0 && destAlbumId > 0) {
+    const resolved = await selectFolder(destAlbumId, destPath);
+    destFolderId = Number(resolved?.id || 0);
+  }
+  const destinationPath = getFullPath(destPath, file.name);
+  if (normalizePathForCompare(file.file_path) === normalizePathForCompare(destinationPath)) {
+    toast.info(t('msgbox.file_conflict.same_folder'));
+    showMoveTo.value = false;
+    return;
+  }
+  let conflictPolicy: FileConflictPolicy = 'keep_both';
+  if (await checkFileExists(destinationPath)) {
+    const conflict = await requestFileConflict(file.name, destPath);
+    if (conflict.policy === 'skip') return;
+    conflictPolicy = conflict.policy;
+  }
+  try {
+    if (moveMode.value === 'copy') {
+      const copiedPath = await copyFile(file.file_path, destPath, conflictPolicy);
+      if (copiedPath) {
+        if (destFolderId > 0) await addFileToDb(destFolderId, copiedPath);
+        emit('message-from-image-viewer', { message: 'file-copied', fileId: file.id, path: copiedPath, albumId: destAlbumId });
+        toast.success(t('msgbox.copy_to.success', { source: file.name, dest: destPath }));
+      } else {
+        toast.error(t('msgbox.copy_to.error', { source: file.name, dest: destPath }));
+      }
+    } else {
+      const movedPath = await moveFile(file.id, file.file_path, destFolderId, destPath, conflictPolicy);
+      if (movedPath) {
+        await applyMovedFile(file, movedPath, {
+          folderId: destFolderId,
+          albumId: destAlbumId,
+        });
+        toast.success(t('msgbox.move_to.success', { source: file.name, dest: destPath }));
+      } else {
+        toast.error(t('msgbox.move_to.error', { source: file.name, dest: destPath }));
+      }
+    }
+    showMoveTo.value = false;
+  } catch (error) {
+    showActionError(error);
+  }
+}
+
+async function editActiveImage(pane: Pane) {
+  const file = getFileInfoByPane(pane);
+  if (!file || ![1, 3].includes(Number(file.file_type))) return;
+  if (isPreviewOnlyDocument(file.file_path || '')) return;
+  if (isOriginalUnavailable(file)) {
+    toast.warning(t('offline.requires_original'));
+    return;
+  }
+  const fileId = Number(file.id || 0);
+  if (fileId <= 0) return;
+
+  // Register the save-as context in the main window before the editor can save.
+  emit('message-from-image-viewer', { message: 'register-image-editor-context', fileId });
+  const existing = await WebviewWindow.getByLabel('imageeditor');
+  if (existing) {
+    await existing.emit('update-file', { fileId });
+    existing.show();
+    existing.setFocus();
+    return;
+  }
+
+  const editor = new WebviewWindow('imageeditor', {
+    url: `/image-editor?fileId=${fileId}`,
+    title: 'Image Editor',
+    width: 1100,
+    height: 700,
+    minWidth: 800,
+    minHeight: 500,
+    resizable: true,
+    maximizable: false,
+    visible: false,
+    transparent: true,
+    decorations: isMac,
+    ...(isMac && {
+      titleBarStyle: 'overlay',
+      hiddenTitle: true,
+      minimizable: false,
+    }),
+  });
+  editor.once('tauri://created', () => { void editor.show(); });
+}
+
+async function printActiveImage(pane: Pane) {
+  const file = getFileInfoByPane(pane);
+  if (!file?.file_path) return;
+  if (isOriginalStorageUnavailable(file) || await isCloudOnlyFile(file.file_path)) {
+    toast.warning(t('offline.requires_original'));
+    return;
+  }
+  try {
+    const fileType = Number(file.file_type || 1);
+    const source = shouldUseBackendPreview(file.file_path, fileType)
+      ? getPreviewUrl(Number(file.id), file.file_path, false, Number(file.modified_at || 0))
+      : getAssetSrc(file.file_path, Number(file.modified_at || 0));
+    await printImageView.value?.print(source);
+  } catch (error) {
+    console.error('Failed to prepare image for printing:', error);
+  }
+}
+
+async function refreshActiveFileInfo(pane: Pane) {
+  const file = getFileInfoByPane(pane);
+  if (!file) return;
+  try {
+    const refreshed = await refreshFileInfo(libConfig._libraryId, file.id);
+    const message = [refreshed?.warning, refreshed?.error].filter(Boolean).join('; ');
+    if (refreshed?.file) {
+      Object.assign(file, refreshed.file);
+      applyFileMetaToPanes(Number(file.id), refreshed.file);
+      emit('message-from-image-viewer', {
+        message: 'file-refreshed',
+        fileId: Number(file.id),
+        file: refreshed.file,
+      });
+    }
+    if (refreshed?.error) toast.error(message);
+    else if (refreshed?.warning) toast.warning(message);
+    else if (refreshed?.file) toast.success(t('tooltip.update_image.success'));
+    else toast.error(t('tooltip.update_image.failed'));
+  } catch (error) {
+    toast.error(t('tooltip.update_image.failed'));
+  }
+}
+
+async function setActiveAlbumCover(pane: Pane) {
+  const file = getFileInfoByPane(pane);
+  const albumId = Number(file?.album_id || libConfig.album.id || 0);
+  if (!file || albumId <= 0) return;
+  try {
+    const result = await setAlbumCover(albumId, file.id);
+    if (!result) throw new Error('Failed to set album cover');
+    emit('album-cover-changed', { albumId, fileId: file.id });
+    toast.success(t('tooltip.set_album_cover.success'));
+  } catch (error) {
+    toast.error(t('tooltip.set_album_cover.failed'));
+  }
+}
+
+async function setActiveDesktopWallpaper(pane: Pane) {
+  const file = getFileInfoByPane(pane);
+  if (!file?.file_path) return;
+  if (isOriginalUnavailable(file)) {
+    toast.warning(t('offline.requires_original'));
+    return;
+  }
+  const companionPath = file.media_subtype === 'raw_jpeg_pair'
+    ? String(file.live_photo_video_path || '')
+    : null;
+  try {
+    await setDesktopWallpaper(file.file_path, companionPath || null);
+    toast.success(t('tooltip.set_desktop_wallpaper.success'));
+  } catch (error) {
+    toast.error(t('tooltip.set_desktop_wallpaper.failed'));
+  }
+}
+
+async function saveActiveXmp(pane: Pane) {
+  const file = getFileInfoByPane(pane);
+  if (!file) return;
+  try {
+    const result = await saveXmpMetadata([file.id], libConfig._libraryId);
+    if (result?.savedIds?.length) {
+      toast.success(t('menu.file.xmp_save_success', { count: result.savedIds.length }));
+    }
+    if (result?.failures?.length) {
+      toast.error(t('menu.file.xmp_save_failed', { count: result.failures.length }) + ': ' + result.failures[0].error);
+    }
+  } catch (error) {
+    toast.error(String(error));
+  }
+}
+
+function runInMainWindow(action: string) {
+  const pane = getActiveFilePane();
+  const file = getFileInfoByPane(pane);
+  if (!file) return;
+  emit('message-from-image-viewer', {
+    message: 'run-file-action',
+    action,
+    fileId: Number(file.id),
+  });
+}
+
 const handleItemAction = async (payload: { action: string }) => {
   const pane = getActiveFilePane();
+
+  if (payload.action.startsWith('open-external-app:')) {
+    await openExternalApp(pane, payload.action.slice('open-external-app:'.length));
+    return;
+  }
 
   switch (payload.action) {
     case 'copy':
       await copyActiveFiles(pane);
+      break;
+    case 'reveal':
+      revealFile(getFileInfoByPane(pane));
+      break;
+    case 'rename':
+      clickRename(pane);
+      break;
+    case 'open-external-app':
+      await openExternalApp(pane);
+      break;
+    case 'trash':
+      requestDelete(pane, config.settings.fileDeleteBehavior === 'permanent');
       break;
     case 'favorite':
       await toggleFavorite(pane);
@@ -1592,7 +2375,35 @@ const handleItemAction = async (payload: { action: string }) => {
     case 'toggle-sync-viewport':
       toggleSyncViewport();
       break;
+    case 'save-xmp':
+      await saveActiveXmp(pane);
+      break;
+    case 'edit':
+      await editActiveImage(pane);
+      break;
+    case 'print':
+      await printActiveImage(pane);
+      break;
+    case 'refresh-file-info':
+      await refreshActiveFileInfo(pane);
+      break;
+    case 'set-album-cover':
+      await setActiveAlbumCover(pane);
+      break;
+    case 'set-desktop-wallpaper':
+      await setActiveDesktopWallpaper(pane);
+      break;
+    case 'move-within-library':
+      openMoveDialog(pane, 'move');
+      break;
+    case 'move-to-folder':
+      await transferFileToFolder(pane, 'move');
+      break;
+    case 'copy-to-folder':
+      await transferFileToFolder(pane, 'copy');
+      break;
     default:
+      runInMainWindow(payload.action);
       break;
   }
 };

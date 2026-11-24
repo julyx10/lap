@@ -581,17 +581,11 @@
     @cancel="batchRenameSelection = null"
     @done="onBatchRenameDone"
   />
-  <MessageBox
+  <RenameFileDialog
     v-if="showRenameMsgbox"
-    :title="$t('msgbox.rename_file.title')"
-    :showInput="true"
-    :inputText="renamingFileName.name"
-    :inputPlaceholder="$t('msgbox.rename_file.placeholder')"
-    :inputExtension="renamingFileName.ext"
-    :needValidateInput="true"
-    :OkText="$t('msgbox.rename_file.ok')"
-    :cancelText="$t('msgbox.cancel')"
-    :errorMessage="errorMessage"
+    :name="renamingFileName.name"
+    :extension="renamingFileName.ext"
+    :error-message="errorMessage"
     @ok="onRenameFile"
     @cancel="showRenameMsgbox = false"
     @reset="errorMessage = ''"
@@ -625,54 +619,26 @@
     @resolve="resolveFileConflict"
   />
 
-  <MessageBox
+  <FileDeleteDialog
     v-if="showTrashMsgbox"
-    position-key="file-delete"
-    :title="deletePermanently ? $t('msgbox.file_delete.title', deleteConfirmationCount) : $t('msgbox.move_to_trash.title')"
-    :message="fileDeletePlan ? undefined : trashMsgboxMessage"
-    :OkText="deletePermanently ? $t('msgbox.file_delete.confirm', deleteConfirmationCount) : $t('msgbox.move_to_trash.ok')"
-    :cancelText="$t('msgbox.cancel')"
-    :warningOk="true"
-    :focusCancel="true"
-    :isLoading="isTrashDeleting"
+    :plan="fileDeletePlan"
+    :permanently="deletePermanently"
+    :confirmation-count="deleteConfirmationCount"
+    :subtitle="fileDeleteSubtitle"
+    :trash-message="trashMsgboxMessage"
+    :preview-files="deletePreviewFiles"
+    :preview-item-count="deletePreviewItemCount"
+    :preview-limit="fileDeletePreviewLimit"
+    :thumbnails="fileDeleteThumbnails"
+    :raw-pair-delete-count="rawPairDeleteCount"
+    :single-delete-count="singleDeleteCount"
+    :raw-pair-delete-choices="rawPairDeleteChoices"
+    :raw-pair-scope="rawPairDeleteScope"
+    :is-deleting="isTrashDeleting"
+    @update:rawPairScope="rawPairDeleteScope = $event"
     @ok="handleTrashMsgboxOk"
     @cancel="closeTrashMsgbox"
-  >
-    <template v-if="fileDeletePlan">
-      <p class="text-sm">
-        {{ fileDeleteSubtitle }}
-        {{ deletePermanently ? $t('msgbox.file_delete.irreversible') : '' }}
-      </p>
-      <p v-if="fileDeletePlan.trashUnavailable" class="mt-2 text-sm text-warning">
-        {{ $t('msgbox.file_delete.trash_unavailable') }}
-      </p>
-    </template>
-    <div v-if="deletePreviewFiles.length" class="my-4 flex flex-wrap gap-3 rounded-box border border-base-content/10 bg-base-300/30 p-3">
-      <div v-for="file in deletePreviewFiles" :key="file.id"
-        class="relative h-12 w-12 shrink-0" :title="file.name">
-        <div v-if="file.rawPair" class="absolute inset-0 translate-x-1 translate-y-1 rounded-box border border-base-content/20 bg-base-300"></div>
-        <img :src="fileDeleteThumbnails[file.id] || file.thumbnail || thumbnailPlaceholder" :alt="file.name"
-          class="relative h-full w-full rounded-box border border-base-content/20 bg-base-300 object-cover" />
-      </div>
-      <span v-if="deletePreviewItemCount > fileDeletePreviewLimit"
-        class="flex h-12 w-12 shrink-0 items-center justify-center rounded-box bg-base-300 text-sm">
-        +{{ deletePreviewItemCount - fileDeletePreviewLimit }}
-      </span>
-    </div>
-    <template v-if="fileDeletePlan">
-      <div v-if="rawPairDeleteCount" class="rounded-box border border-base-content/5 bg-base-300/30 p-3">
-        <label class="flex items-center justify-between gap-4 text-sm">
-          <span>{{ $t('msgbox.raw_pair_delete.scope') }}</span>
-          <select v-model="rawPairDeleteScope" class="select select-bordered select-sm w-40 shrink-0" :disabled="isTrashDeleting">
-            <option v-for="choice in rawPairDeleteChoices" :key="choice.value" :value="choice.value">
-              {{ choice.label }}
-            </option>
-          </select>
-        </label>
-        <p v-if="singleDeleteCount" class="mt-2 text-xs text-base-content/70">{{ $t('msgbox.file_delete.mixed_hint') }}</p>
-      </div>
-    </template>
-  </MessageBox>
+  />
 
   <MessageBox
     v-if="showTrashFailedMsgbox"
@@ -820,9 +786,9 @@ import { useToast } from '@/common/toast';
 import { useUIStore } from '@/stores/uiStore';
 import { getAlbum, getAllAlbums, recountAlbum, getQueryCountAndSum, getQueryTimeLine, getQueryFiles, getFilesByIds, getGroupedQueryRows, getGroupedFilePosition, getGroupFileIds, getQueryFileIds, syncAlbumFolderMtimes, reconcileRawJpegPairs,
          getSmartQueryCountAndSum, getSmartQueryTimeLine, getSmartQueryFiles, getSmartGroupedQueryRows, getSmartGroupFileIds, getSmartQueryFileIds, getSmartQueryFilePosition,
-         copyImages, renameFile, moveFile, moveFileOutsideLibrary, copyFile, withFileTransferBatch, batchDeleteFiles, getFileThumb, getFileThumbById, getFileThumbs, getFileInfo,
+         moveFile, moveFileOutsideLibrary, copyFile, withFileTransferBatch, batchDeleteFiles, getFileThumb, getFileThumbById, getFileThumbs, getFileInfo,
          setFileRotate, setFileFavorite, setFileRating, setFileCullingFlag, batchUpdateFileMetadata, getTagsForFile, searchSimilarImages, generateEmbedding,
-         revealPath, getTagName, indexAlbum, listenIndexProgress, listenIndexFinished, setAlbumCover, setDesktopWallpaper,
+         getTagName, indexAlbum, listenIndexProgress, listenIndexFinished, setAlbumCover, setDesktopWallpaper,
          updateFileInfo, refreshFileInfo, changeVideoThumbnail, getSupportedFormatExtensions, importFiles, importUrl, importFileBytes, getDragPayload, importClipboard, addFileToDb, checkFileExists, checkFileAccessibility, isCloudOnlyFile, cancelIndexing as cancelIndexingApi, selectFolder, getFacesForFile, listenFaceIndexProgress,
          openFilesWithApp, getAppConfig, getIndexRecoveryInfo, clearIndexRecoveryInfo, setLastSelectedItemIndex,
          dedupDelete, getQueryFilePosition, getFolderSearchExcluded,
@@ -846,18 +812,26 @@ import { isWin, isMac, isLinux, separator,
          formatFileSize, formatDate, getCalendarDateRange, formatFolderBreadcrumb, getThumbnailDataUrl, getAssetSrc, getPreviewUrl,
          getCachedThumbnailDataUrl,
          clearCachedThumbnailDataUrl,
-         extractFileName, combineFileName, getFolderPath, getFolderName, getSelectOptions, 
-         getCountryName, getMediaItemSize, shortenFilename, getSlideShowInterval, copyFilePaths, getClipboardItemPaths, getFullPath, normalizePathForCompare, isWithinRootPath, shouldUseBackendPreview, isPreviewOnlyDocument } from '@/common/utils';
+         extractFileName, getFolderPath, getFolderName, getSelectOptions,
+         getCountryName, getMediaItemSize, shortenFilename, getSlideShowInterval, getFullPath, normalizePathForCompare, isWithinRootPath, shouldUseBackendPreview, isPreviewOnlyDocument } from '@/common/utils';
 
 import DropDownSelect from '@/components/DropDownSelect.vue';
 import ProgressBar from '@/components/ProgressBar.vue';
 import GridView  from '@/components/GridView.vue';
 import BatchRenameDialog from '@/components/BatchRenameDialog.vue';
+import RenameFileDialog from '@/components/RenameFileDialog.vue';
 const PhotoMapView = defineAsyncComponent(() => import('@/components/PhotoMapView.vue'));
 import ContextMenu from '@/components/ContextMenu.vue';
 import { MAX_NATIVE_DRAG_FILES, createDragPreview, isWindowDragEdge, isNativeFileDragActive, isReturningNativeFileDrag, startNativeFileDrag } from '@/common/nativeDrag';
 import { isOriginalStorageUnavailable, isOriginalUnavailable, setFileAccessibility, setFolderAccessibility, requiresOriginalAction } from '@/common/availability';
 import { useFileMenuItems } from '@/common/fileMenu';
+import {
+  buildDeleteRetryTargets, buildFileDeleteTargets, copyFilesToClipboard, countDeleteTargets, countRawPairTargets, countSingleTargets,
+  copyFilePathsForFiles, dispatchFileAction, getMediaKind, revealFile,
+  rawPairCompanionFormat as getRawPairCompanionFormat, renameSingleFile,
+  resolveExternalAppTarget, shouldConfirmDelete,
+  type FileDeletePlan, type FileDeleteTarget,
+} from '@/common/fileActions';
 import Welcome from '@/components/Welcome.vue';
 import MediaViewer from '@/components/MediaViewer.vue';
 import MessageBox from '@/components/MessageBox.vue';
@@ -877,6 +851,7 @@ import { getAspectRatio } from '@/common/layout';
 import { createMetadataSyncTracker } from '@/common/metadataSync';
 import SelectionPanel from '@/components/SelectionPanel.vue';
 import FileConflictDialog from '@/components/FileConflictDialog.vue';
+import FileDeleteDialog from '@/components/FileDeleteDialog.vue';
 import ScrollBar from '@/components/ScrollBar.vue';
 import SliderInput from '@/components/SliderInput.vue';
 import StatusBar from '@/components/StatusBar.vue';
@@ -1169,18 +1144,6 @@ async function refreshSelectionPanelPreviews() {
 watch([selectMode, selectedFilesVersion, selectionPreviewCapacity], () => {
   void refreshSelectionPanelPreviews();
 });
-const getMediaKind = (items: any[]): 'image' | 'video' | 'mixed' | 'empty' => {
-  let hasImage = false;
-  let hasVideo = false;
-  for (const item of items) {
-    if (item?.file_type === 1 || item?.file_type === 3) hasImage = true;
-    else if (item?.file_type === 2) hasVideo = true;
-    if (hasImage && hasVideo) return 'mixed';
-  }
-  if (hasImage) return 'image';
-  if (hasVideo) return 'video';
-  return 'empty';
-};
 const selectionMediaKind = computed(() => getMediaKind(selectedFiles.value));
 type ImageViewerSession =
   | { mode: 'normal' }
@@ -2291,35 +2254,15 @@ let fileConflictResolver: ((result: { policy: FileConflictPolicy; applyAll: bool
 const showTrashMsgbox = ref(false);
 type RawPairDeleteScope = 'both' | 'raw' | 'companion';
 const rawPairDeleteScope = ref<RawPairDeleteScope>('both');
-type FileDeleteItem = {
-  id: number;
-  name: string;
-  file_path: string;
-  album_id?: number;
-  thumbnail?: string;
-  rawPair: boolean;
-  companion?: { id: number; file_path: string };
-};
-const fileDeletePlan = shallowRef<{
-  libraryId: string;
-  requestId: number;
-  files: FileDeleteItem[];
-  trashUnavailable?: boolean;
-} | null>(null);
+const fileDeletePlan = shallowRef<FileDeletePlan | null>(null);
 const fileDeleteThumbnails = ref<Record<number, string>>({});
 const fileDeletePreviewLimit = 5;
-const rawPairDeleteCount = computed(() => fileDeletePlan.value?.files.filter(file => file.rawPair).length ?? 0);
-const singleDeleteCount = computed(() => (fileDeletePlan.value?.files.length ?? 0) - rawPairDeleteCount.value);
-const fileDeleteCount = computed(() => (fileDeletePlan.value?.files ?? []).reduce((count, file) =>
-  count + (file.companion && (!file.rawPair || rawPairDeleteScope.value === 'both') ? 2 : 1), 0));
+const rawPairDeleteCount = computed(() => countRawPairTargets(fileDeletePlan.value));
+const singleDeleteCount = computed(() => countSingleTargets(fileDeletePlan.value));
+const fileDeleteCount = computed(() => countDeleteTargets(fileDeletePlan.value, rawPairDeleteScope.value));
 const fileDeleteSubtitle = computed(() => t(deletePermanently.value
   ? 'msgbox.file_delete.permanent_summary' : 'msgbox.file_delete.trash_summary', fileDeleteCount.value));
-const rawPairCompanionFormat = computed(() => {
-  const formats = new Set(fileDeletePlan.value?.files.filter(file => file.rawPair).map(file =>
-    /\.jpe?g$/i.test(file.companion?.file_path || '') ? 'JPEG'
-      : /\.(heic|heif|hif)$/i.test(file.companion?.file_path || '') ? 'HEIC' : ''));
-  return formats.size === 1 ? [...formats][0] : '';
-});
+const rawPairCompanionFormat = computed(() => getRawPairCompanionFormat(fileDeletePlan.value));
 const rawPairDeleteChoices = computed(() => {
   const format = rawPairCompanionFormat.value;
   return [
@@ -2343,7 +2286,7 @@ const dedupTrashGroupKey = ref('');
 const dedupDeleteFileIds = ref<number[]>([]);
 const dedupBulkFileCount = ref(0);
 type DedupDeletePreview = { token: string; itemCount: number; fileCount: number; previewFileIds: number[]; bytes: number };
-const dedupDeleteSamples = shallowRef<FileDeleteItem[]>([]);
+const dedupDeleteSamples = shallowRef<FileDeleteTarget[]>([]);
 const dedupDeletePreview = ref<DedupDeletePreview | null>(null);
 const pendingDedupRetryPreview = ref<DedupDeletePreview | null>(null);
 const deleteConfirmationCount = computed(() => fileDeletePlan.value
@@ -2626,20 +2569,12 @@ const openFileDeletion = async (action: 'preference' | 'trash' | 'permanent' = '
   const plan = {
     libraryId,
     requestId,
-    files: files.map((file): FileDeleteItem => {
-      const rawPair = Boolean(config.settings.groupRawJpegPairs && file.media_subtype === 'raw_jpeg_pair'
-        && file.live_photo_video_id && file.live_photo_video_path);
-      return {
-        id: file.id, name: file.name, file_path: file.file_path, album_id: file.album_id, thumbnail: file.thumbnail, rawPair,
-        companion: (rawPair || file.media_subtype === 'live_photo') && file.live_photo_video_id && file.live_photo_video_path
-          ? { id: file.live_photo_video_id, file_path: file.live_photo_video_path } : undefined,
-      };
-    }),
+    files: buildFileDeleteTargets(files, Boolean(config.settings.groupRawJpegPairs)),
   };
   rawPairDeleteScope.value = 'both';
   deletePermanently.value = action === 'permanent' || (action === 'preference' && config.settings.fileDeleteBehavior === 'permanent');
   const proceed = () => {
-    if (deletePermanently.value || plan.files.length > 1 || plan.files.some(file => file.companion)) {
+    if (shouldConfirmDelete(plan, deletePermanently.value)) {
       showFileDeleteConfirmation(plan);
       return;
     }
@@ -2662,7 +2597,7 @@ function showFileDeleteConfirmation(plan: NonNullable<typeof fileDeletePlan.valu
     () => fileDeletePlan.value === plan && plan.libraryId === libConfig._libraryId);
 }
 
-function loadDeleteThumbnails(files: FileDeleteItem[], isCurrent: () => boolean) {
+function loadDeleteThumbnails(files: FileDeleteTarget[], isCurrent: () => boolean) {
   for (const file of files) {
     if (file.thumbnail && file.thumbnail !== thumbnailPlaceholder) continue;
     void getFileThumbById(file.id, config.settings.thumbnailSize).then(thumb => {
@@ -4864,40 +4799,6 @@ function handleItemAction(payload: { action: string, index: number }) {
   if (index >= 0) selectedItemIndex.value = index; // Panel actions have no thumbnail index.
   if (currentOriginalsUnavailable() && requiresOriginalAction(action)) return;
 
-  if (action.startsWith('rating-')) {
-    const rating = Number.parseInt(action.slice('rating-'.length), 10);
-    if (!Number.isNaN(rating)) {
-      void (selectMode.value ? selectModeSetRatings(rating) : setSelectedFileRating(rating));
-    }
-    return;
-  }
-
-  if (action.startsWith('culling-')) {
-    const cullingFlag = action === 'culling-pick'
-      ? 1
-      : action === 'culling-reject'
-        ? 2
-        : action === 'culling-unreviewed'
-          ? 0
-          : -1;
-    if (cullingFlag >= 0) {
-      if (selectMode.value) {
-        void selectModeSetCullingFlags(cullingFlag);
-      } else {
-        void setSelectedFileCullingFlag(cullingFlag);
-      }
-    }
-    return;
-  }
-  if (action.startsWith('open-external-app:')) {
-    void openInExternalApp(action.slice('open-external-app:'.length));
-    return;
-  }
-  if (action === 'manage-external-apps') {
-    showExternalAppsDialog.value = true;
-    return;
-  }
-
   const actionMap = {
     'open': () => openImageViewer(selectedItemIndex.value, true),
     'print': () => void printImage(selectedItemIndex.value),
@@ -4925,7 +4826,7 @@ function handleItemAction(payload: { action: string, index: number }) {
         void removeFileFromCurrentCollection(selectedItemIndex.value);
       }
     },
-    'reveal': () => revealPath(fileList.value[selectedItemIndex.value].file_path),
+    'reveal': () => revealFile(fileList.value[selectedItemIndex.value]),
     'refresh-file-info': () => selectMode.value ? startSelectedFileRefresh() : void updateFile(fileList.value[selectedItemIndex.value], true),
     'save-xmp': async () => {
       const ids = selectMode.value
@@ -4958,19 +4859,28 @@ function handleItemAction(payload: { action: string, index: number }) {
     'set-desktop-wallpaper': () => void clickSetDesktopWallpaper(),
   };
 
-  if ((actionMap as any)[action]) {
-    // Check for unsaved changes before performing action, especially if it might change the context
-    // Most actions here operate on `index` which becomes the selected index. 
-    // If index is different from current selectedItemIndex, we should check.
-    
+  const run = (handler: () => void | Promise<void>) => {
     if (index !== selectedItemIndex.value) {
-        checkUnsavedChanges(() => {
-             (actionMap as any)[action]();
-        });
+      checkUnsavedChanges(() => { void handler(); });
     } else {
-         (actionMap as any)[action]();
+      void handler();
     }
-  }
+  };
+  dispatchFileAction(action, actionMap as Record<string, () => void | Promise<void>>, {
+    run,
+    onRating: (rating) => {
+      void (selectMode.value ? selectModeSetRatings(rating) : setSelectedFileRating(rating));
+    },
+    onCulling: (cullingFlag) => {
+      if (selectMode.value) {
+        void selectModeSetCullingFlags(cullingFlag);
+      } else {
+        void setSelectedFileCullingFlag(cullingFlag);
+      }
+    },
+    onExternalApp: (appId) => { void openInExternalApp(appId); },
+    onManageExternalApps: () => { showExternalAppsDialog.value = true; },
+  });
 }
 
 function requestNavigate(direction: 'prev' | 'next') {
@@ -5294,7 +5204,7 @@ function handleLocalKeyDown(event: KeyboardEvent) {
   if (matchesShortcut('file.reveal', event, shortcutPlatform)) {
     event.preventDefault();
     if (selectMode.value && selectedCount.value === 0) return;
-    if (!currentOriginalsUnavailable()) revealPath(fileList.value[selectedItemIndex.value].file_path);
+    if (!currentOriginalsUnavailable()) revealFile(fileList.value[selectedItemIndex.value]);
     return;
   }
 
@@ -6382,6 +6292,109 @@ onMounted( async() => {
            }
         }
         break;
+      case 'run-file-action': {
+        const action = String((event.payload as any).action || '');
+        const fileId = Number((event.payload as any).fileId);
+        const index = fileList.value.findIndex(file => isRealFileItem(file) && Number(file?.id) === fileId);
+        if (!action) break;
+        if (index < 0) {
+          toast.warning(t('info_panel.file_action_unavailable'));
+          break;
+        }
+        void getCurrentWebviewWindow().setFocus();
+        // Viewer actions target one image even if the main grid still has a
+        // multi-selection active.
+        if (selectMode.value) selectMode.value = false;
+        selectedItemIndex.value = index;
+        handleItemAction({ action, index });
+        break;
+      }
+      case 'register-image-editor-context': {
+        const editorFileId = Number((event.payload as any).fileId);
+        if (editorFileId > 0) {
+          const file = fileList.value.find(item => isRealFileItem(item) && Number(item?.id) === editorFileId);
+          if (file) imageEditorSaveAsContexts.set(editorFileId, getCurrentSaveAsContext(file));
+        }
+        break;
+      }
+      case 'file-refreshed': {
+        const refreshedId = Number((event.payload as any).fileId);
+        const refreshedFile = (event.payload as any).file;
+        if (refreshedId > 0 && refreshedFile) {
+          const file = fileList.value.find(item => isRealFileItem(item) && Number(item.id) === refreshedId);
+          if (file) Object.assign(file, refreshedFile);
+          const session = imageViewerSession.value;
+          if (session.mode === 'compare') {
+            for (const sessionFile of session.files) {
+              if (Number(sessionFile?.id) === refreshedId) Object.assign(sessionFile, refreshedFile);
+            }
+          }
+          fileInfoRevision.value++;
+          refreshFileGeometryLayout();
+          updateContent(true);
+        }
+        break;
+      }
+      case 'file-moved': {
+        const movedId = Number((event.payload as any).fileId);
+        const movedPath = String((event.payload as any).path || '');
+        if (movedId > 0 && movedPath) {
+          const movedFile = (event.payload as any).file;
+          const file = fileList.value.find(item => isRealFileItem(item) && Number(item?.id) === movedId);
+          const sourceAlbumId = Number(file?.album_id || 0);
+          if (file) {
+            if (movedFile) Object.assign(file, movedFile);
+            else file.file_path = movedPath;
+          }
+          const destinationAlbumId = Number((event.payload as any).albumId || 0);
+          if (destinationAlbumId > 0 || sourceAlbumId > 0) {
+            void refreshAffectedAlbums([sourceAlbumId, destinationAlbumId].filter(id => id > 0));
+          }
+          const session = imageViewerSession.value;
+          if (session.mode === 'compare') {
+            for (const sessionFile of session.files) {
+              if (Number(sessionFile?.id) === movedId) sessionFile.file_path = movedPath;
+            }
+          }
+          updateContent(true);
+        }
+        break;
+      }
+      case 'file-copied': {
+        const destinationAlbumId = Number((event.payload as any).albumId || 0);
+        if (destinationAlbumId > 0) void refreshAffectedAlbums([destinationAlbumId]);
+        updateContent(true);
+        break;
+      }
+      case 'file-renamed': {
+        const renamedId = Number((event.payload as any).fileId);
+        const renamedName = String((event.payload as any).name || '');
+        const renamedPath = String((event.payload as any).filePath || '');
+        const renamedFile = (event.payload as any).file;
+        if (renamedId > 0 && renamedPath) {
+          const file = fileList.value.find(item => Number(item?.id) === renamedId);
+          if (file) {
+            if (renamedFile) Object.assign(file, renamedFile);
+            else {
+              file.name = renamedName;
+              file.file_path = renamedPath;
+            }
+          }
+          const session = imageViewerSession.value;
+          if (session.mode === 'compare') {
+            for (const sessionFile of session.files) {
+              if (Number(sessionFile?.id) === renamedId) {
+                if (renamedFile) Object.assign(sessionFile, renamedFile);
+                else {
+                  sessionFile.name = renamedName;
+                  sessionFile.file_path = renamedPath;
+                }
+              }
+            }
+          }
+        }
+        break;
+      }
       case 'update-file-meta':
         const targetFileId = Number((event.payload as any).fileId);
         const changes = (event.payload as any).changes || {};
@@ -6437,7 +6450,7 @@ onMounted( async() => {
         if (!saveAsNew && filePath) {
           uiStore.updateFileVersion(filePath);
         }
-        await onFileSaved(true, { saveAsNew, filePath, saveAsContext });
+        await onFileSaved(true, { saveAsNew, filePath, saveAsContext, sourceFileId: sourceId });
       } catch (error) {
         console.error('Failed handling ImageEditor save success:', error);
       }
@@ -6641,43 +6654,123 @@ onMounted( async() => {
     const deletedIds = Array.isArray(event?.payload?.fileIds)
       ? event.payload.fileIds.map((id: any) => Number(id)).filter((id: number) => id > 0)
       : [];
-    const compareFileCount = removeDeletedFilesFromImageViewerSession(deletedIds);
-    if (compareFileCount !== undefined) {
-      // Re-broadcast with the comparison count after its session snapshot has
-      // been updated. The ImageViewer must never fall back to the full list.
-      await tauriEmit('files-deleted', {
-        source: 'content',
-        fileIds: deletedIds,
-        fileCount: fileList.value.length,
-        compareFileCount,
-      });
+    if (deletedIds.length === 0) return;
+    const deletedIdSet = new Set(deletedIds);
+    // A comparison window owns a snapshot that can outlive the main list when
+    // the user navigates to another album. Pair repair must use both sources.
+    const knownFiles = new Map<number, any>();
+    for (const file of fileList.value) {
+      if (isRealFileItem(file)) knownFiles.set(Number(file.id), file);
     }
-    if (deletedIds.length === 0 || fileList.value.length === 0) return;
-
-    if (tempViewMode.value !== 'none') {
-      updateContent();
-      return;
-    }
-
-    const deleteSet = new Set(deletedIds);
-    let removedAny = false;
-    for (let i = fileList.value.length - 1; i >= 0; i--) {
-      if (deleteSet.has(fileList.value[i].id)) {
-        fileList.value.splice(i, 1);
-        removedAny = true;
+    if (imageViewerSession.value.mode === 'compare') {
+      for (const file of imageViewerSession.value.files) {
+        if (file?.id) knownFiles.set(Number(file.id), file);
       }
     }
-    if (!removedAny) return;
-
-    totalFileCount.value = fileList.value.length;
-    totalFileSize.value = fileList.value.reduce((total, file) => total + getMediaItemSize(file), 0);
-    if (fileList.value.length === 0) {
-      selectedItemIndex.value = -1;
-    } else {
-      selectedItemIndex.value = Math.min(selectedItemIndex.value, fileList.value.length - 1);
-      if (selectedItemIndex.value < 0) selectedItemIndex.value = 0;
+    const surviveCompanionByDeletedPrimary = new Map<number, number>();
+    for (const file of knownFiles.values()) {
+      const companionId = Number(file.live_photo_video_id || 0);
+      if (deletedIdSet.has(Number(file.id)) && companionId > 0 && !deletedIdSet.has(companionId)) {
+        surviveCompanionByDeletedPrimary.set(Number(file.id), companionId);
+      }
     }
-    await updateSelectedImage(selectedItemIndex.value);
+
+    const deletedIndices: number[] = [];
+    if (tempViewMode.value === 'none' && surviveCompanionByDeletedPrimary.size === 0) {
+      for (let index = 0; index < fileList.value.length; index++) {
+        if (deletedIdSet.has(Number(fileList.value[index]?.id))) deletedIndices.push(index);
+      }
+    }
+
+    let compareFileCount: number | undefined;
+    if (imageViewerSession.value.mode === 'compare') {
+      const session = imageViewerSession.value;
+      const nextFiles: any[] = [];
+      let changed = false;
+      for (const sessionFile of session.files) {
+        const sessionFileId = Number(sessionFile?.id || 0);
+        if (!deletedIdSet.has(sessionFileId)) {
+          nextFiles.push(sessionFile);
+          continue;
+        }
+        changed = true;
+        const companionId = surviveCompanionByDeletedPrimary.get(sessionFileId);
+        if (companionId) {
+          const companion = await getFileInfo(companionId);
+          if (companion) nextFiles.push(companion);
+        }
+      }
+      if (changed) {
+        imageViewerSession.value = { ...session, files: nextFiles };
+        compareFileCount = nextFiles.length;
+      }
+    }
+
+    const deletedAlbumId = Number(event?.payload?.albumId || 0);
+    if (deletedAlbumId > 0) void refreshAffectedAlbums([deletedAlbumId]);
+    const survivorIds = new Set<number>();
+    for (const file of knownFiles.values()) {
+      if (file.live_photo_video_id && deletedIdSet.has(Number(file.live_photo_video_id))) {
+        survivorIds.add(Number(file.id));
+      }
+    }
+
+    let viewerFileCount = fileList.value.length;
+    if (tempViewMode.value !== 'none' || surviveCompanionByDeletedPrimary.size > 0) {
+      await updateContent(true);
+      viewerFileCount = fileList.value.length;
+    } else {
+      const deleteSet = new Set(deletedIds);
+      let removedAny = false;
+      for (let i = fileList.value.length - 1; i >= 0; i--) {
+        if (deleteSet.has(fileList.value[i].id)) {
+          fileList.value.splice(i, 1);
+          removedAny = true;
+        }
+      }
+      if (removedAny) {
+        totalFileCount.value = fileList.value.length;
+        totalFileSize.value = fileList.value.reduce((total, file) => total + getMediaItemSize(file), 0);
+        if (fileList.value.length === 0) {
+          selectedItemIndex.value = -1;
+        } else {
+          selectedItemIndex.value = Math.min(selectedItemIndex.value, fileList.value.length - 1);
+          if (selectedItemIndex.value < 0) selectedItemIndex.value = 0;
+        }
+        viewerFileCount = fileList.value.length;
+        await updateSelectedImage(selectedItemIndex.value);
+      } else {
+        const payloadCount = Number(event?.payload?.fileCount);
+        if (Number.isFinite(payloadCount) && payloadCount >= 0) viewerFileCount = payloadCount;
+      }
+    }
+
+    const updatedFiles: any[] = [];
+    for (const survivorId of survivorIds) {
+      const updated = await getFileInfo(survivorId);
+      if (!updated) continue;
+      const survivor = fileList.value.find(file => isRealFileItem(file) && Number(file.id) === survivorId);
+      if (survivor) Object.assign(survivor, updated);
+      const session = imageViewerSession.value;
+      if (session.mode === 'compare') {
+        for (const sessionFile of session.files) {
+          if (Number(sessionFile?.id) === survivorId) Object.assign(sessionFile, updated);
+        }
+      }
+      updatedFiles.push(updated);
+    }
+
+    // Always rebroadcast after the main list has settled. This is the single
+    // authoritative navigation update for normal viewers as well as compare.
+    await tauriEmit('files-deleted', {
+      source: 'content',
+      fileIds: deletedIds,
+      fileCount: viewerFileCount,
+      compareFileCount,
+      selectedIndex: selectedItemIndex.value,
+      deletedIndices,
+      updatedFiles,
+    });
   });
 
   unlistenAlbumUpdated = await listen('album-updated', (event: any) => {
@@ -9131,7 +9224,13 @@ const onFileSaved = async (success: boolean, payload: SavedFilePayload = {}) => 
       }
       toast.success(localeMsg.value.tooltip.save_image.save_as_success || localeMsg.value.tooltip.save_image.success);
     } else {
-      const savedFile = fileList.value[selectedItemIndex.value];
+      const sourceId = Number(payload.sourceFileId || 0);
+      const savedIndex = sourceId > 0
+        ? fileList.value.findIndex(file => Number(file?.id) === sourceId)
+        : selectedItemIndex.value;
+      const savedFile = savedIndex >= 0
+        ? fileList.value[savedIndex]
+        : (sourceId > 0 ? await getFileInfo(sourceId) : null);
       if (savedFile?.file_path) {
         uiStore.updateFileVersion(savedFile.file_path);
         clearPreviewPreloadCache(savedFile.file_path);
@@ -9142,7 +9241,14 @@ const onFileSaved = async (success: boolean, payload: SavedFilePayload = {}) => 
         await setFileRotate(savedFile.id, 0);
         await syncFileMetaToImageViewer(savedFile.id, { rotate: 0 });
       }
-      await updateFile(fileList.value[selectedItemIndex.value]);
+      if (savedIndex >= 0) await updateFile(savedFile);
+      if (savedFile) {
+        await tauriEmit('message-from-content', {
+          message: 'file-saved',
+          fileId: savedFile.id,
+          file: savedFile,
+        });
+      }
       toast.success(localeMsg.value.tooltip.save_image.success);
     }
   } else {
@@ -9150,32 +9256,13 @@ const onFileSaved = async (success: boolean, payload: SavedFilePayload = {}) => 
   }
 }
 
-const getClipboardFilePaths = (files: any[], limit = 10) => {
-  const paths: string[] = [];
-  const seenPaths = new Set<string>();
-  let filesOnly = false;
-
-  for (const file of files) {
-    const groupPaths = getClipboardItemPaths(file, config.settings.groupRawJpegPairs);
-    const uniqueGroupPaths = groupPaths.filter(path => !seenPaths.has(path));
-    if (paths.length + uniqueGroupPaths.length > limit) continue;
-    if (groupPaths.length === 2) filesOnly = true;
-    for (const path of uniqueGroupPaths) {
-      seenPaths.add(path);
-      paths.push(path);
-    }
-  }
-
-  return { paths, filesOnly };
-};
-
 async function clickCopyFilePaths() {
   try {
     const files = selectMode.value
       ? await getActionableSelectedItemsForAction()
       : [fileList.value[selectedItemIndex.value]];
     if (!files) return;
-    const count = await copyFilePaths(files, config.settings.groupRawJpegPairs);
+    const count = await copyFilePathsForFiles(files, config.settings.groupRawJpegPairs);
     if (count > 0) {
       toast.success(t('file_info.paths_copied', { count }));
     }
@@ -9188,65 +9275,40 @@ async function clickCopyFilePaths() {
 const clickCopyImages = async (fallbackFile?: any) => {
   if (isProcessing.value) return;
   isProcessing.value = true;
-
-  let copiedCount = 0;
-  let requestedCount = 0;
-  let cancelled = false;
-  let filePaths: string[] = [];
-  let filesOnly = false;
   try {
+    let files: any[] = [];
+    let limit = 10;
     if (selectMode.value && selectedCount.value > 0) {
-      requestedCount = selectedCount.value;
       const selectedItems = await getSelectedItemsForClipboard();
-      if (!selectedItems) {
-        cancelled = true;
-        return;
-      }
-      if (selectedItems.some(isOriginalStorageUnavailable)) {
-        cancelled = true;
-        toast.warning(t('offline.requires_original'));
-        return;
-      }
-      ({ paths: filePaths, filesOnly } = getClipboardFilePaths(selectedItems, CLIPBOARD_SELECTION_LIMIT * 2));
+      if (!selectedItems) return;
+      files = selectedItems;
+      limit = CLIPBOARD_SELECTION_LIMIT * 2;
     } else if (fallbackFile) {
-      if (isOriginalStorageUnavailable(fallbackFile)) {
-        cancelled = true;
-        toast.warning(t('offline.requires_original'));
-        return;
-      }
-      ({ paths: filePaths, filesOnly } = getClipboardFilePaths([fallbackFile]));
-      requestedCount = filePaths.length;
+      files = [fallbackFile];
     }
-    if (filePaths.length === 0) {
-      cancelled = true;
-      return;
-    }
-    const available = await Promise.all(filePaths.map(path => checkFileAccessibility(path)));
-    if (available.some(value => !value)) {
-      cancelled = true;
+    const result = await copyFilesToClipboard(files, {
+      groupRawJpegPairs: config.settings.groupRawJpegPairs,
+      limit,
+    });
+    if (result.offline) {
       toast.warning(t('offline.requires_original'));
       return;
     }
-    copiedCount = Number(await copyImages(filePaths, filesOnly)) || 0;
-  } catch (error) {
-    console.error('Failed to copy files to clipboard:', error);
-  } finally {
-    isProcessing.value = false;
-    if (cancelled) {
-      return;
-    } else if (copiedCount > 0) {
-      toast.success(t('tooltip.copy_image.success', { count: copiedCount.toLocaleString() }));
-      if (requestedCount > CLIPBOARD_SELECTION_LIMIT) {
+    if (result.cancelled) return;
+    if (result.copiedCount > 0) {
+      toast.success(t('tooltip.copy_image.success', { count: result.copiedCount.toLocaleString() }));
+      if (result.requestedCount > CLIPBOARD_SELECTION_LIMIT) {
         toast.warning(t('tooltip.copy_image.limit', { count: CLIPBOARD_SELECTION_LIMIT }));
       }
     } else {
       toast.error(localeMsg.value.tooltip.copy_image.failed);
     }
+  } catch (error) {
+    console.error('Failed to copy files to clipboard:', error);
+  } finally {
+    isProcessing.value = false;
   }
-}
-
-const appPathForMediaKind = (kind: 'image' | 'video') =>
-  String(config.defaultExternalApp(kind)?.path || '');
+};
 
 const launchInExternalApp = async (paths: string[], appPath: string) => {
   try {
@@ -9275,59 +9337,49 @@ const openInExternalApp = async (appId?: string) => {
     : [fileList.value[selectedItemIndex.value]].filter(Boolean);
   if (!items || items.length === 0 || !await requireOriginalFiles(items)) return;
 
-  const kind = getMediaKind(items);
-  if (kind === 'empty') return;
-  if (kind === 'mixed') {
+  const target = resolveExternalAppTarget(items, appId, config);
+  if (target.kind === 'empty' || target.kind === 'no-files') return;
+  if (target.kind === 'mixed') {
     toast.warning(t('tooltip.open_external.mixed_selection'));
     return;
   }
-
-  const appPath = appId
-    ? String(config.externalAppsFor(kind).find((app: any) => app.id === appId)?.path || '')
-    : appPathForMediaKind(kind);
-  if (!appPath) {
+  if (target.kind === 'no-app') {
     toast.warning(t('tooltip.open_external.no_app'));
     return;
   }
 
-  const paths = items.map((item: any) => item.file_path).filter(Boolean);
-  if (paths.length === 0) return;
-
-  if (paths.length > EXTERNAL_OPEN_WARNING_THRESHOLD) {
-    pendingExternalOpen.value = { paths, appPath };
+  if (target.paths.length > EXTERNAL_OPEN_WARNING_THRESHOLD) {
+    pendingExternalOpen.value = { paths: target.paths, appPath: target.appPath };
     showExternalOpenWarningMsgbox.value = true;
     return;
   }
 
-  await launchInExternalApp(paths, appPath);
+  await launchInExternalApp(target.paths, target.appPath);
 }
 
 const onRenameFile = async (newName: string) => {
   if (!await requireCurrentOriginals()) return;
-  if(selectedItemIndex.value >= 0) {
-    const file = fileList.value[selectedItemIndex.value];
-    const fileName = combineFileName(newName, renamingFileName.value.ext ?? '');
-    if (fileName === file.name) {
-      showRenameMsgbox.value = false;
-      return;
-    }
-    let newFilePath;
-    try {
-      newFilePath = await renameFile(file.id, file.file_path, fileName);
-    } catch (error) {
-      errorMessage.value = `${localeMsg.value.msgbox.rename_file.error}: ${String(error)}`;
-      return;
-    }
-    if(newFilePath) {
-      console.log('onRenameFile:', newFilePath);
-      file.name = fileName;
-      file.file_path = newFilePath;
-      showRenameMsgbox.value = false;
-      errorMessage.value = '';
-    } else {
-      errorMessage.value = localeMsg.value.msgbox.rename_file.error;
-    }
+  if (selectedItemIndex.value < 0) return;
+  const file = fileList.value[selectedItemIndex.value];
+  let result;
+  try {
+    result = await renameSingleFile(file, newName, renamingFileName.value.ext ?? '');
+  } catch (error) {
+    errorMessage.value = `${localeMsg.value.msgbox.rename_file.error}: ${String(error)}`;
+    return;
   }
+  if (!result) {
+    errorMessage.value = localeMsg.value.msgbox.rename_file.error;
+    return;
+  }
+  if (result.unchanged) {
+    showRenameMsgbox.value = false;
+    return;
+  }
+  file.name = result.fileName;
+  file.file_path = result.filePath;
+  showRenameMsgbox.value = false;
+  errorMessage.value = '';
 }
 
 const refreshAffectedAlbums = async (albumIds: Array<number | null | undefined>, refreshCounts = false) => {
@@ -9920,16 +9972,7 @@ async function executeFileDeletion(plan: NonNullable<typeof fileDeletePlan.value
     const failed = new Set<number>(result.trashFailedFileIds ?? []);
     if (!permanently && failed.size && applyToCurrentView
       && libraryId === libConfig._libraryId && retryRequest === currentContentRequestId) {
-      const retryFiles: FileDeleteItem[] = [];
-      for (const file of files) {
-        if (failed.has(file.id)) retryFiles.push({ ...file, rawPair: false, companion: undefined });
-        if (file.companion && failed.has(file.companion.id)) {
-          retryFiles.push({
-            ...file.companion, name: file.companion.file_path.split(/[/\\]/).pop() || file.companion.file_path,
-            album_id: file.album_id, rawPair: false,
-          });
-        }
-      }
+      const retryFiles = buildDeleteRetryTargets(files, [...failed]);
       if (retryFiles.length) retryPlan = { libraryId, requestId: retryRequest, files: retryFiles, trashUnavailable: true };
     }
     const failedCount = result.failedCount - (retryPlan ? failed.size : 0);
@@ -10331,6 +10374,7 @@ type SavedFilePayload = {
   saveAsNew?: boolean;
   filePath?: string;
   saveAsContext?: SaveAsContext | null;
+  sourceFileId?: number;
 };
 
 const insertIndexedFileIntoList = async (indexedFile: any) => {

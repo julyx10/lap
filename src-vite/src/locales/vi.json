@@ -532,6 +532,7 @@
     "select_hint": "Chưa chọn mục nào",
     "deselect": "Bỏ chọn",
     "selection_load_failed": "Không thể tải tất cả mục để chọn. Hãy thử lại.",
+    "file_action_unavailable": "Tệp này không còn khả dụng trong cửa sổ chính.",
     "large_batch": {
       "title": "Xác nhận thao tác hàng loạt",
       "content": "Thao tác này sẽ xử lý {count} mục và có thể mất một lúc. Tiếp tục?",
@@ -551,6 +552,7 @@
     "unfavorite_all": "Bỏ yêu thích",
     "action": "Thao tác",
     "file_actions": "Thao tác với tệp",
+    "more": "Thêm…",
     "organize": "Phân loại",
     "more_actions": "Thao tác khác",
     "tag_all": "Gắn thẻ",

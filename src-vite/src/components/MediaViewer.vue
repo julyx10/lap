@@ -201,6 +201,7 @@
         <ContextMenu v-if="mode !== 2"
           ref="contextMenuRef"
           :iconMenu="IconMore"
+          :tooltip="$t('info_panel.more')"
           :menuItems="singleFileMenuItems"
           :disabled="fileIndex < 0 || isSlideShow || !canInteract"
           @open-change="handleMenuOpenChange"
@@ -208,9 +209,15 @@
         />
         <IconSeparator v-if="mode !== 2" class="t-icon-size-sm text-base-content/30" />
         <TButton
+          v-if="mode === 2 && showViewerMenu"
+          :icon="IconMore"
+          :tooltip="$t('info_panel.more')"
+          :disabled="fileIndex < 0 || isSlideShow || !canInteract"
+          @click.stop="$emit('viewer-more', $event)"
+        />
+        <TButton
           :icon="!isFullScreen ? IconFullScreen : IconRestoreScreen"
           :tooltip="!isFullScreen ? $t('image_viewer.toolbar.fullscreen') : $t('image_viewer.toolbar.exit_fullscreen')"
-          :disabled="!canInteract"
           :shortcut="shortcut('view.toggleFullscreen')"
           @click="toggleFullScreen"
         />
@@ -224,7 +231,6 @@
           v-if="isFullScreen || (mode === 0 && config.mediaViewer.isPinned)"
           :icon="IconClose"
           :tooltip="$t('image_viewer.toolbar.close')"
-          :disabled="!canInteract"
           @click.stop="$emit('close')"
         />
       </div>
@@ -615,6 +621,10 @@ const props = defineProps({
     type: Boolean,
     default: true
   },
+  showViewerMenu: {
+    type: Boolean,
+    default: false
+  },
   toolbarOnly: {
     type: Boolean,
     default: false
@@ -692,6 +702,8 @@ const emit = defineEmits([
   'media-dblclick', 
   'viewport-change',
   'view-background-change',
+  'context-menu',
+  'viewer-more',
   'activate',
   'toggle-af-areas',
 ]);
@@ -1245,14 +1257,22 @@ function handleMouseLeave() {
 }
 
 function handleContextMenu(e: MouseEvent) {
-  if (contextMenuRef.value) {
-    contextMenuRef.value.open(e.clientX, e.clientY);
+  e.stopPropagation();
+  if (props.mode === 2) {
+    emit('context-menu', e);
+    return;
   }
+  contextMenuRef.value?.open(e.clientX, e.clientY);
 }
 
 function handleBackgroundContextMenu(e: MouseEvent) {
   const target = e.target as HTMLElement;
   if (target.closest('button')) return;
+  e.stopPropagation();
+  if (props.mode === 2) {
+    emit('context-menu', e);
+    return;
+  }
   backgroundContextMenuRef.value?.open(e.clientX, e.clientY);
 }
 

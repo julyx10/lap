@@ -532,6 +532,7 @@
     "select_hint": "선택한 항목이 없습니다",
     "deselect": "선택 해제",
     "selection_load_failed": "선택할 모든 항목을 불러오지 못했습니다. 다시 시도하세요.",
+    "file_action_unavailable": "이 파일은 더 이상 기본 창에서 사용할 수 없습니다.",
     "large_batch": {
       "title": "일괄 작업 확인",
       "content": "이 작업은 {count}개 항목을 처리하며 시간이 걸릴 수 있습니다. 계속하시겠습니까?",
@@ -551,6 +552,7 @@
     "unfavorite_all": "즐겨찾기 해제",
     "action": "작업",
     "file_actions": "파일 작업",
+    "more": "더 보기…",
     "organize": "정리",
     "more_actions": "추가 작업",
     "tag_all": "태그",

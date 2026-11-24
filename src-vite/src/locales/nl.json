@@ -532,6 +532,7 @@
     "select_hint": "Geen items geselecteerd",
     "deselect": "Deselecteren",
     "selection_load_failed": "Kan niet alle items laden voor de selectie. Probeer het opnieuw.",
+    "file_action_unavailable": "Dit bestand is niet meer beschikbaar in het hoofdvenster.",
     "large_batch": {
       "title": "Bulkbewerking bevestigen",
       "content": "Deze bewerking verwerkt {count} items en kan even duren. Doorgaan?",
@@ -551,6 +552,7 @@
     "unfavorite_all": "Geen favoriet",
     "action": "Actie",
     "file_actions": "Bestandsacties",
+    "more": "Meer…",
     "organize": "Ordenen",
     "more_actions": "Meer acties",
     "tag_all": "Taggen",

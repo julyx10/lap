@@ -532,6 +532,7 @@
     "select_hint": "未選取項目",
     "deselect": "取消選取",
     "selection_load_failed": "無法載入所有選取項目。請再試一次。",
+    "file_action_unavailable": "此檔案在主視窗中已無法使用。",
     "large_batch": {
       "title": "確認大量操作",
       "content": "此操作將處理 {count} 個項目，可能需要一些時間。要繼續嗎？",
@@ -551,6 +552,7 @@
     "unfavorite_all": "取消我的最愛",
     "action": "動作",
     "file_actions": "檔案動作",
+    "more": "更多…",
     "organize": "整理",
     "more_actions": "更多動作",
     "tag_all": "標籤",

@@ -532,6 +532,7 @@
     "select_hint": "No items selected",
     "deselect": "Deselect",
     "selection_load_failed": "Could not load all items for selection. Try again.",
+    "file_action_unavailable": "This file is no longer available in the main window.",
     "large_batch": {
       "title": "Confirm bulk operation",
       "content": "This operation will process {count} items and may take some time. Continue?",
@@ -551,6 +552,7 @@
     "unfavorite_all": "Unfavorite",
     "action": "Action",
     "file_actions": "File actions",
+    "more": "More...",
     "organize": "Organize",
     "more_actions": "More actions",
     "tag_all": "Tag",

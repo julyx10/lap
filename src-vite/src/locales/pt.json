@@ -532,6 +532,7 @@
     "select_hint": "Nenhum item selecionado",
     "deselect": "Desmarcar",
     "selection_load_failed": "Não foi possível carregar todos os itens para seleção. Tente novamente.",
+    "file_action_unavailable": "Este arquivo não está mais disponível na janela principal.",
     "large_batch": {
       "title": "Confirmar operação em massa",
       "content": "Esta operação processará {count} itens e pode demorar. Continuar?",
@@ -551,6 +552,7 @@
     "unfavorite_all": "Remover",
     "action": "Ação",
     "file_actions": "Ações de arquivo",
+    "more": "Mais…",
     "organize": "Organizar",
     "more_actions": "Mais ações",
     "tag_all": "Tag",

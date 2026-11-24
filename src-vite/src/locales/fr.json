@@ -532,6 +532,7 @@
     "select_hint": "Aucun élément sélectionné",
     "deselect": "Décocher",
     "selection_load_failed": "Impossible de charger tous les éléments pour la sélection. Réessayez.",
+    "file_action_unavailable": "Ce fichier n’est plus disponible dans la fenêtre principale.",
     "large_batch": {
       "title": "Confirmer l’opération groupée",
       "content": "Cette opération traitera {count} éléments et peut prendre du temps. Continuer ?",
@@ -551,6 +552,7 @@
     "unfavorite_all": "Retirer",
     "action": "Action",
     "file_actions": "Actions sur les fichiers",
+    "more": "Plus…",
     "organize": "Organiser",
     "more_actions": "Autres actions",
     "tag_all": "Tag",

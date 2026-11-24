@@ -532,6 +532,7 @@
     "select_hint": "Keine Elemente ausgewählt",
     "deselect": "Abwählen",
     "selection_load_failed": "Nicht alle Elemente konnten für die Auswahl geladen werden. Versuchen Sie es erneut.",
+    "file_action_unavailable": "Diese Datei ist im Hauptfenster nicht mehr verfügbar.",
     "large_batch": {
       "title": "Massenvorgang bestätigen",
       "content": "Dieser Vorgang verarbeitet {count} Elemente und kann einige Zeit dauern. Fortfahren?",
@@ -551,6 +552,7 @@
     "unfavorite_all": "Entfernen",
     "action": "Aktion",
     "file_actions": "Dateiaktionen",
+    "more": "Mehr…",
     "organize": "Organisieren",
     "more_actions": "Weitere Aktionen",
     "tag_all": "Tag",

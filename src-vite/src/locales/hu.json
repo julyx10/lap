@@ -532,6 +532,7 @@
     "select_hint": "Nincs kijelölt elem",
     "deselect": "Kijelölés törlése",
     "selection_load_failed": "Nem tölthető be minden elem a kijelöléshez. Próbálja újra.",
+    "file_action_unavailable": "Ez a fájl már nem érhető el a főablakban.",
     "large_batch": {
       "title": "Tömeges művelet megerősítése",
       "content": "A művelet {count} elemet dolgoz fel, és időbe telhet. Folytatja?",
@@ -551,6 +552,7 @@
     "unfavorite_all": "Kedvelés törlése",
     "action": "Művelet",
     "file_actions": "Fájlműveletek",
+    "more": "Továbbiak…",
     "organize": "Rendezés",
     "more_actions": "További műveletek",
     "tag_all": "Címke",

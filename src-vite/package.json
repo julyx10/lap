@@ -17,7 +17,9 @@
     "test:shortcuts": "node --test tests/shortcutsLayout.test.mjs",
     "test:tags": "node --test tests/tagTree.test.mjs",
     "test:searchable": "node --test tests/searchableOptions.test.mjs tests/searchableSelectState.test.mjs",
-    "test:location": "node --test tests/locationBreadcrumb.test.mjs"
+    "test:location": "node --test tests/locationBreadcrumb.test.mjs",
+    "test:file-actions": "node --test tests/fileActions.test.mjs",
+    "test:image-viewer-ui": "node --test tests/imageViewerUi.test.mjs"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.2.2",

@@ -8,6 +8,7 @@
         :icon="rawIconMenu"
         :buttonSize="smallIcon ? 'small' : 'medium'"
         :disabled="disabled"
+        :tooltip="tooltip"
         @click="toggleDropdown" 
         @dblclick.stop
       />
@@ -131,6 +132,10 @@ const props = defineProps({
   smallIcon: {
     type: Boolean,
     default: false,
+  },
+  tooltip: {
+    type: String,
+    default: '',
   },
   disabled: {
     type: Boolean,
