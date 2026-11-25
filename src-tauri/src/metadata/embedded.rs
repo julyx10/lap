@@ -1232,6 +1232,60 @@ mod camera_settings_tests {
     }
 
     #[test]
+    fn monochrome_simulations_override_film_mode_without_becoming_color_values() {
+        for (code, name) in [
+            (0x300, "None (B&W)"),
+            (0x301, "B&W Red Filter"),
+            (0x302, "B&W Yellow Filter"),
+            (0x303, "B&W Green Filter"),
+            (0x310, "B&W Sepia"),
+            (0x500, "Acros"),
+            (0x501, "Acros Red Filter"),
+            (0x502, "Acros Yellow Filter"),
+            (0x503, "Acros Green Filter"),
+        ] {
+            let mut saturation = make_tag("MakerNotes", "FujiFilm", "Saturation", name);
+            saturation.raw_value = Value::U16(code);
+            for film_mode in [None, Some("F0/Standard (Provia)")] {
+                let mut tags = vec![saturation.clone()];
+                if let Some(mode) = film_mode {
+                    tags.push(make_tag("MakerNotes", "FujiFilm", "FilmMode", mode));
+                }
+                let details = detail_values(&tags);
+                assert_eq!(details["filmSimulation"].values, vec![name]);
+                assert_eq!(details["filmSimulation"].source, "MakerNotes:Saturation");
+                assert!(!details.contains_key("saturation"));
+                assert!(!detail_values_for(&tags, true).contains_key("filmSimulation"));
+            }
+        }
+    }
+
+    #[test]
+    fn color_and_unknown_saturation_values_do_not_override_film_mode() {
+        for code in [0, 0x100, 0x304, 0x504, 0x8000] {
+            let mut saturation = make_tag("MakerNotes", "FujiFilm", "Saturation", "Color value");
+            saturation.raw_value = Value::U16(code);
+            let tags = vec![
+                make_tag("MakerNotes", "FujiFilm", "FilmMode", "Classic Chrome"),
+                saturation,
+            ];
+            let details = detail_values(&tags);
+            assert_eq!(details["filmSimulation"].values, vec!["Classic Chrome"]);
+            assert_eq!(details["saturation"].values, vec!["Color value"]);
+        }
+        for (family0, family1) in [("EXIF", "ExifIFD"), ("MakerNotes", "Sony")] {
+            let mut saturation = make_tag(family0, family1, "Saturation", "Acros");
+            saturation.raw_value = Value::U16(0x500);
+            let details = detail_values(&[
+                make_tag("MakerNotes", "FujiFilm", "FilmMode", "Classic Chrome"),
+                saturation,
+            ]);
+            assert_eq!(details["filmSimulation"].values, vec!["Classic Chrome"]);
+            assert!(!details.contains_key("saturation"));
+        }
+    }
+
+    #[test]
     fn makernotes_never_shadow_standard_exif_capture_fields() {
         let tags = vec![
             make_tag("EXIF", "ExifIFD", "WhiteBalance", "Auto"),
@@ -1592,17 +1646,19 @@ fn detail_values_for(tags: &[Tag], stored_only: bool) -> Details {
     result
 }
 
+fn find_fuji_maker_tag_entry<'a>(tags: &'a [Tag], name: &str) -> Option<&'a Tag> {
+    tags.iter().find(|tag| {
+        tag.group.family0 == "MakerNotes"
+            && tag.group.family1 == "FujiFilm"
+            && tag.name == name
+            && !matches!(tag.raw_value, Value::Binary(_) | Value::Undefined(_))
+            && !tag.print_value.trim().is_empty()
+            && !tag.print_value.contains('\0')
+    })
+}
+
 fn find_fuji_maker_tag<'a>(tags: &'a [Tag], name: &str) -> Option<&'a str> {
-    tags.iter()
-        .find(|tag| {
-            tag.group.family0 == "MakerNotes"
-                && tag.group.family1 == "FujiFilm"
-                && tag.name == name
-                && !matches!(tag.raw_value, Value::Binary(_) | Value::Undefined(_))
-                && !tag.print_value.trim().is_empty()
-                && !tag.print_value.contains('\0')
-        })
-        .map(|tag| tag.print_value.trim())
+    find_fuji_maker_tag_entry(tags, name).map(|tag| tag.print_value.trim())
 }
 
 fn normalize_fuji_dr_level(raw: &str) -> String {
@@ -1695,6 +1751,17 @@ fn format_fuji_grain_effect(tags: &[Tag]) -> Option<DetailValue> {
 }
 
 fn apply_camera_settings_formatters(tags: &[Tag], result: &mut Details) {
+    // Fujifilm stores monochrome simulations in Saturation, not FilmMode.
+    if let Some(tag) = find_fuji_maker_tag_entry(tags, "Saturation") {
+        if matches!(
+            tag.raw_value.as_u64(),
+            Some(0x300..=0x303 | 0x310 | 0x500..=0x503)
+        ) {
+            if let Some(simulation) = result.remove("saturation") {
+                result.insert("filmSimulation".into(), simulation);
+            }
+        }
+    }
     if let Some(dr) = format_fuji_dynamic_range(tags) {
         result.insert("dynamicRange".into(), dr);
     }
