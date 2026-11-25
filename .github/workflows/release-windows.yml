@@ -4,8 +4,8 @@ on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: "Existing release tag to publish Windows assets to"
-        required: true
+        description: "Existing release tag (required only when signing_mode is disabled)"
+        required: false
         type: string
       build_target:
         description: "Architecture to build"
@@ -16,8 +16,18 @@ on:
           - all
           - x64
           - arm64
+      signing_mode:
+        description: "SignPath setup: prepare a sample ZIP or test-sign without publishing a release"
+        required: true
+        default: disabled
+        type: choice
+        options:
+          - disabled
+          - prepare
+          - test
 
 permissions:
+  actions: read
   contents: write
 
 env:
@@ -31,6 +41,36 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
+      - name: Validate release and signing settings
+        shell: bash
+        env:
+          SIGNING_MODE: ${{ inputs.signing_mode }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          SIGNPATH_ORGANIZATION_ID: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          SIGNPATH_PROJECT_SLUG: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          SIGNPATH_TEST_SIGNING_POLICY_SLUG: ${{ vars.SIGNPATH_TEST_SIGNING_POLICY_SLUG }}
+          SIGNPATH_API_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          case "$SIGNING_MODE" in
+            disabled)
+              if [ -z "$RELEASE_TAG" ]; then
+                echo "release_tag is required when signing_mode is disabled."
+                exit 1
+              fi
+              ;;
+            prepare) ;;
+            test)
+              for name in SIGNPATH_ORGANIZATION_ID SIGNPATH_PROJECT_SLUG SIGNPATH_TEST_SIGNING_POLICY_SLUG SIGNPATH_API_TOKEN; do
+                if [ -z "${!name}" ]; then
+                  echo "Missing SignPath setting: $name"
+                  exit 1
+                fi
+              done
+              ;;
+            *) echo "Unknown signing_mode."; exit 1 ;;
+          esac
+
       - id: set-matrix
         shell: bash
         run: |
@@ -193,16 +233,70 @@ jobs:
           if ($msis.Count -ne 1) { throw "Expected exactly one Windows MSI." }
           .\scripts\test_windows_msi_runtime.ps1 -MsiPath $msis[0].FullName
 
+      # upload-artifact supplies the ZIP envelope required by the SignPath configuration.
+      # Upload only the MSI: its updater signature must be generated after Authenticode signing.
+      - name: Upload unsigned SignPath sample
+        if: inputs.signing_mode != 'disabled'
+        id: signpath-unsigned
+        uses: actions/upload-artifact@v4
+        with:
+          name: signpath-unsigned-${{ matrix.artifact_name }}
+          path: src-tauri/target/${{ matrix.target }}/release/bundle/msi/*.msi
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7
+
+      - name: Test-sign MSI and embedded Lap executable
+        if: inputs.signing_mode == 'test'
+        uses: signpath/github-action-submit-signing-request@a2c5b60d9c75f073142b653c354b632eedce097b # v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ vars.SIGNPATH_TEST_SIGNING_POLICY_SLUG }}
+          artifact-configuration-slug: windows-msi
+          github-artifact-id: ${{ steps.signpath-unsigned.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: ${{ runner.temp }}/signpath-signed
+
+      - name: Replace MSI and regenerate updater signature
+        if: inputs.signing_mode == 'test'
+        shell: pwsh
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $bundle = "src-tauri/target/${{ matrix.target }}/release/bundle/msi"
+          $original = @(Get-ChildItem $bundle -Filter '*.msi' -File)
+          $signed = @(Get-ChildItem (Join-Path $env:RUNNER_TEMP 'signpath-signed') -Filter '*.msi' -File)
+          if ($original.Count -ne 1 -or $signed.Count -ne 1) { throw 'Expected one original and one signed MSI.' }
+          if ($signed[0].Name -ne $original[0].Name) { throw 'SignPath returned an unexpected MSI filename.' }
+          $signature = Get-AuthenticodeSignature $signed[0].FullName
+          # A self-signed test certificate is not expected to be trusted by this runner.
+          if (-not $signature.SignerCertificate -or $signature.Status -in @('NotSigned', 'HashMismatch')) {
+            throw "Missing or invalid MSI signature: $($signature.Status)"
+          }
+          Write-Host "Test signer: $($signature.SignerCertificate.Subject); status: $($signature.Status)"
+          Copy-Item $signed[0].FullName $original[0].FullName -Force
+          Remove-Item "$($original[0].FullName).sig" -Force -ErrorAction SilentlyContinue
+          tauri signer sign $original[0].FullName
+          if ($LASTEXITCODE -ne 0) { throw 'Failed to regenerate the updater signature.' }
+          if (-not (Test-Path "$($original[0].FullName).sig")) { throw 'Updater signature was not generated.' }
+          .\scripts\test_windows_msi_runtime.ps1 -MsiPath $original[0].FullName
+
       - name: Upload Build Artifact (Windows ${{ matrix.arch }})
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.artifact_name }}
+          name: ${{ inputs.signing_mode == 'test' && format('signpath-test-{0}', matrix.artifact_name) || matrix.artifact_name }}
           path: |
             src-tauri/target/${{ matrix.target }}/release/bundle/msi/*.msi
             src-tauri/target/${{ matrix.target }}/release/bundle/msi/*.msi.sig
           if-no-files-found: error
 
   publish-windows:
+    # Self-signed test installers must never replace public release assets or latest.json.
+    if: inputs.signing_mode == 'disabled'
     needs: build-windows
     runs-on: ubuntu-latest
 
