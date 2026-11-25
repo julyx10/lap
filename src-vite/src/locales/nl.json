@@ -285,8 +285,8 @@
     "add_album_description": "Kies een map en laat Lap je foto's en video's ordenen.",
     "smart_album_title": "Ordenen met slimme albums",
     "smart_album_description": "Gebruik regels om foto's die aan je criteria voldoen automatisch te groeperen.",
-    "collection_title": "Groepeer foto's in collecties",
-    "collection_description": "Groepeer foto's voor een evenement of project — sleep ze er op elk moment in zonder de originelen te verplaatsen."
+    "text_search_title": "Foto's zoeken met woorden",
+    "text_search_description": "Beschrijf een scène, object of moment. De lokale AI van Lap vindt visueel overeenkomende foto's."
   },
   "search": {
     "title": "Zoeken",

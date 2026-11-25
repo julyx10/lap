@@ -85,8 +85,8 @@ importers:
         specifier: ^10.4.27
         version: 10.4.27(postcss@8.5.8)
       daisyui:
-        specifier: 5.5.19
-        version: 5.5.19
+        specifier: 5.8.2
+        version: 5.8.2
       postcss:
         specifier: ^8.5.8
         version: 8.5.8
@@ -772,8 +772,8 @@ packages:
   csstype@3.2.3:
     resolution: {integrity: sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==}
 
-  daisyui@5.5.19:
-    resolution: {integrity: sha512-pbFAkl1VCEh/MPCeclKL61I/MqRIFFhNU7yiXoDDRapXN4/qNCoMxeCCswyxEEhqL5eiTTfwHvucFtOE71C9sA==}
+  daisyui@5.8.2:
+    resolution: {integrity: sha512-InScsDXX0pbfgvWyPQ8iTHV4rNMZdfbMo85KqlQUn62/PCIjwczViw5lbotzoXy/nPrn4qjDMmx/fspuUnjBtA==}
 
   date-fns@4.1.0:
     resolution: {integrity: sha512-Ukq0owbQXxa/U3EGtsdVBkR1w7KOQ5gIBqdH2hkvknzZPYvBxb/aa6E8L7tmjFtkwZBu3UXBbjIgPo/Ez4xaNg==}
@@ -2202,7 +2202,7 @@ snapshots:
 
   csstype@3.2.3: {}
 
-  daisyui@5.5.19: {}
+  daisyui@5.8.2: {}
 
   date-fns@4.1.0: {}
 

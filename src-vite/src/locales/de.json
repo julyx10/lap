@@ -285,8 +285,8 @@
     "add_album_description": "Wähle einen Ordner und lass Lap deine Fotos und Videos organisieren.",
     "smart_album_title": "Mit Smart-Alben organisieren",
     "smart_album_description": "Mit Regeln werden passende Fotos automatisch gruppiert.",
-    "collection_title": "Fotos in Sammlungen gruppieren",
-    "collection_description": "Fotos für ein Event oder Projekt sammeln – jederzeit hineinziehen, ohne Originale zu verschieben."
+    "text_search_title": "Fotos mit Worten suchen",
+    "text_search_description": "Beschreibe eine Szene, ein Objekt oder einen Moment. Laps lokale KI findet visuell passende Fotos."
   },
   "search": {
     "title": "Suche",

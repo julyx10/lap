@@ -1,5 +1,5 @@
 <template>
-  <ModalDialog :title="isNew ? $t('album.smart_edit.title_add') : $t('album.smart_edit.title_edit')" :width="620" position-key="smart-album-edit" @cancel="clickCancel">
+  <ModalDialog :title="isNew ? $t('album.smart_edit.title_add') : $t('album.smart_edit.title_edit')" :width="500" position-key="smart-album-edit" @cancel="clickCancel">
     <section
       class="min-h-0 overflow-y-auto pr-1"
       @dragenter.stop
@@ -18,7 +18,7 @@
           v-model="description"
           rows="2"
           maxlength="1024"
-          class="w-full textarea textarea-sm min-h-[56px] max-h-[120px] text-xs font-semibold"
+          class="w-full textarea textarea-sm min-h-14 max-h-30 text-xs font-semibold"
         ></textarea>
         <TButton
           v-else
@@ -77,7 +77,7 @@
               ref="rulesListRef"
               :class="[
                 'pr-1',
-                rules.length > 4 ? 'max-h-[236px] overflow-y-auto' : ''
+                rules.length > 4 ? 'max-h-59 overflow-y-auto' : ''
               ]"
             >
               <template
@@ -88,7 +88,7 @@
                   <select v-model="rule.field" class="select select-sm text-xs w-full" @change="resetRule(rule)">
                     <option v-for="field in fieldOptions" :key="field.value" :value="field.value">{{ field.label }}</option>
                   </select>
-                  <select v-model="rule.operator" class="select select-sm text-xs w-[88px]" @change="resetRuleValue(rule)">
+                  <select v-model="rule.operator" class="select select-sm text-xs w-full!" @change="resetRuleValue(rule)">
                     <option v-for="operator in getOperatorOptions(rule.field)" :key="operator.value" :value="operator.value">{{ operator.label }}</option>
                   </select>
                   <RuleValueControl

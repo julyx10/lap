@@ -285,8 +285,8 @@
     "add_album_description": "选择一个文件夹，让 Lap 为您整理照片和视频。",
     "smart_album_title": "智能整理照片",
     "smart_album_description": "使用规则自动归类符合条件的照片。",
-    "collection_title": "将照片归入合集",
-    "collection_description": "为活动或项目归集照片，随时拖入，无需移动原文件。"
+    "text_search_title": "以文搜图",
+    "text_search_description": "描述场景、物体或瞬间，Lap 的本地 AI 会找到视觉上匹配的照片。"
   },
   "search": {
     "title": "搜索",

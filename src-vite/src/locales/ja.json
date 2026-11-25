@@ -285,8 +285,8 @@
     "add_album_description": "フォルダを選択して、Lapに写真と動画を整理させましょう。",
     "smart_album_title": "スマートアルバムで整理",
     "smart_album_description": "条件に合う写真をルールで自動的にまとめます。",
-    "collection_title": "コレクションで写真をまとめる",
-    "collection_description": "イベントやプロジェクトの写真をまとめ、いつでもドラッグして追加できます。元の写真は移動しません。"
+    "text_search_title": "言葉で写真を検索",
+    "text_search_description": "風景、物体、瞬間を説明してください。Lap のオンデバイス AI が視覚的に一致する写真を見つけます。"
   },
   "search": {
     "title": "検索",

@@ -285,8 +285,8 @@
     "add_album_description": "Wybierz folder i pozwól Lap uporządkować Twoje zdjęcia i filmy.",
     "smart_album_title": "Porządkuj dzięki inteligentnym albumom",
     "smart_album_description": "Użyj reguł, aby automatycznie grupować zdjęcia spełniające Twoje kryteria.",
-    "collection_title": "Grupuj zdjęcia w kolekcjach",
-    "collection_description": "Grupuj zdjęcia na wydarzenie lub projekt — przeciągaj je w dowolnym momencie bez przenoszenia oryginałów."
+    "text_search_title": "Szukaj zdjęć słowami",
+    "text_search_description": "Opisz scenę, obiekt lub moment. Lokalna AI Lap znajdzie wizualnie pasujące zdjęcia."
   },
   "search": {
     "title": "Wyszukiwanie",

@@ -285,8 +285,8 @@
     "add_album_description": "Válasszon mappát, a Lap pedig rendszerezi a fotókat és videókat.",
     "smart_album_title": "Rendezés intelligens albumokkal",
     "smart_album_description": "Szabályokkal automatikusan csoportosíthatja a feltételeknek megfelelő fotókat.",
-    "collection_title": "Fotók gyűjteményekbe rendezése",
-    "collection_description": "Rendezze gyűjteménybe egy esemény vagy projekt fotóit az eredetik áthelyezése nélkül."
+    "text_search_title": "Fotók keresése szavakkal",
+    "text_search_description": "Írjon le egy jelenetet, tárgyat vagy pillanatot. A Lap helyi AI-ja megtalálja a vizuálisan egyező fotókat."
   },
   "search": {
     "title": "Keresés",

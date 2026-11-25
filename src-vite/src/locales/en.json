@@ -285,8 +285,8 @@
     "add_album_description": "Select a folder and let Lap organize your photos and videos.",
     "smart_album_title": "Organize with smart albums",
     "smart_album_description": "Use rules to automatically group photos that match your criteria.",
-    "collection_title": "Group photos in collections",
-    "collection_description": "Group photos for an event or project—drag them in anytime without moving the originals."
+    "text_search_title": "Search photos with words",
+    "text_search_description": "Describe a scene, object, or moment. Lap's on-device AI finds visually matching photos."
   },
   "search": {
     "title": "Search",

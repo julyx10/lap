@@ -285,8 +285,8 @@
     "add_album_description": "Vyberte složku a nechte Lap uspořádat vaše fotografie a videa.",
     "smart_album_title": "Organizujte pomocí chytrých alb",
     "smart_album_description": "Pomocí pravidel automaticky seskupujte fotografie, které odpovídají vašim kritériím.",
-    "collection_title": "Seskupujte fotografie do kolekcí",
-    "collection_description": "Seskupte fotografie pro událost nebo projekt – kdykoli je sem přetáhněte, aniž byste přesouvali originály."
+    "text_search_title": "Hledat fotografie slovy",
+    "text_search_description": "Popište scénu, objekt nebo okamžik. Místní AI v Lapu najde vizuálně odpovídající fotografie."
   },
   "search": {
     "title": "Hledat",

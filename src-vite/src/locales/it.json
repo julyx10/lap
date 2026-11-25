@@ -285,8 +285,8 @@
     "add_album_description": "Seleziona una cartella e lascia che Lap organizzi le tue foto e i tuoi video.",
     "smart_album_title": "Organizza con album intelligenti",
     "smart_album_description": "Usa le regole per raggruppare automaticamente le foto che corrispondono ai tuoi criteri.",
-    "collection_title": "Raggruppa le foto in raccolte",
-    "collection_description": "Raggruppa le foto per un evento o un progetto: trascinale quando vuoi senza spostare gli originali."
+    "text_search_title": "Cerca foto con le parole",
+    "text_search_description": "Descrivi una scena, un oggetto o un momento. L'IA locale di Lap trova le foto visivamente corrispondenti."
   },
   "search": {
     "title": "Cerca",

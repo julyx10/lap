@@ -285,8 +285,8 @@
     "add_album_description": "폴더를 선택하고 Lap이 사진과 동영상을 정리하도록 하세요.",
     "smart_album_title": "스마트 앨범으로 정리",
     "smart_album_description": "규칙에 맞는 사진을 자동으로 그룹화합니다.",
-    "collection_title": "컬렉션에 사진 모으기",
-    "collection_description": "이벤트나 프로젝트 사진을 모으고 언제든 드래그해 추가하세요. 원본은 이동하지 않습니다."
+    "text_search_title": "단어로 사진 검색",
+    "text_search_description": "장면, 사물 또는 순간을 설명하세요. Lap의 온디바이스 AI가 시각적으로 일치하는 사진을 찾아줍니다."
   },
   "search": {
     "title": "검색",

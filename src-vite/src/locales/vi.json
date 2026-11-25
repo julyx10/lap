@@ -285,8 +285,8 @@
     "add_album_description": "Chọn một thư mục và để Lap sắp xếp ảnh và video của bạn.",
     "smart_album_title": "Sắp xếp bằng album thông minh",
     "smart_album_description": "Dùng quy tắc để tự động nhóm các ảnh khớp với tiêu chí của bạn.",
-    "collection_title": "Nhóm ảnh vào bộ sưu tập",
-    "collection_description": "Nhóm ảnh cho một sự kiện hay dự án—kéo ảnh vào bất cứ lúc nào mà không di chuyển bản gốc."
+    "text_search_title": "Tìm ảnh bằng từ ngữ",
+    "text_search_description": "Mô tả một khung cảnh, đồ vật hoặc khoảnh khắc. AI trên thiết bị của Lap sẽ tìm những bức ảnh phù hợp về mặt hình ảnh."
   },
   "search": {
     "title": "Tìm kiếm",

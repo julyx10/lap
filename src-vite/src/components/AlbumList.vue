@@ -133,38 +133,14 @@
                 @dblclick.stop
               />
               <div class="w-10 h-10 mr-2 rounded-box shrink-0 overflow-hidden border border-base-content/5 bg-base-content/5" @click.stop>
-                <!-- Scanning / Paused / Queued -->
-                <div v-if="isAlbumScanning(album.id)"
-                  class="w-full h-full flex items-center justify-center cursor-pointer"
-                  :title="$t('toolbar.tooltip.scanning')"
-                  @click="toggleIndexAlbum(album.id)"
-                >
-                  <IconUpdate class="w-6 h-6 animate-spin" />
-                </div>
-                <div v-else-if="isAlbumPaused(album.id) || (Number(album.indexed) > 0 && Number(album.indexed) < Number(album.total))"
-                  class="w-full h-full flex items-center justify-center"
-                  :class="album.is_accessible === false ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'"
-                  :title="$t('toolbar.tooltip.scan_paused')"
-                  @click="toggleIndexAlbum(album.id)"
-                >
-                  <IconUpdateDot class="w-6 h-6" />
-                </div>
-                <div v-else-if="getAlbumIcon(album) === 'update'"
-                  class="w-full h-full flex items-center justify-center cursor-pointer hover:bg-base-100/30"
-                  :title="$t('toolbar.tooltip.scan_queued')"
-                  @click="toggleIndexAlbum(album.id)"
-                >
-                  <IconUpdate class="w-6 h-6" />
-                </div>
-                <!-- Cover -->
+                <!-- Cover stays visible while scanning; status lives in the title badge. -->
                 <img
-                  v-else-if="album.cover_file_id && albumCovers[album.id] && !albumCoverErrors[album.id]"
+                  v-if="album.cover_file_id && albumCovers[album.id] && !albumCoverErrors[album.id]"
                   :src="albumCovers[album.id]"
                   class="w-full h-full object-cover"
                   @error="albumCoverErrors[album.id] = true"
                   @click="clickAlbum(album)"
                 >
-                <!-- Fallback -->
                 <div v-else
                   class="w-full h-full flex items-center justify-center cursor-pointer"
                   @click="clickAlbum(album)"
@@ -173,13 +149,38 @@
                 </div>
               </div>
 
-              <div class="flex flex-col overflow-hidden">
+              <div class="flex min-w-0 flex-1 flex-col overflow-hidden">
                 <div class="flex min-w-0 items-center gap-1">
-                  <span class="truncate whitespace-pre">{{ album.name }}</span>
+                  <span
+                    class="min-w-0 truncate whitespace-pre"
+                    :class="getAlbumBadgeState(album) === 'scanning' ? 'album-title-marquee' : ''"
+                  >{{ album.name }}</span>
                   <span
                     v-if="album.is_accessible === false"
                     class="shrink-0 rounded-box bg-warning/10 px-1.5 py-0.5 text-[10px] leading-none text-warning/80"
                   >{{ t('offline.badge') }}</span>
+                  <button
+                    v-if="getAlbumBadgeState(album) === 'scanning'"
+                    type="button"
+                    class="badge badge-sm badge-outline max-w-full min-w-0 shrink-0 border-primary/20 bg-primary/10 font-medium text-primary/80 hover:text-primary cursor-pointer"
+                    :title="t('toolbar.tooltip.scanning')"
+                    @click.stop="toggleIndexAlbum(album.id)"
+                  >{{ t('toolbar.tooltip.scanning') }}</button>
+                  <button
+                    v-else-if="getAlbumBadgeState(album) === 'paused'"
+                    type="button"
+                    class="badge badge-sm badge-outline max-w-full min-w-0 shrink-0 border-warning/20 bg-warning/10 font-medium text-warning/80 hover:text-warning cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+                    :title="t('toolbar.tooltip.scan_paused')"
+                    :disabled="album.is_accessible === false"
+                    @click.stop="toggleIndexAlbum(album.id)"
+                  >{{ t('toolbar.tooltip.scan_paused') }}</button>
+                  <button
+                    v-else-if="getAlbumBadgeState(album) === 'queued'"
+                    type="button"
+                    class="badge badge-sm badge-outline max-w-full min-w-0 shrink-0 border-base-content/5 bg-base-content/5 font-medium text-base-content/70 hover:text-base-content cursor-pointer"
+                    :title="t('toolbar.tooltip.scan_queued')"
+                    @click.stop="toggleIndexAlbum(album.id)"
+                  >{{ t('toolbar.tooltip.scan_queued') }}</button>
                 </div>
                 <div
                   v-if="album.description"
@@ -315,7 +316,7 @@ import {
   openFolderDialog,
   isWithinRootPath,
 } from '@/common/utils';
-import { getAlbumQueueIndex, getAlbumScanState, getAlbumScanIcon, shouldAnimateAlbumScanIcon } from '@/common/scanStatus';
+import { getAlbumQueueIndex, getAlbumScanState } from '@/common/scanStatus';
 import { getAllAlbums, getAlbumVisibleCounts, getAllAlbumFolders, reorderAlbums, addAlbum, editAlbum, removeAlbum, getDragPayload, isDirectoryAccessible,
          fetchFolder, expandFinalFolder, getFileThumbById,
          getAlbum, checkAlbumAccessibility, cancelIndexing as cancelIndexingApi, listenIndexProgress, listenIndexFinished, recountAlbum } from '@/common/api';
@@ -340,7 +341,6 @@ import {
   IconRemove,
   IconUpdate,
   IconUpdateOff,
-  IconUpdateDot,
   IconRight,
   IconDragHandle,
   IconOrder,
@@ -870,8 +870,13 @@ const isAlbumScanning = (albumId: number) =>
     pausedAlbumIds: libConfig.index.pausedAlbumIds as any[],
     status: Number(libConfig.index.status || 0),
   }) === 'scanning';
-const getAlbumIcon = (album: any) => getAlbumScanIcon(getAlbumStatus(album));
-const shouldAnimateAlbumIcon = (album: any) => shouldAnimateAlbumScanIcon(getAlbumStatus(album));
+const getAlbumBadgeState = (album: any): 'scanning' | 'paused' | 'queued' | 'none' => {
+  const state = getAlbumStatus(album);
+  if (state === 'scanning' || state === 'paused' || state === 'queued') return state;
+  // A non-queued album with a partial index is effectively resumable/paused.
+  if (Number(album?.indexed) > 0 && Number(album?.indexed) < Number(album?.total)) return 'paused';
+  return 'none';
+};
 const refreshAlbumAccess = async (album: Album) => {
   const libraryId = libConfig._libraryId;
   const available = await checkAlbumAccessibility(album.id);
@@ -1655,3 +1660,41 @@ defineExpose({
 });
 
 </script>
+
+
+<style scoped>
+.album-title-marquee {
+  background-image: linear-gradient(
+    100deg,
+    var(--color-primary) 0%,
+    var(--color-primary) 40%,
+    color-mix(in oklab, var(--color-primary) 55%, var(--color-base-100)) 50%,
+    var(--color-primary) 60%,
+    var(--color-primary) 100%
+  );
+  background-size: 250% 100%;
+  color: var(--color-primary);
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  -webkit-background-clip: text;
+  animation: album-title-marquee 2.2s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .album-title-marquee {
+    background: none;
+    color: var(--color-primary);
+    -webkit-text-fill-color: currentColor;
+    animation: none;
+  }
+}
+
+@keyframes album-title-marquee {
+  from {
+    background-position: 150% 0;
+  }
+  to {
+    background-position: -150% 0;
+  }
+}
+</style>

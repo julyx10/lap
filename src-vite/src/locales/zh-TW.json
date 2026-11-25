@@ -285,8 +285,8 @@
     "add_album_description": "選擇資料夾，讓 Lap 為你整理相片與影片。",
     "smart_album_title": "用智慧相簿整理",
     "smart_album_description": "用規則自動分組符合條件的相片。",
-    "collection_title": "將相片分組到收藏",
-    "collection_description": "為活動或專案分組相片——隨時拖曳加入，不必移動原始檔案。"
+    "text_search_title": "以文搜圖",
+    "text_search_description": "描述場景、物體或瞬間，Lap 的本地 AI 會找到視覺上符合的照片。"
   },
   "search": {
     "title": "搜尋",
