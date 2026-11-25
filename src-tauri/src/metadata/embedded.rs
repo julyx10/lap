@@ -1146,6 +1146,185 @@ mod favorite_tests {
     }
 }
 
+#[cfg(test)]
+mod camera_settings_tests {
+    use super::*;
+
+    fn make_tag(family0: &str, family1: &str, name: &str, print_value: &str) -> Tag {
+        Tag {
+            id: exiftool_rs::TagId::Numeric(0),
+            name: name.into(),
+            description: String::new(),
+            group: exiftool_rs::TagGroup {
+                family0: family0.into(),
+                family1: family1.into(),
+                family2: "Camera".into(),
+                family3: "Main".into(),
+            },
+            raw_value: Value::String(print_value.into()),
+            print_value: print_value.into(),
+            priority: 0,
+        }
+    }
+
+    fn make_list_tag(
+        family0: &str,
+        family1: &str,
+        name: &str,
+        raw: Vec<Value>,
+        print_value: &str,
+    ) -> Tag {
+        Tag {
+            id: exiftool_rs::TagId::Numeric(0),
+            name: name.into(),
+            description: String::new(),
+            group: exiftool_rs::TagGroup {
+                family0: family0.into(),
+                family1: family1.into(),
+                family2: "Camera".into(),
+                family3: "Main".into(),
+            },
+            raw_value: Value::List(raw),
+            print_value: print_value.into(),
+            priority: 0,
+        }
+    }
+
+    #[test]
+    fn camera_settings_matches_fujifilm_makernotes_and_ignores_other_groups() {
+        let tags = vec![
+            make_tag("MakerNotes", "FujiFilm", "FilmMode", "Classic Chrome"),
+            make_tag("MakerNotes", "FujiFilm", "HighlightTone", "-0.5"),
+            make_tag("MakerNotes", "FujiFilm", "ShadowTone", "+1 (medium hard)"),
+            make_tag("MakerNotes", "FujiFilm", "ColorChromeEffect", "Weak"),
+            make_tag("MakerNotes", "FujiFilm", "ColorChromeFXBlue", "Strong"),
+            make_tag("MakerNotes", "FujiFilm", "Clarity", "0"),
+            make_list_tag(
+                "MakerNotes",
+                "FujiFilm",
+                "WhiteBalanceFineTune",
+                vec![Value::I32(20), Value::I32(-40)],
+                "Red +20, Blue -40",
+            ),
+            // Wrong family0 or family1 must be ignored by Fujifilm CameraSettings fields
+            make_tag("EXIF", "ExifIFD", "Sharpness", "Hard"),
+            make_tag("MakerNotes", "Sony", "Saturation", "High"),
+            make_tag("XMP", "XMP-xmp", "FocusMode", "AF-C"),
+        ];
+
+        let details = detail_values(&tags);
+        assert_eq!(details["filmSimulation"].values, vec!["Classic Chrome"]);
+        assert_eq!(details["filmSimulation"].source, "MakerNotes:FilmMode");
+        assert_eq!(details["highlightTone"].values, vec!["-0.5"]);
+        assert_eq!(details["shadowTone"].values, vec!["+1 (medium hard)"]);
+        assert_eq!(details["colorChromeEffect"].values, vec!["Weak"]);
+        assert_eq!(details["colorChromeFxBlue"].values, vec!["Strong"]);
+        assert_eq!(details["clarity"].values, vec!["0"]);
+        assert_eq!(details["whiteBalanceShift"].values, vec!["Red +20, Blue -40"]);
+        // Ignored because group did not match (MakerNotes, FujiFilm)
+        assert!(!details.contains_key("sharpness"));
+        assert!(!details.contains_key("saturation"));
+        assert!(!details.contains_key("focusMode"));
+        // Absent fields are omitted
+        assert!(!details.contains_key("dynamicRange"));
+        assert!(!details.contains_key("grainEffect"));
+        assert!(!details.contains_key("driveMode"));
+    }
+
+    #[test]
+    fn makernotes_never_shadow_standard_exif_capture_fields() {
+        let tags = vec![
+            make_tag("EXIF", "ExifIFD", "WhiteBalance", "Auto"),
+            make_tag("EXIF", "ExifIFD", "ExposureProgram", "Aperture-priority AE"),
+            make_tag("MakerNotes", "FujiFilm", "WhiteBalance", "Daylight Fluorescent"),
+            make_tag("MakerNotes", "FujiFilm", "Flash", "Off"),
+            make_tag("MakerNotes", "FujiFilm", "Sharpness", "+2 (hard)"),
+        ];
+
+        let details = detail_values(&tags);
+        assert_eq!(details["whiteBalance"].values, vec!["Auto"]);
+        assert_eq!(details["whiteBalance"].source, "EXIF:WhiteBalance");
+        assert_eq!(details["exposureProgram"].values, vec!["Aperture-priority AE"]);
+        // MakerNotes:Flash must NOT populate Capture's standard EXIF flash field
+        assert!(!details.contains_key("flash"));
+        // MakerNotes:Sharpness populates CameraSettings sharpness
+        assert_eq!(details["sharpness"].values, vec!["+2 (hard)"]);
+        assert_eq!(details["sharpness"].source, "MakerNotes:Sharpness");
+    }
+
+    #[test]
+    fn camera_settings_handles_missing_and_partial_combined_fields() {
+        // 1. Auto + AutoDynamicRange (e.g. X-H2)
+        let auto_tags = vec![
+            make_tag("MakerNotes", "FujiFilm", "DynamicRangeSetting", "Auto"),
+            make_tag("MakerNotes", "FujiFilm", "AutoDynamicRange", "100%"),
+            make_tag("MakerNotes", "FujiFilm", "GrainEffectRoughness", "Weak"),
+            make_tag("MakerNotes", "FujiFilm", "GrainEffectSize", "Small"),
+        ];
+        let auto_details = detail_values(&auto_tags);
+        assert_eq!(auto_details["dynamicRange"].values, vec!["Auto (DR100)"]);
+        assert_eq!(auto_details["grainEffect"].values, vec!["Weak / Small"]);
+
+        // 2. Manual + DevelopmentDynamicRange (e.g. X-Pro1 / X-Pro2) + Grain Off without Size
+        let manual_tags = vec![
+            make_tag("MakerNotes", "FujiFilm", "DynamicRangeSetting", "Manual"),
+            make_tag("MakerNotes", "FujiFilm", "DevelopmentDynamicRange", "200"),
+            make_tag("MakerNotes", "FujiFilm", "GrainEffectRoughness", "Off"),
+        ];
+        let manual_details = detail_values(&manual_tags);
+        assert_eq!(manual_details["dynamicRange"].values, vec!["DR200"]);
+        assert_eq!(manual_details["grainEffect"].values, vec!["Off"]);
+
+        // 3. Partial tags: Auto without AutoDynamicRange/DevelopmentDynamicRange never guesses DR100
+        let partial_tags = vec![
+            make_tag("MakerNotes", "FujiFilm", "DynamicRangeSetting", "Auto"),
+            make_tag("MakerNotes", "FujiFilm", "GrainEffectRoughness", "Strong"),
+        ];
+        let partial_details = detail_values(&partial_tags);
+        assert_eq!(partial_details["dynamicRange"].values, vec!["Auto"]);
+        assert_eq!(partial_details["grainEffect"].values, vec!["Strong"]);
+
+        // 4. Empty tags produce no CameraSettings entries
+        assert!(detail_values(&[]).is_empty());
+    }
+
+    #[test]
+    fn camera_settings_excluded_from_stored_scan_and_disjoint_from_capture() {
+        let tags = vec![
+            make_tag("EXIF", "ExifIFD", "WhiteBalance", "Auto"),
+            make_tag("MakerNotes", "FujiFilm", "FilmMode", "Provia/Standard"),
+            make_tag("MakerNotes", "FujiFilm", "DynamicRangeSetting", "Manual"),
+            make_tag("MakerNotes", "FujiFilm", "DevelopmentDynamicRange", "400"),
+        ];
+
+        // Scan path (stored_only = true) must never emit CameraSettings fields
+        let stored = detail_values_for(&tags, true);
+        assert!(!stored.contains_key("filmSimulation"));
+        assert!(!stored.contains_key("dynamicRange"));
+
+        // Section filtering keeps Capture and CameraSettings strictly disjoint
+        let mut capture = detail_values(&tags);
+        capture.retain(|key, _| {
+            schema::DETAIL_FIELDS
+                .iter()
+                .any(|f| f.key == key && f.section == Some(schema::DetailSection::Capture))
+        });
+        assert!(capture.contains_key("whiteBalance"));
+        assert!(!capture.contains_key("filmSimulation"));
+        assert!(!capture.contains_key("dynamicRange"));
+
+        let mut camera = detail_values(&tags);
+        camera.retain(|key, _| {
+            schema::DETAIL_FIELDS
+                .iter()
+                .any(|f| f.key == key && f.section == Some(schema::DetailSection::CameraSettings))
+        });
+        assert!(camera.contains_key("filmSimulation"));
+        assert!(camera.contains_key("dynamicRange"));
+        assert!(!camera.contains_key("whiteBalance"));
+    }
+}
+
 /// Read-only detail values, deliberately excluded from catalog rows and search indexes.
 #[derive(Clone, Debug, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -1351,7 +1530,9 @@ fn detail_values_for(tags: &[Tag], stored_only: bool) -> Details {
         let key = field.key;
         let names = field.backend_names;
         if (!stored_only && field.section.is_none())
-            || (stored_only && !field.stored) {
+            || (stored_only && !field.stored)
+            || names.is_empty()
+        {
             continue;
         }
         let descriptive = field.descriptive;
@@ -1359,7 +1540,11 @@ fn detail_values_for(tags: &[Tag], stored_only: bool) -> Details {
             .iter()
             .filter(|tag| names.contains(&tag.name.as_str()))
             .filter(|tag| {
-                if descriptive {
+                if let Some(groups) = field.allowed_groups {
+                    groups
+                        .iter()
+                        .any(|(f0, f1)| tag.group.family0 == *f0 && tag.group.family1 == *f1)
+                } else if descriptive {
                     schema::SOURCE_PRIORITY.contains(&tag.group.family0.as_str())
                 } else {
                     schema::TECHNICAL_GROUPS.contains(&tag.group.family0.as_str())
@@ -1375,7 +1560,13 @@ fn detail_values_for(tags: &[Tag], stored_only: bool) -> Details {
             });
         if let Some(tag) = candidate {
             let values = match &tag.raw_value {
-                Value::List(items) => items.iter().map(|v| v.to_display_string()).collect(),
+                Value::List(items) => {
+                    if !tag.print_value.trim().is_empty() && field.allowed_groups.is_some() {
+                        vec![tag.print_value.clone()]
+                    } else {
+                        items.iter().map(|v| v.to_display_string()).collect()
+                    }
+                }
                 _ => vec![tag.print_value.clone()],
             };
             let values: Vec<_> = values
@@ -1395,7 +1586,121 @@ fn detail_values_for(tags: &[Tag], stored_only: bool) -> Details {
             }
         }
     }
+    if !stored_only {
+        apply_camera_settings_formatters(tags, &mut result);
+    }
     result
+}
+
+fn find_fuji_maker_tag<'a>(tags: &'a [Tag], name: &str) -> Option<&'a str> {
+    tags.iter()
+        .find(|tag| {
+            tag.group.family0 == "MakerNotes"
+                && tag.group.family1 == "FujiFilm"
+                && tag.name == name
+                && !matches!(tag.raw_value, Value::Binary(_) | Value::Undefined(_))
+                && !tag.print_value.trim().is_empty()
+                && !tag.print_value.contains('\0')
+        })
+        .map(|tag| tag.print_value.trim())
+}
+
+fn normalize_fuji_dr_level(raw: &str) -> String {
+    let trimmed = raw.trim().trim_end_matches('%').trim();
+    if !trimmed.is_empty() && trimmed.chars().all(|c| c.is_ascii_digit()) {
+        format!("DR{}", trimmed)
+    } else {
+        raw.trim().to_string()
+    }
+}
+
+fn format_fuji_dynamic_range(tags: &[Tag]) -> Option<DetailValue> {
+    let setting = find_fuji_maker_tag(tags, "DynamicRangeSetting");
+    let auto_dr = find_fuji_maker_tag(tags, "AutoDynamicRange");
+    let dev_dr = find_fuji_maker_tag(tags, "DevelopmentDynamicRange");
+    let base_dr = find_fuji_maker_tag(tags, "DynamicRange");
+
+    let (formatted, source) = if let Some(s) = setting {
+        if s.eq_ignore_ascii_case("Auto") {
+            if let Some(level) = auto_dr.or(dev_dr) {
+                (
+                    format!("Auto ({})", normalize_fuji_dr_level(level)),
+                    "MakerNotes:DynamicRangeSetting",
+                )
+            } else {
+                ("Auto".to_string(), "MakerNotes:DynamicRangeSetting")
+            }
+        } else if s.eq_ignore_ascii_case("Manual") {
+            if let Some(level) = dev_dr {
+                (
+                    normalize_fuji_dr_level(level),
+                    "MakerNotes:DevelopmentDynamicRange",
+                )
+            } else if let Some(base) = base_dr {
+                (base.to_string(), "MakerNotes:DynamicRange")
+            } else {
+                ("Manual".to_string(), "MakerNotes:DynamicRangeSetting")
+            }
+        } else if let Some(level) = dev_dr.or(auto_dr) {
+            (
+                format!("{} ({})", s, normalize_fuji_dr_level(level)),
+                "MakerNotes:DynamicRangeSetting",
+            )
+        } else {
+            (s.to_string(), "MakerNotes:DynamicRangeSetting")
+        }
+    } else if let Some(level) = dev_dr {
+        (
+            normalize_fuji_dr_level(level),
+            "MakerNotes:DevelopmentDynamicRange",
+        )
+    } else if let Some(level) = auto_dr {
+        (
+            normalize_fuji_dr_level(level),
+            "MakerNotes:AutoDynamicRange",
+        )
+    } else if let Some(base) = base_dr {
+        (base.to_string(), "MakerNotes:DynamicRange")
+    } else {
+        return None;
+    };
+
+    Some(DetailValue {
+        values: vec![formatted],
+        source: source.to_string(),
+    })
+}
+
+fn format_fuji_grain_effect(tags: &[Tag]) -> Option<DetailValue> {
+    let roughness = find_fuji_maker_tag(tags, "GrainEffectRoughness");
+    let size = find_fuji_maker_tag(tags, "GrainEffectSize");
+
+    let (formatted, source) = match (roughness, size) {
+        (Some(r), _) if r.eq_ignore_ascii_case("Off") => {
+            ("Off".to_string(), "MakerNotes:GrainEffectRoughness")
+        }
+        (Some(r), Some(s)) if !s.eq_ignore_ascii_case("Off") => (
+            format!("{} / {}", r, s),
+            "MakerNotes:GrainEffectRoughness",
+        ),
+        (Some(r), _) => (r.to_string(), "MakerNotes:GrainEffectRoughness"),
+        (None, Some(s)) => (s.to_string(), "MakerNotes:GrainEffectSize"),
+        (None, None) => return None,
+    };
+
+    Some(DetailValue {
+        values: vec![formatted],
+        source: source.to_string(),
+    })
+}
+
+fn apply_camera_settings_formatters(tags: &[Tag], result: &mut Details) {
+    if let Some(dr) = format_fuji_dynamic_range(tags) {
+        result.insert("dynamicRange".into(), dr);
+    }
+    if let Some(grain) = format_fuji_grain_effect(tags) {
+        result.insert("grainEffect".into(), grain);
+    }
 }
 
 // Cancellation also covers tokens cancelled before their extraction command arrives.

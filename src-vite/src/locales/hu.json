@@ -1228,7 +1228,6 @@
     "fields_default": "Alapértelmezett",
     "fields_all": "Összes megjelenítése",
     "fields_custom": "Egyéni",
-
     "hide_empty_fields": "Üres mezők automatikus elrejtése",
     "customize_fields": "Mezők testreszabása",
     "title": "Adatok",
@@ -1310,11 +1309,27 @@
       "directionRef": "Északi referencia",
       "iccProfile": "ICC-profil",
       "colorSpace": "Színtér",
-      "bitDepth": "Bitmélység"
+      "bitDepth": "Bitmélység",
+      "filmSimulation": "Filmszimuláció",
+      "dynamicRange": "Dinamikatartomány",
+      "highlightTone": "Csúcsfények",
+      "shadowTone": "Árnyékok",
+      "saturation": "Szín",
+      "sharpness": "Élesség",
+      "noiseReduction": "Zajcsökkentés",
+      "clarity": "Tisztaság",
+      "whiteBalanceShift": "WB eltolás",
+      "grainEffect": "Szemcsézettség",
+      "colorChromeEffect": "Color Chrome",
+      "colorChromeFxBlue": "Color Chrome Kék",
+      "focusMode": "Fókuszmód",
+      "driveMode": "Felvételi mód",
+      "imageStabilization": "Stabilizálás"
     },
     "metadata_details_retry": "A metaadatok nem olvashatók. Kattintson az újrapróbáláshoz.",
     "true_north": "Földrajzi észak",
-    "magnetic_north": "Mágneses észak"
+    "magnetic_north": "Mágneses észak",
+    "camera_settings": "Kamera beállítások"
   },
   "map": {
     "show_map": "Térkép megjelenítése",

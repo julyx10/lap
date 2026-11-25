@@ -24,6 +24,14 @@ export const fileInfoFieldGroups = [
     ...fields('capture', ['taken_at', 'camera', 'lens', 'capture_settings']),
     ...fields('capture', ['flash', 'whiteBalance', 'exposureMode', 'exposureProgram', 'meteringMode', 'focalLength35mm', 'timeZone'], true),
   ] },
+  { key: 'cameraSettings', label: 'file_info.camera_settings', fields: [
+    ...fields('cameraSettings', [
+      'filmSimulation', 'dynamicRange', 'highlightTone', 'shadowTone',
+      'saturation', 'sharpness', 'noiseReduction', 'clarity',
+      'whiteBalanceShift', 'grainEffect', 'colorChromeEffect', 'colorChromeFxBlue',
+      'focusMode', 'driveMode', 'imageStabilization',
+    ], true),
+  ] },
   { key: 'location', label: 'file_info.geo_location', fields: [
     ...fields('location', ['geo_location']),
     { key: 'location.gps', label: 'GPS' },

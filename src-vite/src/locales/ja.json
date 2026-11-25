@@ -1228,7 +1228,6 @@
     "fields_default": "既定",
     "fields_all": "すべて表示",
     "fields_custom": "カスタム",
-
     "hide_empty_fields": "空の項目を自動的に非表示",
     "customize_fields": "表示項目の設定",
     "title": "ファイル情報",
@@ -1310,11 +1309,27 @@
       "directionRef": "北の基準",
       "iccProfile": "ICCプロファイル",
       "colorSpace": "色空間",
-      "bitDepth": "ビット深度"
+      "bitDepth": "ビット深度",
+      "filmSimulation": "フィルムシミュレーション",
+      "dynamicRange": "ダイナミックレンジ",
+      "highlightTone": "ハイライトトーン",
+      "shadowTone": "シャドウトーン",
+      "saturation": "カラー",
+      "sharpness": "シャープネス",
+      "noiseReduction": "ノイズリダクション",
+      "clarity": "明瞭度",
+      "whiteBalanceShift": "WBシフト",
+      "grainEffect": "グレイン・エフェクト",
+      "colorChromeEffect": "カラークローム・エフェクト",
+      "colorChromeFxBlue": "カラークローム ブルー",
+      "focusMode": "フォーカスモード",
+      "driveMode": "ドライブモード",
+      "imageStabilization": "手ブレ補正"
     },
     "metadata_details_retry": "メタデータを読み込めません。クリックして再試行。",
     "true_north": "真北",
-    "magnetic_north": "磁北"
+    "magnetic_north": "磁北",
+    "camera_settings": "カメラ設定"
   },
   "map": {
     "show_map": "地図を表示",

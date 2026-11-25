@@ -1228,7 +1228,6 @@
     "fields_default": "Par défaut",
     "fields_all": "Tout afficher",
     "fields_custom": "Personnalisé",
-
     "hide_empty_fields": "Masquer automatiquement les champs vides",
     "customize_fields": "Personnaliser les champs",
     "title": "Info fichier",
@@ -1310,11 +1309,27 @@
       "directionRef": "Référence du nord",
       "iccProfile": "Profil ICC",
       "colorSpace": "Espace colorimétrique",
-      "bitDepth": "Profondeur de couleur"
+      "bitDepth": "Profondeur de couleur",
+      "filmSimulation": "Simulation de film",
+      "dynamicRange": "Plage dynamique",
+      "highlightTone": "Hautes lumières",
+      "shadowTone": "Ombres",
+      "saturation": "Couleur",
+      "sharpness": "Netteté",
+      "noiseReduction": "Réduction du bruit",
+      "clarity": "Clarté",
+      "whiteBalanceShift": "Décalage BdB",
+      "grainEffect": "Effet de grain",
+      "colorChromeEffect": "Effet Color Chrome",
+      "colorChromeFxBlue": "Color Chrome Bleu",
+      "focusMode": "Mode de mise au point",
+      "driveMode": "Mode d'entraînement",
+      "imageStabilization": "Stabilisation"
     },
     "metadata_details_retry": "Lecture des métadonnées impossible. Cliquez pour réessayer.",
     "true_north": "Nord géographique",
-    "magnetic_north": "Nord magnétique"
+    "magnetic_north": "Nord magnétique",
+    "camera_settings": "Réglages de l'appareil"
   },
   "map": {
     "show_map": "Voir carte",

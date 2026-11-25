@@ -1309,11 +1309,27 @@
       "directionRef": "Tham chiếu hướng bắc",
       "iccProfile": "Hồ sơ ICC",
       "colorSpace": "Không gian màu",
-      "bitDepth": "Độ sâu bit"
+      "bitDepth": "Độ sâu bit",
+      "filmSimulation": "Giả lập phim",
+      "dynamicRange": "Dải tương phản động",
+      "highlightTone": "Tông vùng sáng",
+      "shadowTone": "Tông vùng tối",
+      "saturation": "Màu sắc",
+      "sharpness": "Độ sắc nét",
+      "noiseReduction": "Giảm nhiễu",
+      "clarity": "Độ trong trẻo",
+      "whiteBalanceShift": "Dịch chuyển WB",
+      "grainEffect": "Hiệu ứng hạt",
+      "colorChromeEffect": "Hiệu ứng Color Chrome",
+      "colorChromeFxBlue": "Color Chrome Xanh dương",
+      "focusMode": "Chế độ lấy nét",
+      "driveMode": "Chế độ chụp",
+      "imageStabilization": "Chống rung"
     },
     "metadata_details_retry": "Không thể đọc siêu dữ liệu. Nhấp để thử lại.",
     "true_north": "Bắc thực",
-    "magnetic_north": "Bắc từ"
+    "magnetic_north": "Bắc từ",
+    "camera_settings": "Cài đặt máy ảnh"
   },
   "map": {
     "show_map": "Hiện bản đồ",

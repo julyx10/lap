@@ -1309,11 +1309,27 @@
       "directionRef": "Vztažný sever",
       "iccProfile": "Profil ICC",
       "colorSpace": "Barevný prostor",
-      "bitDepth": "Bitová hloubka"
+      "bitDepth": "Bitová hloubka",
+      "filmSimulation": "Simulace filmu",
+      "dynamicRange": "Dynamický rozsah",
+      "highlightTone": "Světla",
+      "shadowTone": "Stíny",
+      "saturation": "Barva",
+      "sharpness": "Ostrost",
+      "noiseReduction": "Redukce šumu",
+      "clarity": "Zřetelnost",
+      "whiteBalanceShift": "Posun WB",
+      "grainEffect": "Efekt zrna",
+      "colorChromeEffect": "Efekt Color Chrome",
+      "colorChromeFxBlue": "Color Chrome Modrá",
+      "focusMode": "Režim ostření",
+      "driveMode": "Režim snímání",
+      "imageStabilization": "Stabilizace"
     },
     "metadata_details_retry": "Metadata se nepodařilo načíst. Klikněte pro nový pokus.",
     "true_north": "Zeměpisný sever",
-    "magnetic_north": "Magnetický sever"
+    "magnetic_north": "Magnetický sever",
+    "camera_settings": "Nastavení fotoaparátu"
   },
   "map": {
     "show_map": "Zobrazit mapu",

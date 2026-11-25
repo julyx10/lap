@@ -55,6 +55,7 @@ export const useConfigStore = defineStore('configStore', {
       showSourceMetadata: false, // show original file metadata
       showBasicInfo: true,       // show basic info
       showMetadata: true,        // show metadata
+      showCameraSettings: false, // show camera MakerNotes settings
       showMap: true,             // show map
       mapTheme: 0,               // 0: standard, 2: satellite
     },

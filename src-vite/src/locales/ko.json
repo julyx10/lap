@@ -1228,7 +1228,6 @@
     "fields_default": "기본값",
     "fields_all": "모두 표시",
     "fields_custom": "사용자 지정",
-
     "hide_empty_fields": "빈 항목 자동 숨기기",
     "customize_fields": "표시 항목 설정",
     "title": "파일 정보",
@@ -1310,11 +1309,27 @@
       "directionRef": "북쪽 기준",
       "iccProfile": "ICC 프로필",
       "colorSpace": "색 공간",
-      "bitDepth": "비트 심도"
+      "bitDepth": "비트 심도",
+      "filmSimulation": "필름 시뮬레이션",
+      "dynamicRange": "다이나믹 레인지",
+      "highlightTone": "하이라이트 톤",
+      "shadowTone": "섀도우 톤",
+      "saturation": "컬러",
+      "sharpness": "선명도",
+      "noiseReduction": "노이즈 감소",
+      "clarity": "명료도",
+      "whiteBalanceShift": "WB 시프트",
+      "grainEffect": "그레인 효과",
+      "colorChromeEffect": "컬러 크롬 효과",
+      "colorChromeFxBlue": "컬러 크롬 FX 블루",
+      "focusMode": "초점 모드",
+      "driveMode": "드라이브 모드",
+      "imageStabilization": "손떨림 보정"
     },
     "metadata_details_retry": "메타데이터를 읽을 수 없습니다. 클릭하여 다시 시도하세요.",
     "true_north": "진북",
-    "magnetic_north": "자북"
+    "magnetic_north": "자북",
+    "camera_settings": "카메라 설정"
   },
   "map": {
     "show_map": "지도 보기",
