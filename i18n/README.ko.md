@@ -20,9 +20,13 @@ Lap은 macOS, Windows, Linux용 무료 오픈 소스 로컬 우선 사진 관리
   <p><strong><a href="https://julyx10.github.io/lap/">공식 웹사이트</a> | <a href="https://julyx10.github.io/lap/demos/lap/index.html">데모</a></strong></p>
 </div>
 
+> [!IMPORTANT]
+> 현재 Lap의 유일한 공식 웹사이트는 [julyx10.github.io/lap](https://julyx10.github.io/lap/)입니다.
+> `lapphotos.com`은 공식 웹사이트가 아니며, Lap 프로젝트와 관련이 없고 프로젝트의 승인이나 지지를 받지 않았습니다.
+
 ## Lap 다운로드
 
-[최신 릴리스 페이지](https://github.com/julyx10/lap/releases/latest)를 열고, 시스템에 맞는 파일을 다운로드하세요.
+가능하면 타사 웹사이트 대신 [GitHub Releases](https://github.com/julyx10/lap/releases)에서 직접 Lap을 다운로드하세요.
 
 | 플랫폼 | 패키지 | 비고 |
 | :-- | :-- | :-- |

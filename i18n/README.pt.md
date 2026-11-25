@@ -20,9 +20,13 @@ Lap é um gestor de fotos gratuito, de código aberto e com prioridade ao armaze
   <p><strong><a href="https://julyx10.github.io/lap/">SITE OFICIAL</a> | <a href="https://julyx10.github.io/lap/demos/lap/index.html">DEMO</a></strong></p>
 </div>
 
+> [!IMPORTANT]
+> Atualmente, o único site oficial do Lap é [julyx10.github.io/lap](https://julyx10.github.io/lap/).
+> `lapphotos.com` não é um site oficial, não tem vínculo com o projeto Lap e não é autorizado nem endossado pelo projeto.
+
 ## Baixar Lap
 
-Abra a [página de lançamentos recentes](https://github.com/julyx10/lap/releases/latest) e baixe o arquivo que corresponde ao seu sistema:
+Sempre que possível, baixe o Lap diretamente do [GitHub Releases](https://github.com/julyx10/lap/releases), em vez de sites de terceiros.
 
 | Plataforma | Pacote | Nota |
 | :-- | :-- | :-- |

@@ -20,9 +20,13 @@ Lap là trình quản lý ảnh miễn phí, mã nguồn mở, ưu tiên xử l�
   <p><strong><a href="https://julyx10.github.io/lap/">TRANG WEB CHÍNH THỨC</a> | <a href="https://julyx10.github.io/lap/demos/lap/index.html">DEMO</a></strong></p>
 </div>
 
+> [!IMPORTANT]
+> Hiện tại, trang web chính thức duy nhất của Lap là [julyx10.github.io/lap](https://julyx10.github.io/lap/).
+> `lapphotos.com` không phải trang web chính thức, không liên quan đến dự án Lap và không được dự án ủy quyền hay chứng thực.
+
 ## Tải Lap
 
-Mở [trang phát hành mới nhất](https://github.com/julyx10/lap/releases/latest), sau đó tải tệp phù hợp với hệ thống của bạn:
+Nếu có thể, hãy tải Lap trực tiếp từ [GitHub Releases](https://github.com/julyx10/lap/releases) thay vì các trang web của bên thứ ba.
 
 | Nền tảng | Gói | Ghi chú |
 | :-- | :-- | :-- |

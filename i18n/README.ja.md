@@ -20,9 +20,13 @@ Lap は macOS、Windows、Linux 用の無料でオープンソースのローカ
   <p><strong><a href="https://julyx10.github.io/lap/">公式サイト</a> | <a href="https://julyx10.github.io/lap/demos/lap/index.html">デモ</a></strong></p>
 </div>
 
+> [!IMPORTANT]
+> 現在、Lap の唯一の公式サイトは [julyx10.github.io/lap](https://julyx10.github.io/lap/) です。
+> `lapphotos.com` は公式サイトではなく、Lap プロジェクトとは無関係であり、プロジェクトによる承認や推奨も受けていません。
+
 ## Lapをダウンロード
 
-[最新のリリースページ](https://github.com/julyx10/lap/releases/latest)を開き、お使いのシステムに合ったファイルをダウンロードしてください：
+可能な限り、第三者のサイトではなく [GitHub Releases](https://github.com/julyx10/lap/releases) から直接 Lap をダウンロードしてください。
 
 | プラットフォーム | パッケージ | 備考 |
 | :-- | :-- | :-- |

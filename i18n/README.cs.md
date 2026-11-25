@@ -20,9 +20,13 @@ Lap je bezplatný správce fotografií s otevřeným zdrojovým kódem pro macOS
   <p><strong><a href="https://julyx10.github.io/lap/">OFICIÁLNÍ WEB</a> | <a href="https://julyx10.github.io/lap/demos/lap/index.html">DEMO</a></strong></p>
 </div>
 
+> [!IMPORTANT]
+> Jediným oficiálním webem projektu Lap je v současnosti [julyx10.github.io/lap](https://julyx10.github.io/lap/).
+> `lapphotos.com` není oficiální web, není spojen s projektem Lap a projekt jej neschválil ani nepodporuje.
+
 ## Stažení Lap
 
-Otevřete [stránku nejnovějšího vydání](https://github.com/julyx10/lap/releases/latest) a stáhněte soubor určený pro váš operační systém:
+Pokud je to možné, stahujte Lap přímo z [GitHub Releases](https://github.com/julyx10/lap/releases), nikoli z webů třetích stran.
 
 | Platforma | Balíček | Poznámka |
 | :-- | :-- | :-- |

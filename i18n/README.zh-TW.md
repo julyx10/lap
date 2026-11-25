@@ -20,9 +20,13 @@ Lap 是一款免費、開源、本機優先的相片管理工具，支援 macOS�
   <p><strong><a href="https://julyx10.github.io/lap/">官方網站</a> | <a href="https://julyx10.github.io/lap/demos/lap/index.html">演示</a></strong></p>
 </div>
 
+> [!IMPORTANT]
+> Lap 目前唯一的官方網站是 [julyx10.github.io/lap](https://julyx10.github.io/lap/)。
+> `lapphotos.com` 並非官方網站，與 Lap 專案無關，也未獲得本專案的授權或認可。
+
 ## 下載 Lap
 
-開啟 [最新版本發布頁面](https://github.com/julyx10/lap/releases/latest)，下載符合你系統的檔案：
+請盡可能直接從 [GitHub Releases](https://github.com/julyx10/lap/releases) 下載 Lap，而非第三方網站。
 
 | 平台 | 安裝包 | 備註 |
 | :-- | :-- | :-- |

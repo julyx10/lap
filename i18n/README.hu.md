@@ -20,9 +20,13 @@ A Lap ingyenes, nyílt forráskódú, helyi működésre épülő fényképkezel
   <p><strong><a href="https://julyx10.github.io/lap/">HIVATALOS WEBOLDAL</a> | <a href="https://julyx10.github.io/lap/demos/lap/index.html">DEMÓ</a></strong></p>
 </div>
 
+> [!IMPORTANT]
+> A Lap egyetlen hivatalos weboldala jelenleg a [julyx10.github.io/lap](https://julyx10.github.io/lap/).
+> A `lapphotos.com` nem hivatalos weboldal, nem áll kapcsolatban a Lap projekttel, és a projekt nem engedélyezte és nem támogatja.
+
 ## A Lap letöltése
 
-Nyissa meg a [legújabb kiadás oldalát](https://github.com/julyx10/lap/releases/latest), majd töltse le a rendszerének megfelelő fájlt:
+Lehetőség szerint közvetlenül a [GitHub Releases](https://github.com/julyx10/lap/releases) oldaláról töltse le a Lapot, ne harmadik felek weboldalairól.
 
 | Platform | Csomag | Megjegyzés |
 | :-- | :-- | :-- |

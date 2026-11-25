@@ -20,9 +20,13 @@ Lap è un gestore di foto gratuito, open source e basato sui dati locali per mac
   <p><strong><a href="https://julyx10.github.io/lap/">SITO UFFICIALE</a> | <a href="https://julyx10.github.io/lap/demos/lap/index.html">DEMO</a></strong></p>
 </div>
 
+> [!IMPORTANT]
+> Attualmente, l’unico sito ufficiale di Lap è [julyx10.github.io/lap](https://julyx10.github.io/lap/).
+> `lapphotos.com` non è un sito ufficiale, non ha alcuna affiliazione con il progetto Lap e non è autorizzato né approvato dal progetto.
+
 ## Scaricare Lap
 
-Aprire la pagina dell'[ultima release](https://github.com/julyx10/lap/releases/latest) e scaricare il file corrispondente al proprio sistema:
+Quando possibile, scaricare Lap direttamente da [GitHub Releases](https://github.com/julyx10/lap/releases), anziché da siti di terze parti.
 
 | Piattaforma | Pacchetto | Nota |
 | :-- | :-- | :-- |

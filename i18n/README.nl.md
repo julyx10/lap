@@ -20,9 +20,13 @@ Lap is een gratis, opensource fotobeheerder voor macOS, Windows en Linux die lok
   <p><strong><a href="https://julyx10.github.io/lap/">OFFICIËLE WEBSITE</a> | <a href="https://julyx10.github.io/lap/demos/lap/index.html">DEMO</a></strong></p>
 </div>
 
+> [!IMPORTANT]
+> De enige officiële website van Lap is momenteel [julyx10.github.io/lap](https://julyx10.github.io/lap/).
+> `lapphotos.com` is geen officiële website, is niet verbonden aan het Lap-project en is niet door het project geautoriseerd of aanbevolen.
+
 ## Lap downloaden
 
-Open de [pagina met de nieuwste release](https://github.com/julyx10/lap/releases/latest) en download het bestand dat bij je systeem past:
+Download Lap waar mogelijk rechtstreeks van [GitHub Releases](https://github.com/julyx10/lap/releases), in plaats van websites van derden.
 
 | Platform | Pakket | Opmerking |
 | :-- | :-- | :-- |
