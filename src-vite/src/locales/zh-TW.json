@@ -1228,7 +1228,6 @@
     "fields_default": "預設",
     "fields_all": "全部顯示",
     "fields_custom": "自訂",
-
     "hide_empty_fields": "自動隱藏空白欄位",
     "customize_fields": "自訂欄位",
     "title": "資訊",
@@ -1310,11 +1309,27 @@
       "directionRef": "北向基準",
       "iccProfile": "ICC 描述檔",
       "colorSpace": "色彩空間",
-      "bitDepth": "位元深度"
+      "bitDepth": "位元深度",
+      "filmSimulation": "軟片模擬",
+      "dynamicRange": "動態範圍",
+      "highlightTone": "亮部色調",
+      "shadowTone": "暗部色調",
+      "saturation": "色彩",
+      "sharpness": "銳利度",
+      "noiseReduction": "雜訊抑制",
+      "clarity": "清晰度",
+      "whiteBalanceShift": "白平衡偏移",
+      "grainEffect": "顆粒效果",
+      "colorChromeEffect": "色彩效果",
+      "colorChromeFxBlue": "色彩FX藍色",
+      "focusMode": "對焦模式",
+      "driveMode": "驅動模式",
+      "imageStabilization": "防手震"
     },
     "metadata_details_retry": "中繼資料讀取失敗，點擊重試",
     "true_north": "真北",
-    "magnetic_north": "磁北"
+    "magnetic_north": "磁北",
+    "camera_settings": "相機設定"
   },
   "map": {
     "show_map": "顯示地圖",

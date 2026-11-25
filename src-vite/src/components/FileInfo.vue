@@ -459,6 +459,22 @@
       </div>
       </div>
 
+      <!-- Camera Settings (MakerNotes) -->
+      <div class="shrink-0">
+      <div v-if="hasCameraSettings" class="border-t border-base-content/5 px-1 py-3">
+        <button type="button" class="flex w-full items-center gap-1 cursor-pointer text-base-content/70 hover:text-base-content" :aria-expanded="showCameraSettingsPanel" @click="toggleCameraSettings">
+          <IconRight class="w-3 h-3 transition-transform duration-200" :class="{ 'rotate-90': showCameraSettingsPanel }" />
+          <span class="font-bold uppercase text-xs tracking-wide text-base-content/30">{{ $t('file_info.camera_settings') }}</span>
+        </button>
+        <div v-if="showCameraSettingsPanel" class="pt-3 pl-4 grid grid-cols-[84px_minmax(0,1fr)] gap-y-1.5 gap-x-4 text-xs">
+            <template v-for="row in cameraSettingsDetailRows" :key="row.key">
+              <div class="text-[11px] text-base-content/30 min-h-6 py-1">{{ row.label }}</div>
+              <div class="text-[12px] text-base-content/70 wrap-break-word py-1">{{ row.value }}</div>
+            </template>
+        </div>
+      </div>
+      </div>
+
       <div class="shrink-0">
       <div v-if="hasLocationInfo" class="border-t border-base-content/5 px-1 py-3">
         <button type="button" class="flex w-full items-center gap-1 cursor-pointer text-base-content/70 hover:text-base-content" :aria-expanded="showMapPanel" @click="toggleMapPanel">
@@ -691,8 +707,8 @@ function renderInfoRevision() {
   return displayedRevision;
 }
 const skipDetailReads = computed(() => isOriginalUnavailable(props.fileInfo) || !!props.fileInfo?.cloud_only);
-type DetailSection = 'source' | 'capture' | 'location';
-const sectionNames: DetailSection[] = ['source', 'capture', 'location'];
+type DetailSection = 'source' | 'capture' | 'location' | 'cameraSettings';
+const sectionNames: DetailSection[] = ['source', 'capture', 'location', 'cameraSettings'];
 function emptyDetailSections() {
   return Object.fromEntries(sectionNames.map(key => [key, { loaded: false, loading: false, error: false, stale: false, revalidate: false, token: null as string | null, request: 0 }])) as Record<DetailSection, { loaded: boolean; loading: boolean; error: boolean; stale: boolean; revalidate: boolean; token: string | null; request: number }>;
 }
@@ -729,6 +745,12 @@ const detailKeys: Record<DetailSection, string[]> = {
   source: sourceKeys,
   capture: ['flash', 'whiteBalance', 'exposureMode', 'exposureProgram', 'meteringMode', 'focalLength35mm', 'timeZone'],
   location: ['direction', 'directionRef'],
+  cameraSettings: [
+    'filmSimulation', 'dynamicRange', 'highlightTone', 'shadowTone',
+    'saturation', 'sharpness', 'noiseReduction', 'clarity',
+    'whiteBalanceShift', 'grainEffect', 'colorChromeEffect', 'colorChromeFxBlue',
+    'focusMode', 'driveMode', 'imageStabilization',
+  ],
 };
 const sourceFallbacks: Record<string, string> = { title: 'e_title', headline: 'e_headline', creator: 'e_artist', copyright: 'e_copyright', software: 'e_software' };
 function detailRows(section: DetailSection, keys = detailKeys[section]) {
@@ -764,8 +786,15 @@ const imageDetailRows = computed(() => [
 ].filter(row => displayField(`file.${row.key}`, row.value))
   .map(row => ({ ...row, label: t(`file_info.detail_fields.${row.key}`) })));
 const locationDetailRows = computed(() => detailRows('location'));
+const cameraSettingsDetailRows = computed(() => detailRows('cameraSettings'));
 function sectionOpen(section: DetailSection) {
-  const expanded = section === 'source' ? showSourceMetadataPanel.value : section === 'capture' ? showMetadataPanel.value : showMapPanel.value;
+  const expanded = section === 'source'
+    ? showSourceMetadataPanel.value
+    : section === 'capture'
+      ? showMetadataPanel.value
+      : section === 'cameraSettings'
+        ? showCameraSettingsPanel.value
+        : showMapPanel.value;
   return expanded && detailKeys[section].some(key => !sourceFallbacks[key] && fieldVisible(`${section}.${key}`));
 }
 async function loadDetailSection(section: DetailSection, force = false) {
@@ -900,6 +929,12 @@ async function changePreviewThumbnail() {
 onBeforeUnmount(() => clearTimeout(loadingTimer));
 const showOrganizationPanel = computed(() => config.infoPanel.showOrganization ?? true);
 const showSourceMetadataPanel = computed(() => config.infoPanel.showSourceMetadata ?? false);
+const showCameraSettingsPanel = computed(() => config.infoPanel.showCameraSettings ?? false);
+const hasCameraSettings = computed(() => (
+  cameraSettingsDetailRows.value.length > 0
+  || (!hideEmptyFields.value && hasVisibleFields('cameraSettings'))
+  || (!showCameraSettingsPanel.value && !detailSections.value.cameraSettings.loaded && hasVisibleFields('cameraSettings'))
+));
 const hasCoordinates = computed(() => {
   const lat = props.fileInfo?.gps_latitude;
   const lon = props.fileInfo?.gps_longitude;
@@ -1247,6 +1282,10 @@ function toggleOrganization() {
 
 function toggleSourceMetadata() {
   config.infoPanel.showSourceMetadata = !showSourceMetadataPanel.value;
+}
+
+function toggleCameraSettings() {
+  config.infoPanel.showCameraSettings = !showCameraSettingsPanel.value;
 }
 
 function toggleBasicInfo() {

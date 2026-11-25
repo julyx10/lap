@@ -1228,7 +1228,6 @@
     "fields_default": "Standard",
     "fields_all": "Alle anzeigen",
     "fields_custom": "Benutzerdefiniert",
-
     "hide_empty_fields": "Leere Felder automatisch ausblenden",
     "customize_fields": "Felder anpassen",
     "title": "Datei-Info",
@@ -1310,11 +1309,27 @@
       "directionRef": "Nordreferenz",
       "iccProfile": "ICC-Profil",
       "colorSpace": "Farbraum",
-      "bitDepth": "Bittiefe"
+      "bitDepth": "Bittiefe",
+      "filmSimulation": "Filmsimulation",
+      "dynamicRange": "Dynamikbereich",
+      "highlightTone": "Lichter",
+      "shadowTone": "Tiefen",
+      "saturation": "Farbe",
+      "sharpness": "Schärfe",
+      "noiseReduction": "Rauschunterdrückung",
+      "clarity": "Klarheit",
+      "whiteBalanceShift": "WB-Verschiebung",
+      "grainEffect": "Körnungseffekt",
+      "colorChromeEffect": "Color-Chrome-Effekt",
+      "colorChromeFxBlue": "Color Chrome Blau",
+      "focusMode": "Fokusmodus",
+      "driveMode": "Auslösemodus",
+      "imageStabilization": "Stabilisierung"
     },
     "metadata_details_retry": "Metadaten konnten nicht gelesen werden. Zum Wiederholen klicken.",
     "true_north": "Geografischer Norden",
-    "magnetic_north": "Magnetischer Norden"
+    "magnetic_north": "Magnetischer Norden",
+    "camera_settings": "Kameraeinstellungen"
   },
   "map": {
     "show_map": "Karte anzeigen",

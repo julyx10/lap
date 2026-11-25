@@ -1228,7 +1228,6 @@
     "fields_default": "Типові",
     "fields_all": "Показати всі",
     "fields_custom": "Власні",
-
     "hide_empty_fields": "Автоматично приховувати порожні поля",
     "customize_fields": "Налаштувати поля",
     "title": "Відомості",
@@ -1310,11 +1309,27 @@
       "directionRef": "Відлік півночі",
       "iccProfile": "Профіль ICC",
       "colorSpace": "Колірний простір",
-      "bitDepth": "Глибина кольору"
+      "bitDepth": "Глибина кольору",
+      "filmSimulation": "Моделювання плівки",
+      "dynamicRange": "Динамічний діапазон",
+      "highlightTone": "Тон світлих ділянок",
+      "shadowTone": "Тон тіней",
+      "saturation": "Колір",
+      "sharpness": "Різкість",
+      "noiseReduction": "Шумозаглушення",
+      "clarity": "Чіткість",
+      "whiteBalanceShift": "Зсув ББ",
+      "grainEffect": "Ефект зерна",
+      "colorChromeEffect": "Ефект Color Chrome",
+      "colorChromeFxBlue": "Color Chrome Синій",
+      "focusMode": "Режим фокусування",
+      "driveMode": "Режим зйомки",
+      "imageStabilization": "Стабілізація"
     },
     "metadata_details_retry": "Не вдалося прочитати метадані. Натисніть, щоб повторити.",
     "true_north": "Істинна північ",
-    "magnetic_north": "Магнітна північ"
+    "magnetic_north": "Магнітна північ",
+    "camera_settings": "Налаштування камери"
   },
   "map": {
     "show_map": "Показати мапу",

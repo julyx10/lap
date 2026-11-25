@@ -1228,7 +1228,6 @@
     "fields_default": "Default",
     "fields_all": "Show all",
     "fields_custom": "Custom",
-
     "hide_empty_fields": "Automatically hide empty fields",
     "customize_fields": "Customize fields",
     "title": "Information",
@@ -1310,11 +1309,27 @@
       "directionRef": "North reference",
       "iccProfile": "ICC profile",
       "colorSpace": "Color space",
-      "bitDepth": "Bit depth"
+      "bitDepth": "Bit depth",
+      "filmSimulation": "Film simulation",
+      "dynamicRange": "Dynamic range",
+      "highlightTone": "Highlight tone",
+      "shadowTone": "Shadow tone",
+      "saturation": "Color",
+      "sharpness": "Sharpness",
+      "noiseReduction": "Noise reduction",
+      "clarity": "Clarity",
+      "whiteBalanceShift": "WB shift",
+      "grainEffect": "Grain effect",
+      "colorChromeEffect": "Color Chrome",
+      "colorChromeFxBlue": "Color Chrome Blue",
+      "focusMode": "Focus mode",
+      "driveMode": "Drive mode",
+      "imageStabilization": "Stabilization"
     },
     "metadata_details_retry": "Could not read metadata. Click to retry.",
     "true_north": "True north",
-    "magnetic_north": "Magnetic north"
+    "magnetic_north": "Magnetic north",
+    "camera_settings": "Camera settings"
   },
   "map": {
     "show_map": "Show map",

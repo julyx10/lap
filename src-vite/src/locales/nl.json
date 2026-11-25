@@ -1228,7 +1228,6 @@
     "fields_default": "Standaard",
     "fields_all": "Alles tonen",
     "fields_custom": "Aangepast",
-
     "hide_empty_fields": "Lege velden automatisch verbergen",
     "customize_fields": "Velden aanpassen",
     "title": "Informatie",
@@ -1310,11 +1309,27 @@
       "directionRef": "Noordreferentie",
       "iccProfile": "ICC-profiel",
       "colorSpace": "Kleurruimte",
-      "bitDepth": "Bitdiepte"
+      "bitDepth": "Bitdiepte",
+      "filmSimulation": "Filmsimulatie",
+      "dynamicRange": "Dynamisch bereik",
+      "highlightTone": "Hooglichten",
+      "shadowTone": "Schaduwen",
+      "saturation": "Kleur",
+      "sharpness": "Scherpte",
+      "noiseReduction": "Ruisonderdrukking",
+      "clarity": "Helderheid",
+      "whiteBalanceShift": "WB-verschuiving",
+      "grainEffect": "Korreleffect",
+      "colorChromeEffect": "Color Chrome",
+      "colorChromeFxBlue": "Color Chrome Blauw",
+      "focusMode": "Focusmodus",
+      "driveMode": "Opnamemodus",
+      "imageStabilization": "Stabilisatie"
     },
     "metadata_details_retry": "Metagegevens konden niet worden gelezen. Klik om opnieuw te proberen.",
     "true_north": "Ware noorden",
-    "magnetic_north": "Magnetische noorden"
+    "magnetic_north": "Magnetische noorden",
+    "camera_settings": "Camera-instellingen"
   },
   "map": {
     "show_map": "Kaart tonen",

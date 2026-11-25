@@ -123,7 +123,7 @@ function detailsFixture(file = { id: 1, file_path: '/1.jpg', e_title: 'DB title'
   const deps = {
     props, ref, computed, fieldVisible, displayField: key => fieldVisible(key), libConfig: { _libraryId: 'test' }, t: key => key,
     isOriginalUnavailable: file => file?.album_accessible === false,
-    showSourceMetadataPanel: ref(true), showMetadataPanel: ref(true), showMapPanel: ref(false),
+    showSourceMetadataPanel: ref(true), showMetadataPanel: ref(true), showCameraSettingsPanel: ref(false), showMapPanel: ref(false),
     generalFileInfo: ref({}), refreshingFile: ref(null),
     activeInfoKey: { get value() { return `test:${props.fileInfo.id}`; } },
     setTimeout: callback => { const timer = { callback }; timers.push(timer); return timer; },
@@ -491,4 +491,51 @@ test('failed inline metadata saves restore the original draft for retry', async 
   fail=false;await editor.saveInlineMetadata();
   assert.equal(editor.metadataEdit.value,null);
   assert.deepEqual(calls[1],['library',[10],{e_title:'Draft'}]);
+});
+
+test('camera settings fields are excluded from defaults and included in allFileInfoFields', async () => {
+  const fieldsSource = await readFile(new URL('../src/common/fileInfoFields.ts', import.meta.url), 'utf8');
+  const transpiled = ts.transpile(fieldsSource.replaceAll('export ', ''), { target: ts.ScriptTarget.ES2022 });
+  const { allFileInfoFields, defaultFileInfoFields, fileInfoFieldGroups } = new Function(
+    `${transpiled}; return { allFileInfoFields, defaultFileInfoFields, fileInfoFieldGroups };`
+  )();
+  const cameraGroup = fileInfoFieldGroups.find(group => group.key === 'cameraSettings');
+  assert.ok(cameraGroup, 'cameraSettings field group should exist');
+  assert.ok(cameraGroup.fields.some(f => f.key === 'cameraSettings.filmSimulation'));
+  assert.ok(cameraGroup.fields.some(f => f.key === 'cameraSettings.dynamicRange'));
+  assert.ok(allFileInfoFields.includes('cameraSettings.filmSimulation'));
+  assert.equal(defaultFileInfoFields.some(key => key.startsWith('cameraSettings.')), false);
+});
+
+test('camera settings section is collapsed by default and renders rows when expanded', async () => {
+  const collapsed = await render('camera_settings', {
+    hasCameraSettings: true,
+    showCameraSettingsPanel: false,
+    toggleCameraSettings() {},
+    cameraSettingsDetailRows: [
+      { key: 'filmSimulation', label: 'file_info.detail_fields.filmSimulation', value: 'Classic Chrome' },
+    ],
+  });
+  assert.match(collapsed, /file_info\.camera_settings/);
+  assert.doesNotMatch(collapsed, /Classic Chrome/);
+
+  const expanded = await render('camera_settings', {
+    hasCameraSettings: true,
+    showCameraSettingsPanel: true,
+    toggleCameraSettings() {},
+    cameraSettingsDetailRows: [
+      { key: 'filmSimulation', label: 'file_info.detail_fields.filmSimulation', value: 'Classic Chrome' },
+      { key: 'dynamicRange', label: 'file_info.detail_fields.dynamicRange', value: 'Auto (DR100)' },
+    ],
+  });
+  assert.match(expanded, /Classic Chrome/);
+  assert.match(expanded, /Auto \(DR100\)/);
+
+  const hidden = await render('camera_settings', {
+    hasCameraSettings: false,
+    showCameraSettingsPanel: false,
+    toggleCameraSettings() {},
+    cameraSettingsDetailRows: [],
+  });
+  assert.doesNotMatch(hidden, /file_info\.camera_settings/);
 });

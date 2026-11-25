@@ -1228,7 +1228,6 @@
     "fields_default": "По умолчанию",
     "fields_all": "Показать все",
     "fields_custom": "Настроить",
-
     "hide_empty_fields": "Автоматически скрывать пустые поля",
     "customize_fields": "Настроить поля",
     "title": "Информация",
@@ -1310,11 +1309,27 @@
       "directionRef": "Отсчёт севера",
       "iccProfile": "Профиль ICC",
       "colorSpace": "Цветовое пространство",
-      "bitDepth": "Глубина цвета"
+      "bitDepth": "Глубина цвета",
+      "filmSimulation": "Моделирование плёнки",
+      "dynamicRange": "Динамический диапазон",
+      "highlightTone": "Тон светов",
+      "shadowTone": "Тон теней",
+      "saturation": "Цвет",
+      "sharpness": "Резкость",
+      "noiseReduction": "Шумоподавление",
+      "clarity": "Чёткость",
+      "whiteBalanceShift": "Сдвиг ББ",
+      "grainEffect": "Эффект зерна",
+      "colorChromeEffect": "Эффект Color Chrome",
+      "colorChromeFxBlue": "Color Chrome Синий",
+      "focusMode": "Режим фокусировки",
+      "driveMode": "Режим съёмки",
+      "imageStabilization": "Стабилизация"
     },
     "metadata_details_retry": "Не удалось прочитать метаданные. Нажмите, чтобы повторить.",
     "true_north": "Истинный север",
-    "magnetic_north": "Магнитный север"
+    "magnetic_north": "Магнитный север",
+    "camera_settings": "Настройки камеры"
   },
   "map": {
     "show_map": "Показать карту",

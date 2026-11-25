@@ -148,6 +148,7 @@ pub(super) enum DetailSection {
     Source,
     Capture,
     Location,
+    CameraSettings,
 }
 
 impl DetailSection {
@@ -156,10 +157,13 @@ impl DetailSection {
             "source" => Some(Self::Source),
             "capture" => Some(Self::Capture),
             "location" => Some(Self::Location),
+            "cameraSettings" => Some(Self::CameraSettings),
             _ => None,
         }
     }
 }
+
+pub(super) const FUJIFILM_MAKER_GROUPS: &[(&str, &str)] = &[("MakerNotes", "FujiFilm")];
 
 /// Detail keys are the existing frontend contract. Original descriptions remain
 /// separate from editable catalog descriptions.
@@ -170,6 +174,9 @@ pub(super) struct DetailField {
     pub stored: bool,
     pub descriptive: bool,
     pub section: Option<DetailSection>,
+    /// When `Some`, restricts tag matching strictly to `(family0, family1)` pairs
+    /// instead of `SOURCE_PRIORITY` / `TECHNICAL_GROUPS`.
+    pub allowed_groups: Option<&'static [(&'static str, &'static str)]>,
 }
 
 pub(super) const DETAIL_FIELDS: &[DetailField] = &[
@@ -184,6 +191,7 @@ pub(super) const DETAIL_FIELDS: &[DetailField] = &[
         stored: true,
         descriptive: true,
         section: Some(DetailSection::Source),
+        allowed_groups: None,
     },
     DetailField {
         key: "headline",
@@ -192,6 +200,7 @@ pub(super) const DETAIL_FIELDS: &[DetailField] = &[
         stored: true,
         descriptive: true,
         section: Some(DetailSection::Source),
+        allowed_groups: None,
     },
     DetailField {
         key: "creator",
@@ -204,6 +213,7 @@ pub(super) const DETAIL_FIELDS: &[DetailField] = &[
         stored: true,
         descriptive: true,
         section: Some(DetailSection::Source),
+        allowed_groups: None,
     },
     DetailField {
         key: "copyright",
@@ -216,6 +226,7 @@ pub(super) const DETAIL_FIELDS: &[DetailField] = &[
         stored: true,
         descriptive: true,
         section: Some(DetailSection::Source),
+        allowed_groups: None,
     },
     DetailField {
         key: "description",
@@ -228,6 +239,7 @@ pub(super) const DETAIL_FIELDS: &[DetailField] = &[
         stored: true,
         descriptive: true,
         section: Some(DetailSection::Source),
+        allowed_groups: None,
     },
     DetailField {
         key: "credit",
@@ -240,6 +252,7 @@ pub(super) const DETAIL_FIELDS: &[DetailField] = &[
         stored: false,
         descriptive: true,
         section: Some(DetailSection::Source),
+        allowed_groups: None,
     },
     DetailField {
         key: "source",
@@ -252,6 +265,7 @@ pub(super) const DETAIL_FIELDS: &[DetailField] = &[
         stored: false,
         descriptive: true,
         section: Some(DetailSection::Source),
+        allowed_groups: None,
     },
     DetailField {
         key: "usageTerms",
@@ -264,6 +278,7 @@ pub(super) const DETAIL_FIELDS: &[DetailField] = &[
         stored: false,
         descriptive: true,
         section: Some(DetailSection::Source),
+        allowed_groups: None,
     },
     DetailField {
         key: "rightsUrl",
@@ -276,6 +291,7 @@ pub(super) const DETAIL_FIELDS: &[DetailField] = &[
         stored: false,
         descriptive: true,
         section: Some(DetailSection::Source),
+        allowed_groups: None,
     },
     DetailField {
         key: "software",
@@ -288,6 +304,7 @@ pub(super) const DETAIL_FIELDS: &[DetailField] = &[
         stored: true,
         descriptive: true,
         section: Some(DetailSection::Source),
+        allowed_groups: None,
     },
     DetailField {
         key: "flash",
@@ -296,6 +313,7 @@ pub(super) const DETAIL_FIELDS: &[DetailField] = &[
         stored: false,
         descriptive: false,
         section: Some(DetailSection::Capture),
+        allowed_groups: None,
     },
     DetailField {
         key: "whiteBalance",
@@ -304,6 +322,7 @@ pub(super) const DETAIL_FIELDS: &[DetailField] = &[
         stored: false,
         descriptive: false,
         section: Some(DetailSection::Capture),
+        allowed_groups: None,
     },
     DetailField {
         key: "exposureMode",
@@ -312,6 +331,7 @@ pub(super) const DETAIL_FIELDS: &[DetailField] = &[
         stored: false,
         descriptive: false,
         section: Some(DetailSection::Capture),
+        allowed_groups: None,
     },
     DetailField {
         key: "exposureProgram",
@@ -320,6 +340,7 @@ pub(super) const DETAIL_FIELDS: &[DetailField] = &[
         stored: false,
         descriptive: false,
         section: Some(DetailSection::Capture),
+        allowed_groups: None,
     },
     DetailField {
         key: "meteringMode",
@@ -328,6 +349,7 @@ pub(super) const DETAIL_FIELDS: &[DetailField] = &[
         stored: false,
         descriptive: false,
         section: Some(DetailSection::Capture),
+        allowed_groups: None,
     },
     DetailField {
         key: "focalLength35mm",
@@ -336,6 +358,7 @@ pub(super) const DETAIL_FIELDS: &[DetailField] = &[
         stored: false,
         descriptive: false,
         section: Some(DetailSection::Capture),
+        allowed_groups: None,
     },
     DetailField {
         key: "timeZone",
@@ -344,6 +367,7 @@ pub(super) const DETAIL_FIELDS: &[DetailField] = &[
         stored: false,
         descriptive: false,
         section: Some(DetailSection::Capture),
+        allowed_groups: None,
     },
     DetailField {
         key: "direction",
@@ -352,6 +376,7 @@ pub(super) const DETAIL_FIELDS: &[DetailField] = &[
         stored: false,
         descriptive: false,
         section: Some(DetailSection::Location),
+        allowed_groups: None,
     },
     DetailField {
         key: "directionRef",
@@ -360,6 +385,143 @@ pub(super) const DETAIL_FIELDS: &[DetailField] = &[
         stored: false,
         descriptive: false,
         section: Some(DetailSection::Location),
+        allowed_groups: None,
+    },
+    // Camera Settings (MakerNotes-scoped, read-only, never stored in catalog rows)
+    DetailField {
+        key: "filmSimulation",
+        backend_names: &["FilmMode"],
+        xmp: None,
+        stored: false,
+        descriptive: false,
+        section: Some(DetailSection::CameraSettings),
+        allowed_groups: Some(FUJIFILM_MAKER_GROUPS),
+    },
+    DetailField {
+        key: "dynamicRange",
+        backend_names: &[],
+        xmp: None,
+        stored: false,
+        descriptive: false,
+        section: Some(DetailSection::CameraSettings),
+        allowed_groups: Some(FUJIFILM_MAKER_GROUPS),
+    },
+    DetailField {
+        key: "highlightTone",
+        backend_names: &["HighlightTone"],
+        xmp: None,
+        stored: false,
+        descriptive: false,
+        section: Some(DetailSection::CameraSettings),
+        allowed_groups: Some(FUJIFILM_MAKER_GROUPS),
+    },
+    DetailField {
+        key: "shadowTone",
+        backend_names: &["ShadowTone"],
+        xmp: None,
+        stored: false,
+        descriptive: false,
+        section: Some(DetailSection::CameraSettings),
+        allowed_groups: Some(FUJIFILM_MAKER_GROUPS),
+    },
+    DetailField {
+        key: "saturation",
+        backend_names: &["Saturation"],
+        xmp: None,
+        stored: false,
+        descriptive: false,
+        section: Some(DetailSection::CameraSettings),
+        allowed_groups: Some(FUJIFILM_MAKER_GROUPS),
+    },
+    DetailField {
+        key: "sharpness",
+        backend_names: &["Sharpness"],
+        xmp: None,
+        stored: false,
+        descriptive: false,
+        section: Some(DetailSection::CameraSettings),
+        allowed_groups: Some(FUJIFILM_MAKER_GROUPS),
+    },
+    DetailField {
+        key: "noiseReduction",
+        backend_names: &["NoiseReduction"],
+        xmp: None,
+        stored: false,
+        descriptive: false,
+        section: Some(DetailSection::CameraSettings),
+        allowed_groups: Some(FUJIFILM_MAKER_GROUPS),
+    },
+    DetailField {
+        key: "clarity",
+        backend_names: &["Clarity"],
+        xmp: None,
+        stored: false,
+        descriptive: false,
+        section: Some(DetailSection::CameraSettings),
+        allowed_groups: Some(FUJIFILM_MAKER_GROUPS),
+    },
+    DetailField {
+        key: "whiteBalanceShift",
+        backend_names: &["WhiteBalanceFineTune"],
+        xmp: None,
+        stored: false,
+        descriptive: false,
+        section: Some(DetailSection::CameraSettings),
+        allowed_groups: Some(FUJIFILM_MAKER_GROUPS),
+    },
+    DetailField {
+        key: "grainEffect",
+        backend_names: &[],
+        xmp: None,
+        stored: false,
+        descriptive: false,
+        section: Some(DetailSection::CameraSettings),
+        allowed_groups: Some(FUJIFILM_MAKER_GROUPS),
+    },
+    DetailField {
+        key: "colorChromeEffect",
+        backend_names: &["ColorChromeEffect"],
+        xmp: None,
+        stored: false,
+        descriptive: false,
+        section: Some(DetailSection::CameraSettings),
+        allowed_groups: Some(FUJIFILM_MAKER_GROUPS),
+    },
+    DetailField {
+        key: "colorChromeFxBlue",
+        backend_names: &["ColorChromeFXBlue"],
+        xmp: None,
+        stored: false,
+        descriptive: false,
+        section: Some(DetailSection::CameraSettings),
+        allowed_groups: Some(FUJIFILM_MAKER_GROUPS),
+    },
+    DetailField {
+        key: "focusMode",
+        backend_names: &["FocusMode"],
+        xmp: None,
+        stored: false,
+        descriptive: false,
+        section: Some(DetailSection::CameraSettings),
+        allowed_groups: Some(FUJIFILM_MAKER_GROUPS),
+    },
+    DetailField {
+        key: "driveMode",
+        backend_names: &["DriveMode"],
+        xmp: None,
+        stored: false,
+        descriptive: false,
+        section: Some(DetailSection::CameraSettings),
+        allowed_groups: Some(FUJIFILM_MAKER_GROUPS),
+    },
+    DetailField {
+        key: "imageStabilization",
+        backend_names: &["ImageStabilization"],
+        xmp: None,
+        stored: false,
+        descriptive: false,
+        section: Some(DetailSection::CameraSettings),
+        allowed_groups: Some(FUJIFILM_MAKER_GROUPS),
     },
     DetailField {
         key: "iccProfile",
@@ -368,6 +530,7 @@ pub(super) const DETAIL_FIELDS: &[DetailField] = &[
         stored: true,
         descriptive: false,
         section: None,
+        allowed_groups: None,
     },
     DetailField {
         key: "colorSpace",
@@ -376,6 +539,7 @@ pub(super) const DETAIL_FIELDS: &[DetailField] = &[
         stored: true,
         descriptive: false,
         section: None,
+        allowed_groups: None,
     },
 ];
 

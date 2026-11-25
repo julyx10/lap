@@ -1228,7 +1228,6 @@
     "fields_default": "Domyślne",
     "fields_all": "Pokaż wszystkie",
     "fields_custom": "Niestandardowe",
-
     "hide_empty_fields": "Automatycznie ukrywaj puste pola",
     "customize_fields": "Dostosuj pola",
     "title": "Informacje",
@@ -1310,11 +1309,27 @@
       "directionRef": "Odniesienie północy",
       "iccProfile": "Profil ICC",
       "colorSpace": "Przestrzeń barw",
-      "bitDepth": "Głębia bitowa"
+      "bitDepth": "Głębia bitowa",
+      "filmSimulation": "Symulacja filmu",
+      "dynamicRange": "Zakres dynamiczny",
+      "highlightTone": "Tony jasne",
+      "shadowTone": "Tony ciemne",
+      "saturation": "Kolor",
+      "sharpness": "Ostrość",
+      "noiseReduction": "Redukcja szumów",
+      "clarity": "Przejrzystość",
+      "whiteBalanceShift": "Korekta WB",
+      "grainEffect": "Efekt ziarna",
+      "colorChromeEffect": "Efekt Color Chrome",
+      "colorChromeFxBlue": "Color Chrome Niebieski",
+      "focusMode": "Tryb ostrości",
+      "driveMode": "Tryb wyzwalania",
+      "imageStabilization": "Stabilizacja"
     },
     "metadata_details_retry": "Nie można odczytać metadanych. Kliknij, aby ponowić.",
     "true_north": "Północ geograficzna",
-    "magnetic_north": "Północ magnetyczna"
+    "magnetic_north": "Północ magnetyczna",
+    "camera_settings": "Ustawienia aparatu"
   },
   "map": {
     "show_map": "Pokaż mapę",

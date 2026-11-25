@@ -1228,7 +1228,6 @@
     "fields_default": "默认",
     "fields_all": "全部显示",
     "fields_custom": "自定义",
-
     "hide_empty_fields": "自动隐藏空值字段",
     "customize_fields": "自定义字段",
     "title": "信息",
@@ -1310,11 +1309,27 @@
       "directionRef": "北向基准",
       "iccProfile": "ICC 配置文件",
       "colorSpace": "色彩空间",
-      "bitDepth": "位深"
+      "bitDepth": "位深",
+      "filmSimulation": "胶片模拟",
+      "dynamicRange": "动态范围",
+      "highlightTone": "高光色调",
+      "shadowTone": "阴影色调",
+      "saturation": "色彩",
+      "sharpness": "锐度",
+      "noiseReduction": "降噪",
+      "clarity": "清晰度",
+      "whiteBalanceShift": "白平衡偏移",
+      "grainEffect": "颗粒效果",
+      "colorChromeEffect": "色彩效果",
+      "colorChromeFxBlue": "色彩FX蓝色",
+      "focusMode": "对焦模式",
+      "driveMode": "驱动模式",
+      "imageStabilization": "防抖"
     },
     "metadata_details_retry": "元数据读取失败，点击重试",
     "true_north": "真北",
-    "magnetic_north": "磁北"
+    "magnetic_north": "磁北",
+    "camera_settings": "相机设置"
   },
   "map": {
     "show_map": "显示地图",
