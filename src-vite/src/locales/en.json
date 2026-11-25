@@ -1324,12 +1324,26 @@
       "colorChromeFxBlue": "Color Chrome Blue",
       "focusMode": "Focus mode",
       "driveMode": "Drive mode",
-      "imageStabilization": "Stabilization"
+      "imageStabilization": "Stabilization",
+      "pictureStyle": "Picture style",
+      "pictureControl": "Picture control",
+      "creativeStyle": "Creative style",
+      "pictureProfile": "Picture profile",
+      "pictureEffect": "Picture effect",
+      "photoStyle": "Photo style",
+      "autoLightingOptimizer": "Auto lighting optimizer",
+      "highlightTonePriority": "Highlight tone priority",
+      "activeDLighting": "Active D-Lighting",
+      "dynamicRangeOptimizer": "D-Range optimizer",
+      "intelligentDRange": "Intelligent D-Range",
+      "contrast": "Contrast",
+      "shutterCount": "Shutter count"
     },
     "metadata_details_retry": "Could not read metadata. Click to retry.",
     "true_north": "True north",
     "magnetic_north": "Magnetic north",
-    "camera_settings": "Camera settings"
+    "camera_settings": "Camera settings",
+    "all_brands": "All"
   },
   "map": {
     "show_map": "Show map",

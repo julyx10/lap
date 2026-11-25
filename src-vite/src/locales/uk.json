@@ -1324,12 +1324,26 @@
       "colorChromeFxBlue": "Color Chrome Синій",
       "focusMode": "Режим фокусування",
       "driveMode": "Режим зйомки",
-      "imageStabilization": "Стабілізація"
+      "imageStabilization": "Стабілізація",
+      "pictureStyle": "Стиль зображення",
+      "pictureControl": "Режим Picture Control",
+      "creativeStyle": "Творчий стиль",
+      "pictureProfile": "Профіль зображення",
+      "pictureEffect": "Ефект зображення",
+      "photoStyle": "Фотостиль",
+      "autoLightingOptimizer": "Автокорекція яскравості",
+      "highlightTonePriority": "Пріоритет світлих ділянок",
+      "activeDLighting": "Активний D-Lighting",
+      "dynamicRangeOptimizer": "Оптимізатор динамічного діапазону",
+      "intelligentDRange": "Інтелектуальний динамічний діапазон",
+      "contrast": "Контрастність",
+      "shutterCount": "Лічильник затвора"
     },
     "metadata_details_retry": "Не вдалося прочитати метадані. Натисніть, щоб повторити.",
     "true_north": "Істинна північ",
     "magnetic_north": "Магнітна північ",
-    "camera_settings": "Налаштування камери"
+    "camera_settings": "Налаштування камери",
+    "all_brands": "Усі"
   },
   "map": {
     "show_map": "Показати мапу",

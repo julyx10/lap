@@ -1206,9 +1206,9 @@ mod camera_settings_tests {
                 vec![Value::I32(20), Value::I32(-40)],
                 "Red +20, Blue -40",
             ),
-            // Wrong family0 or family1 must be ignored by Fujifilm CameraSettings fields
+            // Wrong family0 or unsupported family1 must be ignored by CameraSettings fields
             make_tag("EXIF", "ExifIFD", "Sharpness", "Hard"),
-            make_tag("MakerNotes", "Sony", "Saturation", "High"),
+            make_tag("MakerNotes", "Unknown", "Saturation", "High"),
             make_tag("XMP", "XMP-xmp", "FocusMode", "AF-C"),
         ];
 
@@ -1273,7 +1273,7 @@ mod camera_settings_tests {
             assert_eq!(details["filmSimulation"].values, vec!["Classic Chrome"]);
             assert_eq!(details["saturation"].values, vec!["Color value"]);
         }
-        for (family0, family1) in [("EXIF", "ExifIFD"), ("MakerNotes", "Sony")] {
+        for (family0, family1) in [("EXIF", "ExifIFD"), ("MakerNotes", "Unknown")] {
             let mut saturation = make_tag(family0, family1, "Saturation", "Acros");
             saturation.raw_value = Value::U16(0x500);
             let details = detail_values(&[
@@ -1283,6 +1283,163 @@ mod camera_settings_tests {
             assert_eq!(details["filmSimulation"].values, vec!["Classic Chrome"]);
             assert!(!details.contains_key("saturation"));
         }
+        let mut sony_sat = make_tag("MakerNotes", "Sony", "Saturation", "Acros");
+        sony_sat.raw_value = Value::U16(0x500);
+        let sony_details = detail_values(&[
+            make_tag("MakerNotes", "FujiFilm", "FilmMode", "Classic Chrome"),
+            sony_sat,
+        ]);
+        assert_eq!(sony_details["filmSimulation"].values, vec!["Classic Chrome"]);
+    }
+
+    #[test]
+    fn canon_makernotes_extract_brand_and_shared_fields_ignoring_track4() {
+        let tags = vec![
+            make_tag("MakerNotes", "Track4", "PictureStyle", "Track4Duplicate"),
+            make_tag("MakerNotes", "Canon", "PictureStyle", "Landscape"),
+            make_tag("MakerNotes", "Canon", "AutoLightingOptimizer", "Standard"),
+            make_tag("MakerNotes", "Canon", "HighlightTonePriority", "Off"),
+            make_tag("MakerNotes", "Canon", "ContinuousDrive", "Continuous, Low"),
+            make_tag("MakerNotes", "Canon", "FocusMode", "AI Servo AF (Live View)"),
+            make_tag("MakerNotes", "Canon", "HighISONoiseReduction", "Strong"),
+            make_tag("MakerNotes", "Canon", "Contrast", "Normal"),
+            make_tag("MakerNotes", "Canon", "Saturation", "Normal"),
+            make_tag("MakerNotes", "Canon", "Sharpness", "5"),
+            make_tag("MakerNotes", "Canon", "ImageStabilization", "On (2)"),
+            make_tag("MakerNotes", "Canon", "WBShiftAB", "+2"),
+            make_tag("MakerNotes", "Canon", "WBShiftGM", "-1"),
+        ];
+        let details = detail_values(&tags);
+        assert_eq!(details["pictureStyle"].values, vec!["Landscape"]);
+        assert_eq!(details["autoLightingOptimizer"].values, vec!["Standard"]);
+        assert_eq!(details["highlightTonePriority"].values, vec!["Off"]);
+        assert_eq!(details["driveMode"].values, vec!["Continuous, Low"]);
+        assert_eq!(details["focusMode"].values, vec!["AI Servo AF (Live View)"]);
+        assert_eq!(details["noiseReduction"].values, vec!["Strong"]);
+        assert_eq!(details["contrast"].values, vec!["Normal"]);
+        assert_eq!(details["saturation"].values, vec!["Normal"]);
+        assert_eq!(details["sharpness"].values, vec!["5"]);
+        assert_eq!(details["imageStabilization"].values, vec!["On (2)"]);
+        assert_eq!(details["whiteBalanceShift"].values, vec!["AB +2, GM -1"]);
+        assert!(!details.contains_key("shutterCount"));
+    }
+
+    #[test]
+    fn canon_custom_settings_are_fallbacks_without_accepting_track4() {
+        for (name, key) in [
+            ("AutoLightingOptimizer", "autoLightingOptimizer"),
+            ("HighlightTonePriority", "highlightTonePriority"),
+            ("HighISONoiseReduction", "noiseReduction"),
+        ] {
+            let mut tags = vec![
+                make_tag("MakerNotes", "Track4", name, "Duplicate"),
+                make_tag("EXIF", "CanonCustom", name, "Wrong family"),
+            ];
+            assert!(!detail_values(&tags).contains_key(key));
+            tags.push(make_tag("MakerNotes", "CanonCustom", name, "Off"));
+            let details = detail_values(&tags);
+            assert_eq!(details[key].values, vec!["Off"]);
+            assert_eq!(details[key].source, format!("MakerNotes:{name}"));
+            assert!(!detail_values_for(&tags, true).contains_key(key));
+
+            // Canon takes precedence even if CanonCustom occurs first in the file.
+            tags.push(make_tag("MakerNotes", "Canon", name, "On"));
+            assert_eq!(detail_values(&tags)[key].values, vec!["On"]);
+        }
+    }
+
+    #[test]
+    fn nikon_makernotes_filter_na_placeholders_and_keep_shutter_count_distinct() {
+        let tags = vec![
+            make_tag("MakerNotes", "Nikon", "PictureControlName", "Auto"),
+            make_tag("MakerNotes", "Nikon", "ActiveD-Lighting", "Off"),
+            make_tag("MakerNotes", "Nikon", "Sharpness", "n/a"),
+            make_tag("MakerNotes", "Nikon", "Clarity", "n/a"),
+            make_tag("MakerNotes", "Nikon", "Contrast", "n/a"),
+            make_tag("MakerNotes", "Nikon", "Saturation", "n/a"),
+            make_tag("MakerNotes", "Nikon", "HighISONoiseReduction", "Low"),
+            make_tag("MakerNotes", "Nikon", "NoiseReduction", "Off"),
+            make_tag("MakerNotes", "Nikon", "FocusMode", "AF-C"),
+            make_tag("MakerNotes", "Nikon", "ReleaseMode", "Single Frame"),
+            make_tag("MakerNotes", "Nikon", "ShootingMode", "Single-Frame, Self-timer"),
+            make_tag("MakerNotes", "Nikon", "VibrationReduction", "Off"),
+            make_tag("MakerNotes", "Nikon", "WhiteBalanceFineTune", "0 0"),
+            make_tag("MakerNotes", "Nikon", "ImageCount", "22017"),
+            make_tag("MakerNotes", "Nikon", "ShutterCount", "28902"),
+        ];
+        let details = detail_values(&tags);
+        assert_eq!(details["pictureControl"].values, vec!["Auto"]);
+        assert_eq!(details["activeDLighting"].values, vec!["Off"]);
+        assert!(!details.contains_key("sharpness"));
+        assert!(!details.contains_key("clarity"));
+        assert!(!details.contains_key("contrast"));
+        assert!(!details.contains_key("saturation"));
+        assert_eq!(details["noiseReduction"].values, vec!["Low"]);
+        assert_eq!(details["driveMode"].values, vec!["Single Frame"]);
+        assert_eq!(details["imageStabilization"].values, vec!["Off"]);
+        assert_eq!(details["whiteBalanceShift"].values, vec!["0 0"]);
+        assert_eq!(details["shutterCount"].values, vec!["28902"]);
+    }
+
+    #[test]
+    fn sony_makernotes_extract_settings_and_ignore_sr2_lookup_ifds() {
+        let tags = vec![
+            make_tag("MakerNotes", "SR2DataIFD1", "ColorMode", "Vivid"),
+            make_tag("MakerNotes", "Sony", "CreativeStyle", "Standard"),
+            make_tag("MakerNotes", "Sony", "PictureProfile", "Gamma Still - Standard/Neutral (PP2)"),
+            make_tag("MakerNotes", "Sony", "PictureEffect", "Off"),
+            make_tag("MakerNotes", "Sony", "DynamicRangeOptimizer", "Off"),
+            make_tag("MakerNotes", "Sony", "Contrast", "0"),
+            make_tag("MakerNotes", "Sony", "Saturation", "0"),
+            make_tag("MakerNotes", "Sony", "Sharpness", "0"),
+            make_tag("MakerNotes", "Sony", "HighISONoiseReduction", "Normal"),
+            make_tag("MakerNotes", "Sony", "WBShiftAB_GM", "0 0"),
+            make_tag("MakerNotes", "Sony", "FocusMode", "AF-S"),
+            make_tag("MakerNotes", "Sony", "ReleaseMode", "Normal"),
+            make_tag("MakerNotes", "Sony", "ImageStabilization", "Off"),
+            make_tag("MakerNotes", "Sony", "ShutterCount", "10"),
+        ];
+        let details = detail_values(&tags);
+        assert_eq!(details["creativeStyle"].values, vec!["Standard"]);
+        assert_eq!(
+            details["pictureProfile"].values,
+            vec!["Gamma Still - Standard/Neutral (PP2)"]
+        );
+        assert_eq!(details["pictureEffect"].values, vec!["Off"]);
+        assert_eq!(details["dynamicRangeOptimizer"].values, vec!["Off"]);
+        assert_eq!(details["whiteBalanceShift"].values, vec!["0 0"]);
+        assert_eq!(details["driveMode"].values, vec!["Normal"]);
+        assert_eq!(details["shutterCount"].values, vec!["10"]);
+    }
+
+    #[test]
+    fn panasonic_and_leica_makernotes_extract_settings_and_wb_shift() {
+        let pana_tags = vec![
+            make_tag("MakerNotes", "Panasonic", "PhotoStyle", "Vivid"),
+            make_tag("MakerNotes", "Panasonic", "IntelligentD-Range", "Standard"),
+            make_tag("MakerNotes", "Panasonic", "Contrast", "Normal"),
+            make_tag("MakerNotes", "Panasonic", "Saturation", "Normal"),
+            make_tag("MakerNotes", "Panasonic", "Sharpness", "Normal"),
+            make_tag("MakerNotes", "Panasonic", "NoiseReduction", "Standard"),
+            make_tag("MakerNotes", "Panasonic", "FocusMode", "Auto"),
+            make_tag("MakerNotes", "Panasonic", "ImageStabilization", "Dual2 IS"),
+            make_tag("MakerNotes", "Panasonic", "WBShiftAB", "1"),
+            make_tag("MakerNotes", "Panasonic", "WBShiftGM", "-2"),
+        ];
+        let pana = detail_values(&pana_tags);
+        assert_eq!(pana["photoStyle"].values, vec!["Vivid"]);
+        assert_eq!(pana["intelligentDRange"].values, vec!["Standard"]);
+        assert_eq!(pana["imageStabilization"].values, vec!["Dual2 IS"]);
+        assert_eq!(pana["whiteBalanceShift"].values, vec!["AB 1, GM -2"]);
+
+        let leica_tags = vec![
+            make_tag("MakerNotes", "Leica", "Contrast", "Normal"),
+            make_tag("MakerNotes", "Leica", "Saturation", "High"),
+        ];
+        let leica = detail_values(&leica_tags);
+        assert_eq!(leica["contrast"].values, vec!["Normal"]);
+        assert_eq!(leica["saturation"].values, vec!["High"]);
+        assert!(!leica.contains_key("photoStyle"));
     }
 
     #[test]
@@ -1578,15 +1735,56 @@ fn detail_values(tags: &[Tag]) -> Details {
     detail_values_for(tags, false)
 }
 
+fn is_placeholder_maker_value(value: &str) -> bool {
+    let trimmed = value.trim();
+    trimmed.is_empty()
+        || trimmed.eq_ignore_ascii_case("n/a")
+        || trimmed.eq_ignore_ascii_case("(none)")
+}
+
+fn find_maker_tag_entry<'a>(
+    tags: &'a [Tag],
+    family0: &str,
+    family1: &str,
+    name: &str,
+) -> Option<&'a Tag> {
+    tags.iter().find(|tag| {
+        tag.group.family0 == family0
+            && tag.group.family1 == family1
+            && tag.name == name
+            && !matches!(tag.raw_value, Value::Binary(_) | Value::Undefined(_))
+            && !is_placeholder_maker_value(&tag.print_value)
+            && !tag.print_value.contains('\0')
+    })
+}
+
 fn detail_values_for(tags: &[Tag], stored_only: bool) -> Details {
     let mut result = Details::new();
     for field in schema::DETAIL_FIELDS {
         let key = field.key;
+        if (!stored_only && field.section.is_none()) || (stored_only && !field.stored) {
+            continue;
+        }
+        if let Some(sources) = field.maker_sources {
+            if let Some(tag) = sources
+                .iter()
+                .find_map(|(f0, f1, name)| find_maker_tag_entry(tags, f0, f1, name))
+            {
+                let value: String = tag.print_value.trim().chars().take(32768).collect();
+                if !value.is_empty() {
+                    result.insert(
+                        key.into(),
+                        DetailValue {
+                            values: vec![value],
+                            source: format!("{}:{}", tag.group.family0, tag.name),
+                        },
+                    );
+                }
+            }
+            continue;
+        }
         let names = field.backend_names;
-        if (!stored_only && field.section.is_none())
-            || (stored_only && !field.stored)
-            || names.is_empty()
-        {
+        if names.is_empty() {
             continue;
         }
         let descriptive = field.descriptive;
@@ -1594,11 +1792,7 @@ fn detail_values_for(tags: &[Tag], stored_only: bool) -> Details {
             .iter()
             .filter(|tag| names.contains(&tag.name.as_str()))
             .filter(|tag| {
-                if let Some(groups) = field.allowed_groups {
-                    groups
-                        .iter()
-                        .any(|(f0, f1)| tag.group.family0 == *f0 && tag.group.family1 == *f1)
-                } else if descriptive {
+                if descriptive {
                     schema::SOURCE_PRIORITY.contains(&tag.group.family0.as_str())
                 } else {
                     schema::TECHNICAL_GROUPS.contains(&tag.group.family0.as_str())
@@ -1614,13 +1808,7 @@ fn detail_values_for(tags: &[Tag], stored_only: bool) -> Details {
             });
         if let Some(tag) = candidate {
             let values = match &tag.raw_value {
-                Value::List(items) => {
-                    if !tag.print_value.trim().is_empty() && field.allowed_groups.is_some() {
-                        vec![tag.print_value.clone()]
-                    } else {
-                        items.iter().map(|v| v.to_display_string()).collect()
-                    }
-                }
+                Value::List(items) => items.iter().map(|v| v.to_display_string()).collect(),
                 _ => vec![tag.print_value.clone()],
             };
             let values: Vec<_> = values
@@ -1647,14 +1835,7 @@ fn detail_values_for(tags: &[Tag], stored_only: bool) -> Details {
 }
 
 fn find_fuji_maker_tag_entry<'a>(tags: &'a [Tag], name: &str) -> Option<&'a Tag> {
-    tags.iter().find(|tag| {
-        tag.group.family0 == "MakerNotes"
-            && tag.group.family1 == "FujiFilm"
-            && tag.name == name
-            && !matches!(tag.raw_value, Value::Binary(_) | Value::Undefined(_))
-            && !tag.print_value.trim().is_empty()
-            && !tag.print_value.contains('\0')
-    })
+    find_maker_tag_entry(tags, "MakerNotes", "FujiFilm", name)
 }
 
 fn find_fuji_maker_tag<'a>(tags: &'a [Tag], name: &str) -> Option<&'a str> {
@@ -1750,6 +1931,25 @@ fn format_fuji_grain_effect(tags: &[Tag]) -> Option<DetailValue> {
     })
 }
 
+fn format_ab_gm_wb_shift(tags: &[Tag], family1: &str) -> Option<DetailValue> {
+    let ab = find_maker_tag_entry(tags, "MakerNotes", family1, "WBShiftAB")
+        .map(|t| t.print_value.trim());
+    let gm = find_maker_tag_entry(tags, "MakerNotes", family1, "WBShiftGM")
+        .map(|t| t.print_value.trim());
+
+    let (formatted, source) = match (ab, gm) {
+        (Some(a), Some(g)) => (format!("AB {}, GM {}", a, g), "MakerNotes:WBShiftAB"),
+        (Some(a), None) => (format!("AB {}", a), "MakerNotes:WBShiftAB"),
+        (None, Some(g)) => (format!("GM {}", g), "MakerNotes:WBShiftGM"),
+        (None, None) => return None,
+    };
+
+    Some(DetailValue {
+        values: vec![formatted],
+        source: source.to_string(),
+    })
+}
+
 fn apply_camera_settings_formatters(tags: &[Tag], result: &mut Details) {
     // Fujifilm stores monochrome simulations in Saturation, not FilmMode.
     if let Some(tag) = find_fuji_maker_tag_entry(tags, "Saturation") {
@@ -1767,6 +1967,13 @@ fn apply_camera_settings_formatters(tags: &[Tag], result: &mut Details) {
     }
     if let Some(grain) = format_fuji_grain_effect(tags) {
         result.insert("grainEffect".into(), grain);
+    }
+    if !result.contains_key("whiteBalanceShift") {
+        if let Some(wb) = format_ab_gm_wb_shift(tags, "Canon")
+            .or_else(|| format_ab_gm_wb_shift(tags, "Panasonic"))
+        {
+            result.insert("whiteBalanceShift".into(), wb);
+        }
     }
 }
 

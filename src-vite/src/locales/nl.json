@@ -1324,12 +1324,26 @@
       "colorChromeFxBlue": "Color Chrome Blauw",
       "focusMode": "Focusmodus",
       "driveMode": "Opnamemodus",
-      "imageStabilization": "Stabilisatie"
+      "imageStabilization": "Stabilisatie",
+      "pictureStyle": "Beeldstijl",
+      "pictureControl": "Picture Control",
+      "creativeStyle": "Creatieve stijl",
+      "pictureProfile": "Beeldprofiel",
+      "pictureEffect": "Beeldeffect",
+      "photoStyle": "Fotostijl",
+      "autoLightingOptimizer": "Auto Lighting Optimizer",
+      "highlightTonePriority": "Lichte tonen prioriteit",
+      "activeDLighting": "Actieve D-Lighting",
+      "dynamicRangeOptimizer": "D-Range Optimizer",
+      "intelligentDRange": "Intelligente D-Range",
+      "contrast": "Contrast",
+      "shutterCount": "Aantal sluitercycli"
     },
     "metadata_details_retry": "Metagegevens konden niet worden gelezen. Klik om opnieuw te proberen.",
     "true_north": "Ware noorden",
     "magnetic_north": "Magnetische noorden",
-    "camera_settings": "Camera-instellingen"
+    "camera_settings": "Camera-instellingen",
+    "all_brands": "Alle"
   },
   "map": {
     "show_map": "Kaart tonen",

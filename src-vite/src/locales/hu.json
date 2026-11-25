@@ -1324,12 +1324,26 @@
       "colorChromeFxBlue": "Color Chrome Kék",
       "focusMode": "Fókuszmód",
       "driveMode": "Felvételi mód",
-      "imageStabilization": "Stabilizálás"
+      "imageStabilization": "Stabilizálás",
+      "pictureStyle": "Képstílus",
+      "pictureControl": "Picture Control",
+      "creativeStyle": "Kreatív stílus",
+      "pictureProfile": "Képprofil",
+      "pictureEffect": "Képhatás",
+      "photoStyle": "Fotóstílus",
+      "autoLightingOptimizer": "Automatikus megvilágítás-optimalizáló",
+      "highlightTonePriority": "Csúcsfény-elsőbbség",
+      "activeDLighting": "Aktív D-Lighting",
+      "dynamicRangeOptimizer": "D-tartomány optimalizáló",
+      "intelligentDRange": "Intelligens D-tartomány",
+      "contrast": "Kontraszt",
+      "shutterCount": "Expozíciók száma"
     },
     "metadata_details_retry": "A metaadatok nem olvashatók. Kattintson az újrapróbáláshoz.",
     "true_north": "Földrajzi észak",
     "magnetic_north": "Mágneses észak",
-    "camera_settings": "Kamera beállítások"
+    "camera_settings": "Kamera beállítások",
+    "all_brands": "Mind"
   },
   "map": {
     "show_map": "Térkép megjelenítése",

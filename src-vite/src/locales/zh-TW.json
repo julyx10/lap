@@ -1324,12 +1324,26 @@
       "colorChromeFxBlue": "色彩FX藍色",
       "focusMode": "對焦模式",
       "driveMode": "驅動模式",
-      "imageStabilization": "防手震"
+      "imageStabilization": "防手震",
+      "pictureStyle": "相片風格",
+      "pictureControl": "Picture Control",
+      "creativeStyle": "風格設定",
+      "pictureProfile": "相片設定檔",
+      "pictureEffect": "相片效果",
+      "photoStyle": "相片樣式",
+      "autoLightingOptimizer": "自動亮度優化",
+      "highlightTonePriority": "高光色調優先",
+      "activeDLighting": "主動式 D-Lighting",
+      "dynamicRangeOptimizer": "動態範圍最佳化",
+      "intelligentDRange": "智慧動態範圍",
+      "contrast": "對比度",
+      "shutterCount": "快門次數"
     },
     "metadata_details_retry": "中繼資料讀取失敗，點擊重試",
     "true_north": "真北",
     "magnetic_north": "磁北",
-    "camera_settings": "相機設定"
+    "camera_settings": "相機設定",
+    "all_brands": "全部"
   },
   "map": {
     "show_map": "顯示地圖",

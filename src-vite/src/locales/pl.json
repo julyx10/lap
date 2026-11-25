@@ -1324,12 +1324,26 @@
       "colorChromeFxBlue": "Color Chrome Niebieski",
       "focusMode": "Tryb ostrości",
       "driveMode": "Tryb wyzwalania",
-      "imageStabilization": "Stabilizacja"
+      "imageStabilization": "Stabilizacja",
+      "pictureStyle": "Styl obrazów",
+      "pictureControl": "Picture Control",
+      "creativeStyle": "Strefa twórcza",
+      "pictureProfile": "Profil obrazu",
+      "pictureEffect": "Efekt wizualny",
+      "photoStyle": "Styl zdjęcia",
+      "autoLightingOptimizer": "Auto Lighting Optimizer",
+      "highlightTonePriority": "Priorytet jasnych partii",
+      "activeDLighting": "Aktywna funkcja D-Lighting",
+      "dynamicRangeOptimizer": "Optymalizator zakresu dynamicznego",
+      "intelligentDRange": "Inteligentny zakres dynamiczny",
+      "contrast": "Kontrast",
+      "shutterCount": "Liczba wyzwoleń migawki"
     },
     "metadata_details_retry": "Nie można odczytać metadanych. Kliknij, aby ponowić.",
     "true_north": "Północ geograficzna",
     "magnetic_north": "Północ magnetyczna",
-    "camera_settings": "Ustawienia aparatu"
+    "camera_settings": "Ustawienia aparatu",
+    "all_brands": "Wszystkie"
   },
   "map": {
     "show_map": "Pokaż mapę",

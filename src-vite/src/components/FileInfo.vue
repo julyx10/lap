@@ -746,10 +746,11 @@ const detailKeys: Record<DetailSection, string[]> = {
   capture: ['flash', 'whiteBalance', 'exposureMode', 'exposureProgram', 'meteringMode', 'focalLength35mm', 'timeZone'],
   location: ['direction', 'directionRef'],
   cameraSettings: [
-    'filmSimulation', 'dynamicRange', 'highlightTone', 'shadowTone',
-    'saturation', 'sharpness', 'noiseReduction', 'clarity',
+    'filmSimulation', 'pictureStyle', 'pictureControl', 'creativeStyle', 'pictureProfile', 'pictureEffect', 'photoStyle',
+    'dynamicRange', 'autoLightingOptimizer', 'highlightTonePriority', 'activeDLighting', 'dynamicRangeOptimizer', 'intelligentDRange',
+    'highlightTone', 'shadowTone', 'contrast', 'saturation', 'sharpness', 'noiseReduction', 'clarity',
     'whiteBalanceShift', 'grainEffect', 'colorChromeEffect', 'colorChromeFxBlue',
-    'focusMode', 'driveMode', 'imageStabilization',
+    'focusMode', 'driveMode', 'imageStabilization', 'shutterCount',
   ],
 };
 const sourceFallbacks: Record<string, string> = { title: 'e_title', headline: 'e_headline', creator: 'e_artist', copyright: 'e_copyright', software: 'e_software' };

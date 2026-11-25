@@ -17,9 +17,33 @@
         </label>
       </section>
       <section v-for="group in fileInfoFieldGroups" :key="group.key" class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm" :aria-labelledby="`info-fields-${group.key}`">
-        <h2 :id="`info-fields-${group.key}`" class="flex items-center font-bold uppercase text-[10px] tracking-widest text-base-content/30">{{ $t(group.label) }}</h2>
+        <div class="flex items-center justify-between gap-2">
+          <h2 :id="`info-fields-${group.key}`" class="flex items-center font-bold uppercase text-[10px] tracking-widest text-base-content/30">{{ $t(group.label) }}</h2>
+          <button
+            v-if="group.key === 'cameraSettings'"
+            type="button"
+            class="text-[11px] text-primary hover:underline cursor-pointer"
+            @click="toggleVisibleCameraSettings"
+          >
+            {{ allVisibleCameraSettingsSelected ? $t('menu.select.none') : $t('menu.select.all') }}
+          </button>
+        </div>
+        <div v-if="group.key === 'cameraSettings'" class="flex flex-wrap gap-1">
+          <button
+            v-for="brand in cameraBrandFilterOptions"
+            :key="brand.key"
+            type="button"
+            class="px-2 py-0.5 rounded-full text-[11px] transition-colors cursor-pointer"
+            :class="selectedCameraBrand === brand.key
+              ? 'bg-primary text-primary-content font-medium'
+              : 'bg-base-content/10 text-base-content/70 hover:bg-base-content/15'"
+            @click="selectedCameraBrand = brand.key"
+          >
+            {{ brand.key === 'all' ? $t('file_info.all_brands') : brand.label }}
+          </button>
+        </div>
         <div class="grid grid-cols-2 gap-x-3 gap-y-2">
-          <label v-for="field in group.fields" :key="field.key" class="flex items-center gap-2 text-xs">
+          <label v-for="field in visibleFieldsFor(group)" :key="field.key" class="flex items-center gap-2 text-xs">
             <input type="checkbox" class="checkbox checkbox-primary checkbox-sm shrink-0"
               :checked="selected.includes(field.key)"
               @change="toggle(field.key, ($event.target as HTMLInputElement).checked)" />
@@ -38,12 +62,40 @@
 import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue';
 import ModalDialog from '@/components/ModalDialog.vue';
 import { config } from '@/common/config';
-import { fileInfoFieldGroups, allFileInfoFields, defaultFileInfoFields, normalizeFileInfoFields } from '@/common/fileInfoFields';
+import {
+  fileInfoFieldGroups,
+  allFileInfoFields,
+  defaultFileInfoFields,
+  normalizeFileInfoFields,
+  cameraSettingsBrands,
+  filterCameraSettingsFields,
+  type CameraSettingsBrand,
+} from '@/common/fileInfoFields';
 import { useUIStore } from '@/stores/uiStore';
 
 const emit = defineEmits(['cancel']);
 const uiStore = useUIStore();
 const selected = computed(() => normalizeFileInfoFields(config.infoPanel.fields));
+const selectedCameraBrand = ref<'all' | CameraSettingsBrand>('all');
+const cameraBrandFilterOptions: ReadonlyArray<{ key: 'all' | CameraSettingsBrand; label: string }> = [
+  { key: 'all', label: 'All' },
+  ...cameraSettingsBrands,
+];
+const visibleCameraSettingsFields = computed(() => filterCameraSettingsFields(selectedCameraBrand.value));
+const allVisibleCameraSettingsSelected = computed(() =>
+  visibleCameraSettingsFields.value.length > 0
+  && visibleCameraSettingsFields.value.every(field => selected.value.includes(field.key))
+);
+function visibleFieldsFor(group: (typeof fileInfoFieldGroups)[number]) {
+  return group.key === 'cameraSettings' ? visibleCameraSettingsFields.value : group.fields;
+}
+function toggleVisibleCameraSettings() {
+  const keys = visibleCameraSettingsFields.value.map(field => field.key);
+  const next = allVisibleCameraSettingsSelected.value
+    ? selected.value.filter(key => !keys.includes(key))
+    : [...selected.value, ...keys];
+  config.infoPanel.fields = normalizeFileInfoFields(next);
+}
 const matchesFields = (fields: string[]) => selected.value.length === fields.length && fields.every(key => selected.value.includes(key));
 const preset = ref(matchesFields(defaultFileInfoFields) ? 'default' : matchesFields(allFileInfoFields) ? 'all' : 'custom');
 watch(selected, () => { preset.value = 'custom'; }, { flush: 'sync' });
