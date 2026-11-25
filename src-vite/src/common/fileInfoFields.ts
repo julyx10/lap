@@ -6,6 +6,61 @@ export const editableMetadataFields = [
   { key: 'e_copyright', label: 'file_info.detail_fields.copyright' },
 ] as const;
 
+export type CameraSettingsBrand = 'fujifilm' | 'canon' | 'nikon' | 'sony' | 'panasonic';
+
+export const cameraSettingsBrands: ReadonlyArray<{ key: CameraSettingsBrand; label: string }> = [
+  { key: 'fujifilm', label: 'Fujifilm' },
+  { key: 'canon', label: 'Canon' },
+  { key: 'nikon', label: 'Nikon' },
+  { key: 'sony', label: 'Sony' },
+  { key: 'panasonic', label: 'Panasonic / Leica' },
+];
+
+const ALL_CAMERA_BRANDS: readonly CameraSettingsBrand[] = ['fujifilm', 'canon', 'nikon', 'sony', 'panasonic'];
+
+const cameraSettingsFieldDefs: ReadonlyArray<{ key: string; brands: readonly CameraSettingsBrand[] }> = [
+  { key: 'filmSimulation', brands: ['fujifilm'] },
+  { key: 'pictureStyle', brands: ['canon'] },
+  { key: 'pictureControl', brands: ['nikon'] },
+  { key: 'creativeStyle', brands: ['sony'] },
+  { key: 'pictureProfile', brands: ['sony'] },
+  { key: 'pictureEffect', brands: ['sony'] },
+  { key: 'photoStyle', brands: ['panasonic'] },
+  { key: 'dynamicRange', brands: ['fujifilm'] },
+  { key: 'autoLightingOptimizer', brands: ['canon'] },
+  { key: 'highlightTonePriority', brands: ['canon'] },
+  { key: 'activeDLighting', brands: ['nikon'] },
+  { key: 'dynamicRangeOptimizer', brands: ['sony'] },
+  { key: 'intelligentDRange', brands: ['panasonic'] },
+  { key: 'highlightTone', brands: ['fujifilm'] },
+  { key: 'shadowTone', brands: ['fujifilm'] },
+  { key: 'contrast', brands: ALL_CAMERA_BRANDS },
+  { key: 'saturation', brands: ALL_CAMERA_BRANDS },
+  { key: 'sharpness', brands: ALL_CAMERA_BRANDS },
+  { key: 'noiseReduction', brands: ALL_CAMERA_BRANDS },
+  { key: 'clarity', brands: ['fujifilm', 'nikon'] },
+  { key: 'whiteBalanceShift', brands: ALL_CAMERA_BRANDS },
+  { key: 'grainEffect', brands: ['fujifilm'] },
+  { key: 'colorChromeEffect', brands: ['fujifilm'] },
+  { key: 'colorChromeFxBlue', brands: ['fujifilm'] },
+  { key: 'focusMode', brands: ALL_CAMERA_BRANDS },
+  { key: 'driveMode', brands: ['fujifilm', 'canon', 'nikon', 'sony'] },
+  { key: 'imageStabilization', brands: ALL_CAMERA_BRANDS },
+  { key: 'shutterCount', brands: ['nikon', 'sony'] },
+];
+
+export const cameraSettingsFields = cameraSettingsFieldDefs.map(({ key, brands }) => ({
+  key: `cameraSettings.${key}`,
+  label: `file_info.detail_fields.${key}`,
+  brands,
+}));
+
+export function filterCameraSettingsFields(brand: 'all' | CameraSettingsBrand) {
+  return brand === 'all'
+    ? cameraSettingsFields
+    : cameraSettingsFields.filter(field => field.brands.includes(brand));
+}
+
 // Field choices are independent of section expansion.
 const fields = (section: string, keys: string[], details = false) => keys.map(key => ({
   key: `${section}.${key}`,
@@ -24,14 +79,7 @@ export const fileInfoFieldGroups = [
     ...fields('capture', ['taken_at', 'camera', 'lens', 'capture_settings']),
     ...fields('capture', ['flash', 'whiteBalance', 'exposureMode', 'exposureProgram', 'meteringMode', 'focalLength35mm', 'timeZone'], true),
   ] },
-  { key: 'cameraSettings', label: 'file_info.camera_settings', fields: [
-    ...fields('cameraSettings', [
-      'filmSimulation', 'dynamicRange', 'highlightTone', 'shadowTone',
-      'saturation', 'sharpness', 'noiseReduction', 'clarity',
-      'whiteBalanceShift', 'grainEffect', 'colorChromeEffect', 'colorChromeFxBlue',
-      'focusMode', 'driveMode', 'imageStabilization',
-    ], true),
-  ] },
+  { key: 'cameraSettings', label: 'file_info.camera_settings', fields: cameraSettingsFields },
   { key: 'location', label: 'file_info.geo_location', fields: [
     ...fields('location', ['geo_location']),
     { key: 'location.gps', label: 'GPS' },

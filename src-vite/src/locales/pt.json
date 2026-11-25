@@ -1324,12 +1324,26 @@
       "colorChromeFxBlue": "Color Chrome Azul",
       "focusMode": "Modo de foco",
       "driveMode": "Modo de disparo",
-      "imageStabilization": "Estabilização"
+      "imageStabilization": "Estabilização",
+      "pictureStyle": "Estilo de imagem",
+      "pictureControl": "Picture Control",
+      "creativeStyle": "Estilo criativo",
+      "pictureProfile": "Perfil de imagem",
+      "pictureEffect": "Efeito de imagem",
+      "photoStyle": "Estilo de foto",
+      "autoLightingOptimizer": "Otimizador de iluminação auto",
+      "highlightTonePriority": "Prioridade de tom de realces",
+      "activeDLighting": "D-Lighting ativo",
+      "dynamicRangeOptimizer": "Otimizador de faixa dinâmica",
+      "intelligentDRange": "Faixa dinâmica inteligente",
+      "contrast": "Contraste",
+      "shutterCount": "Contagem de disparos"
     },
     "metadata_details_retry": "Não foi possível ler os metadados. Clique para tentar novamente.",
     "true_north": "Norte verdadeiro",
     "magnetic_north": "Norte magnético",
-    "camera_settings": "Configurações da câmera"
+    "camera_settings": "Configurações da câmera",
+    "all_brands": "Todas"
   },
   "map": {
     "show_map": "Mostrar mapa",

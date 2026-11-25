@@ -1324,12 +1324,26 @@
       "colorChromeFxBlue": "Color Chrome Xanh dương",
       "focusMode": "Chế độ lấy nét",
       "driveMode": "Chế độ chụp",
-      "imageStabilization": "Chống rung"
+      "imageStabilization": "Chống rung",
+      "pictureStyle": "Kiểu ảnh",
+      "pictureControl": "Picture Control",
+      "creativeStyle": "Phong cách sáng tạo",
+      "pictureProfile": "Hồ sơ hình ảnh",
+      "pictureEffect": "Hiệu ứng hình ảnh",
+      "photoStyle": "Phong cách ảnh",
+      "autoLightingOptimizer": "Tối ưu hóa ánh sáng tự động",
+      "highlightTonePriority": "Ưu tiên tông sáng",
+      "activeDLighting": "Active D-Lighting",
+      "dynamicRangeOptimizer": "Tối ưu dải tương phản động",
+      "intelligentDRange": "Dải tương phản thông minh",
+      "contrast": "Độ tương phản",
+      "shutterCount": "Số lần chụp"
     },
     "metadata_details_retry": "Không thể đọc siêu dữ liệu. Nhấp để thử lại.",
     "true_north": "Bắc thực",
     "magnetic_north": "Bắc từ",
-    "camera_settings": "Cài đặt máy ảnh"
+    "camera_settings": "Cài đặt máy ảnh",
+    "all_brands": "Tất cả"
   },
   "map": {
     "show_map": "Hiện bản đồ",

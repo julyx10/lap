@@ -1324,12 +1324,26 @@
       "colorChromeFxBlue": "Color Chrome Blu",
       "focusMode": "Modalità messa a fuoco",
       "driveMode": "Modalità scatto",
-      "imageStabilization": "Stabilizzazione"
+      "imageStabilization": "Stabilizzazione",
+      "pictureStyle": "Stile foto",
+      "pictureControl": "Picture Control",
+      "creativeStyle": "Stile creativo",
+      "pictureProfile": "Profilo immagine",
+      "pictureEffect": "Effetto immagine",
+      "photoStyle": "Stile fotografico",
+      "autoLightingOptimizer": "Ottimizzazione luce auto",
+      "highlightTonePriority": "Priorità tonalità chiare",
+      "activeDLighting": "D-Lighting attivo",
+      "dynamicRangeOptimizer": "Ottimizzatore gamma dinamica",
+      "intelligentDRange": "Gamma dinamica intelligente",
+      "contrast": "Contrasto",
+      "shutterCount": "Conteggio scatti"
     },
     "metadata_details_retry": "Impossibile leggere i metadati. Fai clic per riprovare.",
     "true_north": "Nord geografico",
     "magnetic_north": "Nord magnetico",
-    "camera_settings": "Impostazioni fotocamera"
+    "camera_settings": "Impostazioni fotocamera",
+    "all_brands": "Tutti"
   },
   "map": {
     "show_map": "Mostra mappa",

@@ -1324,12 +1324,26 @@
       "colorChromeFxBlue": "Color Chrome Синий",
       "focusMode": "Режим фокусировки",
       "driveMode": "Режим съёмки",
-      "imageStabilization": "Стабилизация"
+      "imageStabilization": "Стабилизация",
+      "pictureStyle": "Стиль изображения",
+      "pictureControl": "Режим Picture Control",
+      "creativeStyle": "Творческий стиль",
+      "pictureProfile": "Профиль изображения",
+      "pictureEffect": "Эффект рисунка",
+      "photoStyle": "Фотостиль",
+      "autoLightingOptimizer": "Автокоррекция яркости",
+      "highlightTonePriority": "Приоритет светов",
+      "activeDLighting": "Активный D-Lighting",
+      "dynamicRangeOptimizer": "Оптимизатор динамического диапазона",
+      "intelligentDRange": "Интеллектуальный динамический диапазон",
+      "contrast": "Контрастность",
+      "shutterCount": "Счётчик затвора"
     },
     "metadata_details_retry": "Не удалось прочитать метаданные. Нажмите, чтобы повторить.",
     "true_north": "Истинный север",
     "magnetic_north": "Магнитный север",
-    "camera_settings": "Настройки камеры"
+    "camera_settings": "Настройки камеры",
+    "all_brands": "Все"
   },
   "map": {
     "show_map": "Показать карту",

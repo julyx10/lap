@@ -1324,12 +1324,26 @@
       "colorChromeFxBlue": "컬러 크롬 FX 블루",
       "focusMode": "초점 모드",
       "driveMode": "드라이브 모드",
-      "imageStabilization": "손떨림 보정"
+      "imageStabilization": "손떨림 보정",
+      "pictureStyle": "픽처 스타일",
+      "pictureControl": "픽처 컨트롤",
+      "creativeStyle": "크리에이티브 스타일",
+      "pictureProfile": "픽처 프로파일",
+      "pictureEffect": "사진 효과",
+      "photoStyle": "포토 스타일",
+      "autoLightingOptimizer": "자동 밝기 최적화",
+      "highlightTonePriority": "고휘도 측 계조 우선",
+      "activeDLighting": "액티브 D-Lighting",
+      "dynamicRangeOptimizer": "D-레인지 최적화",
+      "intelligentDRange": "인텔리전트 D-레인지",
+      "contrast": "대비",
+      "shutterCount": "셔터 횟수"
     },
     "metadata_details_retry": "메타데이터를 읽을 수 없습니다. 클릭하여 다시 시도하세요.",
     "true_north": "진북",
     "magnetic_north": "자북",
-    "camera_settings": "카메라 설정"
+    "camera_settings": "카메라 설정",
+    "all_brands": "전체"
   },
   "map": {
     "show_map": "지도 보기",

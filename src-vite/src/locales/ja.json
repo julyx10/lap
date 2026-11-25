@@ -1324,12 +1324,26 @@
       "colorChromeFxBlue": "カラークローム ブルー",
       "focusMode": "フォーカスモード",
       "driveMode": "ドライブモード",
-      "imageStabilization": "手ブレ補正"
+      "imageStabilization": "手ブレ補正",
+      "pictureStyle": "ピクチャースタイル",
+      "pictureControl": "ピクチャーコントロール",
+      "creativeStyle": "クリエイティブスタイル",
+      "pictureProfile": "ピクチャープロファイル",
+      "pictureEffect": "ピクチャーエフェクト",
+      "photoStyle": "フォトスタイル",
+      "autoLightingOptimizer": "オートライティングオプティマイザ",
+      "highlightTonePriority": "高輝度側・階調優先",
+      "activeDLighting": "アクティブD-ライティング",
+      "dynamicRangeOptimizer": "Dレンジオプティマイザー",
+      "intelligentDRange": "インテリジェントDレンジ",
+      "contrast": "コントラスト",
+      "shutterCount": "シャッター回数"
     },
     "metadata_details_retry": "メタデータを読み込めません。クリックして再試行。",
     "true_north": "真北",
     "magnetic_north": "磁北",
-    "camera_settings": "カメラ設定"
+    "camera_settings": "カメラ設定",
+    "all_brands": "すべて"
   },
   "map": {
     "show_map": "地図を表示",

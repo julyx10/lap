@@ -1324,12 +1324,26 @@
       "colorChromeFxBlue": "色彩FX蓝色",
       "focusMode": "对焦模式",
       "driveMode": "驱动模式",
-      "imageStabilization": "防抖"
+      "imageStabilization": "防抖",
+      "pictureStyle": "照片风格",
+      "pictureControl": "优化校准",
+      "creativeStyle": "创意风格",
+      "pictureProfile": "图片配置文件",
+      "pictureEffect": "照片效果",
+      "photoStyle": "照片格调",
+      "autoLightingOptimizer": "自动亮度优化",
+      "highlightTonePriority": "高光色调优先",
+      "activeDLighting": "动态 D-Lighting",
+      "dynamicRangeOptimizer": "动态范围优化",
+      "intelligentDRange": "智能动态范围",
+      "contrast": "对比度",
+      "shutterCount": "快门次数"
     },
     "metadata_details_retry": "元数据读取失败，点击重试",
     "true_north": "真北",
     "magnetic_north": "磁北",
-    "camera_settings": "相机设置"
+    "camera_settings": "相机设置",
+    "all_brands": "全部"
   },
   "map": {
     "show_map": "显示地图",

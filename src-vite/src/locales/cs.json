@@ -1324,12 +1324,26 @@
       "colorChromeFxBlue": "Color Chrome Modrá",
       "focusMode": "Režim ostření",
       "driveMode": "Režim snímání",
-      "imageStabilization": "Stabilizace"
+      "imageStabilization": "Stabilizace",
+      "pictureStyle": "Picture Style",
+      "pictureControl": "Picture Control",
+      "creativeStyle": "Kreativní styl",
+      "pictureProfile": "Profil obrazu",
+      "pictureEffect": "Obrazový efekt",
+      "photoStyle": "Styl fotografie",
+      "autoLightingOptimizer": "Auto Lighting Optimizer",
+      "highlightTonePriority": "Priorita jasů",
+      "activeDLighting": "Active D-Lighting",
+      "dynamicRangeOptimizer": "Optimalizace dynamického rozsahu",
+      "intelligentDRange": "Inteligentní dynamický rozsah",
+      "contrast": "Kontrast",
+      "shutterCount": "Počet expozic"
     },
     "metadata_details_retry": "Metadata se nepodařilo načíst. Klikněte pro nový pokus.",
     "true_north": "Zeměpisný sever",
     "magnetic_north": "Magnetický sever",
-    "camera_settings": "Nastavení fotoaparátu"
+    "camera_settings": "Nastavení fotoaparátu",
+    "all_brands": "Vše"
   },
   "map": {
     "show_map": "Zobrazit mapu",

@@ -493,18 +493,52 @@ test('failed inline metadata saves restore the original draft for retry', async 
   assert.deepEqual(calls[1],['library',[10],{e_title:'Draft'}]);
 });
 
-test('camera settings fields are excluded from defaults and included in allFileInfoFields', async () => {
+test('camera settings fields are excluded from defaults and filter cleanly by brand', async () => {
   const fieldsSource = await readFile(new URL('../src/common/fileInfoFields.ts', import.meta.url), 'utf8');
   const transpiled = ts.transpile(fieldsSource.replaceAll('export ', ''), { target: ts.ScriptTarget.ES2022 });
-  const { allFileInfoFields, defaultFileInfoFields, fileInfoFieldGroups } = new Function(
-    `${transpiled}; return { allFileInfoFields, defaultFileInfoFields, fileInfoFieldGroups };`
+  const {
+    allFileInfoFields,
+    defaultFileInfoFields,
+    fileInfoFieldGroups,
+    filterCameraSettingsFields,
+  } = new Function(
+    `${transpiled}; return { allFileInfoFields, defaultFileInfoFields, fileInfoFieldGroups, filterCameraSettingsFields };`
   )();
   const cameraGroup = fileInfoFieldGroups.find(group => group.key === 'cameraSettings');
   assert.ok(cameraGroup, 'cameraSettings field group should exist');
-  assert.ok(cameraGroup.fields.some(f => f.key === 'cameraSettings.filmSimulation'));
-  assert.ok(cameraGroup.fields.some(f => f.key === 'cameraSettings.dynamicRange'));
-  assert.ok(allFileInfoFields.includes('cameraSettings.filmSimulation'));
+  for (const key of [
+    'cameraSettings.filmSimulation',
+    'cameraSettings.dynamicRange',
+    'cameraSettings.pictureStyle',
+    'cameraSettings.pictureControl',
+    'cameraSettings.creativeStyle',
+    'cameraSettings.photoStyle',
+    'cameraSettings.shutterCount',
+  ]) {
+    assert.ok(cameraGroup.fields.some(f => f.key === key), `missing ${key}`);
+    assert.ok(allFileInfoFields.includes(key), `missing ${key} in allFileInfoFields`);
+  }
   assert.equal(defaultFileInfoFields.some(key => key.startsWith('cameraSettings.')), false);
+
+  const allKeys = filterCameraSettingsFields('all').map(f => f.key);
+  assert.equal(allKeys.length, cameraGroup.fields.length);
+
+  const sonyKeys = filterCameraSettingsFields('sony').map(f => f.key);
+  assert.ok(sonyKeys.includes('cameraSettings.creativeStyle'));
+  assert.ok(sonyKeys.includes('cameraSettings.shutterCount'));
+  assert.ok(sonyKeys.includes('cameraSettings.contrast'));
+  assert.equal(sonyKeys.includes('cameraSettings.filmSimulation'), false);
+  assert.equal(sonyKeys.includes('cameraSettings.pictureStyle'), false);
+
+  const fujiKeys = filterCameraSettingsFields('fujifilm').map(f => f.key);
+  assert.ok(fujiKeys.includes('cameraSettings.filmSimulation'));
+  assert.ok(fujiKeys.includes('cameraSettings.clarity'));
+  assert.equal(fujiKeys.includes('cameraSettings.shutterCount'), false);
+
+  const panasonicKeys = filterCameraSettingsFields('panasonic').map(f => f.key);
+  assert.ok(panasonicKeys.includes('cameraSettings.photoStyle'));
+  assert.ok(panasonicKeys.includes('cameraSettings.whiteBalanceShift'));
+  assert.equal(panasonicKeys.includes('cameraSettings.driveMode'), false);
 });
 
 test('camera settings section is collapsed by default and renders rows when expanded', async () => {
