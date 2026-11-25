@@ -189,6 +189,8 @@
         "live_motion_photos": "实况与动态照片"
       },
       "operators": {
+        "in_period": "在期间",
+        "on": "等于",
         "is": "=",
         "is_not": "≠",
         "gt": ">",

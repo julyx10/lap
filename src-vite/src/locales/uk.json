@@ -189,6 +189,8 @@
         "live_motion_photos": "Live та Motion фото"
       },
       "operators": {
+        "in_period": "за період",
+        "on": "у день",
         "is": "=",
         "is_not": "≠",
         "gt": ">",

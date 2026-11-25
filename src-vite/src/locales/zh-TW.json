@@ -189,6 +189,8 @@
         "live_motion_photos": "Live 與 Motion 相片"
       },
       "operators": {
+        "in_period": "在期間",
+        "on": "等於",
         "is": "=",
         "is_not": "≠",
         "gt": ">",

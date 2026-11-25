@@ -189,6 +189,8 @@
         "live_motion_photos": "ライブフォトとモーションフォト"
       },
       "operators": {
+        "in_period": "期間内",
+        "on": "指定日",
         "is": "=",
         "is_not": "≠",
         "gt": ">",

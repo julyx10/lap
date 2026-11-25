@@ -189,6 +189,8 @@
         "live_motion_photos": "라이브 포토 및 모션 포토"
       },
       "operators": {
+        "in_period": "기간 내",
+        "on": "지정일",
         "is": "=",
         "is_not": "≠",
         "gt": ">",

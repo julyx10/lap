@@ -6266,6 +6266,18 @@ impl AFile {
 
     fn smart_rule_date_value(value: &JsonValue, key: &str) -> Option<i64> {
         value.get(key).and_then(Self::smart_rule_i64)
+            .filter(|timestamp| chrono::Local.timestamp_opt(*timestamp, 0).single().is_some())
+    }
+
+    fn smart_rule_day_range(timestamp: i64) -> Result<(i64, i64), String> {
+        let date = chrono::Local.timestamp_opt(timestamp, 0).single()
+            .ok_or_else(|| "Invalid date value".to_string())?.date_naive();
+        let next = date.succ_opt().ok_or_else(|| "Date out of range".to_string())?;
+        let midnight = |date: chrono::NaiveDate| {
+            chrono::Local.from_local_datetime(&date.and_hms_opt(0, 0, 0).unwrap())
+                .earliest().map(|dt| dt.timestamp()).ok_or_else(|| "Invalid local date".to_string())
+        };
+        Ok((midnight(date)?, midnight(next)?))
     }
 
     fn smart_rule_relative_date_cutoff(value: &JsonValue) -> Result<i64, String> {
@@ -6278,17 +6290,19 @@ impl AFile {
             .get("unit")
             .and_then(JsonValue::as_str)
             .unwrap_or("day");
-        let days = match unit {
-            "day" | "days" => amount,
-            "month" | "months" => amount * 30,
-            "year" | "years" => amount * 365,
+        let days_per_unit = match unit {
+            "day" | "days" => 1,
+            "month" | "months" => 30,
+            "year" | "years" => 365,
             _ => return Err(format!("Unsupported relative date unit: {}", unit)),
         };
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .map_err(|e| e.to_string())?
             .as_secs() as i64;
-        Ok(now - days * 86_400)
+        amount.checked_mul(days_per_unit).and_then(|days| days.checked_mul(86_400))
+            .and_then(|seconds| now.checked_sub(seconds))
+            .ok_or_else(|| "Relative date amount too large".to_string())
     }
 
     fn smart_rule_date_period_range(value: &JsonValue) -> Result<(i64, i64), String> {
@@ -6332,9 +6346,9 @@ impl AFile {
         let orientation = Self::smart_rule_string(value)
             .ok_or_else(|| "Orientation value required".to_string())?;
         match orientation.as_str() {
-            "landscape" => Ok("(a.width > a.height)".to_string()),
-            "portrait" => Ok("(a.height > a.width)".to_string()),
-            "square" => Ok("(a.width = a.height)".to_string()),
+            "landscape" => Ok("(a.width > 0 AND a.height > 0 AND a.width > a.height)".to_string()),
+            "portrait" => Ok("(a.width > 0 AND a.height > 0 AND a.height > a.width)".to_string()),
+            "square" => Ok("(a.width > 0 AND a.height > 0 AND a.width = a.height)".to_string()),
             _ => Err(format!("Unsupported orientation value: {}", orientation)),
         }
     }
@@ -6421,6 +6435,22 @@ impl AFile {
         let operator = rule.operator.as_str();
         let value = &rule.value;
 
+        if matches!(field, "rating" | "culling" | "width" | "height" | "duration" | "size")
+            && !matches!(operator, "empty" | "not_empty") {
+            let number = |value: &JsonValue| -> Result<i64, String> {
+                Self::smart_rule_i64(value)
+                    .filter(|v| *v >= 0 && (field != "rating" || *v <= 5) && (field != "culling" || *v <= 2))
+                    .ok_or_else(|| format!("Invalid {} value", field))
+            };
+            if operator == "between" {
+                let start = number(value.get("min").or_else(|| value.get("start")).unwrap_or(&JsonValue::Null))?;
+                let end = number(value.get("max").or_else(|| value.get("end")).unwrap_or(&JsonValue::Null))?;
+                if start > end { return Err("Range start must not exceed end".to_string()); }
+            } else {
+                number(value)?;
+            }
+        }
+
         match field {
             "folder_name" => Self::build_smart_name_condition("b.name", operator, value, sql_params),
             "name" => Self::build_smart_name_condition("a.name", operator, value, sql_params),
@@ -6481,7 +6511,7 @@ impl AFile {
             }
             "rating" => {
                 let mut conditions = Vec::new();
-                Self::push_numeric_rule(&mut conditions, sql_params, "a.rating", operator, value)?;
+                Self::push_numeric_rule(&mut conditions, sql_params, "COALESCE(a.rating, 0)", operator, value)?;
                 Ok(conditions.pop().unwrap_or_else(|| "1 = 1".to_string()))
             }
             "culling" => {
@@ -6510,17 +6540,27 @@ impl AFile {
                         sql_params.push(Box::new(v));
                         Ok(format!("{} < ?", date_col))
                     }
+                    "on" => {
+                        let v = Self::smart_rule_date_value(value, "value")
+                            .ok_or_else(|| "Date value required".to_string())?;
+                        let (start, end) = Self::smart_rule_day_range(v)?;
+                        sql_params.push(Box::new(start));
+                        sql_params.push(Box::new(end));
+                        Ok(format!("({} >= ? AND {} < ?)", date_col, date_col))
+                    }
                     "after" | "gt" => {
                         let v = Self::smart_rule_date_value(value, "value")
                             .ok_or_else(|| "Date value required".to_string())?;
-                        sql_params.push(Box::new(v));
-                        Ok(format!("{} > ?", date_col))
+                        let (_, end) = Self::smart_rule_day_range(v)?;
+                        sql_params.push(Box::new(end));
+                        Ok(format!("{} >= ?", date_col))
                     }
                     "between" => {
                         let start = Self::smart_rule_date_value(value, "start")
                             .ok_or_else(|| "Date start value required".to_string())?;
                         let end = Self::smart_rule_date_value(value, "end")
                             .ok_or_else(|| "Date end value required".to_string())?;
+                        if start >= end { return Err("Date range start must precede end".to_string()); }
                         sql_params.push(Box::new(start));
                         sql_params.push(Box::new(end));
                         Ok(format!("{} >= ? AND {} < ?", date_col, date_col))
@@ -6637,6 +6677,14 @@ impl AFile {
                 }
             }
             "collection" => {
+                if matches!(operator, "empty" | "not_empty") {
+                    let condition = "EXISTS (SELECT 1 FROM acollections_files cf WHERE cf.file_id = a.id)";
+                    return Ok(if operator == "empty" {
+                        format!("NOT ({})", condition)
+                    } else {
+                        condition.to_string()
+                    });
+                }
                 let id = Self::smart_rule_i64(value)
                     .ok_or_else(|| "Collection id required".to_string())?;
                 sql_params.push(Box::new(id));
@@ -6650,6 +6698,21 @@ impl AFile {
                 }
             }
             "camera" | "lens" | "location" => {
+                if matches!(operator, "empty" | "not_empty") {
+                    let columns: &[&str] = match field {
+                        "camera" => &["a.e_make", "a.e_model"],
+                        "lens" => &["a.e_lens_make", "a.e_lens_model"],
+                        _ => &["a.geo_cc", "a.geo_admin1", "a.geo_name"],
+                    };
+                    let condition = columns.iter()
+                        .map(|column| format!("TRIM(COALESCE({}, '')) != ''", column))
+                        .collect::<Vec<_>>().join(" OR ");
+                    return Ok(if operator == "empty" {
+                        format!("NOT ({})", condition)
+                    } else {
+                        format!("({})", condition)
+                    });
+                }
                 let id = Self::smart_rule_string(value)
                     .ok_or_else(|| format!("{} id required", field))?;
                 let parts: Vec<&str> = id.split("||").collect();
@@ -6696,7 +6759,7 @@ impl AFile {
                 }
                 let condition = format!("({})", conditions.join(" AND "));
                 Ok(if matches!(operator, "not_has" | "is_not" | "neq") {
-                    format!("NOT {}", condition)
+                    format!("NOT COALESCE({}, 0)", condition)
                 } else {
                     condition
                 })
@@ -11639,6 +11702,131 @@ mod batch_rename_tests {
                 (2, old.into(), target.into(), "new2".into())];
             assert!(AFile::batch_rename_names_with_conn(&mut conn, &updates).is_err());
             assert_eq!(names(&conn), before);
+        }
+    }
+}
+
+#[cfg(test)]
+mod smart_rule_semantics_tests {
+    use super::*;
+
+    fn condition(field: &str, operator: &str, value: JsonValue) -> Result<(String, Vec<Box<dyn ToSql>>), String> {
+        let rule = SmartRule { id: "test".into(), field: field.into(), operator: operator.into(), value };
+        let mut values = Vec::new();
+        let sql = AFile::build_smart_rule_condition(&rule, &mut Vec::new(), &mut false, &mut values)?;
+        Ok((sql, values))
+    }
+
+    #[test]
+    fn missing_metadata_and_zero_dimensions_have_consistent_semantics() {
+        let conn = Connection::open_in_memory().unwrap();
+        conn.execute_batch("CREATE TABLE afiles(id INTEGER, rating INTEGER, width INTEGER, height INTEGER,
+            e_make TEXT, e_model TEXT, e_lens_make TEXT, e_lens_model TEXT, geo_cc TEXT, geo_admin1 TEXT, geo_name TEXT);
+            INSERT INTO afiles VALUES
+                (1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+                (2,0,0,0,'Canon',NULL,'Canon',NULL,'JP',NULL,NULL),
+                (3,3,100,100,'Nikon','Z','Nikon','Lens','US','CA','LA'),
+                (4,5,100,0,'Canon','R','Canon','Lens','JP','Tokyo','Tokyo');").unwrap();
+        for (field, operator, value, expected) in [
+            ("rating", "is", serde_json::json!(0), vec![1_i64,2]),
+            ("rating", "is_not", serde_json::json!(0), vec![3,4]),
+            ("rating", "empty", JsonValue::Null, vec![1,2]),
+            ("orientation", "is", serde_json::json!("square"), vec![3]),
+            ("orientation", "is", serde_json::json!("landscape"), vec![]),
+            ("camera", "is_not", serde_json::json!("Canon||R"), vec![1,2,3]),
+            ("lens", "is_not", serde_json::json!("Canon||Lens"), vec![1,2,3]),
+            ("location", "is_not", serde_json::json!("JP||Tokyo||Tokyo"), vec![1,2,3]),
+            ("width", "is", serde_json::json!(100), vec![3,4]),
+        ] {
+            let (sql, values) = condition(field, operator, value).unwrap();
+            let mut stmt = conn.prepare(&format!("SELECT a.id FROM afiles a WHERE {sql} ORDER BY a.id")).unwrap();
+            let actual = stmt.query_map(params_from_iter(values.iter()), |row| row.get::<_,i64>(0))
+                .unwrap().collect::<Result<Vec<_>,_>>().unwrap();
+            assert_eq!(actual, expected, "{field} {operator}");
+        }
+    }
+
+    #[test]
+    fn invalid_numbers_ranges_and_relative_overflow_are_rejected() {
+        for (field, operator, value) in [
+            ("width", "is", serde_json::json!(-1)),
+            ("height", "is", serde_json::json!(1.5)),
+            ("duration", "is", serde_json::json!("")),
+            ("rating", "is", serde_json::json!(6)),
+            ("culling", "is", serde_json::json!(3)),
+            ("size", "between", serde_json::json!({})),
+            ("width", "between", serde_json::json!({"min":2000,"max":1000})),
+            ("date_taken", "between", serde_json::json!({"start":20,"end":10})),
+            ("date_taken", "in_last", serde_json::json!({"amount":i64::MAX,"unit":"year"})),
+        ] {
+            assert!(condition(field, operator, value).is_err(), "{field} {operator}");
+        }
+    }
+
+    #[test]
+    fn date_on_and_after_use_local_day_boundaries_and_keep_period_rules() {
+        let chosen = chrono::Local.with_ymd_and_hms(2024, 3, 10, 12, 0, 0).earliest().unwrap().timestamp();
+        let (start, end) = AFile::smart_rule_day_range(chosen).unwrap();
+        assert_eq!(chrono::Local.timestamp_opt(start,0).unwrap().date_naive(), chrono::NaiveDate::from_ymd_opt(2024,3,10).unwrap());
+        assert_eq!(chrono::Local.timestamp_opt(end,0).unwrap().date_naive(), chrono::NaiveDate::from_ymd_opt(2024,3,11).unwrap());
+        let conn = Connection::open_in_memory().unwrap();
+        conn.execute_batch("CREATE TABLE afiles(id INTEGER, taken_date INTEGER);").unwrap();
+        for (id, timestamp) in [(1,start-1),(2,start),(3,chosen),(4,end-1),(5,end)] {
+            conn.execute("INSERT INTO afiles VALUES (?,?)", params![id,timestamp]).unwrap();
+        }
+        for (operator, expected) in [("on",vec![2_i64,3,4]),("after",vec![5]),("before",vec![1])] {
+            let (sql, values) = condition("date_taken", operator, serde_json::json!({"value":start})).unwrap();
+            let mut stmt = conn.prepare(&format!("SELECT a.id FROM afiles a WHERE {sql} ORDER BY a.id")).unwrap();
+            let actual = stmt.query_map(params_from_iter(values.iter()), |row| row.get::<_,i64>(0))
+                .unwrap().collect::<Result<Vec<_>,_>>().unwrap();
+            assert_eq!(actual, expected, "{operator}");
+        }
+        for period in ["this_week","this_month","this_year"] {
+            assert!(condition("date_taken", "is", serde_json::json!(period)).is_ok());
+        }
+    }
+}
+
+#[cfg(test)]
+mod smart_empty_metadata_tests {
+    use super::*;
+
+    #[test]
+    fn empty_rules_handle_missing_partial_and_multiple_memberships() {
+        let conn = Connection::open_in_memory().unwrap();
+        conn.execute_batch(
+            "CREATE TABLE afiles(id INTEGER PRIMARY KEY, e_make TEXT, e_model TEXT,
+                e_lens_make TEXT, e_lens_model TEXT, geo_cc TEXT, geo_admin1 TEXT, geo_name TEXT);
+             CREATE TABLE acollections_files(file_id INTEGER, collection_id INTEGER);
+             INSERT INTO afiles VALUES
+                (1,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+                (2,'','','','','','',''),
+                (3,' ',' ',' ',' ',' ',' ',' '),
+                (4,'Canon',NULL,'Canon',NULL,'JP',NULL,NULL),
+                (5,NULL,'Model',NULL,'Lens',NULL,NULL,'Tokyo'),
+                (6,NULL,NULL,NULL,NULL,NULL,'Tokyo',NULL);
+             INSERT INTO acollections_files VALUES(4,10),(4,20),(5,20);"
+        ).unwrap();
+        for (field, present) in [
+            ("collection", vec![4_i64, 5]),
+            ("camera", vec![4, 5]),
+            ("lens", vec![4, 5]),
+            ("location", vec![4, 5, 6]),
+        ] {
+            for operator in ["empty", "not_empty"] {
+                // Empty operators must not require a picker value, nor use a stale one.
+                for value in [JsonValue::Null, serde_json::json!(123)] {
+                    let rule = SmartRule { id: "test".into(), field: field.into(), operator: operator.into(), value };
+                    let mut values = Vec::new();
+                    let condition = AFile::build_smart_rule_condition(&rule, &mut Vec::new(), &mut false, &mut values).unwrap();
+                    assert!(values.is_empty());
+                    let mut stmt = conn.prepare(&format!("SELECT a.id FROM afiles a WHERE {condition} ORDER BY a.id")).unwrap();
+                    let actual = stmt.query_map([], |row| row.get::<_, i64>(0)).unwrap()
+                        .collect::<Result<Vec<_>, _>>().unwrap();
+                    let expected: Vec<i64> = (1..=6).filter(|id| present.contains(id) == (operator == "not_empty")).collect();
+                    assert_eq!(actual, expected, "{field} {operator}");
+                }
+            }
         }
     }
 }

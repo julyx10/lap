@@ -189,6 +189,8 @@
         "live_motion_photos": "Live és Motion fotók"
       },
       "operators": {
+        "in_period": "időszakban",
+        "on": "ezen a napon",
         "is": "=",
         "is_not": "≠",
         "gt": ">",

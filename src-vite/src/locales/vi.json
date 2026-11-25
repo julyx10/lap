@@ -189,6 +189,8 @@
         "live_motion_photos": "Live Photos và Motion Photos"
       },
       "operators": {
+        "in_period": "trong khoảng",
+        "on": "vào ngày",
         "is": "=",
         "is_not": "≠",
         "gt": ">",

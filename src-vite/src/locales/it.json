@@ -189,6 +189,8 @@
         "live_motion_photos": "Foto Live e Motion"
       },
       "operators": {
+        "in_period": "nel periodo",
+        "on": "il giorno",
         "is": "=",
         "is_not": "≠",
         "gt": ">",

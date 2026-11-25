@@ -189,6 +189,8 @@
         "live_motion_photos": "Live- en bewegende foto's"
       },
       "operators": {
+        "in_period": "in periode",
+        "on": "op",
         "is": "=",
         "is_not": "≠",
         "gt": ">",

@@ -189,6 +189,8 @@
         "live_motion_photos": "Live & Motion Photos"
       },
       "operators": {
+        "in_period": "in",
+        "on": "on",
         "is": "=",
         "is_not": "≠",
         "gt": ">",

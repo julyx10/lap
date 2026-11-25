@@ -189,6 +189,8 @@
         "live_motion_photos": "Live Photos a Motion Photos"
       },
       "operators": {
+        "in_period": "v období",
+        "on": "dne",
         "is": "=",
         "is_not": "≠",
         "gt": ">",

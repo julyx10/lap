@@ -323,13 +323,14 @@ function normalizeRuleForEdit(rule: any) {
 function getOperatorOptions(field: string) {
   const op = (key: string) => ({ value: key, label: t(`album.smart_edit.operators.${key}`) });
   if (['folder_name', 'name'].includes(field)) return [op('contains'), op('not_contains')];
-  if (['file_type', 'media_subtype', 'extension', 'camera', 'lens', 'location', 'album', 'collection'].includes(field)) return [op('is'), op('is_not')];
+  if (['file_type', 'media_subtype', 'extension', 'album'].includes(field)) return [op('is'), op('is_not')];
+  if (['collection', 'camera', 'lens', 'location'].includes(field)) return [op('is'), op('is_not'), op('empty'), op('not_empty')];
   if (field === 'favorite' || field === 'has_gps') return [op('is')];
   if (field === 'culling') return [op('is'), op('is_not')];
   if (field === 'orientation') return [op('is')];
   if (field === 'rating') return [op('is'), op('is_not'), op('gt'), op('gte'), op('lt'), op('lte'), op('between'), op('empty'), op('not_empty')];
-  if (isDateRuleField(field)) return [op('is'), op('before'), op('after'), op('between'), op('in_last'), op('older_than')];
-  if (['size', 'width', 'height', 'duration'].includes(field)) return [op('gt'), op('gte'), op('lt'), op('lte'), op('between'), op('empty'), op('not_empty')];
+  if (isDateRuleField(field)) return [{ value: 'is', label: t('album.smart_edit.operators.in_period') }, op('on'), op('before'), op('after'), op('between'), op('in_last'), op('older_than')];
+  if (['size', 'width', 'height', 'duration'].includes(field)) return [op('is'), op('is_not'), op('gt'), op('gte'), op('lt'), op('lte'), op('between'), op('empty'), op('not_empty')];
   if (field === 'tag' || field === 'person') return [op('has'), op('not_has'), op('empty'), op('not_empty')];
   return [op('is')];
 }
@@ -378,18 +379,24 @@ function isRuleValid(rule: any) {
   // matches all (contains) or none (not_contains) on the backend.
   if (['folder_name', 'name'].includes(rule.field)) return true;
   if (['empty', 'not_empty'].includes(rule.operator)) return true;
-  if (rule.operator === 'between') {
-    return Boolean(
-      (rule.value && rule.value.min !== '' && rule.value.max !== '')
-      || (rule.value && rule.value.start && rule.value.end)
-    );
+  if (['rating', 'width', 'height', 'duration', 'size', 'culling'].includes(rule.field)) {
+    const validNumber = (value: any) => typeof value === 'number' && Number.isFinite(value) && value >= 0
+      && (rule.field === 'size' ? Number.isSafeInteger(Math.round(value * 1_000_000)) : Number.isSafeInteger(value))
+      && (rule.field !== 'rating' || value <= 5) && (rule.field !== 'culling' || value <= 2);
+    return rule.operator === 'between'
+      ? validNumber(rule.value?.min) && validNumber(rule.value?.max) && rule.value.min <= rule.value.max
+      : validNumber(rule.value);
+  }
+  if (isDateRuleField(rule.field) && rule.operator === 'between') {
+    return isDateTimestampValid(rule.value?.start) && isDateTimestampValid(rule.value?.end)
+      && rule.value.start < rule.value.end;
   }
   if (isDateRuleField(rule.field) && isRelativeDateOperator(rule.operator)) return isRelativeDateValueValid(rule.value);
   if (isDateRuleField(rule.field) && rule.operator === 'is') return isDatePeriodValueValid(rule.value);
   if (rule.field === 'orientation') return isOrientationValueValid(rule.value);
   if (rule.field === 'file_type') return Boolean(getFileTypeValue(rule.value));
   if (rule.field === 'media_subtype') return mediaSubtypeOptions.value.some(option => option.value === rule.value);
-  if (isDateRuleField(rule.field)) return Boolean(rule.value?.value);
+  if (isDateRuleField(rule.field)) return isDateTimestampValid(rule.value?.value);
   return rule.value !== null && rule.value !== undefined && rule.value !== '';
 }
 
@@ -510,13 +517,19 @@ function isDateRuleField(field: string) {
   return ['date_taken', 'date_created', 'date_modified'].includes(field);
 }
 
+function isDateTimestampValid(value: any) {
+  return Number.isSafeInteger(value) && Number.isFinite(new Date(value * 1000).getTime());
+}
+
 function isRelativeDateOperator(operator: string) {
   return ['in_last', 'older_than'].includes(operator);
 }
 
 function isRelativeDateValueValid(value: any) {
   const amount = Number(value?.amount);
-  return Number.isFinite(amount) && amount > 0 && ['day', 'month', 'year'].includes(value?.unit);
+  const daysPerUnit: Record<string, number> = { day: 1, month: 30, year: 365 };
+  return Number.isSafeInteger(amount) && amount > 0
+    && Number.isSafeInteger(amount * daysPerUnit[value?.unit] * 86_400);
 }
 
 function isDatePeriodValueValid(value: any) {
@@ -567,7 +580,7 @@ function addDays(date: Date, days: number) {
 }
 
 function unixToDateInput(value: number) {
-  if (!value) return '';
+  if (!isDateTimestampValid(value)) return '';
   const date = new Date(value * 1000);
   const month = `${date.getMonth() + 1}`.padStart(2, '0');
   const day = `${date.getDate()}`.padStart(2, '0');
@@ -575,7 +588,7 @@ function unixToDateInput(value: number) {
 }
 
 function dateInputToUnix(value: string) {
-  if (!value) return 0;
+  if (!value) return null;
   const [year, month, day] = value.split('-').map(Number);
   return Math.floor(new Date(year, month - 1, day).getTime() / 1000);
 }
@@ -588,13 +601,13 @@ function isValidDateInput(value: string) {
 }
 
 function unixToDateInputInclusiveEnd(value: number) {
-  if (!value) return '';
+  if (!isDateTimestampValid(value)) return '';
   return unixToDateInput(value - 1);
 }
 
 function dateInputToUnixExclusiveEnd(value: string) {
-  if (!value) return 0;
-  return dateInputToUnix(value) + 86400;
+  const timestamp = dateInputToUnix(value);
+  return timestamp === null ? null : dateToUnix(addDays(new Date(timestamp * 1000), 1));
 }
 
 async function loadOptions() {
@@ -852,11 +865,11 @@ const RuleValueControl = defineComponent({
     ]);
     const rangeInput = (unit = '', scale = 1, attrs: Record<string, any> = {}) => h('div', { class: 'grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-1' }, [
       unitNumberInput(scaleValue(props.rule.value?.min, scale), unit, (event: any) => {
-        props.rule.value = { ...(props.rule.value || {}), min: Number(event.target.value) };
+        props.rule.value = { ...(props.rule.value || {}), min: readNumberInput(event) };
       }, attrs),
       h('span', { class: 'text-base-content/40 select-none' }, '-'),
       unitNumberInput(scaleValue(props.rule.value?.max, scale), unit, (event: any) => {
-        props.rule.value = { ...(props.rule.value || {}), max: Number(event.target.value) };
+        props.rule.value = { ...(props.rule.value || {}), max: readNumberInput(event) };
       }, attrs),
     ]);
     const dateControl = () => {
@@ -877,7 +890,7 @@ const RuleValueControl = defineComponent({
             step: 1,
             value: value.amount ?? 7,
             onInput: (event: any) => {
-              props.rule.value = { amount: Number(event.target.value), unit: value.unit || 'day' };
+              props.rule.value = { amount: readNumberInput(event), unit: value.unit || 'day' };
             },
           }),
           h('select', {
@@ -916,10 +929,10 @@ const RuleValueControl = defineComponent({
       if (props.rule.field === 'extension') return extensionInput();
       if (props.rule.field === 'favorite' || props.rule.field === 'has_gps') return boolSelect();
       if (props.rule.field === 'orientation') return orientationSelect();
-      if (props.rule.field === 'rating') return props.rule.operator === 'between' ? rangeInput('', 1, { min: 0, max: 5, step: 1 }) : numberInput(props.rule.value, (event: any) => { props.rule.value = Number(event.target.value); }, { min: 0, max: 5, step: 1 });
+      if (props.rule.field === 'rating') return props.rule.operator === 'between' ? rangeInput('', 1, { min: 0, max: 5, step: 1 }) : numberInput(props.rule.value, (event: any) => { props.rule.value = readNumberInput(event); }, { min: 0, max: 5, step: 1 });
       if (isDateRuleField(props.rule.field)) return dateControl();
-      if (props.rule.field === 'size') return props.rule.operator === 'between' ? rangeInput(valueUnit()) : unitNumberInput(props.rule.value, valueUnit(), (event: any) => { props.rule.value = Number(event.target.value); });
-      if (['width', 'height', 'duration'].includes(props.rule.field)) return props.rule.operator === 'between' ? rangeInput(valueUnit()) : unitNumberInput(props.rule.value, valueUnit(), (event: any) => { props.rule.value = Number(event.target.value); });
+      if (props.rule.field === 'size') return props.rule.operator === 'between' ? rangeInput(valueUnit()) : unitNumberInput(props.rule.value, valueUnit(), (event: any) => { props.rule.value = readNumberInput(event); });
+      if (['width', 'height', 'duration'].includes(props.rule.field)) return props.rule.operator === 'between' ? rangeInput(valueUnit()) : unitNumberInput(props.rule.value, valueUnit(), (event: any) => { props.rule.value = readNumberInput(event); });
       if (props.rule.field === 'tag') return searchableInput(props.tagOptions);
       if (props.rule.field === 'person') return searchableInput(props.personOptions);
       if (props.rule.field === 'album') return searchableInput(props.albumOptions);
@@ -931,6 +944,11 @@ const RuleValueControl = defineComponent({
     };
   },
 });
+
+function readNumberInput(event: Event) {
+  const input = event.target as HTMLInputElement;
+  return input.value === '' ? '' : input.valueAsNumber;
+}
 
 function scaleValue(value: any, scale: number) {
   return typeof value === 'number' && scale !== 1 ? value / scale : value;

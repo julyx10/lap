@@ -189,6 +189,8 @@
         "live_motion_photos": "Живые и динамические фото"
       },
       "operators": {
+        "in_period": "за период",
+        "on": "в день",
         "is": "=",
         "is_not": "≠",
         "gt": ">",
