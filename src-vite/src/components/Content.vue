@@ -1667,6 +1667,7 @@ function createViewBackup() {
     fileIdToGroupIdEntries: Array.from(fileIdToGroupId.entries()),
     totalFileCount: totalFileCount.value,
     totalFileSize: totalFileSize.value,
+    contentCountIsAuthoritative: contentCountIsAuthoritative.value,
     contentTitle: contentTitle.value,
     selectedItemIndex: selectedItemIndex.value,
     scrollPosition: scrollPosition.value,
@@ -4851,6 +4852,7 @@ function handleItemAction(payload: { action: string, index: number }) {
     'add-to-collection': clickAddToCollection,
     'comment': () => openCommentEditor(),
     'search-similar': () => enterSimilarSearchMode(fileList.value[selectedItemIndex.value]),
+    'explore-same-folder': () => enterAlbumPreviewMode(fileList.value[selectedItemIndex.value]),
     'find-person': () => {
       if (!config.settings.face.enabled) return;
       enterPersonSearchMode(fileList.value[selectedItemIndex.value]);
@@ -9063,7 +9065,7 @@ function handleNavigatePerson(payload: { personId: number; personName: string })
 }
 
 function enterAlbumPreviewMode(file: any, targetFolderPath?: string) {
-  if (!file.album_id) return;
+  if (!file?.album_id || !file.file_path) return;
   const folderPath = targetFolderPath || getFolderPath(file.file_path);
   if (!folderPath) return;
   if (tempViewMode.value === 'album' && currentQueryParams.value.searchFolder === folderPath) return;
@@ -9078,9 +9080,11 @@ function enterAlbumPreviewMode(file: any, targetFolderPath?: string) {
   // 2. Set mode
   tempViewMode.value = 'album';
   showQuickView.value = false;
+  const requestId = ++currentContentRequestId;
   
   // 3. Update Title and Fetch Files
   getAlbum(file.album_id).then((album: any) => {
+    if (requestId !== currentContentRequestId) return;
     if (album) {
       if(folderPath === album.path) { // current folder is root
         contentTitle.value = album.name;
@@ -9091,12 +9095,7 @@ function enterAlbumPreviewMode(file: any, targetFolderPath?: string) {
   });
 
   // 4. Fetch Files
-  const requestId = ++currentContentRequestId;
-  
-  // Reset list for loading state
-  clearContentRows();
-  totalFileCount.value = 0;
-  totalFileSize.value = 0;
+  showLoadingContent(requestId);
   
   // Reset scroll and selection
   scrollPosition.value = 0;
@@ -9105,13 +9104,16 @@ function enterAlbumPreviewMode(file: any, targetFolderPath?: string) {
     gridViewRef.value.scrollToPosition(0);
   }
   
-  getFileList({ searchFolder: folderPath }, requestId);
+  pendingFocusedFileId = folderPath === getFolderPath(file.file_path) ? Number(file.id) : null;
+  getFileList({ searchFolder: folderPath, searchAllSubfolders: '' }, requestId);
 }
 
 function exitTempViewMode() {
   if (!backupState.value) return;
 
   const state = backupState.value;
+  ++currentContentRequestId;
+  pendingFocusedFileId = null;
   
   // 1. Restore State
   clearSelectionForFileListUpdate();
@@ -9137,6 +9139,10 @@ function exitTempViewMode() {
   groupSelectedSizeMap.value = {};
   totalFileCount.value = state.totalFileCount;
   totalFileSize.value = state.totalFileSize;
+  contentCountIsAuthoritative.value = state.contentCountIsAuthoritative;
+  countedFolderRequestId.value = currentContentRequestId;
+  isLoading.value = false;
+  contentReady.value = true;
   contentTitle.value = state.contentTitle;
   selectedItemIndex.value = state.selectedItemIndex;
   scrollPosition.value = state.scrollPosition;

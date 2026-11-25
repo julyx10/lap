@@ -51,6 +51,19 @@ const locale = ref({ menu: { file: words(), meta: words() }, rating: words(), cu
 const allItems = items => items.flatMap(item => [item, ...allItems(item.children || [])]);
 const action = (items, name) => allItems(items).find(item => item.action?.actionName === name);
 
+test('folder exploration follows similar and person search and works without the original', () => {
+  const file = ref({ id: 42, album_id: 1, album_accessible: false, file_type: 1, file_path: '/photos/image.jpg' });
+  const called = [];
+  const menu = useFileMenuItems(file, locale, true, key => key, name => called.push(name));
+  const actions = menu.value.map(item => item.action?.actionName);
+  const index = actions.indexOf('search-similar');
+  assert.deepEqual(actions.slice(index, index + 3), ['search-similar', 'find-person', 'explore-same-folder']);
+  const item = action(menu.value, 'explore-same-folder');
+  assert.equal(item.disabled, false);
+  item.action();
+  assert.deepEqual(called, ['explore-same-folder']);
+});
+
 test('single-file menu retains catalog organization and blocks original-file operations while offline', () => {
   const file = ref({ id: 42, album_id: 1, album_accessible: false, file_type: 1, has_embedding: true, file_path: '/photos/offline.jpg' });
   setAlbumAccessibility(1, false);

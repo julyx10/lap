@@ -18,6 +18,7 @@ import {
   IconTrash,
   IconPhotoSearch,
   IconPersonSearch,
+  IconFolderSearch,
   IconImageEdit,
   IconExternal,
   IconHeartFilled,
@@ -367,6 +368,12 @@ export const useFileMenuItems = (
         hidden: !config.settings.face.enabled,
         disabled: !isImage,
         action: createAction('find-person')
+      },
+      {
+        label: localeMsg.value.menu.file.explore_same_folder,
+        icon: markRaw(IconFolderSearch),
+        disabled: !file.value?.album_id || !file.value?.file_path,
+        action: createAction('explore-same-folder')
       },
       { label: "-", action: null },
       {
