@@ -469,7 +469,10 @@ pub(super) const DETAIL_FIELDS: &[DetailField] = &[
         stored: false,
         descriptive: false,
         section: Some(DetailSection::CameraSettings),
-        maker_sources: Some(&[("MakerNotes", "Canon", "AutoLightingOptimizer")]),
+        maker_sources: Some(&[
+            ("MakerNotes", "Canon", "AutoLightingOptimizer"),
+            ("MakerNotes", "CanonCustom", "AutoLightingOptimizer"),
+        ]),
     },
     DetailField {
         key: "highlightTonePriority",
@@ -478,7 +481,10 @@ pub(super) const DETAIL_FIELDS: &[DetailField] = &[
         stored: false,
         descriptive: false,
         section: Some(DetailSection::CameraSettings),
-        maker_sources: Some(&[("MakerNotes", "Canon", "HighlightTonePriority")]),
+        maker_sources: Some(&[
+            ("MakerNotes", "Canon", "HighlightTonePriority"),
+            ("MakerNotes", "CanonCustom", "HighlightTonePriority"),
+        ]),
     },
     // --- Nikon ---
     DetailField {
@@ -613,6 +619,7 @@ pub(super) const DETAIL_FIELDS: &[DetailField] = &[
         maker_sources: Some(&[
             ("MakerNotes", "FujiFilm", "NoiseReduction"),
             ("MakerNotes", "Canon", "HighISONoiseReduction"),
+            ("MakerNotes", "CanonCustom", "HighISONoiseReduction"),
             ("MakerNotes", "Nikon", "HighISONoiseReduction"),
             ("MakerNotes", "Sony", "HighISONoiseReduction"),
             ("MakerNotes", "Panasonic", "NoiseReduction"),

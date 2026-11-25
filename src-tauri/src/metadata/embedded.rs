@@ -1325,6 +1325,30 @@ mod camera_settings_tests {
     }
 
     #[test]
+    fn canon_custom_settings_are_fallbacks_without_accepting_track4() {
+        for (name, key) in [
+            ("AutoLightingOptimizer", "autoLightingOptimizer"),
+            ("HighlightTonePriority", "highlightTonePriority"),
+            ("HighISONoiseReduction", "noiseReduction"),
+        ] {
+            let mut tags = vec![
+                make_tag("MakerNotes", "Track4", name, "Duplicate"),
+                make_tag("EXIF", "CanonCustom", name, "Wrong family"),
+            ];
+            assert!(!detail_values(&tags).contains_key(key));
+            tags.push(make_tag("MakerNotes", "CanonCustom", name, "Off"));
+            let details = detail_values(&tags);
+            assert_eq!(details[key].values, vec!["Off"]);
+            assert_eq!(details[key].source, format!("MakerNotes:{name}"));
+            assert!(!detail_values_for(&tags, true).contains_key(key));
+
+            // Canon takes precedence even if CanonCustom occurs first in the file.
+            tags.push(make_tag("MakerNotes", "Canon", name, "On"));
+            assert_eq!(detail_values(&tags)[key].values, vec!["On"]);
+        }
+    }
+
+    #[test]
     fn nikon_makernotes_filter_na_placeholders_and_keep_shutter_count_distinct() {
         let tags = vec![
             make_tag("MakerNotes", "Nikon", "PictureControlName", "Auto"),
