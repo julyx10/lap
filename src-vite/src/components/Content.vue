@@ -55,6 +55,7 @@
       <!-- toolbar -->
       <div class="flex items-center shrink-0">
 
+        <ToolbarSearch ref="toolbarSearchRef" v-model="libConfig.search.searchText" :scope="contentTitle || $t('library.all_files')" :disabled="isScanStreamingMode" />
         <FilterPanel :type="activeFileTypeMask" :types="fileTypeOptions" :disabled="isBrowserFilterDisabled"
           :result-count="browserFilterMatched" :baseline="browserFilterBaseline"
           @type="setBrowserFileType" @open="browserFilterOpen = $event" />
@@ -451,7 +452,7 @@
             :originals-unavailable="selectionHasUnavailable"
             :clipboard-unavailable="selectionStorageUnavailable"
             :selected-size="selectedSize"
-            :query-source="currentQuerySource"
+            :query-source="currentCollectionId ? 'collection' : currentQuerySource"
             :more-actions="selectionMenuItems"
             @close="handleSelectMode(false); config.rightPanel.show = false"
             @select-all="selectAllInCurrentList"
@@ -720,6 +721,7 @@
 </template>
 
 <script setup lang="ts">
+import ToolbarSearch from '@/components/ToolbarSearch.vue';
 import FilterPanel from '@/components/FilterPanel.vue';
 import { browserFilters, passesBrowserFilters } from '@/common/browserFilters';
 import { getVisibleEditableMetadataFields } from '@/common/fileInfoFields';
@@ -1275,7 +1277,7 @@ const selectionMenuItems = useFileMenuItems(
     selectionHasUnavailable,
     selectionStorageUnavailable,
     selectionHasCloudOnly,
-    selectionInCollection: computed(() => currentQuerySource.value === 'collection'),
+    selectionInCollection: computed(() => currentCollectionId.value !== null),
   },
 );
 
@@ -1668,6 +1670,11 @@ function getActiveCustomSmartAlbum() {
   ) || null;
 }
 
+const toolbarSearchRef = ref<InstanceType<typeof ToolbarSearch>>();
+function focusToolbarSearch() { toolbarSearchRef.value?.focus(); }
+onMounted(() => window.addEventListener('focus-toolbar-search', focusToolbarSearch));
+onBeforeUnmount(() => window.removeEventListener('focus-toolbar-search', focusToolbarSearch));
+
 const isCollectionPane = computed(() => libConfig.activePane === 'collection');
 
 const RANDOM_SEED_MODULUS = 2_147_483_647;
@@ -1702,7 +1709,7 @@ const effectiveGroupBy = computed(() => {
 });
 
 const isSearchGroupingView = computed(() =>
-  config.main.sidebarIndex === SIDEBAR.SEARCH
+  !!libConfig.search.searchText.trim() || config.main.sidebarIndex === SIDEBAR.SEARCH
 );
 
 const isSubjectGroupingView = computed(() =>
@@ -2493,7 +2500,7 @@ async function removeFileFromCurrentCollection(index: number) {
   const file = fileList.value[index];
   if (!file || !currentCollectionId.value) return;
   await removeFilesFromCollection(currentCollectionId.value, [file.id]);
-  if (groupedModeActive.value) {
+  if (groupedModeActive.value || currentQuerySource.value === 'search') {
     await updateContent(true);
   } else {
     fileList.value.splice(index, 1);
@@ -2513,7 +2520,7 @@ async function removeSelectedFromCollection() {
   const fileIds = selectedItems.map((item: any) => Number(item.id)).filter((id: number) => id > 0);
   if (fileIds.length === 0) return;
   await removeFilesFromCollection(currentCollectionId.value, fileIds);
-  if (groupedModeActive.value) {
+  if (groupedModeActive.value || currentQuerySource.value === 'search') {
     await updateContent(true);
   } else {
     const removedIdSet = new Set(fileIds);
@@ -3780,6 +3787,7 @@ const mapTempViewState = ref<{ lat: number; lon: number; zoom: number } | null>(
 const currentSmartQueryParams = ref<any | null>(null);
 const currentCollectionId = ref<number | null>(null);
 const currentSearchFileIds = ref<number[]>([]);
+let searchScopeCountAndSum: (() => Promise<any>) | null = null;
 const mapQueryParams = computed(() => (
   currentQuerySource.value === 'smart' && currentSmartQueryParams.value
     ? currentSmartQueryParams.value
@@ -3809,7 +3817,7 @@ const getCurrentSaveAsContext = (file: any): SaveAsContext | null => {
   const folderId = Number(file?.folder_id || 0);
   const context: SaveAsContext = folderId > 0 ? { folderId } : {};
   const collectionId = Number(currentCollectionId.value || 0);
-  if (currentQuerySource.value === 'collection' && collectionId > 0) {
+  if (collectionId > 0) {
     return { ...context, collectionId };
   }
 
@@ -4802,7 +4810,7 @@ function handleItemAction(payload: { action: string, index: number }) {
     'copy-to-folder': () => void onCopyToFolder(),
     'trash': () => openFileDeletion(),
     'remove-from-collection': () => {
-      if (currentQuerySource.value === 'collection' && currentCollectionId.value) {
+      if (currentCollectionId.value) {
         void removeFileFromCurrentCollection(selectedItemIndex.value);
       }
     },
@@ -5622,6 +5630,12 @@ const isScanStreamingMode = computed(() =>
   Boolean(libConfig.album.selected)
 );
 
+// Toolbar search is disabled while the selected album streams. Keep the query
+// text so it can be reapplied after the scan settles.
+const hasActiveToolbarSearch = computed(() =>
+  Boolean(libConfig.search.searchText.trim()) && !isScanStreamingMode.value
+);
+
 // When scanning starts, close panels and multi-select which rely on a stable file list.
 watch(isScanStreamingMode, (streaming, wasStreaming) => {
   if (streaming) {
@@ -5636,7 +5650,7 @@ watch(isScanStreamingMode, (streaming, wasStreaming) => {
   // once the scan settles so active filter chips are applied to the full list.
   const hasActiveBrowserFilters = [browserFilters.favorite, browserFilters.rating,
     browserFilters.culling, browserFilters.tags].some(value => Number(value) !== -1);
-  if (!streaming && wasStreaming && hasActiveBrowserFilters) {
+  if (!streaming && wasStreaming && (hasActiveBrowserFilters || hasActiveToolbarSearch.value)) {
     scheduleContentRefresh(() => refreshContentFromSelectionChange());
   }
 });
@@ -7256,6 +7270,7 @@ const getSidebarQueryCountAndSum = () => {
 };
 
 async function getSearchSidebarCountAndSum() {
+  if (searchScopeCountAndSum) return searchScopeCountAndSum();
   const textParams = { ...currentQueryParams.value, searchFileType: 0, browserFilters: {} };
   const imageParams = { ...currentImageSearchParams.value, fileType: 0 };
   const visualDisabled = imageSearchLanguageUnsupported.value;
@@ -8022,6 +8037,11 @@ async function getFileList(
   }
 
   // Set loading state
+  if (hasActiveToolbarSearch.value) {
+    await searchWithinScope(getQueryFileIds({ ...currentQueryParams.value, searchFileType: 0, browserFilters: {} }), requestId);
+    return;
+  }
+
   isLoading.value = true;
 
   try {
@@ -8086,6 +8106,7 @@ async function getFileList(
 }
 
 async function getMapSearchClusterFileList(fileIds: number[], gpsParams: Record<string, any>, requestId: number, exactMembers = false) {
+  searchScopeCountAndSum = null;
   currentQuerySource.value = 'search';
   currentSmartQueryParams.value = null;
   currentCollectionId.value = null;
@@ -8171,6 +8192,11 @@ async function getCollectionFileList(collectionId: number, requestId: number) {
     personId: 0,
   };
 
+  if (hasActiveToolbarSearch.value) {
+    await searchWithinScope(getCollectionQueryFileIds(collectionId, { ...currentQueryParams.value, searchFileType: 0, browserFilters: {} }), requestId);
+    return;
+  }
+
   isLoading.value = true;
 
   try {
@@ -8249,6 +8275,11 @@ async function getSmartFileList(smartAlbum: any, requestId: number) {
   };
   void refreshDedupSmartFileIds(requestId, currentSmartQueryParams.value);
   void updateSmartAlbumCover(smartAlbum, requestId);
+
+  if (hasActiveToolbarSearch.value) {
+    await searchWithinScope(getSmartQueryFileIds({ ...currentSmartQueryParams.value, fileType: 0, browserFilters: {} }), requestId);
+    return;
+  }
 
   isLoading.value = true;
 
@@ -8330,6 +8361,7 @@ async function getImageSearchFileList(
   requestId: number,
   thresholdOverride?: number,
 ) {
+  searchScopeCountAndSum = null;
   const thresholdIndex = config.settings.imageSearch.thresholdIndex;
   const threshold = thresholdOverride
     ?? (fileId > 0
@@ -8361,6 +8393,10 @@ async function getImageSearchFileList(
     const result = await searchSimilarImages(currentImageSearchParams.value);
     if (requestId !== currentContentRequestId) return;
 
+    if (result && !fileId && hasActiveToolbarSearch.value) {
+      await getUnifiedSearchFileList(libConfig.search.searchText, requestId, result.map((file: any) => Number(file.id)));
+      return;
+    }
     if (result) {
       clearSelectionForFileListUpdate();
       resetGroupingState();
@@ -8409,9 +8445,50 @@ async function getImageSearchFileList(
   }
 }
 
-async function getUnifiedSearchFileList(searchText: string, requestId: number) {
+async function searchWithinScope(idsPromise: Promise<any>, requestId: number) {
+  isLoading.value = true;
+  try {
+    const ids = await idsPromise;
+    if (requestId !== currentContentRequestId) return;
+    if (!Array.isArray(ids)) { showEmptyContent(requestId); return; }
+    await getUnifiedSearchFileList(libConfig.search.searchText, requestId, ids.map(Number));
+  } catch (error) {
+    console.error('Failed to resolve search scope:', error);
+    if (requestId === currentContentRequestId) showEmptyContent(requestId);
+  } finally {
+    if (requestId === currentContentRequestId) {
+      isLoading.value = false;
+      hasLoadedInitialResult.value = true;
+      contentReady.value = true;
+    }
+  }
+}
+
+async function getUnifiedSearchFileList(searchText: string, requestId: number, scopeFileIds?: number[]) {
+  const searchCollectionId = currentQuerySource.value === 'collection' ? currentCollectionId.value : null;
+  // Keep sidebar totals tied to the original category, not the keyword results.
+  searchScopeCountAndSum = null;
+  if (scopeFileIds) {
+    const source = currentQuerySource.value;
+    const collectionId = currentCollectionId.value;
+    const params = { ...(source === 'smart' ? currentSmartQueryParams.value : currentQueryParams.value),
+      searchFileType: 0, fileType: 0, browserFilters: {} };
+    if (source === 'search') {
+      const imageParams = { ...currentImageSearchParams.value, fileType: 0 };
+      searchScopeCountAndSum = async () => {
+        const result = await searchSimilarImages(imageParams);
+        if (!Array.isArray(result)) return null;
+        const files = result.filter(passesAlbumFilters);
+        return [files.length, files.reduce((sum, file) => sum + getMediaItemSize(file), 0)];
+      };
+    } else {
+      searchScopeCountAndSum = () => source === 'smart' ? getSmartQueryCountAndSum(params)
+        : source === 'collection' && collectionId ? getCollectionCountAndSum(collectionId, params)
+        : getQueryCountAndSum(params);
+    }
+  }
   const textParams = {
-    searchFileType: config.search.fileType,
+    searchFileType: 0,
     sortType: 3,
     sortOrder: 0,
     searchFileName: searchText,
@@ -8438,14 +8515,15 @@ async function getUnifiedSearchFileList(searchText: string, requestId: number) {
   currentQueryParams.value = textParams;
   currentQuerySource.value = 'search';
   currentSmartQueryParams.value = null;
-  currentCollectionId.value = null;
+  currentCollectionId.value = searchCollectionId;
   currentSearchFileIds.value = [];
   searchBrowserFilterBaseline.value = null;
   currentImageSearchParams.value = {
     searchText,
     fileId: 0,
+    scopeFileIds,
     threshold: config.imageSearchThresholds[config.settings.imageSearch.thresholdIndex],
-    fileType: Number(config.search.fileType || 0),
+    fileType: 0,
   };
   imageSearchError.value = false;
   const isDefaultModelUnsupportedLanguage =
@@ -8474,15 +8552,22 @@ async function getUnifiedSearchFileList(searchText: string, requestId: number) {
     if (requestId !== currentContentRequestId) return;
     imageSearchError.value = visualSearchFailed;
 
-    const allTextMatches = Array.isArray(textResult) ? textResult : [];
+    const scope = scopeFileIds ? new Set(scopeFileIds) : null;
+    const allTextMatches = (Array.isArray(textResult) ? textResult : []).filter(file => !scope || scope.has(Number(file.id)));
     const textIds = new Set(allTextMatches.map((file: any) => Number(file.id)));
     const allVisualMatches = (Array.isArray(visualResult) ? visualResult : [])
       .filter((file: any) => !textIds.has(Number(file.id)))
       .filter(passesAlbumFilters);
     const allMatches = [...allTextMatches, ...allVisualMatches];
     searchBrowserFilterBaseline.value = allMatches.length;
-    const textMatches = allTextMatches.filter(file => passesBrowserFilters(file));
-    const visualMatches = allVisualMatches.filter(file => passesBrowserFilters(file));
+    const matchesFilters = (file: any) => {
+      if (isBrowserFilterDisabled.value) return true;
+      const mask = Number(config.search.fileType || 0);
+      const bit = Number(file.file_type) === 3 ? 4 : Number(file.file_type) === 2 ? 2 : 1;
+      return (!mask || (mask & bit) !== 0) && passesBrowserFilters(file);
+    };
+    const textMatches = allTextMatches.filter(matchesFilters);
+    const visualMatches = allVisualMatches.filter(matchesFilters);
     const files = preserveLoadedThumbnails([...textMatches, ...visualMatches]);
     contentCountIsAuthoritative.value = true;
 
@@ -10220,8 +10305,8 @@ async function refreshGroupedRowsAfterDelete(fileIds: number[]) {
   // Search builds its filename and visual-match groups client-side. The generic
   // grouping query deliberately excludes Search, so rebuild the unified result
   // after a deletion instead of resetting those groups.
-  if (config.main.sidebarIndex === SIDEBAR.SEARCH && libConfig.search.searchText) {
-    await getUnifiedSearchFileList(libConfig.search.searchText, currentContentRequestId);
+  if (currentQuerySource.value === 'search' && libConfig.search.searchText) {
+    await updateContent(true);
     return;
   }
 
@@ -11258,6 +11343,7 @@ const isSearchLikeView = computed(() => {
 });
 
 const isAiSearchMode = computed(() =>
+  !!libConfig.search.searchText.trim() ||
   config.main.sidebarIndex === SIDEBAR.SEARCH ||
   (config.main.sidebarIndex === SIDEBAR.LIBRARY && libConfig.library.item === LIB_ITEM.SUBJECTS)
 );
@@ -11488,9 +11574,9 @@ async function handleCollectionsAdded({ fileIds = [], results, removedCollection
       file.collectionVersion = Number(file.collectionVersion || 0) + 1;
     }
   }
-  if (currentQuerySource.value === 'collection' && removedCollectionIds.includes(Number(currentCollectionId.value))) {
+  if (currentCollectionId.value && removedCollectionIds.includes(Number(currentCollectionId.value))) {
     const removedIds = new Set(fileIds.map(Number));
-    if (groupedModeActive.value) {
+    if (groupedModeActive.value || currentQuerySource.value === 'search') {
       void updateContent(true);
     } else {
       fileList.value = fileList.value.filter(file => !removedIds.has(Number(file?.id)));

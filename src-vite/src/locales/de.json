@@ -2,7 +2,6 @@
   "sidebar": {
     "library": "Bibliothek",
     "album": "Alben",
-    "search": "Suche",
     "tag": "Tags",
     "calendar": "Kalender",
     "location": "Orte",
@@ -273,9 +272,10 @@
     "text_search_description": "Beschreibe eine Szene, ein Objekt oder einen Moment. Laps lokale KI findet visuell passende Fotos."
   },
   "search": {
+    "in_scope": "In „{scope}“ suchen",
     "title": "Suche",
     "similar_images": "Verwandte Fotos",
-    "image_search_placeholder": "Mediathek durchsuchen",
+    "image_search_placeholder": "Suchbegriffe eingeben…",
     "matches": "Treffer",
     "unknown_location": "Unbekannter Ort",
     "unknown_camera": "Unbekannte Kamera",

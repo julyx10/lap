@@ -2,7 +2,6 @@
   "sidebar": {
     "library": "Thư viện",
     "album": "Album",
-    "search": "Tìm kiếm",
     "tag": "Thẻ",
     "calendar": "Lịch",
     "location": "Địa điểm",
@@ -273,9 +272,10 @@
     "text_search_description": "Mô tả một khung cảnh, đồ vật hoặc khoảnh khắc. AI trên thiết bị của Lap sẽ tìm những bức ảnh phù hợp về mặt hình ảnh."
   },
   "search": {
+    "in_scope": "Tìm kiếm trong “{scope}”",
     "title": "Tìm kiếm",
     "similar_images": "Ảnh liên quan",
-    "image_search_placeholder": "Tìm ảnh, tên tệp hoặc mô tả",
+    "image_search_placeholder": "Nhập nội dung tìm kiếm…",
     "matches": "Kết quả khớp",
     "unknown_location": "Địa điểm không xác định",
     "unknown_camera": "Máy ảnh không xác định",

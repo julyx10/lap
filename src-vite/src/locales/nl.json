@@ -2,7 +2,6 @@
   "sidebar": {
     "library": "Bibliotheek",
     "album": "Albums",
-    "search": "Zoeken",
     "tag": "Tags",
     "calendar": "Kalender",
     "location": "Locaties",
@@ -273,9 +272,10 @@
     "text_search_description": "Beschrijf een scène, object of moment. De lokale AI van Lap vindt visueel overeenkomende foto's."
   },
   "search": {
+    "in_scope": "Zoeken in ‘{scope}’",
     "title": "Zoeken",
     "similar_images": "Verwante foto's",
-    "image_search_placeholder": "Doorzoek je bibliotheek",
+    "image_search_placeholder": "Voer zoektermen in…",
     "matches": "Resultaten",
     "unknown_location": "Onbekende locatie",
     "unknown_camera": "Onbekende camera",

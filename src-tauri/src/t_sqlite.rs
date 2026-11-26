@@ -2309,6 +2309,8 @@ const GROUP_BY_CULLING: i64 = 10;
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ImageSearchParams {
+    #[serde(default)]
+    pub scope_file_ids: Option<Vec<i64>>,
     pub search_text: String,  // search image text (for AI search)
     pub file_id: Option<i64>, // file id (for similar image search)
     pub threshold: f32,       // search threshold
@@ -7583,11 +7585,24 @@ impl AFile {
         Ok(embedding)
     }
 
+    fn image_search_scope_condition(scope_file_ids: Option<&[i64]>) -> Result<(String, Option<String>), String> {
+        let scope_json = scope_file_ids
+            .map(|ids| serde_json::to_string(ids).map_err(|error| error.to_string()))
+            .transpose()?;
+        let clause = if scope_json.is_some() {
+            " AND a.id IN (SELECT value FROM json_each(?))".to_string()
+        } else {
+            String::new()
+        };
+        Ok((clause, scope_json))
+    }
+
     /// search similar images
     pub fn search_similar_images(
         state: &State<t_ai::AiState>,
         params: ImageSearchParams,
     ) -> Result<Vec<Self>, String> {
+        if params.scope_file_ids.as_ref().is_some_and(Vec::is_empty) { return Ok(Vec::new()); }
         // 1. Determine Target Embedding
         let embedding_opt = Self::get_query_embedding(state, &params)?;
         let embedding =
@@ -7612,10 +7627,12 @@ impl AFile {
             query.push_str(&ft_condition);
         }
 
+        let (scope_clause, scope_json) = Self::image_search_scope_condition(params.scope_file_ids.as_deref())?;
+        query.push_str(&scope_clause);
         let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
 
         let rows = stmt
-            .query_map([], |row| {
+            .query_map(rusqlite::params_from_iter(scope_json.iter()), |row| {
                 let id: i64 = row.get(0)?;
                 let embeds_blob: Vec<u8> = row.get(1)?;
                 Ok((id, embeds_blob))
@@ -12503,5 +12520,24 @@ mod synchronized_group_sort_tests {
         assert_eq!(ids(GROUP_BY_RATING, 0, 0, 1, "group_id IN ('1','5')"), vec!["5", "1"]);
         assert_eq!(ids(GROUP_BY_CAMERA, 0, 0, 0, "group_id IN ('Canon','Sony','unknown-camera')"), vec!["Sony", "Canon", "unknown-camera"]);
         assert_eq!(ids(GROUP_BY_CAMERA, 0, 0, 1, "group_id IN ('Canon','Sony','unknown-camera')"), vec!["Canon", "Sony", "unknown-camera"]);
+    }
+}
+
+#[cfg(test)]
+mod scoped_image_search_tests {
+    use super::*;
+
+    #[test]
+    fn scope_restricts_embedding_candidates_including_empty_scope() {
+        let conn = rusqlite::Connection::open_in_memory().unwrap();
+        conn.execute_batch("CREATE TABLE afiles(id INTEGER, embeds BLOB); INSERT INTO afiles VALUES(1,x'00'),(2,x'00'),(3,x'00');").unwrap();
+        for (scope, expected) in [(Some(&[1_i64, 3][..]), vec![1, 3]), (Some(&[][..]), vec![])] {
+            let (clause, scope_json): (String, Option<String>) = AFile::image_search_scope_condition(scope).unwrap();
+            let sql = format!("SELECT a.id FROM afiles a WHERE a.embeds IS NOT NULL{clause} ORDER BY a.id");
+            let mut stmt = conn.prepare(&sql).unwrap();
+            let ids = stmt.query_map(rusqlite::params_from_iter(scope_json.iter()), |row| row.get::<_, i64>(0))
+                .unwrap().collect::<Result<Vec<_>, _>>().unwrap();
+            assert_eq!(ids, expected);
+        }
     }
 }

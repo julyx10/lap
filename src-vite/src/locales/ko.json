@@ -2,7 +2,6 @@
   "sidebar": {
     "library": "라이브러리",
     "album": "앨범",
-    "search": "검색",
     "tag": "태그",
     "calendar": "달력",
     "location": "위치",
@@ -273,9 +272,10 @@
     "text_search_description": "장면, 사물 또는 순간을 설명하세요. Lap의 온디바이스 AI가 시각적으로 일치하는 사진을 찾아줍니다."
   },
   "search": {
+    "in_scope": "‘{scope}’에서 검색",
     "title": "검색",
     "similar_images": "관련 사진",
-    "image_search_placeholder": "라이브러리 검색",
+    "image_search_placeholder": "검색어 입력…",
     "matches": "일치 항목",
     "unknown_location": "알 수 없는 위치",
     "unknown_camera": "알 수 없는 카메라",

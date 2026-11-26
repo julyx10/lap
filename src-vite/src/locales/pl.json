@@ -2,7 +2,6 @@
   "sidebar": {
     "library": "Biblioteka",
     "album": "Albumy",
-    "search": "Wyszukiwanie",
     "tag": "Tagi",
     "calendar": "Kalendarz",
     "location": "Lokalizacje",
@@ -273,9 +272,10 @@
     "text_search_description": "Opisz scenę, obiekt lub moment. Lokalna AI Lap znajdzie wizualnie pasujące zdjęcia."
   },
   "search": {
+    "in_scope": "Szukaj w „{scope}”",
     "title": "Wyszukiwanie",
     "similar_images": "Powiązane zdjęcia",
-    "image_search_placeholder": "Przeszukaj bibliotekę",
+    "image_search_placeholder": "Wpisz wyszukiwane hasło…",
     "matches": "Wyniki",
     "unknown_location": "Nieznana lokalizacja",
     "unknown_camera": "Nieznany aparat",

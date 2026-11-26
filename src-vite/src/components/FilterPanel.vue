@@ -16,13 +16,14 @@
       :aria-label="disabled ? tr('disabled') : undefined"
       @click="togglePanel"
     >
-      <IconFilter class="w-4 h-4 shrink-0" />
+      <IconFilter class="w-5 h-5 shrink-0" />
       <span v-if="!disabled && count > 0" class="badge badge-primary badge-xs ml-1">{{
         count
       }}</span>
     </button>
   </div>
   <Teleport to="body">
+    <Transition name="fade">
     <div
       v-if="open"
       ref="panel"
@@ -181,6 +182,7 @@
       </section>
       </div>
     </div>
+    </Transition>
   </Teleport>
 </template>
 

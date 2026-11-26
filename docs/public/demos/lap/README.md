@@ -6,7 +6,8 @@ This version compiles the current Lap frontend into a static browser application
 
 | Area | Actual source used |
 | --- | --- |
-| Left panels | `Library.vue`, `AlbumList.vue`, `AlbumFolder.vue`, `SmartAlbumList.vue`, `SmartAlbumEdit.vue`, `ImageSearch.vue`, `Tag.vue`, `Calendar.vue`, `Person.vue`, `Location.vue`, `Camera.vue`, `CollectionTray.vue` |
+| Left panels | `Library.vue`, `AlbumList.vue`, `AlbumFolder.vue`, `SmartAlbumList.vue`, `SmartAlbumEdit.vue`, `Tag.vue`, `Calendar.vue`, `Person.vue`, `Location.vue`, `Camera.vue`, `CollectionTray.vue` |
+| Toolbar search | `ToolbarSearch.vue`: scoped search input and search history |
 | Settings | `views/Settings.vue` and `SettingsAbout.vue`: General, Layout, Viewer, RAW, Metadata, Search, Advanced, Shortcuts, About, with the original controls, labels and layout |
 | Filmstrip | `Content.vue`, `GridView.vue`, `MediaViewer.vue`, `Image.vue`: real large preview, navigation, zoom controls and all four strip placements |
 | Multi-select | `SelectionPanel.vue`, `PanelActionButton.vue`, `FavoriteRatingControl.vue`: original action sections, icon/text buttons, enabled states and dialogs |

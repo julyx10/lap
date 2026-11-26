@@ -2,7 +2,6 @@
   "sidebar": {
     "library": "Library",
     "album": "Albums",
-    "search": "Search",
     "tag": "Tags",
     "calendar": "Calendar",
     "location": "Locations",
@@ -273,9 +272,10 @@
     "text_search_description": "Describe a scene, object, or moment. Lap's on-device AI finds visually matching photos."
   },
   "search": {
+    "in_scope": "Search in “{scope}”",
     "title": "Search",
     "similar_images": "Similar images",
-    "image_search_placeholder": "Search your library",
+    "image_search_placeholder": "Enter search text…",
     "matches": "Matches",
     "unknown_location": "Unknown location",
     "unknown_camera": "Unknown camera",

@@ -201,7 +201,6 @@ import { getAppConfig, getLibraryVisibleCounts, switchLibrary, cancelIndexing, c
 import Library from '@/components/Library.vue';
 import AlbumList from '@/components/AlbumList.vue';
 const SmartAlbumList = defineAsyncComponent(() => import('@/components/SmartAlbumList.vue'));
-const ImageSearch = defineAsyncComponent(() => import('@/components/ImageSearch.vue'));
 const Tag = defineAsyncComponent(() => import('@/components/Tag.vue'));
 const Calendar = defineAsyncComponent(() => import('@/components/Calendar.vue'));
 const Location = defineAsyncComponent(() => import('@/components/Location.vue'));
@@ -381,7 +380,6 @@ const buttons = computed(() =>  [
   { index: SIDEBAR.LIBRARY, icon: IconPhotoAll, component: Library, text: localeMsg.value.sidebar.library },
   { index: SIDEBAR.ALBUM, icon: IconFolders, component: AlbumList, text: localeMsg.value.sidebar.album, props: { selectionSource: 'album' } },
   { index: SIDEBAR.SMART_ALBUM, icon: IconFolderCog, component: SmartAlbumList, text: localeMsg.value.album.smart_album_list },
-  { index: SIDEBAR.SEARCH, icon: IconSearch, component: ImageSearch, text: localeMsg.value.sidebar.search },
   { index: SIDEBAR.CALENDAR, icon: IconCalendarDay, component: Calendar, text: localeMsg.value.sidebar.calendar },
   { index: SIDEBAR.TAG, icon: IconTag, component: Tag, text: localeMsg.value.sidebar.tag },
   { index: SIDEBAR.PERSON, icon: IconPerson, component: Person, text: localeMsg.value.sidebar.people, hidden: !config.settings.face.enabled },
@@ -483,6 +481,11 @@ watch(databaseCorrupted, corrupted => {
   if (corrupted) void nextTick(() => requestAnimationFrame(() => requestAnimationFrame(() => finishStartup())));
 });
 
+// Migrate the removed Search destination, including asynchronously restored settings.
+watch(() => config.main.sidebarIndex, index => {
+  if (index === SIDEBAR.SEARCH) config.main.sidebarIndex = SIDEBAR.LIBRARY;
+}, { immediate: true, flush: 'sync' });
+
 onMounted(async () => {
   window.addEventListener('keydown', handleHomeKeyDown);
   unlistenOpenPreferences = await listen('app-open-preferences', () => {
@@ -581,12 +584,7 @@ function handleHomeKeyDown(event: KeyboardEvent) {
     event.preventDefault();
     event.stopPropagation();
     if (!libraryEmpty.value && !databaseCorrupted.value) {
-      if (config.main.sidebarIndex === SIDEBAR.SEARCH && showPanel.value) {
-        nextTick(() => (panelRef.value as any)?.focusSearchInput?.());
-      } else {
-        config.main.sidebarIndex = SIDEBAR.SEARCH;
-        showPanel.value = true;
-      }
+      window.dispatchEvent(new CustomEvent('focus-toolbar-search'));
     }
     return;
   }

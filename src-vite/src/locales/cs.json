@@ -2,7 +2,6 @@
   "sidebar": {
     "library": "Knihovna",
     "album": "Alba",
-    "search": "Hledat",
     "tag": "Štítky",
     "calendar": "Kalendář",
     "location": "Místa",
@@ -273,9 +272,10 @@
     "text_search_description": "Popište scénu, objekt nebo okamžik. Místní AI v Lapu najde vizuálně odpovídající fotografie."
   },
   "search": {
+    "in_scope": "Hledat v „{scope}“",
     "title": "Hledat",
     "similar_images": "Podobné fotografie",
-    "image_search_placeholder": "Hledat obrázky, názvy souborů nebo popisy",
+    "image_search_placeholder": "Zadejte hledaný výraz…",
     "matches": "Shody",
     "unknown_location": "Neznámé místo",
     "unknown_camera": "Neznámý fotoaparát",

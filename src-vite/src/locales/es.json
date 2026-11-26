@@ -2,7 +2,6 @@
   "sidebar": {
     "library": "Biblioteca",
     "album": "Álbumes",
-    "search": "Buscar",
     "tag": "Etiquetas",
     "calendar": "Calendario",
     "location": "Ubicaciones",
@@ -273,9 +272,10 @@
     "text_search_description": "Describe una escena, un objeto o un momento. La IA local de Lap encuentra fotos visualmente coincidentes."
   },
   "search": {
+    "in_scope": "Buscar en «{scope}»",
     "title": "Búsqueda",
     "similar_images": "Fotos relacionadas",
-    "image_search_placeholder": "Buscar en tu biblioteca",
+    "image_search_placeholder": "Introduce términos de búsqueda…",
     "matches": "Coincidencias",
     "unknown_location": "Ubicación desconocida",
     "unknown_camera": "Cámara desconocida",

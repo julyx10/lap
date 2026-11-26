@@ -2,7 +2,6 @@
   "sidebar": {
     "library": "媒體庫",
     "album": "相簿",
-    "search": "搜尋",
     "tag": "標籤",
     "calendar": "行事曆",
     "location": "地點",
@@ -273,9 +272,10 @@
     "text_search_description": "描述場景、物體或瞬間，Lap 的本地 AI 會找到視覺上符合的照片。"
   },
   "search": {
+    "in_scope": "在“{scope}”中搜尋",
     "title": "搜尋",
     "similar_images": "相關相片",
-    "image_search_placeholder": "搜尋圖庫",
+    "image_search_placeholder": "輸入搜尋文字…",
     "matches": "相符項目",
     "unknown_location": "未知地點",
     "unknown_camera": "未知相機",

@@ -2,7 +2,6 @@
   "sidebar": {
     "library": "资料库",
     "album": "相册",
-    "search": "搜索",
     "tag": "标签",
     "calendar": "日历",
     "location": "地点",
@@ -273,9 +272,10 @@
     "text_search_description": "描述场景、物体或瞬间，Lap 的本地 AI 会找到视觉上匹配的照片。"
   },
   "search": {
+    "in_scope": "在“{scope}”中搜索",
     "title": "搜索",
     "similar_images": "相关照片",
-    "image_search_placeholder": "搜索图库",
+    "image_search_placeholder": "输入搜索文字…",
     "matches": "匹配结果",
     "unknown_location": "未知位置",
     "unknown_camera": "未知相机",

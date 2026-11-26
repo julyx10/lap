@@ -48,7 +48,7 @@ const sourceFiles = [
   "components/AlbumFolder.vue",
   "components/SmartAlbumList.vue",
   "components/SmartAlbumEdit.vue",
-  "components/ImageSearch.vue",
+  "components/ToolbarSearch.vue",
   "components/Tag.vue",
   "components/Calendar.vue",
   "components/Person.vue",
