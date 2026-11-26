@@ -5846,21 +5846,35 @@ impl AFile {
         }
     }
 
+    fn synchronized_group_order(group_by: i64, folder_sort: i64, calendar_sort: i64, category_sort: i64, sort_order: i64) -> String {
+        let order = i64::from(sort_order != 0);
+        let dir = if order == 0 { "ASC" } else { "DESC" };
+        match group_by {
+            GROUP_BY_RATING => format!("CAST(group_id AS INTEGER) {dir}"),
+            GROUP_BY_FILE_TYPE => format!("CASE group_id WHEN 'image' THEN 0 WHEN 'raw' THEN 1 WHEN 'video' THEN 2 ELSE 3 END {dir}"),
+            GROUP_BY_CULLING => format!("CASE group_id WHEN '1' THEN 0 WHEN '2' THEN 1 ELSE 2 END {dir}"),
+            _ => Self::group_order_clause_values(group_by,
+                folder_sort / 2 * 2 + order, calendar_sort / 2 * 2 + order, category_sort / 2 * 2 + order),
+        }
+    }
+
     fn group_order_clause(params: &QueryParams) -> String {
-        Self::group_order_clause_values(
+        Self::synchronized_group_order(
             params.group_by,
             params.folder_sort,
             params.calendar_sort,
             params.category_sort,
+            params.sort_order,
         )
     }
 
     fn smart_group_order_clause(params: &SmartQueryParams) -> String {
-        Self::group_order_clause_values(
+        Self::synchronized_group_order(
             params.group_by,
             params.folder_sort,
             params.calendar_sort,
             params.category_sort,
+            params.sort_order,
         )
     }
 
@@ -12439,5 +12453,55 @@ mod browser_filter_tests {
         AFile::append_browser_filters(&BrowserFilters { rating: Some(-2), ..Default::default() }, &mut conditions);
         let sql = format!("SELECT COUNT(*) FROM afiles a WHERE {}", conditions.join(" AND "));
         assert_eq!(conn.query_row(&sql, [], |row| row.get::<_, i64>(0)).unwrap(), 1);
+    }
+}
+
+#[cfg(test)]
+mod synchronized_group_sort_tests {
+    use super::*;
+
+    #[test]
+    fn group_direction_follows_item_direction_without_changing_group_basis() {
+        for group in [GROUP_BY_DATE_DAY, GROUP_BY_DATE_MONTH, GROUP_BY_DATE_YEAR, GROUP_BY_FOLDER_PATH,
+            GROUP_BY_RATING, GROUP_BY_FILE_TYPE, GROUP_BY_CULLING, GROUP_BY_LOCATION, GROUP_BY_CAMERA, GROUP_BY_LENS] {
+            let asc = AFile::synchronized_group_order(group, 0, 0, 0, 0);
+            let desc = AFile::synchronized_group_order(group, 0, 0, 0, 1);
+            assert_ne!(asc, desc, "group {group}");
+            assert!(asc.contains("ASC"), "{asc}");
+            assert!(desc.contains("DESC"), "{desc}");
+        }
+        assert!(AFile::synchronized_group_order(GROUP_BY_FOLDER_PATH, 3, 0, 0, 0).contains("MAX(group_sort) ASC"));
+        assert!(AFile::synchronized_group_order(GROUP_BY_CAMERA, 0, 0, 2, 1).contains("COUNT(*) DESC"));
+    }
+
+    #[test]
+    fn group_order_applies_to_real_sqlite_rows() {
+        let conn = rusqlite::Connection::open_in_memory().unwrap();
+        conn.execute_batch(
+            "CREATE TABLE grouped(group_id TEXT, label TEXT, group_sort TEXT);
+             INSERT INTO grouped VALUES
+                ('folder-b', 'B', '2'),
+                ('folder-a', 'A', '1'),
+                ('5', 'Five', '5'),
+                ('1', 'One', '1'),
+                ('unknown-camera', 'Unknown', '0'),
+                ('Canon', 'Canon', '2'),
+                ('Sony', 'Sony', '1');"
+        ).unwrap();
+
+        let ids = |group_by: i64, folder_sort: i64, category_sort: i64, sort_order: i64, scope: &str| {
+            let order = AFile::synchronized_group_order(group_by, folder_sort, 0, category_sort, sort_order);
+            let sql = format!("SELECT group_id FROM grouped WHERE {scope} GROUP BY group_id, label ORDER BY {order}");
+            conn.prepare(&sql).unwrap()
+                .query_map([], |row| row.get::<_, String>(0)).unwrap()
+                .collect::<Result<Vec<_>, _>>().unwrap()
+        };
+
+        assert_eq!(ids(GROUP_BY_FOLDER_PATH, 2, 0, 0, "group_id LIKE 'folder-%'"), vec!["folder-a", "folder-b"]);
+        assert_eq!(ids(GROUP_BY_FOLDER_PATH, 2, 0, 1, "group_id LIKE 'folder-%'"), vec!["folder-b", "folder-a"]);
+        assert_eq!(ids(GROUP_BY_RATING, 0, 0, 0, "group_id IN ('1','5')"), vec!["1", "5"]);
+        assert_eq!(ids(GROUP_BY_RATING, 0, 0, 1, "group_id IN ('1','5')"), vec!["5", "1"]);
+        assert_eq!(ids(GROUP_BY_CAMERA, 0, 0, 0, "group_id IN ('Canon','Sony','unknown-camera')"), vec!["Sony", "Canon", "unknown-camera"]);
+        assert_eq!(ids(GROUP_BY_CAMERA, 0, 0, 1, "group_id IN ('Canon','Sony','unknown-camera')"), vec!["Canon", "Sony", "unknown-camera"]);
     }
 }

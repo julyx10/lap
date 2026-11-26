@@ -676,6 +676,8 @@
     "items_summary": "{count} 個項目（{size}）"
   },
   "menu": {
+    "sort_more": "更多",
+    "group_by": "分組依據",
     "select": {
       "all": "全選",
       "none": "取消全選",

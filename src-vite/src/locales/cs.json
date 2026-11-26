@@ -676,6 +676,8 @@
     "items_summary": "{count} položek ({size})"
   },
   "menu": {
+    "sort_more": "Další",
+    "group_by": "Seskupit podle",
     "select": {
       "all": "Vybrat vše",
       "none": "Zrušit celý výběr",

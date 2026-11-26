@@ -676,6 +676,8 @@
     "items_summary": "{count} mục ({size})"
   },
   "menu": {
+    "sort_more": "Thêm",
+    "group_by": "Nhóm theo",
     "select": {
       "all": "Chọn tất cả",
       "none": "Bỏ chọn tất cả",

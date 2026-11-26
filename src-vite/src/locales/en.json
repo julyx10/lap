@@ -676,6 +676,8 @@
     "items_summary": "{count} items ({size})"
   },
   "menu": {
+    "sort_more": "More",
+    "group_by": "Group by",
     "select": {
       "all": "Select all",
       "none": "Deselect all",

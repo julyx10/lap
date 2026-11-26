@@ -676,6 +676,8 @@
     "items_summary": "{count} items ({size})"
   },
   "menu": {
+    "sort_more": "Meer",
+    "group_by": "Groeperen op",
     "select": {
       "all": "Alles selecteren",
       "none": "Niets selecteren",

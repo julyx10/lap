@@ -56,6 +56,35 @@ export const DATE_SORT = {
   TAKEN_DESC: 1,
 } as const;
 
+
+// sort type enum (matches toolbar.filter.sort_type_options order)
+export const SORT_TYPE = {
+  TAKEN_DATE: 0,
+  CREATED_DATE: 1,
+  MODIFIED_DATE: 2,
+  NAME: 3,
+  SIZE: 4,
+  DIMENSION: 5,
+  DURATION: 6,
+  RANDOM: 7,
+  ADDED: 8,
+} as const;
+
+export const SORT_MENU_PRIMARY = [
+  SORT_TYPE.TAKEN_DATE,
+  SORT_TYPE.NAME,
+  SORT_TYPE.SIZE,
+] as const;
+
+export const SORT_MENU_MORE = [
+  SORT_TYPE.CREATED_DATE,
+  SORT_TYPE.MODIFIED_DATE,
+  SORT_TYPE.DIMENSION,
+  SORT_TYPE.DURATION,
+  SORT_TYPE.RANDOM,
+  SORT_TYPE.ADDED,
+] as const;
+
 // group by enum
 export const GROUP = {
   NONE: 0,

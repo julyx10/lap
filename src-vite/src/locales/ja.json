@@ -676,6 +676,8 @@
     "items_summary": "{count} 項目 ({size})"
   },
   "menu": {
+    "sort_more": "その他",
+    "group_by": "グループ化",
     "select": {
       "all": "すべて選択",
       "none": "すべての選択を解除",

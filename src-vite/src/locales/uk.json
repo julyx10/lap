@@ -676,6 +676,8 @@
     "items_summary": "{count} елементів ({size})"
   },
   "menu": {
+    "sort_more": "Більше",
+    "group_by": "Групувати за",
     "select": {
       "all": "Вибрати всі",
       "none": "Скасувати вибір усіх",

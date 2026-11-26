@@ -17,7 +17,7 @@
       @click="togglePanel"
     >
       <IconFilter class="w-4 h-4 shrink-0" />
-      <span v-if="!disabled && count > 0" class="badge badge-primary badge-sm ml-1">{{
+      <span v-if="!disabled && count > 0" class="badge badge-primary badge-xs ml-1">{{
         count
       }}</span>
     </button>

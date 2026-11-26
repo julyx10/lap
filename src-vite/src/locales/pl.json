@@ -676,6 +676,8 @@
     "items_summary": "{count} elementów ({size})"
   },
   "menu": {
+    "sort_more": "Więcej",
+    "group_by": "Grupuj według",
     "select": {
       "all": "Zaznacz wszystko",
       "none": "Odznacz wszystko",

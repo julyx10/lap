@@ -676,6 +676,8 @@
     "items_summary": "{count} elem ({size})"
   },
   "menu": {
+    "sort_more": "Továbbiak",
+    "group_by": "Csoportosítás",
     "select": {
       "all": "Összes kijelölése",
       "none": "Kijelölések törlése",

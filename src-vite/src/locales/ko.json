@@ -676,6 +676,8 @@
     "items_summary": "{count}개 항목 ({size})"
   },
   "menu": {
+    "sort_more": "더 보기",
+    "group_by": "그룹화 기준",
     "select": {
       "all": "모두 선택",
       "none": "모두 선택 해제",

@@ -676,6 +676,8 @@
     "items_summary": "Элементов: {count} ({size})"
   },
   "menu": {
+    "sort_more": "Ещё",
+    "group_by": "Группировать по",
     "select": {
       "all": "Выбрать все",
       "none": "Снять выделение",

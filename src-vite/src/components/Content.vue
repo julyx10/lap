@@ -53,48 +53,18 @@
       </div>
 
       <!-- toolbar -->
-      <div class="flex items-center gap-2 shrink-0">
+      <div class="flex items-center shrink-0">
 
         <FilterPanel :type="activeFileTypeMask" :types="fileTypeOptions" :disabled="isBrowserFilterDisabled"
           :result-count="browserFilterMatched" :baseline="browserFilterBaseline"
           @type="setBrowserFileType" @open="browserFilterOpen = $event" />
 
-        <!-- sort type options -->
-        <DropDownSelect
-          :icon="isRandomSort ? IconSortingShuffle : (config.search.sortOrder === 0 ? IconSortingAsc : IconSortingDesc)"
-          :options="toolbarSortOptions"
-          :defaultIndex="toolbarSortType"
-          :extendOptions="toolbarSortExtendOptions"
-          :defaultExtendIndex="toolbarSortOrder"
-          :extendDisabled="isRandomSort"
-          :disabled="isSortControlDisabled"
-          :selected="isSmartAlbumSortOverride"
-          @select="handleSortTypeSelect"
-        />
-
-        <!-- global grouping options for query-backed grid views -->
-        <DropDownSelect
-          :icon="IconGroup"
-          :options="toolbarGroupOptions"
-          :defaultIndex="toolbarGroupIndex"
-          :separatorsAfter="toolbarGroupOptions.length > 1 ? [0] : []"
-          :disabled="isGroupControlDisabled"
-          :selected="isSmartAlbumGroupOverride"
-          @select="handleGroupSelect"
-        />
+        <ContextMenu :iconMenu="toolbarSortOrder === 0 ? IconSortingAsc : IconSortingDesc"
+          :tooltip="sortGroupTooltip" :menuItems="sortGroupMenuItems" :disabled="isSortControlDisabled" />
 
         <!-- select and layout section -->
         <div class="flex flex-row items-center">
           <IconSeparator class="t-icon-size text-base-content/15" />
-          
-          <!-- refresh file list -->
-          <!-- Bugfix: need to update album files when the album is updated -->
-          <!-- <TButton
-            :icon="IconRefresh"
-            :tooltip="$t('toolbar.tooltip.refresh')"
-            :disabled="isIndexing || showQuickView"
-            @click="updateContent()"
-          /> -->
           
           <!-- grid size slider -->
           <div class="flex flex-row items-center gap-2 px-2 shrink-0 group">
@@ -789,7 +759,7 @@ import { handleVideoPlaybackShortcut, handleVideoEscapeShortcut } from '@/common
 import { clearFolderFileCounts, setFolderFileCount, getCountedFolderPaths } from '@/composables/useAlbumSelection';
 import { createEmptyLibraryCounts } from '@/stores/libraryStore';
 import { getAlbumScanState, getAlbumScanIcon, shouldAnimateAlbumScanIcon } from '@/common/scanStatus';
-import { CULLING, DATE_SORT, GROUP, LIB_ITEM, RATE, SIDEBAR, RIGHT_PANEL_MIN_WIDTH, PANEL_ANIMATION_MS, MONTAGE_MAX_PHOTOS, LARGE_BATCH_CONFIRM_THRESHOLD, EXTERNAL_OPEN_WARNING_THRESHOLD } from '@/common/constants';
+import { CULLING, DATE_SORT, GROUP, LIB_ITEM, RATE, SIDEBAR, RIGHT_PANEL_MIN_WIDTH, PANEL_ANIMATION_MS, MONTAGE_MAX_PHOTOS, LARGE_BATCH_CONFIRM_THRESHOLD, EXTERNAL_OPEN_WARNING_THRESHOLD, SORT_MENU_MORE, SORT_MENU_PRIMARY, SORT_TYPE } from '@/common/constants';
 import { isWin, isMac, isLinux, separator,
          formatFileSize, formatDate, getCalendarDateRange, formatFolderBreadcrumb, getThumbnailDataUrl, getAssetSrc, getPreviewUrl,
          getCachedThumbnailDataUrl,
@@ -797,7 +767,6 @@ import { isWin, isMac, isLinux, separator,
          extractFileName, getFolderPath, getFolderName, getSelectOptions,
          getCountryName, getMediaItemSize, shortenFilename, getSlideShowInterval, getFullPath, normalizePathForCompare, isWithinRootPath, shouldUseBackendPreview, isPreviewOnlyDocument } from '@/common/utils';
 
-import DropDownSelect from '@/components/DropDownSelect.vue';
 import ProgressBar from '@/components/ProgressBar.vue';
 import GridView  from '@/components/GridView.vue';
 import BatchRenameDialog from '@/components/BatchRenameDialog.vue';
@@ -871,7 +840,6 @@ import StatusBar from '@/components/StatusBar.vue';
 
 import {
   IconFolders,
-  IconGroup,
   IconFiles,
   IconFolder,
   IconFolderCog,
@@ -910,14 +878,13 @@ import {
   IconSimilar,
   IconCamera,
   IconHeartFilled,
-  IconOk,
+  IconDot,
   IconHistory,
   IconCollection,
   IconFileSearch,
   IconPerson,
   IconSortingAsc,
   IconSortingDesc,
-  IconSortingShuffle,
   IconFilter,
   IconChevronsRight,
 } from '@/common/icons';
@@ -1703,7 +1670,6 @@ function getActiveCustomSmartAlbum() {
 
 const isCollectionPane = computed(() => libConfig.activePane === 'collection');
 
-const RANDOM_SORT = 7;
 const RANDOM_SEED_MODULUS = 2_147_483_647;
 
 function createRandomSeed() {
@@ -1722,7 +1688,7 @@ const isRandomSort = computed(() => {
   const sortType = activeSmartAlbum.value
     ? activeSmartAlbum.value.sort?.type ?? config.search.sortType
     : config.search.sortType;
-  return Number(sortType) === RANDOM_SORT;
+  return Number(sortType) === SORT_TYPE.RANDOM;
 });
 
 const effectiveGroupBy = computed(() => {
@@ -11203,10 +11169,6 @@ const sortExtendOptions = computed(() => {
   return getSelectOptions(localeMsg.value.toolbar.filter?.sort_order_options);
 });
 
-const toolbarSortExtendOptions = computed(() =>
-  isSimilaritySortedResultView.value ? [] : sortExtendOptions.value
-);
-
 const groupTypeLabels = computed(() =>
   localeMsg.value.toolbar.filter?.group_type_options || []
 );
@@ -11254,6 +11216,38 @@ const toolbarSortOrder = computed(() => (
     ? Number(getActiveCustomSmartAlbum()?.sort?.order ?? 1)
     : Number(config.search.sortOrder || 0)
 ));
+
+const sortGroupTooltip = computed(() => {
+  const sort = toolbarSortOptions.value[toolbarSortType.value]?.label || '';
+  const group = effectiveGroupBy.value === GROUP.NONE ? '' : toolbarGroupOptions.value[toolbarGroupIndex.value]?.label;
+  return group ? `${sort} · ${group}` : sort;
+});
+const sortGroupMenuItems = computed(() => {
+  const sortItem = (index: number) => ({
+    label: sortOptions.value[index]?.label || '',
+    icon: toolbarSortType.value === index ? markRaw(IconDot) : undefined,
+    action: () => handleSortTypeSelect(index, toolbarSortOrder.value),
+  });
+  return [
+    ...SORT_MENU_PRIMARY.map(sortItem),
+    { label: t('menu.sort_more'), icon: SORT_MENU_MORE.some(type => type === toolbarSortType.value) ? markRaw(IconDot) : undefined, children: SORT_MENU_MORE.map(sortItem) },
+    { label: '-', action: null },
+    ...sortExtendOptions.value.map((option, index) => ({
+      label: option.label,
+      icon: toolbarSortOrder.value === index ? markRaw(IconDot) : undefined,
+      disabled: isRandomSort.value,
+      action: () => handleSortTypeSelect(toolbarSortType.value, index),
+    })),
+    { label: '-', action: null },
+    { label: t('menu.group_by'), disabled: isGroupControlDisabled.value,
+      children: toolbarGroupOptions.value.flatMap((option, index) => [
+        ...(index === 1 ? [{ label: '-', action: null }] : []),
+        { label: option.label, icon: toolbarGroupIndex.value === index ? markRaw(IconDot) : undefined,
+          action: () => handleGroupSelect(groupOptions.value.findIndex(group => group.value === option.value)) },
+      ]),
+    },
+  ];
+});
 
 const isSearchLikeView = computed(() => {
   return !isCollectionPane.value && (
