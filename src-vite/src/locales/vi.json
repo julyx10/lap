@@ -522,6 +522,32 @@
       "scanning": "Đang quét…",
       "scan_paused": "Đã tạm dừng quét",
       "scan_queued": "Đang chờ quét"
+    },
+    "browser_filters": {
+      "title": "Bộ lọc",
+      "file_type": "Loại tệp",
+      "favorite": "Yêu thích",
+      "rating": "Đánh giá",
+      "culling": "Phân loại",
+      "tags": "Thẻ",
+      "all": "Tất cả",
+      "favorited": "Đã yêu thích",
+      "not_favorited": "Chưa yêu thích",
+      "unrated": "Chưa đánh giá",
+      "pick": "Đã chọn",
+      "reject": "Bị từ chối",
+      "unreviewed": "Chưa xem",
+      "tagged": "Có thẻ",
+      "untagged": "Không có thẻ",
+      "reset": "Đặt lại bộ lọc",
+      "rated": "Đã đánh giá",
+      "remove": "Xóa bộ lọc",
+      "clear_all": "Xóa tất cả",
+      "counting": "Đang đếm…",
+      "results": "{count} / {total} mục",
+      "total_items": "{total} mục",
+      "tooltip": "Bộ lọc",
+      "disabled": "Bộ lọc đã tắt"
     }
   },
   "info_panel": {

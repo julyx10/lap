@@ -522,6 +522,32 @@
       "scanning": "掃描中…",
       "scan_paused": "掃描已暫停",
       "scan_queued": "已排隊等待掃描"
+    },
+    "browser_filters": {
+      "title": "篩選",
+      "file_type": "檔案類型",
+      "favorite": "收藏",
+      "rating": "評分",
+      "culling": "選片",
+      "tags": "標籤",
+      "all": "全部",
+      "favorited": "已收藏",
+      "not_favorited": "未收藏",
+      "unrated": "未評分",
+      "pick": "已選取",
+      "reject": "已拒絕",
+      "unreviewed": "未審核",
+      "tagged": "有標籤",
+      "untagged": "無標籤",
+      "reset": "重設篩選",
+      "rated": "已評分",
+      "remove": "移除篩選",
+      "clear_all": "清除全部",
+      "counting": "統計中…",
+      "results": "{count} / {total} 項",
+      "total_items": "{total} 項",
+      "tooltip": "篩選",
+      "disabled": "篩選已停用"
     }
   },
   "info_panel": {

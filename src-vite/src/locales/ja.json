@@ -522,6 +522,32 @@
       "scanning": "スキャン中…",
       "scan_paused": "スキャン一時停止",
       "scan_queued": "スキャン待機中"
+    },
+    "browser_filters": {
+      "title": "フィルター",
+      "file_type": "ファイル形式",
+      "favorite": "お気に入り",
+      "rating": "評価",
+      "culling": "選別",
+      "tags": "タグ",
+      "all": "すべて",
+      "favorited": "お気に入り",
+      "not_favorited": "お気に入り以外",
+      "unrated": "未評価",
+      "pick": "ピック",
+      "reject": "拒否",
+      "unreviewed": "未確認",
+      "tagged": "タグあり",
+      "untagged": "タグなし",
+      "reset": "フィルターをリセット",
+      "rated": "評価済み",
+      "remove": "フィルターを解除",
+      "clear_all": "すべてクリア",
+      "counting": "集計中…",
+      "results": "{count} / {total} 件",
+      "total_items": "{total} 件",
+      "tooltip": "フィルター",
+      "disabled": "フィルターは無効です"
     }
   },
   "info_panel": {

@@ -2125,10 +2125,22 @@ pub struct TagFilter {
     pub any: bool,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct BrowserFilters {
+    pub favorite: Option<i64>,
+    pub rating: Option<i64>,
+    pub culling: Option<i64>,
+    pub tags: Option<i64>,
+    #[serde(default, rename = "ratingOp")]
+    pub rating_op: String,
+}
+
 /// Define the query parameters struct for file queries
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct QueryParams {
+    #[serde(default)]
+    pub browser_filters: BrowserFilters,
     pub search_file_name: String, // filename and metadata text search
     pub search_file_type: i64,
     pub sort_type: i64,
@@ -2192,6 +2204,8 @@ pub struct SmartRule {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct SmartQueryParams {
+    #[serde(default)]
+    pub browser_filters: BrowserFilters,
     #[serde(default = "default_smart_query_version")]
     pub version: i32,
     #[serde(default = "default_smart_query_match")]
@@ -5600,6 +5614,7 @@ impl AFile {
             }
         }
 
+        Self::append_browser_filters(&params.browser_filters, &mut conditions);
         if params.is_favorite {
             conditions.push("a.is_favorite = 1".to_string());
         }
@@ -5710,6 +5725,26 @@ impl AFile {
         final_params.push(&resolved_limit);
         final_params.push(&offset);
         Self::query_files(&query, &final_params)
+    }
+
+    fn append_browser_filters(filters: &BrowserFilters, conditions: &mut Vec<String>) {
+        for (value, column, max) in [(filters.favorite, "is_favorite", 1), (filters.culling, "culling_flag", 2)] {
+            if let Some(value) = value.filter(|value| (0..=max).contains(value)) {
+                conditions.push(format!("COALESCE(a.{column}, 0) = {value}"));
+            }
+        }
+        if let Some(rating) = filters.rating.filter(|value| (0..=5).contains(value)) {
+            let op = if rating == 0 { "=" } else { match filters.rating_op.as_str() { "eq" => "=", "lte" => "<=", _ => ">=" } };
+            conditions.push(format!("COALESCE(a.rating, 0) {op} {rating}"));
+        }
+        if filters.rating == Some(-2) {
+            conditions.push("COALESCE(a.rating, 0) > 0".into());
+        }
+        match filters.tags {
+            Some(0) => conditions.push("NOT EXISTS (SELECT 1 FROM afile_tags ft WHERE ft.file_id=a.id)".into()),
+            Some(1) => conditions.push("EXISTS (SELECT 1 FROM afile_tags ft WHERE ft.file_id=a.id)".into()),
+            _ => {}
+        }
     }
 
     fn group_key_and_sort_expr(group_by: i64, calendar_sort: i64) -> Option<(String, String)> {
@@ -6792,6 +6827,7 @@ impl AFile {
         if let Some(condition) = Self::build_browser_file_type_condition(params.file_type) {
             conditions.push(condition);
         }
+        Self::append_browser_filters(&params.browser_filters, &mut conditions);
         if params.favorites_only {
             conditions.push("a.is_favorite = 1".to_string());
         }
@@ -12358,5 +12394,50 @@ mod multi_tag_filter_tests {
             let actual = stmt.query_map(rusqlite::params_from_iter(values.iter()), |row| row.get::<_,i64>(0)).unwrap().collect::<Result<Vec<_>,_>>().unwrap();
             assert_eq!(actual, expected);
         }
+    }
+}
+
+#[cfg(test)]
+mod browser_filter_tests {
+    use super::*;
+
+    #[test]
+    fn rating_comparisons() {
+        let conn = rusqlite::Connection::open_in_memory().unwrap();
+        conn.execute_batch("CREATE TABLE afiles(id INTEGER, rating INTEGER); CREATE TABLE atags(id INTEGER, parent_id INTEGER);
+            CREATE TABLE afile_tags(file_id INTEGER, tag_id INTEGER);
+            INSERT INTO afiles VALUES(1,0),(2,3),(3,4),(4,5);
+            INSERT INTO atags VALUES(10,NULL),(11,10),(20,NULL);
+            INSERT INTO afile_tags VALUES(2,11),(3,10),(3,20),(4,20);").unwrap();
+        let count = |filters: BrowserFilters| {
+            let mut conditions = Vec::new();
+            AFile::append_browser_filters(&filters, &mut conditions);
+            conn.query_row(&format!("SELECT COUNT(*) FROM afiles a WHERE {}", conditions.join(" AND ")), [], |row| row.get::<_, i64>(0)).unwrap()
+        };
+        for (op, expected) in [("gte", 2), ("eq", 1), ("lte", 3)] {
+            assert_eq!(count(BrowserFilters { rating: Some(4), rating_op: op.into(), ..Default::default() }), expected);
+        }
+    }
+
+    #[test]
+    fn filters_intersect_and_untagged_uses_membership() {
+        let conn = rusqlite::Connection::open_in_memory().unwrap();
+        conn.execute_batch("CREATE TABLE afiles(id INTEGER, is_favorite INTEGER, rating INTEGER, culling_flag INTEGER);
+            CREATE TABLE afile_tags(file_id INTEGER, tag_id INTEGER);
+            INSERT INTO afiles VALUES(1,1,0,1),(2,1,0,1),(3,0,0,1),(4,1,5,1);
+            INSERT INTO afile_tags VALUES(2,10);").unwrap();
+        let filters = BrowserFilters { favorite: Some(1), rating: Some(0), culling: Some(1), tags: Some(0), ..Default::default() };
+        let mut conditions = Vec::new();
+        AFile::append_browser_filters(&filters, &mut conditions);
+        let sql = format!("SELECT a.id FROM afiles a WHERE {}", conditions.join(" AND "));
+        let ids = conn.prepare(&sql).unwrap().query_map([], |row| row.get::<_, i64>(0)).unwrap()
+            .collect::<Result<Vec<_>, _>>().unwrap();
+        assert_eq!(ids, vec![1]);
+        conditions.clear();
+        AFile::append_browser_filters(&BrowserFilters::default(), &mut conditions);
+        assert!(conditions.is_empty());
+        AFile::append_browser_filters(&BrowserFilters { rating: Some(-2), ..Default::default() }, &mut conditions);
+        let sql = format!("SELECT COUNT(*) FROM afiles a WHERE {}", conditions.join(" AND "));
+        assert_eq!(conn.query_row(&sql, [], |row| row.get::<_, i64>(0)).unwrap(), 1);
     }
 }

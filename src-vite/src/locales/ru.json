@@ -522,6 +522,32 @@
       "scanning": "Сканирование…",
       "scan_paused": "Сканирование на паузе",
       "scan_queued": "В очереди на сканирование"
+    },
+    "browser_filters": {
+      "title": "Фильтры",
+      "file_type": "Тип файла",
+      "favorite": "Избранное",
+      "rating": "Рейтинг",
+      "culling": "Отбор",
+      "tags": "Теги",
+      "all": "Все",
+      "favorited": "В избранном",
+      "not_favorited": "Не в избранном",
+      "unrated": "Без рейтинга",
+      "pick": "Выбранные",
+      "reject": "Отклонённые",
+      "unreviewed": "Непросмотренные",
+      "tagged": "С тегами",
+      "untagged": "Без тегов",
+      "reset": "Сбросить фильтры",
+      "rated": "С рейтингом",
+      "remove": "Убрать фильтр",
+      "clear_all": "Очистить всё",
+      "counting": "Подсчёт…",
+      "results": "{count} из {total} элементов",
+      "total_items": "{total} элементов",
+      "tooltip": "Фильтр",
+      "disabled": "Фильтр отключён"
     }
   },
   "info_panel": {

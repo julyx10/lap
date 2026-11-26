@@ -522,6 +522,32 @@
       "scanning": "Scannen…",
       "scan_paused": "Scan gepauzeerd",
       "scan_queued": "In wachtrij voor scan"
+    },
+    "browser_filters": {
+      "title": "Filters",
+      "file_type": "Bestandstype",
+      "favorite": "Favorieten",
+      "rating": "Beoordeling",
+      "culling": "Selectie",
+      "tags": "Tags",
+      "all": "Alles",
+      "favorited": "Favoriet",
+      "not_favorited": "Niet favoriet",
+      "unrated": "Onbeoordeeld",
+      "pick": "Gekozen",
+      "reject": "Afgewezen",
+      "unreviewed": "Ongecontroleerd",
+      "tagged": "Met tags",
+      "untagged": "Zonder tags",
+      "reset": "Filters resetten",
+      "rated": "Beoordeeld",
+      "remove": "Filter verwijderen",
+      "clear_all": "Alles wissen",
+      "counting": "Tellen…",
+      "results": "{count} van {total} items",
+      "total_items": "{total} items",
+      "tooltip": "Filter",
+      "disabled": "Filter uitgeschakeld"
     }
   },
   "info_panel": {

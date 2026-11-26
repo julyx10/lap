@@ -522,6 +522,32 @@
       "scanning": "Escaneando…",
       "scan_paused": "Escaneo pausado",
       "scan_queued": "En cola para escanear"
+    },
+    "browser_filters": {
+      "title": "Filtros",
+      "file_type": "Tipo de archivo",
+      "favorite": "Favoritos",
+      "rating": "Valoración",
+      "culling": "Selección",
+      "tags": "Etiquetas",
+      "all": "Todos",
+      "favorited": "Favoritos",
+      "not_favorited": "No favoritos",
+      "unrated": "Sin valorar",
+      "pick": "Elegidas",
+      "reject": "Rechazadas",
+      "unreviewed": "Sin revisar",
+      "tagged": "Etiquetadas",
+      "untagged": "Sin etiquetar",
+      "reset": "Restablecer filtros",
+      "rated": "Valoradas",
+      "remove": "Quitar filtro",
+      "clear_all": "Borrar todo",
+      "counting": "Contando…",
+      "results": "{count} de {total} elementos",
+      "total_items": "{total} elementos",
+      "tooltip": "Filtro",
+      "disabled": "Filtro desactivado"
     }
   },
   "info_panel": {

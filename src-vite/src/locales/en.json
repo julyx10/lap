@@ -522,6 +522,32 @@
       "scanning": "Scanning…",
       "scan_paused": "Scan paused",
       "scan_queued": "Queued for scan"
+    },
+    "browser_filters": {
+      "title": "Filters",
+      "file_type": "File type",
+      "favorite": "Favorites",
+      "rating": "Rating",
+      "culling": "Culling",
+      "tags": "Tags",
+      "all": "All",
+      "favorited": "Favorited",
+      "not_favorited": "Not favorited",
+      "unrated": "Unrated",
+      "pick": "Picked",
+      "reject": "Rejected",
+      "unreviewed": "Unreviewed",
+      "tagged": "Tagged",
+      "untagged": "Untagged",
+      "reset": "Reset filters",
+      "rated": "Rated",
+      "remove": "Remove filter",
+      "clear_all": "Clear all",
+      "counting": "Counting…",
+      "results": "{count} of {total} items",
+      "total_items": "{total} items",
+      "tooltip": "Filter",
+      "disabled": "Filter disabled"
     }
   },
   "info_panel": {

@@ -522,6 +522,32 @@
       "scanning": "Сканування…",
       "scan_paused": "Сканування призупинено",
       "scan_queued": "У черзі на сканування"
+    },
+    "browser_filters": {
+      "title": "Фільтри",
+      "file_type": "Тип файлу",
+      "favorite": "Обране",
+      "rating": "Рейтинг",
+      "culling": "Відбір",
+      "tags": "Теги",
+      "all": "Усі",
+      "favorited": "В обраному",
+      "not_favorited": "Не в обраному",
+      "unrated": "Без рейтингу",
+      "pick": "Вибрані",
+      "reject": "Відхилені",
+      "unreviewed": "Непереглянуті",
+      "tagged": "З тегами",
+      "untagged": "Без тегів",
+      "reset": "Скинути фільтри",
+      "rated": "З рейтингом",
+      "remove": "Прибрати фільтр",
+      "clear_all": "Очистити все",
+      "counting": "Підрахунок…",
+      "results": "{count} з {total} елементів",
+      "total_items": "{total} елементів",
+      "tooltip": "Фільтр",
+      "disabled": "Фільтр вимкнено"
     }
   },
   "info_panel": {

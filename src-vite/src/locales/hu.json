@@ -522,6 +522,32 @@
       "scanning": "Beolvasás…",
       "scan_paused": "Beolvasás szünetel",
       "scan_queued": "Beolvasásra vár"
+    },
+    "browser_filters": {
+      "title": "Szűrők",
+      "file_type": "Fájltípus",
+      "favorite": "Kedvencek",
+      "rating": "Értékelés",
+      "culling": "Kiválogatás",
+      "tags": "Címkék",
+      "all": "Mind",
+      "favorited": "Kedvenc",
+      "not_favorited": "Nem kedvenc",
+      "unrated": "Értékeletlen",
+      "pick": "Kiválasztott",
+      "reject": "Elutasított",
+      "unreviewed": "Nem ellenőrzött",
+      "tagged": "Címkézett",
+      "untagged": "Címkézetlen",
+      "reset": "Szűrők visszaállítása",
+      "rated": "Értékelt",
+      "remove": "Szűrő eltávolítása",
+      "clear_all": "Összes törlése",
+      "counting": "Számlálás…",
+      "results": "{count} / {total} elem",
+      "total_items": "{total} elem",
+      "tooltip": "Szűrő",
+      "disabled": "Szűrő letiltva"
     }
   },
   "info_panel": {

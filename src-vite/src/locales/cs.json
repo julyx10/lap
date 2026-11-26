@@ -522,6 +522,32 @@
       "scanning": "Probíhá skenování…",
       "scan_paused": "Skenování pozastaveno",
       "scan_queued": "Ve frontě na skenování"
+    },
+    "browser_filters": {
+      "title": "Filtry",
+      "file_type": "Typ souboru",
+      "favorite": "Oblíbené",
+      "rating": "Hodnocení",
+      "culling": "Výběr",
+      "tags": "Štítky",
+      "all": "Vše",
+      "favorited": "Oblíbené",
+      "not_favorited": "Neoblíbené",
+      "unrated": "Bez hodnocení",
+      "pick": "Vybrané",
+      "reject": "Zamítnuté",
+      "unreviewed": "Neprohlédnuté",
+      "tagged": "Se štítky",
+      "untagged": "Bez štítků",
+      "reset": "Resetovat filtry",
+      "rated": "Hodnocené",
+      "remove": "Odebrat filtr",
+      "clear_all": "Vymazat vše",
+      "counting": "Počítání…",
+      "results": "{count} z {total} položek",
+      "total_items": "{total} položek",
+      "tooltip": "Filtr",
+      "disabled": "Filtr zakázán"
     }
   },
   "info_panel": {

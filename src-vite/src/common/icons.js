@@ -226,3 +226,7 @@ export { default as IconVideoFill } from '@/assets/icons/video-fill.svg';
 export { default as IconVideoPause } from '@/assets/icons/video-pause.svg';
 export { default as IconVideoPlay } from '@/assets/icons/video-play.svg';
 export { default as IconVideoReplay } from '@/assets/icons/video-replay.svg';
+
+export { default as IconEqual } from '@/assets/icons/equal.svg';
+export { default as IconEqualGreater } from '@/assets/icons/equal-greater.svg';
+export { default as IconEqualLower } from '@/assets/icons/equal-lower.svg';

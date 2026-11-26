@@ -55,29 +55,9 @@
       <!-- toolbar -->
       <div class="flex items-center gap-2 shrink-0">
 
-        <!-- file type options -->
-        <DropDownSelect
-          :icon="IconFilter"
-          :options="fileTypeOptions"
-          :defaultIndex="fileTypeSelectedIndex"
-          :disabled="isFavoritesFilterDisabled"
-          :optionsDisabled="tempViewMode === 'person' || tempViewMode === 'similar'"
-          :selected="activeFileTypeMask !== 0 || activeFavoritesOnly"
-          :title="activeFavoritesOnly ? $t('toolbar.filter.favorites_only') : ''"
-          @select="handleFileTypeSelect"
-        >
-          <template #trigger-suffix>
-            <IconHeartFilled v-if="activeFavoritesOnly" class="w-4 h-4 shrink-0" />
-          </template>
-          <template #menu-after>
-            <div class="mx-2 my-1 border-t border-base-content/10"></div>
-            <button class="p-1 flex items-center text-sm whitespace-nowrap rounded-box hover:bg-base-100/30 hover:text-base-content cursor-pointer"
-              role="menuitemcheckbox" :aria-checked="activeFavoritesOnly" @click="toggleFavoritesFilter">
-              <span class="w-5"><IconOk v-if="activeFavoritesOnly" class="w-4 h-4" /></span>
-              <span class="mr-4">{{ $t('toolbar.filter.favorites_only') }}</span>
-            </button>
-          </template>
-        </DropDownSelect>
+        <FilterPanel :type="activeFileTypeMask" :types="fileTypeOptions" :disabled="isBrowserFilterDisabled"
+          :result-count="browserFilterMatched" :baseline="browserFilterBaseline"
+          @type="setBrowserFileType" @open="browserFilterOpen = $event" />
 
         <!-- sort type options -->
         <DropDownSelect
@@ -355,7 +335,7 @@
 
         <!-- custom scrollbar -->
         <div v-if="!isMapVisible && !showWelcomeContent && !showFilmstripLayout && fileList.length > 0"
-          class="mt-12 shrink-0" 
+          class="mt-12 shrink-0"
           :class="[ config.settings.showStatusBar ? 'mb-8' : 'mb-1' ]"
         >
           <ScrollBar
@@ -770,6 +750,8 @@
 </template>
 
 <script setup lang="ts">
+import FilterPanel from '@/components/FilterPanel.vue';
+import { browserFilters, passesBrowserFilters } from '@/common/browserFilters';
 import { getVisibleEditableMetadataFields } from '@/common/fileInfoFields';
 import EditMetadataDialog from "@/components/EditMetadataDialog.vue";
 import { externalDragKind, updateExternalDrag, resetExternalDrag, finishExternalDrag } from '@/common/externalDrag';
@@ -784,15 +766,15 @@ import { PREVIEW_WINDOW_FOCUS_RESTORED } from '@/common/previewWindow';
 import { useI18n } from 'vue-i18n';
 import { useToast } from '@/common/toast';
 import { useUIStore } from '@/stores/uiStore';
-import { getAlbum, getAllAlbums, recountAlbum, getQueryCountAndSum, getQueryTimeLine, getQueryFiles, getFilesByIds, getGroupedQueryRows, getGroupedFilePosition, getGroupFileIds, getQueryFileIds, syncAlbumFolderMtimes, reconcileRawJpegPairs,
-         getSmartQueryCountAndSum, getSmartQueryTimeLine, getSmartQueryFiles, getSmartGroupedQueryRows, getSmartGroupFileIds, getSmartQueryFileIds, getSmartQueryFilePosition,
+import { getAlbum, getAllAlbums, recountAlbum, getQueryCountAndSum as apiGetQueryCountAndSum, getQueryTimeLine as apiGetQueryTimeLine, getQueryFiles as apiGetQueryFiles, getFilesByIds, getGroupedQueryRows as apiGetGroupedQueryRows, getGroupedFilePosition as apiGetGroupedFilePosition, getGroupFileIds as apiGetGroupFileIds, getQueryFileIds as apiGetQueryFileIds, syncAlbumFolderMtimes, reconcileRawJpegPairs,
+         getSmartQueryCountAndSum as apiGetSmartQueryCountAndSum, getSmartQueryTimeLine as apiGetSmartQueryTimeLine, getSmartQueryFiles as apiGetSmartQueryFiles, getSmartGroupedQueryRows as apiGetSmartGroupedQueryRows, getSmartGroupFileIds as apiGetSmartGroupFileIds, getSmartQueryFileIds as apiGetSmartQueryFileIds, getSmartQueryFilePosition as apiGetSmartQueryFilePosition,
          moveFile, moveFileOutsideLibrary, copyFile, withFileTransferBatch, batchDeleteFiles, getFileThumb, getFileThumbById, getFileThumbs, getFileInfo,
          setFileRotate, setFileFavorite, setFileRating, setFileCullingFlag, batchUpdateFileMetadata, getTagsForFile, searchSimilarImages, generateEmbedding,
          getTagName, indexAlbum, listenIndexProgress, listenIndexFinished, setAlbumCover, setDesktopWallpaper,
          updateFileInfo, refreshFileInfo, changeVideoThumbnail, getSupportedFormatExtensions, importFiles, importUrl, importFileBytes, getDragPayload, importClipboard, addFileToDb, checkFileExists, checkFileAccessibility, isCloudOnlyFile, cancelIndexing as cancelIndexingApi, selectFolder, getFacesForFile, listenFaceIndexProgress,
          openFilesWithApp, getAppConfig, getIndexRecoveryInfo, clearIndexRecoveryInfo, setLastSelectedItemIndex,
-         dedupDelete, getQueryFilePosition, getFolderSearchExcluded,
-         listCollections, createCollection, addFilesToCollection, removeFilesFromCollection, getFileCollections, getCollectionCountAndSum, getCollectionFiles, getCollectionGroupedQueryRows, getCollectionGroupFileIds, getCollectionQueryFileIds, fetchFolder, isDirectoryAccessible, checkAlbumAccessibility, addTagToFile, saveXmpMetadata } from '@/common/api';
+         dedupDelete, getQueryFilePosition as apiGetQueryFilePosition, getFolderSearchExcluded,
+         listCollections, createCollection, addFilesToCollection, removeFilesFromCollection, getFileCollections, getCollectionCountAndSum as apiGetCollectionCountAndSum, getCollectionFiles as apiGetCollectionFiles, getCollectionGroupedQueryRows as apiGetCollectionGroupedQueryRows, getCollectionGroupFileIds as apiGetCollectionGroupFileIds, getCollectionQueryFileIds as apiGetCollectionQueryFileIds, fetchFolder, isDirectoryAccessible, checkAlbumAccessibility, addTagToFile, saveXmpMetadata } from '@/common/api';
 import { config, libConfig } from '@/common/config';
 import { createThumbnailScheduler } from '@/common/thumbnailScheduler';
 import {
@@ -820,6 +802,37 @@ import ProgressBar from '@/components/ProgressBar.vue';
 import GridView  from '@/components/GridView.vue';
 import BatchRenameDialog from '@/components/BatchRenameDialog.vue';
 import RenameFileDialog from '@/components/RenameFileDialog.vue';
+// Browser predicates belong to this view, not shared API callers (sidebar totals,
+// album covers and other windows). Explicit predicates can opt out below.
+function browserQuery(params: any) {
+  // Smart Albums own their rule set; the toolbar filter panel is disabled there,
+  // so do not inject browser predicates into their queries.
+  const suppressFilters = config.main.sidebarIndex === SIDEBAR.SMART_ALBUM
+    || isScanStreamingMode.value;
+  const activeFilters = suppressFilters ? {} : { ...browserFilters };
+  return { ...params, browserFilters: params?.browserFilters ?? activeFilters };
+}
+const getSmartQueryCountAndSum = (params: any, ...args: any[]) => (apiGetSmartQueryCountAndSum as any)(browserQuery(params), ...args);
+const getSmartQueryTimeLine = (params: any, ...args: any[]) => (apiGetSmartQueryTimeLine as any)(browserQuery(params), ...args);
+const getSmartQueryFiles = (params: any, ...args: any[]) => (apiGetSmartQueryFiles as any)(browserQuery(params), ...args);
+const getSmartGroupedQueryRows = (params: any, ...args: any[]) => (apiGetSmartGroupedQueryRows as any)(browserQuery(params), ...args);
+const getSmartGroupFileIds = (params: any, ...args: any[]) => (apiGetSmartGroupFileIds as any)(browserQuery(params), ...args);
+const getSmartQueryFileIds = (params: any, ...args: any[]) => (apiGetSmartQueryFileIds as any)(browserQuery(params), ...args);
+const getSmartQueryFilePosition = (params: any, ...args: any[]) => (apiGetSmartQueryFilePosition as any)(browserQuery(params), ...args);
+const getQueryCountAndSum = (params: any, ...args: any[]) => (apiGetQueryCountAndSum as any)(browserQuery(params), ...args);
+const getQueryTimeLine = (params: any, ...args: any[]) => (apiGetQueryTimeLine as any)(browserQuery(params), ...args);
+const getQueryFiles = (params: any, ...args: any[]) => (apiGetQueryFiles as any)(browserQuery(params), ...args);
+const getGroupedQueryRows = (params: any, ...args: any[]) => (apiGetGroupedQueryRows as any)(browserQuery(params), ...args);
+const getGroupedFilePosition = (params: any, ...args: any[]) => (apiGetGroupedFilePosition as any)(browserQuery(params), ...args);
+const getGroupFileIds = (params: any, ...args: any[]) => (apiGetGroupFileIds as any)(browserQuery(params), ...args);
+const getQueryFileIds = (params: any, ...args: any[]) => (apiGetQueryFileIds as any)(browserQuery(params), ...args);
+const getQueryFilePosition = (params: any, ...args: any[]) => (apiGetQueryFilePosition as any)(browserQuery(params), ...args);
+const getCollectionCountAndSum = (id: number, params: any, ...args: any[]) => (apiGetCollectionCountAndSum as any)(id, browserQuery(params), ...args);
+const getCollectionFiles = (id: number, params: any, ...args: any[]) => (apiGetCollectionFiles as any)(id, browserQuery(params), ...args);
+const getCollectionGroupedQueryRows = (id: number, params: any, ...args: any[]) => (apiGetCollectionGroupedQueryRows as any)(id, browserQuery(params), ...args);
+const getCollectionGroupFileIds = (id: number, params: any, ...args: any[]) => (apiGetCollectionGroupFileIds as any)(id, browserQuery(params), ...args);
+const getCollectionQueryFileIds = (id: number, params: any, ...args: any[]) => (apiGetCollectionQueryFileIds as any)(id, browserQuery(params), ...args);
+
 const PhotoMapView = defineAsyncComponent(() => import('@/components/PhotoMapView.vue'));
 import ContextMenu from '@/components/ContextMenu.vue';
 import { MAX_NATIVE_DRAG_FILES, createDragPreview, isWindowDragEdge, isNativeFileDragActive, isReturningNativeFileDrag, startNativeFileDrag } from '@/common/nativeDrag';
@@ -3880,7 +3893,7 @@ async function refreshFolderSidebarCount(path: string) {
   const showSubfolderFiles = config.settings.showSubfolderFiles;
   try {
     const result = await getQueryCountAndSum({
-      searchFileName: '', searchFileType: 0,
+      searchFileName: '', searchFileType: 0, browserFilters: {},
       sortType: 0, sortOrder: 0, searchAllSubfolders: showSubfolderFiles ? path : '',
       searchFolder: showSubfolderFiles ? '' : path,
       startDate: 0, endDate: 0, calendarSort: 0, make: '', model: '', lensMake: '', lensModel: '',
@@ -5644,13 +5657,21 @@ const isScanStreamingMode = computed(() =>
 );
 
 // When scanning starts, close panels and multi-select which rely on a stable file list.
-watch(isScanStreamingMode, (streaming) => {
+watch(isScanStreamingMode, (streaming, wasStreaming) => {
   if (streaming) {
     config.rightPanel.show = false;
     if (selectMode.value) selectMode.value = false;
   }
   if (groupedModeActive.value || effectiveGroupBy.value > 0) {
     updateContent();
+    return;
+  }
+  // Browser filters are bypassed while the selected album streams. Re-query
+  // once the scan settles so active filter chips are applied to the full list.
+  const hasActiveBrowserFilters = [browserFilters.favorite, browserFilters.rating,
+    browserFilters.culling, browserFilters.tags].some(value => Number(value) !== -1);
+  if (!streaming && wasStreaming && hasActiveBrowserFilters) {
+    scheduleContentRefresh(() => refreshContentFromSelectionChange());
   }
 });
 
@@ -6996,7 +7017,7 @@ watch(
     libConfig.search.searchText,
     libConfig.rating.item, // rating
     libConfig.culling.item, // culling
-    config.search.fileType, config.search.favoritesOnly, config.search.sortType, config.search.sortOrder, // search and sort
+    JSON.stringify(browserFilters), config.search.fileType, config.search.favoritesOnly, config.search.sortType, config.search.sortOrder, // search and sort
     config.settings.showSubfolderFiles,                                            // album folder view
     config.settings.folderSort, config.settings.calendarSort, config.settings.locationSort, config.settings.cameraSort, config.search.groupBy, // group sorting and filtering (tag/person sorts only affect their sidebars, not content grouping)
     libConfig.person.id,                                                              // person
@@ -7256,12 +7277,12 @@ const pendingRequests = new Set();
 // Sidebar totals describe the category, independently of the browser media filter.
 const getSidebarQueryCountAndSum = () => {
   if (currentQuerySource.value === 'smart' && currentSmartQueryParams.value) {
-    return getSmartQueryCountAndSum({ ...currentSmartQueryParams.value, fileType: 0 });
+    return getSmartQueryCountAndSum({ ...currentSmartQueryParams.value, fileType: 0, browserFilters: {} });
   }
   if (currentQuerySource.value === 'search') {
     return getSearchSidebarCountAndSum();
   }
-  const params = { ...currentQueryParams.value, searchFileType: 0 };
+  const params = { ...currentQueryParams.value, searchFileType: 0, browserFilters: {} };
   if (currentQuerySource.value === 'collection' && currentCollectionId.value) {
     return getCollectionCountAndSum(currentCollectionId.value, params);
   }
@@ -7269,7 +7290,7 @@ const getSidebarQueryCountAndSum = () => {
 };
 
 async function getSearchSidebarCountAndSum() {
-  const textParams = { ...currentQueryParams.value, searchFileType: 0 };
+  const textParams = { ...currentQueryParams.value, searchFileType: 0, browserFilters: {} };
   const imageParams = { ...currentImageSearchParams.value, fileType: 0 };
   const visualDisabled = imageSearchLanguageUnsupported.value;
   const subjectsOnly = config.main.sidebarIndex === SIDEBAR.LIBRARY
@@ -8250,7 +8271,8 @@ async function getSmartFileList(smartAlbum: any, requestId: number) {
     match: query.match === 'any' ? 'any' : 'all',
     rules,
     favoritesOnly: Boolean(config.search.favoritesOnly),
-    fileType: Number(config.search.fileType || 0),
+    // Smart Albums own their rule set; toolbar filters are disabled here.
+    fileType: 0,
     sortType: Number(smartAlbum?.sort?.type ?? 0),
     sortOrder: Number(smartAlbum?.sort?.order ?? 1),
     randomSeed: createRandomSeed(),
@@ -8316,7 +8338,7 @@ async function getSmartFileList(smartAlbum: any, requestId: number) {
 }
 
 async function updateSmartAlbumCover(smartAlbum: any, requestId: number) {
-  const result = await getSmartQueryFiles({ ...currentSmartQueryParams.value, favoritesOnly: false, fileType: 0 }, 0, 1);
+  const result = await getSmartQueryFiles({ ...currentSmartQueryParams.value, favoritesOnly: false, fileType: 0, browserFilters: {} }, 0, 1);
   if (
     requestId !== currentContentRequestId ||
     libConfig.smartAlbum.type !== 'custom' ||
@@ -8353,7 +8375,7 @@ async function getImageSearchFileList(
     searchText,
     fileId,
     threshold,
-    fileType: tempViewMode.value === 'similar' ? 0 : Number(config.search.fileType || 0),
+    fileType: Number(config.search.fileType || 0),
   };
   currentCollectionId.value = null;
   currentSearchFileIds.value = [];
@@ -8445,12 +8467,14 @@ async function getUnifiedSearchFileList(searchText: string, requestId: number) {
     tagId: 0,
     personId: 0,
     groupBy: 0,
+    browserFilters: {},
   };
   currentQueryParams.value = textParams;
   currentQuerySource.value = 'search';
   currentSmartQueryParams.value = null;
   currentCollectionId.value = null;
   currentSearchFileIds.value = [];
+  searchBrowserFilterBaseline.value = null;
   currentImageSearchParams.value = {
     searchText,
     fileId: 0,
@@ -8484,12 +8508,15 @@ async function getUnifiedSearchFileList(searchText: string, requestId: number) {
     if (requestId !== currentContentRequestId) return;
     imageSearchError.value = visualSearchFailed;
 
-    const textMatches = Array.isArray(textResult) ? textResult : [];
-    const textIds = new Set(textMatches.map((file: any) => Number(file.id)));
-    const visualMatches = (Array.isArray(visualResult) ? visualResult : [])
+    const allTextMatches = Array.isArray(textResult) ? textResult : [];
+    const textIds = new Set(allTextMatches.map((file: any) => Number(file.id)));
+    const allVisualMatches = (Array.isArray(visualResult) ? visualResult : [])
       .filter((file: any) => !textIds.has(Number(file.id)))
-      .filter(passesAlbumFilters)
-      .filter((file: any) => !config.search.favoritesOnly || file.is_favorite);
+      .filter(passesAlbumFilters);
+    const allMatches = [...allTextMatches, ...allVisualMatches];
+    searchBrowserFilterBaseline.value = allMatches.length;
+    const textMatches = allTextMatches.filter(file => passesBrowserFilters(file));
+    const visualMatches = allVisualMatches.filter(file => passesBrowserFilters(file));
     const files = preserveLoadedThumbnails([...textMatches, ...visualMatches]);
     contentCountIsAuthoritative.value = true;
 
@@ -9056,7 +9083,7 @@ async function enterPersonTempView(personId: number, personName: string) {
     gridViewRef.value.scrollToPosition(0);
   }
 
-  getFileList({ personId, searchFileType: 0 }, requestId);
+  getFileList({ personId, searchFileType: config.search.fileType }, requestId);
 }
 
 // Click a person name in the file info panel → "find this person".
@@ -10931,18 +10958,8 @@ const emptyFilesMessage = computed(() => {
   // if (currentQuerySource.value === 'collection') {
   //   return `${localeMsg.value.collection.empty_content}`;
   // }
-  const notFound = localeMsg.value.tooltip.not_found;
-  const mask = normalizeFileTypeMask(Number(config.search.fileType || 0));
-  const messageKey = {
-    [FILE_TYPE_IMAGE]: 'image_files',
-    [FILE_TYPE_VIDEO]: 'video_files',
-    [FILE_TYPE_RAW]: 'raw_files',
-    [FILE_TYPE_IMAGE | FILE_TYPE_VIDEO]: 'image_video_files',
-    [FILE_TYPE_IMAGE | FILE_TYPE_RAW]: 'image_raw_files',
-    [FILE_TYPE_VIDEO | FILE_TYPE_RAW]: 'raw_video_files',
-  }[mask];
-
-  return (messageKey && notFound[messageKey]) || notFound.files;
+  // Empty-state copy represents the view, not the active media filter.
+  return localeMsg.value.tooltip.not_found.files;
 });
 
 const emptyFilesHint = computed(() => {
@@ -10966,34 +10983,33 @@ const statusBarEmptyMessage = computed(() => (
     : ''
 ));
 
-const activeFileTypeMask = computed(() =>
-  (tempViewMode.value === 'person' || tempViewMode.value === 'similar')
-    ? 0
-    : Number(config.search.fileType || 0)
+const activeFileTypeMask = computed(() => Number(config.search.fileType || 0));
+
+const isBrowserFilterDisabled = computed(() =>
+  config.main.sidebarIndex === SIDEBAR.SMART_ALBUM || isScanStreamingMode.value
 );
 
 const isFavoritesFilterDisabled = computed(() => tempViewMode.value === 'person'
-  || tempViewMode.value === 'similar' || tempViewMode.value === 'album' || isScanStreamingMode.value);
+  || tempViewMode.value === 'similar' || tempViewMode.value === 'album'
+  || config.main.sidebarIndex === SIDEBAR.SMART_ALBUM || isScanStreamingMode.value);
 const activeFavoritesOnly = computed(() => Boolean(config.search.favoritesOnly) && !isFavoritesFilterDisabled.value);
 
-function toggleFavoritesFilter() {
-  if (isFavoritesFilterDisabled.value) return;
+// Migrate the former favorites-only toggle into the unified filter state.
+watch(() => config.search.favoritesOnly, value => {
+  if (value) {
+    browserFilters.favorite = 1;
+    config.search.favoritesOnly = false;
+  }
+}, { immediate: true });
+
+const browserFilterBaseline = ref<number | null>(null);
+const browserFilterMatched = ref<number | null>(null);
+const searchBrowserFilterBaseline = ref<number | null>(null);
+const browserFilterOpen = ref(false);
+function setBrowserFileType(value: number) {
   rememberFocusedFileForPresentationRefresh();
-  config.search.favoritesOnly = !config.search.favoritesOnly;
+  config.search.fileType = normalizeFileTypeMask(value);
 }
-
-const fileTypeSelectedIndex = computed(() => {
-  const mask = normalizeFileTypeMask(activeFileTypeMask.value);
-  return Math.max(0, fileTypeOptions.value.findIndex(option => option.value === mask));
-});
-
-const handleFileTypeSelect = (index: number) => {
-  if (isScanStreamingMode.value) return;
-  const mask = fileTypeOptions.value[index]?.value ?? 0;
-  if (normalizeFileTypeMask(activeFileTypeMask.value) === normalizeFileTypeMask(mask)) return;
-  rememberFocusedFileForPresentationRefresh();
-  config.search.fileType = normalizeFileTypeMask(mask);
-};
 
 const handleSortTypeSelect = (option: any, extendOption: any) => {
   if (isScanStreamingMode.value) return;
@@ -12009,6 +12025,39 @@ defineExpose({
   refreshCenteredGridLayout: refreshGridLayoutPreservingScroll,
   selectAll: selectAllInCurrentList,
 });
+
+let browserBaselineRequest = 0;
+watch(() => [browserFilterOpen.value, JSON.stringify(browserFilters), JSON.stringify(currentQueryParams.value), JSON.stringify(currentSmartQueryParams.value), currentCollectionId.value, currentQuerySource.value, isLoading.value, totalFileCount.value, searchBrowserFilterBaseline.value], async () => {
+  const request = ++browserBaselineRequest;
+  browserFilterBaseline.value = null;
+  browserFilterMatched.value = null;
+  if (!browserFilterOpen.value || isLoading.value) return;
+  // Query both counts from the same scope, never use the grid's transient zero
+  // or filtered count as the unfiltered denominator after a failed request.
+  if (currentQuerySource.value === 'search') {
+    browserFilterMatched.value = totalFileCount.value;
+    // Unified search captures the merged text+visual count before applying
+    // browser predicates, so it can provide a real denominator.
+    browserFilterBaseline.value = searchBrowserFilterBaseline.value;
+    return;
+  }
+  const source = currentQuerySource.value;
+  const collectionId = currentCollectionId.value;
+  const params = { ...(source === 'smart' ? currentSmartQueryParams.value : currentQueryParams.value),
+    browserFilters: { ...browserFilters } };
+  // Keep the original folder/query predicates, but explicitly remove every
+  // Filter-panel predicate, including file type and selected tag IDs.
+  const base = { ...params, searchFileType: 0, fileType: 0, favoritesOnly: false,
+    browserFilters: { favorite: -1, rating: -1, culling: -1, tags: -1,
+      ratingOp: 'gte' } };
+  const count = (query: any) => source === 'smart' ? getSmartQueryCountAndSum(query)
+    : source === 'collection' && collectionId ? getCollectionCountAndSum(collectionId, query)
+    : getQueryCountAndSum(query);
+  const [matched, total] = await Promise.all([count(params), count(base)]);
+  if (request !== browserBaselineRequest || !matched || !total) return;
+  browserFilterMatched.value = Number(matched[0]);
+  browserFilterBaseline.value = Number(total[0]);
+}, { immediate: true });
 </script>
 
 <style scoped>

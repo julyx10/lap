@@ -522,6 +522,32 @@
       "scanning": "스캔 중…",
       "scan_paused": "스캔 일시 중지",
       "scan_queued": "스캔 대기 중"
+    },
+    "browser_filters": {
+      "title": "필터",
+      "file_type": "파일 형식",
+      "favorite": "즐겨찾기",
+      "rating": "별점",
+      "culling": "선별",
+      "tags": "태그",
+      "all": "전체",
+      "favorited": "즐겨찾기",
+      "not_favorited": "즐겨찾기 아님",
+      "unrated": "미평가",
+      "pick": "선택",
+      "reject": "거부",
+      "unreviewed": "미검토",
+      "tagged": "태그 있음",
+      "untagged": "태그 없음",
+      "reset": "필터 초기화",
+      "rated": "평가됨",
+      "remove": "필터 제거",
+      "clear_all": "모두 지우기",
+      "counting": "계산 중…",
+      "results": "{count} / {total}개 항목",
+      "total_items": "{total}개 항목",
+      "tooltip": "필터",
+      "disabled": "필터 비활성화됨"
     }
   },
   "info_panel": {
