@@ -49,6 +49,7 @@ const sourceFiles = [
   "components/SmartAlbumList.vue",
   "components/SmartAlbumEdit.vue",
   "components/ToolbarSearch.vue",
+  "components/FilterPanel.vue",
   "components/Tag.vue",
   "components/Calendar.vue",
   "components/Person.vue",
@@ -100,7 +101,7 @@ await build({
             'role="button" :aria-label="tooltip || text" :data-demo-tooltip="tooltip"',
           );
         const component = id.match(
-          /\/(Library|AlbumList|SmartAlbumList|ImageSearch|Tag|Calendar|Person|Location|Camera|SelectionPanel|DedupPane|FileInfo)\.vue$/,
+          /\/(Library|AlbumList|SmartAlbumList|ToolbarSearch|Tag|Calendar|Person|Location|Camera|SelectionPanel|DedupPane|FileInfo)\.vue$/,
         )?.[1];
         if (component === "DedupPane")
           return code.replace(
@@ -116,7 +117,10 @@ await build({
           return code.replaceAll(
             'const base = `${scheme}/${_thumbLibraryId}/${fileId}`;',
             'const base = demoMediaUrl(fileId);',
-          ).replace(/^/, 'import { demoMediaUrl } from "' + root + '/tauri.mjs";\n');
+          ).replace(
+            /export function getAssetSrc\([^]*?\n\}/,
+            'export function getAssetSrc(filePath: string, fileVersion = 0): string { return filePath ? convertFileSrc(filePath) : ""; }',
+          ).replace(/^/, 'import { demoMediaUrl, convertFileSrc } from "' + root + '/tauri.mjs";\n');
         if (id.endsWith("/views/Settings.vue"))
           return code.replace(
             "const appWindow = getCurrentWebviewWindow()",

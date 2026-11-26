@@ -209,6 +209,25 @@ function query(params = {}, collectionId) {
     list = list.filter(
       (f) => ((f.type === "RAW" ? 4 : 1) & p.search_file_type) !== 0,
     );
+  if (p.browser_filters) {
+    const filters = p.browser_filters;
+    list = list.filter((f) => {
+      if ([0, 1].includes(filters.favorite) && Number(f.favorite) !== filters.favorite) return false;
+      const rating = Number(filters.rating ?? -1);
+      if (rating === -2 && f.rating <= 0) return false;
+      if (rating >= 0) {
+        const op = rating === 0 ? 'eq' : (filters.ratingOp || 'gte');
+        if (op === 'eq' && f.rating !== rating) return false;
+        if (op === 'gte' && f.rating < rating) return false;
+        if (op === 'lte' && f.rating > rating) return false;
+      }
+      if ([0, 1, 2].includes(filters.culling)
+        && ({ pick: 1, reject: 2, unreviewed: 0 })[f.culling] !== filters.culling) return false;
+      if (filters.tags === 0 && f.tags.length > 0) return false;
+      if (filters.tags === 1 && f.tags.length === 0) return false;
+      return true;
+    });
+  }
   if (p.rules?.length)
     list = list.filter((f) => {
       const results = p.rules.map((r) => {
@@ -1419,6 +1438,7 @@ export async function invoke(command, args = {}) {
       "Sample search matches seeded tags and metadata. No AI model runs online.",
     );
     return live()
+      .filter((p) => !Array.isArray(input.scopeFileIds) || input.scopeFileIds.includes(p.id))
       .filter((p) =>
         origin
           ? p.tags.some((t) => origin.tags.includes(t))

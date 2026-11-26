@@ -27,6 +27,29 @@ async function adapter(storage = new Map()) {
 }
 const ids = rows => Array.from(rows, p => p.id).sort((a, b) => a - b);
 
+test('browser filters restrict results without changing the unfiltered scope', async () => {
+  const a = await adapter();
+  const all = await a.invoke('get_query_file_ids', { params: { browserFilters: {} } });
+  const rated = await a.invoke('get_query_files', { params: { browserFilters: { rating: 4, ratingOp: 'gte' } } });
+  assert.equal(all.length, 20);
+  assert(rated.length > 0 && rated.length < all.length);
+  assert(rated.every(file => file.rating >= 4));
+  const favorites = await a.invoke('get_query_files', { params: { browserFilters: { favorite: 1 } } });
+  assert(favorites.length > 0 && favorites.every(file => file.is_favorite));
+  const untagged = await a.invoke('get_query_files', { params: { browserFilters: { tags: 0 } } });
+  assert(untagged.every(file => !file.has_tags));
+});
+
+test('sample semantic search respects explicit and empty scopes', async () => {
+  const a = await adapter();
+  const params = { searchText: 'landscape' };
+  const all = await a.invoke('search_similar_images', { params });
+  assert(all.length > 1);
+  const scopeFileIds = [all[0].id];
+  assert.deepEqual(ids(await a.invoke('search_similar_images', { params: { ...params, scopeFileIds } })), scopeFileIds);
+  assert.deepEqual(ids(await a.invoke('search_similar_images', { params: { ...params, scopeFileIds: [] } })), []);
+});
+
 test('actual adapter exposes twenty records and two duplicate groups', async () => {
   const a = await adapter();
   assert.equal(a.demoBackend.query().length, 20);

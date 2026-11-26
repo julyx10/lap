@@ -62,38 +62,37 @@ const assert = require("node:assert/strict");
       "Library",
       "AlbumList",
       "SmartAlbumList",
-      "ImageSearch",
       "Tag",
       "Calendar",
       "Person",
       "Location",
       "Camera",
     ];
-    for (let i = 0; i < 9; i++) {
+    for (let i = 0; i < components.length; i++) {
       await rail.nth(i).click();
       await comp(components[i]).waitFor();
       if (i === 2)
         await comp("SmartAlbumList")
           .getByText("Five-star photos", { exact: true })
           .waitFor();
-      if (i === 4)
+      if (i === 3)
         await comp("Tag").getByText("Outdoors", { exact: true }).waitFor();
-      if (i === 5) await comp("Calendar").getByText(/2025/).first().waitFor();
-      if (i === 6)
+      if (i === 4) await comp("Calendar").getByText(/2025/).first().waitFor();
+      if (i === 5)
         await comp("Person").getByText("Sophie", { exact: true }).waitFor();
-      if (i === 7)
+      if (i === 6)
         await comp("Location")
           .getByText(/Austria/)
           .first()
           .waitFor();
-      if (i === 8)
+      if (i === 7)
         await comp("Camera")
           .getByText("Canon", { exact: true })
           .first()
           .waitFor();
       await shot("panel-" + i);
     }
-    console.log("PASS: all nine native sidebar components and sample content");
+    console.log("PASS: all eight native sidebar components and sample content");
     await rail.nth(1).click();
     await page
       .locator("[data-album-list-root]")
@@ -127,8 +126,24 @@ const assert = require("node:assert/strict");
     await page.keyboard.press("Escape");
     console.log("PASS: album folder tree and smart rules/editor");
     await chooseSection(0);
-    await comp("Library").getByText("All files", { exact: true }).click();
+    await comp("Library").getByText("All items", { exact: true }).click();
     await waitCount(20);
+    await page.getByRole('button', { name: 'Search', exact: true }).click();
+    await page.locator('#toolbar-search-input').fill('unlikely-search-no-results');
+    await page.locator('#toolbar-search-input').press('Enter');
+    await waitCount(0);
+    await page.getByRole('button', { name: 'Clear search', exact: true }).click();
+    await waitCount(20);
+    console.log('PASS: toolbar search submission and clearing');
+    await page.locator('button[title="Filter"]').click();
+    const filters = page.getByRole('dialog', { name: 'Filters', exact: true });
+    await filters.getByRole('button', { name: 'Favorited', exact: true }).click();
+    const favoriteCount = await page.evaluate(() => window.__lapDemoBackend.state.photos.filter(p => p.favorite && !p.deleted).length);
+    await waitCount(favoriteCount);
+    await filters.getByRole('button', { name: 'Reset filters', exact: true }).click();
+    await waitCount(20);
+    await page.keyboard.press('Escape');
+    console.log('PASS: filter panel predicates and reset');
     const dragSource = page.locator("[data-thumbnail-container]").first(),
       dragTarget = page.locator('[data-collection-drop-id="2"]');
     const src = await dragSource.boundingBox(),
@@ -193,7 +208,7 @@ const assert = require("node:assert/strict");
       "PASS: all nine original Settings pages and live appearance change",
     );
     await chooseSection(0);
-    await comp("Library").getByText("All files", { exact: true }).click();
+    await comp("Library").getByText("All items", { exact: true }).click();
     await waitCount(20);
     await page.getByRole("button", { name: "Filmstrip", exact: true }).click();
     const previewReady = () =>
@@ -298,7 +313,7 @@ const assert = require("node:assert/strict");
       .getByRole("button", { name: "Similar Images", exact: true })
       .click();
     await dedup
-      .getByRole("button", { name: "Analyze 20 photos", exact: true })
+      .getByRole("button", { name: "Analyze similar images", exact: true })
       .click();
     await dedup.getByText("Similar Sets", { exact: true }).waitFor();
     await shot("similar-native");
