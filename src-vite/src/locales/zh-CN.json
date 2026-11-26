@@ -1,10 +1,8 @@
 {
   "sidebar": {
-    "home": "主页",
     "library": "资料库",
     "album": "相册",
     "search": "搜索",
-    "rating": "评分",
     "tag": "标签",
     "calendar": "日历",
     "location": "地点",
@@ -17,15 +15,11 @@
     "title": "合集",
     "add": "新建合集",
     "edit_collections": "编辑合集",
-    "recent": "最近使用的合集",
     "search": "搜索合集",
-    "enter_new_collection_name": "新合集名称",
     "not_found": "未找到合集",
     "name_exists": "已存在同名合集",
     "name_save_failed": "无法保存合集名称",
     "default_name": "合集 {index}",
-    "expand": "展开",
-    "collapse": "折叠",
     "rename": "重命名",
     "reorder": "重新排序",
     "delete": "删除",
@@ -36,7 +30,6 @@
     "drop_here": "将文件拖放到这里",
     "drop_action": "添加",
     "drop_title_hint": "拖放以添加",
-    "empty_drop_hint": "将文件拖到合集中以添加。",
     "added_toast": "已添加 {count} 个项目到合集",
     "add_failed_toast": "无法将项目添加到 {count} 个合集",
     "already_exists_toast": "{count} 个项目已在合集中",
@@ -49,7 +42,6 @@
   "library": {
     "all_files": "所有文件",
     "on_this_day": "历史上的今天",
-    "review": "审阅",
     "database_corrupted": "当前图库的数据库已损坏",
     "database_corrupted_hint": "请尝试切换到其他库。"
   },
@@ -71,10 +63,6 @@
     "folder_unavailable": {
       "title": "文件夹无法访问",
       "description": "请重新连接存储设备，或检查文件夹位置。"
-    },
-    "folder_not_found": {
-      "title": "文件夹不存在",
-      "description": "文件夹可能已移动或删除。请刷新父文件夹。"
     },
     "edit": {
       "title_add": "新建相册",
@@ -124,10 +112,6 @@
       "save_failed": "无法保存相册设置，请重试。",
       "file_types_hint": "勾选的文件类型将从此相册中排除。",
       "tab_exclusions": "排除项"
-    },
-    "no_albums": {
-      "title": "还没有相册",
-      "description": "添加包含照片或视频的文件夹以开始使用"
     },
     "no_smart_albums": {
       "description": "通过自定义查询条件创建智能相册。"
@@ -301,14 +285,12 @@
     "index": {
       "wait_index": "排队等待扫描",
       "indexing": "正在扫描... {count}/{total}",
-      "scan_summary": "已索引 {indexed} · 已跳过 {skipped} 个不支持的文件 · 失败 {failed}",
       "discovering": "正在扫描相册... {count}/{total}",
       "preparing_previews": "正在生成预览... {count}/{total}",
       "preparing_search": "正在准备搜索索引... {count}/{total}",
       "complete": "扫描完成",
       "complete_with_issues": "扫描完成，但有 {count} 个问题",
       "paused": "扫描已暂停",
-      "description": "生成缩略图用于搜索和快速预览。大型相册可能需要几分钟。",
       "cancel": "取消扫描",
       "recovery": {
         "title": "扫描异常中断",
@@ -316,13 +298,11 @@
         "skip": "跳过",
         "skip_once": "跳过这个文件并继续",
         "file_label": "最后扫描的文件",
-        "message": "上一次扫描没有正常退出。",
-        "message_with_file": "上一次扫描没有正常退出。\n\n最后扫描的文件：\n{file}\n\n如果继续，Lap 将跳过该文件一次并恢复扫描。"
+        "message": "上一次扫描没有正常退出。"
       }
     }
   },
   "face_index": {
-    "start": "索引人脸",
     "indexing": "正在索引人脸... {current}/{total}",
     "clustering": "正在聚类人脸...",
     "faces_found": "已发现 {count} 张人脸",
@@ -336,15 +316,12 @@
     "resume": "继续索引"
   },
   "favorite": {
-    "title": "收藏",
-    "files": "收藏的文件",
-    "folders": "收藏的文件夹"
+    "files": "收藏的文件"
   },
   "rating": {
     "mixed": "混合",
     "title": "评分",
     "unrated": "未评分",
-    "all_rated": "全部已评分",
     "rated": "已评分",
     "clear_rating": "清除评分",
     "five_stars": "5 星",
@@ -372,8 +349,6 @@
     "title": "标签",
     "delete_tag": "删除标签",
     "edit_tag": "编辑标签",
-    "search_tags": "搜索标签",
-    "enter_new_tag_name": "输入新标签名称",
     "not_found": "未找到标签",
     "name_exists": "已存在同名标签",
     "name_save_failed": "无法保存标签名称",
@@ -406,13 +381,6 @@
       "months": "月",
       "days": "日"
     },
-    "day": "日",
-    "week": "周",
-    "month": "月",
-    "year": "年",
-    "today": "今天",
-    "monthly": "按月",
-    "daily": "按日",
     "weekdays": [
       "日",
       "一",
@@ -421,15 +389,6 @@
       "四",
       "五",
       "六"
-    ],
-    "weekdays_long": [
-      "星期日",
-      "星期一",
-      "星期二",
-      "星期三",
-      "星期四",
-      "星期五",
-      "星期六"
     ],
     "months": [
       "1月",
@@ -461,12 +420,37 @@
     ]
   },
   "toolbar": {
+    "browser_filters": {
+      "title": "筛选",
+      "file_type": "文件类型",
+      "favorite": "收藏",
+      "rating": "评分",
+      "culling": "选片",
+      "tags": "标签",
+      "all": "全部",
+      "favorited": "已收藏",
+      "not_favorited": "未收藏",
+      "unrated": "未评分",
+      "pick": "已选择",
+      "reject": "已拒绝",
+      "unreviewed": "未审核",
+      "tagged": "有标签",
+      "untagged": "无标签",
+      "reset": "重置筛选",
+      "rated": "已评分",
+      "remove": "移除筛选",
+      "clear_all": "清除全部",
+      "counting": "统计中…",
+      "results": "{count} / {total} 项",
+      "total_items": "{total} 项",
+      "tooltip": "筛选",
+      "disabled": "筛选已禁用"
+    },
     "search": {
       "title": "搜索",
       "placeholder": "搜索文件名"
     },
     "filter": {
-      "favorites_only": "仅收藏",
       "show_selection_panel": "打开选择面板",
       "exit_selection_mode": "退出选择模式",
       "select_count": "已选择 {count}",
@@ -508,55 +492,16 @@
       "file_type_other": "其他"
     },
     "tooltip": {
-      "restore": "恢复",
       "refresh": "刷新",
       "info": "信息",
-      "clear_history": "清空搜索历史",
-      "index_faces": "索引人脸",
       "sort": "排序",
-      "monthly": "按月",
-      "daily": "按日",
-      "time_asc": "时间升序",
-      "time_desc": "时间降序",
       "back": "返回",
       "scanning": "扫描中…",
       "scan_paused": "扫描已暂停",
       "scan_queued": "排队等待扫描"
-    },
-    "browser_filters": {
-      "title": "筛选",
-      "file_type": "文件类型",
-      "favorite": "收藏",
-      "rating": "评分",
-      "culling": "选片",
-      "tags": "标签",
-      "all": "全部",
-      "favorited": "已收藏",
-      "not_favorited": "未收藏",
-      "unrated": "未评分",
-      "pick": "已选择",
-      "reject": "已拒绝",
-      "unreviewed": "未审核",
-      "tagged": "有标签",
-      "untagged": "无标签",
-      "reset": "重置筛选",
-      "rated": "已评分",
-      "remove": "移除筛选",
-      "clear_all": "清除全部",
-      "counting": "统计中…",
-      "results": "{count} / {total} 项",
-      "total_items": "{total} 项",
-      "tooltip": "筛选",
-      "disabled": "筛选已禁用"
     }
   },
   "info_panel": {
-    "tabs": [
-      "信息",
-      "调整"
-    ],
-    "empty_title": "当前列表为空",
-    "empty_desc": "请添加项目，或更新当前筛选范围以在此显示内容。",
     "select_hint": "未选择项目",
     "deselect": "取消选择",
     "selection_load_failed": "无法加载全部项目进行选择，请重试。",
@@ -570,7 +515,6 @@
       "copy": "复制",
       "move": "移动"
     },
-    "edit_disabled": "请选择单张照片进行编辑",
     "type_image": "张图片",
     "type_images": "张图片",
     "type_video": "个视频",
@@ -578,12 +522,10 @@
     "select_title": "选择",
     "favorite_all": "收藏",
     "unfavorite_all": "取消收藏",
-    "action": "操作",
     "file_actions": "文件操作",
     "more": "更多…",
     "organize": "整理",
     "more_actions": "更多操作",
-    "tag_all": "标签",
     "dedup": {
       "keep_rules": {
         "title": "保留规则",
@@ -619,8 +561,6 @@
       "error_desc": "扫描未能完成，请更新文件列表后重试",
       "empty_title": "未发现重复项",
       "empty_desc": "可以添加更多文件，或更新当前筛选范围后再试",
-      "similar_title": "相似图片功能将在下一步提供",
-      "similar_desc": "这个标签页将用于视觉上相似的图片分组，当前先保留完全重复的清理流程",
       "similar": {
         "analyze_images": "分析相似图片",
         "analyze": "分析",
@@ -633,8 +573,6 @@
         "analyzing": "分析相似图片",
         "groups_title": "相似组",
         "results": "结果",
-        "groups_count": "{count} 个相似组",
-        "load_more": "加载更多",
         "error_title": "无法加载相似图片",
         "empty_title": "未发现相似图片",
         "reanalyze": "重新分析"
@@ -645,20 +583,10 @@
       "actions_title": "操作",
       "compare": "对比",
       "rescan": "重新扫描",
-      "keep_strategy": "默认保留规则",
-      "keep_strategy_options": {
-        "best_quality": "最佳质量",
-        "oldest_created": "优先最早创建",
-        "oldest_modified": "优先最早修改"
-      },
       "keep_label": "保留",
-      "unkeep_label": "取消保留",
-      "delete_selected": "删除所选项",
       "trash_all": "全部移到废纸篓",
       "delete_all": "删除全部",
-      "move_selected_to_trash": "移到废纸篓（已选 {count} 项 · {size}）",
       "no_removable_files": "没有可移至废纸篓的可删除项目",
-      "set_keep": "保留",
       "removable_copies_summary": "{count} 个可删除副本 · {size}",
       "similar_items_summary": "{count} 个相似项 · {size}"
     }
@@ -670,17 +598,11 @@
     },
     "not_found": {
       "albums": "未找到相册",
-      "files": "未找到文件",
+      "files": "未找到任何项目",
       "image_search_failed": "图像搜索不可用",
       "image_search_failed_hint": "请检查图像搜索模型是否可用，然后重试。",
       "image_search_language_unsupported": "默认搜索模型仅支持英文",
       "image_search_language_unsupported_hint": "请在设置中选择多语言模型以搜索此语言。",
-      "image_files": "未找到照片",
-      "raw_files": "未找到 RAW 文件",
-      "video_files": "未找到视频文件",
-      "image_raw_files": "未找到照片或 RAW 文件",
-      "image_video_files": "未找到照片或视频文件",
-      "raw_video_files": "未找到 RAW 或视频文件",
       "folder_files": "此文件夹中没有文件",
       "folder_files_hint": "尝试浏览子文件夹，或在设置中开启'显示子文件夹中的文件'以查看所有文件。",
       "folders": "未找到文件夹",
@@ -760,16 +682,10 @@
       "invert": "反选"
     },
     "home": {
-      "delete": "删除",
-      "pin": "固定",
-      "unpin": "取消固定"
+      "delete": "删除"
     },
     "library": {
-      "add": "新建库...",
-      "edit": "编辑库...",
-      "manage": "管理库...",
-      "remove": "移除库",
-      "default": "默认库"
+      "manage": "管理库..."
     },
     "album": {
       "add": "新建相册",
@@ -790,11 +706,7 @@
       "copy": "复制到剪贴板",
       "paste": "粘贴",
       "edit_image": "编辑...",
-      "open_image_in_app": "在 {app} 中打开照片...",
-      "open_video_in_app": "在 {app} 中打开视频...",
-      "open_selected_images_in_app": "在 {app} 中打开照片...",
       "compare_selected_images": "对比...",
-      "open_selected_videos_in_app": "在 {app} 中打开视频...",
       "open_in_app": "在外部应用中打开...",
       "manage_app": "管理应用...",
       "find_similar_images": "查找相关图像",
@@ -808,7 +720,6 @@
       "move_within_library": "在库内移动...",
       "move_to_folder": "移动到文件夹...",
       "copy_to_folder": "复制到文件夹...",
-      "move_to_trash": "移到废纸篓",
       "delete": "删除",
       "reveal_in_finder": "在访达中显示...",
       "reveal_in_file_explorer": "在文件资源管理器中显示...",
@@ -821,14 +732,7 @@
       "create_montage": "创建拼图...",
       "save_xmp": "保存元数据到 XMP",
       "xmp_save_success": "已保存 {count} 个文件的 XMP 元数据",
-      "xmp_save_failed": "{count} 个文件的 XMP 保存失败",
-      "comment": "描述…"
-    },
-    "calendar": {
-      "monthly": "按月",
-      "daily": "按日",
-      "time_asc": "时间升序",
-      "time_desc": "时间降序"
+      "xmp_save_failed": "{count} 个文件的 XMP 保存失败"
     },
     "location": {
       "search": "搜索地点"
@@ -859,12 +763,7 @@
       "unfavorite": "取消收藏",
       "tag": "标签...",
       "collection": "合集...",
-      "comment": "描述…",
       "rotate": "旋转视图"
-    },
-    "sort": {
-      "sort_by_name": "按名称排序",
-      "sort_by_count": "按数量排序"
     }
   },
   "msgbox": {
@@ -907,9 +806,6 @@
     "manage_libraries": {
       "title": "管理库",
       "libraries": "媒体库",
-      "name": "名称",
-      "visible": "可见",
-      "action": "操作",
       "default": "默认库",
       "current": "当前库",
       "show": "显示",
@@ -921,32 +817,19 @@
       "add_new": "新建库",
       "add": "添加",
       "placeholder": "输入库的名称",
-      "max_limit_reached": "已达到库数量限制",
-      "created_at_lower": "创建于",
       "calculating_stats": "正在计算库大小...",
       "unable_to_load": "无法加载",
-      "library_file_path": "库文件路径",
-      "library_file_size": "库文件大小",
-      "created_at": "创建时间",
       "cache_size": "缩略图缓存 {size}"
     },
     "remove_library": {
       "title": "移除库",
       "content": "确定要移除 '{library}' 吗？这将永久删除数据库文件。",
-      "ok": "移除",
-      "success": "库 '{library}' 已成功移除。",
-      "error": "移除库失败。"
+      "ok": "移除"
     },
     "remove_album": {
       "title": "移除相册",
       "content": "相册 '{album}' 将被移除。此操作不会删除实际文件。",
       "ok": "移除"
-    },
-    "rename_folder": {
-      "title": "重命名文件夹",
-      "content": "输入文件夹的新名称:",
-      "ok": "重命名",
-      "error": "重命名文件夹失败。"
     },
     "new_folder": {
       "title": "新建文件夹",
@@ -1030,7 +913,6 @@
     "folder_delete_contents": "这包括其中的所有文件和子文件夹。",
     "move_to_trash": {
       "title": "移到废纸篓",
-      "file_content": "文件 '{file}' 将被移到废纸篓。",
       "files_content": "{count} 个所选项目将被移到废纸篓。",
       "removable_files_content": "全部 {count} 个可删除项目将被移到废纸篓。",
       "folder_content": "文件夹 '{folder}' 将被移到废纸篓。",
@@ -1038,21 +920,17 @@
       "file_success": "文件 '{file}' 已移到废纸篓。",
       "files_success": "{count} 个所选项目已移到废纸篓。",
       "folder_success": "文件夹 '{folder}' 已移到废纸篓。",
-      "file_error": "将文件移到废纸篓失败。",
       "files_error": "将所选项目移到废纸篓失败。",
       "folder_error": "将文件夹移到废纸篓失败。"
     },
     "permanent_delete": {
       "title": "永久删除",
-      "file_content": "文件 '{file}' 将被永久删除。",
       "files_content": "{count} 个所选项目将被永久删除。",
       "removable_files_content": "全部 {count} 个可删除项目将被永久删除。",
       "folder_content": "文件夹 '{folder}' 将被永久删除。",
-      "ok": "删除",
       "file_success": "文件 '{file}' 已永久删除。",
       "files_success": "{count} 个所选项目已永久删除。",
       "folder_success": "文件夹 '{folder}' 已永久删除。",
-      "file_error": "永久删除文件失败。",
       "files_error": "永久删除所选项目失败。",
       "folder_error": "永久删除文件夹失败。"
     },
@@ -1060,7 +938,6 @@
       "title": "移到废纸篓失败",
       "file_content": "文件 '{file}' 无法移到废纸篓。\n\n是否改为永久删除？",
       "files_content": "所选 {count} 个项目无法移到废纸篓。\n\n是否改为永久删除？",
-      "folder_content": "文件夹 '{folder}' 无法移到废纸篓。\n\n是否改为永久删除？\n\n此操作无法通过系统回收站撤销。",
       "folder_partial_warning": "上一次操作可能已将部分内容移入回收站。",
       "ok": "永久删除"
     },
@@ -1070,27 +947,14 @@
       "ok": "继续打开"
     },
     "new_tag": {
-      "title": "新建标签",
-      "ok": "创建",
-      "error": "创建标签失败。"
+      "title": "新建标签"
     },
     "delete_tag": {
       "title": "删除“{tag}”？",
-      "content": "标签 '{tag}' 将被删除。",
-      "ok": "删除",
-      "success": "标签 '{tag}' 已删除。",
-      "error": "删除标签失败。"
-    },
-    "edit_comment": {
-      "title": "编辑描述",
-      "placeholder": "输入描述",
-      "ok": "保存"
+      "ok": "删除"
     },
     "select_folder": {
       "error": "选择文件夹失败。"
-    },
-    "select_file": {
-      "error": "选择文件失败。"
     },
     "file_refresh": {
       "metadata_failed": "元数据导入失败：{count}",
@@ -1249,7 +1113,6 @@
     "paths_copied": "已复制 {count} 个文件路径到剪贴板",
     "copy_path": "复制文件路径",
     "copy_path_failed": "复制路径失败",
-    "video_only": "（仅视频）",
     "field_preset": "显示字段",
     "fields_default": "默认",
     "fields_all": "全部显示",
@@ -1261,10 +1124,8 @@
     "thumbnail": "缩略图",
     "change_thumbnail": "更换缩略图",
     "histogram": "直方图",
-    "preview_size": "缩略图大小",
     "general": "通用",
     "metadata": "元数据",
-    "location": "地点",
     "map": "地图",
     "open_apple_maps": "在 Apple 地图中打开",
     "empty_title": "未选择文件",
@@ -1274,46 +1135,19 @@
     "folder": "文件夹",
     "dimension": "尺寸",
     "size": "大小",
-    "duration": "时长",
-    "unknown_duration": "未知",
     "created_at": "创建时间",
     "modified_at": "修改时间",
     "last_scan_time": "最近扫描",
-    "marks": "标记",
     "camera": "相机",
-    "camera_make": "相机制造商",
-    "camera_model": "相机型号",
     "taken_at": "拍摄时间",
-    "taken_by": "拍摄者",
-    "software": "软件",
-    "artist": "艺术家",
-    "copyright": "版权",
-    "description": "描述",
     "lens": "镜头",
-    "lens_make": "镜头制造商",
-    "lens_model": "镜头型号",
-    "exposure_bias": "曝光偏移",
-    "exposure_time": "曝光时间",
-    "aperture": "光圈",
-    "focal_length": "焦距",
-    "iso": "ISO",
-    "flash": "闪光灯",
-    "color_type": "颜色类型",
-    "bit_depth": "位深度",
-    "alpha_channel": "Alpha 通道",
-    "gps_latitude": "纬度",
-    "gps_longitude": "经度",
-    "gps_altitude": "海拔",
     "geo_location": "地点",
-    "tags": "标签",
     "comment": "描述",
     "capture_settings": "曝光参数",
     "organization": "整理",
     "file": "文件",
     "capture": "拍摄信息",
     "source_metadata": "其他信息",
-    "source_description": "原始描述",
-    "coordinates": "坐标",
     "detail_fields": {
       "title": "标题",
       "headline": "内容标题",
@@ -1372,18 +1206,14 @@
     "all_brands": "全部"
   },
   "map": {
-    "show_map": "显示地图",
-    "hide_map": "隐藏地图",
     "zoom_in": "放大",
     "zoom_out": "缩小",
     "zoom_center": "中心",
     "standard": "标准",
     "satellite": "卫星",
-    "heatmap": "热力图",
     "photo_count": "{count} 张照片",
     "no_photos_in_view": "没有照片",
-    "photos_in_view": "此区域内有 {count} 张照片",
-    "photos_in_view_limited": "显示前 {count} 张照片 - 放大以查看更多"
+    "photos_in_view": "此区域内有 {count} 张照片"
   },
   "format": {
     "relative_time": {
@@ -1403,8 +1233,6 @@
     "live": "实况",
     "motion": "动态",
     "title": "图像查看器",
-    "loading": "加载中...",
-    "loading_original": "加载原始照片...",
     "media_server_unavailable": "无法加载原图和视频。请重启 Lap 后重试。",
     "failed": "加载照片失败。文件不存在或已损坏。",
     "raw_render_unavailable": "无法渲染该 RAW，已显示内嵌预览。",
@@ -1418,7 +1246,6 @@
       "zoom_out": "缩小",
       "zoom_fit": "适应窗口",
       "zoom_fit_short": "适应",
-      "zoom_actual": "实际大小",
       "af_area": "显示自动对焦区域",
       "fullscreen": "全屏",
       "exit_fullscreen": "退出全屏",
@@ -1432,7 +1259,6 @@
   "video": {
     "loading": "正在加载视频...",
     "loading_compatible": "正在准备兼容播放...",
-    "failed": "视频无法播放",
     "errors": {
       "playback_failed": "播放失败",
       "aborted": "视频加载被中止",
@@ -1543,13 +1369,10 @@
       "import_hint": "扫描和刷新时导入收藏、评分、选片标记、标签和描述，保留本地编辑。"
     },
     "browse": {
-      "section_album": "相册文件夹",
       "show_subfolder_files": "显示子文件夹中的文件",
-      "show_subfolder_files_hint": "文件夹视图包含子文件夹内的文件",
       "group_raw_jpeg_pairs": "合并显示 RAW 配对",
       "group_raw_jpeg_pairs_hint": "将同名的 RAW 与 JPEG/HEIC 文件合并显示为一个条目",
       "folder_sort": "文件夹排序",
-      "folder_sort_hint": "相册下显示的文件夹排序方式",
       "folder_sort_options": [
         "名称（A 到 Z）",
         "名称（Z 到 A）",
@@ -1662,7 +1485,6 @@
         "浅灰色",
         "白色"
       ],
-      "section_slideshow": "幻灯片",
       "slide_show_interval": "幻灯片放映间隔: {second} 秒",
       "slide_show_transition": "幻灯片过场",
       "slide_show_transition_options": [
@@ -1688,7 +1510,6 @@
       "multilingual_model_download_message": "多语言照片搜索模型尚未安装。下载后可支持 50+ 语言搜索。",
       "download": "下载",
       "downloading_multilingual_model": "正在下载多语言模型",
-      "multilingual_model_download_success": "多语言搜索模型已就绪。重启 Lap 后生效。",
       "multilingual_model_download_failed": "多语言搜索模型下载失败",
       "similarity": "搜索相似度",
       "similarity_hint": "控制关键词搜索中的视觉匹配",
@@ -1795,15 +1616,13 @@
       "file_delete_permanent_hint": "永久删除前始终需要确认",
       "title": "高级",
       "external_app": {
-        "section_external_apps": "外部应用",
         "manage_external_apps": "管理外部应用",
         "external_image_editor": "使用以下应用打开照片",
         "external_video_app": "使用以下应用打开视频",
         "external_app_not_selected": "未选择应用",
         "choose_app": "选择",
         "clear_app": "清空",
-        "default_app": "默认",
-        "set_default_app": "设为默认"
+        "default_app": "默认"
       },
       "section_diagnostics": "诊断",
       "debug_mode": "调试模式",
@@ -1861,7 +1680,6 @@
       }
     },
     "database": {
-      "title": "存储",
       "section_storage": "资料库数据维护",
       "current_location": "更改数据位置",
       "system_default": "系统默认",
@@ -1893,7 +1711,6 @@
       "restore_dialog_title": "从备份恢复",
       "restore_select_file": "选择备份文件",
       "restore_file_info": "备份：{path}",
-      "restore_created_at": "创建时间：{date}",
       "restore_libraries": "{count} 个资料库（{size}）",
       "restore_new_library": "新资料库",
       "restore_conflict": "已存在 → 将自动重命名",
@@ -1918,12 +1735,9 @@
     "about": {
       "title": "关于",
       "package": {
-        "name": "包名",
-        "description": "描述",
         "app_description": "一个面向大型本地照片库的离线优先照片管理器。",
         "version": "版本",
         "build_time": "构建时间",
-        "author": "作者",
         "license": "许可证",
         "link": "链接",
         "website": "网站",

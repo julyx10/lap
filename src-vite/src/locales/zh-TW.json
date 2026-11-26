@@ -1,10 +1,8 @@
 {
   "sidebar": {
-    "home": "首頁",
     "library": "媒體庫",
     "album": "相簿",
     "search": "搜尋",
-    "rating": "評分",
     "tag": "標籤",
     "calendar": "行事曆",
     "location": "地點",
@@ -17,15 +15,11 @@
     "title": "收藏",
     "add": "新增收藏",
     "edit_collections": "編輯收藏",
-    "recent": "最近收藏",
     "search": "搜尋收藏",
-    "enter_new_collection_name": "新收藏名稱",
     "not_found": "找不到收藏",
     "name_exists": "已存在同名收藏",
     "name_save_failed": "無法儲存收藏名稱",
     "default_name": "收藏 {index}",
-    "expand": "展開",
-    "collapse": "收合",
     "rename": "重新命名",
     "reorder": "重新排序",
     "delete": "刪除",
@@ -36,7 +30,6 @@
     "drop_here": "將檔案拖到此處",
     "drop_action": "新增",
     "drop_title_hint": "拖放以新增",
-    "empty_drop_hint": "將項目拖到上方的收藏即可新增。",
     "added_toast": "已新增 {count} 個項目到收藏",
     "add_failed_toast": "無法將項目新增到 {count} 個收藏",
     "already_exists_toast": "{count} 個項目已在收藏中",
@@ -49,7 +42,6 @@
   "library": {
     "all_files": "所有檔案",
     "on_this_day": "當年今日",
-    "review": "檢視",
     "database_corrupted": "此媒體庫的資料庫已損毀",
     "database_corrupted_hint": "請嘗試切換到其他媒體庫。"
   },
@@ -71,10 +63,6 @@
     "folder_unavailable": {
       "title": "資料夾無法使用",
       "description": "請重新連接儲存裝置或檢查資料夾位置。"
-    },
-    "folder_not_found": {
-      "title": "找不到資料夾",
-      "description": "資料夾可能已被移動或刪除。請重新整理其上層資料夾。"
     },
     "edit": {
       "title_add": "新增相簿",
@@ -124,10 +112,6 @@
       "save_failed": "無法儲存相簿設定。請再試一次。",
       "file_types_hint": "已選取的檔案類型將從此相簿排除。",
       "tab_exclusions": "排除項目"
-    },
-    "no_albums": {
-      "title": "尚未新增相簿",
-      "description": "新增一個包含相片或影片的相簿以開始使用"
     },
     "no_smart_albums": {
       "description": "用自訂查詢規則建立智慧相簿。"
@@ -301,14 +285,12 @@
     "index": {
       "wait_index": "已排隊等待掃描",
       "indexing": "掃描中... {count}/{total}",
-      "scan_summary": "已索引 {indexed} · 已跳過 {skipped} 個不支援 · 失敗 {failed}",
       "discovering": "正在掃描相簿... {count}/{total}",
       "preparing_previews": "正在產生預覽... {count}/{total}",
       "preparing_search": "正在準備搜尋... {count}/{total}",
       "complete": "掃描完成",
       "complete_with_issues": "掃描完成，有 {count} 個問題",
       "paused": "掃描已暫停",
-      "description": "正在產生縮圖以供搜尋與快速預覽。大型相簿可能需要幾分鐘。",
       "cancel": "取消掃描",
       "recovery": {
         "title": "掃描已中斷",
@@ -316,13 +298,11 @@
         "skip": "跳過",
         "skip_once": "跳過此檔案並繼續",
         "file_label": "上次掃描的檔案",
-        "message": "上次掃描未正常結束。",
-        "message_with_file": "上次的掃描工作未正常結束。\n\n上次掃描的檔案：\n{file}\n\n若繼續，Lap 會跳過此檔案一次並恢復掃描。"
+        "message": "上次掃描未正常結束。"
       }
     }
   },
   "face_index": {
-    "start": "建立人臉索引",
     "indexing": "正在建立人臉索引... {current}/{total}",
     "clustering": "正在分群人臉...",
     "faces_found": "找到 {count} 張人臉",
@@ -336,15 +316,12 @@
     "resume": "繼續建立索引"
   },
   "favorite": {
-    "title": "我的最愛",
-    "files": "我的最愛檔案",
-    "folders": "我的最愛資料夾"
+    "files": "我的最愛檔案"
   },
   "rating": {
     "mixed": "混合",
     "title": "評分",
     "unrated": "未評分",
-    "all_rated": "全部已評分",
     "rated": "已評分",
     "clear_rating": "清除評分",
     "five_stars": "5 星",
@@ -372,8 +349,6 @@
     "title": "標籤",
     "delete_tag": "刪除標籤",
     "edit_tag": "編輯標籤",
-    "search_tags": "搜尋標籤",
-    "enter_new_tag_name": "輸入新標籤名稱",
     "not_found": "找不到標籤",
     "name_exists": "已存在同名標籤",
     "name_save_failed": "無法儲存標籤名稱",
@@ -406,13 +381,6 @@
       "months": "月",
       "days": "日"
     },
-    "day": "日",
-    "week": "週",
-    "month": "月",
-    "year": "年",
-    "today": "今天",
-    "monthly": "月",
-    "daily": "日",
     "weekdays": [
       "日",
       "一",
@@ -421,15 +389,6 @@
       "四",
       "五",
       "六"
-    ],
-    "weekdays_long": [
-      "星期日",
-      "星期一",
-      "星期二",
-      "星期三",
-      "星期四",
-      "星期五",
-      "星期六"
     ],
     "months": [
       "1月",
@@ -461,12 +420,37 @@
     ]
   },
   "toolbar": {
+    "browser_filters": {
+      "title": "篩選",
+      "file_type": "檔案類型",
+      "favorite": "收藏",
+      "rating": "評分",
+      "culling": "選片",
+      "tags": "標籤",
+      "all": "全部",
+      "favorited": "已收藏",
+      "not_favorited": "未收藏",
+      "unrated": "未評分",
+      "pick": "已選取",
+      "reject": "已拒絕",
+      "unreviewed": "未審核",
+      "tagged": "有標籤",
+      "untagged": "無標籤",
+      "reset": "重設篩選",
+      "rated": "已評分",
+      "remove": "移除篩選",
+      "clear_all": "清除全部",
+      "counting": "統計中…",
+      "results": "{count} / {total} 項",
+      "total_items": "{total} 項",
+      "tooltip": "篩選",
+      "disabled": "篩選已停用"
+    },
     "search": {
       "title": "搜尋",
       "placeholder": "搜尋檔案名稱"
     },
     "filter": {
-      "favorites_only": "僅收藏",
       "show_selection_panel": "開啟選取面板",
       "exit_selection_mode": "退出選取模式",
       "select_count": "已選 {count}",
@@ -508,55 +492,16 @@
       "file_type_other": "其他"
     },
     "tooltip": {
-      "restore": "還原",
       "refresh": "重新整理",
       "info": "資訊",
-      "clear_history": "清除搜尋紀錄",
-      "index_faces": "建立人臉索引",
       "sort": "排序",
-      "monthly": "月",
-      "daily": "日",
-      "time_asc": "時間遞增",
-      "time_desc": "時間遞減",
       "back": "返回",
       "scanning": "掃描中…",
       "scan_paused": "掃描已暫停",
       "scan_queued": "已排隊等待掃描"
-    },
-    "browser_filters": {
-      "title": "篩選",
-      "file_type": "檔案類型",
-      "favorite": "收藏",
-      "rating": "評分",
-      "culling": "選片",
-      "tags": "標籤",
-      "all": "全部",
-      "favorited": "已收藏",
-      "not_favorited": "未收藏",
-      "unrated": "未評分",
-      "pick": "已選取",
-      "reject": "已拒絕",
-      "unreviewed": "未審核",
-      "tagged": "有標籤",
-      "untagged": "無標籤",
-      "reset": "重設篩選",
-      "rated": "已評分",
-      "remove": "移除篩選",
-      "clear_all": "清除全部",
-      "counting": "統計中…",
-      "results": "{count} / {total} 項",
-      "total_items": "{total} 項",
-      "tooltip": "篩選",
-      "disabled": "篩選已停用"
     }
   },
   "info_panel": {
-    "tabs": [
-      "資訊",
-      "調整"
-    ],
-    "empty_title": "此清單是空的",
-    "empty_desc": "新增項目或更新目前篩選以在此顯示。",
     "select_hint": "未選取項目",
     "deselect": "取消選取",
     "selection_load_failed": "無法載入所有選取項目。請再試一次。",
@@ -570,7 +515,6 @@
       "copy": "複製",
       "move": "移動"
     },
-    "edit_disabled": "請選擇單一相片以編輯",
     "type_image": "圖片",
     "type_images": "圖片",
     "type_video": "影片",
@@ -578,12 +522,10 @@
     "select_title": "選取",
     "favorite_all": "加入我的最愛",
     "unfavorite_all": "取消我的最愛",
-    "action": "動作",
     "file_actions": "檔案動作",
     "more": "更多…",
     "organize": "整理",
     "more_actions": "更多動作",
-    "tag_all": "標籤",
     "dedup": {
       "keep_rules": {
         "title": "保留規則",
@@ -619,8 +561,6 @@
       "error_desc": "掃描無法完成。請更新檔案清單後再試一次",
       "empty_title": "找不到重複項",
       "empty_desc": "試試新增更多檔案或更新目前篩選範圍",
-      "similar_title": "相似圖片即將推出",
-      "similar_desc": "此分頁將在精確重複流程擴充後，用於視覺相似的圖片",
       "similar": {
         "analyze_images": "分析相似圖片",
         "analyze": "分析",
@@ -633,8 +573,6 @@
         "analyzing": "正在分析相似圖片",
         "groups_title": "相似群組",
         "results": "結果",
-        "groups_count": "{count} 個相似群組",
-        "load_more": "載入更多",
         "error_title": "無法載入相似圖片",
         "empty_title": "找不到相似圖片",
         "reanalyze": "重新分析"
@@ -645,20 +583,10 @@
       "actions_title": "動作",
       "compare": "比較",
       "rescan": "重新掃描",
-      "keep_strategy": "預設保留規則",
-      "keep_strategy_options": {
-        "best_quality": "最佳品質",
-        "oldest_created": "偏好最早建立",
-        "oldest_modified": "偏好最早修改"
-      },
       "keep_label": "保留",
-      "unkeep_label": "取消保留",
-      "delete_selected": "刪除所選",
       "trash_all": "全部移到垃圾桶",
       "delete_all": "全部刪除",
-      "move_selected_to_trash": "移到垃圾桶（已選 {count} · {size}）",
       "no_removable_files": "沒有可移到垃圾桶的可移除項目",
-      "set_keep": "保留",
       "removable_copies_summary": "{count} 個可移除複本 · {size}",
       "similar_items_summary": "{count} 個相似項目 · {size}"
     }
@@ -670,17 +598,11 @@
     },
     "not_found": {
       "albums": "找不到相簿",
-      "files": "找不到檔案",
+      "files": "未找到任何項目",
       "image_search_failed": "無法使用圖片搜尋",
       "image_search_failed_hint": "請確認圖片搜尋模型可用，然後再試一次。",
       "image_search_language_unsupported": "預設搜尋模型僅支援英文",
       "image_search_language_unsupported_hint": "請在設定中選擇多語言模型，以用此語言搜尋。",
-      "image_files": "找不到相片",
-      "raw_files": "找不到 RAW 檔",
-      "video_files": "找不到影片檔",
-      "image_raw_files": "找不到相片或 RAW 檔",
-      "image_video_files": "找不到相片或影片",
-      "raw_video_files": "找不到 RAW 或影片檔",
       "folder_files": "此資料夾沒有檔案",
       "folder_files_hint": "試著瀏覽子資料夾，或在設定中開啟「顯示子資料夾的檔案」。",
       "folders": "找不到資料夾",
@@ -760,16 +682,10 @@
       "invert": "反向選取"
     },
     "home": {
-      "delete": "刪除",
-      "pin": "釘選",
-      "unpin": "取消釘選"
+      "delete": "刪除"
     },
     "library": {
-      "add": "新增媒體庫...",
-      "edit": "編輯媒體庫...",
-      "manage": "管理媒體庫...",
-      "remove": "移除媒體庫",
-      "default": "預設媒體庫"
+      "manage": "管理媒體庫..."
     },
     "album": {
       "add": "新增相簿",
@@ -790,11 +706,7 @@
       "copy": "複製到剪貼簿",
       "paste": "貼上",
       "edit_image": "編輯...",
-      "open_image_in_app": "用 {app} 開啟相片...",
-      "open_video_in_app": "用 {app} 開啟影片...",
-      "open_selected_images_in_app": "用 {app} 開啟相片...",
       "compare_selected_images": "比較...",
-      "open_selected_videos_in_app": "用 {app} 開啟影片...",
       "open_in_app": "用外部應用程式開啟...",
       "manage_app": "管理應用程式...",
       "find_similar_images": "尋找相關圖像",
@@ -808,7 +720,6 @@
       "move_within_library": "在媒體庫內移動...",
       "move_to_folder": "移動到資料夾...",
       "copy_to_folder": "複製到資料夾...",
-      "move_to_trash": "移到垃圾桶",
       "delete": "刪除",
       "reveal_in_finder": "在 Finder 中顯示...",
       "reveal_in_file_explorer": "在檔案總管中顯示...",
@@ -821,14 +732,7 @@
       "create_montage": "建立拼貼...",
       "save_xmp": "儲存中繼資料至 XMP",
       "xmp_save_success": "已儲存 {count} 個檔案的 XMP 中繼資料",
-      "xmp_save_failed": "{count} 個檔案的 XMP 儲存失敗",
-      "comment": "描述…"
-    },
-    "calendar": {
-      "monthly": "月",
-      "daily": "日",
-      "time_asc": "時間遞增",
-      "time_desc": "時間遞減"
+      "xmp_save_failed": "{count} 個檔案的 XMP 儲存失敗"
     },
     "location": {
       "search": "搜尋地點"
@@ -859,12 +763,7 @@
       "unfavorite": "取消我的最愛",
       "tag": "標籤...",
       "collection": "收藏...",
-      "comment": "描述…",
       "rotate": "旋轉檢視"
-    },
-    "sort": {
-      "sort_by_name": "依名稱排序",
-      "sort_by_count": "依數量排序"
     }
   },
   "msgbox": {
@@ -907,9 +806,6 @@
     "manage_libraries": {
       "title": "管理媒體庫",
       "libraries": "媒體庫",
-      "name": "名稱",
-      "visible": "可見",
-      "action": "動作",
       "default": "預設媒體庫",
       "current": "目前媒體庫",
       "show": "顯示",
@@ -921,32 +817,19 @@
       "add_new": "新增媒體庫",
       "add": "新增",
       "placeholder": "輸入媒體庫名稱",
-      "max_limit_reached": "已達媒體庫數量上限",
-      "created_at_lower": "建立於",
       "calculating_stats": "正在計算媒體庫大小...",
       "unable_to_load": "無法載入",
-      "library_file_path": "媒體庫檔案路徑",
-      "library_file_size": "媒體庫檔案大小",
-      "created_at": "建立時間",
       "cache_size": "縮圖快取 {size}"
     },
     "remove_library": {
       "title": "移除媒體庫",
       "content": "確定要移除「{library}」嗎？這將永久刪除資料庫檔案。",
-      "ok": "移除",
-      "success": "已移除媒體庫「{library}」。",
-      "error": "無法移除媒體庫。"
+      "ok": "移除"
     },
     "remove_album": {
       "title": "移除相簿",
       "content": "相簿「{album}」將被移除。此動作不會刪除實際檔案。",
       "ok": "移除"
-    },
-    "rename_folder": {
-      "title": "重新命名資料夾",
-      "content": "輸入資料夾的新名稱：",
-      "ok": "重新命名",
-      "error": "無法重新命名資料夾。"
     },
     "new_folder": {
       "title": "新增資料夾",
@@ -1030,7 +913,6 @@
     "folder_delete_contents": "這包括其中的所有檔案與子資料夾。",
     "move_to_trash": {
       "title": "移到垃圾桶",
-      "file_content": "檔案「{file}」將被移到垃圾桶。",
       "files_content": "已選的 {count} 個項目將被移到垃圾桶。",
       "removable_files_content": "全部 {count} 個可移除項目將被移到垃圾桶。",
       "folder_content": "資料夾「{folder}」將被移到垃圾桶。",
@@ -1038,21 +920,17 @@
       "file_success": "已將檔案「{file}」移到垃圾桶。",
       "files_success": "已將已選的 {count} 個項目移到垃圾桶。",
       "folder_success": "已將資料夾「{folder}」移到垃圾桶。",
-      "file_error": "無法將檔案移到垃圾桶。",
       "files_error": "無法將已選項目移到垃圾桶。",
       "folder_error": "無法將資料夾移到垃圾桶。"
     },
     "permanent_delete": {
       "title": "永久刪除",
-      "file_content": "檔案「{file}」將被永久刪除。",
       "files_content": "已選的 {count} 個項目將被永久刪除。",
       "removable_files_content": "全部 {count} 個可移除項目將被永久刪除。",
       "folder_content": "資料夾「{folder}」將被永久刪除。",
-      "ok": "刪除",
       "file_success": "已永久刪除檔案「{file}」。",
       "files_success": "已永久刪除已選的 {count} 個項目。",
       "folder_success": "已永久刪除資料夾「{folder}」。",
-      "file_error": "無法永久刪除檔案。",
       "files_error": "無法永久刪除已選項目。",
       "folder_error": "無法永久刪除資料夾。"
     },
@@ -1060,7 +938,6 @@
       "title": "移到垃圾桶失敗",
       "file_content": "無法將檔案「{file}」移到垃圾桶。\n\n要改為永久刪除嗎？",
       "files_content": "無法將已選的 {count} 個項目移到垃圾桶。\n\n要改為永久刪除嗎？",
-      "folder_content": "無法將資料夾「{folder}」移到垃圾桶。\n\n要改為永久刪除嗎？\n\n此操作無法透過系統垃圾桶復原。",
       "folder_partial_warning": "上一次操作可能已將部分內容移至垃圾桶。",
       "ok": "永久刪除"
     },
@@ -1070,27 +947,14 @@
       "ok": "繼續開啟"
     },
     "new_tag": {
-      "title": "新增標籤",
-      "ok": "建立",
-      "error": "無法建立標籤。"
+      "title": "新增標籤"
     },
     "delete_tag": {
       "title": "刪除「{tag}」？",
-      "content": "標籤「{tag}」將被刪除。",
-      "ok": "刪除",
-      "success": "已刪除標籤「{tag}」。",
-      "error": "無法刪除標籤。"
-    },
-    "edit_comment": {
-      "title": "編輯描述",
-      "placeholder": "輸入描述",
-      "ok": "儲存"
+      "ok": "刪除"
     },
     "select_folder": {
       "error": "無法選擇資料夾。"
-    },
-    "select_file": {
-      "error": "無法選擇檔案。"
     },
     "file_refresh": {
       "metadata_failed": "中繼資料匯入失敗：{count}",
@@ -1249,7 +1113,6 @@
     "paths_copied": "已複製 {count} 個檔案路徑到剪貼簿",
     "copy_path": "複製檔案路徑",
     "copy_path_failed": "複製路徑失敗",
-    "video_only": "（僅影片）",
     "field_preset": "顯示欄位",
     "fields_default": "預設",
     "fields_all": "全部顯示",
@@ -1261,10 +1124,8 @@
     "thumbnail": "縮圖",
     "change_thumbnail": "更換縮圖",
     "histogram": "直方圖",
-    "preview_size": "縮圖大小",
     "general": "一般",
     "metadata": "中繼資料",
-    "location": "地點",
     "map": "地圖",
     "open_apple_maps": "在 Apple 地圖中開啟",
     "empty_title": "未選取檔案",
@@ -1274,46 +1135,19 @@
     "folder": "資料夾",
     "dimension": "尺寸",
     "size": "大小",
-    "duration": "長度",
-    "unknown_duration": "未知",
     "created_at": "建立時間",
     "modified_at": "修改時間",
     "last_scan_time": "上次掃描",
-    "marks": "標記",
     "camera": "相機",
-    "camera_make": "相機品牌",
-    "camera_model": "相機型號",
     "taken_at": "拍攝時間",
-    "taken_by": "拍攝者",
-    "software": "軟體",
-    "artist": "作者",
-    "copyright": "版權",
-    "description": "描述",
     "lens": "鏡頭",
-    "lens_make": "鏡頭品牌",
-    "lens_model": "鏡頭型號",
-    "exposure_bias": "曝光補償",
-    "exposure_time": "快門速度",
-    "aperture": "光圈",
-    "focal_length": "焦距",
-    "iso": "ISO",
-    "flash": "閃光燈",
-    "color_type": "色彩類型",
-    "bit_depth": "位元深度",
-    "alpha_channel": "透明通道",
-    "gps_latitude": "緯度",
-    "gps_longitude": "經度",
-    "gps_altitude": "海拔",
     "geo_location": "地點",
-    "tags": "標籤",
     "comment": "描述",
     "capture_settings": "曝光參數",
     "organization": "整理",
     "file": "檔案",
     "capture": "拍攝資訊",
     "source_metadata": "其他資訊",
-    "source_description": "原始描述",
-    "coordinates": "座標",
     "detail_fields": {
       "title": "標題",
       "headline": "內容標題",
@@ -1372,18 +1206,14 @@
     "all_brands": "全部"
   },
   "map": {
-    "show_map": "顯示地圖",
-    "hide_map": "隱藏地圖",
     "zoom_in": "放大",
     "zoom_out": "縮小",
     "zoom_center": "置中",
     "standard": "標準",
     "satellite": "衛星",
-    "heatmap": "熱力圖",
     "photo_count": "{count} 張相片",
     "no_photos_in_view": "沒有相片",
-    "photos_in_view": "此區域有 {count} 張相片",
-    "photos_in_view_limited": "顯示前 {count} 張相片——放大以查看更多"
+    "photos_in_view": "此區域有 {count} 張相片"
   },
   "format": {
     "relative_time": {
@@ -1403,8 +1233,6 @@
     "live": "LIVE",
     "motion": "MOTION",
     "title": "圖片檢視器",
-    "loading": "載入中...",
-    "loading_original": "正在載入原始相片...",
     "media_server_unavailable": "無法載入原始相片和影片。請重新啟動 Lap 後再試。",
     "failed": "無法載入相片。檔案遺失或已損毀。",
     "raw_render_unavailable": "無法算繪此 RAW；已顯示內嵌預覽。",
@@ -1418,7 +1246,6 @@
       "zoom_out": "縮小",
       "zoom_fit": "符合視窗",
       "zoom_fit_short": "適應",
-      "zoom_actual": "實際大小",
       "af_area": "顯示自動對焦區域",
       "fullscreen": "全螢幕",
       "exit_fullscreen": "離開全螢幕",
@@ -1432,7 +1259,6 @@
   "video": {
     "loading": "正在載入影片...",
     "loading_compatible": "正在準備相容播放...",
-    "failed": "無法播放影片",
     "errors": {
       "playback_failed": "播放失敗",
       "aborted": "影片載入已取消",
@@ -1463,43 +1289,43 @@
       ],
       "theme": "主題",
       "theme_options_light": [
-        "Default",
-        "Cupcake",
-        "Bumblebee",
-        "Emerald",
-        "Corporate",
-        "Retro",
-        "Cyberpunk",
-        "Valentine",
-        "Garden",
-        "Lofi",
-        "Pastel",
-        "Fantasy",
-        "Wireframe",
-        "Cmyk",
-        "Autumn",
-        "Acid",
-        "Lemonade",
-        "Winter",
-        "Nord",
-        "Caramellatte",
-        "Silk"
+        "預設",
+        "紙杯蛋糕",
+        "大黃蜂",
+        "祖母綠",
+        "企業",
+        "復古",
+        "賽博龐克",
+        "情人節",
+        "花園",
+        "低保真",
+        "粉彩",
+        "幻想",
+        "線框",
+        "CMYK",
+        "秋天",
+        "酸性",
+        "檸檬水",
+        "冬天",
+        "北歐",
+        "焦糖拿鐵",
+        "絲綢"
       ],
       "theme_options_dark": [
-        "Default",
-        "Synthwave",
-        "Halloween",
-        "Forest",
-        "Aqua",
-        "Black",
-        "Luxury",
-        "Dracula",
-        "Business",
-        "Night",
-        "Coffee",
-        "Dim",
-        "Sunset",
-        "Abyss"
+        "預設",
+        "合成波",
+        "萬聖節",
+        "森林",
+        "水",
+        "黑色",
+        "奢華",
+        "德古拉",
+        "商務",
+        "夜晚",
+        "咖啡",
+        "昏暗",
+        "日落",
+        "深淵"
       ],
       "select_language": "選擇語言",
       "date_time_format": "日期時間格式",
@@ -1543,13 +1369,10 @@
       "import_hint": "掃描和重新整理時匯入收藏、評分、選片標記、標籤和描述，保留本機編輯。"
     },
     "browse": {
-      "section_album": "相簿資料夾",
       "show_subfolder_files": "顯示子資料夾的檔案",
-      "show_subfolder_files_hint": "資料夾檢視包含子資料夾中的檔案",
       "group_raw_jpeg_pairs": "合併 RAW 配對",
       "group_raw_jpeg_pairs_hint": "將相符的 RAW 與 JPEG/HEIC 檔案合併顯示為單一項目",
       "folder_sort": "資料夾排序",
-      "folder_sort_hint": "相簿下資料夾的排序方式",
       "folder_sort_options": [
         "名稱（A 到 Z）",
         "名稱（Z 到 A）",
@@ -1662,7 +1485,6 @@
         "淺灰",
         "白色"
       ],
-      "section_slideshow": "投影片",
       "slide_show_interval": "投影片間隔：{second} 秒",
       "slide_show_transition": "投影片轉場",
       "slide_show_transition_options": [
@@ -1688,7 +1510,6 @@
       "multilingual_model_download_message": "尚未安裝多語言相片搜尋模型。下載後即可以超過 50 種語言搜尋。",
       "download": "下載",
       "downloading_multilingual_model": "正在下載多語言模型",
-      "multilingual_model_download_success": "多語言搜尋模型已就緒。請重新啟動 Lap 以使用。",
       "multilingual_model_download_failed": "無法下載多語言搜尋模型",
       "similarity": "搜尋相似度",
       "similarity_hint": "控制關鍵字搜尋的視覺相符程度",
@@ -1795,15 +1616,13 @@
       "file_delete_permanent_hint": "永久刪除前一律需要確認",
       "title": "進階",
       "external_app": {
-        "section_external_apps": "外部應用程式",
         "manage_external_apps": "管理外部應用程式",
         "external_image_editor": "開啟相片於",
         "external_video_app": "開啟影片於",
         "external_app_not_selected": "未選擇應用程式",
         "choose_app": "選擇",
         "clear_app": "清除",
-        "default_app": "預設",
-        "set_default_app": "設為預設"
+        "default_app": "預設"
       },
       "section_diagnostics": "診斷",
       "debug_mode": "除錯模式",
@@ -1861,7 +1680,6 @@
       }
     },
     "database": {
-      "title": "儲存",
       "section_storage": "媒體庫資料維護",
       "current_location": "變更資料位置",
       "system_default": "系統預設",
@@ -1893,7 +1711,6 @@
       "restore_dialog_title": "從備份還原",
       "restore_select_file": "選擇備份檔",
       "restore_file_info": "備份：{path}",
-      "restore_created_at": "建立：{date}",
       "restore_libraries": "{count} 個媒體庫（{size}）",
       "restore_new_library": "新媒體庫",
       "restore_conflict": "已存在 → 將重新命名",
@@ -1918,12 +1735,9 @@
     "about": {
       "title": "關於",
       "package": {
-        "name": "套件名稱",
-        "description": "描述",
         "app_description": "為大型本機媒體庫打造的離線優先相片管理工具",
         "version": "版本",
         "build_time": "建置時間",
-        "author": "作者",
         "license": "授權",
         "link": "連結",
         "website": "網站",

@@ -1,10 +1,8 @@
 {
   "sidebar": {
-    "home": "Início",
     "library": "Biblioteca",
     "album": "Álbuns",
     "search": "Pesquisar",
-    "rating": "Avaliações",
     "tag": "Tags",
     "calendar": "Calendário",
     "location": "Locais",
@@ -17,15 +15,11 @@
     "title": "Coleções",
     "add": "Nova coleção",
     "edit_collections": "Editar coleções",
-    "recent": "Coleções recentes",
     "search": "Pesquisar coleções",
-    "enter_new_collection_name": "Nome da nova coleção",
     "not_found": "Nenhuma coleção encontrada",
     "name_exists": "Já existe uma coleção com este nome",
     "name_save_failed": "Não foi possível salvar o nome da coleção",
     "default_name": "Coleção {index}",
-    "expand": "Expandir",
-    "collapse": "Recolher",
     "rename": "Renomear",
     "reorder": "Reordenar",
     "delete": "Excluir",
@@ -36,7 +30,6 @@
     "drop_here": "Solte arquivos aqui",
     "drop_action": "Adicionar",
     "drop_title_hint": "Soltar para adicionar",
-    "empty_drop_hint": "Arraste itens para a coleção para adicioná-los.",
     "added_toast": "{count} item(ns) adicionado(s) à coleção",
     "add_failed_toast": "Não foi possível adicionar os itens a {count} coleção(ões)",
     "already_exists_toast": "{count} item(ns) já na coleção",
@@ -49,7 +42,6 @@
   "library": {
     "all_files": "Todos os arquivos",
     "on_this_day": "Neste dia",
-    "review": "Revisão",
     "database_corrupted": "O banco de dados desta biblioteca está corrompido",
     "database_corrupted_hint": "Tente mudar para outra biblioteca."
   },
@@ -71,10 +63,6 @@
     "folder_unavailable": {
       "title": "Pasta indisponível",
       "description": "Reconecte o dispositivo de armazenamento ou verifique a localização da pasta."
-    },
-    "folder_not_found": {
-      "title": "Pasta não encontrada",
-      "description": "A pasta pode ter sido movida ou excluída. Atualize a pasta pai."
     },
     "edit": {
       "title_add": "Novo álbum",
@@ -124,10 +112,6 @@
       "save_failed": "Não foi possível salvar as configurações do álbum. Tente novamente.",
       "file_types_hint": "Os tipos de arquivo selecionados são excluídos deste álbum.",
       "tab_exclusions": "Exclusões"
-    },
-    "no_albums": {
-      "title": "Sem álbuns",
-      "description": "Adicione um álbum com fotos ou vídeos para começar"
     },
     "no_smart_albums": {
       "description": "Crie álbuns inteligentes com regras de consulta personalizadas."
@@ -301,14 +285,12 @@
     "index": {
       "wait_index": "Na fila para escanear",
       "indexing": "Escaneando... {count}/{total}",
-      "scan_summary": "Indexados {indexed} · Ignorados {skipped} não suportados · Falhas {failed}",
       "discovering": "Escaneando álbum... {count}/{total}",
       "preparing_previews": "Gerando miniaturas... {count}/{total}",
       "preparing_search": "Preparando pesquisa... {count}/{total}",
       "complete": "Varredura concluída",
       "complete_with_issues": "Varredura concluída com {count} problemas",
       "paused": "Varredura em pausa",
-      "description": "Gerando miniaturas para pesquisa e pré-visualização. Pode levar alguns minutos.",
       "cancel": "Cancelar escaneamento",
       "recovery": {
         "title": "Varredura interrompida",
@@ -316,13 +298,11 @@
         "skip": "Ignorar",
         "skip_once": "Pular este arquivo e continuar",
         "file_label": "Último arquivo verificado",
-        "message": "A verificação anterior não foi encerrada normalmente.",
-        "message_with_file": "A varredura anterior não foi encerrada corretamente.\n\nÚltimo arquivo verificado:\n{file}\n\nSe continuar, o Lap irá pular este arquivo uma vez e retomar a varredura."
+        "message": "A verificação anterior não foi encerrada normalmente."
       }
     }
   },
   "face_index": {
-    "start": "Indexar rostos",
     "indexing": "Indexando rostos... {current}/{total}",
     "clustering": "Agrupando rostos...",
     "faces_found": "{count} rostos encontrados",
@@ -336,15 +316,12 @@
     "resume": "Retomar"
   },
   "favorite": {
-    "title": "Favoritos",
-    "files": "Arquivos favoritos",
-    "folders": "Pastas favoritas"
+    "files": "Arquivos favoritos"
   },
   "rating": {
     "mixed": "Variado",
     "title": "Avaliações",
     "unrated": "Sem classificação",
-    "all_rated": "Todos avaliados",
     "rated": "Avaliado",
     "clear_rating": "Limpar classificação",
     "five_stars": "5 estrelas",
@@ -372,8 +349,6 @@
     "title": "Tags",
     "delete_tag": "Excluir tag",
     "edit_tag": "Editar tags",
-    "search_tags": "Pesquisar tags",
-    "enter_new_tag_name": "Novo nome da tag",
     "not_found": "Tags não encontradas",
     "name_exists": "Já existe uma tag com este nome",
     "name_save_failed": "Não foi possível salvar o nome da tag",
@@ -406,13 +381,6 @@
       "months": "Meses",
       "days": "Dias"
     },
-    "day": "Dia",
-    "week": "Semana",
-    "month": "Mês",
-    "year": "Ano",
-    "today": "Hoje",
-    "monthly": "Mensal",
-    "daily": "Diário",
     "weekdays": [
       "Dom",
       "Seg",
@@ -421,15 +389,6 @@
       "Qui",
       "Sex",
       "Sáb"
-    ],
-    "weekdays_long": [
-      "Domingo",
-      "Segunda-feira",
-      "Terça-feira",
-      "Quarta-feira",
-      "Quinta-feira",
-      "Sexta-feira",
-      "Sábado"
     ],
     "months": [
       "Jan",
@@ -461,12 +420,37 @@
     ]
   },
   "toolbar": {
+    "browser_filters": {
+      "title": "Filtros",
+      "file_type": "Tipo de arquivo",
+      "favorite": "Favoritos",
+      "rating": "Avaliação",
+      "culling": "Seleção",
+      "tags": "Tags",
+      "all": "Todos",
+      "favorited": "Favoritos",
+      "not_favorited": "Não favoritos",
+      "unrated": "Sem avaliação",
+      "pick": "Escolhidas",
+      "reject": "Rejeitadas",
+      "unreviewed": "Não revisadas",
+      "tagged": "Com tags",
+      "untagged": "Sem tags",
+      "reset": "Redefinir filtros",
+      "rated": "Avaliadas",
+      "remove": "Remover filtro",
+      "clear_all": "Limpar tudo",
+      "counting": "Contando…",
+      "results": "{count} de {total} itens",
+      "total_items": "{total} itens",
+      "tooltip": "Filtro",
+      "disabled": "Filtro desativado"
+    },
     "search": {
       "title": "Pesquisar",
       "placeholder": "Nome do arquivo"
     },
     "filter": {
-      "favorites_only": "Somente favoritos",
       "show_selection_panel": "Abrir painel de seleção",
       "exit_selection_mode": "Sair do modo de seleção",
       "select_count": "{count} selecionados",
@@ -508,55 +492,16 @@
       "file_type_other": "Outros"
     },
     "tooltip": {
-      "restore": "Restaurar",
       "refresh": "Atualizar",
       "info": "Informações",
-      "clear_history": "Limpar histórico",
-      "index_faces": "Indexar rostos",
       "sort": "Ordenar",
-      "monthly": "Mensal",
-      "daily": "Diário",
-      "time_asc": "Tempo asc",
-      "time_desc": "Tempo desc",
       "back": "Voltar",
       "scanning": "Escaneando…",
       "scan_paused": "Escaneamento pausado",
       "scan_queued": "Na fila para escanear"
-    },
-    "browser_filters": {
-      "title": "Filtros",
-      "file_type": "Tipo de arquivo",
-      "favorite": "Favoritos",
-      "rating": "Avaliação",
-      "culling": "Seleção",
-      "tags": "Tags",
-      "all": "Todos",
-      "favorited": "Favoritos",
-      "not_favorited": "Não favoritos",
-      "unrated": "Sem avaliação",
-      "pick": "Escolhidas",
-      "reject": "Rejeitadas",
-      "unreviewed": "Não revisadas",
-      "tagged": "Com tags",
-      "untagged": "Sem tags",
-      "reset": "Redefinir filtros",
-      "rated": "Avaliadas",
-      "remove": "Remover filtro",
-      "clear_all": "Limpar tudo",
-      "counting": "Contando…",
-      "results": "{count} de {total} itens",
-      "total_items": "{total} itens",
-      "tooltip": "Filtro",
-      "disabled": "Filtro desativado"
     }
   },
   "info_panel": {
-    "tabs": [
-      "Info",
-      "Ajustar"
-    ],
-    "empty_title": "Esta lista está vazia",
-    "empty_desc": "Adicione itens ou atualize o filtro atual para mostrá-los aqui.",
     "select_hint": "Nenhum item selecionado",
     "deselect": "Desmarcar",
     "selection_load_failed": "Não foi possível carregar todos os itens para seleção. Tente novamente.",
@@ -570,7 +515,6 @@
       "copy": "Copiar",
       "move": "Mover"
     },
-    "edit_disabled": "Selecione uma única foto para editar",
     "type_image": "Imagem",
     "type_images": "Imagens",
     "type_video": "Vídeo",
@@ -578,12 +522,10 @@
     "select_title": "Seleção",
     "favorite_all": "Favorito",
     "unfavorite_all": "Remover",
-    "action": "Ação",
     "file_actions": "Ações de arquivo",
     "more": "Mais…",
     "organize": "Organizar",
     "more_actions": "Mais ações",
-    "tag_all": "Tag",
     "dedup": {
       "keep_rules": {
         "title": "Regras de retenção",
@@ -619,8 +561,6 @@
       "error_desc": "O escaneamento não pôde ser concluído. Atualize a lista de arquivos e tente novamente",
       "empty_title": "Nenhum duplicado potencial nesta lista",
       "empty_desc": "Amplie os filtros ou teste outra lista de arquivos",
-      "similar_title": "As imagens semelhantes vêm em seguida",
-      "similar_desc": "Esta aba será usada para imagens visualmente semelhantes quando o fluxo de duplicatas exatas for expandido",
       "similar": {
         "analyze_images": "Analisar imagens semelhantes",
         "analyze": "Analisar",
@@ -633,8 +573,6 @@
         "analyzing": "Analisando imagens semelhantes",
         "groups_title": "Grupos semelhantes",
         "results": "Resultados",
-        "groups_count": "{count} grupos semelhantes",
-        "load_more": "Carregar mais",
         "error_title": "Não foi possível carregar imagens semelhantes",
         "empty_title": "Nenhuma imagem semelhante encontrada",
         "reanalyze": "Analisar novamente"
@@ -645,20 +583,10 @@
       "actions_title": "Ações",
       "compare": "Comparar",
       "rescan": "Verificar novamente",
-      "keep_strategy": "Regra de retenção padrão",
-      "keep_strategy_options": {
-        "best_quality": "Melhor qualidade",
-        "oldest_created": "Preferir mais antigo (criação)",
-        "oldest_modified": "Preferir mais antigo (modificação)"
-      },
       "keep_label": "Manter",
-      "unkeep_label": "Não manter",
-      "delete_selected": "Excluir selecionados",
       "trash_all": "Mover tudo para a lixeira",
       "delete_all": "Excluir tudo",
-      "move_selected_to_trash": "Mover para lixeira ({count} selecionados · {size})",
       "no_removable_files": "Não há itens removíveis para mover para a lixeira",
-      "set_keep": "Manter",
       "removable_copies_summary": "{count} cópias removíveis · {size}",
       "similar_items_summary": "{count} itens semelhantes · {size}"
     }
@@ -670,17 +598,11 @@
     },
     "not_found": {
       "albums": "Nenhum álbum encontrado",
-      "files": "Nenhum arquivo encontrado",
+      "files": "Nenhum item encontrado",
       "image_search_failed": "Pesquisa de imagens indisponível",
       "image_search_failed_hint": "Verifique se o modelo de pesquisa de imagens está disponível e tente novamente.",
       "image_search_language_unsupported": "O modelo de pesquisa padrão só oferece suporte ao inglês",
       "image_search_language_unsupported_hint": "Escolha o modelo multilíngue nas Configurações para pesquisar neste idioma.",
-      "image_files": "Nenhum arquivo de foto encontrado",
-      "raw_files": "Nenhum arquivo RAW encontrado",
-      "video_files": "Nenhum arquivo de vídeo encontrado",
-      "image_raw_files": "Nenhum arquivo de foto ou RAW encontrado",
-      "image_video_files": "Nenhum arquivo de foto ou vídeo encontrado",
-      "raw_video_files": "Nenhum arquivo RAW ou de vídeo encontrado",
       "folder_files": "Esta pasta não contém arquivos",
       "folder_files_hint": "Navegue pelas subpastas ou ative 'Mostrar arquivos de subpastas' nas Configurações.",
       "folders": "Nenhuma pasta encontrada",
@@ -760,16 +682,10 @@
       "invert": "Inverter seleção"
     },
     "home": {
-      "delete": "Excluir",
-      "pin": "Fixar",
-      "unpin": "Desafixar"
+      "delete": "Excluir"
     },
     "library": {
-      "add": "Nova biblioteca...",
-      "edit": "Editar biblioteca...",
-      "manage": "Gerenciar bibliotecas...",
-      "remove": "Remover biblioteca",
-      "default": "Biblioteca padrão"
+      "manage": "Gerenciar bibliotecas..."
     },
     "album": {
       "add": "Novo álbum",
@@ -790,11 +706,7 @@
       "copy": "Copiar para área de transferência",
       "paste": "Colar",
       "edit_image": "Editar...",
-      "open_image_in_app": "Abrir foto em {app}...",
-      "open_video_in_app": "Abrir vídeo em {app}...",
-      "open_selected_images_in_app": "Abrir fotos em {app}...",
       "compare_selected_images": "Comparar...",
-      "open_selected_videos_in_app": "Abrir vídeos em {app}...",
       "open_in_app": "Abrir em app externo...",
       "manage_app": "Gerenciar apps...",
       "find_similar_images": "Encontrar fotos relacionadas",
@@ -808,7 +720,6 @@
       "move_within_library": "Mover na biblioteca...",
       "move_to_folder": "Mover para pasta...",
       "copy_to_folder": "Copiar para pasta...",
-      "move_to_trash": "Mover para o lixo",
       "delete": "Excluir",
       "reveal_in_finder": "Mostrar no Finder...",
       "reveal_in_file_explorer": "Mostrar no Explorer...",
@@ -821,14 +732,7 @@
       "create_montage": "Criar colagem...",
       "save_xmp": "Salvar metadados em XMP",
       "xmp_save_success": "Metadados XMP salvos para {count} arquivo(s)",
-      "xmp_save_failed": "Falha ao salvar XMP para {count} arquivo(s)",
-      "comment": "Descrição…"
-    },
-    "calendar": {
-      "monthly": "Mensal",
-      "daily": "Diário",
-      "time_asc": "Tempo asc",
-      "time_desc": "Tempo desc"
+      "xmp_save_failed": "Falha ao salvar XMP para {count} arquivo(s)"
     },
     "location": {
       "search": "Pesquisar locais"
@@ -859,12 +763,7 @@
       "unfavorite": "Desfavoritar",
       "tag": "Tags...",
       "collection": "Coleções...",
-      "comment": "Descrição…",
       "rotate": "Girar visualização"
-    },
-    "sort": {
-      "sort_by_name": "Por nome",
-      "sort_by_count": "Por quantidade"
     }
   },
   "msgbox": {
@@ -907,9 +806,6 @@
     "manage_libraries": {
       "title": "Gerenciar bibliotecas",
       "libraries": "Bibliotecas",
-      "name": "Nome",
-      "visible": "Visível",
-      "action": "Ação",
       "default": "Padrão",
       "current": "Atual",
       "show": "Mostrar",
@@ -921,32 +817,19 @@
       "add_new": "Nova biblioteca",
       "add": "Adicionar",
       "placeholder": "Nome da biblioteca",
-      "max_limit_reached": "Limite atingido",
-      "created_at_lower": "criado em",
       "calculating_stats": "Calculando o tamanho da biblioteca...",
       "unable_to_load": "Não foi possível carregar",
-      "library_file_path": "Caminho do arquivo",
-      "library_file_size": "Tamanho do arquivo",
-      "created_at": "Criado em",
       "cache_size": "cache de miniaturas {size}"
     },
     "remove_library": {
       "title": "Remover biblioteca",
       "content": "Remover '{library}'? O arquivo do banco de dados será excluído.",
-      "ok": "Remover",
-      "success": "'{library}' removida.",
-      "error": "Falha ao remover a biblioteca."
+      "ok": "Remover"
     },
     "remove_album": {
       "title": "Remover álbum",
       "content": "O álbum '{album}' será removido. Arquivos permanecem.",
       "ok": "Remover"
-    },
-    "rename_folder": {
-      "title": "Renomear pasta",
-      "content": "Novo nome:",
-      "ok": "Renomear",
-      "error": "Falha ao renomear a pasta."
     },
     "new_folder": {
       "title": "Nova pasta",
@@ -1030,7 +913,6 @@
     "folder_delete_contents": "Isso inclui todos os arquivos e subpastas.",
     "move_to_trash": {
       "title": "Mover para o lixo",
-      "file_content": "O arquivo '{file}' será movido para o lixo.",
       "files_content": "{count} itens selecionados serão movidos para o lixo.",
       "removable_files_content": "Todos os {count} itens removíveis serão movidos para o lixo.",
       "folder_content": "A pasta '{folder}' será movida para o lixo.",
@@ -1038,21 +920,17 @@
       "file_success": "O arquivo '{file}' foi movido para o lixo.",
       "files_success": "{count} itens selecionados foram movidos para o lixo.",
       "folder_success": "A pasta '{folder}' foi movida para o lixo.",
-      "file_error": "Falha ao mover o arquivo para o lixo.",
       "files_error": "Falha ao mover os itens selecionados para o lixo.",
       "folder_error": "Falha ao mover a pasta para o lixo."
     },
     "permanent_delete": {
       "title": "Excluir permanentemente",
-      "file_content": "O arquivo '{file}' será excluído permanentemente.",
       "files_content": "{count} itens selecionados serão excluídos permanentemente.",
       "removable_files_content": "Todos os {count} itens removíveis serão excluídos permanentemente.",
       "folder_content": "A pasta '{folder}' será excluída permanentemente.",
-      "ok": "Excluir",
       "file_success": "O arquivo '{file}' foi excluído permanentemente.",
       "files_success": "{count} itens selecionados foram excluídos permanentemente.",
       "folder_success": "A pasta '{folder}' foi excluída permanentemente.",
-      "file_error": "Falha ao excluir o arquivo permanentemente.",
       "files_error": "Falha ao excluir permanentemente os itens selecionados.",
       "folder_error": "Falha ao excluir permanentemente a pasta."
     },
@@ -1060,7 +938,6 @@
       "title": "Falha ao mover para a lixeira",
       "file_content": "O arquivo '{file}' não pôde ser movido para a lixeira.\n\nDeseja excluí-lo permanentemente em vez disso?",
       "files_content": "{count} itens selecionados não puderam ser movidos para a lixeira.\n\nDeseja excluí-los permanentemente em vez disso?",
-      "folder_content": "A pasta '{folder}' não pôde ser movida para a lixeira.\n\nDeseja excluí-la permanentemente em vez disso?\n\nEsta ação não pode ser desfeita através da lixeira do sistema.",
       "folder_partial_warning": "A tentativa anterior pode ter movido parte do conteúdo para a lixeira.",
       "ok": "Excluir permanentemente"
     },
@@ -1070,27 +947,14 @@
       "ok": "Abrir mesmo assim"
     },
     "new_tag": {
-      "title": "Nova tag",
-      "ok": "Criar",
-      "error": "Falha ao criar a tag."
+      "title": "Nova tag"
     },
     "delete_tag": {
       "title": "Eliminar “{tag}”?",
-      "content": "A tag '{tag}' será excluída.",
-      "ok": "Excluir",
-      "success": "'{tag}' excluída.",
-      "error": "Falha ao excluir a tag."
-    },
-    "edit_comment": {
-      "title": "Editar descrição",
-      "placeholder": "Introduzir descrição",
-      "ok": "Salvar"
+      "ok": "Excluir"
     },
     "select_folder": {
       "error": "Falha ao selecionar pasta."
-    },
-    "select_file": {
-      "error": "Falha ao selecionar arquivo."
     },
     "file_refresh": {
       "metadata_failed": "Falha na importação de metadados: {count}",
@@ -1249,7 +1113,6 @@
     "paths_copied": "{count} caminho(s) de arquivo copiado(s) para a área de transferência",
     "copy_path": "Copiar caminho do arquivo",
     "copy_path_failed": "Não foi possível copiar o caminho",
-    "video_only": "(somente vídeos)",
     "field_preset": "Campos visíveis",
     "fields_default": "Padrão",
     "fields_all": "Mostrar todos",
@@ -1261,10 +1124,8 @@
     "thumbnail": "Miniatura",
     "change_thumbnail": "Alterar miniatura",
     "histogram": "Histograma",
-    "preview_size": "Tamanho da miniatura",
     "general": "Geral",
     "metadata": "Metadados",
-    "location": "Localização",
     "map": "Mapa",
     "open_apple_maps": "Abrir no Apple Mapas",
     "empty_title": "Nenhum arquivo selecionado",
@@ -1274,46 +1135,19 @@
     "folder": "Pasta",
     "dimension": "Dimensão",
     "size": "Tamanho",
-    "duration": "Duração",
-    "unknown_duration": "Desconhecida",
     "created_at": "Criado em",
     "modified_at": "Modificado em",
     "last_scan_time": "Última verificação",
-    "marks": "Marcações",
     "camera": "Câmera",
-    "camera_make": "Fabricante",
-    "camera_model": "Modelo",
     "taken_at": "Tirada em",
-    "taken_by": "Por",
-    "software": "Software",
-    "artist": "Artista",
-    "copyright": "Direitos autorais",
-    "description": "Descrição",
     "lens": "Lente",
-    "lens_make": "Fabr. lente",
-    "lens_model": "Mod. lente",
-    "exposure_bias": "Comp. Exp.",
-    "exposure_time": "Tempo Exp.",
-    "aperture": "Abertura",
-    "focal_length": "Dist. Focal",
-    "iso": "ISO",
-    "flash": "Flash",
-    "color_type": "Tipo de cor",
-    "bit_depth": "Bits",
-    "alpha_channel": "Alfa",
-    "gps_latitude": "Latitude",
-    "gps_longitude": "Longitude",
-    "gps_altitude": "Altitude",
     "geo_location": "Local",
-    "tags": "Tags",
     "comment": "Descrição",
     "capture_settings": "Exposição",
     "organization": "Organização",
     "file": "Ficheiro",
     "capture": "Captura",
     "source_metadata": "Outras informações",
-    "source_description": "Descrição original",
-    "coordinates": "Coordenadas",
     "detail_fields": {
       "title": "Título",
       "headline": "Manchete",
@@ -1372,18 +1206,14 @@
     "all_brands": "Todas"
   },
   "map": {
-    "show_map": "Mostrar mapa",
-    "hide_map": "Ocultar mapa",
     "zoom_in": "Ampliar",
     "zoom_out": "Reduzir",
     "zoom_center": "Centralizar",
     "standard": "Padrão",
     "satellite": "Satélite",
-    "heatmap": "Mapa de calor",
     "photo_count": "{count} fotos",
     "no_photos_in_view": "Nenhuma foto",
-    "photos_in_view": "{count} fotos nesta área",
-    "photos_in_view_limited": "Mostrando as primeiras {count} fotos - aproxime para mais"
+    "photos_in_view": "{count} fotos nesta área"
   },
   "format": {
     "relative_time": {
@@ -1403,8 +1233,6 @@
     "live": "AO VIVO",
     "motion": "MOTION",
     "title": "Visualizador de imagens",
-    "loading": "Carregando...",
-    "loading_original": "Carregando foto original...",
     "media_server_unavailable": "Não foi possível carregar as fotos e os vídeos originais. Reinicie o Lap para tentar novamente.",
     "failed": "Falha ao carregar a foto. O arquivo está ausente ou corrompido.",
     "raw_render_unavailable": "Não é possível renderizar este RAW; pré-visualização incorporada exibida.",
@@ -1418,7 +1246,6 @@
       "zoom_out": "Reduzir",
       "zoom_fit": "Ajustar à janela",
       "zoom_fit_short": "Ajust.",
-      "zoom_actual": "Tamanho real",
       "af_area": "Mostrar áreas de AF",
       "fullscreen": "Tela cheia",
       "exit_fullscreen": "Sair tela cheia",
@@ -1432,7 +1259,6 @@
   "video": {
     "loading": "Carregando vídeo...",
     "loading_compatible": "Preparando reprodução compatível...",
-    "failed": "Erro na reprodução",
     "errors": {
       "playback_failed": "Falha na reprodução",
       "aborted": "Abortado",
@@ -1465,41 +1291,41 @@
       "theme_options_light": [
         "Padrão",
         "Cupcake",
-        "Bumblebee",
-        "Emerald",
-        "Corporate",
-        "Retro",
+        "Abelha",
+        "Esmeralda",
+        "Corporativo",
+        "Retrô",
         "Cyberpunk",
-        "Valentine",
-        "Garden",
-        "Lofi",
+        "Dia dos Namorados",
+        "Jardim",
+        "Lo-Fi",
         "Pastel",
-        "Fantasy",
+        "Fantasia",
         "Wireframe",
-        "Cmyk",
-        "Autumn",
-        "Acid",
-        "Lemonade",
-        "Winter",
+        "CMYK",
+        "Outono",
+        "Ácido",
+        "Limonada",
+        "Inverno",
         "Nord",
-        "Caramellatte",
-        "Silk"
+        "Latte de caramelo",
+        "Seda"
       ],
       "theme_options_dark": [
         "Padrão",
         "Synthwave",
         "Halloween",
-        "Forest",
+        "Floresta",
         "Aqua",
-        "Black",
-        "Luxury",
-        "Dracula",
-        "Business",
-        "Night",
-        "Coffee",
-        "Dim",
-        "Sunset",
-        "Abyss"
+        "Preto",
+        "Luxo",
+        "Drácula",
+        "Negócios",
+        "Noite",
+        "Café",
+        "Escuro",
+        "Pôr do sol",
+        "Abismo"
       ],
       "select_language": "Idioma",
       "date_time_format": "Formato de data e hora",
@@ -1543,13 +1369,10 @@
       "import_hint": "Importar favoritos, avaliações, marcações de seleção, etiquetas e descrições durante verificações e atualizações, preservando as edições locais."
     },
     "browse": {
-      "section_album": "Pasta do álbum",
       "show_subfolder_files": "Mostrar arquivos de subpastas",
-      "show_subfolder_files_hint": "A visualização de pasta inclui arquivos em subpastas",
       "group_raw_jpeg_pairs": "Agrupar pares RAW",
       "group_raw_jpeg_pairs_hint": "Mostrar arquivos RAW e JPEG/HEIC correspondentes como um único item",
       "folder_sort": "Ordenação de pastas",
-      "folder_sort_hint": "Ordem de classificação das pastas exibidas dentro dos álbuns",
       "folder_sort_options": [
         "Nome (A a Z)",
         "Nome (Z a A)",
@@ -1662,7 +1485,6 @@
         "Cinza claro",
         "Branco"
       ],
-      "section_slideshow": "Apresentação",
       "slide_show_interval": "Intervalo: {second} s",
       "slide_show_transition": "Transição da apresentação",
       "slide_show_transition_options": [
@@ -1688,7 +1510,6 @@
       "multilingual_model_download_message": "O modelo de pesquisa de fotos multilíngue não está instalado. Baixe-o para habilitar a pesquisa em mais de 50 idiomas.",
       "download": "Baixar",
       "downloading_multilingual_model": "Baixando modelo multilíngue",
-      "multilingual_model_download_success": "O modelo de pesquisa multilíngue está pronto. Reinicie o Lap para usá-lo.",
       "multilingual_model_download_failed": "Falha ao baixar o modelo de pesquisa multilíngue",
       "similarity": "Similaridade de pesquisa",
       "similarity_hint": "Controla correspondências visuais em buscas por palavras-chave",
@@ -1795,15 +1616,13 @@
       "file_delete_section": "Exclusão de arquivos",
       "title": "Avançado",
       "external_app": {
-        "section_external_apps": "Apps externos",
         "manage_external_apps": "Gerenciar apps externos",
         "external_image_editor": "Abrir foto com",
         "external_video_app": "Abrir vídeo com",
         "external_app_not_selected": "Nenhum app selecionado",
         "choose_app": "Escolher",
         "clear_app": "Limpar",
-        "default_app": "Padrão",
-        "set_default_app": "Definir como padrão"
+        "default_app": "Padrão"
       },
       "section_diagnostics": "Diagnóstico",
       "debug_mode": "Modo debug",
@@ -1847,11 +1666,20 @@
         "finishing": "Finalizando a migração do cache…",
         "success": "Local do cache de miniaturas alterado",
         "cleanup_warning": "O cache foi movido, mas alguns arquivos antigos não puderam ser removidos:",
-        "busy": "Aguarde a conclusão da migração do cache de miniaturas."
+        "busy": "Aguarde a conclusão da migração do cache de miniaturas.",
+        "cleanup": {
+          "title": "Limpar cache não utilizado",
+          "hint": "Limpar miniaturas não utilizadas das bibliotecas listadas",
+          "button": "Limpar",
+          "progress": "Processando {current} / {total} · {name}",
+          "freed": "{size} liberados.",
+          "empty": "Não há cache de miniaturas não utilizado para limpar.",
+          "failed": "Não foi possível limpar estas bibliotecas:",
+          "list_error": "Não foi possível carregar a lista de bibliotecas."
+        }
       }
     },
     "database": {
-      "title": "Armazenamento",
       "section_storage": "Manutenção dos dados",
       "current_location": "Alterar local dos dados",
       "system_default": "Padrão do sistema",
@@ -1883,7 +1711,6 @@
       "restore_dialog_title": "Restaurar do Backup",
       "restore_select_file": "Selecionar arquivo de backup",
       "restore_file_info": "Backup: {path}",
-      "restore_created_at": "Criado em: {date}",
       "restore_libraries": "{count} bibliotecas ({size})",
       "restore_new_library": "Nova biblioteca",
       "restore_conflict": "Já existe → será renomeada",
@@ -1908,12 +1735,9 @@
     "about": {
       "title": "Sobre",
       "package": {
-        "name": "Nome do pacote",
-        "description": "Descrição",
         "app_description": "Um gerenciador de fotos local e offline para grandes bibliotecas.",
         "version": "Versão",
         "build_time": "Hora do build",
-        "author": "Autor",
         "license": "Licença",
         "link": "Link",
         "website": "Site",

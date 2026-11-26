@@ -1,10 +1,8 @@
 {
   "sidebar": {
-    "home": "Domů",
     "library": "Knihovna",
     "album": "Alba",
     "search": "Hledat",
-    "rating": "Hodnocení",
     "tag": "Štítky",
     "calendar": "Kalendář",
     "location": "Místa",
@@ -17,15 +15,11 @@
     "title": "Kolekce",
     "add": "Nová kolekce",
     "edit_collections": "Upravit kolekce",
-    "recent": "Nedávné kolekce",
     "search": "Hledat kolekce",
-    "enter_new_collection_name": "Název nové kolekce",
     "not_found": "Nebyly nalezeny žádné kolekce",
     "name_exists": "Kolekce s tímto názvem již existuje",
     "name_save_failed": "Kolekce s daným názvem se nepodařilo uložit",
     "default_name": "Kolekce {index}",
-    "expand": "Rozbalit",
-    "collapse": "Sbalit",
     "rename": "Přejmenovat",
     "reorder": "Změnit pořadí",
     "delete": "Odstranit",
@@ -36,7 +30,6 @@
     "drop_here": "Sem přetáhněte soubory",
     "drop_action": "Přidat",
     "drop_title_hint": "Přidejte přetažením",
-    "empty_drop_hint": "Přetáhněte položky do výše uvedené kolekce a přidejte je.",
     "added_toast": "Do kolekce přidáno: {count} položek",
     "add_failed_toast": "Nepodařilo se přidat položky do kolekcí: {count}",
     "already_exists_toast": "V kolekci se nachází: {count} položek",
@@ -49,7 +42,6 @@
   "library": {
     "all_files": "Všechny soubory",
     "on_this_day": "V tento den",
-    "review": "Zkontrolovat",
     "database_corrupted": "Databáze této knihovny je poškozená",
     "database_corrupted_hint": "Zkuste přepnout na jinou knihovnu."
   },
@@ -71,10 +63,6 @@
     "folder_unavailable": {
       "title": "Složka není dostupná",
       "description": "Znovu připojte úložné zařízení nebo zkontrolujte umístění složky."
-    },
-    "folder_not_found": {
-      "title": "Složka nebyla nalezena",
-      "description": "Složka mohla být přesunuta nebo odstraněna. Obnovte zobrazení nadřazené složky."
     },
     "edit": {
       "title_add": "Nové album",
@@ -124,10 +112,6 @@
       "save_failed": "Nastavení alba se nepodařilo uložit. Zkuste to znovu.",
       "file_types_hint": "Vybrané typy souborů jsou z tohoto alba vyloučeny.",
       "tab_exclusions": "Vyloučení"
-    },
-    "no_albums": {
-      "title": "Zatím nebyla přidána žádná alba",
-      "description": "Začněte přidáním alba obsahujícího fotografie nebo videa"
     },
     "no_smart_albums": {
       "description": "Vytvářejte chytrá alba pomocí vlastních pravidel dotazů."
@@ -301,14 +285,12 @@
     "index": {
       "wait_index": "Ve frontě na skenování",
       "indexing": "Probíhá skenování… {count}/{total}",
-      "scan_summary": "Zaindexováno: {indexed} · Přeskočeno – nepodporované: {skipped} · Chyby: {failed}",
       "discovering": "Probíhá skenování alba… {count}/{total}",
       "preparing_previews": "Vytvářejí se náhledy… {count}/{total}",
       "preparing_search": "Připravuje se vyhledávání… {count}/{total}",
       "complete": "Skenování dokončeno",
       "complete_with_issues": "Skenování dokončeno s počtem problémů: {count}",
       "paused": "Skenování pozastaveno",
-      "description": "Vytvářejí se miniatury pro vyhledávání a rychlý náhled. U velkých alb to může trvat několik minut.",
       "cancel": "Zrušit skenování",
       "recovery": {
         "title": "Skenování přerušeno",
@@ -316,13 +298,11 @@
         "skip": "Přeskočit",
         "skip_once": "Přeskočit tento soubor a pokračovat",
         "file_label": "Poslední skenovaný soubor",
-        "message": "Předchozí skenování nebylo řádně ukončeno.",
-        "message_with_file": "Předchozí úloha skenování nebyla řádně ukončena.\n\nPoslední skenovaný soubor:\n{file}\n\nPokud budete pokračovat, Lap tento soubor jednou přeskočí a obnoví skenování."
+        "message": "Předchozí skenování nebylo řádně ukončeno."
       }
     }
   },
   "face_index": {
-    "start": "Indexovat tváře",
     "indexing": "Indexují se tváře… {current}/{total}",
     "clustering": "Seskupují se tváře…",
     "faces_found": "Nalezeno tváří: {count}",
@@ -336,15 +316,12 @@
     "resume": "Pokračovat v indexování"
   },
   "favorite": {
-    "title": "Oblíbené",
-    "files": "Oblíbené soubory",
-    "folders": "Oblíbené složky"
+    "files": "Oblíbené soubory"
   },
   "rating": {
     "mixed": "Smíšené",
     "title": "Hodnocení",
     "unrated": "Bez hodnocení",
-    "all_rated": "Všechny ohodnocené",
     "rated": "Ohodnocené",
     "clear_rating": "Zrušit hodnocení",
     "five_stars": "5 hvězdiček",
@@ -372,8 +349,6 @@
     "title": "Štítky",
     "delete_tag": "Odstranit štítek",
     "edit_tag": "Upravit štítky",
-    "search_tags": "Hledat štítky",
-    "enter_new_tag_name": "Zadejte nový název štítku",
     "not_found": "Nebyly nalezeny žádné štítky",
     "name_exists": "Štítek s tímto názvem již existuje",
     "name_save_failed": "Nepodařilo se uložit název štítku",
@@ -406,13 +381,6 @@
       "months": "Měsíce",
       "days": "Dny"
     },
-    "day": "Den",
-    "week": "Týden",
-    "month": "Měsíc",
-    "year": "Rok",
-    "today": "Dnes",
-    "monthly": "Měsíčně",
-    "daily": "Denně",
     "weekdays": [
       "Ne",
       "Po",
@@ -421,15 +389,6 @@
       "Čt",
       "Pá",
       "So"
-    ],
-    "weekdays_long": [
-      "Neděle",
-      "Pondělí",
-      "Úterý",
-      "Středa",
-      "Čtvrtek",
-      "Pátek",
-      "Sobota"
     ],
     "months": [
       "Led",
@@ -461,12 +420,37 @@
     ]
   },
   "toolbar": {
+    "browser_filters": {
+      "title": "Filtry",
+      "file_type": "Typ souboru",
+      "favorite": "Oblíbené",
+      "rating": "Hodnocení",
+      "culling": "Výběr",
+      "tags": "Štítky",
+      "all": "Vše",
+      "favorited": "Oblíbené",
+      "not_favorited": "Neoblíbené",
+      "unrated": "Bez hodnocení",
+      "pick": "Vybrané",
+      "reject": "Zamítnuté",
+      "unreviewed": "Neprohlédnuté",
+      "tagged": "Se štítky",
+      "untagged": "Bez štítků",
+      "reset": "Resetovat filtry",
+      "rated": "Hodnocené",
+      "remove": "Odebrat filtr",
+      "clear_all": "Vymazat vše",
+      "counting": "Počítání…",
+      "results": "{count} z {total} položek",
+      "total_items": "{total} položek",
+      "tooltip": "Filtr",
+      "disabled": "Filtr zakázán"
+    },
     "search": {
       "title": "Hledat",
       "placeholder": "Hledat podle názvu souboru"
     },
     "filter": {
-      "favorites_only": "Jen oblíbené",
       "show_selection_panel": "Otevřít panel výběru",
       "exit_selection_mode": "Ukončit režim výběru",
       "select_count": "Vybráno: {count}",
@@ -508,55 +492,16 @@
       "file_type_other": "Ostatní"
     },
     "tooltip": {
-      "restore": "Obnovit",
       "refresh": "Obnovit",
       "info": "Informace",
-      "clear_history": "Vymazat historii hledání",
-      "index_faces": "Indexovat tváře",
       "sort": "Řadit",
-      "monthly": "Měsíčně",
-      "daily": "Denně",
-      "time_asc": "Čas vzestupně",
-      "time_desc": "Čas sestupně",
       "back": "Zpět",
       "scanning": "Probíhá skenování…",
       "scan_paused": "Skenování pozastaveno",
       "scan_queued": "Ve frontě na skenování"
-    },
-    "browser_filters": {
-      "title": "Filtry",
-      "file_type": "Typ souboru",
-      "favorite": "Oblíbené",
-      "rating": "Hodnocení",
-      "culling": "Výběr",
-      "tags": "Štítky",
-      "all": "Vše",
-      "favorited": "Oblíbené",
-      "not_favorited": "Neoblíbené",
-      "unrated": "Bez hodnocení",
-      "pick": "Vybrané",
-      "reject": "Zamítnuté",
-      "unreviewed": "Neprohlédnuté",
-      "tagged": "Se štítky",
-      "untagged": "Bez štítků",
-      "reset": "Resetovat filtry",
-      "rated": "Hodnocené",
-      "remove": "Odebrat filtr",
-      "clear_all": "Vymazat vše",
-      "counting": "Počítání…",
-      "results": "{count} z {total} položek",
-      "total_items": "{total} položek",
-      "tooltip": "Filtr",
-      "disabled": "Filtr zakázán"
     }
   },
   "info_panel": {
-    "tabs": [
-      "Informace",
-      "Úpravy"
-    ],
-    "empty_title": "Tento seznam je prázdný",
-    "empty_desc": "Přidejte položky nebo upravte aktuální filtr, aby se zde zobrazily.",
     "select_hint": "Nejsou vybrány žádné položky",
     "deselect": "Zrušit výběr",
     "selection_load_failed": "Nepodařilo se načíst všechny položky z výběru. Zkuste to znovu.",
@@ -570,7 +515,6 @@
       "copy": "Kopírovat",
       "move": "Přesunout"
     },
-    "edit_disabled": "Chcete-li upravovat, vyberte jednu fotografii",
     "type_image": "Obrázek",
     "type_images": "Obrázky",
     "type_video": "Video",
@@ -578,12 +522,10 @@
     "select_title": "Výběr",
     "favorite_all": "Oblíbené",
     "unfavorite_all": "Odebrat z oblíbených",
-    "action": "Akce",
     "file_actions": "Operace se soubory",
     "more": "Více…",
     "organize": "Uspořádat",
     "more_actions": "Další akce",
-    "tag_all": "Štítek",
     "dedup": {
       "keep_rules": {
         "title": "Pravidla pro zachování",
@@ -619,8 +561,6 @@
       "error_desc": "Vyhledávání nebylo možné dokončit. Aktualizujte seznam souborů a zkuste to znovu",
       "empty_title": "Nebyly nalezeny žádné duplicity",
       "empty_desc": "Zkuste přidat další soubory nebo upravit rozsah aktuálního filtru",
-      "similar_title": "Podobné obrázky budou doplněny později",
-      "similar_desc": "Tato karta bude sloužit k vyhledávání vizuálně podobných obrázků, až budou rozšířeny funkce práce s přesnými duplicitami",
       "similar": {
         "analyze_images": "Analyzovat podobné obrázky",
         "analyze": "Analyzovat",
@@ -633,8 +573,6 @@
         "analyzing": "Analyzují se podobné obrázky",
         "groups_title": "Skupiny podobných obrázků",
         "results": "Výsledky",
-        "groups_count": "Počet skupin podobných obrázků: {count}",
-        "load_more": "Načíst další",
         "error_title": "Podobné obrázky nelze načíst",
         "empty_title": "Nebyly nalezeny žádné podobné obrázky",
         "reanalyze": "Znovu analyzovat"
@@ -645,20 +583,10 @@
       "actions_title": "Akce",
       "compare": "Porovnat",
       "rescan": "Znovu prohledat",
-      "keep_strategy": "Výchozí pravidlo pro zachování",
-      "keep_strategy_options": {
-        "best_quality": "Nejvyšší kvalita",
-        "oldest_created": "Upřednostnit nejstarší datum vytvoření",
-        "oldest_modified": "Upřednostnit nejstarší datum změny"
-      },
       "keep_label": "Ponechat",
-      "unkeep_label": "Zrušit označení k ponechání",
-      "delete_selected": "Odstranit vybrané",
       "trash_all": "Přesunout vše do koše",
       "delete_all": "Odstranit vše",
-      "move_selected_to_trash": "Přesunout do koše ({count} vybraných · {size})",
       "no_removable_files": "Nejsou zde žádné odstranitelné položky k přesunutí do koše",
-      "set_keep": "Ponechat",
       "removable_copies_summary": "K odstranění {count} · {size} kopií",
       "similar_items_summary": "Podobných {count} · {size} položek"
     }
@@ -670,17 +598,11 @@
     },
     "not_found": {
       "albums": "Nebyla nalezena žádná alba",
-      "files": "Nebyly nalezeny žádné soubory",
+      "files": "Nebyly nalezeny žádné položky",
       "image_search_failed": "Vyhledávání obrázků není dostupné",
       "image_search_failed_hint": "Zkontrolujte, zda je dostupný model pro vyhledávání obrázků, a zkuste to znovu.",
       "image_search_language_unsupported": "Výchozí model vyhledávání podporuje pouze angličtinu",
       "image_search_language_unsupported_hint": "Chcete-li hledat v tomto jazyce, vyberte v Nastavení vícejazyčný model.",
-      "image_files": "Nebyly nalezeny žádné fotografie",
-      "raw_files": "Nebyly nalezeny žádné soubory RAW",
-      "video_files": "Nebyl nalezena žádná videa",
-      "image_raw_files": "Nebyly nalezeny žádné fotografie ani soubory RAW",
-      "image_video_files": "Nebyly nalezeny žádné fotografie ani videa",
-      "raw_video_files": "Nebyly nalezeny žádné soubory RAW ani videa",
       "folder_files": "Tato složka neobsahuje žádné soubory",
       "folder_files_hint": "Zkuste procházet podsložky nebo v Nastavení zapněte možnost „Zobrazovat soubory z podsložek“.",
       "folders": "Nebyly nalezeny žádné složky",
@@ -760,16 +682,10 @@
       "invert": "Invertovat výběr"
     },
     "home": {
-      "delete": "Odstranit",
-      "pin": "Připnout",
-      "unpin": "Odepnout"
+      "delete": "Odstranit"
     },
     "library": {
-      "add": "Nová knihovna…",
-      "edit": "Upravit knihovnu…",
-      "manage": "Spravovat knihovny…",
-      "remove": "Odebrat knihovnu",
-      "default": "Výchozí knihovna"
+      "manage": "Spravovat knihovny…"
     },
     "album": {
       "add": "Nové album",
@@ -790,11 +706,7 @@
       "copy": "Kopírovat do schránky",
       "paste": "Vložit",
       "edit_image": "Upravit…",
-      "open_image_in_app": "Otevřít fotografii v aplikaci {app}…",
-      "open_video_in_app": "Otevřít video v aplikaci {app}…",
-      "open_selected_images_in_app": "Otevřít fotografie v aplikaci {app}…",
       "compare_selected_images": "Porovnat…",
-      "open_selected_videos_in_app": "Otevřít videa v aplikaci {app}…",
       "open_in_app": "Otevřít v externí aplikaci…",
       "manage_app": "Spravovat aplikace…",
       "find_similar_images": "Najít podobné fotografie",
@@ -808,7 +720,6 @@
       "move_within_library": "Přesunout v knihovně…",
       "move_to_folder": "Přesunout do složky…",
       "copy_to_folder": "Kopírovat do složky…",
-      "move_to_trash": "Přesunout do koše",
       "delete": "Odstranit",
       "reveal_in_finder": "Zobrazit ve Vyhledávači…",
       "reveal_in_file_explorer": "Zobrazit v Průzkumníku souborů…",
@@ -821,14 +732,7 @@
       "create_montage": "Vytvořit koláž…",
       "save_xmp": "Uložit metadata do XMP",
       "xmp_save_success": "Metadata XMP uložena pro tento počet souborů: {count}",
-      "xmp_save_failed": "Nepodařilo se uložit XMP pro {count} souborů",
-      "comment": "Popis…"
-    },
-    "calendar": {
-      "monthly": "Měsíčně",
-      "daily": "Denně",
-      "time_asc": "Čas vzestupně",
-      "time_desc": "Čas sestupně"
+      "xmp_save_failed": "Nepodařilo se uložit XMP pro {count} souborů"
     },
     "location": {
       "search": "Hledat místa"
@@ -859,12 +763,7 @@
       "unfavorite": "Odebrat z oblíbených",
       "tag": "Štítky…",
       "collection": "Kolekce…",
-      "comment": "Popis…",
       "rotate": "Otočit zobrazení"
-    },
-    "sort": {
-      "sort_by_name": "Řadit podle názvu",
-      "sort_by_count": "Řadit podle počtu"
     }
   },
   "msgbox": {
@@ -907,9 +806,6 @@
     "manage_libraries": {
       "title": "Správa knihoven",
       "libraries": "Knihovny",
-      "name": "Název",
-      "visible": "Viditelné",
-      "action": "Akce",
       "default": "Výchozí knihovna",
       "current": "Aktuální knihovna",
       "show": "Zobrazit",
@@ -921,32 +817,19 @@
       "add_new": "Nová knihovna",
       "add": "Přidat",
       "placeholder": "Zadejte název knihovny",
-      "max_limit_reached": "Byl dosažen limit knihoven",
-      "created_at_lower": "vytvořeno",
       "calculating_stats": "Počítá se velikost knihovny…",
       "unable_to_load": "Nelze načíst",
-      "library_file_path": "Cesta k souboru knihovny",
-      "library_file_size": "Velikost souboru knihovny",
-      "created_at": "Vytvořeno v",
       "cache_size": "mezipaměť miniatur {size}"
     },
     "remove_library": {
       "title": "Odebrat knihovnu",
       "content": "Opravdu chcete odebrat knihovnu „{library}“? Databázový soubor bude trvale odstraněn.",
-      "ok": "Odebrat",
-      "success": "Knihovna „{library}“ byla odebrána.",
-      "error": "Knihovnu se nepodařilo odebrat."
+      "ok": "Odebrat"
     },
     "remove_album": {
       "title": "Odebrat album",
       "content": "Album „{album}“ bude odebráno. Tato akce neodstraní samotné soubory.",
       "ok": "Odebrat"
-    },
-    "rename_folder": {
-      "title": "Přejmenovat složku",
-      "content": "Zadejte nový název složky:",
-      "ok": "Přejmenovat",
-      "error": "Složku se nepodařilo přejmenovat."
     },
     "new_folder": {
       "title": "Nová složka",
@@ -1030,7 +913,6 @@
     "folder_delete_contents": "Týká se to všech souborů a podsložek.",
     "move_to_trash": {
       "title": "Přesunout do koše",
-      "file_content": "Soubor „{file}“ bude přesunut do koše.",
       "files_content": "Vybrané položky ({count}) budou přesunuty do koše.",
       "removable_files_content": "Všech {count} odstranitelných položek bude přesunuto do koše.",
       "folder_content": "Složka „{folder}“ bude přesunuta do koše.",
@@ -1038,21 +920,17 @@
       "file_success": "Soubor „{file}“ byl přesunut do koše.",
       "files_success": "Vybrané položky ({count}) byly přesunuty do koše.",
       "folder_success": "Složka „{folder}“ byla přesunuta do koše.",
-      "file_error": "Soubor se nepodařilo přesunout do koše.",
       "files_error": "Vybrané položky se nepodařilo přesunout do koše.",
       "folder_error": "Složku se nepodařilo přesunout do koše."
     },
     "permanent_delete": {
       "title": "Odstranit trvale",
-      "file_content": "Soubor „{file}“ bude trvale odstraněn.",
       "files_content": "Vybrané položky ({count}) budou trvale odstraněny.",
       "removable_files_content": "Všech {count} odstranitelných položek bude trvale smazáno.",
       "folder_content": "Složka „{folder}“ bude trvale odstraněna.",
-      "ok": "Odstranit",
       "file_success": "Soubor „{file}“ byl trvale odstraněn.",
       "files_success": "Vybrané položky ({count}) byly trvale odstraněny.",
       "folder_success": "Složka „{folder}“ byla trvale odstraněna.",
-      "file_error": "Soubor se nepodařilo trvale odstranit.",
       "files_error": "Vybrané položky se nepodařilo trvale odstranit.",
       "folder_error": "Složku se nepodařilo trvale odstranit."
     },
@@ -1060,7 +938,6 @@
       "title": "Přesunutí do koše se nezdařilo",
       "file_content": "Soubor „{file}“ se nepodařilo přesunout do koše.\n\nChcete jej místo toho trvale odstranit?",
       "files_content": "Vybrané položky ({count}) se nepodařilo přesunout do koše.\n\nChcete je místo toho trvale odstranit?",
-      "folder_content": "Složku „{folder}“ se nepodařilo přesunout do koše.\n\nChcete ji místo toho trvale odstranit?\n\nTuto akci nelze vrátit zpět přes systémový koš.",
       "folder_partial_warning": "Předchozí pokus mohl část obsahu přesunout do koše.",
       "ok": "Odstranit trvale"
     },
@@ -1070,27 +947,14 @@
       "ok": "Pokračovat v otevírání"
     },
     "new_tag": {
-      "title": "Nový štítek",
-      "ok": "Vytvořit",
-      "error": "Štítek se nepodařilo vytvořit."
+      "title": "Nový štítek"
     },
     "delete_tag": {
       "title": "Odstranit „{tag}“?",
-      "content": "Štítek „{tag}“ bude odstraněn.",
-      "ok": "Odstranit",
-      "success": "Štítek „{tag}“ byl odstraněn.",
-      "error": "Štítek se nepodařilo odstranit."
-    },
-    "edit_comment": {
-      "title": "Upravit popis",
-      "placeholder": "Zadejte popis",
-      "ok": "Uložit"
+      "ok": "Odstranit"
     },
     "select_folder": {
       "error": "Nepodařilo se vybrat složku."
-    },
-    "select_file": {
-      "error": "Nepodařilo se vybrat soubor."
     },
     "file_refresh": {
       "metadata_failed": "Import metadat selhal: {count}",
@@ -1249,7 +1113,6 @@
     "paths_copied": "Do schránky byly zkopírovány cesty k souborům: {count}",
     "copy_path": "Kopírovat cestu k souboru",
     "copy_path_failed": "Cestu k souboru se nepodařilo zkopírovat",
-    "video_only": "(jen video)",
     "field_preset": "Zobrazená pole",
     "fields_default": "Výchozí",
     "fields_all": "Zobrazit vše",
@@ -1261,10 +1124,8 @@
     "thumbnail": "Miniatura",
     "change_thumbnail": "Změnit miniaturu",
     "histogram": "Histogram",
-    "preview_size": "Velikost miniatur",
     "general": "Obecné",
     "metadata": "Metadata",
-    "location": "Místo",
     "map": "Mapa",
     "open_apple_maps": "Otevřít v Apple Maps",
     "empty_title": "Není vybrán žádný soubor",
@@ -1274,46 +1135,19 @@
     "folder": "Složka",
     "dimension": "Rozměry",
     "size": "Velikost",
-    "duration": "Délka",
-    "unknown_duration": "Neznámá",
     "created_at": "Vytvořeno",
     "modified_at": "Změněno",
     "last_scan_time": "Naposledy skenováno",
-    "marks": "Značky",
     "camera": "Fotoaparát",
-    "camera_make": "Výrobce fotoaparátu",
-    "camera_model": "Model fotoaparátu",
     "taken_at": "Pořízeno dne",
-    "taken_by": "Pořídil",
-    "software": "Software",
-    "artist": "Autor",
-    "copyright": "Autorská práva",
-    "description": "Popis",
     "lens": "Objektiv",
-    "lens_make": "Výrobce objektivu",
-    "lens_model": "Model objektivu",
-    "exposure_bias": "Korekce expozice",
-    "exposure_time": "Expoziční čas",
-    "aperture": "Clona",
-    "focal_length": "Ohnisková vzdálenost",
-    "iso": "ISO",
-    "flash": "Blesk",
-    "color_type": "Typ barev",
-    "bit_depth": "Barevná hloubka",
-    "alpha_channel": "Alfa kanál",
-    "gps_latitude": "Zeměpisná šířka",
-    "gps_longitude": "Zeměpisná délka",
-    "gps_altitude": "Nadmořská výška",
     "geo_location": "Místo",
-    "tags": "Štítky",
     "comment": "Popis",
     "capture_settings": "Expozice",
     "organization": "Organizace",
     "file": "Soubor",
     "capture": "Pořízení",
     "source_metadata": "Další informace",
-    "source_description": "Původní popis",
-    "coordinates": "Souřadnice",
     "detail_fields": {
       "title": "Název",
       "headline": "Titulek",
@@ -1372,18 +1206,14 @@
     "all_brands": "Vše"
   },
   "map": {
-    "show_map": "Zobrazit mapu",
-    "hide_map": "Skrýt mapu",
     "zoom_in": "Přiblížit",
     "zoom_out": "Oddálit",
     "zoom_center": "Na střed",
     "standard": "Standardní",
     "satellite": "Satelitní",
-    "heatmap": "Tepelná mapa",
     "photo_count": "Fotografií: {count}",
     "no_photos_in_view": "Žádné fotografie",
-    "photos_in_view": "Fotografií v této oblasti: {count}",
-    "photos_in_view_limited": "Zobrazuje se prvních {count} fotografií – přibližte mapu pro zobrazení dalších"
+    "photos_in_view": "Fotografií v této oblasti: {count}"
   },
   "format": {
     "relative_time": {
@@ -1403,8 +1233,6 @@
     "live": "Živě",
     "motion": "Pohyb",
     "title": "Prohlížeč obrázků",
-    "loading": "Načítání…",
-    "loading_original": "Načítá se původní fotografie…",
     "media_server_unavailable": "Původní fotografie a videa se nepodařilo načíst. Restartujte Lap a zkuste to znovu.",
     "failed": "Fotografii se nepodařilo načíst. Soubor chybí nebo je poškozený.",
     "raw_render_unavailable": "Tento soubor RAW nelze vykreslit; zobrazuje se vložený náhled.",
@@ -1418,7 +1246,6 @@
       "zoom_out": "Oddálit",
       "zoom_fit": "Přizpůsobit oknu",
       "zoom_fit_short": "Přizp.",
-      "zoom_actual": "Skutečná velikost",
       "af_area": "Zobrazit body ostření AF",
       "fullscreen": "Celá obrazovka",
       "exit_fullscreen": "Ukončit režim celé obrazovky",
@@ -1432,7 +1259,6 @@
   "video": {
     "loading": "Načítá se video…",
     "loading_compatible": "Připravuje se kompatibilní přehrávání…",
-    "failed": "Video se nepodařilo přehrát",
     "errors": {
       "playback_failed": "Přehrávání selhalo",
       "aborted": "Načítání videa bylo zrušeno",
@@ -1464,7 +1290,7 @@
       "theme": "Motiv",
       "theme_options_light": [
         "Výchozí",
-        "Cupcake",
+        "Košíček",
         "Čmelák",
         "Smaragd",
         "Firemní",
@@ -1472,18 +1298,18 @@
         "Cyberpunk",
         "Valentin",
         "Zahrada",
-        "Lofi",
+        "Lo-Fi",
         "Pastel",
         "Fantazie",
         "Perokresba",
-        "Cmyk",
+        "CMYK",
         "Podzim",
         "Kyselý",
         "Limonáda",
-        "Větrné",
+        "Zimní",
         "Severní",
-        "Karamelové",
-        "Hedvábné"
+        "Karamelová latte",
+        "Hedvábí"
       ],
       "theme_options_dark": [
         "Výchozí",
@@ -1543,13 +1369,10 @@
       "import_hint": "Při skenování a obnovení importovat oblíbené, hodnocení, značky výběru, štítky a popisy. Místní úpravy zůstanou zachovány."
     },
     "browse": {
-      "section_album": "Složka alba",
       "show_subfolder_files": "Zobrazovat soubory z podsložek",
-      "show_subfolder_files_hint": "Zobrazení složky zahrnuje soubory v podsložkách",
       "group_raw_jpeg_pairs": "Seskupovat dvojice RAW",
       "group_raw_jpeg_pairs_hint": "Zobrazovat odpovídající soubory RAW a JPEG/HEIC jako jednu položku",
       "folder_sort": "Řazení složek",
-      "folder_sort_hint": "Pořadí řazení složek zobrazených pod alby",
       "folder_sort_options": [
         "Název (A až Z)",
         "Název (Z až A)",
@@ -1662,7 +1485,6 @@
         "Světle šedá",
         "Bílá"
       ],
-      "section_slideshow": "Prezentace",
       "slide_show_interval": "Interval prezentace: {second} sekund",
       "slide_show_transition": "Přechod prezentace",
       "slide_show_transition_options": [
@@ -1688,7 +1510,6 @@
       "multilingual_model_download_message": "Vícejazyčný model pro vyhledávání fotografií není nainstalován. Stáhněte jej, chcete-li povolit vyhledávání ve více než 50 jazycích.",
       "download": "Stáhnout",
       "downloading_multilingual_model": "Stahuje se vícejazyčný model",
-      "multilingual_model_download_success": "Vícejazyčný model vyhledávání je připraven. Chcete-li jej použít, restartujte Lap.",
       "multilingual_model_download_failed": "Nepodařilo se stáhnout vícejazyčný model vyhledávání",
       "similarity": "Hledat podobnost",
       "similarity_hint": "Ovlivňuje vizuální shody při vyhledávání podle klíčových slov",
@@ -1795,15 +1616,13 @@
       "file_delete_section": "Odstraňování souborů",
       "title": "Pokročilé",
       "external_app": {
-        "section_external_apps": "Externí aplikace",
         "manage_external_apps": "Spravovat externí aplikace",
         "external_image_editor": "Otevřít fotografii v",
         "external_video_app": "Otevřít video v",
         "external_app_not_selected": "Není vybrána žádná aplikace",
         "choose_app": "Vybrat",
         "clear_app": "Vyprázdnit",
-        "default_app": "Výchozí",
-        "set_default_app": "Nastavit jako výchozí"
+        "default_app": "Výchozí"
       },
       "section_diagnostics": "Diagnostika",
       "debug_mode": "Režim ladění",
@@ -1847,11 +1666,20 @@
         "finishing": "Dokončuje se migrace mezipaměti…",
         "success": "Umístění mezipaměti miniatur bylo úspěšně změněno",
         "cleanup_warning": "Mezipaměť byla přesunuta, ale některé staré soubory se nepodařilo odstranit:",
-        "busy": "Počkejte, až bude dokončena migrace mezipaměti miniatur."
+        "busy": "Počkejte, až bude dokončena migrace mezipaměti miniatur.",
+        "cleanup": {
+          "title": "Vyčistit nepoužívanou mezipaměť",
+          "hint": "Vyčistit nepoužívané miniatury z uvedených knihoven",
+          "button": "Vyčistit",
+          "progress": "Zpracování {current} / {total} · {name}",
+          "freed": "Uvolněno {size}.",
+          "empty": "Není co vyčistit v mezipaměti miniatur.",
+          "failed": "Tyto knihovny nebylo možné vyčistit:",
+          "list_error": "Seznam knihoven se nepodařilo načíst."
+        }
       }
     },
     "database": {
-      "title": "Úložiště",
       "section_storage": "Správa dat knihovny",
       "current_location": "Změnit umístění dat",
       "system_default": "Výchozí nastavení systému",
@@ -1883,7 +1711,6 @@
       "restore_dialog_title": "Obnovit ze zálohy",
       "restore_select_file": "Vybrat záložní soubor",
       "restore_file_info": "Záloha: {path}",
-      "restore_created_at": "Vytvořeno: {date}",
       "restore_libraries": "Knihoven: {count} ({size})",
       "restore_new_library": "Nová knihovna",
       "restore_conflict": "Již existuje → bude přejmenováno",
@@ -1908,12 +1735,9 @@
     "about": {
       "title": "O aplikaci",
       "package": {
-        "name": "Název balíčku",
-        "description": "Popis",
         "app_description": "Správce fotografií zaměřený na offline práci s rozsáhlými místními knihovnami",
         "version": "Verze",
         "build_time": "Čas sestavení",
-        "author": "Autor",
         "license": "Licence",
         "link": "Propojit",
         "website": "Webová stránka",

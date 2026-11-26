@@ -1,10 +1,8 @@
 {
   "sidebar": {
-    "home": "홈",
     "library": "라이브러리",
     "album": "앨범",
     "search": "검색",
-    "rating": "평점",
     "tag": "태그",
     "calendar": "달력",
     "location": "위치",
@@ -17,15 +15,11 @@
     "title": "컬렉션",
     "add": "새 컬렉션",
     "edit_collections": "컬렉션 편집",
-    "recent": "최근 사용한 컬렉션",
     "search": "컬렉션 검색",
-    "enter_new_collection_name": "새 컬렉션 이름",
     "not_found": "컬렉션을 찾을 수 없습니다",
     "name_exists": "같은 이름의 컬렉션이 이미 있습니다",
     "name_save_failed": "컬렉션 이름을 저장할 수 없습니다",
     "default_name": "컬렉션 {index}",
-    "expand": "펼치기",
-    "collapse": "접기",
     "rename": "이름 변경",
     "reorder": "순서 변경",
     "delete": "삭제",
@@ -36,7 +30,6 @@
     "drop_here": "여기에 파일 드롭",
     "drop_action": "추가",
     "drop_title_hint": "추가하려면 드롭",
-    "empty_drop_hint": "항목을 컬렉션으로 드래그하여 추가하세요.",
     "added_toast": "{count}개 항목을 컬렉션에 추가했습니다",
     "add_failed_toast": "{count}개 컬렉션에 항목을 추가할 수 없습니다",
     "already_exists_toast": "{count}개 항목이 이미 컬렉션에 있습니다",
@@ -49,7 +42,6 @@
   "library": {
     "all_files": "모든 파일",
     "on_this_day": "과거의 오늘",
-    "review": "검토",
     "database_corrupted": "이 라이브러리의 데이터베이스가 손상되었습니다",
     "database_corrupted_hint": "다른 라이브러리로 전환해 보세요."
   },
@@ -71,10 +63,6 @@
     "folder_unavailable": {
       "title": "폴더를 사용할 수 없음",
       "description": "저장 장치를 다시 연결하거나 폴더 위치를 확인하세요."
-    },
-    "folder_not_found": {
-      "title": "폴더를 찾을 수 없음",
-      "description": "폴더가 이동되었거나 삭제되었을 수 있습니다. 상위 폴더를 새로 고치세요."
     },
     "edit": {
       "title_add": "새 앨범",
@@ -124,10 +112,6 @@
       "save_failed": "앨범 설정을 저장하지 못했습니다. 다시 시도하세요.",
       "file_types_hint": "선택한 파일 형식은 이 앨범에서 제외됩니다.",
       "tab_exclusions": "제외 설정"
-    },
-    "no_albums": {
-      "title": "앨범이 없습니다",
-      "description": "사진 또는 동영상이 포함된 앨범을 추가하여 시작하세요"
     },
     "no_smart_albums": {
       "description": "사용자 지정 쿼리 규칙으로 스마트 앨범을 만들 수 있습니다."
@@ -301,14 +285,12 @@
     "index": {
       "wait_index": "스캔 대기 중",
       "indexing": "스캔 중... {count}/{total}",
-      "scan_summary": "색인됨 {indexed} · 지원되지 않아 건너뜀 {skipped} · 실패 {failed}",
       "discovering": "앨범 스캔 중... {count}/{total}",
       "preparing_previews": "미리보기 생성 중... {count}/{total}",
       "preparing_search": "검색 준비 중... {count}/{total}",
       "complete": "스캔 완료",
       "complete_with_issues": "스캔 완료 ({count}개의 문제 발생)",
       "paused": "스캔 일시중지됨",
-      "description": "검색 및 미리보기를 위한 썸네일을 생성 중입니다. 대규모 앨범의 경우 몇 분 정도 걸릴 수 있습니다.",
       "cancel": "스캔 취소",
       "recovery": {
         "title": "스캔이 중단되었습니다",
@@ -316,13 +298,11 @@
         "skip": "건너뛰기",
         "skip_once": "이 파일을 건너뛰고 계속",
         "file_label": "마지막으로 스캔한 파일",
-        "message": "이전 스캔이 정상적으로 종료되지 않았습니다.",
-        "message_with_file": "이전 스캔이 정상적으로 종료되지 않았습니다.\n\n마지막으로 스캔한 파일:\n{file}\n\n계속하면 Lap이 이 파일을 한 번 건너뛰고 스캔을 다시 시작합니다."
+        "message": "이전 스캔이 정상적으로 종료되지 않았습니다."
       }
     }
   },
   "face_index": {
-    "start": "얼굴 인덱싱",
     "indexing": "얼굴 인덱싱 중... {current}/{total}",
     "clustering": "얼굴 클러스터링 중...",
     "faces_found": "{count}개의 얼굴 찾음",
@@ -336,15 +316,12 @@
     "resume": "인덱싱 재개"
   },
   "favorite": {
-    "title": "즐겨찾기",
-    "files": "즐겨찾는 파일",
-    "folders": "즐겨찾는 폴더"
+    "files": "즐겨찾는 파일"
   },
   "rating": {
     "mixed": "혼합",
     "title": "평점",
     "unrated": "별점 없음",
-    "all_rated": "모든 평점 있음",
     "rated": "평점 있음",
     "clear_rating": "별점 지우기",
     "five_stars": "5점",
@@ -372,8 +349,6 @@
     "title": "태그",
     "delete_tag": "태그 삭제",
     "edit_tag": "태그 편집",
-    "search_tags": "태그 검색",
-    "enter_new_tag_name": "새 태그 이름 입력",
     "not_found": "태그를 찾을 수 없음",
     "name_exists": "같은 이름의 태그가 이미 있습니다",
     "name_save_failed": "태그 이름을 저장할 수 없습니다",
@@ -406,13 +381,6 @@
       "months": "월",
       "days": "일"
     },
-    "day": "일",
-    "week": "주",
-    "month": "월",
-    "year": "년",
-    "today": "오늘",
-    "monthly": "월별",
-    "daily": "일별",
     "weekdays": [
       "일",
       "월",
@@ -421,15 +389,6 @@
       "목",
       "금",
       "토"
-    ],
-    "weekdays_long": [
-      "일요일",
-      "월요일",
-      "화요일",
-      "수요일",
-      "목요일",
-      "금요일",
-      "토요일"
     ],
     "months": [
       "1월",
@@ -461,12 +420,37 @@
     ]
   },
   "toolbar": {
+    "browser_filters": {
+      "title": "필터",
+      "file_type": "파일 형식",
+      "favorite": "즐겨찾기",
+      "rating": "별점",
+      "culling": "선별",
+      "tags": "태그",
+      "all": "전체",
+      "favorited": "즐겨찾기",
+      "not_favorited": "즐겨찾기 아님",
+      "unrated": "미평가",
+      "pick": "선택",
+      "reject": "거부",
+      "unreviewed": "미검토",
+      "tagged": "태그 있음",
+      "untagged": "태그 없음",
+      "reset": "필터 초기화",
+      "rated": "평가됨",
+      "remove": "필터 제거",
+      "clear_all": "모두 지우기",
+      "counting": "계산 중…",
+      "results": "{count} / {total}개 항목",
+      "total_items": "{total}개 항목",
+      "tooltip": "필터",
+      "disabled": "필터 비활성화됨"
+    },
     "search": {
       "title": "검색",
       "placeholder": "파일 이름"
     },
     "filter": {
-      "favorites_only": "즐겨찾기만",
       "show_selection_panel": "선택 패널 열기",
       "exit_selection_mode": "선택 모드 종료",
       "select_count": "{count}개 선택됨",
@@ -508,55 +492,16 @@
       "file_type_other": "기타"
     },
     "tooltip": {
-      "restore": "복원",
       "refresh": "새로고침",
       "info": "정보",
-      "clear_history": "기록 지우기",
-      "index_faces": "얼굴 인덱싱",
       "sort": "정렬",
-      "monthly": "월별",
-      "daily": "일별",
-      "time_asc": "오래된 순",
-      "time_desc": "최신 순",
       "back": "뒤로",
       "scanning": "스캔 중…",
       "scan_paused": "스캔 일시 중지",
       "scan_queued": "스캔 대기 중"
-    },
-    "browser_filters": {
-      "title": "필터",
-      "file_type": "파일 형식",
-      "favorite": "즐겨찾기",
-      "rating": "별점",
-      "culling": "선별",
-      "tags": "태그",
-      "all": "전체",
-      "favorited": "즐겨찾기",
-      "not_favorited": "즐겨찾기 아님",
-      "unrated": "미평가",
-      "pick": "선택",
-      "reject": "거부",
-      "unreviewed": "미검토",
-      "tagged": "태그 있음",
-      "untagged": "태그 없음",
-      "reset": "필터 초기화",
-      "rated": "평가됨",
-      "remove": "필터 제거",
-      "clear_all": "모두 지우기",
-      "counting": "계산 중…",
-      "results": "{count} / {total}개 항목",
-      "total_items": "{total}개 항목",
-      "tooltip": "필터",
-      "disabled": "필터 비활성화됨"
     }
   },
   "info_panel": {
-    "tabs": [
-      "정보",
-      "조정"
-    ],
-    "empty_title": "현재 목록이 비어 있습니다",
-    "empty_desc": "항목을 추가하거나 현재 필터를 업데이트해 여기에 표시하세요.",
     "select_hint": "선택한 항목이 없습니다",
     "deselect": "선택 해제",
     "selection_load_failed": "선택할 모든 항목을 불러오지 못했습니다. 다시 시도하세요.",
@@ -570,7 +515,6 @@
       "copy": "복사",
       "move": "이동"
     },
-    "edit_disabled": "편집할 사진 한 장을 선택하세요",
     "type_image": "이미지",
     "type_images": "이미지",
     "type_video": "개 비디오",
@@ -578,12 +522,10 @@
     "select_title": "선택",
     "favorite_all": "즐겨찾기",
     "unfavorite_all": "즐겨찾기 해제",
-    "action": "작업",
     "file_actions": "파일 작업",
     "more": "더 보기…",
     "organize": "정리",
     "more_actions": "추가 작업",
-    "tag_all": "태그",
     "dedup": {
       "keep_rules": {
         "title": "보존 규칙",
@@ -619,8 +561,6 @@
       "error_desc": "스캔을 완료하지 못했습니다. 파일 목록을 업데이트한 후 다시 시도하세요",
       "empty_title": "현재 목록에 중복 후보가 없습니다",
       "empty_desc": "필터를 넓히거나 다른 파일 목록에서 실행해 보세요",
-      "similar_title": "유사 이미지 기능은 다음 단계로 준비 중입니다",
-      "similar_desc": "정확한 중복 워크플로를 확장한 뒤 이 탭은 시각적으로 유사한 이미지를 위해 사용됩니다",
       "similar": {
         "analyze_images": "유사 이미지 분석",
         "analyze": "분석",
@@ -633,8 +573,6 @@
         "analyzing": "유사 이미지 분석 중",
         "groups_title": "유사 그룹",
         "results": "결과",
-        "groups_count": "유사 그룹 {count}개",
-        "load_more": "더 보기",
         "error_title": "유사 이미지를 불러올 수 없습니다",
         "empty_title": "유사한 이미지를 찾을 수 없습니다",
         "reanalyze": "다시 분석"
@@ -645,20 +583,10 @@
       "actions_title": "작업",
       "compare": "비교",
       "rescan": "다시 스캔",
-      "keep_strategy": "기본 유지 규칙",
-      "keep_strategy_options": {
-        "best_quality": "최고 품질 우선",
-        "oldest_created": "오래된 생성일 우선",
-        "oldest_modified": "오래된 수정일 우선"
-      },
       "keep_label": "유지",
-      "unkeep_label": "유지 안 함",
-      "delete_selected": "선택 항목 삭제",
       "trash_all": "모두 휴지통으로 이동",
       "delete_all": "모두 삭제",
-      "move_selected_to_trash": "휴지통으로 이동 ({count}개 선택 · {size})",
       "no_removable_files": "휴지통으로 이동할 삭제 가능한 항목이 없습니다",
-      "set_keep": "유지",
       "removable_copies_summary": "삭제 가능한 사본 {count}개 · {size}",
       "similar_items_summary": "유사 항목 {count}개 · {size}"
     }
@@ -670,17 +598,11 @@
     },
     "not_found": {
       "albums": "앨범을 찾을 수 없습니다",
-      "files": "파일을 찾을 수 없습니다",
+      "files": "항목을 찾을 수 없습니다",
       "image_search_failed": "이미지 검색을 사용할 수 없습니다",
       "image_search_failed_hint": "이미지 검색 모델을 확인한 후 다시 시도하세요.",
       "image_search_language_unsupported": "기본 검색 모델은 영어만 지원합니다",
       "image_search_language_unsupported_hint": "이 언어로 검색하려면 설정에서 다국어 모델을 선택하세요.",
-      "image_files": "사진 파일을 찾을 수 없습니다",
-      "raw_files": "RAW 파일을 찾을 수 없습니다",
-      "video_files": "비디오 파일을 찾을 수 없습니다",
-      "image_raw_files": "사진 또는 RAW 파일을 찾을 수 없습니다",
-      "image_video_files": "사진 또는 비디오 파일을 찾을 수 없습니다",
-      "raw_video_files": "RAW 또는 비디오 파일을 찾을 수 없습니다",
       "folder_files": "이 폴더에는 파일이 없습니다",
       "folder_files_hint": "하위 폴더를 찾아보거나 설정에서 '하위 폴더의 파일 표시'를 활성화하세요.",
       "folders": "폴더를 찾을 수 없습니다",
@@ -760,16 +682,10 @@
       "invert": "선택 반전"
     },
     "home": {
-      "delete": "삭제",
-      "pin": "고정",
-      "unpin": "고정 해제"
+      "delete": "삭제"
     },
     "library": {
-      "add": "새 라이브러리...",
-      "edit": "라이브러리 편집...",
-      "manage": "라이브러리 관리...",
-      "remove": "라이브러리 제거",
-      "default": "기본 라이브러리"
+      "manage": "라이브러리 관리..."
     },
     "album": {
       "add": "새 앨범",
@@ -790,11 +706,7 @@
       "copy": "클립보드에 복사",
       "paste": "붙여넣기",
       "edit_image": "편집...",
-      "open_image_in_app": "{app}에서 사진 열기...",
-      "open_video_in_app": "{app}에서 동영상 열기...",
-      "open_selected_images_in_app": "{app}에서 사진 열기...",
       "compare_selected_images": "비교...",
-      "open_selected_videos_in_app": "{app}에서 동영상 열기...",
       "open_in_app": "외부 앱에서 열기...",
       "manage_app": "앱 관리...",
       "find_similar_images": "관련 사진 찾기",
@@ -808,7 +720,6 @@
       "move_within_library": "라이브러리 내에서 이동...",
       "move_to_folder": "폴더로 이동...",
       "copy_to_folder": "폴더로 복사...",
-      "move_to_trash": "휴지통으로 이동",
       "delete": "삭제",
       "reveal_in_finder": "Finder에서 보기...",
       "reveal_in_file_explorer": "탐색기에서 보기...",
@@ -821,14 +732,7 @@
       "create_montage": "콜라주 만들기...",
       "save_xmp": "메타데이터를 XMP에 저장",
       "xmp_save_success": "파일 {count}개의 XMP 메타데이터를 저장했습니다",
-      "xmp_save_failed": "파일 {count}개의 XMP 저장에 실패했습니다",
-      "comment": "설명…"
-    },
-    "calendar": {
-      "monthly": "월별",
-      "daily": "일별",
-      "time_asc": "오래된 순",
-      "time_desc": "최신 순"
+      "xmp_save_failed": "파일 {count}개의 XMP 저장에 실패했습니다"
     },
     "location": {
       "search": "위치 검색"
@@ -859,12 +763,7 @@
       "unfavorite": "즐겨찾기 해제",
       "tag": "태그...",
       "collection": "컬렉션...",
-      "comment": "설명…",
       "rotate": "보기 회전"
-    },
-    "sort": {
-      "sort_by_name": "이름순",
-      "sort_by_count": "개수순"
     }
   },
   "msgbox": {
@@ -907,9 +806,6 @@
     "manage_libraries": {
       "title": "라이브러리 관리",
       "libraries": "라이브러리",
-      "name": "이름",
-      "visible": "표시",
-      "action": "작업",
       "default": "기본",
       "current": "현재",
       "show": "보이기",
@@ -921,32 +817,19 @@
       "add_new": "새 라이브러리",
       "add": "추가",
       "placeholder": "라이브러리 이름",
-      "max_limit_reached": "제한 도달",
-      "created_at_lower": "생성일",
       "calculating_stats": "라이브러리 크기 계산 중...",
       "unable_to_load": "불러올 수 없습니다",
-      "library_file_path": "파일 경로",
-      "library_file_size": "파일 크기",
-      "created_at": "생성일",
       "cache_size": "축소판 캐시 {size}"
     },
     "remove_library": {
       "title": "라이브러리 제거",
       "content": "'{library}'을(를) 제거하시겠습니까? 데이터베이스 파일이 삭제됩니다.",
-      "ok": "제거",
-      "success": "'{library}' 제거됨.",
-      "error": "라이브러리를 제거하지 못했습니다."
+      "ok": "제거"
     },
     "remove_album": {
       "title": "앨범 제거",
       "content": "'{album}'이(가) 제거됩니다. 파일은 삭제되지 않습니다.",
       "ok": "제거"
-    },
-    "rename_folder": {
-      "title": "폴더 이름 변경",
-      "content": "새 폴더 이름:",
-      "ok": "변경",
-      "error": "폴더 이름을 변경하지 못했습니다."
     },
     "new_folder": {
       "title": "새 폴더",
@@ -1030,7 +913,6 @@
     "folder_delete_contents": "모든 파일과 하위 폴더가 포함됩니다.",
     "move_to_trash": {
       "title": "휴지통으로 이동",
-      "file_content": "'{file}'을(를) 휴지통으로 이동합니다.",
       "files_content": "선택한 {count}개 항목을 휴지통으로 이동합니다.",
       "removable_files_content": "삭제 가능한 {count}개 항목을 모두 휴지통으로 이동합니다.",
       "folder_content": "'{folder}'을(를) 휴지통으로 이동합니다.",
@@ -1038,21 +920,17 @@
       "file_success": "'{file}'을(를) 휴지통으로 이동했습니다.",
       "files_success": "선택한 {count}개 항목을 휴지통으로 이동했습니다.",
       "folder_success": "'{folder}'을(를) 휴지통으로 이동했습니다.",
-      "file_error": "파일을 휴지통으로 이동하지 못했습니다.",
       "files_error": "선택한 항목을 휴지통으로 이동하지 못했습니다.",
       "folder_error": "폴더를 휴지통으로 이동하지 못했습니다."
     },
     "permanent_delete": {
       "title": "영구 삭제",
-      "file_content": "'{file}' 파일을 영구 삭제합니다.",
       "files_content": "선택한 {count}개 항목을 영구 삭제합니다.",
       "removable_files_content": "삭제 가능한 {count}개 항목을 모두 영구 삭제합니다.",
       "folder_content": "'{folder}' 폴더를 영구 삭제합니다.",
-      "ok": "삭제",
       "file_success": "'{file}' 파일을 영구 삭제했습니다.",
       "files_success": "선택한 {count}개 항목을 영구 삭제했습니다.",
       "folder_success": "'{folder}' 폴더를 영구 삭제했습니다.",
-      "file_error": "파일을 영구 삭제하지 못했습니다.",
       "files_error": "선택한 항목을 영구 삭제하지 못했습니다.",
       "folder_error": "폴더를 영구 삭제하지 못했습니다."
     },
@@ -1060,7 +938,6 @@
       "title": "휴지통으로 이동하지 못했습니다",
       "file_content": "파일 '{file}'을(를) 휴지통으로 이동할 수 없습니다.\n\n대신 영구적으로 삭제하시겠습니까?",
       "files_content": "선택한 {count}개 항목을 휴지통으로 이동할 수 없습니다.\n\n대신 영구적으로 삭제하시겠습니까?",
-      "folder_content": "폴더 '{folder}'을(를) 휴지통으로 이동할 수 없습니다.\n\n대신 영구적으로 삭제하시겠습니까?\n\n이 작업은 시스템 휴지통을 통해 되돌릴 수 없습니다.",
       "folder_partial_warning": "이전 시도로 일부 내용이 휴지통으로 이동했을 수 있습니다.",
       "ok": "영구 삭제"
     },
@@ -1070,27 +947,14 @@
       "ok": "계속 열기"
     },
     "new_tag": {
-      "title": "새 태그",
-      "ok": "생성",
-      "error": "태그를 만들지 못했습니다."
+      "title": "새 태그"
     },
     "delete_tag": {
       "title": "“{tag}”을(를) 삭제할까요?",
-      "content": "'{tag}' 태그가 삭제됩니다.",
-      "ok": "삭제",
-      "success": "'{tag}' 삭제됨.",
-      "error": "태그를 삭제하지 못했습니다."
-    },
-    "edit_comment": {
-      "title": "설명 편집",
-      "placeholder": "설명 입력",
-      "ok": "확인"
+      "ok": "삭제"
     },
     "select_folder": {
       "error": "폴더 선택 실패."
-    },
-    "select_file": {
-      "error": "파일 선택 실패."
     },
     "file_refresh": {
       "metadata_failed": "메타데이터 가져오기 실패: {count}",
@@ -1249,7 +1113,6 @@
     "paths_copied": "파일 경로 {count}개를 클립보드에 복사했습니다",
     "copy_path": "파일 경로 복사",
     "copy_path_failed": "파일 경로를 복사하지 못했습니다",
-    "video_only": "(동영상만)",
     "field_preset": "표시 항목",
     "fields_default": "기본값",
     "fields_all": "모두 표시",
@@ -1261,10 +1124,8 @@
     "thumbnail": "썸네일",
     "change_thumbnail": "썸네일 변경",
     "histogram": "히스토그램",
-    "preview_size": "썸네일 크기",
     "general": "일반",
     "metadata": "메타데이터",
-    "location": "위치",
     "map": "지도",
     "open_apple_maps": "Apple 지도에서 열기",
     "empty_title": "선택된 파일이 없습니다",
@@ -1274,46 +1135,19 @@
     "folder": "폴더",
     "dimension": "픽셀 크기",
     "size": "크기",
-    "duration": "재생시간",
-    "unknown_duration": "알 수 없음",
     "created_at": "생성일",
     "modified_at": "수정일",
     "last_scan_time": "최근 스캔",
-    "marks": "표시",
     "camera": "카메라",
-    "camera_make": "제조사",
-    "camera_model": "모델",
     "taken_at": "촬영일",
-    "taken_by": "촬영자",
-    "software": "소프트웨어",
-    "artist": "작가",
-    "copyright": "저작권",
-    "description": "설명",
     "lens": "렌즈",
-    "lens_make": "렌즈 제조사",
-    "lens_model": "렌즈 모델",
-    "exposure_bias": "노출 보정",
-    "exposure_time": "노출 시간",
-    "aperture": "조리개",
-    "focal_length": "초점 거리",
-    "iso": "ISO",
-    "flash": "플래시",
-    "color_type": "색상 유형",
-    "bit_depth": "비트 깊이",
-    "alpha_channel": "알파 채널",
-    "gps_latitude": "위도",
-    "gps_longitude": "경도",
-    "gps_altitude": "고도",
     "geo_location": "위치",
-    "tags": "태그",
     "comment": "설명",
     "capture_settings": "노출",
     "organization": "정리",
     "file": "파일",
     "capture": "촬영 정보",
     "source_metadata": "기타 정보",
-    "source_description": "원본 설명",
-    "coordinates": "좌표",
     "detail_fields": {
       "title": "제목",
       "headline": "헤드라인",
@@ -1372,18 +1206,14 @@
     "all_brands": "전체"
   },
   "map": {
-    "show_map": "지도 보기",
-    "hide_map": "지도 숨기기",
     "zoom_in": "확대",
     "zoom_out": "축소",
     "zoom_center": "중심",
     "standard": "표준",
     "satellite": "위성",
-    "heatmap": "히트맵",
     "photo_count": "사진 {count}장",
     "no_photos_in_view": "사진이 없습니다",
-    "photos_in_view": "이 영역에 사진 {count}장",
-    "photos_in_view_limited": "처음 {count}장 표시 중 - 더 보려면 확대하세요"
+    "photos_in_view": "이 영역에 사진 {count}장"
   },
   "format": {
     "relative_time": {
@@ -1403,8 +1233,6 @@
     "live": "라이브",
     "motion": "모션",
     "title": "이미지 뷰어",
-    "loading": "로딩 중...",
-    "loading_original": "원본 사진을 불러오는 중...",
     "media_server_unavailable": "원본 사진과 동영상을 불러올 수 없습니다. Lap을 다시 시작한 후 재시도하세요.",
     "failed": "사진을 불러오지 못했습니다. 파일이 없거나 손상되었습니다.",
     "raw_render_unavailable": "이 RAW는 렌더링할 수 없습니다. 내장 미리보기 표시 중.",
@@ -1418,7 +1246,6 @@
       "zoom_out": "축소",
       "zoom_fit": "창 맞춤",
       "zoom_fit_short": "맞춤",
-      "zoom_actual": "실제 크기",
       "af_area": "AF 영역 표시",
       "fullscreen": "전체 화면",
       "exit_fullscreen": "전체 화면 종료",
@@ -1432,7 +1259,6 @@
   "video": {
     "loading": "비디오 로딩 중...",
     "loading_compatible": "호환 재생을 준비 중...",
-    "failed": "재생 실패",
     "errors": {
       "playback_failed": "재생 실패",
       "aborted": "중단됨",
@@ -1543,13 +1369,10 @@
       "import_hint": "스캔 및 새로 고침 시 즐겨찾기, 별점, 선별 표시, 태그와 설명을 가져오며 로컬 편집은 유지합니다."
     },
     "browse": {
-      "section_album": "앨범 폴더",
       "show_subfolder_files": "하위 폴더의 파일 표시",
-      "show_subfolder_files_hint": "폴더 보기에서 하위 폴더의 파일을 포함합니다",
       "group_raw_jpeg_pairs": "RAW 쌍을 하나로 표시",
       "group_raw_jpeg_pairs_hint": "일치하는 RAW 및 JPEG/HEIC 파일을 하나의 항목으로 표시합니다",
       "folder_sort": "폴더 정렬",
-      "folder_sort_hint": "앨범 아래에 표시되는 폴더의 정렬 순서입니다",
       "folder_sort_options": [
         "이름 (A-Z)",
         "이름 (Z-A)",
@@ -1662,7 +1485,6 @@
         "연한 회색",
         "흰색"
       ],
-      "section_slideshow": "슬라이드쇼",
       "slide_show_interval": "간격: {second}초",
       "slide_show_transition": "슬라이드쇼 전환",
       "slide_show_transition_options": [
@@ -1688,7 +1510,6 @@
       "multilingual_model_download_message": "다국어 사진 검색 모델이 설치되어 있지 않습니다. 다운로드하면 50개 이상 언어 검색을 사용할 수 있습니다.",
       "download": "다운로드",
       "downloading_multilingual_model": "다국어 모델 다운로드 중",
-      "multilingual_model_download_success": "다국어 검색 모델이 준비되었습니다. 사용하려면 Lap을 다시 시작하세요.",
       "multilingual_model_download_failed": "다국어 검색 모델 다운로드 실패",
       "similarity": "검색 유사도",
       "similarity_hint": "키워드 검색의 시각적 일치 결과를 조절합니다",
@@ -1795,15 +1616,13 @@
       "file_delete_section": "파일 삭제",
       "title": "고급",
       "external_app": {
-        "section_external_apps": "외부 앱",
         "manage_external_apps": "외부 앱 관리",
         "external_image_editor": "사진을 다음으로 열기",
         "external_video_app": "동영상 열기 앱",
         "external_app_not_selected": "선택된 앱이 없습니다",
         "choose_app": "선택",
         "clear_app": "지우기",
-        "default_app": "기본값",
-        "set_default_app": "기본값으로 설정"
+        "default_app": "기본값"
       },
       "section_diagnostics": "진단",
       "debug_mode": "디버그 모드",
@@ -1847,11 +1666,20 @@
         "finishing": "캐시 이동 마무리 중…",
         "success": "썸네일 캐시 위치가 변경되었습니다",
         "cleanup_warning": "캐시를 이동했지만 일부 이전 파일을 삭제하지 못했습니다:",
-        "busy": "썸네일 캐시 이동이 완료될 때까지 기다려 주세요."
+        "busy": "썸네일 캐시 이동이 완료될 때까지 기다려 주세요.",
+        "cleanup": {
+          "title": "사용하지 않는 캐시 정리",
+          "hint": "나열된 라이브러리에서 사용하지 않는 썸네일 정리",
+          "button": "정리",
+          "progress": "{current} / {total} 처리 중 · {name}",
+          "freed": "{size} 해제됨.",
+          "empty": "정리할 사용하지 않는 썸네일 캐시가 없습니다.",
+          "failed": "다음 라이브러리를 정리하지 못했습니다:",
+          "list_error": "라이브러리 목록을 불러오지 못했습니다."
+        }
       }
     },
     "database": {
-      "title": "저장소",
       "section_storage": "라이브러리 데이터 관리",
       "current_location": "데이터 위치 변경",
       "system_default": "시스템 기본값",
@@ -1883,7 +1711,6 @@
       "restore_dialog_title": "백업에서 복원",
       "restore_select_file": "백업 파일 선택",
       "restore_file_info": "백업: {path}",
-      "restore_created_at": "생성일: {date}",
       "restore_libraries": "{count}개 라이브러리 ({size})",
       "restore_new_library": "새 라이브러리",
       "restore_conflict": "이미 존재함 → 자동 이름 변경",
@@ -1908,12 +1735,9 @@
     "about": {
       "title": "정보",
       "package": {
-        "name": "패키지 이름",
-        "description": "설명",
         "app_description": "대규모 로컬 라이브러리를 위한 오프라인 우선 사진 관리자입니다.",
         "version": "버전",
         "build_time": "빌드 시간",
-        "author": "작성자",
         "license": "라이선스",
         "link": "링크",
         "website": "웹사이트",

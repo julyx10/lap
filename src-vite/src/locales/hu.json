@@ -1,10 +1,8 @@
 {
   "sidebar": {
-    "home": "Kezdőlap",
     "library": "Könyvtár",
     "album": "Albumok",
     "search": "Keresés",
-    "rating": "Értékelések",
     "tag": "Címkék",
     "calendar": "Naptár",
     "location": "Helyek",
@@ -17,15 +15,11 @@
     "title": "Gyűjtemények",
     "add": "Új gyűjtemény",
     "edit_collections": "Gyűjtemények szerkesztése",
-    "recent": "Legutóbbi gyűjtemények",
     "search": "Gyűjtemények keresése",
-    "enter_new_collection_name": "Új gyűjteménynév",
     "not_found": "Nincs gyűjtemény",
     "name_exists": "Már van ilyen nevű gyűjtemény",
     "name_save_failed": "A gyűjteménynév nem menthető",
     "default_name": "{index}. gyűjtemény",
-    "expand": "Kibontás",
-    "collapse": "Összecsukás",
     "rename": "Átnevezés",
     "reorder": "Átrendezés",
     "delete": "Törlés",
@@ -36,7 +30,6 @@
     "drop_here": "Húzza ide a fájlokat",
     "drop_action": "Hozzáadás",
     "drop_title_hint": "Húzza ide a hozzáadáshoz",
-    "empty_drop_hint": "Húzza az elemeket a fenti gyűjteményre.",
     "added_toast": "{count} elem hozzáadva a gyűjteményhez",
     "add_failed_toast": "Nem sikerült elemeket hozzáadni {count} gyűjteményhez",
     "already_exists_toast": "{count} elem már a gyűjteményben van",
@@ -49,7 +42,6 @@
   "library": {
     "all_files": "Minden fájl",
     "on_this_day": "Ezen a napon",
-    "review": "Átnézés",
     "database_corrupted": "A könyvtár adatbázisa sérült",
     "database_corrupted_hint": "Váltson másik könyvtárra."
   },
@@ -71,10 +63,6 @@
     "folder_unavailable": {
       "title": "A mappa nem érhető el",
       "description": "Csatlakoztassa újra a meghajtót, vagy ellenőrizze a mappa helyét."
-    },
-    "folder_not_found": {
-      "title": "A mappa nem található",
-      "description": "A mappát áthelyezhették vagy törölhették. Frissítse a szülőmappát."
     },
     "edit": {
       "title_add": "Új album",
@@ -124,10 +112,6 @@
       "save_failed": "Nem sikerült menteni az album beállításait. Próbálja újra.",
       "file_types_hint": "A kiválasztott fájltípusok ki vannak zárva ebből az albumból.",
       "tab_exclusions": "Kizárások"
-    },
-    "no_albums": {
-      "title": "Még nincs album",
-      "description": "Kezdésként adjon hozzá egy fotókat vagy videókat tartalmazó albumot"
     },
     "no_smart_albums": {
       "description": "Hozzon létre intelligens albumokat egyéni szabályokkal."
@@ -301,14 +285,12 @@
     "index": {
       "wait_index": "Beolvasásra vár",
       "indexing": "Beolvasás... {count}/{total}",
-      "scan_summary": "Indexelve: {indexed} · Nem támogatott: {skipped} · Sikertelen: {failed}",
       "discovering": "Album beolvasása... {count}/{total}",
       "preparing_previews": "Előnézetek készítése... {count}/{total}",
       "preparing_search": "Keresés előkészítése... {count}/{total}",
       "complete": "Beolvasás kész",
       "complete_with_issues": "Beolvasás kész, {count} hibával",
       "paused": "Beolvasás szünetel",
-      "description": "Bélyegképek készítése a kereséshez és a gyors előnézethez. Nagy albumoknál ez néhány percig tarthat.",
       "cancel": "Beolvasás megszakítása",
       "recovery": {
         "title": "Beolvasás megszakadt",
@@ -316,13 +298,11 @@
         "skip": "Kihagyás",
         "skip_once": "Fájl kihagyása és folytatás",
         "file_label": "Utolsó beolvasott fájl",
-        "message": "Az előző beolvasás nem állt le megfelelően.",
-        "message_with_file": "Az előző beolvasás nem állt le megfelelően.\n\nUtolsó beolvasott fájl:\n{file}\n\nFolytatáskor a Lap egyszer kihagyja ezt a fájlt, majd folytatja a beolvasást."
+        "message": "Az előző beolvasás nem állt le megfelelően."
       }
     }
   },
   "face_index": {
-    "start": "Arcok indexelése",
     "indexing": "Arcok indexelése... {current}/{total}",
     "clustering": "Arcok csoportosítása...",
     "faces_found": "{count} arc található",
@@ -336,15 +316,12 @@
     "resume": "Indexelés folytatása"
   },
   "favorite": {
-    "title": "Kedvenc",
-    "files": "Kedvenc fájlok",
-    "folders": "Kedvenc mappák"
+    "files": "Kedvenc fájlok"
   },
   "rating": {
     "mixed": "Vegyes",
     "title": "Értékelések",
     "unrated": "Nincs értékelve",
-    "all_rated": "Mind értékelt",
     "rated": "Értékelt",
     "clear_rating": "Értékelés törlése",
     "five_stars": "5 csillag",
@@ -372,8 +349,6 @@
     "title": "Címkék",
     "delete_tag": "Címke törlése",
     "edit_tag": "Címkék szerkesztése",
-    "search_tags": "Címkék keresése",
-    "enter_new_tag_name": "Új címkenév",
     "not_found": "Nincs címke",
     "name_exists": "Már van ilyen nevű címke",
     "name_save_failed": "A címkenév nem menthető",
@@ -406,13 +381,6 @@
       "months": "Hónapok",
       "days": "Napok"
     },
-    "day": "Nap",
-    "week": "Hét",
-    "month": "Hónap",
-    "year": "Év",
-    "today": "Ma",
-    "monthly": "Havi",
-    "daily": "Napi",
     "weekdays": [
       "V",
       "H",
@@ -421,15 +389,6 @@
       "Cs",
       "P",
       "Szo"
-    ],
-    "weekdays_long": [
-      "vasárnap",
-      "hétfő",
-      "kedd",
-      "szerda",
-      "csütörtök",
-      "péntek",
-      "szombat"
     ],
     "months": [
       "jan.",
@@ -461,12 +420,37 @@
     ]
   },
   "toolbar": {
+    "browser_filters": {
+      "title": "Szűrők",
+      "file_type": "Fájltípus",
+      "favorite": "Kedvencek",
+      "rating": "Értékelés",
+      "culling": "Kiválogatás",
+      "tags": "Címkék",
+      "all": "Mind",
+      "favorited": "Kedvenc",
+      "not_favorited": "Nem kedvenc",
+      "unrated": "Értékeletlen",
+      "pick": "Kiválasztott",
+      "reject": "Elutasított",
+      "unreviewed": "Nem ellenőrzött",
+      "tagged": "Címkézett",
+      "untagged": "Címkézetlen",
+      "reset": "Szűrők visszaállítása",
+      "rated": "Értékelt",
+      "remove": "Szűrő eltávolítása",
+      "clear_all": "Összes törlése",
+      "counting": "Számlálás…",
+      "results": "{count} / {total} elem",
+      "total_items": "{total} elem",
+      "tooltip": "Szűrő",
+      "disabled": "Szűrő letiltva"
+    },
     "search": {
       "title": "Keresés",
       "placeholder": "Keresés fájlnévre"
     },
     "filter": {
-      "favorites_only": "Csak kedvencek",
       "show_selection_panel": "Kijelölési panel megnyitása",
       "exit_selection_mode": "Kilépés a kijelölési módból",
       "select_count": "{count} kijelölve",
@@ -508,55 +492,16 @@
       "file_type_other": "Egyéb"
     },
     "tooltip": {
-      "restore": "Visszaállítás",
       "refresh": "Frissítés",
       "info": "Információk",
-      "clear_history": "Keresési előzmények törlése",
-      "index_faces": "Arcok indexelése",
       "sort": "Rendezés",
-      "monthly": "Havi",
-      "daily": "Napi",
-      "time_asc": "Idő szerint növekvő",
-      "time_desc": "Idő szerint csökkenő",
       "back": "Vissza",
       "scanning": "Beolvasás…",
       "scan_paused": "Beolvasás szünetel",
       "scan_queued": "Beolvasásra vár"
-    },
-    "browser_filters": {
-      "title": "Szűrők",
-      "file_type": "Fájltípus",
-      "favorite": "Kedvencek",
-      "rating": "Értékelés",
-      "culling": "Kiválogatás",
-      "tags": "Címkék",
-      "all": "Mind",
-      "favorited": "Kedvenc",
-      "not_favorited": "Nem kedvenc",
-      "unrated": "Értékeletlen",
-      "pick": "Kiválasztott",
-      "reject": "Elutasított",
-      "unreviewed": "Nem ellenőrzött",
-      "tagged": "Címkézett",
-      "untagged": "Címkézetlen",
-      "reset": "Szűrők visszaállítása",
-      "rated": "Értékelt",
-      "remove": "Szűrő eltávolítása",
-      "clear_all": "Összes törlése",
-      "counting": "Számlálás…",
-      "results": "{count} / {total} elem",
-      "total_items": "{total} elem",
-      "tooltip": "Szűrő",
-      "disabled": "Szűrő letiltva"
     }
   },
   "info_panel": {
-    "tabs": [
-      "Adatok",
-      "Korrekció"
-    ],
-    "empty_title": "A lista üres",
-    "empty_desc": "Adjon hozzá elemeket, vagy módosítsa a szűrőt az elemek megjelenítéséhez.",
     "select_hint": "Nincs kijelölt elem",
     "deselect": "Kijelölés törlése",
     "selection_load_failed": "Nem tölthető be minden elem a kijelöléshez. Próbálja újra.",
@@ -570,7 +515,6 @@
       "copy": "Másolás",
       "move": "Áthelyezés"
     },
-    "edit_disabled": "Jelöljön ki egy fotót a szerkesztéshez",
     "type_image": "Kép",
     "type_images": "Képek",
     "type_video": "Videó",
@@ -578,12 +522,10 @@
     "select_title": "Kijelölés",
     "favorite_all": "Kedvenc",
     "unfavorite_all": "Kedvelés törlése",
-    "action": "Művelet",
     "file_actions": "Fájlműveletek",
     "more": "Továbbiak…",
     "organize": "Rendezés",
     "more_actions": "További műveletek",
-    "tag_all": "Címke",
     "dedup": {
       "keep_rules": {
         "title": "Megtartási szabályok",
@@ -619,8 +561,6 @@
       "error_desc": "A keresés nem fejeződött be. Frissítse a fájllistát, majd próbálja újra",
       "empty_title": "Nincs duplikátum",
       "empty_desc": "Adjon hozzá több fájlt, vagy módosítsa a szűrési tartományt",
-      "similar_title": "A hasonló képek funkció hamarosan érkezik",
-      "similar_desc": "Ez a lap a vizuálisan hasonló képekat jeleníti majd meg a duplikátumkezelés bővítése után",
       "similar": {
         "analyze_images": "Hasonló képek elemzése",
         "analyze": "Elemzés",
@@ -633,8 +573,6 @@
         "analyzing": "Hasonló képek elemzése",
         "groups_title": "Hasonló csoportok",
         "results": "Eredmények",
-        "groups_count": "{count} hasonló csoport",
-        "load_more": "Továbbiak betöltése",
         "error_title": "A hasonló képek nem tölthetők be",
         "empty_title": "Nincs hasonló kép",
         "reanalyze": "Újraelemzés"
@@ -645,20 +583,10 @@
       "actions_title": "Műveletek",
       "compare": "Összehasonlítás",
       "rescan": "Újrakeresés",
-      "keep_strategy": "Alapértelmezett szabály",
-      "keep_strategy_options": {
-        "best_quality": "Legjobb minőség",
-        "oldest_created": "Legrégebben létrehozott előnyben",
-        "oldest_modified": "Legrégebben módosított előnyben"
-      },
       "keep_label": "Megtartás",
-      "unkeep_label": "Megtartás törlése",
-      "delete_selected": "Kijelöltek törlése",
       "trash_all": "Összes áthelyezése a kukába",
       "delete_all": "Összes törlése",
-      "move_selected_to_trash": "Kukába helyezés ({count} kijelölve · {size})",
       "no_removable_files": "Nincs kukába helyezhető eltávolítható elem",
-      "set_keep": "Megtartás",
       "removable_copies_summary": "{count} törölhető példány · {size}",
       "similar_items_summary": "{count} hasonló elem · {size}"
     }
@@ -670,17 +598,11 @@
     },
     "not_found": {
       "albums": "Nincs album",
-      "files": "Nincs fájl",
+      "files": "Nem találhatók elemek",
       "image_search_failed": "A képkeresés nem érhető el",
       "image_search_failed_hint": "Ellenőrizze a képkeresési modell elérhetőségét, majd próbálja újra.",
       "image_search_language_unsupported": "Az alapértelmezett keresési modell csak angolul működik",
       "image_search_language_unsupported_hint": "Az ezen a nyelven való kereséshez válassza a Többnyelvű modellt a Beállításokban.",
-      "image_files": "Nincs fotó",
-      "raw_files": "Nincs RAW-fájl",
-      "video_files": "Nincs videó",
-      "image_raw_files": "Nincs fotó vagy RAW-fájl",
-      "image_video_files": "Nincs fotó vagy videó",
-      "raw_video_files": "Nincs RAW- vagy videófájl",
       "folder_files": "A mappa üres",
       "folder_files_hint": "Tallózzon az almappákban, vagy kapcsolja be az „Almappák fájljainak megjelenítése” beállítást.",
       "folders": "Nincs mappa",
@@ -760,16 +682,10 @@
       "invert": "Kijelölés megfordítása"
     },
     "home": {
-      "delete": "Törlés",
-      "pin": "Rögzítés",
-      "unpin": "Rögzítés feloldása"
+      "delete": "Törlés"
     },
     "library": {
-      "add": "Új könyvtár...",
-      "edit": "Könyvtár szerkesztése...",
-      "manage": "Könyvtárak kezelése...",
-      "remove": "Könyvtár eltávolítása",
-      "default": "Alapértelmezett könyvtár"
+      "manage": "Könyvtárak kezelése..."
     },
     "album": {
       "add": "Új album",
@@ -790,11 +706,7 @@
       "copy": "Másolás a vágólapra",
       "paste": "Beillesztés",
       "edit_image": "Szerkesztés...",
-      "open_image_in_app": "Fotó megnyitása itt: {app}...",
-      "open_video_in_app": "Videó megnyitása itt: {app}...",
-      "open_selected_images_in_app": "Fotók megnyitása itt: {app}...",
       "compare_selected_images": "Összehasonlítás...",
-      "open_selected_videos_in_app": "Videók megnyitása itt: {app}...",
       "open_in_app": "Megnyitás külső alkalmazásban...",
       "manage_app": "Alkalmazások kezelése...",
       "find_similar_images": "Kapcsolódó fotók keresése",
@@ -808,7 +720,6 @@
       "move_within_library": "Áthelyezés a könyvtárban...",
       "move_to_folder": "Áthelyezés mappába...",
       "copy_to_folder": "Másolás mappába...",
-      "move_to_trash": "Kukába helyezés",
       "delete": "Törlés",
       "reveal_in_finder": "Megjelenítés a Finderben...",
       "reveal_in_file_explorer": "Megjelenítés a Fájlkezelőben...",
@@ -821,14 +732,7 @@
       "create_montage": "Kollázs készítése...",
       "save_xmp": "Metaadatok mentése XMP-be",
       "xmp_save_success": "XMP-metaadatok mentve {count} fájlhoz",
-      "xmp_save_failed": "Az XMP mentése sikertelen {count} fájlnál",
-      "comment": "Leírás…"
-    },
-    "calendar": {
-      "monthly": "Havi",
-      "daily": "Napi",
-      "time_asc": "Idő szerint növekvő",
-      "time_desc": "Idő szerint csökkenő"
+      "xmp_save_failed": "Az XMP mentése sikertelen {count} fájlnál"
     },
     "location": {
       "search": "Helyszínek keresése"
@@ -859,12 +763,7 @@
       "unfavorite": "Kedvelés törlése",
       "tag": "Címkék...",
       "collection": "Gyűjtemények...",
-      "comment": "Leírás…",
       "rotate": "Nézet elforgatása"
-    },
-    "sort": {
-      "sort_by_name": "Rendezés név szerint",
-      "sort_by_count": "Rendezés darabszám szerint"
     }
   },
   "msgbox": {
@@ -907,9 +806,6 @@
     "manage_libraries": {
       "title": "Könyvtárak kezelése",
       "libraries": "Könyvtárak",
-      "name": "Név",
-      "visible": "Látható",
-      "action": "Művelet",
       "default": "Alapértelmezett könyvtár",
       "current": "Aktuális könyvtár",
       "show": "Megjelenítés",
@@ -921,32 +817,19 @@
       "add_new": "Új könyvtár",
       "add": "Hozzáadás",
       "placeholder": "Könyvtárnév megadása",
-      "max_limit_reached": "Elérte a könyvtárak maximális számát",
-      "created_at_lower": "létrehozva",
       "calculating_stats": "Könyvtárméret számítása...",
       "unable_to_load": "Nem tölthető be",
-      "library_file_path": "Könyvtárfájl helye",
-      "library_file_size": "Könyvtárfájl mérete",
-      "created_at": "Létrehozva",
       "cache_size": "bélyegkép-gyorsítótár: {size}"
     },
     "remove_library": {
       "title": "Könyvtár eltávolítása",
       "content": "Biztosan eltávolítja a következőt: \"{library}\"? Ezzel véglegesen törli az adatbázisfájlt.",
-      "ok": "Eltávolítás",
-      "success": "A(z) \"{library}\" könyvtár eltávolítva.",
-      "error": "Nem sikerült eltávolítani a könyvtárat."
+      "ok": "Eltávolítás"
     },
     "remove_album": {
       "title": "Album eltávolítása",
       "content": "A(z) „{album}” album eltávolításra kerül. Ez a művelet nem törli a tényleges fájlokat.",
       "ok": "Eltávolítás"
-    },
-    "rename_folder": {
-      "title": "Mappa átnevezése",
-      "content": "Adja meg a mappa új nevét:",
-      "ok": "Átnevezés",
-      "error": "Nem sikerült átnevezni a mappát."
     },
     "new_folder": {
       "title": "Új mappa",
@@ -1030,7 +913,6 @@
     "folder_delete_contents": "Ez minden fájlra és almappára vonatkozik.",
     "move_to_trash": {
       "title": "Kukába helyezés",
-      "file_content": "A(z) \"{file}\" fájl a kukába kerül.",
       "files_content": "{count} kiválasztott elem a kukába kerül.",
       "removable_files_content": "Az összes {count} eltávolítható elem a kukába kerül.",
       "folder_content": "A(z) \"{folder}\" mappa a kukába kerül.",
@@ -1038,21 +920,17 @@
       "file_success": "A(z) \"{file}\" fájl a kukába került.",
       "files_success": "{count} kiválasztott elem a kukába került.",
       "folder_success": "A(z) \"{folder}\" mappa a kukába került.",
-      "file_error": "Nem sikerült áthelyezni a fájlt a kukába.",
       "files_error": "Nem sikerült a kiválasztott elemeket a kukába helyezni.",
       "folder_error": "Nem sikerült a mappát a kukába helyezni."
     },
     "permanent_delete": {
       "title": "Végleges törlés",
-      "file_content": "A(z) \"{file}\" fájl véglegesen törlődik.",
       "files_content": "{count} kiválasztott elem véglegesen törlődik.",
       "removable_files_content": "Az összes {count} eltávolítható elem véglegesen törlődik.",
       "folder_content": "A(z) \"{folder}\" mappa véglegesen törlődik.",
-      "ok": "Törlés",
       "file_success": "A(z) \"{file}\" fájl véglegesen törölve lett.",
       "files_success": "{count} kiválasztott elem véglegesen törölve lett.",
       "folder_success": "A(z) \"{folder}\" mappa véglegesen törölve lett.",
-      "file_error": "Nem sikerült véglegesen törölni a fájlt.",
       "files_error": "Nem sikerült véglegesen törölni a kiválasztott elemeket.",
       "folder_error": "Nem sikerült véglegesen törölni a mappát."
     },
@@ -1060,7 +938,6 @@
       "title": "Sikertelen kukába helyezés",
       "file_content": "A(z) \"{file}\" fájl nem helyezhető át a kukába.\n\nEhelyett véglegesen törölni szeretné?",
       "files_content": "{count} kiválasztott elemet nem sikerült a kukába helyezni.\n\nEhelyett véglegesen törölni szeretné őket?",
-      "folder_content": "A(z) \"{folder}\" mappa nem helyezhető át a kukába.\n\nEhelyett véglegesen törölni szeretné?\n\nEz a művelet nem vonható vissza a rendszer Lomtárából.",
       "folder_partial_warning": "Az előző kísérlet során a tartalom egy része a Lomtárba kerülhetett.",
       "ok": "Végleges törlés"
     },
@@ -1070,27 +947,14 @@
       "ok": "Megnyitás folytatása"
     },
     "new_tag": {
-      "title": "Új címke",
-      "ok": "Létrehozás",
-      "error": "Nem sikerült létrehozni a címkét."
+      "title": "Új címke"
     },
     "delete_tag": {
       "title": "Törli a(z) „{tag}” címkét?",
-      "content": "A „{tag}” címke törlésre kerül.",
-      "ok": "Törlés",
-      "success": "A „{tag}” címke törölve.",
-      "error": "Nem sikerült törölni a címkét."
-    },
-    "edit_comment": {
-      "title": "Leírás szerkesztése",
-      "placeholder": "Leírás megadása",
-      "ok": "Mentés"
+      "ok": "Törlés"
     },
     "select_folder": {
       "error": "Nem sikerült kiválasztani a mappát."
-    },
-    "select_file": {
-      "error": "Nem sikerült kiválasztani a fájlt."
     },
     "file_refresh": {
       "metadata_failed": "Sikertelen metaadat-importálás: {count}",
@@ -1249,7 +1113,6 @@
     "paths_copied": "{count} fájlútvonal a vágólapra másolva",
     "copy_path": "Fájlútvonal másolása",
     "copy_path_failed": "Az útvonal másolása sikertelen",
-    "video_only": "(csak videók)",
     "field_preset": "Látható mezők",
     "fields_default": "Alapértelmezett",
     "fields_all": "Összes megjelenítése",
@@ -1261,10 +1124,8 @@
     "thumbnail": "Bélyegkép",
     "change_thumbnail": "Bélyegkép módosítása",
     "histogram": "Hisztogram",
-    "preview_size": "Bélyegkép mérete",
     "general": "Általános",
     "metadata": "Metaadatok",
-    "location": "Hely",
     "map": "Térkép",
     "open_apple_maps": "Megnyitás az Apple Térképekben",
     "empty_title": "Nincs kiválasztva fájl",
@@ -1274,46 +1135,19 @@
     "folder": "Mappa",
     "dimension": "Méretek",
     "size": "Méret",
-    "duration": "Időtartam",
-    "unknown_duration": "Ismeretlen",
     "created_at": "Létrehozva",
     "modified_at": "Módosítva",
     "last_scan_time": "Utolsó beolvasás",
-    "marks": "Jelölések",
     "camera": "Kamera",
-    "camera_make": "Kamera gyártója",
-    "camera_model": "Kameramodell",
     "taken_at": "Készítve",
-    "taken_by": "Készítette",
-    "software": "Szoftver",
-    "artist": "Alkotó",
-    "copyright": "Szerzői jog",
-    "description": "Leírás",
     "lens": "Objektív",
-    "lens_make": "Objektív gyártója",
-    "lens_model": "Objektívmodell",
-    "exposure_bias": "Expozíciókorrekció",
-    "exposure_time": "Expozíciós idő",
-    "aperture": "Rekesz",
-    "focal_length": "Gyújtótávolság",
-    "iso": "ISO",
-    "flash": "Vaku",
-    "color_type": "Színtípus",
-    "bit_depth": "Bitmélység",
-    "alpha_channel": "Alfa-csatorna",
-    "gps_latitude": "Szélesség",
-    "gps_longitude": "Hosszúság",
-    "gps_altitude": "Magasság",
     "geo_location": "Hely",
-    "tags": "Címkék",
     "comment": "Leírás",
     "capture_settings": "Expozíció",
     "organization": "Rendszerezés",
     "file": "Fájl",
     "capture": "Felvétel",
     "source_metadata": "Egyéb információk",
-    "source_description": "Eredeti leírás",
-    "coordinates": "Koordináták",
     "detail_fields": {
       "title": "Cím",
       "headline": "Főcím",
@@ -1372,18 +1206,14 @@
     "all_brands": "Mind"
   },
   "map": {
-    "show_map": "Térkép megjelenítése",
-    "hide_map": "Térkép elrejtése",
     "zoom_in": "Nagyítás",
     "zoom_out": "Kicsinyítés",
     "zoom_center": "Középre",
     "standard": "Normál",
     "satellite": "Műhold",
-    "heatmap": "Hőtérkép",
     "photo_count": "{count} fotó",
     "no_photos_in_view": "Nincs fotó",
-    "photos_in_view": "{count} fotó ezen a területen",
-    "photos_in_view_limited": "Az első {count} fotó megjelenítése – a továbbiakért nagyítson"
+    "photos_in_view": "{count} fotó ezen a területen"
   },
   "format": {
     "relative_time": {
@@ -1403,8 +1233,6 @@
     "live": "LIVE",
     "motion": "MOTION",
     "title": "Képnézegető",
-    "loading": "Betöltés...",
-    "loading_original": "Eredeti fotó betöltése...",
     "media_server_unavailable": "Nem sikerült betölteni az eredeti fényképeket és videókat. Indítsa újra a Lap alkalmazást, majd próbálkozzon újra.",
     "failed": "A fotó nem tölthető be. A fájl hiányzik vagy sérült.",
     "raw_render_unavailable": "Ez a RAW nem dolgozható fel; a beágyazott előnézet jelenik meg.",
@@ -1418,7 +1246,6 @@
       "zoom_out": "Kicsinyítés",
       "zoom_fit": "Ablakhoz igazítás",
       "zoom_fit_short": "Igaz.",
-      "zoom_actual": "Tényleges méret",
       "af_area": "AF-területek megjelenítése",
       "fullscreen": "Teljes képernyő",
       "exit_fullscreen": "Kilépés a teljes képernyőből",
@@ -1432,7 +1259,6 @@
   "video": {
     "loading": "Videó betöltése...",
     "loading_compatible": "Kompatibilis lejátszás előkészítése...",
-    "failed": "A videót nem lehetett lejátszani",
     "errors": {
       "playback_failed": "A lejátszás sikertelen",
       "aborted": "A videó betöltése megszakadt",
@@ -1463,43 +1289,43 @@
       ],
       "theme": "Téma",
       "theme_options_light": [
-        "Default",
+        "Alapértelmezett",
         "Cupcake",
-        "Bumblebee",
-        "Emerald",
-        "Corporate",
+        "Poszméh",
+        "Smaragd",
+        "Vállalati",
         "Retro",
         "Cyberpunk",
-        "Valentine",
-        "Garden",
-        "Lofi",
-        "Pastel",
-        "Fantasy",
-        "Wireframe",
-        "Cmyk",
-        "Autumn",
-        "Acid",
-        "Lemonade",
-        "Winter",
+        "Valentin-nap",
+        "Kert",
+        "Lo-Fi",
+        "Pasztell",
+        "Fantázia",
+        "Drótváz",
+        "CMYK",
+        "Ősz",
+        "Sav",
+        "Limonádé",
+        "Tél",
         "Nord",
-        "Caramellatte",
-        "Silk"
+        "Karamellás latte",
+        "Selyem"
       ],
       "theme_options_dark": [
-        "Default",
+        "Alapértelmezett",
         "Synthwave",
         "Halloween",
-        "Forest",
+        "Erdő",
         "Aqua",
-        "Black",
-        "Luxury",
-        "Dracula",
-        "Business",
-        "Night",
-        "Coffee",
-        "Dim",
-        "Sunset",
-        "Abyss"
+        "Fekete",
+        "Luxus",
+        "Drakula",
+        "Üzlet",
+        "Éjszaka",
+        "Kávé",
+        "Tompa",
+        "Naplemente",
+        "Mélység"
       ],
       "select_language": "Nyelv kiválasztása",
       "date_time_format": "Dátum- és időformátum",
@@ -1543,13 +1369,10 @@
       "import_hint": "Kedvencek, értékelések, válogatási jelölők, címkék és leírások importálása vizsgálat és frissítés során, a helyi módosítások megőrzésével."
     },
     "browse": {
-      "section_album": "Albummappa",
       "show_subfolder_files": "Almappák fájljainak megjelenítése",
-      "show_subfolder_files_hint": "A mappanézet az almappák fájljait is tartalmazza",
       "group_raw_jpeg_pairs": "RAW-párok csoportosítása",
       "group_raw_jpeg_pairs_hint": "Az egyező RAW- és JPEG/HEIC-fájlok egy elemként jelennek meg",
       "folder_sort": "Mapparendezés",
-      "folder_sort_hint": "Az albumok mappáinak rendezési sorrendje",
       "folder_sort_options": [
         "Név (A–Z)",
         "Név (Z–A)",
@@ -1662,7 +1485,6 @@
         "Világosszürke",
         "Fehér"
       ],
-      "section_slideshow": "Diavetítés",
       "slide_show_interval": "Diaváltás: {second} mp",
       "slide_show_transition": "Diaváltási áttűnés",
       "slide_show_transition_options": [
@@ -1688,7 +1510,6 @@
       "multilingual_model_download_message": "A többnyelvű fotókeresési modell nincs telepítve. Töltse le az 50-nél több nyelvű kereséshez.",
       "download": "Letöltés",
       "downloading_multilingual_model": "Többnyelvű modell letöltése",
-      "multilingual_model_download_success": "A többnyelvű keresési modell készen áll. Indítsa újra a Lapot a használatához.",
       "multilingual_model_download_failed": "Nem sikerült letölteni a többnyelvű keresési modellt",
       "similarity": "Keresési hasonlóság",
       "similarity_hint": "A kulcsszavas keresés vizuális egyezéseit szabályozza",
@@ -1795,15 +1616,13 @@
       "file_delete_section": "Fájlok törlése",
       "title": "Speciális",
       "external_app": {
-        "section_external_apps": "Külső alkalmazások",
         "manage_external_apps": "Külső alkalmazások kezelése",
         "external_image_editor": "Fotó megnyitása ezzel",
         "external_video_app": "Videó megnyitása ezzel",
         "external_app_not_selected": "Nincs kijelölt alkalmazás",
         "choose_app": "Kiválasztás",
         "clear_app": "Törlés",
-        "default_app": "Alapértelmezett",
-        "set_default_app": "Alapértelmezetté tétel"
+        "default_app": "Alapértelmezett"
       },
       "section_diagnostics": "Diagnosztika",
       "debug_mode": "Hibakeresési mód",
@@ -1847,11 +1666,20 @@
         "finishing": "Áthelyezés befejezése…",
         "success": "A bélyegkép-gyorsítótár helye megváltozott",
         "cleanup_warning": "A gyorsítótár áthelyezése sikerült, de néhány régi fájl nem törölhető:",
-        "busy": "Várja meg a bélyegkép-gyorsítótár áthelyezésének befejezését."
+        "busy": "Várja meg a bélyegkép-gyorsítótár áthelyezésének befejezését.",
+        "cleanup": {
+          "title": "Nem használt gyorsítótár tisztítása",
+          "hint": "Nem használt bélyegképek törlése a felsorolt könyvtárakból",
+          "button": "Tisztítás",
+          "progress": "Feldolgozás: {current} / {total} · {name}",
+          "freed": "{size} felszabadítva.",
+          "empty": "Nincs tisztítandó nem használt bélyegkép-gyorsítótár.",
+          "failed": "Ezeket a könyvtárakat nem sikerült tisztítani:",
+          "list_error": "A könyvtárlista nem tölthető be."
+        }
       }
     },
     "database": {
-      "title": "Tárhely",
       "section_storage": "Könyvtáradatok karbantartása",
       "current_location": "Adathely módosítása",
       "system_default": "Rendszer alapértelmezése",
@@ -1883,7 +1711,6 @@
       "restore_dialog_title": "Visszaállítás biztonsági mentésből",
       "restore_select_file": "Biztonsági mentés kiválasztása",
       "restore_file_info": "Biztonsági mentés: {path}",
-      "restore_created_at": "Létrehozva: {date}",
       "restore_libraries": "{count} könyvtár ({size})",
       "restore_new_library": "Új könyvtár",
       "restore_conflict": "Már létezik → át lesz nevezve",
@@ -1908,12 +1735,9 @@
     "about": {
       "title": "Névjegy",
       "package": {
-        "name": "Csomagnév",
-        "description": "Leírás",
         "app_description": "Elsősorban offline működő fotókezelő nagy helyi könyvtárakhoz",
         "version": "Verzió",
         "build_time": "Összeállítás ideje",
-        "author": "Szerző",
         "license": "Licenc",
         "link": "Hivatkozás",
         "website": "Webhely",

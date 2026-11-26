@@ -4,6 +4,15 @@ import { readFile } from "node:fs/promises";
 import ts from "typescript";
 import { computed, ref } from "vue";
 
+function componentFunction(source, name) {
+  const script = source.match(/<script\b[^>]*>([\s\S]*?)<\/script>/)?.[1];
+  assert.ok(script, 'component script must exist');
+  const parsed = ts.createSourceFile('component.ts', script, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  const fn = parsed.statements.find(node => ts.isFunctionDeclaration(node) && node.name?.text === name);
+  assert.ok(fn, `function ${name} must exist`);
+  return fn.getText(parsed);
+}
+
 const treeSource = await readFile(
   new URL("../src/common/tagTree.ts", import.meta.url),
   "utf8",
@@ -417,15 +426,14 @@ test('inline tag filters keep ten recent tags in usage order and support assigne
 
 test('inline assignment keeps its original file target and does not reload after switching photos', async () => {
   const panel = await readFile(new URL('../src/components/AssignTagsPanel.vue', import.meta.url), 'utf8');
-  const start = panel.indexOf('async function change(');
-  const end = panel.indexOf('watch(() => libConfig._libraryId', start);
+  const changeSource = componentFunction(panel, 'change');
   let finish;
   const calls = [], updates = [], events = [];
   const props = { fileIds: [10] };
   const deps = { props, libConfig: { _libraryId: 'library', tag: {id: 1} }, subtreeIds, tags: ref([]), busy: ref(false), loading: ref(false), failed: ref(false),
     recent: ref([]), updateTagCount: (...args) => updates.push(args), emit: (...args) => events.push(args),
     source: 'test', tauriEmit: () => {}, applyTagsToFiles: (...args) => { calls.push(args); return new Promise(resolve => { finish = resolve; }); } };
-  const handlers = new Function(...Object.keys(deps), 'let version=1, disposed=false;' + ts.transpile(panel.slice(start, end), { target: ts.ScriptTarget.ES2022 }) + ';return {change, switchFile:()=>version++};')(...Object.values(deps));
+  const handlers = new Function(...Object.keys(deps), 'let version=1, disposed=false;' + ts.transpile(changeSource, { target: ts.ScriptTarget.ES2022 }) + ';return {change, switchFile:()=>version++};')(...Object.values(deps));
   const saving = handlers.change(3, true);
   props.fileIds = [20]; handlers.switchFile();
   finish([{file_id: 10, has_tags: true}]);
@@ -508,13 +516,13 @@ test('inline tag additions refresh the active query and removals reuse its patch
 
 test('a refresh overlapping a tag save reconciles membership after the write commits', async () => {
   const panel = await readFile(new URL('../src/components/AssignTagsPanel.vue', import.meta.url), 'utf8');
-  const start = panel.indexOf('async function change('), end = panel.indexOf('watch(() => libConfig._libraryId',start);
+  const changeSource = componentFunction(panel, 'change');
   let finish;
   const refreshes = [], updates = [];
   const deps = {props:{fileIds:[10]},libConfig:{_libraryId:'library',tag:{id:1}},subtreeIds,tags:ref([]),busy:ref(false),loading:ref(false),failed:ref(false),recent:ref([]),source:'inline',
     updateTagCount:(...args)=>updates.push(args),emit:()=>{},load:async(catalog)=>refreshes.push(catalog),
     applyTagsToFiles:()=>new Promise(resolve=>{finish=resolve;})};
-  const handlers = new Function(...Object.keys(deps),'let version=1,disposed=false;'+ts.transpile(panel.slice(start,end),{target:ts.ScriptTarget.ES2022})+';return {change,refresh:()=>version++};')(...Object.values(deps));
+  const handlers = new Function(...Object.keys(deps),'let version=1,disposed=false;'+ts.transpile(changeSource,{target:ts.ScriptTarget.ES2022})+';return {change,refresh:()=>version++};')(...Object.values(deps));
   const saving = handlers.change(3,true);
   handlers.refresh();
   finish([{file_id:10,has_tags:true}]);

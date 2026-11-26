@@ -1,10 +1,8 @@
 {
   "sidebar": {
-    "home": "Trang chủ",
     "library": "Thư viện",
     "album": "Album",
     "search": "Tìm kiếm",
-    "rating": "Đánh giá",
     "tag": "Thẻ",
     "calendar": "Lịch",
     "location": "Địa điểm",
@@ -17,15 +15,11 @@
     "title": "Bộ sưu tập",
     "add": "Bộ sưu tập mới",
     "edit_collections": "Sửa bộ sưu tập",
-    "recent": "Bộ sưu tập gần đây",
     "search": "Tìm bộ sưu tập",
-    "enter_new_collection_name": "Tên bộ sưu tập mới",
     "not_found": "Không tìm thấy bộ sưu tập nào",
     "name_exists": "Đã có bộ sưu tập trùng tên",
     "name_save_failed": "Không thể lưu tên bộ sưu tập",
     "default_name": "Bộ sưu tập {index}",
-    "expand": "Mở rộng",
-    "collapse": "Thu gọn",
     "rename": "Đổi tên",
     "reorder": "Sắp xếp lại",
     "delete": "Xóa",
@@ -36,7 +30,6 @@
     "drop_here": "Thả tệp vào đây",
     "drop_action": "Thêm",
     "drop_title_hint": "Thả để thêm",
-    "empty_drop_hint": "Kéo các mục vào bộ sưu tập ở trên để thêm.",
     "added_toast": "Đã thêm {count} mục vào bộ sưu tập",
     "add_failed_toast": "Không thể thêm mục vào {count} bộ sưu tập",
     "already_exists_toast": "{count} mục đã có trong bộ sưu tập",
@@ -49,7 +42,6 @@
   "library": {
     "all_files": "Tất cả tệp",
     "on_this_day": "Ngày này năm xưa",
-    "review": "Xem lại",
     "database_corrupted": "Cơ sở dữ liệu của thư viện này bị hỏng",
     "database_corrupted_hint": "Hãy thử chuyển sang thư viện khác."
   },
@@ -71,10 +63,6 @@
     "folder_unavailable": {
       "title": "Thư mục không khả dụng",
       "description": "Hãy kết nối lại thiết bị lưu trữ hoặc kiểm tra vị trí thư mục."
-    },
-    "folder_not_found": {
-      "title": "Không tìm thấy thư mục",
-      "description": "Thư mục có thể đã bị di chuyển hoặc xóa. Hãy làm mới thư mục cha của nó."
     },
     "edit": {
       "title_add": "Album mới",
@@ -124,10 +112,6 @@
       "save_failed": "Không thể lưu cài đặt album. Vui lòng thử lại.",
       "file_types_hint": "Các loại tệp được chọn sẽ bị loại trừ khỏi album này.",
       "tab_exclusions": "Loại trừ"
-    },
-    "no_albums": {
-      "title": "Chưa có album nào",
-      "description": "Thêm một album chứa ảnh hoặc video để bắt đầu"
     },
     "no_smart_albums": {
       "description": "Tạo album thông minh từ các quy tắc truy vấn tùy chỉnh."
@@ -301,14 +285,12 @@
     "index": {
       "wait_index": "Đang chờ quét",
       "indexing": "Đang quét... {count}/{total}",
-      "scan_summary": "Đã lập chỉ mục {indexed} · Bỏ qua {skipped} tệp không hỗ trợ · Thất bại {failed}",
       "discovering": "Đang quét album... {count}/{total}",
       "preparing_previews": "Đang tạo bản xem trước... {count}/{total}",
       "preparing_search": "Đang chuẩn bị tìm kiếm... {count}/{total}",
       "complete": "Đã quét xong",
       "complete_with_issues": "Đã quét xong với {count} vấn đề",
       "paused": "Đã tạm dừng quét",
-      "description": "Đang tạo ảnh thu nhỏ để tìm kiếm và xem nhanh. Album lớn có thể mất vài phút.",
       "cancel": "Hủy quét",
       "recovery": {
         "title": "Quá trình quét bị gián đoạn",
@@ -316,13 +298,11 @@
         "skip": "Bỏ qua",
         "skip_once": "Bỏ qua tệp này và tiếp tục",
         "file_label": "Tệp được quét cuối cùng",
-        "message": "Lần quét trước không kết thúc bình thường.",
-        "message_with_file": "Tác vụ quét trước đó không thoát đúng cách.\n\nTệp được quét cuối cùng:\n{file}\n\nNếu tiếp tục, Lap sẽ bỏ qua tệp này một lần và tiếp tục quét."
+        "message": "Lần quét trước không kết thúc bình thường."
       }
     }
   },
   "face_index": {
-    "start": "Lập chỉ mục khuôn mặt",
     "indexing": "Đang lập chỉ mục khuôn mặt... {current}/{total}",
     "clustering": "Đang phân cụm khuôn mặt...",
     "faces_found": "Tìm thấy {count} khuôn mặt",
@@ -336,15 +316,12 @@
     "resume": "Tiếp tục lập chỉ mục"
   },
   "favorite": {
-    "title": "Yêu thích",
-    "files": "Tệp yêu thích",
-    "folders": "Thư mục yêu thích"
+    "files": "Tệp yêu thích"
   },
   "rating": {
     "mixed": "Hỗn hợp",
     "title": "Đánh giá",
     "unrated": "Chưa đánh giá",
-    "all_rated": "Tất cả đã đánh giá",
     "rated": "Đã đánh giá",
     "clear_rating": "Xóa đánh giá",
     "five_stars": "5 sao",
@@ -372,8 +349,6 @@
     "title": "Thẻ",
     "delete_tag": "Xóa thẻ",
     "edit_tag": "Sửa thẻ",
-    "search_tags": "Tìm thẻ",
-    "enter_new_tag_name": "Nhập tên thẻ mới",
     "not_found": "Không tìm thấy thẻ nào",
     "name_exists": "Đã có thẻ trùng tên",
     "name_save_failed": "Không thể lưu tên thẻ",
@@ -406,13 +381,6 @@
       "months": "Tháng",
       "days": "Ngày"
     },
-    "day": "Ngày",
-    "week": "Tuần",
-    "month": "Tháng",
-    "year": "Năm",
-    "today": "Hôm nay",
-    "monthly": "Theo tháng",
-    "daily": "Theo ngày",
     "weekdays": [
       "CN",
       "T2",
@@ -421,15 +389,6 @@
       "T5",
       "T6",
       "T7"
-    ],
-    "weekdays_long": [
-      "Chủ nhật",
-      "Thứ hai",
-      "Thứ ba",
-      "Thứ tư",
-      "Thứ năm",
-      "Thứ sáu",
-      "Thứ bảy"
     ],
     "months": [
       "Thg 1",
@@ -461,12 +420,37 @@
     ]
   },
   "toolbar": {
+    "browser_filters": {
+      "title": "Bộ lọc",
+      "file_type": "Loại tệp",
+      "favorite": "Yêu thích",
+      "rating": "Đánh giá",
+      "culling": "Phân loại",
+      "tags": "Thẻ",
+      "all": "Tất cả",
+      "favorited": "Đã yêu thích",
+      "not_favorited": "Chưa yêu thích",
+      "unrated": "Chưa đánh giá",
+      "pick": "Đã chọn",
+      "reject": "Bị từ chối",
+      "unreviewed": "Chưa xem",
+      "tagged": "Có thẻ",
+      "untagged": "Không có thẻ",
+      "reset": "Đặt lại bộ lọc",
+      "rated": "Đã đánh giá",
+      "remove": "Xóa bộ lọc",
+      "clear_all": "Xóa tất cả",
+      "counting": "Đang đếm…",
+      "results": "{count} / {total} mục",
+      "total_items": "{total} mục",
+      "tooltip": "Bộ lọc",
+      "disabled": "Bộ lọc đã tắt"
+    },
     "search": {
       "title": "Tìm kiếm",
       "placeholder": "Tìm tên tệp"
     },
     "filter": {
-      "favorites_only": "Chỉ hiện mục yêu thích",
       "show_selection_panel": "Mở bảng chọn",
       "exit_selection_mode": "Thoát chế độ chọn",
       "select_count": "Đã chọn {count}",
@@ -508,55 +492,16 @@
       "file_type_other": "Khác"
     },
     "tooltip": {
-      "restore": "Khôi phục",
       "refresh": "Làm mới",
       "info": "Thông tin",
-      "clear_history": "Xóa lịch sử tìm kiếm",
-      "index_faces": "Lập chỉ mục khuôn mặt",
       "sort": "Sắp xếp",
-      "monthly": "Theo tháng",
-      "daily": "Theo ngày",
-      "time_asc": "Thời gian tăng dần",
-      "time_desc": "Thời gian giảm dần",
       "back": "Quay lại",
       "scanning": "Đang quét…",
       "scan_paused": "Đã tạm dừng quét",
       "scan_queued": "Đang chờ quét"
-    },
-    "browser_filters": {
-      "title": "Bộ lọc",
-      "file_type": "Loại tệp",
-      "favorite": "Yêu thích",
-      "rating": "Đánh giá",
-      "culling": "Phân loại",
-      "tags": "Thẻ",
-      "all": "Tất cả",
-      "favorited": "Đã yêu thích",
-      "not_favorited": "Chưa yêu thích",
-      "unrated": "Chưa đánh giá",
-      "pick": "Đã chọn",
-      "reject": "Bị từ chối",
-      "unreviewed": "Chưa xem",
-      "tagged": "Có thẻ",
-      "untagged": "Không có thẻ",
-      "reset": "Đặt lại bộ lọc",
-      "rated": "Đã đánh giá",
-      "remove": "Xóa bộ lọc",
-      "clear_all": "Xóa tất cả",
-      "counting": "Đang đếm…",
-      "results": "{count} / {total} mục",
-      "total_items": "{total} mục",
-      "tooltip": "Bộ lọc",
-      "disabled": "Bộ lọc đã tắt"
     }
   },
   "info_panel": {
-    "tabs": [
-      "Thông tin",
-      "Điều chỉnh"
-    ],
-    "empty_title": "Danh sách này trống",
-    "empty_desc": "Thêm mục hoặc cập nhật bộ lọc hiện tại để hiển thị chúng ở đây.",
     "select_hint": "Chưa chọn mục nào",
     "deselect": "Bỏ chọn",
     "selection_load_failed": "Không thể tải tất cả mục để chọn. Hãy thử lại.",
@@ -570,7 +515,6 @@
       "copy": "Sao chép",
       "move": "Di chuyển"
     },
-    "edit_disabled": "Chọn một ảnh duy nhất để chỉnh sửa",
     "type_image": "Ảnh",
     "type_images": "Ảnh",
     "type_video": "Video",
@@ -578,12 +522,10 @@
     "select_title": "Lựa chọn",
     "favorite_all": "Yêu thích",
     "unfavorite_all": "Bỏ yêu thích",
-    "action": "Thao tác",
     "file_actions": "Thao tác với tệp",
     "more": "Thêm…",
     "organize": "Phân loại",
     "more_actions": "Thao tác khác",
-    "tag_all": "Gắn thẻ",
     "dedup": {
       "keep_rules": {
         "title": "Quy tắc giữ lại",
@@ -619,8 +561,6 @@
       "error_desc": "Không thể hoàn tất quá trình quét. Hãy thử lại sau khi cập nhật danh sách tệp",
       "empty_title": "Không tìm thấy ảnh trùng lặp",
       "empty_desc": "Hãy thử thêm tệp hoặc thay đổi phạm vi bộ lọc hiện tại",
-      "similar_title": "Sắp có tính năng ảnh tương tự",
-      "similar_desc": "Thẻ này sẽ dùng cho các ảnh tương tự về hình ảnh sau khi quy trình xử lý ảnh giống hệt nhau được mở rộng",
       "similar": {
         "analyze_images": "Phân tích ảnh tương tự",
         "analyze": "Phân tích",
@@ -633,8 +573,6 @@
         "analyzing": "Đang phân tích ảnh tương tự",
         "groups_title": "Nhóm tương tự",
         "results": "Kết quả",
-        "groups_count": "{count} nhóm tương tự",
-        "load_more": "Tải thêm",
         "error_title": "Không thể tải ảnh tương tự",
         "empty_title": "Không tìm thấy ảnh tương tự",
         "reanalyze": "Phân tích lại"
@@ -645,20 +583,10 @@
       "actions_title": "Thao tác",
       "compare": "So sánh",
       "rescan": "Quét lại",
-      "keep_strategy": "Quy tắc giữ lại mặc định",
-      "keep_strategy_options": {
-        "best_quality": "Chất lượng tốt nhất",
-        "oldest_created": "Ưu tiên bản tạo sớm nhất",
-        "oldest_modified": "Ưu tiên bản sửa đổi sớm nhất"
-      },
       "keep_label": "Giữ lại",
-      "unkeep_label": "Bỏ giữ lại",
-      "delete_selected": "Xóa mục đã chọn",
       "trash_all": "Chuyển tất cả vào thùng rác",
       "delete_all": "Xóa tất cả",
-      "move_selected_to_trash": "Chuyển vào thùng rác (đã chọn {count} · {size})",
       "no_removable_files": "Không có mục nào có thể chuyển vào thùng rác",
-      "set_keep": "Giữ lại",
       "removable_copies_summary": "{count} bản sao có thể gỡ bỏ · {size}",
       "similar_items_summary": "{count} mục tương tự · {size}"
     }
@@ -670,17 +598,11 @@
     },
     "not_found": {
       "albums": "Không tìm thấy album nào",
-      "files": "Không tìm thấy tệp nào",
+      "files": "Không tìm thấy mục nào",
       "image_search_failed": "Không thể tìm kiếm ảnh",
       "image_search_failed_hint": "Hãy kiểm tra mô hình tìm kiếm ảnh đã sẵn sàng rồi thử lại.",
       "image_search_language_unsupported": "Mô hình tìm kiếm mặc định chỉ hỗ trợ tiếng Anh",
       "image_search_language_unsupported_hint": "Chọn mô hình Đa ngôn ngữ trong Cài đặt để tìm kiếm bằng ngôn ngữ này.",
-      "image_files": "Không tìm thấy ảnh nào",
-      "raw_files": "Không tìm thấy tệp RAW nào",
-      "video_files": "Không tìm thấy tệp video nào",
-      "image_raw_files": "Không tìm thấy ảnh hoặc tệp RAW nào",
-      "image_video_files": "Không tìm thấy ảnh hoặc video nào",
-      "raw_video_files": "Không tìm thấy tệp RAW hoặc video nào",
       "folder_files": "Thư mục này không có tệp nào",
       "folder_files_hint": "Hãy thử duyệt các thư mục con, hoặc bật “Hiện tệp từ thư mục con” trong Cài đặt.",
       "folders": "Không tìm thấy thư mục nào",
@@ -760,16 +682,10 @@
       "invert": "Đảo ngược lựa chọn"
     },
     "home": {
-      "delete": "Xóa",
-      "pin": "Ghim",
-      "unpin": "Bỏ ghim"
+      "delete": "Xóa"
     },
     "library": {
-      "add": "Thư viện mới...",
-      "edit": "Sửa thư viện...",
-      "manage": "Quản lý thư viện...",
-      "remove": "Gỡ bỏ thư viện",
-      "default": "Thư viện mặc định"
+      "manage": "Quản lý thư viện..."
     },
     "album": {
       "add": "Album mới",
@@ -790,11 +706,7 @@
       "copy": "Sao chép vào bộ nhớ tạm",
       "paste": "Dán",
       "edit_image": "Chỉnh sửa...",
-      "open_image_in_app": "Mở ảnh bằng {app}...",
-      "open_video_in_app": "Mở video bằng {app}...",
-      "open_selected_images_in_app": "Mở các ảnh bằng {app}...",
       "compare_selected_images": "So sánh",
-      "open_selected_videos_in_app": "Mở các video bằng {app}...",
       "open_in_app": "Mở bằng ứng dụng bên ngoài...",
       "manage_app": "Quản lý ứng dụng...",
       "find_similar_images": "Tìm ảnh liên quan",
@@ -808,7 +720,6 @@
       "move_within_library": "Di chuyển trong thư viện...",
       "move_to_folder": "Di chuyển đến thư mục...",
       "copy_to_folder": "Sao chép đến thư mục...",
-      "move_to_trash": "Chuyển vào thùng rác",
       "delete": "Xóa",
       "reveal_in_finder": "Hiện trong Finder...",
       "reveal_in_file_explorer": "Hiện trong File Explorer...",
@@ -821,14 +732,7 @@
       "create_montage": "Tạo ảnh ghép",
       "save_xmp": "Lưu siêu dữ liệu vào XMP",
       "xmp_save_success": "Đã lưu siêu dữ liệu XMP cho {count} tệp",
-      "xmp_save_failed": "Không thể lưu XMP cho {count} tệp",
-      "comment": "Mô tả…"
-    },
-    "calendar": {
-      "monthly": "Theo tháng",
-      "daily": "Theo ngày",
-      "time_asc": "Thời gian tăng dần",
-      "time_desc": "Thời gian giảm dần"
+      "xmp_save_failed": "Không thể lưu XMP cho {count} tệp"
     },
     "location": {
       "search": "Tìm địa điểm"
@@ -859,12 +763,7 @@
       "unfavorite": "Bỏ yêu thích",
       "tag": "Thẻ...",
       "collection": "Bộ sưu tập...",
-      "comment": "Mô tả…",
       "rotate": "Xoay chế độ xem"
-    },
-    "sort": {
-      "sort_by_name": "Sắp xếp theo tên",
-      "sort_by_count": "Sắp xếp theo số lượng"
     }
   },
   "msgbox": {
@@ -907,9 +806,6 @@
     "manage_libraries": {
       "title": "Quản lý thư viện",
       "libraries": "Thư viện",
-      "name": "Tên",
-      "visible": "Hiển thị",
-      "action": "Thao tác",
       "default": "Thư viện mặc định",
       "current": "Thư viện hiện tại",
       "show": "Hiện",
@@ -921,32 +817,19 @@
       "add_new": "Thư viện mới",
       "add": "Thêm",
       "placeholder": "Nhập tên thư viện",
-      "max_limit_reached": "Đã đạt giới hạn số thư viện",
-      "created_at_lower": "tạo lúc",
       "calculating_stats": "Đang tính dung lượng thư viện...",
       "unable_to_load": "Không thể tải",
-      "library_file_path": "Đường dẫn tệp thư viện",
-      "library_file_size": "Kích thước tệp thư viện",
-      "created_at": "Ngày tạo",
       "cache_size": "bộ nhớ đệm ảnh thu nhỏ {size}"
     },
     "remove_library": {
       "title": "Gỡ bỏ thư viện",
       "content": "Bạn có chắc muốn gỡ bỏ “{library}”? Thao tác này sẽ xóa vĩnh viễn tệp cơ sở dữ liệu.",
-      "ok": "Gỡ bỏ",
-      "success": "Đã gỡ bỏ thư viện “{library}”.",
-      "error": "Không thể gỡ bỏ thư viện."
+      "ok": "Gỡ bỏ"
     },
     "remove_album": {
       "title": "Gỡ bỏ album",
       "content": "Album “{album}” sẽ bị gỡ bỏ. Thao tác này không xóa các tệp thực tế.",
       "ok": "Gỡ bỏ"
-    },
-    "rename_folder": {
-      "title": "Đổi tên thư mục",
-      "content": "Nhập tên mới cho thư mục:",
-      "ok": "Đổi tên",
-      "error": "Không thể đổi tên thư mục."
     },
     "new_folder": {
       "title": "Thư mục mới",
@@ -1030,7 +913,6 @@
     "folder_delete_contents": "Thao tác này bao gồm tất cả tệp và thư mục con.",
     "move_to_trash": {
       "title": "Chuyển vào thùng rác",
-      "file_content": "Tệp “{file}” sẽ được chuyển vào thùng rác.",
       "files_content": "{count} mục đã chọn sẽ được chuyển vào thùng rác.",
       "removable_files_content": "Tất cả {count} mục có thể gỡ bỏ sẽ được chuyển vào thùng rác.",
       "folder_content": "Thư mục “{folder}” sẽ được chuyển vào thùng rác.",
@@ -1038,21 +920,17 @@
       "file_success": "Đã chuyển tệp “{file}” vào thùng rác.",
       "files_success": "Đã chuyển {count} mục đã chọn vào thùng rác.",
       "folder_success": "Đã chuyển thư mục “{folder}” vào thùng rác.",
-      "file_error": "Không thể chuyển tệp vào thùng rác.",
       "files_error": "Không thể chuyển các mục đã chọn vào thùng rác.",
       "folder_error": "Không thể chuyển thư mục vào thùng rác."
     },
     "permanent_delete": {
       "title": "Xóa vĩnh viễn",
-      "file_content": "Tệp “{file}” sẽ bị xóa vĩnh viễn.",
       "files_content": "{count} mục đã chọn sẽ bị xóa vĩnh viễn.",
       "removable_files_content": "Tất cả {count} mục có thể gỡ bỏ sẽ bị xóa vĩnh viễn.",
       "folder_content": "Thư mục “{folder}” sẽ bị xóa vĩnh viễn.",
-      "ok": "Xóa",
       "file_success": "Đã xóa vĩnh viễn tệp “{file}”.",
       "files_success": "Đã xóa vĩnh viễn {count} mục đã chọn.",
       "folder_success": "Đã xóa vĩnh viễn thư mục “{folder}”.",
-      "file_error": "Không thể xóa vĩnh viễn tệp.",
       "files_error": "Không thể xóa vĩnh viễn các mục đã chọn.",
       "folder_error": "Không thể xóa vĩnh viễn thư mục."
     },
@@ -1060,7 +938,6 @@
       "title": "Không thể chuyển vào thùng rác",
       "file_content": "Không thể chuyển tệp “{file}” vào thùng rác.\n\nBạn có muốn xóa vĩnh viễn tệp này không?",
       "files_content": "Không thể chuyển {count} mục đã chọn vào thùng rác.\n\nBạn có muốn xóa vĩnh viễn các mục này không?",
-      "folder_content": "Không thể chuyển thư mục “{folder}” vào thùng rác.\n\nBạn có muốn xóa vĩnh viễn thư mục này không?\n\nKhông thể hoàn tác thao tác này qua thùng rác của hệ thống.",
       "folder_partial_warning": "Lần thử trước có thể đã chuyển một phần nội dung vào thùng rác.",
       "ok": "Xóa vĩnh viễn"
     },
@@ -1070,27 +947,14 @@
       "ok": "Tiếp tục mở"
     },
     "new_tag": {
-      "title": "Thẻ mới",
-      "ok": "Tạo",
-      "error": "Không thể tạo thẻ."
+      "title": "Thẻ mới"
     },
     "delete_tag": {
       "title": "Xóa “{tag}”?",
-      "content": "Thẻ “{tag}” sẽ bị xóa.",
-      "ok": "Xóa",
-      "success": "Đã xóa thẻ “{tag}”.",
-      "error": "Không thể xóa thẻ."
-    },
-    "edit_comment": {
-      "title": "Sửa mô tả",
-      "placeholder": "Nhập mô tả",
-      "ok": "Lưu"
+      "ok": "Xóa"
     },
     "select_folder": {
       "error": "Không thể chọn thư mục."
-    },
-    "select_file": {
-      "error": "Không thể chọn tệp."
     },
     "file_refresh": {
       "metadata_failed": "Nhập siêu dữ liệu thất bại: {count}",
@@ -1249,7 +1113,6 @@
     "paths_copied": "Đã sao chép {count} đường dẫn tệp vào bộ nhớ tạm",
     "copy_path": "Sao chép đường dẫn tệp",
     "copy_path_failed": "Không thể sao chép đường dẫn tệp",
-    "video_only": "(chỉ video)",
     "field_preset": "Trường hiển thị",
     "fields_default": "Mặc định",
     "fields_all": "Hiển thị tất cả",
@@ -1261,10 +1124,8 @@
     "thumbnail": "Ảnh thu nhỏ",
     "change_thumbnail": "Đổi ảnh thu nhỏ",
     "histogram": "Biểu đồ tần suất",
-    "preview_size": "Kích thước ảnh thu nhỏ",
     "general": "Chung",
     "metadata": "Siêu dữ liệu",
-    "location": "Địa điểm",
     "map": "Bản đồ",
     "open_apple_maps": "Mở trong Apple Maps",
     "empty_title": "Chưa chọn tệp nào",
@@ -1274,46 +1135,19 @@
     "folder": "Thư mục",
     "dimension": "Kích thước ảnh",
     "size": "Dung lượng",
-    "duration": "Thời lượng",
-    "unknown_duration": "Không xác định",
     "created_at": "Ngày tạo",
     "modified_at": "Ngày sửa đổi",
     "last_scan_time": "Lần quét cuối",
-    "marks": "Đánh dấu",
     "camera": "Máy ảnh",
-    "camera_make": "Hãng máy ảnh",
-    "camera_model": "Mẫu máy ảnh",
     "taken_at": "Thời gian chụp",
-    "taken_by": "Người chụp",
-    "software": "Phần mềm",
-    "artist": "Tác giả",
-    "copyright": "Bản quyền",
-    "description": "Mô tả",
     "lens": "Ống kính",
-    "lens_make": "Hãng ống kính",
-    "lens_model": "Mẫu ống kính",
-    "exposure_bias": "Bù phơi sáng",
-    "exposure_time": "Thời gian phơi sáng",
-    "aperture": "Khẩu độ",
-    "focal_length": "Tiêu cự",
-    "iso": "ISO",
-    "flash": "Đèn flash",
-    "color_type": "Kiểu màu",
-    "bit_depth": "Độ sâu bit",
-    "alpha_channel": "Kênh alpha",
-    "gps_latitude": "Vĩ độ",
-    "gps_longitude": "Kinh độ",
-    "gps_altitude": "Độ cao",
     "geo_location": "Địa điểm",
-    "tags": "Thẻ",
     "comment": "Mô tả",
     "capture_settings": "Phơi sáng",
     "organization": "Phân loại",
     "file": "Tệp",
     "capture": "Thông tin chụp",
     "source_metadata": "Thông tin khác",
-    "source_description": "Mô tả gốc",
-    "coordinates": "Tọa độ",
     "detail_fields": {
       "title": "Tiêu đề gốc",
       "headline": "Tiêu đề phụ",
@@ -1372,18 +1206,14 @@
     "all_brands": "Tất cả"
   },
   "map": {
-    "show_map": "Hiện bản đồ",
-    "hide_map": "Ẩn bản đồ",
     "zoom_in": "Phóng to",
     "zoom_out": "Thu nhỏ",
     "zoom_center": "Căn giữa",
     "standard": "Tiêu chuẩn",
     "satellite": "Vệ tinh",
-    "heatmap": "Bản đồ nhiệt",
     "photo_count": "{count} ảnh",
     "no_photos_in_view": "Không có ảnh",
-    "photos_in_view": "{count} ảnh trong khu vực này",
-    "photos_in_view_limited": "Đang hiển thị {count} ảnh đầu tiên - phóng to để xem thêm"
+    "photos_in_view": "{count} ảnh trong khu vực này"
   },
   "format": {
     "relative_time": {
@@ -1403,8 +1233,6 @@
     "live": "LIVE",
     "motion": "MOTION",
     "title": "Trình xem ảnh",
-    "loading": "Đang tải...",
-    "loading_original": "Đang tải ảnh gốc...",
     "media_server_unavailable": "Không thể tải ảnh và video gốc. Hãy khởi động lại Lap để thử lại.",
     "failed": "Không thể tải ảnh. Tệp bị thiếu hoặc bị hỏng.",
     "raw_render_unavailable": "Không thể kết xuất ảnh RAW này; đang hiển thị bản xem trước nhúng.",
@@ -1418,7 +1246,6 @@
       "zoom_out": "Thu nhỏ",
       "zoom_fit": "Vừa cửa sổ",
       "zoom_fit_short": "Vừa",
-      "zoom_actual": "Kích thước thực",
       "af_area": "Hiện vùng AF",
       "fullscreen": "Toàn màn hình",
       "exit_fullscreen": "Thoát toàn màn hình",
@@ -1432,7 +1259,6 @@
   "video": {
     "loading": "Đang tải video...",
     "loading_compatible": "Đang chuẩn bị phát ở chế độ tương thích...",
-    "failed": "Không thể phát video",
     "errors": {
       "playback_failed": "Không phát được video",
       "aborted": "Đã hủy tải video",
@@ -1465,41 +1291,41 @@
       "theme_options_light": [
         "Mặc định",
         "Cupcake",
-        "Bumblebee",
-        "Emerald",
-        "Corporate",
+        "Ong nghệ",
+        "Ngọc lục bảo",
+        "Doanh nghiệp",
         "Retro",
         "Cyberpunk",
-        "Valentine",
-        "Garden",
-        "Lofi",
+        "Lễ Tình nhân",
+        "Khu vườn",
+        "Lo-Fi",
         "Pastel",
-        "Fantasy",
+        "Giả tưởng",
         "Wireframe",
-        "Cmyk",
-        "Autumn",
-        "Acid",
-        "Lemonade",
-        "Winter",
+        "CMYK",
+        "Mùa thu",
+        "Axit",
+        "Nước chanh",
+        "Mùa đông",
         "Nord",
-        "Caramellatte",
-        "Silk"
+        "Latte caramel",
+        "Lụa"
       ],
       "theme_options_dark": [
         "Mặc định",
         "Synthwave",
         "Halloween",
-        "Forest",
+        "Rừng",
         "Aqua",
-        "Black",
-        "Luxury",
+        "Đen",
+        "Sang trọng",
         "Dracula",
-        "Business",
-        "Night",
-        "Coffee",
-        "Dim",
-        "Sunset",
-        "Abyss"
+        "Kinh doanh",
+        "Ban đêm",
+        "Cà phê",
+        "Mờ",
+        "Hoàng hôn",
+        "Vực thẳm"
       ],
       "select_language": "Chọn ngôn ngữ",
       "date_time_format": "Định dạng ngày và giờ",
@@ -1543,13 +1369,10 @@
       "import_hint": "Nhập mục yêu thích, đánh giá, cờ sàng lọc, thẻ và mô tả khi quét và làm mới, đồng thời giữ nguyên các chỉnh sửa cục bộ."
     },
     "browse": {
-      "section_album": "Thư mục album",
       "show_subfolder_files": "Hiện tệp từ thư mục con",
-      "show_subfolder_files_hint": "Chế độ xem thư mục bao gồm cả tệp trong các thư mục con",
       "group_raw_jpeg_pairs": "Nhóm cặp RAW",
       "group_raw_jpeg_pairs_hint": "Hiển thị các tệp RAW và JPEG/HEIC tương ứng thành một mục duy nhất",
       "folder_sort": "Sắp xếp thư mục",
-      "folder_sort_hint": "Thứ tự sắp xếp các thư mục hiển thị trong album",
       "folder_sort_options": [
         "Tên (A đến Z)",
         "Tên (Z đến A)",
@@ -1662,7 +1485,6 @@
         "Xám nhạt",
         "Trắng"
       ],
-      "section_slideshow": "Trình chiếu",
       "slide_show_interval": "Khoảng thời gian trình chiếu: {second} giây",
       "slide_show_transition": "Hiệu ứng chuyển trình chiếu",
       "slide_show_transition_options": [
@@ -1688,7 +1510,6 @@
       "multilingual_model_download_message": "Chưa cài đặt mô hình tìm kiếm ảnh đa ngôn ngữ. Hãy tải xuống để tìm kiếm bằng hơn 50 ngôn ngữ.",
       "download": "Tải xuống",
       "downloading_multilingual_model": "Đang tải xuống mô hình đa ngôn ngữ",
-      "multilingual_model_download_success": "Mô hình tìm kiếm đa ngôn ngữ đã sẵn sàng. Hãy khởi động lại Lap để sử dụng.",
       "multilingual_model_download_failed": "Không thể tải xuống mô hình tìm kiếm đa ngôn ngữ",
       "similarity": "Độ tương đồng khi tìm kiếm",
       "similarity_hint": "Điều chỉnh các kết quả khớp về hình ảnh khi tìm theo từ khóa",
@@ -1795,15 +1616,13 @@
       "file_delete_permanent_hint": "Luôn xác nhận trước khi xóa vĩnh viễn",
       "title": "Nâng cao",
       "external_app": {
-        "section_external_apps": "Ứng dụng bên ngoài",
         "manage_external_apps": "Quản lý ứng dụng bên ngoài",
         "external_image_editor": "Mở ảnh bằng",
         "external_video_app": "Mở video bằng",
         "external_app_not_selected": "Chưa chọn ứng dụng",
         "choose_app": "Chọn",
         "clear_app": "Xóa",
-        "default_app": "Mặc định",
-        "set_default_app": "Đặt làm mặc định"
+        "default_app": "Mặc định"
       },
       "section_diagnostics": "Chẩn đoán",
       "debug_mode": "Chế độ gỡ lỗi",
@@ -1861,7 +1680,6 @@
       }
     },
     "database": {
-      "title": "Lưu trữ",
       "section_storage": "Bảo trì dữ liệu thư viện",
       "current_location": "Thay đổi vị trí dữ liệu",
       "system_default": "Mặc định của hệ thống",
@@ -1893,7 +1711,6 @@
       "restore_dialog_title": "Khôi phục từ bản sao lưu",
       "restore_select_file": "Chọn tệp sao lưu",
       "restore_file_info": "Bản sao lưu: {path}",
-      "restore_created_at": "Ngày tạo: {date}",
       "restore_libraries": "{count} thư viện ({size})",
       "restore_new_library": "Thư viện mới",
       "restore_conflict": "Đã tồn tại → sẽ được đổi tên",
@@ -1918,12 +1735,9 @@
     "about": {
       "title": "Giới thiệu",
       "package": {
-        "name": "Tên gói",
-        "description": "Mô tả",
         "app_description": "Trình quản lý ảnh ưu tiên ngoại tuyến cho các thư viện cục bộ lớn",
         "version": "Phiên bản",
         "build_time": "Thời gian dựng",
-        "author": "Tác giả",
         "license": "Giấy phép",
         "link": "Liên kết",
         "website": "Trang web",
