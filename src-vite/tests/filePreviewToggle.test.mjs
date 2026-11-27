@@ -44,6 +44,28 @@ test('histogram stays unavailable for video files', () => {
   assert.equal(showHistogramPanel, false);
 });
 
+test('histogram-only image preferences fall back to thumbnails for videos and survive reopening', () => {
+  const isVideoFile = ref(false);
+  const config = { infoPanel: { showPreview: true, showThumbnail: false, showHistogram: true } };
+  assert.equal(previewPanels({ isVideoFile, config }).showHistogramPanel, true);
+  isVideoFile.value = true;
+  assert.deepEqual(previewPanels({ isVideoFile, config }), {
+    canShowHistogram: false, showThumbnailPanel: true, showHistogramPanel: false,
+  });
+  const start = source.indexOf('function togglePreview()');
+  const end = source.indexOf('\n}', start) + '\n}'.length;
+  const togglePreview = new Function('config', 'canShowHistogram',
+    ts.transpile(source.slice(start, end)) + '\nreturn togglePreview;')(config, { value: false });
+  togglePreview();
+  togglePreview();
+  assert.equal(previewPanels({ isVideoFile, config }).showThumbnailPanel, true);
+  assert.deepEqual(config.infoPanel, { showPreview: true, showThumbnail: false, showHistogram: true });
+  isVideoFile.value = false;
+  assert.deepEqual(previewPanels({ isVideoFile, config }), {
+    canShowHistogram: true, showThumbnailPanel: false, showHistogramPanel: true,
+  });
+});
+
 test('togglePreviewPanel flips the matching flag and ignores histogram for videos', () => {
   const start = source.indexOf('function togglePreviewPanel(');
   const end = source.indexOf('\n}', start) + '\n}'.length;

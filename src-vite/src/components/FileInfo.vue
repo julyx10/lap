@@ -1068,7 +1068,9 @@ const canPreviewVideo = computed(() => (
   && !isWebViewVideoPlaybackDisabled(previewVideoPath.value)
 ));
 const canShowHistogram = computed(() => !isVideoFile.value);
-const showThumbnailPanel = computed(() => !!config.infoPanel.showThumbnail);
+// Videos have no histogram or panel toggles; keep their thumbnail available
+// without changing the user's image-preview preferences.
+const showThumbnailPanel = computed(() => isVideoFile.value || !!config.infoPanel.showThumbnail);
 const showHistogramPanel = computed(() => canShowHistogram.value && !!config.infoPanel.showHistogram);
 const hasPreviewNavigator = computed(() => !!props.fileInfo?.thumbnail
   && !isVideoFile.value && !!props.navigatorViewport
