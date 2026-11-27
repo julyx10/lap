@@ -2,7 +2,7 @@
   <section
     data-collection-tray-root="true"
     :data-collection-drop-new="collections.length === 0 ? 'true' : undefined"
-    class="collection-tray min-h-0 flex flex-col  border-t border-base-content/5 shadow-sm"
+    class="collection-tray min-h-0 flex flex-col border-t border-base-content/5"
     :class="libConfig.activePane === 'collection' ? '' : 'sidebar-pane-inactive'"
   >
     <div class="sidebar-panel-header cursor-pointer" @click="$emit('toggle-expanded')">

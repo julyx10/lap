@@ -5,21 +5,21 @@
     :class="expanded || modelValue ? 'w-57' : 'w-8'"
     @transitionend.self="locateHistory"
   >
-    <button
-      v-if="disabled || (!expanded && !modelValue)"
-      class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-box border border-transparent text-sm outline-none"
-      :class="
-        disabled
-          ? 'text-base-content/30 cursor-default'
-          : 'text-base-content/70 hover:text-base-content hover:bg-base-100/30 cursor-pointer'
-      "
-      :disabled="disabled"
-      :title="$t('search.title')"
-      :aria-label="$t('search.title')"
-      @click="focus"
-    >
-      <IconSearch class="w-5 h-5 shrink-0" />
-    </button>
+    <TButton v-if="disabled || (!expanded && !modelValue)" :tooltip="$t('search.title')">
+      <button
+        class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-box border border-transparent text-sm outline-none"
+        :class="
+          disabled
+            ? 'text-base-content/30 cursor-default'
+            : 'text-base-content/70 hover:text-base-content hover:bg-base-100/30 cursor-pointer'
+        "
+        :disabled="disabled"
+        :aria-label="$t('search.title')"
+        @click="focus"
+      >
+        <IconSearch class="w-5 h-5 shrink-0" />
+      </button>
+    </TButton>
     <div
       v-else
       ref="inputBox"
@@ -96,6 +96,7 @@
 </template>
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import TButton from "@/components/TButton.vue";
 import { config, libConfig } from "@/common/config";
 import { IconSearch, IconClose, IconTrash } from "@/common/icons";
 import { useUIStore } from "@/stores/uiStore";

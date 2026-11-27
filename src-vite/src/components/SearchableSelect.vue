@@ -13,14 +13,14 @@
       @click="toggle"
       @keydown="onTriggerKeydown"
     >
-      <span class="min-w-0 flex-1 truncate" :class="{ 'text-base-content/40': !hasSelection }">{{ displayLabel }}</span>
+      <span class="min-w-0 flex-1 truncate" :class="{'text-base-content/40': !hasSelection }">{{ displayLabel }}</span>
     </button>
 
     <teleport to="body">
       <div
         v-if="open"
         ref="menuRef"
-        class="fixed z-[700] flex flex-col overflow-hidden rounded-box border border-base-content/30 bg-base-200/95 shadow-lg backdrop-blur-md"
+        class="fixed z-700 flex flex-col overflow-hidden rounded-box border border-base-content/30 bg-base-200/95 shadow-lg backdrop-blur-md"
         :style="menuStyle"
       >
         <label class="flex items-center gap-1.5 border-b border-base-content/10 px-2 py-1.5">

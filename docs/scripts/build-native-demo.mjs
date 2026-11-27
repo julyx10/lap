@@ -32,7 +32,6 @@ writeFileSync(`${root}/fixtures.generated.json`, JSON.stringify(seed));
 const sourceFiles = [
   "views/Home.vue",
   "views/Settings.vue",
-  "components/SettingsMetadata.vue",
   "components/TaggingDialog.vue",
   "components/FavoriteRatingControl.vue",
   "components/Library.vue",

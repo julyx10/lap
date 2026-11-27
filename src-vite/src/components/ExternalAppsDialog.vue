@@ -1,9 +1,9 @@
 <template>
-  <ModalDialog :title="$t('settings.advanced.external_app.manage_external_apps')" :width="480" @cancel="close">
+  <ModalDialog class="w-120" :title="$t('settings.advanced.external_app.manage_external_apps')" @cancel="close">
     <div class="space-y-4">
       <section v-for="group in externalAppGroups" :key="group.kind" class="space-y-2">
         <div class="flex items-center justify-between gap-3">
-          <span class="text-[10px] uppercase tracking-widest font-bold text-base-content/30">{{ group.label }}</span>
+          <span class="text-xs uppercase tracking-widest font-bold text-base-content/30">{{ group.label }}</span>
           <TButton
             :icon="IconAdd"
             :buttonSize="'small'"

@@ -1,30 +1,30 @@
 <template>
-  <ModalDialog :title="$t('import_organize.title')" :width="520" position-key="import-organize" @cancel="close">
+  <ModalDialog class="w-130" :title="$t('import_organize.title')" position-key="import-organize" @cancel="close">
     <div class="space-y-2 select-none">
-      <section class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
-        <div class="font-bold uppercase text-[10px] tracking-widest text-base-content/30">{{ $t('import_organize.section_folders') }}</div>
-        <div class="grid grid-cols-[84px_1fr] gap-x-4 gap-y-2 items-start px-1 text-xs">
-          <div class="min-h-6 flex items-center text-[11px] text-base-content/30">{{ $t('import_organize.source') }}</div>
+      <section class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
+        <div class="font-bold uppercase text-xs tracking-widest text-base-content/30">{{ $t('import_organize.section_folders') }}</div>
+        <div class="grid grid-cols-[7rem_minmax(0,1fr)] gap-x-4 gap-y-2 items-start px-1 text-sm">
+          <div class="min-h-6 flex items-center text-sm text-base-content/30">{{ $t('import_organize.source') }}</div>
           <div class="min-w-0 min-h-6 flex items-center justify-between gap-2">
-            <input v-if="sourcePath" readonly :value="sourcePath" :title="sourcePath" class="w-full bg-transparent border-none p-0 text-[12px] text-base-content/70 focus:outline-none focus:ring-0" />
+            <input v-if="sourcePath" readonly :value="sourcePath" :title="sourcePath" class="w-full bg-transparent border-none p-0 text-sm text-base-content/70 focus:outline-none focus:ring-0" />
             <button v-else class="btn btn-primary btn-sm rounded-box" :disabled="locked" @click="chooseSource">
               <IconDownload class="w-4 h-4" />{{ $t('album.edit.select_folder') }}
             </button>
             <TButton v-if="sourcePath" :icon="IconDownload" :selected="true" :disabled="locked" :tooltip="$t('album.edit.select_folder')" @click="chooseSource" />
           </div>
 
-          <div class="min-h-6 flex items-center text-[11px] text-base-content/30">{{ $t('import_organize.destination') }}</div>
+          <div class="min-h-6 flex items-center text-sm text-base-content/30">{{ $t('import_organize.destination') }}</div>
           <div class="min-w-0 space-y-2">
             <div class="min-w-0 min-h-6 flex items-center">
-              <input readonly :value="destinationPath" :title="destinationPath" class="w-full bg-transparent border-none p-0 text-[12px] text-base-content/70 focus:outline-none focus:ring-0" />
+              <input readonly :value="destinationPath" :title="destinationPath" class="w-full bg-transparent border-none p-0 text-sm text-base-content/70 focus:outline-none focus:ring-0" />
             </div>
             <div :inert="locked" class="max-h-44 overflow-y-auto rounded-box bg-base-100/40 border border-base-content/10 p-1" :class="{ 'opacity-60': locked }">
               <AlbumFolder :children="destinationTree ? [destinationTree] : []" :albumId="Number(album.id)" :rootPath="album.path" :allowContextMenu="false" />
             </div>
           </div>
 
-          <label class="min-h-6 flex items-center text-[11px] text-base-content/30" for="import-layout">{{ $t('import_organize.folder_layout') }}</label>
-          <select id="import-layout" v-model="layout" :disabled="locked" class="select select-bordered select-xs w-full text-[12px]">
+          <label class="min-h-6 flex items-center text-sm text-base-content/30" for="import-layout">{{ $t('import_organize.folder_layout') }}</label>
+          <select id="import-layout" v-model="layout" :disabled="locked" class="select select-bordered select-xs w-full text-sm">
             <option value="day">{{ $t('import_organize.layout_day') }}</option>
             <option value="month">{{ $t('import_organize.layout_month') }}</option>
             <option value="year">{{ $t('import_organize.layout_year') }}</option>
@@ -33,11 +33,11 @@
         </div>
       </section>
 
-      <section class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
-        <div class="font-bold uppercase text-[10px] tracking-widest text-base-content/30">{{ $t('import_organize.section_status') }}</div>
-        <div v-if="!running && !completed" class="grid grid-cols-[84px_1fr] gap-x-4 gap-y-1.5 items-center px-1 text-xs">
-          <div class="min-h-6 flex items-center text-[11px] text-base-content/30">{{ $t('import_organize.to_import') }}</div>
-          <div class="min-h-6 flex items-center text-[12px] text-base-content/70" :class="{ 'animate-pulse': counting }">
+      <section class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
+        <div class="font-bold uppercase text-xs tracking-widest text-base-content/30">{{ $t('import_organize.section_status') }}</div>
+        <div v-if="!running && !completed" class="grid grid-cols-[7rem_minmax(0,1fr)] gap-x-4 gap-y-1.5 items-center px-1 text-sm">
+          <div class="min-h-6 flex items-center text-sm text-base-content/30">{{ $t('import_organize.to_import') }}</div>
+          <div class="min-h-6 flex items-center text-sm text-base-content/70" :class="{ 'animate-pulse': counting }">
             <span v-if="!sourcePath">{{ $t('import_organize.source_placeholder') }}</span>
             <span v-else-if="counting">{{ $t('album.edit.files_counting') }}</span>
             <span v-else-if="sourceSummary">{{ $t('album.edit.files_count', { count: sourceSummary.count.toLocaleString(), size: formatFileSize(sourceSummary.size) }) }}</span>
@@ -59,7 +59,7 @@
         <div v-if="importError" role="alert" class="px-1 text-xs text-error/70 wrap-break-word">{{ importError }}</div>
       </section>
     </div>
-    <div class="mt-4 flex justify-end gap-4">
+    <div class="mt-4 flex justify-end gap-4 select-none">
       <button v-if="!running" class="t-button-default" @click="close">{{ completed ? $t('msgbox.close') : $t('msgbox.cancel') }}</button>
       <button v-if="completed && cancelled" class="t-button-primary" @click="continueImport">{{ $t('import_organize.continue') }}</button>
       <button v-if="!running && !completed" class="t-button-primary" :disabled="!sourcePath || counting || !destinationTree" @click="startImport">{{ $t('import_organize.import') }}</button>

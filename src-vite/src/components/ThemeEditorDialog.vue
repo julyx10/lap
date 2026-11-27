@@ -1,14 +1,14 @@
 <template>
-  <ModalDialog :title="$t('settings.general.theme')" :width="560" @cancel="$emit('close')">
+  <ModalDialog class="w-140" :title="$t('settings.general.theme')" @cancel="$emit('close')">
     <div class="max-h-[70vh] overflow-y-auto pr-1 space-y-3 select-none">
-      <div class="grid grid-cols-[90px_minmax(0,1fr)] items-center gap-2 text-sm">
+      <div class="grid grid-cols-[5.625rem_minmax(0,1fr)] items-center gap-2 text-sm">
         <span class="text-base-content/50">{{ $t('msgbox.batch_rename.name') }}</span>
         <input v-model="name" class="input input-sm w-full" maxlength="80" />
       </div>
       <div class="border-t border-base-content/10 pt-3">
         <div class="mb-2 text-xs font-bold uppercase tracking-widest text-base-content/30">Colors</div>
         <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <div v-for="[token, label] in THEME_COLOR_TOKENS" :key="token" class="flex items-center gap-2 text-xs">
+          <div v-for="[token, label] in THEME_COLOR_TOKENS" :key="token" class="flex items-center gap-2 text-sm">
             <input
               type="color"
               :aria-label="label"

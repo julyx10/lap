@@ -1,12 +1,12 @@
 <template>
-  <ModalDialog :title="isNewAlbum ? $t('album.edit.title_add') : $t('album.edit.title')" :width="460" position-key="album-edit" @cancel="clickCancel">
-    <div role="tablist" class="sidebar-header-tabs shrink-0" :aria-label="$t('album.edit.title')">
+  <ModalDialog class="w-115" :title="isNewAlbum ? $t('album.edit.title_add') : $t('album.edit.title')" position-key="album-edit" @cancel="clickCancel">
+    <div role="tablist" class="sidebar-header-tabs shrink-0 select-none" :aria-label="$t('album.edit.title')">
       <button
         v-for="tab in ['general', 'exclusions']"
         :key="tab"
         type="button"
         role="tab"
-        class="sidebar-header-tab"
+        class="sidebar-header-tab cursor-pointer"
         :class="{ 'tab-active': activeTab === tab }"
         :aria-selected="activeTab === tab"
         @click="activeTab = tab"
@@ -17,20 +17,20 @@
     <section v-show="activeTab === 'general'" class="space-y-2 select-none">
 
       <!-- General Information -->
-      <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+      <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
         <div class="flex items-center gap-2 text-base-content/30">
-          <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('album.edit.section_general') }}</span>
+          <span class="font-bold uppercase text-xs tracking-widest">{{ $t('album.edit.section_general') }}</span>
         </div>
-        <div class="w-full grid grid-cols-[84px_1fr] gap-x-4 gap-y-1.5 items-center px-1 text-xs">
+        <div class="w-full grid grid-cols-[8rem_minmax(0,1fr)] gap-x-4 gap-y-1.5 items-center px-1 text-sm">
           <!-- Folder -->
-          <div class="h-6 flex items-center text-[11px] text-base-content/30">{{ $t('album.edit.folder') }}</div>
+          <div class="min-h-6 flex items-center text-sm text-base-content/30">{{ $t('album.edit.folder') }}</div>
           <div class="min-h-6 flex flex-col justify-center gap-0.5">
             <div class="flex items-center justify-between gap-x-2">
             <input v-if="selectedFolder !== ''"
               type="text"
               readonly
               :value="selectedFolder"
-              class="w-full bg-transparent border-none p-0 text-[12px] text-base-content/70 focus:border-none focus:ring-0 focus:outline-none"
+              class="w-full bg-transparent border-none p-0 text-sm text-base-content/70 focus:border-none focus:ring-0 focus:outline-none"
             />
             <IconExclamation v-if="!isNewAlbum && album?.is_accessible === false" class="size-4 shrink-0 text-warning/70" :aria-label="t('offline.original_unavailable')" />
             <button v-if="selectedFolder === ''"
@@ -49,7 +49,7 @@
           </div>
 
           <!-- Name -->
-          <div class="h-6 flex items-center text-[11px] text-base-content/30">{{ $t('album.edit.name') }}</div>
+          <div class="min-h-6 flex items-center text-sm text-base-content/30">{{ $t('album.edit.name') }}</div>
           <div class="flex min-h-6 items-center">
             <input
               ref="inputNameRef"
@@ -57,12 +57,12 @@
               type="text"
               maxlength="255"
               :disabled="selectedFolder === ''"
-              class="w-full input input-xs h-6 px-1.5 text-[12px] font-medium"
+              class="w-full input input-xs h-6 px-1.5 text-sm font-medium"
             />
           </div>
 
           <!-- Description -->
-          <div class="h-6 flex items-start pt-1 text-[11px] text-base-content/30">{{ $t('album.edit.description') }}</div>
+          <div class="min-h-6 flex items-start pt-1 text-sm text-base-content/30">{{ $t('album.edit.description') }}</div>
           <div>
             <textarea
               v-if="showDescription"
@@ -72,7 +72,7 @@
               maxlength="1024"
               :placeholder="$t('album.edit.description_placeholder')"
               :disabled="selectedFolder === ''"
-              class="w-full textarea textarea-sm min-h-14 max-h-50 px-1.5 text-[12px] font-medium"
+              class="w-full textarea textarea-sm min-h-14 max-h-50 px-1.5 text-sm font-medium"
             ></textarea>
             <TButton
               v-else
@@ -85,24 +85,24 @@
           </div>
 
           <template v-if="!isNewAlbum">
-            <div class="h-6 flex items-center text-[11px] text-base-content/30">{{ $t('album.edit.created_at') }}</div>
-            <div class="h-6 flex items-center text-[12px] text-base-content/70">{{ createdAt }}</div>
-            <div class="h-6 flex items-center text-[11px] text-base-content/30">{{ $t('album.edit.modified_at') }}</div>
-            <div class="h-6 flex items-center text-[12px] text-base-content/70">{{ modifiedAt }}</div>
+            <div class="min-h-6 flex items-center text-sm text-base-content/30">{{ $t('album.edit.created_at') }}</div>
+            <div class="min-h-6 flex items-center text-sm text-base-content/70">{{ createdAt }}</div>
+            <div class="min-h-6 flex items-center text-sm text-base-content/30">{{ $t('album.edit.modified_at') }}</div>
+            <div class="min-h-6 flex items-center text-sm text-base-content/70">{{ modifiedAt }}</div>
           </template>
         </div>
       </div>
 
       <!-- Scan Status -->
-      <div v-if="selectedFolder !== ''" class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+      <div v-if="selectedFolder !== ''" class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
         <div class="flex items-center gap-2 text-base-content/30">
-          <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('album.edit.section_scan') }}</span>
+          <span class="font-bold uppercase text-xs tracking-widest">{{ $t('album.edit.section_scan') }}</span>
         </div>
-        <div class="w-full grid grid-cols-[84px_1fr] gap-x-4 gap-y-1.5 items-center px-1 text-xs select-none">
-          <div class="h-6 flex items-center text-[11px] text-base-content/30">
+        <div class="w-full grid grid-cols-[8rem_minmax(0,1fr)] gap-x-4 gap-y-1.5 items-center px-1 text-sm select-none">
+          <div class="min-h-6 flex items-center text-sm text-base-content/30">
             {{ isNewAlbum ? $t('album.edit.files_to_scan') : (isScanning ? $t('album.edit.scanning') : $t('album.edit.scanned_files')) }}
           </div>
-          <div class="h-6 flex items-center text-[12px] text-base-content/70" :class="{ 'animate-pulse': scanDisplayCount < 0 }">
+          <div class="min-h-6 flex items-center text-sm text-base-content/70" :class="{ 'animate-pulse': scanDisplayCount < 0 }">
             <template v-if="isScanning">
               {{ $t('album.edit.scanning_files', { current: scanDisplayCount.toLocaleString(), total: scanTotalCount.toLocaleString(), size: formatFileSize(scanTotalSize) }) }}
             </template>
@@ -115,38 +115,38 @@
             </template>
           </div>
           <template v-if="!isNewAlbum || isScanning">
-          <div v-if="indexedSummaryCount > 0" class="h-6 flex items-center text-[11px] text-base-content/30">{{ $t('album.edit.indexed_files') }}</div>
-          <div v-if="indexedSummaryCount > 0" class="h-6 flex items-center text-[12px] text-base-content/70">
+          <div v-if="indexedSummaryCount > 0" class="min-h-6 flex items-center text-sm text-base-content/30">{{ $t('album.edit.indexed_files') }}</div>
+          <div v-if="indexedSummaryCount > 0" class="min-h-6 flex items-center text-sm text-base-content/70">
             {{ $t('album.edit.files_count', { count: indexedSummaryCount.toLocaleString(), size: formatFileSize(indexedSummarySize) }) }}
           </div>
-          <div v-if="displaySkippedCount > 0" class="h-6 flex items-center text-[11px] text-base-content/30">{{ $t('album.edit.skipped_files') }}</div>
-          <div v-if="displaySkippedCount > 0" class="h-6 flex items-center text-[12px] text-base-content/70">
+          <div v-if="displaySkippedCount > 0" class="min-h-6 flex items-center text-sm text-base-content/30">{{ $t('album.edit.skipped_files') }}</div>
+          <div v-if="displaySkippedCount > 0" class="min-h-6 flex items-center text-sm text-base-content/70">
             {{ $t('album.edit.files_count', { count: displaySkippedCount.toLocaleString(), size: formatFileSize(displaySkippedSize) }) }}
           </div>
-          <div v-if="!isScanning && mergedFileCount > 0" class="min-h-6 flex items-center gap-0.5 text-[11px] leading-4 text-base-content/30">
+          <div v-if="!isScanning && mergedFileCount > 0" class="min-h-6 flex items-center gap-0.5 text-sm leading-4 text-base-content/30">
             <span>{{ $t('album.edit.merged_files') }}</span>
             <InfoTooltip v-if="activeTab === 'general'" :label="$t('album.edit.merged_files')" :text="$t('album.edit.merged_files_hint')" />
           </div>
-          <div v-if="!isScanning && mergedFileCount > 0" class="h-6 flex items-center text-[12px] text-base-content/70">
+          <div v-if="!isScanning && mergedFileCount > 0" class="min-h-6 flex items-center text-sm text-base-content/70">
             {{ formatFileCount(mergedFileCount, mergedFileSize) }}
           </div>
-          <div v-if="displayFailedCount > 0" class="h-6 flex items-center text-[11px] text-error/70">{{ $t('album.edit.failed_files') }}</div>
-          <div v-if="displayFailedCount > 0" class="h-6 flex items-center text-[12px] text-error/70">
+          <div v-if="displayFailedCount > 0" class="min-h-6 flex items-center text-sm text-error/70">{{ $t('album.edit.failed_files') }}</div>
+          <div v-if="displayFailedCount > 0" class="min-h-6 flex items-center text-sm text-error/70">
             {{ formatFileCount(displayFailedCount, displayFailedSize) }}
           </div>
-          <div v-if="!isScanning" class="h-6 flex items-center text-[11px] text-base-content/30">{{ $t('album.edit.last_scan_time') }}</div>
-          <div v-if="!isScanning" class="h-6 flex items-center text-[12px] text-base-content/70">{{ lastScanTime }}</div>
+          <div v-if="!isScanning" class="min-h-6 flex items-center text-sm text-base-content/30">{{ $t('album.edit.last_scan_time') }}</div>
+          <div v-if="!isScanning" class="min-h-6 flex items-center text-sm text-base-content/70">{{ lastScanTime }}</div>
           </template>
         </div>
       </div>
     </section>
 
-    <section v-show="activeTab === 'exclusions'" class="space-y-2 text-xs max-h-[60vh] overflow-y-auto pr-1 select-none">
+    <section v-show="activeTab === 'exclusions'" class="space-y-2 text-sm max-h-[60vh] overflow-y-auto pr-1 select-none">
       <fieldset :disabled="busy || !selectedFolder" class="space-y-2">
-        <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+        <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
           <div class="flex flex-col gap-0.5">
             <div class="flex items-center gap-2 text-base-content/30">
-              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('album.edit.file_types') }}</span>
+              <span class="font-bold uppercase text-xs tracking-widest">{{ $t('album.edit.file_types') }}</span>
             </div>
             <div id="album-file-types-hint" class="text-xs text-base-content/30">{{ $t('album.edit.file_types_hint') }}</div>
           </div>
@@ -158,11 +158,11 @@
           </div>
           <p v-if="fileTypes === 0" class="text-error">{{ $t('album.edit.file_types_required') }}</p>
         </div>
-        <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+        <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
           <div class="flex items-center justify-between gap-4 rounded-box hover:bg-base-100/10 transition-colors duration-200">
             <div class="min-w-0 flex flex-col gap-0.5">
               <div class="flex items-center gap-2 text-base-content/30">
-                <label for="album-pixel-filter" class="font-bold uppercase text-[10px] tracking-widest">{{ $t('album.edit.pixel_filter') }}</label>
+                <label for="album-pixel-filter" class="font-bold uppercase text-xs tracking-widest">{{ $t('album.edit.pixel_filter') }}</label>
               </div>
               <div id="album-pixel-hint" class="text-xs text-base-content/30">{{ $t('album.edit.pixel_hint') }}</div>
             </div>
@@ -172,9 +172,9 @@
             </select>
           </div>
         </div>
-        <div class="rounded-box p-2 space-y-1 bg-base-300/30 border border-base-content/5 shadow-sm">
+        <div class="rounded-box p-2 space-y-1 bg-base-300/30 border border-base-content/5 select-none">
             <div class="flex items-center gap-2 text-base-content/30">
-              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('album.edit.excluded_folders') }}</span>
+              <span class="font-bold uppercase text-xs tracking-widest">{{ $t('album.edit.excluded_folders') }}</span>
             </div>
           <p class="text-base-content/30">{{ $t('album.edit.excluded_hint') }}</p>
           <div
@@ -219,28 +219,28 @@
       </fieldset>
     </section>
 
-    <div v-if="selectedFolder && activeTab === 'exclusions'" class="mt-2 rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm select-none" role="status" aria-live="polite" :aria-busy="previewLoading">
+    <div v-if="selectedFolder && activeTab === 'exclusions'" class="mt-2 rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 select-none" role="status" aria-live="polite" :aria-busy="previewLoading">
       <div class="flex items-center gap-2 text-base-content/30">
-        <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('album.edit.section_scan_preview') }}</span>
+        <span class="font-bold uppercase text-xs tracking-widest">{{ $t('album.edit.section_scan_preview') }}</span>
       </div>
-      <div class="grid grid-cols-[84px_1fr] gap-x-4 gap-y-1.5 items-center px-1 text-xs">
-        <div class="min-h-6 flex items-center text-[11px] text-base-content/30">{{ $t('album.edit.files_to_scan') }}</div>
-        <div class="min-h-6 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-base-content/70">
+      <div class="grid grid-cols-[8rem_minmax(0,1fr)] gap-x-4 gap-y-1.5 items-center px-1 text-sm">
+        <div class="min-h-6 flex items-center text-sm text-base-content/30">{{ $t('album.edit.files_to_scan') }}</div>
+        <div class="min-h-6 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-base-content/70">
           <span v-if="previewError" class="text-warning">{{ $t('album.edit.preview_unavailable') }}</span>
           <template v-else>
             <span v-if="previewCount !== null">{{ $t('album.edit.files_count', { count: previewCount.toLocaleString(), size: formatFileSize(previewSize) }) }}</span>
-            <span v-if="previewLoading" class="flex items-center gap-1 text-[11px] text-base-content/30">
+            <span v-if="previewLoading" class="flex items-center gap-1 text-sm text-base-content/30">
               <span class="loading loading-spinner loading-xs" aria-hidden="true"></span>
               {{ $t(previewCount === null ? 'album.edit.files_counting' : 'album.edit.preview_updating') }}
             </span>
           </template>
         </div>
-        <div class="min-h-6 flex items-center text-[11px] text-base-content/30">{{ $t('album.edit.excluded_files') }}</div>
-        <div class="min-h-6 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-base-content/70">
+        <div class="min-h-6 flex items-center text-sm text-base-content/30">{{ $t('album.edit.excluded_files') }}</div>
+        <div class="min-h-6 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-base-content/70">
           <span v-if="previewError" class="text-warning">{{ $t('album.edit.preview_unavailable') }}</span>
           <template v-else>
             <span v-if="excludedPreviewCount !== null">{{ $t('album.edit.files_count', { count: excludedPreviewCount.toLocaleString(), size: formatFileSize(excludedPreviewSize) }) }}</span>
-            <span v-if="previewLoading" class="flex items-center gap-1 text-[11px] text-base-content/30">
+            <span v-if="previewLoading" class="flex items-center gap-1 text-sm text-base-content/30">
               <span class="loading loading-spinner loading-xs" aria-hidden="true"></span>
               {{ $t(excludedPreviewCount === null ? 'album.edit.files_counting' : 'album.edit.preview_updating') }}
             </span>
@@ -250,7 +250,7 @@
     </div>
 
     <!-- cancel and OK buttons -->
-    <div class="mt-4 flex justify-end space-x-4">
+    <div class="mt-4 flex justify-end space-x-4 select-none">
       <button 
         class="t-button-default"
         :disabled="busy"

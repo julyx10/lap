@@ -25,7 +25,7 @@
       <div class="flex-1 min-w-0 flex flex-col items-center justify-center gap-2">
         <div
           ref="containerRef"
-          class="relative w-full flex-1 rounded-box overflow-hidden border border-base-content/5 bg-base-300/30 shadow-sm cursor-default"
+          class="relative w-full flex-1 rounded-box overflow-hidden border border-base-content/5 bg-base-300/30 cursor-default"
           @pointerdown="handlePreviewPointerDown"
           @pointerup="handlePreviewPointerUp"
           @pointerleave="handlePreviewPointerUp"
@@ -206,7 +206,7 @@
         </div>
 
         <template v-if="activeEditorTab === 'edit'">
-        <section class="rounded-box p-3 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+        <section class="rounded-box p-3 space-y-2 bg-base-300/30 border border-base-content/5">
           <div class="flex items-center justify-between gap-2">
             <div class="text-[11px] font-bold uppercase tracking-[0.22em] text-base-content/30">{{ $t('msgbox.image_editor.transform') }}</div>
             <TButton
@@ -246,7 +246,7 @@
           </div>
         </section>
 
-        <section class="rounded-box p-3 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+        <section class="rounded-box p-3 space-y-2 bg-base-300/30 border border-base-content/5">
           <div class="flex items-center justify-between gap-2">
             <div class="text-[11px] font-bold uppercase tracking-[0.22em] text-base-content/30">{{ $t('msgbox.image_editor.crop') }}</div>
             <TButton
@@ -295,7 +295,7 @@
           </div>
         </section>
 
-        <section class="rounded-box p-3 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+        <section class="rounded-box p-3 space-y-2 bg-base-300/30 border border-base-content/5">
           <div class="flex items-center justify-between gap-2">
             <div class="text-[11px] font-bold uppercase tracking-[0.22em] text-base-content/30">{{ $t('msgbox.image_editor.resize') }}</div>
             <TButton
@@ -376,7 +376,7 @@
         </template>
 
         <template v-else>
-        <section class="rounded-box p-3 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+        <section class="rounded-box p-3 space-y-2 bg-base-300/30 border border-base-content/5">
           <div class="flex items-center justify-between gap-2">
             <div class="text-[11px] font-bold uppercase tracking-[0.22em] text-base-content/30">{{ $t('msgbox.image_editor.histogram') }}</div>
           </div>
@@ -393,7 +393,7 @@
           />
         </section>
 
-        <section class="rounded-box p-3 space-y-2 border border-base-content/5 shadow-sm bg-base-300/30">
+        <section class="rounded-box p-3 space-y-2 border border-base-content/5 bg-base-300/30">
           <div class="flex items-center justify-between gap-2">
             <span class="text-[11px] font-bold uppercase tracking-[0.22em] text-base-content/30">{{ $t('msgbox.image_editor.presets.title') }}</span>
             <div class="flex items-center gap-1">
@@ -448,7 +448,7 @@
           </div>
         </section>
 
-        <section class="rounded-box p-3 space-y-2 border border-base-content/5 shadow-sm bg-base-300/30">
+        <section class="rounded-box p-3 space-y-2 border border-base-content/5 bg-base-300/30">
           <div class="flex items-center justify-between gap-2">
             <span class="text-[11px] font-bold uppercase tracking-[0.22em] text-base-content/30">{{ $t('msgbox.image_editor.adjustments') }}</span>
             <TButton

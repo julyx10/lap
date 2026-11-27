@@ -157,7 +157,7 @@
                   >{{ album.name }}</span>
                   <span
                     v-if="album.is_accessible === false"
-                    class="shrink-0 rounded-box bg-warning/10 px-1.5 py-0.5 text-[10px] leading-none text-warning/80"
+                    class="shrink-0 rounded-box bg-warning/10 px-1.5 py-0.5 text-xs leading-none text-warning/80"
                   >{{ t('offline.badge') }}</span>
                   <button
                     v-if="getAlbumBadgeState(album) === 'scanning'"
@@ -217,7 +217,7 @@
             >
               <div
                 v-if="(isFolderFiltering ? shouldShowFilteredFolderTree(album.id) : album.is_expanded) && getAlbumQueueIndex(album.id, libConfig.index.albumQueue as any[]) === -1"
-                class="ml-6 mr-2 my-1 p-1 rounded-box bg-base-300/30 border border-base-content/5 shadow-sm"
+                class="ml-6 mr-2 my-1 p-1 rounded-box bg-base-300/30 border border-base-content/5"
               >
                 <AlbumFolder
                   :ref="(el: any) => { if (el) albumFolderRefs[album.id] = el; else delete albumFolderRefs[album.id]; }"

@@ -28,7 +28,7 @@
         <div v-if="config.settings.tabIndex === SETTINGS_TAB.GENERAL" class="flex flex-col space-y-2">
           
           <!-- languange -->
-          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
             <div class="flex items-center gap-2 text-base-content/30">
               <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.general.section_language') }}</span>
             </div>
@@ -52,7 +52,7 @@
           </div>
 
           <!-- appearance -->
-          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
             <div class="flex items-center gap-2 text-base-content/30">
               <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.general.section_appearance') }}</span>
             </div>
@@ -98,7 +98,7 @@
           </div>
 
           <!-- display -->
-          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
             <div class="flex items-center gap-2 text-base-content/30">
               <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.general.section_interface') }}</span>
             </div>
@@ -136,7 +136,7 @@
         <div v-else-if="config.settings.tabIndex === SETTINGS_TAB.GRID" class="flex flex-col space-y-2">
 
           <!-- grid view -->
-          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
             <div class="flex items-center gap-2 text-base-content/30">
               <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.grid.section_grid') }}</span>
             </div>
@@ -199,7 +199,7 @@
           </div>
 
           <!-- filmstrip -->
-          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
             <div class="flex items-center gap-2 text-base-content/30">
               <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.grid.filmstrip_view.title') }}</span>
             </div>
@@ -214,7 +214,7 @@
           </div>
 
           <!-- map -->
-          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
             <div class="flex items-center gap-2 text-base-content/30">
               <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.grid.section_map') }}</span>
             </div>
@@ -234,7 +234,7 @@
         <div v-else-if="config.settings.tabIndex === SETTINGS_TAB.IMAGE_VIEW" class="flex flex-col space-y-2">
 
           <!-- navigation -->
-          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
             <div class="flex items-center gap-2 text-base-content/30">
               <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.image_view.section_navigation') }}</span>
             </div>
@@ -274,7 +274,7 @@
           </div>
 
           <!-- view -->
-          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
             <div class="flex items-center gap-2 text-base-content/30">
               <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.image_view.section_view') }}</span>
             </div>
@@ -300,7 +300,7 @@
           </div>
 
           <!-- video -->
-          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
             <div class="flex items-center gap-2 text-base-content/30">
               <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.image_view.section_video') }}</span>
             </div>
@@ -322,7 +322,7 @@
 
         <!-- RAW Tab -->
         <div v-else-if="config.settings.tabIndex === SETTINGS_TAB.RAW" class="flex flex-col space-y-2">
-          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
             <div class="flex items-center gap-2 text-base-content/30">
               <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.raw.section_pairs') }}</span>
             </div>
@@ -344,7 +344,7 @@
               </select>
             </div>
           </div>
-          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
             <div class="flex items-center gap-2 text-base-content/30">
               <span id="raw-preview-heading" class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.raw.preview_mode') }}</span>
             </div>
@@ -361,13 +361,24 @@
         </div>
 
         <!-- Metadata Tab -->
-        <SettingsMetadata v-else-if="config.settings.tabIndex === SETTINGS_TAB.METADATA" />
+        <div v-else-if="config.settings.tabIndex === SETTINGS_TAB.METADATA" class="flex flex-col space-y-2">
+          <section aria-labelledby="metadata-import-heading" class="rounded-box p-3 space-y-3 bg-base-300/30 border border-base-content/5">
+            <h2 id="metadata-import-heading" class="font-bold uppercase text-[10px] tracking-widest text-base-content/50">{{ $t('settings.metadata.section_import') }}</h2>
+            <div class="flex items-center justify-between gap-4">
+              <label for="metadata-import" class="min-w-0 flex flex-col gap-1 text-sm leading-5">
+                <span>{{ $t('settings.metadata.import') }}</span>
+                <span id="metadata-import-hint" class="text-xs text-base-content/30">{{ $t('settings.metadata.import_hint') }}</span>
+              </label>
+              <input id="metadata-import" type="checkbox" class="toggle toggle-primary toggle-sm shrink-0" v-model="config.settings.importXmpSidecars" aria-describedby="metadata-import-hint" />
+            </div>
+          </section>
+        </div>
 
         <!-- Search Tab -->
         <div v-else-if="config.settings.tabIndex === SETTINGS_TAB.IMAGE_SEARCH" class="flex flex-col overflow-hidden space-y-2">
 
           <!-- image search -->
-          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
             <div class="flex items-center gap-2 text-base-content/30">
               <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.image_search.search_image') }}</span>
             </div>
@@ -426,7 +437,7 @@
           </div>
 
           <!-- similar photos -->
-          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
             <div class="flex items-center gap-2 text-base-content/30">
               <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.similar_photos.title') }}</span>
             </div>
@@ -442,7 +453,7 @@
           </div>
 
           <!-- face recognition -->
-          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
             <div class="flex items-center gap-2 text-base-content/30">
               <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.face_recognition.title') }}</span>
             </div>
@@ -477,7 +488,7 @@
 
         <!-- Advanced Tab -->
         <div v-else-if="config.settings.tabIndex === SETTINGS_TAB.ADVANCED" class="flex flex-col space-y-2">
-          <section class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm" aria-labelledby="file-delete-settings">
+          <section class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5" aria-labelledby="file-delete-settings">
             <h2 id="file-delete-settings" class="font-bold uppercase text-[10px] tracking-widest text-base-content/30">{{ $t('settings.advanced.file_delete_section') }}</h2>
             <label class="flex items-start justify-between gap-4 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
               <span class="min-w-0 flex flex-col gap-0.5 text-sm leading-5">
@@ -493,7 +504,7 @@
 
 
           <!-- thumbnail cache -->
-          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
             <div class="flex items-center gap-2 text-base-content/30">
               <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.advanced.thumbnail_cache.section_thumbnail_cache') }}</span>
             </div>
@@ -554,7 +565,7 @@
           </div>
 
           <!-- data -->
-          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
             <div class="flex items-center gap-2 text-base-content/30">
               <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.database.section_storage') }}</span>
             </div>
@@ -613,7 +624,7 @@
           </div>
 
           <!-- map -->
-          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
             <div class="flex items-center gap-2 text-base-content/30">
               <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.advanced.map.section_map') }}</span>
             </div>
@@ -657,7 +668,7 @@
           </div>
 
           <!-- diagnostics -->
-          <!-- <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+          <!-- <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
             <div class="flex items-center gap-2 text-base-content/30">
               <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.advanced.section_diagnostics') }}</span>
             </div>
@@ -675,7 +686,7 @@
           <div
             v-for="section in shortcutSections"
             :key="section.key"
-            class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm"
+            class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5"
           >
             <div class="flex items-center gap-2 text-base-content/30">
               <span class="font-bold uppercase text-[10px] tracking-widest">{{ section.title }}</span>
@@ -737,7 +748,7 @@
       @delete="deleteCustomTheme"
       @close="showThemeEditor = false"
     />
-    <ModalDialog v-if="cleanupOpen" :title="$t(cleanupKey + '.title')" :width="440" hide-close>
+    <ModalDialog class="w-110" v-if="cleanupOpen" :title="$t(cleanupKey + '.title')" hide-close>
       <div class="space-y-2 text-sm" role="status">
         <template v-if="cleanupRunning">
           <p class="break-words">{{ cleanupTotal
@@ -751,7 +762,7 @@
           <p v-else-if="!cleanupFailures.length">{{ $t(cleanupKey + '.empty') }}</p>
           <template v-if="cleanupFailures.length">
             <p class="text-error">{{ $t(cleanupKey + '.failed') }}</p>
-            <ul class="max-h-32 overflow-y-auto list-disc pl-5 break-words">
+            <ul class="max-h-32 overflow-y-auto list-disc pl-5 wrap-break-word">
               <li v-for="failure in cleanupFailures" :key="failure.id">{{ failure.name }} — {{ failure.error }}</li>
             </ul>
           </template>
@@ -762,16 +773,15 @@
       </div>
     </ModalDialog>
 
-    <ModalDialog
+    <ModalDialog class="w-120"
       v-if="showThumbnailMigrationDialog"
       :title="$t('settings.advanced.thumbnail_cache.current_location')"
-      :width="480"
       @cancel="cancelThumbnailMigration"
     >
       <div class="space-y-3">
         <p class="text-xs text-base-content/60">{{ $t('settings.advanced.thumbnail_cache.migration_hint') }}</p>
         <div class="text-xs text-base-content/75 break-all">{{ $t('settings.advanced.thumbnail_cache.new_location', { path: pendingThumbnailCacheDir === null ? $t('settings.database.system_default') : `${pendingThumbnailCacheDir}/lap-thumbnail-cache` }) }}</div>
-        <section class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+        <section class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
           <div class="font-bold uppercase text-[10px] tracking-widest text-base-content/30">{{ $t('settings.advanced.thumbnail_cache.migration_progress') }}</div>
           <div class="space-y-2 px-1 text-xs" role="status" aria-live="polite">
             <div class="flex items-center justify-between gap-2 text-base-content/75">
@@ -779,7 +789,7 @@
               <span v-if="thumbnailMigrationPreview === 'ready' && thumbnailCacheProgress.phase !== 'rolling_back'" class="tabular-nums shrink-0">{{ formatMigrationCount(thumbnailCacheProgress.completed) }} / {{ formatMigrationCount(thumbnailCacheProgress.total) }}</span>
             </div>
             <progress class="progress progress-primary w-full" :value="thumbnailCacheProgress.completed" :max="Math.max(thumbnailCacheProgress.total, 1)" :aria-label="$t('settings.advanced.thumbnail_cache.migration_progress')"></progress>
-            <p v-if="thumbnailMigrationError" class="text-error/70 break-words" role="alert">{{ thumbnailMigrationError }}</p>
+            <p v-if="thumbnailMigrationError" class="text-error/70 wrap-break-word" role="alert">{{ thumbnailMigrationError }}</p>
           </div>
         </section>
       </div>
@@ -861,7 +871,6 @@ import { IconClose, IconEdit, IconRestore } from '@/common/icons';
 
 import TitleBar from '@/components/TitleBar.vue';
 import SettingsAbout from '@/components/SettingsAbout.vue';
-import SettingsMetadata from '@/components/SettingsMetadata.vue';
 import MessageBox from '@/components/MessageBox.vue';
 import StatusBarFieldsDialog from '@/components/StatusBarFieldsDialog.vue';
 import ThemeEditorDialog from '@/components/ThemeEditorDialog.vue';

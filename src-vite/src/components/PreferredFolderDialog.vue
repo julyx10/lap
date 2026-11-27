@@ -1,5 +1,5 @@
 <template>
-  <ModalDialog :title="$t('info_panel.dedup.keep_rules.add_folder')" :width="500" position-key="preferred-folder" @cancel="emit('cancel')">
+  <ModalDialog class="w-125" :title="$t('info_panel.dedup.keep_rules.add_folder')" position-key="preferred-folder" @cancel="emit('cancel')">
     <div class="h-[min(400px,55vh)] overflow-auto">
       <AlbumList ref="albumList" selection-source="local" :show-total-count="false" />
     </div>

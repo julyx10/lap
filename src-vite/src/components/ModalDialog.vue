@@ -3,20 +3,21 @@
     <Transition name="modal">
       <div v-if="visible" class="fixed inset-0 bg-black/30 z-600">
         <div
+          v-bind="$attrs"
           ref="modalDialogRef"
           role="dialog"
           aria-modal="true"
           :aria-label="title"
           tabindex="-1"
-          class="modal-dialog outline-none text-base-content/70 bg-base-200/80 backdrop-blur-md border border-base-content/30 rounded-box overflow-hidden flex flex-col"
-          :style="{ position: 'fixed', top: y + 'px', left: x + 'px', width: width + 'px', ...(height !== undefined && { height: height + 'px' }) }"
+          class="modal-dialog max-w-[calc(100vw-2rem)] max-h-[calc(100dvh-2rem)] outline-none text-sm text-base-content/70 bg-base-200/80 backdrop-blur-md border border-base-content/30 rounded-box overflow-hidden flex flex-col"
+          :style="{ position: 'fixed', top: y + 'px', left: x + 'px' }"
         >
         <!-- title bar -->
         <div
           class="p-3 flex items-center justify-between select-none cursor-default shrink-0"
           @mousedown="dragStart"
         >
-          <span class="min-w-0 flex-1">{{ title }}</span>
+          <span class="min-w-0 flex-1 text-base">{{ title }}</span>
           <div v-if="$slots['title-actions']" class="mr-2 shrink-0" @mousedown.stop>
             <slot name="title-actions"></slot>
           </div>
@@ -30,7 +31,7 @@
         </div>
 
         <!-- dialog content -->
-        <div class="px-3 pb-3 flex-1 min-h-0 flex flex-col">
+        <div class="px-3 pb-3 flex-1 min-h-0 flex flex-col overflow-y-auto">
           <slot></slot>
         </div>
       </div>
@@ -44,19 +45,13 @@ import { ref, onMounted, onBeforeUnmount, onUnmounted, nextTick } from 'vue';
 import { IconClose } from '@/common/icons';
 import TButton from '@/components/TButton.vue';
 
+defineOptions({ inheritAttrs: false });
+
 const props = defineProps({
   hideClose: Boolean,
   title: { 
     type: String, 
     required: true
-  },
-  width: {
-    type: Number,
-    default: 400
-  },
-  height: {
-    type: Number,
-    default: undefined // undefined means no height limit
   },
   // When provided, dialog position is persisted in localStorage under this key
   // and restored on next mount. Without it, dialog always centers on mount.
@@ -240,6 +235,12 @@ const clickCancel = () => {
 </script>
 
 <style scoped>
+@layer components {
+  .modal-dialog {
+    width: 25rem;
+  }
+}
+
 .modal-enter-active,
 .modal-leave-active {
   transition: opacity 0.2s ease-out;

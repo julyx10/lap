@@ -1,7 +1,7 @@
 <template>
-  <ModalDialog :title="$t('menu.file.refresh_file_info')" :width="440" @cancel="closeOrCancel">
-    <section class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
-      <div class="font-bold uppercase text-[10px] tracking-widest text-base-content/30">{{ $t('msgbox.file_refresh.status') }}</div>
+  <ModalDialog class="w-110" :title="$t('menu.file.refresh_file_info')" @cancel="closeOrCancel">
+    <section class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 select-none">
+      <div class="font-bold uppercase text-xs tracking-widest text-base-content/30">{{ $t('msgbox.file_refresh.status') }}</div>
       <div class="space-y-2 px-1 text-xs" role="status" aria-live="polite">
         <div class="flex items-center justify-between gap-2 text-base-content/75">
           <span>{{ $t(running ? (cancelled ? 'msgbox.file_refresh.cancelling' : 'msgbox.file_refresh.running') : cancelled ? 'msgbox.file_refresh.cancelled' : 'msgbox.file_refresh.complete') }}</span>
@@ -16,7 +16,7 @@
         </div>
       </div>
     </section>
-    <div class="mt-4 flex justify-end gap-4">
+    <div class="mt-4 flex justify-end gap-4 select-none">
       <button class="t-button-default" :disabled="running && cancelled" @click="closeOrCancel">
         {{ $t(running ? 'msgbox.cancel' : 'msgbox.close') }}
       </button>

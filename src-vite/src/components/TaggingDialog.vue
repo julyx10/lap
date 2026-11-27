@@ -1,7 +1,6 @@
 <template>
-  <ModalDialog
+  <ModalDialog class="w-125"
     :title="dialogTitle"
-    :width="500"
     :position-key="positionKey"
     @cancel="clickCancel"
   >

@@ -5,7 +5,9 @@
       class="relative inline-flex"
       @mouseenter="showTooltip"
       @mouseleave="hideTooltip"
+      @click="hideTooltip"
     >
+      <slot>
       <div
         class="btn btn-ghost btn-square rounded-box border-0 focus:outline-none shadow-none! flex flex-col text-base-content/70 hover:text-base-content"
         :class="[
@@ -53,6 +55,7 @@
           {{ text }}
         </span>
       </div>
+      </slot>
     </div>
     <Teleport to="body">
       <transition name="fade">

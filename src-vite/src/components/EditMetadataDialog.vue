@@ -1,7 +1,7 @@
 <template>
-  <ModalDialog :title="$t('file_info.edit_metadata')" :width="540" position-key="edit-metadata" @cancel="close">
+  <ModalDialog class="w-135" :title="$t('file_info.edit_metadata')" position-key="edit-metadata" @cancel="close">
     <form class="space-y-3 overflow-auto max-h-[70vh]" @submit.prevent="save" @keydown.esc.stop.prevent="close">
-      <div class="rounded-box p-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+      <div class="rounded-box p-2 bg-base-300/30 border border-base-content/5 select-none">
         <p v-if="!visibleFields.length" class="px-1 text-sm text-base-content/70">
           {{ $t('file_info.edit_metadata_no_fields') }}
         </p>
@@ -13,9 +13,9 @@
             class="min-w-0 flex flex-col gap-1"
             :class="{ 'col-span-2': !showTitleAndHeadline || !['e_title', 'e_headline'].includes(field.key) }"
           >
-            <span class="flex items-center justify-between gap-2 text-[11px] text-base-content/30">
+            <span class="flex items-center justify-between gap-2 text-sm text-base-content/30">
               <span>{{ $t(field.label) }}</span>
-              <span v-if="field.key === 'e_artist'" class="shrink-0 text-[10px]">
+              <span v-if="field.key === 'e_artist'" class="shrink-0 text-xs">
                 {{ $t('file_info.metadata_placeholders.e_artist_hint') }}
               </span>
             </span>
@@ -27,17 +27,17 @@
               :value="values[field.key]"
               :disabled="saving"
               :class="field.key === 'comments'
-                ? 'w-full textarea textarea-sm min-h-20 max-h-50 px-1.5 text-[12px] font-medium'
+                ? 'w-full textarea textarea-sm min-h-20 max-h-50 px-1.5 text-sm font-medium'
                 : field.key === 'e_artist'
-                  ? 'w-full textarea textarea-sm min-h-14 max-h-32 px-1.5 text-[12px] font-medium'
-                  : 'w-full input input-xs h-8 px-1.5 text-[12px] font-medium'"
+                  ? 'w-full textarea textarea-sm min-h-14 max-h-32 px-1.5 text-sm font-medium'
+                  : 'w-full input input-xs h-8 px-1.5 text-sm font-medium'"
               @input="update(field.key, $event)"
             />
           </label>
         </div>
       </div>
       <p v-if="failed" role="alert" class="text-error text-sm">{{ $t('file_info.metadata_save_failed') }}</p>
-      <div class="flex justify-end gap-2">
+      <div class="flex justify-end gap-2 select-none">
         <button type="button" class="t-button-default" :disabled="saving" @click="close">{{ $t('msgbox.cancel') }}</button>
         <button v-if="visibleFields.length" type="submit" class="t-button-primary" :disabled="saving">{{ $t('msgbox.save') }}</button>
       </div>

@@ -1,8 +1,6 @@
 <template>
-  <ModalDialog
+  <ModalDialog class="w-125 h-95"
     :title="$t('settings.database.backup_dialog_title')"
-    :width="500"
-    :height="380"
     @cancel="clickCancel"
   >
     <div class="flex flex-col flex-1 min-h-0 overflow-hidden select-none">
@@ -22,7 +20,7 @@
       </div>
 
       <!-- Library list -->
-      <div class="flex-1 overflow-y-auto border border-base-content/5 bg-base-300/30 shadow-sm rounded-box p-1">
+      <div class="flex-1 overflow-y-auto border border-base-content/5 bg-base-300/30 rounded-box p-1">
         <div
           v-for="lib in libraries"
           :key="lib.libraryId"
@@ -41,7 +39,7 @@
     </div>
 
     <!-- Buttons -->
-    <div class="flex justify-end items-center gap-2 shrink-0 pt-4">
+    <div class="flex justify-end items-center gap-2 shrink-0 pt-4 select-none">
       <button
         class="px-4 py-1.5 rounded-box text-base-content/70 hover:bg-base-100/30 cursor-pointer text-sm"
         @click="clickCancel"

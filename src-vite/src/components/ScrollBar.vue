@@ -1,9 +1,12 @@
 <template>
   <div 
     :class="[
-      'h-full flex flex-col items-end justify-center',
+      'h-full flex flex-col items-end justify-center transition-opacity ease-in-out motion-reduce:transition-none',
+      isRegionHovered || isDragging || isScrolling ? 'opacity-100 duration-200' : 'opacity-0 duration-500',
       isGroupingMarkers ? 'w-10' : (markers.length > 0 ? 'w-14' : 'w-4.5')
     ]"
+    @mouseenter="isRegionHovered = true"
+    @mouseleave="isRegionHovered = false"
   >
     <IconScrollUp 
       :class="[
@@ -46,14 +49,14 @@
 
         <!-- Hover Marker -->
         <div v-if="isHovering"
-          class="absolute h-[2px] bg-base-content/70 pointer-events-none rounded-full"
+          class="absolute h-0.5 bg-base-content/70 pointer-events-none rounded-full"
           :class="isGroupingMarkers ? 'right-0 w-4' : 'left-1 right-0'"
           :style="{ top: (hoverY - 1) + 'px' }"
         ></div>
 
         <!-- Selected Marker -->
         <div v-if="selectedTop >= 0"
-          class="absolute h-[2px] bg-primary/70 pointer-events-none rounded-full"
+          class="absolute h-0.5 bg-primary/70 pointer-events-none rounded-full"
           :class="isGroupingMarkers ? 'right-0 w-4' : 'left-1 right-0'"
           :style="{ top: (selectedTop - 1) + 'px', transition: 'all 0.2s ease-in-out' }"
         ></div>
@@ -99,11 +102,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import { IconScrollUp, IconScrollDown } from '@/common/icons';
 import { formatDate } from '@/common/utils';
 
 const props = defineProps({
+  scrollActivity: {
+    type: Number,
+    default: 0,
+  },
   total: {
     type: Number,
     default: 0
@@ -133,6 +140,17 @@ const thumbRef = ref<HTMLElement | null>(null);
 
 // State for dragging
 const isDragging = ref(false);
+const isRegionHovered = ref(false);
+const isScrolling = ref(false);
+let scrollIdleTimer: ReturnType<typeof setTimeout> | undefined;
+watch(() => props.scrollActivity, () => {
+  isScrolling.value = true;
+  clearTimeout(scrollIdleTimer);
+  scrollIdleTimer = setTimeout(() => {
+    isScrolling.value = false;
+    scrollIdleTimer = undefined;
+  }, 3000);
+});
 const startY = ref(0);
 const startThumbTop = ref(0);
 
@@ -320,6 +338,7 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
+  clearTimeout(scrollIdleTimer);
   if (trackRef.value) {
     resizeObserver.unobserve(trackRef.value);
   }

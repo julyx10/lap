@@ -28,7 +28,7 @@ html, body {
 }
 
 @utility select {
-  @apply h-8 w-fit rounded-box focus:outline-none focus:rounded-box hover:bg-base-100 hover:text-base-content cursor-pointer transition-colors duration-200;
+  @apply h-8 w-fit rounded-box focus:outline-none focus-within:outline-none open:outline-none hover:bg-base-100 hover:text-base-content cursor-pointer transition-colors duration-200;
 }
 
 /* Keep native select options on one line in WebView dropdowns. */

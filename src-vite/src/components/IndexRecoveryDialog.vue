@@ -1,5 +1,5 @@
 <template>
-  <ModalDialog :title="title" :width="440" position-key="index-recovery" @cancel="clickCancel">
+  <ModalDialog class="w-110" :title="title" position-key="index-recovery" @cancel="clickCancel">
     <div class="flex flex-col gap-2 select-none">
       <div v-if="message" class="text-sm wrap-break-word text-base-content/30">
         {{ message }}

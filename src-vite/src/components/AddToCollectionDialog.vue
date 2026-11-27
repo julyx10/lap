@@ -1,5 +1,5 @@
 <template>
-  <ModalDialog :title="$t('collection.edit_collections') + (collections.length ? ` (${collections.length.toLocaleString()})` : '')" :width="500" :position-key="positionKey" @cancel="close">
+  <ModalDialog class="w-125" :title="$t('collection.edit_collections') + (collections.length ? ` (${collections.length.toLocaleString()})` : '')" :position-key="positionKey" @cancel="close">
     <template #title-actions>
       <button
         type="button"

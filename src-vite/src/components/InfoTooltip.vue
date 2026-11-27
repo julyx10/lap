@@ -19,7 +19,7 @@
       :id="tooltipId"
       ref="tooltip"
       role="tooltip"
-      class="fixed z-1000 w-[300px] max-w-[calc(100vw-16px)] rounded-box border border-base-content/10 bg-base-100 px-3 py-2 text-xs leading-5 text-base-content shadow-lg"
+      class="fixed z-1000 w-75 max-w-[calc(100vw-16px)] rounded-box border border-base-content/10 bg-base-100 px-3 py-2 text-xs leading-5 text-base-content shadow-lg"
       :style="position"
       @mouseenter="enter"
       @mouseleave="leave"

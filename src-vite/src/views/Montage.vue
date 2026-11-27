@@ -25,7 +25,7 @@
       <div class="flex-1 min-w-0 flex flex-col items-center justify-center gap-2">
         <div
           ref="containerRef"
-          class="relative w-full flex-1 min-h-0 rounded-box overflow-hidden border border-base-content/5 bg-base-300/30 shadow-sm flex items-center justify-center"
+          class="relative w-full flex-1 min-h-0 rounded-box overflow-hidden border border-base-content/5 bg-base-300/30 flex items-center justify-center"
         >
           <transition name="fade">
             <div v-if="isProcessing" class="absolute inset-0 bg-base-100/50 flex items-center justify-center z-50 rounded-box">
@@ -102,7 +102,7 @@
                 :style="dial.handle"
                 @pointerdown.stop="startDrag($event, dial.item.fileId, 'transform')"
               >
-                <span class="size-6 rounded-full border border-base-content/15 shadow-md flex items-center justify-center transition-colors group-hover:bg-primary group-hover:text-primary-content"
+                <span class="size-6 rounded-full border border-base-content/15 shadow-lg flex items-center justify-center transition-colors group-hover:bg-primary group-hover:text-primary-content"
                   :class="activeDragKind === 'transform' ? 'bg-primary text-primary-content' : 'bg-base-100 text-primary'">
                   <IconRotate class="size-3.5" />
                 </span>
@@ -114,7 +114,7 @@
 
       <!-- Right: Settings -->
       <div class="w-80 shrink-0 flex flex-col gap-3 overflow-y-auto text-xs">
-        <section class="rounded-box p-3 space-y-2 border border-base-content/5 shadow-sm bg-base-300/30">
+        <section class="rounded-box p-3 space-y-2 border border-base-content/5 bg-base-300/30">
           <div class="font-semibold text-base-content/80">{{ $t('msgbox.montage.layout') }}</div>
           <div class="flex items-center gap-1">
             <TButton
@@ -145,7 +145,7 @@
           </button>
         </section>
 
-        <section class="rounded-box p-3 space-y-2 border border-base-content/5 shadow-sm bg-base-300/30">
+        <section class="rounded-box p-3 space-y-2 border border-base-content/5 bg-base-300/30">
           <div class="font-semibold text-base-content/80">{{ $t('msgbox.montage.page') }}</div>
           <div class="flex items-center justify-between gap-2">
             <span>{{ $t('msgbox.montage.page_size') }}</span>
@@ -163,7 +163,7 @@
           <div class="text-[11px] text-base-content/30">{{ $t('msgbox.montage.export', { size: exportLabel }) }}</div>
         </section>
 
-        <section class="rounded-box p-3 space-y-3 border border-base-content/5 shadow-sm bg-base-300/30">
+        <section class="rounded-box p-3 space-y-3 border border-base-content/5 bg-base-300/30">
           <div class="font-semibold text-base-content/80">{{ $t('msgbox.montage.style') }}</div>
           <div class="flex items-center justify-between gap-2">
             <span>{{ $t('msgbox.montage.background') }}</span>
@@ -211,9 +211,9 @@
     </div>
 
     <!-- Bottom Bar -->
-    <div class="h-14 shrink-0 flex items-center justify-end px-4 gap-2">
+    <div class="h-14 shrink-0 flex items-center justify-end px-4 gap-2 select-none">
       <button
-        class="px-4 py-1 rounded-box hover:bg-base-100 hover:text-base-content cursor-pointer text-sm mr-4"
+        class="btn btn-sm"
         :disabled="isProcessing"
         @click="closeWindow"
       >{{ $t('msgbox.image_editor.cancel') }}</button>
@@ -233,7 +233,7 @@
     <PrintImage ref="printImageView" />
 
     <!-- Save dialog: destination folder and file name -->
-    <ModalDialog v-if="showSaveDialog" :title="$t('msgbox.montage.save_title')" :width="480" @cancel="closeSaveDialog">
+    <ModalDialog class="w-120" v-if="showSaveDialog" :title="$t('msgbox.montage.save_title')" @cancel="closeSaveDialog">
       <div class="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-3 items-center text-sm">
         <div>{{ $t('msgbox.montage.folder') }}</div>
         <div class="flex items-center gap-1">

@@ -1,5 +1,5 @@
 <template>
-  <ModalDialog :title="title" :width="400" :position-key="positionKey" @cancel="clickCancel">
+  <ModalDialog class="w-100" :title="title" :position-key="positionKey" @cancel="clickCancel">
     <div v-if="message" class="text-sm whitespace-pre-line wrap-break-word select-none">
       {{ message }}
     </div>

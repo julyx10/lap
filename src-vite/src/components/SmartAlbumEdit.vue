@@ -1,5 +1,5 @@
 <template>
-  <ModalDialog :title="isNew ? $t('album.smart_edit.title_add') : $t('album.smart_edit.title_edit')" :width="500" position-key="smart-album-edit" @cancel="clickCancel">
+  <ModalDialog class="w-140" :title="isNew ? $t('album.smart_edit.title_add') : $t('album.smart_edit.title_edit')" position-key="smart-album-edit" @cancel="clickCancel">
     <section
       class="min-h-0 overflow-y-auto pr-1"
       @dragenter.stop
@@ -7,18 +7,18 @@
       @dragleave.stop
       @drop.stop
     >
-      <div class="w-full grid grid-cols-[92px_1fr] gap-x-4 gap-y-3 items-start text-xs select-none">
-        <div class="h-8 flex items-center text-[10px] uppercase tracking-widest font-bold text-base-content/30">{{ $t('album.smart_edit.name') }}</div>
-        <input ref="inputNameRef" v-model="name" type="text" maxlength="255" class="w-full input input-sm text-xs font-semibold" :placeholder="$t('album.smart_edit.validation_name')" />
+      <div class="w-full grid grid-cols-[7rem_minmax(0,1fr)] gap-x-4 gap-y-3 items-start text-sm select-none">
+        <div class="min-h-8 flex items-center text-sm uppercase tracking-widest font-bold text-base-content/30">{{ $t('album.smart_edit.name') }}</div>
+        <input ref="inputNameRef" v-model="name" type="text" maxlength="255" class="w-full input input-sm text-sm font-semibold" :placeholder="$t('album.smart_edit.validation_name')" />
 
-        <div class="h-8 flex items-start pt-2 text-[10px] uppercase tracking-widest font-bold text-base-content/30">{{ $t('album.smart_edit.description') }}</div>
+        <div class="min-h-8 flex items-start pt-2 text-sm uppercase tracking-widest font-bold text-base-content/30">{{ $t('album.smart_edit.description') }}</div>
         <textarea
           v-if="showDescription"
           ref="descriptionRef"
           v-model="description"
           rows="2"
           maxlength="1024"
-          class="w-full textarea textarea-sm min-h-14 max-h-30 text-xs font-semibold"
+          class="w-full textarea textarea-sm min-h-14 max-h-30 text-sm font-semibold"
         ></textarea>
         <TButton
           v-else
@@ -28,33 +28,33 @@
           @click="showDescriptionInput"
         />
 
-        <section class="col-span-2 rounded-box border border-base-content/10 bg-base-300/20 p-3 shadow-sm">
+        <section class="col-span-2 rounded-box border border-base-content/5 bg-base-300/20 p-3">
           <div class="grid grid-cols-3 gap-2">
             <label class="min-w-0 space-y-1">
-              <span class="block text-[10px] uppercase tracking-widest font-bold text-base-content/30">{{ $t('album.smart_edit.sort') }}</span>
-              <select v-model.number="sortType" class="select select-sm text-xs w-full">
+              <span class="block text-sm uppercase tracking-widest font-bold text-base-content/30">{{ $t('album.smart_edit.sort') }}</span>
+              <select v-model.number="sortType" class="select select-sm text-sm w-full">
                 <option v-for="option in sortOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
               </select>
             </label>
             <label class="min-w-0 space-y-1">
-              <span class="block text-[10px] uppercase tracking-widest font-bold text-base-content/30">{{ $t('album.smart_edit.order') }}</span>
-              <select v-model.number="sortOrder" class="select select-sm text-xs w-full" :disabled="isRandomSort">
+              <span class="block text-sm uppercase tracking-widest font-bold text-base-content/30">{{ $t('album.smart_edit.order') }}</span>
+              <select v-model.number="sortOrder" class="select select-sm text-sm w-full" :disabled="isRandomSort">
                 <option v-for="option in sortOrderOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
               </select>
             </label>
             <label class="min-w-0 space-y-1">
-              <span class="block text-[10px] uppercase tracking-widest font-bold text-base-content/30">{{ $t('album.smart_edit.group') }}</span>
-              <select v-model.number="displayedGroupType" class="select select-sm text-xs w-full" :disabled="isRandomSort">
+              <span class="block text-sm uppercase tracking-widest font-bold text-base-content/30">{{ $t('album.smart_edit.group') }}</span>
+              <select v-model.number="displayedGroupType" class="select select-sm text-sm w-full" :disabled="isRandomSort">
                 <option v-for="option in groupOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
               </select>
             </label>
           </div>
         </section>
 
-        <section class="col-span-2 rounded-box border border-base-content/10 bg-base-300/20 p-3 shadow-sm">
+        <section class="col-span-2 rounded-box border border-base-content/5 bg-base-300/20 p-3">
           <div class="mb-2 flex min-h-8 items-center justify-between gap-3">
-            <span class="text-[10px] uppercase tracking-widest font-bold text-base-content/30">{{ $t('album.smart_edit.match') }}</span>
-            <div role="tablist" class="tabs tabs-box tabs-xs shrink-0 bg-base-100/40 shadow-inner">
+            <span class="text-sm uppercase tracking-widest font-bold text-base-content/30">{{ $t('album.smart_edit.match') }}</span>
+            <div role="tablist" class="tabs tabs-box tabs-xs shrink-0 bg-base-100/5 shadow-inner">
               <button
                 role="tab"
                 :class="['tab', matchMode === 'all' ? 'tab-active text-primary' : '']"
@@ -84,11 +84,11 @@
               v-for="(rule, index) in rules"
               :key="rule.id"
               >
-                <div class="grid grid-cols-[minmax(0,1fr)_88px_minmax(0,1.45fr)_28px] gap-2 items-center rounded-box border border-transparent px-1 py-1 transition-colors hover:border-base-content/5 hover:bg-base-100/40">
-                  <select v-model="rule.field" class="select select-sm text-xs w-full" @change="resetRule(rule)">
+                <div class="grid grid-cols-[minmax(0,1fr)_5.5rem_minmax(0,1.45fr)_1.75rem] gap-2 items-center rounded-box border border-transparent px-1 py-1 transition-colors hover:border-base-content/5 hover:bg-base-100/40">
+                  <select v-model="rule.field" class="select select-sm text-sm w-full" @change="resetRule(rule)">
                     <option v-for="field in fieldOptions" :key="field.value" :value="field.value">{{ field.label }}</option>
                   </select>
-                  <select v-model="rule.operator" class="select select-sm text-xs w-full!" @change="resetRuleValue(rule)">
+                  <select v-model="rule.operator" class="select select-sm text-sm w-full!" @change="resetRuleValue(rule)">
                     <option v-for="operator in getOperatorOptions(rule.field)" :key="operator.value" :value="operator.value">{{ operator.label }}</option>
                   </select>
                   <RuleValueControl
@@ -115,7 +115,7 @@
                 </div>
                 <div
                   v-if="index < rules.length - 1"
-                  class="flex h-5 items-center gap-2 px-2 text-[9px] font-bold uppercase tracking-widest text-base-content/30"
+                  class="flex h-5 items-center gap-2 px-2 text-xs font-bold uppercase tracking-widest text-base-content/30"
                 >
                   <span class="h-px flex-1 bg-base-content/5"></span>
                   <span>{{ matchMode === 'all' ? $t('album.smart_edit.match_and') : $t('album.smart_edit.match_or') }}</span>
@@ -707,8 +707,8 @@ const RuleValueControl = defineComponent({
   },
   setup(props: any) {
     const suppressDatePopoverUntil = ref(0);
-    const inputClass = 'input input-sm text-xs w-full';
-    const selectClass = 'select select-sm text-xs w-full';
+    const inputClass = 'input input-sm text-sm w-full';
+    const selectClass = 'select select-sm text-sm w-full';
     const numberInput = (value: any, onInput: any, attrs: Record<string, any> = {}) => h('input', { class: inputClass, type: 'number', value, onInput, ...attrs });
     const inputWithUnit = (inputNode: any, unit: string) => {
       if (!unit) return inputNode;
@@ -716,12 +716,12 @@ const RuleValueControl = defineComponent({
         h('div', { class: 'min-w-0 flex-1' }, [
           inputNode,
         ]),
-        h('span', { class: 'pr-2 text-[10px] uppercase text-base-content/40 shrink-0' }, unit),
+        h('span', { class: 'pr-2 text-xs uppercase text-base-content/40 shrink-0' }, unit),
       ]);
     };
     const unitNumberInput = (value: any, unit: string, onInput: any, attrs: Record<string, any> = {}) => inputWithUnit(
       h('input', {
-        class: 'w-full min-w-0 bg-transparent px-2 text-xs outline-none',
+        class: 'w-full min-w-0 bg-transparent px-2 text-sm outline-none',
         type: 'number',
         value,
         onInput,
@@ -773,7 +773,7 @@ const RuleValueControl = defineComponent({
       return h('div', { class: 'w-full' }, [
         h('input', {
           type: 'text',
-          class: 'input input-sm w-full text-xs',
+          class: 'input input-sm w-full text-sm',
           value,
           placeholder: 'YYYY-MM-DD',
           style: `anchor-name:${anchorName}`,
@@ -882,7 +882,7 @@ const RuleValueControl = defineComponent({
         }, ['this_week', 'this_month', 'this_year'].map(period => h('option', { value: period }, t(`album.smart_edit.date_periods.${period}`))));
       }
       if (isRelativeDateOperator(props.rule.operator)) {
-        return h('div', { class: 'grid grid-cols-[minmax(0,1fr)_110px] gap-1' }, [
+        return h('div', { class: 'grid grid-cols-[minmax(0,1fr)_6.875rem] gap-1' }, [
           h('input', {
             class: inputClass,
             type: 'number',

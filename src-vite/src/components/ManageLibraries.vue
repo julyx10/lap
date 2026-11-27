@@ -1,8 +1,6 @@
 <template>
-  <ModalDialog 
-    :title="$t('msgbox.manage_libraries.title')" 
-    :width="600"
-    :height="400"
+  <ModalDialog class="w-150 h-100"
+    :title="$t('msgbox.manage_libraries.title')"
     position-key="manage-libraries"
     @cancel="clickCancel"
   >
@@ -17,7 +15,7 @@
         {{ $t('msgbox.manage_libraries.add_new') }}
       </button>
     </template>
-    <div class="flex flex-col flex-1 min-h-0 border border-base-content/5 bg-base-300/30 shadow-sm rounded-box overflow-hidden relative">
+    <div class="flex flex-col flex-1 min-h-0 border border-base-content/5 bg-base-300/30 rounded-box overflow-hidden relative">
       <div class="flex items-center px-2 py-2 shrink-0 select-none">
         <span class="flex-1 sidebar-panel-header-title text-base-content/30">{{ $t('msgbox.manage_libraries.libraries') }} ({{ libraries.length }})</span>
       </div>
@@ -90,8 +88,8 @@
                   >
                     {{ lib.name }}
                   </span>
-                  <span v-if="lib.id === 'default'" class="ml-2 shrink-0 rounded-box border border-base-content/5 px-1.5 text-[10px] font-bold uppercase tracking-wide text-base-content/30">{{ $t('msgbox.manage_libraries.default') }}</span>
-                  <span v-if="lib.hidden" class="ml-2 shrink-0 rounded-box border border-base-content/5 px-1.5 text-[10px] font-bold uppercase tracking-wide text-base-content/30">{{ $t('msgbox.manage_libraries.hidden') }}</span>
+                  <span v-if="lib.id === 'default'" class="ml-2 shrink-0 rounded-box border border-base-content/5 px-1.5 text-xs font-bold uppercase tracking-wide text-base-content/30">{{ $t('msgbox.manage_libraries.default') }}</span>
+                  <span v-if="lib.hidden" class="ml-2 shrink-0 rounded-box border border-base-content/5 px-1.5 text-xs font-bold uppercase tracking-wide text-base-content/30">{{ $t('msgbox.manage_libraries.hidden') }}</span>
                 </div>
               </div>
             </div>
@@ -154,7 +152,7 @@
       {{ inputErrorMessage }}
     </div>
 
-    <div class="flex justify-end items-center gap-2 shrink-0 pt-2 min-h-[56px]">
+    <div class="flex justify-end items-center gap-2 shrink-0 pt-2 min-h-14 select-none">
       <button
         type="button"
         class="t-button-default"

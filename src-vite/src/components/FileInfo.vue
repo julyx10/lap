@@ -73,7 +73,7 @@
           <div v-if="showPreviewPanel" class="pt-3 overflow-hidden">
             <div
               v-if="showThumbnailPanel"
-              class="relative w-full overflow-hidden rounded-box border border-base-content/5 shadow-sm transition-[padding-top] duration-200 ease-out"
+              class="relative w-full overflow-hidden rounded-box border border-base-content/5 transition-[padding-top] duration-200 ease-out"
               :style="{ paddingTop: `${75 * previewScale}%` }"
               @pointerenter="playVideoPreviewOnHover"
               @pointerleave="stopPreviewVideo"
@@ -142,7 +142,7 @@
                 </div>
               </div>
             </div>
-            <div v-if="showHistogramPanel" class="rounded-box border border-base-content/5 bg-base-300/30 p-3 shadow-sm" :class="showThumbnailPanel ? 'mt-3' : ''">
+            <div v-if="showHistogramPanel" class="rounded-box border border-base-content/5 bg-base-300/30 p-3" :class="showThumbnailPanel ? 'mt-3' : ''">
               <ImageHistogram :source="fileInfo?.thumbnail || ''" />
             </div>
           </div>

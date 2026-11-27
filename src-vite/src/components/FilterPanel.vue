@@ -1,26 +1,27 @@
 <template>
   <div class="flex items-center gap-2 shrink-0">
-    <button
-      ref="trigger"
-      class="inline-flex h-8 items-center justify-center rounded-box border px-2 text-sm outline-none"
-      :class="[
-        disabled
-          ? 'border-0! border-transparent text-base-content/30 cursor-default'
-          : count > 0
-            ? 'border-transparent bg-base-100 hover:bg-base-100 text-primary! cursor-pointer'
-            : 'border-transparent text-base-content/70 hover:text-base-content hover:bg-base-100/30 cursor-pointer',
-      ]"
-      :disabled="disabled"
-      :aria-expanded="open"
-      :title="disabled ? tr('disabled') : filterTooltip"
-      :aria-label="disabled ? tr('disabled') : undefined"
-      @click="togglePanel"
-    >
-      <IconFilter class="w-5 h-5 shrink-0" />
-      <span v-if="!disabled && count > 0" class="badge badge-primary badge-xs ml-1">{{
-        count
-      }}</span>
-    </button>
+    <TButton :tooltip="disabled ? tr('disabled') : filterTooltip">
+      <button
+        ref="trigger"
+        class="inline-flex h-8 items-center justify-center rounded-box border px-2 text-sm outline-none"
+        :class="[
+          disabled
+            ? 'border-0! border-transparent text-base-content/30 cursor-default'
+            : count > 0
+              ? 'border-transparent bg-base-100 hover:bg-base-100 text-primary! cursor-pointer'
+              : 'border-transparent text-base-content/70 hover:text-base-content hover:bg-base-100/30 cursor-pointer',
+        ]"
+        :disabled="disabled"
+        :aria-expanded="open"
+        :aria-label="disabled ? tr('disabled') : undefined"
+        @click="togglePanel"
+      >
+        <IconFilter class="w-5 h-5 shrink-0" />
+        <span v-if="!disabled && count > 0" class="badge badge-primary badge-xs ml-1">{{
+          count
+        }}</span>
+      </button>
+    </TButton>
   </div>
   <Teleport to="body">
     <Transition name="fade">
@@ -29,7 +30,7 @@
       ref="panel"
       role="dialog"
       :aria-label="tr('title')"
-      class="fixed z-700 w-100 max-w-[calc(100vw-16px)] rounded-box border border-base-content/30 bg-base-200/80 backdrop-blur-md shadow-xl text-base-content overflow-y-auto px-4 py-2 select-none"
+      class="fixed z-700 w-100 max-w-[calc(100vw-16px)] rounded-box border border-base-content/30 bg-base-200/80 backdrop-blur-md shadow-lg text-base-content overflow-y-auto px-4 py-2 select-none"
       :style="position"
       @keydown.esc.stop.prevent="close"
     >
@@ -187,6 +188,7 @@
 </template>
 
 <script setup lang="ts">
+import TButton from "@/components/TButton.vue";
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import {

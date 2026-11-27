@@ -1,5 +1,5 @@
 <template>
-  <ModalDialog :title="title" :width="500" position-key="move-to" @cancel="clickCancel">
+  <ModalDialog class="w-125" :title="title" position-key="move-to" @cancel="clickCancel">
     <template #title-actions>
       <button
         type="button"

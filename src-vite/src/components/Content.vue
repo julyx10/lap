@@ -154,9 +154,9 @@
           :active="isMapContentVisible"
           :query-params="mapQueryParams"
           :query-source="currentQuerySource"
-          :collection-id="currentCollectionId"
+          :collection-id="currentCollectionId ?? undefined"
           :file-ids="currentSearchFileIds"
-          :restore-view="mapTempViewState"
+          :restore-view="mapTempViewState ?? undefined"
           :selected-file="fileList[selectedItemIndex]"
           @open-cluster="openMapClusterTempView"
           @select-file="selectMapFile"
@@ -315,6 +315,7 @@
             :modelValue="scrollPosition"
             :markers="scrollbarMarkers"
             :selectedIndex="scrollbarSelectedIndex"
+            :scroll-activity="timelineScrollActivity"
             @update:modelValue="handleScrollUpdate"
             @select-item="handleTimelineSelectItem"
           ></ScrollBar>
@@ -681,7 +682,7 @@
     @cancel="showDropWarning = false"
   />
 
-  <ModalDialog v-if="fileImportVisible" :title="$t('import_files.title')" :width="480"
+  <ModalDialog class="w-120" v-if="fileImportVisible" :title="$t('import_files.title')"
     @cancel="fileImportVisible = false">
     <div class="text-sm break-all mb-3">{{ fileImportTarget }}</div>
     <div v-if="isImportingFiles" role="status" aria-live="polite" class="text-sm">
@@ -2732,6 +2733,7 @@ const gridScrollContainerRef = ref<HTMLElement | null>(null);
 const gridViewRef = ref<any>(null);
 
 const scrollPosition = ref(0);    // scrollbar position (item index)
+const timelineScrollActivity = ref(0);
 
 const containerHeight = ref(0);   // container height
 const containerWidth = ref(0);    // container width
@@ -4944,6 +4946,7 @@ function updateScrollPosition(currentScrollTop: number, currentScrollHeight: num
 
 function handleGridScroll(event: any) {
   if (event && event.target) {
+    timelineScrollActivity.value++;
     updateScrollPosition(
         event.target.scrollTop, 
         event.target.scrollHeight

@@ -1,5 +1,5 @@
 <template>
-  <ModalDialog :title="$t('msgbox.file_conflict.title')" :width="440" position-key="file-conflict" @cancel="resolve('skip')">
+  <ModalDialog class="w-110" :title="$t('msgbox.file_conflict.title')" position-key="file-conflict" @cancel="resolve('skip')">
     <p class="text-sm whitespace-pre-line wrap-break-word">
       {{ $t('msgbox.file_conflict.message', { name, destination }) }}
     </p>

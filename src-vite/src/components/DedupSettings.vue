@@ -1,8 +1,8 @@
 <template>
-  <ModalDialog :title="$t('info_panel.dedup.keep_rules.title')" :width="520" position-key="dedup-keep-rules" @cancel="emit('cancel')">
+  <ModalDialog class="w-130" :title="$t('info_panel.dedup.keep_rules.title')" position-key="dedup-keep-rules" @cancel="emit('cancel')">
     <div class="space-y-2 max-h-[65vh] overflow-y-auto select-none">
-      <section aria-labelledby="keep-rules-priority-heading" class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
-        <h2 id="keep-rules-priority-heading" class="flex items-center font-bold uppercase text-[10px] tracking-widest text-base-content/30">{{ $t('info_panel.dedup.keep_rules.priority_order') }}</h2>
+      <section aria-labelledby="keep-rules-priority-heading" class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
+        <h2 id="keep-rules-priority-heading" class="flex items-center font-bold uppercase text-xs tracking-widest text-base-content/30">{{ $t('info_panel.dedup.keep_rules.priority_order') }}</h2>
         <div class="space-y-2 px-1">
           <div class="min-w-0 flex items-start gap-1.5 text-sm leading-5">
             <span class="shrink-0 text-base-content/30" aria-hidden="true">①</span>
@@ -13,7 +13,7 @@
           </div>
           <div class="rounded-box border border-base-content/10 text-sm">
             <div class="relative flex shrink-0 items-center px-2 py-2 pr-9">
-              <span class="min-w-0 flex-1 truncate font-bold uppercase text-[10px] tracking-widest text-base-content/30">
+              <span class="min-w-0 flex-1 truncate font-bold uppercase text-xs tracking-widest text-base-content/30">
                 {{ $t('msgbox.manage_libraries.current') }}<template v-if="folderPathsReady && preferredFolderIds.length"> ({{ preferredFolderIds.length.toLocaleString() }})</template>
               </span>
               <div class="absolute right-2 top-1/2 flex -translate-y-1/2">
@@ -59,7 +59,7 @@
                     aria-hidden="true"
                   />
                   <IconFolder class="size-4 shrink-0" aria-hidden="true" />
-                  <span class="text-xs min-w-0 flex-1 truncate" :title="folderPaths.get(folderId)">
+                  <span class="text-sm min-w-0 flex-1 truncate" :title="folderPaths.get(folderId)">
                     {{ folderPaths.get(folderId) }}
                   </span>
                   <TButton
@@ -83,7 +83,7 @@
             <span class="shrink-0 text-base-content/30" aria-hidden="true">②</span>
             <span class="min-w-0 flex flex-wrap items-center gap-x-2">
               <span>{{ $t('info_panel.dedup.keep_rules.format') }}</span>
-              <span class="rounded-box border border-base-content/5 px-1.5 text-[10px] font-bold uppercase leading-normal tracking-wide text-base-content/30">{{ $t('info_panel.dedup.keep_rules.similar_only') }}</span>
+              <span class="rounded-box border border-base-content/5 px-1.5 text-xs font-bold uppercase leading-normal tracking-wide text-base-content/30">{{ $t('info_panel.dedup.keep_rules.similar_only') }}</span>
             </span>
           </span>
           <select v-model="rules.preferFormat" class="select select-bordered select-sm w-auto max-w-[65%] shrink-0">
@@ -97,7 +97,7 @@
             <span class="shrink-0 text-base-content/30" aria-hidden="true">③</span>
             <span class="min-w-0 flex flex-wrap items-center gap-x-2">
               <span>{{ $t('info_panel.dedup.keep_rules.size') }}</span>
-              <span class="rounded-box border border-base-content/5 px-1.5 text-[10px] font-bold uppercase leading-normal tracking-wide text-base-content/30">{{ $t('info_panel.dedup.keep_rules.similar_only') }}</span>
+              <span class="rounded-box border border-base-content/5 px-1.5 text-xs font-bold uppercase leading-normal tracking-wide text-base-content/30">{{ $t('info_panel.dedup.keep_rules.similar_only') }}</span>
             </span>
           </span>
           <select v-model="rules.preferredSize" class="select select-bordered select-sm w-auto max-w-[65%] shrink-0">
