@@ -1,6 +1,6 @@
 import { computed, onScopeDispose, ref, watch } from 'vue';
 import { useConfigStore } from '@/stores/configStore';
-import { setTheme } from '@/common/utils';
+import { applyTheme, findTheme, sanitizeCustomTheme, type CustomTheme, type ThemeAppearance } from '@/common/themes';
 
 // Keep the saved mode (0: light, 1: dark, 2: system) separate from the displayed mode.
 export function useAppearance() {
@@ -24,11 +24,25 @@ export function useAppTheme() {
   const config = useConfigStore();
   const appearance = useAppearance();
 
+  const resolved = computed<ThemeAppearance>(() => appearance.value === 0 ? 'light' : 'dark');
+  const customThemes = computed<CustomTheme[]>(() => {
+    const list = Array.isArray(config.settings.customThemes) ? config.settings.customThemes : [];
+    return list
+      .map(theme => sanitizeCustomTheme(theme))
+      .filter((theme): theme is CustomTheme => Boolean(theme));
+  });
+
   watch(
-    [appearance, () => config.settings.lightTheme, () => config.settings.darkTheme],
-    ([mode, lightTheme, darkTheme]) => {
-      setTheme(mode, mode === 0 ? lightTheme : darkTheme);
+    [
+      resolved,
+      () => config.settings.lightThemeId,
+      () => config.settings.darkThemeId,
+      customThemes,
+    ],
+    ([mode, lightThemeId, darkThemeId, themes]) => {
+      const selectedId = mode === 'light' ? lightThemeId : darkThemeId;
+      applyTheme(findTheme(selectedId, mode, themes));
     },
-    { immediate: true },
+    { immediate: true, deep: true },
   );
 }

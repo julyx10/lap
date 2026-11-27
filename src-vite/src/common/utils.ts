@@ -27,50 +27,6 @@ export const separator = isWin ? '\\' : '/';
 // scale values for window size and font size
 export const SCALE_VALUES = [0.8, 0.9, 1, 1.1, 1.2];
 
-/// set the theme
-export function setTheme(appearance: number, themeId: number) {
-  const theme = appearance === 0 ? [
-    "light",
-    "cupcake",
-    "bumblebee",
-    "emerald",
-    "corporate",
-    "retro",
-    "cyberpunk",
-    "valentine",
-    "garden",
-    "lofi",
-    "pastel",
-    "fantasy",
-    "wireframe",
-    "cmyk",
-    "autumn",
-    "acid",
-    "lemonade",
-    "winter",
-    "nord",
-    "caramellatte",
-    "silk"
-  ][themeId] || 'light' : [
-    "dark",
-    "synthwave",
-    "halloween",
-    "forest",
-    "aqua",
-    "black",
-    "luxury",
-    "dracula",
-    "business",
-    "night",
-    "coffee",
-    "dim",
-    "sunset",
-    "abyss"
-  ][themeId] || 'dark';
-
-  document.documentElement.setAttribute('data-theme', theme);
-}
-
 /// get the select options for a dropdown list
 export function getSelectOptions(options: string[]): { label: string, value: number }[] {
   const result = [];

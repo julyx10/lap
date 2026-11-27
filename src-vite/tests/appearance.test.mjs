@@ -6,8 +6,7 @@ import { computed, effectScope, nextTick, onScopeDispose, reactive, ref, watch }
 import ts from 'typescript';
 
 const source = await readFile(new URL('../src/composables/useAppearance.ts', import.meta.url), 'utf8');
-const utils = await readFile(new URL('../src/common/utils.ts', import.meta.url), 'utf8');
-const themeCode = ts.transpile(utils.slice(utils.indexOf('export function setTheme'), utils.indexOf('/// get the select options')).replace('export ', ''));
+const themesSource = await readFile(new URL('../src/common/themes.ts', import.meta.url), 'utf8');
 
 function systemTheme(dark = false) {
   const listeners = new Set();
@@ -29,23 +28,33 @@ function systemTheme(dark = false) {
   };
 }
 
-async function fixture(t, { appearance = 2, lightTheme = 1, darkTheme = 7, media = systemTheme() } = {}) {
+async function fixture(t, { appearance = 2, lightThemeId = 'cupcake', darkThemeId = 'dracula', media = systemTheme() } = {}) {
   let theme;
-  const config = reactive({ settings: { appearance, lightTheme, darkTheme } });
-  const document = { documentElement: { setAttribute(key, value) {
-    assert.equal(key, 'data-theme');
-    theme = value;
-  } } };
-  const setTheme = new Function('document', themeCode + '; return setTheme;')(document);
-  const context = vm.createContext({ window: { matchMedia(query) {
+  let styleElement;
+  const config = reactive({ settings: { appearance, lightThemeId, darkThemeId, customThemes: [] } });
+  const document = {
+    getElementById: () => styleElement,
+    createElement: () => ({ id: '', textContent: '' }),
+    head: { appendChild(element) { styleElement = element; } },
+    documentElement: { style: {}, setAttribute(key, value) {
+      assert.equal(key, 'data-theme');
+      theme = value;
+    } },
+  };
+  const context = vm.createContext({ document, window: { matchMedia(query) {
     assert.equal(query, '(prefers-color-scheme: dark)');
     return media;
   } } });
+  const themes = new vm.SourceTextModule(ts.transpile(themesSource, { module: ts.ModuleKind.ESNext }), { context });
+  await themes.link(() => { throw new Error('Unexpected theme dependency'); });
+  await themes.evaluate();
   const module = new vm.SourceTextModule(ts.transpile(source, { module: ts.ModuleKind.ESNext }), { context });
   await module.link(specifier => {
+    if (specifier === '@/common/themes') return themes;
     const exports = specifier === 'vue'
       ? { computed, onScopeDispose, ref, watch }
-      : specifier === '@/stores/configStore' ? { useConfigStore: () => config } : { setTheme };
+      : specifier === '@/stores/configStore' ? { useConfigStore: () => config } : null;
+    if (!exports) throw new Error(`Unexpected appearance dependency: ${specifier}`);
     return new vm.SyntheticModule(Object.keys(exports), function () {
       for (const [key, value] of Object.entries(exports)) this.setExport(key, value);
     }, { context });
@@ -54,7 +63,8 @@ async function fixture(t, { appearance = 2, lightTheme = 1, darkTheme = 7, media
   const scope = effectScope();
   t.after(() => scope.stop());
   scope.run(module.namespace.useAppTheme);
-  return { config, media, scope, useAppearance: module.namespace.useAppearance, get theme() { return theme; } };
+  return { config, media, scope, themes: themes.namespace, useAppearance: module.namespace.useAppearance,
+    get theme() { return theme; } };
 }
 
 test('startup immediately uses the saved light or dark theme for the current system appearance', async t => {
@@ -85,7 +95,7 @@ test('the boot background follows the saved mode before Vue starts', async () =>
 test('system changes update all windows and closing one removes only its listeners', async t => {
   const media = systemTheme();
   const main = await fixture(t, { media });
-  const viewer = await fixture(t, { media, lightTheme: 3, darkTheme: 9 });
+  const viewer = await fixture(t, { media, lightThemeId: 'emerald', darkThemeId: 'night' });
   assert.equal(media.listenerCount, 2);
   media.change(true);
   await nextTick();
@@ -122,27 +132,27 @@ test('manual appearance stays fixed and selecting system immediately uses its la
 test('settings edits the currently displayed theme and preserves the other appearance', async t => {
   const f = await fixture(t);
   const settings = await readFile(new URL('../src/views/Settings.vue', import.meta.url), 'utf8');
-  const code = settings.slice(settings.indexOf('const appearance = useAppearance();'), settings.indexOf('const scaleOptions ='));
-  const { currentTheme, themeOptions } = f.scope.run(() => new Function('useAppearance', 'computed', 'config', 'localeMsg',
-    code + '; return { currentTheme, themeOptions };')(f.useAppearance, computed, f.config, { value: { settings: { general: {
-      theme_options_light: ['Light', 'Cupcake', 'Bumblebee'],
-      theme_options_dark: ['Dark', 'Synthwave', 'Halloween'],
-    } } } }));
+  const code = ts.transpile(settings.slice(settings.indexOf('const appearance = useAppearance();'), settings.indexOf('const scaleOptions =')),
+    { target: ts.ScriptTarget.ES2022 });
+  const { currentTheme, themeOptions } = f.scope.run(() => new Function('useAppearance', 'computed', 'ref', 'config',
+    'BUILTIN_THEMES', 'sanitizeCustomTheme', 'themeLabel', 't', code + '; return { currentTheme, themeOptions };')(
+    f.useAppearance, computed, ref, f.config, f.themes.BUILTIN_THEMES, f.themes.sanitizeCustomTheme, f.themes.themeLabel,
+    key => ({ 'settings.general.theme_names.light': 'Light', 'settings.general.theme_names.dark': 'Dark' })[key] || key));
   assert.equal(themeOptions.value[0].label, 'Light');
-  currentTheme.value = 2;
+  currentTheme.value = 'bumblebee';
   await nextTick();
   assert.equal(f.theme, 'bumblebee');
-  assert.equal(f.config.settings.darkTheme, 7);
+  assert.equal(f.config.settings.darkThemeId, 'dracula');
   f.media.change(true);
   await nextTick();
-  assert.equal(currentTheme.value, 7);
+  assert.equal(currentTheme.value, 'dracula');
   assert.equal(themeOptions.value[0].label, 'Dark');
-  currentTheme.value = 1;
+  currentTheme.value = 'synthwave';
   await nextTick();
   assert.equal(f.theme, 'synthwave');
-  assert.equal(f.config.settings.lightTheme, 2);
+  assert.equal(f.config.settings.lightThemeId, 'bumblebee');
   // A settings sync for the inactive appearance must not change the active palette.
-  f.config.settings.lightTheme = 3;
+  f.config.settings.lightThemeId = 'emerald';
   await nextTick();
   assert.equal(f.theme, 'synthwave');
   f.media.change(false);

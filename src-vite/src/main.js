@@ -131,15 +131,6 @@ if (isMainWindow) void invoke('record_startup_stage', { stage: 'app-mounted' }).
 
 // Listen for events
 if (isMainWindow) {
-  listen('settings-appearance-changed', (event) => {
-    config.setAppearance(event.payload)
-  })
-  listen('settings-lightTheme-changed', (event) => {
-    config.setLightTheme(event.payload)
-  })
-  listen('settings-darkTheme-changed', (event) => {
-    config.setDarkTheme(event.payload)
-  })
   listen('settings-scale-changed', (event) => {
     config.setScale(event.payload)
   })
@@ -264,5 +255,18 @@ if (isMainWindow) {
   })
   listen('libraries-changed', () => {
     config.notifyLibrariesChanged()
+  })
+}
+
+// Theme state must reach every webview except the Settings window that emits it.
+// Listening there would echo the new array back into its own watcher and cause
+// repeated theme application/flicker.
+if (currentWindowLabel !== 'settings') {
+  listen('settings-theme-changed', (event) => {
+    const payload = event.payload || {}
+    config.setAppearance(payload.appearance)
+    config.setLightThemeId(payload.lightThemeId)
+    config.setDarkThemeId(payload.darkThemeId)
+    config.setCustomThemes(payload.customThemes)
   })
 }

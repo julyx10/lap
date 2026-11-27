@@ -145,8 +145,9 @@ export const useConfigStore = defineStore('configStore', {
       languageInitialized: false, // match system language once, then preserve the saved choice
       dateTimeFormat: 0,          // date/time locale source (0: follow system region, 1: follow app language)
       appearance: 1,              // appearance (0: light; 1: dark; 2: follow system)
-      lightTheme: 0,              // light theme color index
-      darkTheme: 0,               // dark theme color index
+      lightThemeId: 'light',      // stable light theme id
+      darkThemeId: 'dark',        // stable dark theme id
+      customThemes: [],           // user-created daisyUI themes
       scale: 1,                   // root font-size scale
       showToolTip: true,          // show button tooltip
       statusBarFields: null,
@@ -256,11 +257,14 @@ export const useConfigStore = defineStore('configStore', {
     setAppearance(appearance) {
       this.settings.appearance = appearance;
     },
-    setLightTheme(lightTheme) {
-      this.settings.lightTheme = lightTheme;
+    setLightThemeId(lightThemeId) {
+      this.settings.lightThemeId = lightThemeId;
     },
-    setDarkTheme(darkTheme) {
-      this.settings.darkTheme = darkTheme;
+    setDarkThemeId(darkThemeId) {
+      this.settings.darkThemeId = darkThemeId;
+    },
+    setCustomThemes(customThemes) {
+      this.settings.customThemes = Array.isArray(customThemes) ? customThemes : [];
     },
     setScale(scale) {
       this.settings.scale = scale;
@@ -468,6 +472,13 @@ export const useConfigStore = defineStore('configStore', {
             settings.fileDeleteBehavior = settings.deletePermanently === true ? 'permanent' : 'trash';
           }
           delete settings.deletePermanently;
+          // Theme IDs replace the old numeric theme indexes. Old numeric
+          // selections are intentionally ignored (no historical migration).
+          if (typeof settings.lightThemeId !== 'string') settings.lightThemeId = 'light';
+          if (typeof settings.darkThemeId !== 'string') settings.darkThemeId = 'dark';
+          if (!Array.isArray(settings.customThemes)) settings.customThemes = [];
+          delete settings.lightTheme;
+          delete settings.darkTheme;
         }
         return state;
       },

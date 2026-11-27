@@ -68,9 +68,24 @@
               <div class="flex flex-col gap-0.5 text-sm leading-5">
                 <div>{{ $t('settings.general.theme') }}</div>
               </div>
-              <select class="select select-bordered select-sm min-w-32" v-model="currentTheme">
-                <option v-for="(option, index) in themeOptions" :key="index" :value="option.value">{{ option.label }}</option>
-              </select>
+              <div class="flex items-center gap-1">
+                <select :key="JSON.stringify(themeOptions)" class="select select-bordered select-sm min-w-32" :value="currentTheme" @change="selectTheme">
+                  <optgroup :label="$t('settings.general.theme_builtin')" class="text-base-content/30 [&>option]:text-base-content/70">
+                    <option v-for="option in builtinThemeOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
+                  </optgroup>
+                  <optgroup :label="$t('settings.general.theme_custom')" class="text-base-content/30 [&>option]:text-base-content/70">
+                    <option v-for="option in customThemeOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
+                    <option value="__new__">{{ $t('settings.general.theme_new') }}</option>
+                  </optgroup>
+                </select>
+                <TButton
+                  v-if="currentThemeIsCustom"
+                  :icon="IconEdit"
+                  buttonSize="small"
+                  :tooltip="$t('settings.general.theme_edit')"
+                  @click="openThemeEditor(true)"
+                />
+              </div>
             </div>
             <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
               <div class="flex flex-col gap-0.5 text-sm leading-5">
@@ -706,6 +721,14 @@
     </div>
 
     <StatusBarFieldsDialog v-if="showStatusBarFieldsDialog" @cancel="showStatusBarFieldsDialog = false" />
+    <ThemeEditorDialog
+      v-if="showThemeEditor"
+      :theme="editingTheme"
+      :appearance="themeEditorAppearance"
+      @save="saveCustomTheme"
+      @delete="deleteCustomTheme"
+      @close="showThemeEditor = false"
+    />
     <ModalDialog v-if="cleanupOpen" :title="$t(cleanupKey + '.title')" :width="440" hide-close>
       <div class="space-y-2 text-sm" role="status">
         <template v-if="cleanupRunning">
@@ -823,15 +846,17 @@ import {
 } from '@/common/api';
 import { formatFileSize, isLinux, isMac, SCALE_VALUES } from '@/common/utils';
 import { useAppearance } from '@/composables/useAppearance';
+import { BUILTIN_THEMES, sanitizeCustomTheme, themeLabel, type CustomTheme, type ThemeAppearance } from '@/common/themes';
 import { getShortcutLabels, ShortcutActionId, ShortcutPlatform } from '@/common/shortcuts';
 import { useToast } from '@/common/toast';
-import { IconClose, IconRestore } from '@/common/icons';
+import { IconClose, IconEdit, IconRestore } from '@/common/icons';
 
 import TitleBar from '@/components/TitleBar.vue';
 import SettingsAbout from '@/components/SettingsAbout.vue';
 import SettingsMetadata from '@/components/SettingsMetadata.vue';
 import MessageBox from '@/components/MessageBox.vue';
 import StatusBarFieldsDialog from '@/components/StatusBarFieldsDialog.vue';
+import ThemeEditorDialog from '@/components/ThemeEditorDialog.vue';
 import ModalDialog from '@/components/ModalDialog.vue';
 import BackupDialog from '@/components/BackupDialog.vue';
 import RestoreDialog from '@/components/RestoreDialog.vue';
@@ -989,26 +1014,76 @@ const appearanceOptions = computed(() => {
 const appearance = useAppearance();
 
 // Show and edit the theme for the currently displayed appearance.
-const themeOptions = computed(() => {
-  const options = appearance.value === 0
-    ? localeMsg.value.settings.general.theme_options_light 
-    : localeMsg.value.settings.general.theme_options_dark;
-
-  const result = [];
-  for (let i = 0; i < options.length; i++) {
-    result.push({ label: options[i], value: i });
-  }
-  return result;
+const themeAppearance = computed<ThemeAppearance>(() => appearance.value === 0 ? 'light' : 'dark');
+const customThemes = computed<CustomTheme[]>(() => {
+  const list = Array.isArray(config.settings.customThemes) ? config.settings.customThemes : [];
+  return list
+    .map(theme => sanitizeCustomTheme(theme))
+    .filter((theme): theme is CustomTheme => Boolean(theme));
 });
-
+const builtinThemeOptions = computed(() =>
+  BUILTIN_THEMES
+    .filter(theme => theme.appearance === themeAppearance.value)
+    .map(theme => ({
+      label: themeLabel(theme, (key, fallback) => t(key, fallback)),
+      value: theme.id,
+    }))
+);
+const customThemeOptions = computed(() =>
+  customThemes.value
+    .filter(theme => theme.appearance === themeAppearance.value)
+    .map(theme => ({ label: theme.name, value: theme.id }))
+);
+const themeOptions = computed(() => [...builtinThemeOptions.value, ...customThemeOptions.value]);
 const currentTheme = computed({
   get() {
-    return appearance.value === 0 ? config.settings.lightTheme : config.settings.darkTheme;
+    const value = themeAppearance.value === 'light'
+      ? config.settings.lightThemeId
+      : config.settings.darkThemeId;
+    return themeOptions.value.some(option => option.value === value) ? value : themeOptions.value[0]?.value;
   },
   set(value) {
-    appearance.value === 0 ? config.settings.lightTheme = value : config.settings.darkTheme = value;
+    if (themeAppearance.value === 'light') config.settings.lightThemeId = value;
+    else config.settings.darkThemeId = value;
   }
 });
+const currentThemeIsCustom = computed(() =>
+  customThemeOptions.value.some(option => option.value === currentTheme.value)
+);
+const showThemeEditor = ref(false);
+const editingTheme = ref<CustomTheme | null>(null);
+const themeEditorAppearance = ref<ThemeAppearance>('dark');
+function selectTheme(event: Event) {
+  const select = event.target as HTMLSelectElement;
+  if (select.value === '__new__') {
+    openThemeEditor();
+  } else {
+    currentTheme.value = select.value;
+  }
+  // Commands open the editor without changing the active theme or select label.
+  select.value = currentTheme.value || '';
+}
+function openThemeEditor(editExisting = false) {
+  const existing = editExisting ? customThemes.value.find(theme => theme.id === currentTheme.value) : null;
+  editingTheme.value = existing ? { ...existing, colors: { ...existing.colors } } : null;
+  themeEditorAppearance.value = themeAppearance.value;
+  showThemeEditor.value = true;
+}
+function saveCustomTheme(theme: CustomTheme) {
+  const next = customThemes.value.filter(item => item.id !== theme.id);
+  next.push(theme);
+  config.$patch({ settings: {
+    customThemes: next,
+    ...(theme.appearance === 'light' ? { lightThemeId: theme.id } : { darkThemeId: theme.id }),
+  } });
+  showThemeEditor.value = false;
+}
+function deleteCustomTheme(id: string) {
+  config.settings.customThemes = customThemes.value.filter(theme => theme.id !== id);
+  if (config.settings.lightThemeId === id) config.settings.lightThemeId = 'light';
+  if (config.settings.darkThemeId === id) config.settings.darkThemeId = 'dark';
+  showThemeEditor.value = false;
+}
 
 const scaleOptions = computed(() => {
   const options = localeMsg.value.settings.general.font_size_options;
@@ -1632,15 +1707,25 @@ onUnmounted(() => {
 watch(() => config.settings.tabIndex, (newValue) => {
   emit('settings-settingsTabIndex-changed', newValue);
 });
-watch(() => config.settings.appearance, (newValue) => {
-  emit('settings-appearance-changed', newValue);
-});
-watch(() => config.settings.lightTheme, (newValue) => {
-  emit('settings-lightTheme-changed', newValue);
-});
-watch(() => config.settings.darkTheme, (newValue) => {
-  emit('settings-darkTheme-changed', newValue);
-});
+// Emit one coalesced theme payload so a save that changes the custom theme and
+// its selected ID does not apply two different themes across windows.
+watch(
+  () => [
+    config.settings.appearance,
+    config.settings.lightThemeId,
+    config.settings.darkThemeId,
+    config.settings.customThemes,
+  ],
+  () => {
+    emit('settings-theme-changed', {
+      appearance: config.settings.appearance,
+      lightThemeId: config.settings.lightThemeId,
+      darkThemeId: config.settings.darkThemeId,
+      customThemes: config.settings.customThemes,
+    });
+  },
+  { deep: true },
+);
 watch(() => config.settings.scale, (newValue) => {
   applyWindowScale(Number(newValue || 1));
   updateSettingsWindowSize(Number(newValue || 1));

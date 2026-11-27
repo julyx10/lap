@@ -8,7 +8,7 @@ import { i18n, initializeLanguage } from "@/common/i18n";
 import { useConfigStore } from "@/stores/configStore";
 import { useLibraryStore } from "@/stores/libraryStore";
 import { useUIStore } from "@/stores/uiStore";
-import { setTheme } from "@/common/utils";
+import { useAppTheme } from "@/composables/useAppearance";
 import Home from "@/views/Home.vue";
 import Settings from "@/views/Settings.vue";
 import ImageViewer from "@/views/ImageViewer.vue";
@@ -20,6 +20,7 @@ import { overlay, overlayBounds, notice, resetDemo, invoke } from "./tauri.mjs";
 const pinia = createPinia();
 const app = createApp({
   setup() {
+    useAppTheme();
     const components = {
       settings: Settings,
       imageviewer: ImageViewer,
@@ -116,7 +117,7 @@ if (saved) {
   config.rightPanel.show = true;
   config.collectionTray.expanded = true;
   config.settings.appearance = 1;
-  config.settings.darkTheme = 0;
+  config.settings.darkThemeId = "dark";
   config.settings.autoCheckUpdates = false;
   config.settings.face.enabled = true;
   config.settings.grid.style = 2;
@@ -169,20 +170,8 @@ if (!library.smartAlbums.length) {
   ];
 }
 useUIStore().startupReady = true;
-setTheme(
-  config.settings.appearance,
-  config.settings.appearance === 0
-    ? config.settings.lightTheme
-    : config.settings.darkTheme,
-);
 config.$subscribe(() => {
   localStorage.setItem("lap-native-config-v1", JSON.stringify(config.$state));
-  setTheme(
-    config.settings.appearance,
-    config.settings.appearance === 0
-      ? config.settings.lightTheme
-      : config.settings.darkTheme,
-  );
 });
 window.__lapDemoUI = { config, library: useLibraryStore() };
 const applyScale = () =>
