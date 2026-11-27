@@ -1198,6 +1198,12 @@
       "activeDLighting": "アクティブD-ライティング",
       "dynamicRangeOptimizer": "Dレンジオプティマイザー",
       "intelligentDRange": "インテリジェントDレンジ",
+      "pictureMode": "ピクチャーモード",
+      "artFilter": "アートフィルター",
+      "gradation": "階調",
+      "imageTone": "カスタムイメージ",
+      "dynamicRangeExpansion": "ハイライト補正",
+      "shadowCorrection": "シャドー補正",
       "contrast": "コントラスト",
       "shutterCount": "シャッター回数"
     },

@@ -1198,6 +1198,12 @@
       "activeDLighting": "D-Lighting attivo",
       "dynamicRangeOptimizer": "Ottimizzatore gamma dinamica",
       "intelligentDRange": "Gamma dinamica intelligente",
+      "pictureMode": "Modalità immagine",
+      "artFilter": "Filtro artistico",
+      "gradation": "Gradazione",
+      "imageTone": "Tono immagine",
+      "dynamicRangeExpansion": "Correzione alte luci",
+      "shadowCorrection": "Correzione ombre",
       "contrast": "Contrasto",
       "shutterCount": "Conteggio scatti"
     },

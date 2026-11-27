@@ -1198,6 +1198,12 @@
       "activeDLighting": "Active D-Lighting",
       "dynamicRangeOptimizer": "Tối ưu dải tương phản động",
       "intelligentDRange": "Dải tương phản thông minh",
+      "pictureMode": "Chế độ hình ảnh",
+      "artFilter": "Bộ lọc nghệ thuật",
+      "gradation": "Chuyển sắc",
+      "imageTone": "Tông màu ảnh",
+      "dynamicRangeExpansion": "Hiệu chỉnh vùng sáng",
+      "shadowCorrection": "Hiệu chỉnh vùng tối",
       "contrast": "Độ tương phản",
       "shutterCount": "Số lần chụp"
     },

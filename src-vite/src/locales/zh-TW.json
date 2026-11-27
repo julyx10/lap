@@ -1198,6 +1198,12 @@
       "activeDLighting": "主動式 D-Lighting",
       "dynamicRangeOptimizer": "動態範圍最佳化",
       "intelligentDRange": "智慧動態範圍",
+      "pictureMode": "相片模式",
+      "artFilter": "藝術濾鏡",
+      "gradation": "漸層",
+      "imageTone": "自訂影像",
+      "dynamicRangeExpansion": "高光校正",
+      "shadowCorrection": "陰影校正",
       "contrast": "對比度",
       "shutterCount": "快門次數"
     },

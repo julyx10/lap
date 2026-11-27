@@ -1198,6 +1198,12 @@
       "activeDLighting": "Active D-Lighting",
       "dynamicRangeOptimizer": "Optimalizace dynamického rozsahu",
       "intelligentDRange": "Inteligentní dynamický rozsah",
+      "pictureMode": "Obrazový režim",
+      "artFilter": "Umělecký filtr",
+      "gradation": "Gradace",
+      "imageTone": "Tón obrazu",
+      "dynamicRangeExpansion": "Korekce světel",
+      "shadowCorrection": "Korekce stínů",
       "contrast": "Kontrast",
       "shutterCount": "Počet expozic"
     },

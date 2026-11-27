@@ -1443,6 +1443,79 @@ mod camera_settings_tests {
     }
 
     #[test]
+    fn olympus_and_om_system_makernotes_extract_settings_and_trim_art_filter() {
+        let tags = vec![
+            make_tag("MakerNotes", "Olympus", "PictureMode", "Natural; 2"),
+            make_tag("MakerNotes", "Olympus", "ArtFilter", "Off; 0; 0; 0"),
+            make_tag("MakerNotes", "Olympus", "Gradation", "Normal; User-Selected"),
+            make_tag("MakerNotes", "Olympus", "ContrastSetting", "-3 (min -5, max 5)"),
+            make_tag("MakerNotes", "Olympus", "CustomSaturation", "-2 (min -5, max 5)"),
+            make_tag("MakerNotes", "Olympus", "SharpnessSetting", "-1 (min -5, max 5)"),
+            make_tag("MakerNotes", "Olympus", "NoiseFilter", "Low"),
+            make_tag("MakerNotes", "Olympus", "NoiseReduction", "(none)"),
+            make_tag("MakerNotes", "Olympus", "FilmGrainEffect", "Off"),
+            make_tag("MakerNotes", "Olympus", "WhiteBalanceFineTune", "0 0"),
+            make_tag("MakerNotes", "Olympus", "FocusMode", "Single AF; S-AF, Imager AF"),
+            make_tag("MakerNotes", "Olympus", "DriveMode", "HighRes Shot"),
+            make_tag("MakerNotes", "Olympus", "ImageStabilization", "On, S-IS Auto"),
+        ];
+        let details = detail_values(&tags);
+        assert_eq!(details["pictureMode"].values, vec!["Natural; 2"]);
+        assert_eq!(details["artFilter"].values, vec!["Off"]);
+        assert_eq!(details["gradation"].values, vec!["Normal; User-Selected"]);
+        assert_eq!(details["contrast"].values, vec!["-3 (min -5, max 5)"]);
+        assert_eq!(details["saturation"].values, vec!["-2 (min -5, max 5)"]);
+        assert_eq!(details["sharpness"].values, vec!["-1 (min -5, max 5)"]);
+        assert_eq!(details["noiseReduction"].values, vec!["Low"]);
+        assert_eq!(details["grainEffect"].values, vec!["Off"]);
+        assert_eq!(details["whiteBalanceShift"].values, vec!["0 0"]);
+        assert_eq!(details["driveMode"].values, vec!["HighRes Shot"]);
+        assert_eq!(details["imageStabilization"].values, vec!["On, S-IS Auto"]);
+    }
+
+    #[test]
+    fn pentax_and_ricoh_makernotes_extract_settings_wb_shift_and_shutter_count() {
+        let pentax_tags = vec![
+            make_tag("MakerNotes", "Pentax", "ImageTone", "Monotone"),
+            make_tag("MakerNotes", "Pentax", "DynamicRangeExpansion", "On; Auto; 0; 0"),
+            make_tag("MakerNotes", "Pentax", "ShadowCorrection", "Auto"),
+            make_tag("MakerNotes", "Pentax", "Contrast", "+1 (medium high)"),
+            make_tag("MakerNotes", "Pentax", "Saturation", "0 (normal)"),
+            make_tag("MakerNotes", "Pentax", "Sharpness", "+1 (medium hard)"),
+            make_tag("MakerNotes", "Pentax", "HighISONoiseReduction", "Auto; Inactive"),
+            make_tag("MakerNotes", "Pentax", "ClarityControl", "Off"),
+            make_tag("MakerNotes", "Pentax", "WBShiftAB", "0"),
+            make_tag("MakerNotes", "Pentax", "WBShiftGM", "0"),
+            make_tag("MakerNotes", "Pentax", "FocusMode", "AF-C (Focus-priority)"),
+            make_tag(
+                "MakerNotes",
+                "Pentax",
+                "DriveMode",
+                "Single-frame; No Timer; Shutter Button; Single Exposure",
+            ),
+            make_tag("MakerNotes", "Pentax", "ShakeReduction", "On (AA simulation off)"),
+            make_tag("MakerNotes", "Pentax", "ShutterCount", "1057"),
+        ];
+        let details = detail_values(&pentax_tags);
+        assert_eq!(details["imageTone"].values, vec!["Monotone"]);
+        assert_eq!(details["dynamicRangeExpansion"].values, vec!["On; Auto"]);
+        assert_eq!(details["shadowCorrection"].values, vec!["Auto"]);
+        assert_eq!(details["contrast"].values, vec!["+1 (medium high)"]);
+        assert_eq!(details["noiseReduction"].values, vec!["Auto; Inactive"]);
+        assert_eq!(details["clarity"].values, vec!["Off"]);
+        assert_eq!(details["whiteBalanceShift"].values, vec!["AB 0, GM 0"]);
+        assert_eq!(details["imageStabilization"].values, vec!["On (AA simulation off)"]);
+        assert_eq!(details["shutterCount"].values, vec!["1057"]);
+
+        let legacy_ricoh = detail_values(&[
+            make_tag("MakerNotes", "Ricoh", "NoiseReduction", "Off"),
+            make_tag("MakerNotes", "Ricoh", "Saturation", "Unknown (48)"),
+        ]);
+        assert_eq!(legacy_ricoh["noiseReduction"].values, vec!["Off"]);
+        assert!(!legacy_ricoh.contains_key("saturation"));
+    }
+
+    #[test]
     fn makernotes_never_shadow_standard_exif_capture_fields() {
         let tags = vec![
             make_tag("EXIF", "ExifIFD", "WhiteBalance", "Auto"),
@@ -1950,6 +2023,14 @@ fn format_ab_gm_wb_shift(tags: &[Tag], family1: &str) -> Option<DetailValue> {
     })
 }
 
+fn trim_trailing_zero_segments(value: &str) -> String {
+    let mut parts: Vec<&str> = value.split(';').map(str::trim).filter(|s| !s.is_empty()).collect();
+    while parts.len() > 1 && parts.last() == Some(&"0") {
+        parts.pop();
+    }
+    parts.join("; ")
+}
+
 fn apply_camera_settings_formatters(tags: &[Tag], result: &mut Details) {
     // Fujifilm stores monochrome simulations in Saturation, not FilmMode.
     if let Some(tag) = find_fuji_maker_tag_entry(tags, "Saturation") {
@@ -1971,8 +2052,16 @@ fn apply_camera_settings_formatters(tags: &[Tag], result: &mut Details) {
     if !result.contains_key("whiteBalanceShift") {
         if let Some(wb) = format_ab_gm_wb_shift(tags, "Canon")
             .or_else(|| format_ab_gm_wb_shift(tags, "Panasonic"))
+            .or_else(|| format_ab_gm_wb_shift(tags, "Pentax"))
         {
             result.insert("whiteBalanceShift".into(), wb);
+        }
+    }
+    for key in ["artFilter", "dynamicRangeExpansion"] {
+        if let Some(detail) = result.get_mut(key) {
+            for value in &mut detail.values {
+                *value = trim_trailing_zero_segments(value);
+            }
         }
     }
 }

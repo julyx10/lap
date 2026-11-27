@@ -751,7 +751,9 @@ const detailKeys: Record<DetailSection, string[]> = {
   location: ['direction', 'directionRef'],
   cameraSettings: [
     'filmSimulation', 'pictureStyle', 'pictureControl', 'creativeStyle', 'pictureProfile', 'pictureEffect', 'photoStyle',
+    'pictureMode', 'artFilter', 'imageTone',
     'dynamicRange', 'autoLightingOptimizer', 'highlightTonePriority', 'activeDLighting', 'dynamicRangeOptimizer', 'intelligentDRange',
+    'gradation', 'dynamicRangeExpansion', 'shadowCorrection',
     'highlightTone', 'shadowTone', 'contrast', 'saturation', 'sharpness', 'noiseReduction', 'clarity',
     'whiteBalanceShift', 'grainEffect', 'colorChromeEffect', 'colorChromeFxBlue',
     'focusMode', 'driveMode', 'imageStabilization', 'shutterCount',
