@@ -279,6 +279,7 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  inCollection: Boolean,
   querySource: {
     type: String,
     default: '',
@@ -621,6 +622,7 @@ const menuItems = useFileMenuItems(
   isMac,
   t,
   (action) => emit('action', action),
+  { inCollection: computed(() => props.inCollection) },
 );
 
 const getGridLabelText = (file: any, option: number) => {

@@ -88,6 +88,7 @@
           :is-active="getFileIndex(item, index) === selectedItemIndex"
           :select-mode="selectMode"
           :query-source="querySource"
+          :in-collection="inCollection"
           :dedup-status="dedupStatuses[Number(getFileItem(item).id)]"
           :grid-size="gridSize"
           @clicked="(modifiers) => $emit('item-clicked', getFileIndex(item, index), modifiers)"
@@ -166,6 +167,7 @@ const props = withDefaults(defineProps<{
   groupSelectionLoading?: Record<string, boolean>;
   folderGroupRoots?: Array<{ path: string; name?: string }>;
   querySource?: string;
+  inCollection?: boolean;
   dedupStatuses?: Record<number, 'keep' | 'dup'>;
   draggedFileIds?: Set<number>;
   gridSize: number;
@@ -184,6 +186,7 @@ const props = withDefaults(defineProps<{
   groupSelectionLoading: () => ({}),
   folderGroupRoots: () => [],
   querySource: '',
+  inCollection: false,
   dedupStatuses: () => ({}),
   draggedFileIds: () => new Set<number>(),
   gridSize: 120,

@@ -142,7 +142,7 @@
                 </div>
               </div>
             </div>
-            <div v-if="showHistogramPanel" class="rounded-box border border-base-content/5 bg-base-300/30 p-3" :class="showThumbnailPanel ? 'mt-3' : ''">
+            <div v-if="showHistogramPanel" class="rounded-box border border-base-content/5 p-3" :class="showThumbnailPanel ? 'mt-3' : ''">
               <ImageHistogram :source="fileInfo?.thumbnail || ''" />
             </div>
           </div>

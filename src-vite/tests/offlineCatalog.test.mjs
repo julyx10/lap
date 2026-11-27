@@ -51,6 +51,37 @@ const locale = ref({ menu: { file: words(), meta: words() }, rating: words(), cu
 const allItems = items => items.flatMap(item => [item, ...allItems(item.children || [])]);
 const action = (items, name) => allItems(items).find(item => item.action?.actionName === name);
 
+test('single-file collection removal follows the active scope and works offline', () => {
+  const file = ref({ id: 42, file_type: 1, album_accessible: false, file_path: '/offline.jpg' });
+  const inCollection = ref(false);
+  const called = [];
+  const menu = useFileMenuItems(file, locale, true, key => key, name => called.push(name), { inCollection });
+  assert.equal(action(menu.value, 'remove-from-collection').hidden, true);
+  inCollection.value = true;
+  const item = action(menu.value, 'remove-from-collection');
+  assert.equal(item.hidden, false);
+  assert.equal(item.disabled, false);
+  item.action();
+  assert.deepEqual(called, ['remove-from-collection']);
+  const viewerMenu = useFileMenuItems(file, locale, true, key => key, () => {});
+  assert.equal(action(viewerMenu.value, 'remove-from-collection').hidden, true);
+});
+
+test('single and selection menus omit duplicate organization controls and keep collection removal above trash', () => {
+  for (const selectMode of [false, true]) {
+    const menu = useFileMenuItems(ref({ id: 42, file_type: 1 }), locale, true, key => key, () => {}, {
+      selectMode: ref(selectMode), selectionCount: ref(2), selectionMediaKind: ref('image'),
+      inCollection: ref(true), selectionInCollection: ref(true),
+    }).value;
+    for (const name of ['favorite', 'favorite-all', 'unfavorite-all', 'rating-5', 'culling-pick', 'tag', 'add-to-collection']) {
+      assert.equal(action(menu, name), undefined, name);
+    }
+    const trashIndex = menu.findIndex(item => item.action?.actionName === 'trash');
+    assert.equal(menu[trashIndex - 1].action.actionName, selectMode ? 'remove-selected-from-collection' : 'remove-from-collection');
+    assert.ok(menu.every((item, index) => item.label !== '-' || menu[index + 1]?.label !== '-'));
+  }
+});
+
 test('folder exploration follows similar and person search and works without the original', () => {
   const file = ref({ id: 42, album_id: 1, album_accessible: false, file_type: 1, file_path: '/photos/image.jpg' });
   const called = [];
@@ -64,7 +95,7 @@ test('folder exploration follows similar and person search and works without the
   assert.deepEqual(called, ['explore-same-folder']);
 });
 
-test('single-file menu retains catalog organization and blocks original-file operations while offline', () => {
+test('single-file menu retains preview and catalog actions and blocks original-file operations while offline', () => {
   const file = ref({ id: 42, album_id: 1, album_accessible: false, file_type: 1, has_embedding: true, file_path: '/photos/offline.jpg' });
   setAlbumAccessibility(1, false);
   const called = [];
@@ -74,11 +105,11 @@ test('single-file menu retains catalog organization and blocks original-file ope
     action(menu.value, name).action();
   }
   assert.deepEqual(called, []);
-  for (const name of ['favorite', 'rating-5', 'tag', 'comment', 'add-to-collection', 'rotate', 'open', 'set-album-cover']) {
+  for (const name of ['open', 'set-album-cover']) {
     assert.equal(action(menu.value, name).disabled, false, name);
     action(menu.value, name).action();
   }
-  assert.ok(called.includes('tag'));
+  assert.ok(called.includes('set-album-cover'));
 
   setAlbumAccessibility(1, true);
   assert.equal(action(menu.value, 'copy').disabled, false);

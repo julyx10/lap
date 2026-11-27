@@ -41,8 +41,8 @@
       >
         <defs>
           <linearGradient :id="gradientId" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="rgba(148,163,184,0.62)" />
-            <stop offset="100%" stop-color="rgba(148,163,184,0.12)" />
+            <stop offset="0%" :stop-color="isLight ? 'rgba(71,85,105,0.5)' : 'rgba(148,163,184,0.62)'" />
+            <stop offset="100%" :stop-color="isLight ? 'rgba(71,85,105,0.12)' : 'rgba(148,163,184,0.12)'" />
           </linearGradient>
         </defs>
         <g class="text-base-content/30">
@@ -51,9 +51,12 @@
           <line x1="192" y1="0" x2="192" y2="64" stroke="currentColor" stroke-width="0.5" />
         </g>
         <path v-if="visibleChannels.luma" :d="histogramPath" :fill="`url(#${gradientId})`" />
-        <path v-if="visibleChannels.red" :d="histogramPathR" fill="rgba(239,68,68,0.35)" style="mix-blend-mode: screen" />
-        <path v-if="visibleChannels.green" :d="histogramPathG" fill="rgba(34,197,94,0.35)" style="mix-blend-mode: screen" />
-        <path v-if="visibleChannels.blue" :d="histogramPathB" fill="rgba(59,130,246,0.35)" style="mix-blend-mode: screen" />
+        <path v-if="visibleChannels.red" :d="histogramPathR"
+          :fill="isLight ? 'rgba(185,28,28,0.3)' : 'rgba(239,68,68,0.35)'" :style="channelStyle" />
+        <path v-if="visibleChannels.green" :d="histogramPathG"
+          :fill="isLight ? 'rgba(21,128,61,0.3)' : 'rgba(34,197,94,0.35)'" :style="channelStyle" />
+        <path v-if="visibleChannels.blue" :d="histogramPathB"
+          :fill="isLight ? 'rgba(29,78,216,0.3)' : 'rgba(59,130,246,0.35)'" :style="channelStyle" />
         <line
           v-if="hoverBin !== null"
           :x1="hoverX"
@@ -77,9 +80,13 @@
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import { useAppearance } from '@/composables/useAppearance';
 import { useConfigStore } from '@/stores/configStore';
 
 const config = useConfigStore();
+const appearance = useAppearance();
+const isLight = computed(() => appearance.value === 0);
+const channelStyle = computed(() => ({ mixBlendMode: isLight.value ? 'multiply' as const : 'screen' as const }));
 const props = defineProps({
   source: {
     type: String,

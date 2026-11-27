@@ -212,6 +212,7 @@
                 :group-selection-loading="groupSelectionLoading"
                 :folder-group-roots="folderGroupRoots"
                 :query-source="currentQuerySource"
+                :in-collection="currentCollectionId !== null"
                 :dedup-statuses="dedupStatuses"
                 :dragged-file-ids="draggedFileIds"
                 :grid-size="gridSize"
@@ -274,6 +275,7 @@
               class="w-full h-full flex items-center justify-center"
             >
               <MediaViewer
+                :in-collection="currentCollectionId !== null"
                 ref="filmStripMediaRef"
                 :suppress-auto-navigator="infoNavigatorVisible"
                 @viewport-change="previewViewports.filmstrip = $event"
@@ -333,6 +335,7 @@
           >
             <MediaViewer
               ref="quickViewMediaRef"
+              :in-collection="currentCollectionId !== null"
               :suppress-auto-navigator="infoNavigatorVisible"
               @viewport-change="previewViewports.quick = $event"
               :mode="0"
@@ -1274,7 +1277,6 @@ const selectionMenuItems = useFileMenuItems(
   {
     selectMode: ref(true),
     selectionMediaKind,
-    selectionFirstFavorite: computed(() => Boolean(selectedFiles.value[0]?.is_favorite)),
     selectionCount: selectedCount,
     selectionHasUnavailable,
     selectionStorageUnavailable,

@@ -8,10 +8,6 @@ import {
   IconSave,
   IconPrint,
   IconRefresh,
-  IconHeart,
-  IconStar,
-  IconStarFilled,
-  IconTag,
   IconCopy,
   IconRename,
   IconFileArrowRight,
@@ -21,11 +17,6 @@ import {
   IconFolderSearch,
   IconImageEdit,
   IconExternal,
-  IconHeartFilled,
-  IconFlag,
-  IconFlagFilled,
-  IconFlagOff,
-  IconCollection,
   IconSplitOn,
   IconSplitOn4,
   IconCollage,
@@ -53,7 +44,7 @@ export const useFileMenuItems = (
     selectionHasCloudOnly?: Ref<boolean>;
     selectionStorageUnavailable?: Ref<boolean>;
     selectionInCollection?: Ref<boolean>;
-    selectionFirstFavorite?: Ref<boolean>;
+    inCollection?: Ref<boolean>;
     /** Hide "View in new window" instead of only disabling it. */
     hideViewInNewWindow?: boolean;
   }
@@ -109,11 +100,9 @@ export const useFileMenuItems = (
     const selectionCount = options?.selectionCount?.value ?? 0;
     const unavailable = options?.selectionHasUnavailable?.value === true;
     const batchActions = new Set([
-      'tag', 'add-to-collection', 'rename', 'copy', 'trash',
+      'rename', 'copy', 'trash',
     ]);
     const batchLabels = new Set([
-      localeMsg.value.rating.title,
-      localeMsg.value.culling.title,
       translate('menu.file.move_copy'),
     ]);
     const batchItems = buildSingleFileMenu({}).filter(item =>
@@ -143,31 +132,9 @@ export const useFileMenuItems = (
         action: createAction('create-montage'),
       },
       { label: '-', action: null },
-      {
-        label: options?.selectionFirstFavorite?.value
-          ? localeMsg.value.menu.meta.unfavorite
-          : localeMsg.value.menu.meta.favorite,
-        icon: markRaw(options?.selectionFirstFavorite?.value ? IconHeartFilled : IconHeart),
-        shortcut: shortcut('meta.favorite'),
-        disabled: selectionCount === 0,
-        action: createAction(options?.selectionFirstFavorite?.value ? 'unfavorite-all' : 'favorite-all'),
-        hideInSelectionPanel: true,
-      },
-      ...batchItems.filter(item =>
-        !['rename', 'copy', 'trash'].includes(item.action?.actionName)
-        && item.label !== translate('menu.file.move_copy')
-      ),
-      { label: '-', action: null },
       ...batchItems.filter(item => item.action?.actionName === 'rename'),
       ...batchItems.filter(item => item.action?.actionName === 'copy'),
       ...batchItems.filter(item => item.label === translate('menu.file.move_copy')),
-      {
-        label: localeMsg.value.menu.file.remove_from_collection,
-        hidden: !options?.selectionInCollection?.value,
-        disabled: selectionCount === 0,
-        action: createAction('remove-selected-from-collection'),
-        hideInSelectionPanel: true,
-      },
       { label: '-', action: null },
       {
         label: localeMsg.value.menu.file.refresh_file_info,
@@ -182,6 +149,13 @@ export const useFileMenuItems = (
         action: createAction('save-xmp'),
       },
       { label: '-', action: null },
+      {
+        label: localeMsg.value.menu.file.remove_from_collection,
+        hidden: !options?.selectionInCollection?.value,
+        disabled: selectionCount === 0,
+        action: createAction('remove-selected-from-collection'),
+        hideInSelectionPanel: true,
+      },
       ...batchItems.filter(item => item.action?.actionName === 'trash'),
     ];
   };
@@ -221,100 +195,6 @@ export const useFileMenuItems = (
         icon: markRaw(IconPrint),
         disabled: !isImage,
         action: createAction('print')
-      },
-      { label: "-", action: null },
-      {
-        label: f.is_favorite ? localeMsg.value.menu.meta.unfavorite : localeMsg.value.menu.meta.favorite,
-        icon: markRaw(Number(f.is_favorite) ? IconHeartFilled : IconHeart),
-        shortcut: shortcut('meta.favorite'),
-        action: createAction('favorite')
-      },
-      {
-        label: localeMsg.value.rating.title,
-        icon: markRaw(Number(f.rating || 0) > 0 ? IconStarFilled : IconStar),
-        submenuOpenDelay: 200,
-        children: [
-          {
-            label: localeMsg.value.rating.clear_rating,
-            icon: markRaw(IconStar),
-            shortcut: shortcut('meta.rating.clear'),
-            action: createAction('rating-0')
-          },
-          { label: '-', action: null },
-          {
-            label: localeMsg.value.rating.five_stars,
-            icon: markRaw(Number(f.rating || 0) === 5 ? IconStarFilled : IconStar),
-            shortcut: shortcut('meta.rating.five'),
-            action: createAction('rating-5')
-          },
-          {
-            label: localeMsg.value.rating.four_stars,
-            icon: markRaw(Number(f.rating || 0) === 4 ? IconStarFilled : IconStar),
-            shortcut: shortcut('meta.rating.four'),
-            action: createAction('rating-4')
-          },
-          {
-            label: localeMsg.value.rating.three_stars,
-            icon: markRaw(Number(f.rating || 0) === 3 ? IconStarFilled : IconStar),
-            shortcut: shortcut('meta.rating.three'),
-            action: createAction('rating-3')
-          },
-          {
-            label: localeMsg.value.rating.two_stars,
-            icon: markRaw(Number(f.rating || 0) === 2 ? IconStarFilled : IconStar),
-            shortcut: shortcut('meta.rating.two'),
-            action: createAction('rating-2')
-          },
-          {
-            label: localeMsg.value.rating.one_star,
-            icon: markRaw(Number(f.rating || 0) === 1 ? IconStarFilled : IconStar),
-            shortcut: shortcut('meta.rating.one'),
-            action: createAction('rating-1')
-          },
-        ]
-      },
-      {
-        label: localeMsg.value.culling.title,
-        icon: markRaw(
-          Number(f.culling_flag ?? f.cullingFlag ?? 0) === 1
-            ? IconFlagFilled
-            : Number(f.culling_flag ?? f.cullingFlag ?? 0) === 2
-              ? IconFlagOff
-              : IconFlag,
-        ),
-        submenuOpenDelay: 200,
-        children: [
-          {
-            label: localeMsg.value.culling.picks,
-            icon: markRaw(IconFlagFilled),
-            shortcut: shortcut('meta.culling.pick'),
-            action: createAction('culling-pick'),
-          },
-          {
-            label: localeMsg.value.culling.rejected,
-            icon: markRaw(IconFlagOff),
-            shortcut: shortcut('meta.culling.reject'),
-            action: createAction('culling-reject'),
-          },
-          {
-            label: localeMsg.value.culling.unreviewed,
-            icon: markRaw(IconFlag),
-            shortcut: shortcut('meta.culling.unreviewed'),
-            action: createAction('culling-unreviewed'),
-          },
-        ],
-      },
-      {
-        label: localeMsg.value.menu.meta.tag,
-        icon: markRaw(IconTag),
-        shortcut: shortcut('meta.tag'),
-        action: createAction('tag')
-      },
-      {
-        label: localeMsg.value.menu.meta.collection,
-        icon: markRaw(IconCollection),
-        shortcut: shortcut('meta.collection'),
-        action: createAction('add-to-collection'),
       },
       { label: "-", action: null },
       {
@@ -403,6 +283,11 @@ export const useFileMenuItems = (
         ],
       },
       { label: "-", action: null },
+      {
+        label: localeMsg.value.menu.file.remove_from_collection,
+        hidden: !options?.inCollection?.value,
+        action: createAction('remove-from-collection'),
+      },
       {
         label: translate(config.settings.fileDeleteBehavior === 'permanent' ? 'menu.file.delete' : 'msgbox.move_to_trash.title'),
         icon: markRaw(IconTrash),

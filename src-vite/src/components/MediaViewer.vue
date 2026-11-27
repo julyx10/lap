@@ -526,6 +526,7 @@ import { useFileMenuItems } from '@/common/fileMenu';
 const Video = defineAsyncComponent(() => import('@/components/Video.vue'));
 
 const props = defineProps({
+  inCollection: Boolean,
   // 0: quick view, 1: filmstrip, 2: image viewer
   mode: {
     type: Number,
@@ -1543,7 +1544,8 @@ const singleFileMenuItems = computed(() => {
     localeMsg,
     isMac,
     t,
-    (action) => emit('item-action', { action, index: props.fileIndex })
+    (action) => emit('item-action', { action, index: props.fileIndex }),
+    { inCollection: computed(() => props.inCollection) }
   ).value;
 });
 </script>
