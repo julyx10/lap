@@ -48,7 +48,9 @@ export const useConfigStore = defineStore('configStore', {
       fields: [...defaultFileInfoFields],
       hideEmptyFields: false,
       showPreview: true,         // show preview thumbnail
-      previewMode: 'thumbnail',  // preview section mode ('thumbnail' | 'histogram')
+      showThumbnail: true,       // show preview thumbnail panel (independent toggle)
+      showHistogram: false,      // show histogram panel (independent toggle)
+      previewRestore: null,      // panel to re-enable when an auto-collapsed preview section is re-opened ('thumbnail' | 'histogram')
       previewScale: 1,           // preview thumbnail scale (1, 0.5, 0.25)
       histogramChannels: 15,     // histogram channel mask (L=1, R=2, G=4, B=8; 0=none, 15=all)
       showOrganization: true,   // show catalog organization
@@ -479,6 +481,18 @@ export const useConfigStore = defineStore('configStore', {
           if (!Array.isArray(settings.customThemes)) settings.customThemes = [];
           delete settings.lightTheme;
           delete settings.darkTheme;
+        }
+        const info = state?.infoPanel;
+        if (info) {
+          // Migrate the old radio-style preview mode to independent toggles.
+          if (info.previewMode === 'histogram') {
+            info.showThumbnail = false;
+            info.showHistogram = true;
+          } else if (info.previewMode === 'thumbnail') {
+            info.showThumbnail = true;
+            info.showHistogram = false;
+          }
+          delete info.previewMode;
         }
         return state;
       },

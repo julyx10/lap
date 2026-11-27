@@ -350,11 +350,22 @@ const assert = require("node:assert/strict");
     await page.locator("#metadata-e_title").fill("Edited demo title");
     await page.getByRole("button", { name: "Save", exact: true }).click();
     await info.getByText("Edited demo title", { exact: true }).waitFor();
-    await info.getByRole("tab", { name: "Histogram", exact: true }).click();
-    await info.locator('svg[viewBox="0 0 256 64"]').waitFor();
+    const histogram = info.getByRole("button", { name: "Histogram", exact: true });
+    const thumbnail = info.getByRole("button", { name: "Thumbnail", exact: true });
+    await histogram.click();
+    const histogramPanel = info.locator('svg[viewBox="0 0 256 64"]');
+    await histogramPanel.waitFor();
+    assert(await histogram.evaluate(el => el.classList.contains('tab-active')));
+    assert(await thumbnail.evaluate(el => el.classList.contains('tab-active')));
     await shot("info-native");
-    await info.getByRole("tab", { name: "Thumbnail", exact: true }).click();
-    console.log("PASS: actual FileInfo metadata and histogram/thumbnail tabs");
+    await thumbnail.click();
+    await histogramPanel.waitFor();
+    assert(!(await thumbnail.evaluate(el => el.classList.contains('tab-active'))));
+    await thumbnail.click();
+    await histogram.click();
+    await histogramPanel.waitFor({ state: 'detached' });
+    assert(await thumbnail.evaluate(el => el.classList.contains('tab-active')));
+    console.log("PASS: actual FileInfo metadata and independent histogram/thumbnail panels");
     assert.deepEqual(errors, []);
     if (process.argv.includes("--site")) {
       await page.goto("http://127.0.0.1:4180/lap/", {
