@@ -51,17 +51,17 @@
             :aria-busy="changingThumbnail"
             @click.stop="changePreviewThumbnail"
           >{{ $t('file_info.change_thumbnail') }}{{ changingThumbnail ? '…' : '' }}</button>
-          <div v-else-if="showPreviewPanel" role="tablist" class="tabs tabs-xs shrink-0">
+          <div v-else-if="showPreviewPanel" class="tabs tabs-xs shrink-0">
             <button
-              role="tab"
-              :class="['tab', !isHistogramPreview ? 'tab-active text-primary' : '']"
-              @click.stop="setPreviewMode('thumbnail')"
+              type="button"
+              :class="['tab', showThumbnailPanel ? 'tab-active text-primary' : '']"
+              @click.stop="togglePreviewPanel('thumbnail')"
             >{{ $t('file_info.thumbnail') }}</button>
             <button
               v-if="canShowHistogram"
-              role="tab"
-              :class="['tab', isHistogramPreview ? 'tab-active text-primary' : '']"
-              @click.stop="setPreviewMode('histogram')"
+              type="button"
+              :class="['tab', showHistogramPanel ? 'tab-active text-primary' : '']"
+              @click.stop="togglePreviewPanel('histogram')"
             >{{ $t('file_info.histogram') }}</button>
           </div>
         </div>
@@ -69,7 +69,7 @@
         <div class="shrink-0">
           <div v-if="showPreviewPanel" class="pt-3 overflow-hidden">
             <div
-              v-if="!isHistogramPreview"
+              v-if="showThumbnailPanel"
               class="relative w-full overflow-hidden rounded-box border border-base-content/5 shadow-sm transition-[padding-top] duration-200 ease-out"
               :style="{ paddingTop: `${75 * previewScale}%` }"
               @pointerenter="playVideoPreviewOnHover"
@@ -139,7 +139,7 @@
                 </div>
               </div>
             </div>
-            <div v-else class="rounded-box border border-base-content/5 bg-base-300/30 p-3 shadow-sm">
+            <div v-if="showHistogramPanel" class="rounded-box border border-base-content/5 bg-base-300/30 p-3 shadow-sm" :class="showThumbnailPanel ? 'mt-3' : ''">
               <ImageHistogram :source="fileInfo?.thumbnail || ''" />
             </div>
           </div>
@@ -1068,8 +1068,8 @@ const canPreviewVideo = computed(() => (
   && !isWebViewVideoPlaybackDisabled(previewVideoPath.value)
 ));
 const canShowHistogram = computed(() => !isVideoFile.value);
-const activePreviewMode = computed(() => canShowHistogram.value ? config.infoPanel.previewMode : 'thumbnail');
-const isHistogramPreview = computed(() => activePreviewMode.value === 'histogram');
+const showThumbnailPanel = computed(() => !!config.infoPanel.showThumbnail);
+const showHistogramPanel = computed(() => canShowHistogram.value && !!config.infoPanel.showHistogram);
 const hasPreviewNavigator = computed(() => !!props.fileInfo?.thumbnail
   && !isVideoFile.value && !!props.navigatorViewport
   && props.navigatorViewport.fileId === props.fileInfo?.id);
@@ -1092,7 +1092,7 @@ const histogramChannelLabel = computed(() => {
 const previewVideoRef = ref<HTMLVideoElement | null>(null);
 const showVideoPreview = ref(false);
 const isVideoPreviewReady = ref(false);
-watch(() => showPreviewPanel.value && !isHistogramPreview.value && hasPreviewNavigator.value && !showVideoPreview.value,
+watch(() => showPreviewPanel.value && showThumbnailPanel.value && hasPreviewNavigator.value && !showVideoPreview.value,
   visible => emit('navigator-visible', visible), { immediate: true, flush: 'post' });
 onBeforeUnmount(() => emit('navigator-visible', false));
 
@@ -1159,15 +1159,35 @@ const previewFormatLabel = computed(() => {
   return extension.toUpperCase();
 });
 const previewTagLabel = computed(() => (
-  isHistogramPreview.value ? histogramChannelLabel.value : previewFormatLabel.value
+  showHistogramPanel.value && !showThumbnailPanel.value ? histogramChannelLabel.value : previewFormatLabel.value
 ));
 function togglePreview() {
   config.infoPanel.showPreview = !config.infoPanel.showPreview;
+  // Re-opening an auto-collapsed section restores the last unchecked panel;
+  // a normal collapse/expand keeps the checked state as-is.
+  if (config.infoPanel.showPreview) {
+    const restore = config.infoPanel.previewRestore;
+    if (!config.infoPanel.showThumbnail && !config.infoPanel.showHistogram) {
+      if (restore === 'histogram' ? canShowHistogram.value : true) {
+        config.infoPanel[restore === 'histogram' ? 'showHistogram' : 'showThumbnail'] = true;
+      } else {
+        config.infoPanel.showThumbnail = true;
+      }
+    }
+    delete config.infoPanel.previewRestore;
+  }
 }
 
-function setPreviewMode(mode: 'thumbnail' | 'histogram') {
-  if (mode === 'histogram' && !canShowHistogram.value) return;
-  config.infoPanel.previewMode = mode;
+function togglePreviewPanel(kind: 'thumbnail' | 'histogram') {
+  if (kind === 'histogram' && !canShowHistogram.value) return;
+  const key = kind === 'histogram' ? 'showHistogram' : 'showThumbnail';
+  config.infoPanel[key] = !config.infoPanel[key];
+  // No visible panel left: collapse the section like the other info sections,
+  // remembering which panel was hidden last so re-opening can restore it.
+  if (!config.infoPanel.showThumbnail && !config.infoPanel.showHistogram) {
+    config.infoPanel.showPreview = false;
+    config.infoPanel.previewRestore = kind;
+  }
 }
 
 let videoPreviewRequest = 0;
@@ -1243,7 +1263,7 @@ watch(
     props.fileInfo?.live_photo_video_path,
     props.fileInfo?.media_subtype,
     showPreviewPanel.value,
-    isHistogramPreview.value,
+    showThumbnailPanel.value,
   ],
   stopPreviewVideo
 );
