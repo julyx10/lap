@@ -1410,6 +1410,12 @@
         "Oříznout na na celou šířku",
         "Roztáhnout pro vyplnění"
       ],
+      "spacing": "Rozestupy miniatur",
+      "spacing_options": [
+        "Kompaktní",
+        "Pohodlné",
+        "Prostorné"
+      ],
       "thumbnail_corners": "Rohy miniatur",
       "thumbnail_corner_options": [
         "Podle motivu",
@@ -1428,7 +1434,7 @@
         "Objektiv",
         "Expozice"
       ],
-      "show_thumbnail_badges": "Zobrazovat štítky miniatur",
+      "show_thumbnail_badges": "Štítky miniatur",
       "thumbnail_badge_options": [
         "(Prázdné)",
         "Formát souboru",

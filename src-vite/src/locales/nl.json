@@ -1410,6 +1410,12 @@
         "Bijsnijden tot vullend",
         "Uitrekken tot vullend"
       ],
+      "spacing": "Miniatuurafstand",
+      "spacing_options": [
+        "Compact",
+        "Comfortabel",
+        "Ruim"
+      ],
       "thumbnail_corners": "Hoeken van miniaturen",
       "thumbnail_corner_options": [
         "Thema volgen",
@@ -1428,7 +1434,7 @@
         "Objectief",
         "Belichting"
       ],
-      "show_thumbnail_badges": "Badges op miniaturen tonen",
+      "show_thumbnail_badges": "Badges op miniaturen",
       "thumbnail_badge_options": [
         "(Leeg)",
         "Bestandsformaat",

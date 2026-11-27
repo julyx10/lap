@@ -1410,6 +1410,12 @@
         "裁剪填充",
         "拉伸填充"
       ],
+      "spacing": "缩略图间距",
+      "spacing_options": [
+        "紧凑",
+        "舒适",
+        "宽松"
+      ],
       "thumbnail_corners": "缩略图圆角",
       "thumbnail_corner_options": [
         "跟随主题",
@@ -1428,7 +1434,7 @@
         "镜头",
         "曝光参数"
       ],
-      "show_thumbnail_badges": "显示缩略图标记",
+      "show_thumbnail_badges": "缩略图标记",
       "thumbnail_badge_options": [
         "（空）",
         "文件格式",

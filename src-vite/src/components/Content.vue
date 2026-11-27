@@ -190,8 +190,8 @@
           <div class="relative" 
             :class="{ 'flex-1': !showFilmstripLayout }"
             :style="{ 
-              height: (showFilmstripLayout && !isFilmstripVertical) ? itemSize + 'px' : '',
-              width: (showFilmstripLayout && isFilmstripVertical) ? itemWidth + 'px' : ''
+              height: (showFilmstripLayout && !isFilmstripVertical) ? (itemSize + 2 * filmstripPadding) + 'px' : '',
+              width: (showFilmstripLayout && isFilmstripVertical) ? (itemWidth + 2 * filmstripPadding) + 'px' : ''
             }"
           >
             <!-- grid view -->
@@ -723,6 +723,7 @@
 <script setup lang="ts">
 import ToolbarSearch from '@/components/ToolbarSearch.vue';
 import FilterPanel from '@/components/FilterPanel.vue';
+import { thumbnailSpacing, cardItemMetrics } from '@/common/thumbnailSpacing';
 import { browserFilters, passesBrowserFilters } from '@/common/browserFilters';
 import { getVisibleEditableMetadataFields } from '@/common/fileInfoFields';
 import EditMetadataDialog from "@/components/EditMetadataDialog.vue";
@@ -2756,6 +2757,11 @@ function scheduleLayoutRefresh() {
   }, 120);
 }
 const gap = 8;                    // Gap between items (must match GridView)
+const gridSpacingPixels = computed(() => isFilmstripView.value ? 0
+  : thumbnailSpacing(config.settings.grid.spacing, config.settings.scale).pixels);
+const filmstripPadding = computed(() => thumbnailSpacing(config.settings.grid.spacing, config.settings.scale).pixels);
+const cardMetrics = computed(() => cardItemMetrics(config.settings.scale,
+  config.settings.grid.labelPrimary > 0, config.settings.grid.labelSecondary > 0));
 const gridSizeProfile = computed(() => thumbnailProfile(config.settings.thumbnailSize));
 const gridSize = computed(() =>
   gridSizeFromPosition(config.settings.grid.sizePosition, config.settings.thumbnailSize),
@@ -2775,9 +2781,9 @@ function setGridSize(value: unknown) {
 
 const itemWidth = computed(() => {
   if (config.settings.grid.style === 0) {
-    return gridSize.value + 20; // size + padding/border/gap(20)
+    return gridSize.value + cardMetrics.value.frame + gridSpacingPixels.value;
   } else if (config.settings.grid.style === 1) {
-    return gridSize.value;
+    return gridSize.value + gridSpacingPixels.value;
   } else if (isGeometryGridStyle.value) {
     return gridSize.value; // Approximation for geometry layouts
   }
@@ -2786,10 +2792,7 @@ const itemWidth = computed(() => {
 
 const itemSize = computed(() => {
   if (config.settings.grid.style === 0) {
-    let labelHeight = 0
-    if (config.settings.grid.labelPrimary > 0 ) labelHeight += 16;      // height of text-sm
-    if (config.settings.grid.labelSecondary > 0 ) labelHeight += 16;    // height of text-xs
-    return gridSize.value + 20 + labelHeight; // size + padding/border/gap(20) + labels
+    return gridSize.value + cardMetrics.value.frame + cardMetrics.value.labelHeight + gridSpacingPixels.value;
   } else if (config.settings.grid.style === 1) {
     return itemWidth.value + gap / 2;
   } else if (isGeometryGridStyle.value) {
@@ -2800,7 +2803,7 @@ const itemSize = computed(() => {
 
 const columnCount = computed(() => {
   if (containerWidth.value <= 0 || itemWidth.value <= 0) return 4;
-  return Math.max(1, Math.floor(containerWidth.value / itemWidth.value));
+  return Math.max(1, Math.floor((containerWidth.value - 2 * gridSpacingPixels.value) / itemWidth.value));
 });
 
 const visibleItemCount = computed(() => {

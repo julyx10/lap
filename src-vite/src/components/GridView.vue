@@ -2,9 +2,9 @@
   <div
     ref="containerRef"
     class="w-full h-full"
-    :class="{ 
+    :class="[spacing.padding, {
       'pointer-events-none': uiStore.inputStack.length > 0,
-    }"
+    }]"
     @wheel="onWheel"
     @dragstart.capture.prevent
   >
@@ -72,7 +72,11 @@
       <div
         v-else
         class="w-full h-full flex items-center justify-center overflow-hidden"
-        :class="{ 'opacity-50': draggedFileIds.has(Number(getFileItem(item)?.id)) }"
+        :class="[
+          { 'opacity-50': draggedFileIds.has(Number(getFileItem(item)?.id)) },
+          !isGeometryGridStyle(config.settings.grid.style) && (!isFilmstripView || !isVerticalFilmstrip) ? spacing.x : '',
+          !isGeometryGridStyle(config.settings.grid.style) && (!isFilmstripView || isVerticalFilmstrip) ? spacing.y : '',
+        ]"
         @pointerdown="onItemPointerDown($event, getFileIndex(item, index), getFileItem(item))"
       >
         <Thumbnail
@@ -126,6 +130,7 @@ import Thumbnail from '@/components/Thumbnail.vue';
 import VirtualScroll from '@/components/VirtualScroll.vue';
 import { GROUP, GROUP_HEADER_HEIGHT } from '@/common/constants';
 import { calculateJustifiedLayout, calculateLinearRowLayout, calculateLinearColumnLayout, calculateMasonryLayout, type Geometry } from '@/common/layout';
+import { thumbnailSpacing, cardItemMetrics } from '@/common/thumbnailSpacing';
 import { buildFolderBreadcrumbs, formatFolderBreadcrumb, isWithinRootPath } from '@/common/utils';
 import Breadcrumb from '@/components/Breadcrumb.vue';
 import {
@@ -303,6 +308,7 @@ function isGeometryGridStyle(style: number) {
 }
 
 const isFilmstripView = computed(() => config.settings.grid.viewMode === 'filmstrip');
+const spacing = computed(() => thumbnailSpacing(config.settings.grid.spacing, config.settings.scale));
 const renderItems = computed(() => props.fileList);
 const hasGroupRows = computed(() =>
   !isFilmstripView.value &&
@@ -389,8 +395,8 @@ const groupedLayoutGeometryResult = computed(() => {
   const flushGroup = () => {
     if (groupFiles.length === 0) return;
     const result = style === 3
-      ? calculateMasonryLayout(groupFiles, containerWidth.value, size, 0)
-      : calculateJustifiedLayout(groupFiles, containerWidth.value, size, 0);
+      ? calculateMasonryLayout(groupFiles, containerWidth.value, size + spacing.value.pixels, spacing.value.pixels)
+      : calculateJustifiedLayout(groupFiles, containerWidth.value, size, spacing.value.pixels);
     result.boxes.forEach((box, index) => {
       boxes[groupRowIndices[index]] = {
         ...box,
@@ -434,19 +440,19 @@ const layoutGeometryResult = computed(() => {
       const isVertical = config.settings.grid.previewPosition >= 2;
       if (isVertical) {
         if (containerWidth.value <= 0) return { boxes: [], contentSize: 0 };
-        const result = calculateLinearColumnLayout(getLayoutItems(), containerWidth.value, 0);
+        const result = calculateLinearColumnLayout(getLayoutItems(), containerWidth.value, spacing.value.pixels);
         return { boxes: result.boxes, contentSize: result.containerHeight };
       }
-      const result = calculateLinearRowLayout(getLayoutItems(), size, 0);
+      const result = calculateLinearRowLayout(getLayoutItems(), size, spacing.value.pixels);
       return { boxes: result.boxes, contentSize: result.containerWidth };
     }
   } else {
     if (style === 2 && containerWidth.value > 0) {
-      const result = calculateJustifiedLayout(getLayoutItems(), containerWidth.value, size, 0);
+      const result = calculateJustifiedLayout(getLayoutItems(), containerWidth.value, size, spacing.value.pixels);
       return { boxes: result.boxes, contentSize: result.containerHeight };
     }
     else if (style === 3 && containerWidth.value > 0) {
-      const result = calculateMasonryLayout(getLayoutItems(), containerWidth.value, size, 0);
+      const result = calculateMasonryLayout(getLayoutItems(), containerWidth.value, size + spacing.value.pixels, spacing.value.pixels);
       return { boxes: result.boxes, contentSize: result.containerHeight };
     }
   }
@@ -473,6 +479,10 @@ let isInitialLayout = true;
 
 const gap = 8; // Gap between items
 const isVerticalFilmstrip = computed(() => isFilmstripView.value && config.settings.grid.previewPosition >= 2);
+const spacingX = computed(() => isVerticalFilmstrip.value ? 0 : spacing.value.pixels);
+const spacingY = computed(() => isFilmstripView.value && !isVerticalFilmstrip.value ? 0 : spacing.value.pixels);
+const cardMetrics = computed(() => cardItemMetrics(config.settings.scale,
+  config.settings.grid.labelPrimary > 0, config.settings.grid.labelSecondary > 0));
 
 // item width and height(including gap)
 const itemWidth = computed(() => {
@@ -481,8 +491,8 @@ const itemWidth = computed(() => {
   if (isVerticalFilmstrip.value && containerWidth.value > 0) {
     return containerWidth.value;
   }
-  if (style === 0) return size + 20; // size + padding(4*2) + border(2*2) + gap(8)
-  return size;
+  if (style === 0) return size + cardMetrics.value.frame + spacingX.value;
+  return size + spacingX.value;
 });
 
 const itemHeight = computed(() => {
@@ -490,16 +500,14 @@ const itemHeight = computed(() => {
   const size = props.gridSize;
   
   if (style === 0) {
-    let labelHeight = 0;
-    if (config.settings.grid.labelPrimary > 0) labelHeight += 18;   // text-sm
-    if (config.settings.grid.labelSecondary > 0) labelHeight += 16; // text-xs
+    const { frame, labelHeight, paddingAndBorder } = cardMetrics.value;
     
     if (isVerticalFilmstrip.value && containerWidth.value > 0) {
-      return containerWidth.value + 12 + labelHeight; // Narrower padding in filmstrip
+      return containerWidth.value + paddingAndBorder + labelHeight + spacingY.value;
     }
-    return size + 20 + labelHeight; // size + padding/border/gap(20) + labels
+    return size + frame + labelHeight + spacingY.value;
   }
-  if (style === 1) return itemWidth.value + gap * 0.5;
+  if (style === 1) return itemWidth.value - spacingX.value + gap * 0.5 + spacingY.value;
   
   if (isVerticalFilmstrip.value && containerWidth.value > 0) {
     return containerWidth.value;
@@ -517,7 +525,7 @@ let loadingDelayTimer: ReturnType<typeof setTimeout> | null = null;
 
 function updateColumnCount() {
   if (containerRef.value) {
-    containerWidth.value = containerRef.value.clientWidth;
+    containerWidth.value = Math.max(0, containerRef.value.clientWidth - 2 * spacing.value.pixels);
     if (itemWidth.value > 0) {
       columnCount.value = Math.max(1, Math.floor(containerWidth.value / itemWidth.value));
     }
@@ -529,7 +537,7 @@ function updateLayout() {
   emit('layout-update', { height: layoutContentHeight.value });
 }
 
-watch(() => [props.gridSize, config.settings.grid.style, isFilmstripView.value], async () => {
+watch(() => [props.gridSize, config.settings.grid.style, config.settings.grid.spacing, config.settings.scale, isFilmstripView.value], async () => {
   if (isInitialLayout) {
     isInitialLayout = false;
     updateColumnCount();

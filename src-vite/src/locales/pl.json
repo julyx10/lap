@@ -1410,6 +1410,12 @@
         "Kadruj do wypełnienia",
         "Rozciągnij do wypełnienia"
       ],
+      "spacing": "Odstępy miniatur",
+      "spacing_options": [
+        "Kompaktowe",
+        "Wygodne",
+        "Przestronne"
+      ],
       "thumbnail_corners": "Narożniki miniatur",
       "thumbnail_corner_options": [
         "Zgodnie z motywem",
@@ -1428,7 +1434,7 @@
         "Obiektyw",
         "Ekspozycja"
       ],
-      "show_thumbnail_badges": "Pokazuj znaczniki miniatur",
+      "show_thumbnail_badges": "Znaczniki miniatur",
       "thumbnail_badge_options": [
         "(Puste)",
         "Format pliku",

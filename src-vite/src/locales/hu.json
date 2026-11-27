@@ -1410,6 +1410,12 @@
         "Kitöltő vágás",
         "Kitöltő nyújtás"
       ],
+      "spacing": "Bélyegképek térköze",
+      "spacing_options": [
+        "Kompakt",
+        "Kényelmes",
+        "Tágas"
+      ],
       "thumbnail_corners": "Bélyegkép sarkai",
       "thumbnail_corner_options": [
         "Téma szerint",
@@ -1428,7 +1434,7 @@
         "Objektív",
         "Expozíció"
       ],
-      "show_thumbnail_badges": "Bélyegképjelvények megjelenítése",
+      "show_thumbnail_badges": "Bélyegképjelvények",
       "thumbnail_badge_options": [
         "(Üres)",
         "Fájlformátum",

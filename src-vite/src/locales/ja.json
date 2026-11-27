@@ -1410,6 +1410,12 @@
         "埋める",
         "引き伸ばす"
       ],
+      "spacing": "サムネイルの間隔",
+      "spacing_options": [
+        "コンパクト",
+        "標準",
+        "広め"
+      ],
       "thumbnail_corners": "サムネイルの角",
       "thumbnail_corner_options": [
         "テーマに従う",
@@ -1428,7 +1434,7 @@
         "レンズ",
         "露出"
       ],
-      "show_thumbnail_badges": "サムネイルバッジを表示",
+      "show_thumbnail_badges": "サムネイルバッジ",
       "thumbnail_badge_options": [
         "（なし）",
         "ファイル形式",

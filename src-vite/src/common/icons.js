@@ -7,6 +7,7 @@ export { default as IconGoto } from '@/assets/icons/goto.svg';
 export { default as IconHistory } from '@/assets/icons/history.svg';
 export { default as IconHome } from '@/assets/icons/home.svg';
 export { default as IconLeft } from '@/assets/icons/arrow-left.svg';
+export { default as IconLeftRight } from '@/assets/icons/left-right.svg';
 export { default as IconNext } from '@/assets/icons/nav-next.svg';
 export { default as IconPrev } from '@/assets/icons/nav-prev.svg';
 export { default as IconRight } from '@/assets/icons/arrow-right.svg';

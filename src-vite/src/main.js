@@ -196,6 +196,9 @@ if (isMainWindow) {
   listen('settings-gridThumbnailCorners-changed', (event) => {
     config.setGridThumbnailCorners(event.payload)
   })
+  listen('settings-gridSpacing-changed', (event) => {
+    config.setGridSpacing(event.payload)
+  })
   listen('settings-gridLabelPrimary-changed', (event) => {
     config.setGridLabelPrimary(event.payload)
   })

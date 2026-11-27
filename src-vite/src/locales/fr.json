@@ -1410,6 +1410,12 @@
         "Remplir",
         "Étirer"
       ],
+      "spacing": "Espacement des miniatures",
+      "spacing_options": [
+        "Compact",
+        "Confortable",
+        "Aéré"
+      ],
       "thumbnail_corners": "Coins des miniatures",
       "thumbnail_corner_options": [
         "Suivre le thème",
@@ -1428,7 +1434,7 @@
         "Objectif",
         "Exposition"
       ],
-      "show_thumbnail_badges": "Afficher les badges sur les miniatures",
+      "show_thumbnail_badges": "Badges sur les miniatures",
       "thumbnail_badge_options": [
         "(Vide)",
         "Format du fichier",

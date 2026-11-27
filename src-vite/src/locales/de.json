@@ -1410,6 +1410,12 @@
         "Füllen",
         "Strecken"
       ],
+      "spacing": "Miniaturabstand",
+      "spacing_options": [
+        "Kompakt",
+        "Komfortabel",
+        "Großzügig"
+      ],
       "thumbnail_corners": "Miniaturansicht-Ecken",
       "thumbnail_corner_options": [
         "Dem Design folgen",
@@ -1428,7 +1434,7 @@
         "Objektiv",
         "Belichtung"
       ],
-      "show_thumbnail_badges": "Miniatur-Abzeichen anzeigen",
+      "show_thumbnail_badges": "Miniatur-Abzeichen",
       "thumbnail_badge_options": [
         "(Leer)",
         "Dateiformat",

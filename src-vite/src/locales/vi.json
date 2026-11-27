@@ -1410,6 +1410,12 @@
         "Cắt để lấp đầy",
         "Kéo giãn để lấp đầy"
       ],
+      "spacing": "Khoảng cách ảnh thu nhỏ",
+      "spacing_options": [
+        "Gọn",
+        "Thoải mái",
+        "Rộng"
+      ],
       "thumbnail_corners": "Góc ảnh thu nhỏ",
       "thumbnail_corner_options": [
         "Theo chủ đề",
@@ -1428,7 +1434,7 @@
         "Ống kính",
         "Phơi sáng"
       ],
-      "show_thumbnail_badges": "Hiện nhãn trên ảnh thu nhỏ",
+      "show_thumbnail_badges": "Nhãn trên ảnh thu nhỏ",
       "thumbnail_badge_options": [
         "(Trống)",
         "Định dạng tệp",

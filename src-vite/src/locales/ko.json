@@ -1410,6 +1410,12 @@
         "채우기",
         "늘리기"
       ],
+      "spacing": "썸네일 간격",
+      "spacing_options": [
+        "좁게",
+        "보통",
+        "넓게"
+      ],
       "thumbnail_corners": "미리보기 모서리",
       "thumbnail_corner_options": [
         "테마 따르기",
@@ -1428,7 +1434,7 @@
         "렌즈",
         "노출"
       ],
-      "show_thumbnail_badges": "썸네일 배지 표시",
+      "show_thumbnail_badges": "썸네일 배지",
       "thumbnail_badge_options": [
         "(없음)",
         "파일 형식",

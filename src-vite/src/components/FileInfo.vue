@@ -45,13 +45,16 @@
           <span class="py-1 font-bold mr-auto uppercase text-xs tracking-wide text-base-content/30">
             {{ $t('file_info.preview') }}
           </span>
-          <button v-if="showPreviewPanel && isVideoFile" type="button"
-            class="tab h-6 text-xs shrink-0 hover:text-primary cursor-pointer disabled:opacity-40 disabled:cursor-wait"
+          <TButton v-if="showPreviewPanel && isVideoFile && canChangeThumbnail"
+            :icon="changingThumbnail ? LoadingIcon : IconLeftRight"
+            button-size="small"
+            :tooltip="$t('file_info.change_thumbnail')"
             :disabled="!canChangeThumbnail || changingThumbnail || fileInfoBusy || !changeThumbnail || isOriginalUnavailable(fileInfo)"
             :aria-busy="changingThumbnail"
+            :aria-label="$t('file_info.change_thumbnail')"
             @click.stop="changePreviewThumbnail"
-          >{{ $t('file_info.change_thumbnail') }}{{ changingThumbnail ? '…' : '' }}</button>
-          <div v-else-if="showPreviewPanel" class="tabs tabs-xs shrink-0">
+          />
+          <div v-else-if="showPreviewPanel && !isVideoFile" class="tabs tabs-xs shrink-0">
             <button
               type="button"
               :class="['tab', showThumbnailPanel ? 'tab-active text-primary' : '']"
@@ -599,6 +602,7 @@ import {
   IconFolder,
   IconPhoto,
   IconVideo,
+  IconLeftRight,
   IconZoomIn,
   IconZoomOut,
   IconLivePhoto,

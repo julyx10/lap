@@ -1410,6 +1410,12 @@
         "Ritaglia per riempire",
         "Allunga per riempire"
       ],
+      "spacing": "Spaziatura miniature",
+      "spacing_options": [
+        "Compatta",
+        "Comoda",
+        "Ampia"
+      ],
       "thumbnail_corners": "Angoli delle miniature",
       "thumbnail_corner_options": [
         "Segui il tema",
@@ -1428,7 +1434,7 @@
         "Obiettivo",
         "Esposizione"
       ],
-      "show_thumbnail_badges": "Mostra badge sulle miniature",
+      "show_thumbnail_badges": "Badge sulle miniature",
       "thumbnail_badge_options": [
         "(Vuoto)",
         "Formato file",

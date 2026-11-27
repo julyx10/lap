@@ -1410,6 +1410,12 @@
         "Preencher",
         "Esticar"
       ],
+      "spacing": "Espaçamento das miniaturas",
+      "spacing_options": [
+        "Compacto",
+        "Confortável",
+        "Amplo"
+      ],
       "thumbnail_corners": "Cantos das miniaturas",
       "thumbnail_corner_options": [
         "Seguir o tema",
@@ -1428,7 +1434,7 @@
         "Lente",
         "Exposição"
       ],
-      "show_thumbnail_badges": "Mostrar emblemas de miniaturas",
+      "show_thumbnail_badges": "Emblemas de miniaturas",
       "thumbnail_badge_options": [
         "(Vazio)",
         "Formato do arquivo",

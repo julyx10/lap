@@ -217,13 +217,13 @@
       :style="{ width: layoutStyle.width }"
     >
       <span 
-        class="w-full text-sm text-center whitespace-pre text-nowrap text-ellipsis overflow-hidden"
+        class="w-full text-sm leading-5 text-center whitespace-pre text-nowrap text-ellipsis overflow-hidden"
         :title="getGridLabelTooltip(file, config.settings.grid.labelPrimary)"
       >
         {{ getGridLabelText(file, config.settings.grid.labelPrimary) }}
       </span>
       <span 
-        class="w-full text-xs text-center whitespace-pre text-nowrap text-ellipsis overflow-hidden"
+        class="w-full text-xs leading-4 text-center whitespace-pre text-nowrap text-ellipsis overflow-hidden"
         :title="getGridLabelTooltip(file, config.settings.grid.labelSecondary)"
       >
         {{ getGridLabelText(file, config.settings.grid.labelSecondary) }}

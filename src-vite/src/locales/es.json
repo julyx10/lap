@@ -1410,6 +1410,12 @@
         "Recortar para llenar",
         "Estirar"
       ],
+      "spacing": "Espaciado de miniaturas",
+      "spacing_options": [
+        "Compacto",
+        "Cómodo",
+        "Amplio"
+      ],
       "thumbnail_corners": "Esquinas de miniaturas",
       "thumbnail_corner_options": [
         "Seguir el tema",
@@ -1428,7 +1434,7 @@
         "Lente",
         "Exposición"
       ],
-      "show_thumbnail_badges": "Mostrar insignias de miniaturas",
+      "show_thumbnail_badges": "Insignias de miniaturas",
       "thumbnail_badge_options": [
         "(Vacío)",
         "Formato de archivo",

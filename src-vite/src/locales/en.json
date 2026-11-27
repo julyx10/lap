@@ -1410,6 +1410,12 @@
         "Crop to fill",
         "Stretch to fill"
       ],
+      "spacing": "Thumbnail spacing",
+      "spacing_options": [
+        "Compact",
+        "Comfortable",
+        "Spacious"
+      ],
       "thumbnail_corners": "Thumbnail corners",
       "thumbnail_corner_options": [
         "Follow theme",
@@ -1428,7 +1434,7 @@
         "Lens",
         "Exposure"
       ],
-      "show_thumbnail_badges": "Show thumbnail badges",
+      "show_thumbnail_badges": "Thumbnail badges",
       "thumbnail_badge_options": [
         "(Empty)",
         "File format",

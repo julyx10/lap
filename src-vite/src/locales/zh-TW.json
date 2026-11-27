@@ -1410,6 +1410,12 @@
         "裁剪填滿",
         "拉伸填滿"
       ],
+      "spacing": "縮圖間距",
+      "spacing_options": [
+        "緊密",
+        "舒適",
+        "寬鬆"
+      ],
       "thumbnail_corners": "縮圖圓角",
       "thumbnail_corner_options": [
         "跟隨主題",
@@ -1428,7 +1434,7 @@
         "鏡頭",
         "曝光參數"
       ],
-      "show_thumbnail_badges": "顯示縮圖標記",
+      "show_thumbnail_badges": "縮圖標記",
       "thumbnail_badge_options": [
         "（空）",
         "檔案格式",
