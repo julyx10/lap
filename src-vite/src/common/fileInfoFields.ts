@@ -6,7 +6,7 @@ export const editableMetadataFields = [
   { key: 'e_copyright', label: 'file_info.detail_fields.copyright' },
 ] as const;
 
-export type CameraSettingsBrand = 'fujifilm' | 'canon' | 'nikon' | 'sony' | 'panasonic';
+export type CameraSettingsBrand = 'fujifilm' | 'canon' | 'nikon' | 'sony' | 'panasonic' | 'olympus' | 'pentax';
 
 export const cameraSettingsBrands: ReadonlyArray<{ key: CameraSettingsBrand; label: string }> = [
   { key: 'fujifilm', label: 'Fujifilm' },
@@ -14,9 +14,13 @@ export const cameraSettingsBrands: ReadonlyArray<{ key: CameraSettingsBrand; lab
   { key: 'nikon', label: 'Nikon' },
   { key: 'sony', label: 'Sony' },
   { key: 'panasonic', label: 'Panasonic / Leica' },
+  { key: 'olympus', label: 'Olympus / OM System' },
+  { key: 'pentax', label: 'Ricoh / Pentax' },
 ];
 
-const ALL_CAMERA_BRANDS: readonly CameraSettingsBrand[] = ['fujifilm', 'canon', 'nikon', 'sony', 'panasonic'];
+const ALL_CAMERA_BRANDS: readonly CameraSettingsBrand[] = [
+  'fujifilm', 'canon', 'nikon', 'sony', 'panasonic', 'olympus', 'pentax',
+];
 
 const cameraSettingsFieldDefs: ReadonlyArray<{ key: string; brands: readonly CameraSettingsBrand[] }> = [
   { key: 'filmSimulation', brands: ['fujifilm'] },
@@ -26,27 +30,33 @@ const cameraSettingsFieldDefs: ReadonlyArray<{ key: string; brands: readonly Cam
   { key: 'pictureProfile', brands: ['sony'] },
   { key: 'pictureEffect', brands: ['sony'] },
   { key: 'photoStyle', brands: ['panasonic'] },
+  { key: 'pictureMode', brands: ['olympus'] },
+  { key: 'artFilter', brands: ['olympus'] },
+  { key: 'imageTone', brands: ['pentax'] },
   { key: 'dynamicRange', brands: ['fujifilm'] },
   { key: 'autoLightingOptimizer', brands: ['canon'] },
   { key: 'highlightTonePriority', brands: ['canon'] },
   { key: 'activeDLighting', brands: ['nikon'] },
   { key: 'dynamicRangeOptimizer', brands: ['sony'] },
   { key: 'intelligentDRange', brands: ['panasonic'] },
+  { key: 'gradation', brands: ['olympus'] },
+  { key: 'dynamicRangeExpansion', brands: ['pentax'] },
+  { key: 'shadowCorrection', brands: ['pentax'] },
   { key: 'highlightTone', brands: ['fujifilm'] },
   { key: 'shadowTone', brands: ['fujifilm'] },
   { key: 'contrast', brands: ALL_CAMERA_BRANDS },
   { key: 'saturation', brands: ALL_CAMERA_BRANDS },
   { key: 'sharpness', brands: ALL_CAMERA_BRANDS },
   { key: 'noiseReduction', brands: ALL_CAMERA_BRANDS },
-  { key: 'clarity', brands: ['fujifilm', 'nikon'] },
+  { key: 'clarity', brands: ['fujifilm', 'nikon', 'pentax'] },
   { key: 'whiteBalanceShift', brands: ALL_CAMERA_BRANDS },
-  { key: 'grainEffect', brands: ['fujifilm'] },
+  { key: 'grainEffect', brands: ['fujifilm', 'olympus'] },
   { key: 'colorChromeEffect', brands: ['fujifilm'] },
   { key: 'colorChromeFxBlue', brands: ['fujifilm'] },
   { key: 'focusMode', brands: ALL_CAMERA_BRANDS },
-  { key: 'driveMode', brands: ['fujifilm', 'canon', 'nikon', 'sony'] },
+  { key: 'driveMode', brands: ['fujifilm', 'canon', 'nikon', 'sony', 'olympus', 'pentax'] },
   { key: 'imageStabilization', brands: ALL_CAMERA_BRANDS },
-  { key: 'shutterCount', brands: ['nikon', 'sony'] },
+  { key: 'shutterCount', brands: ['nikon', 'sony', 'pentax'] },
 ];
 
 export const cameraSettingsFields = cameraSettingsFieldDefs.map(({ key, brands }) => ({

@@ -1198,6 +1198,12 @@
       "activeDLighting": "动态 D-Lighting",
       "dynamicRangeOptimizer": "动态范围优化",
       "intelligentDRange": "智能动态范围",
+      "pictureMode": "照片模式",
+      "artFilter": "艺术滤镜",
+      "gradation": "渐变",
+      "imageTone": "自定义影像",
+      "dynamicRangeExpansion": "高光校正",
+      "shadowCorrection": "阴影校正",
       "contrast": "对比度",
       "shutterCount": "快门次数"
     },

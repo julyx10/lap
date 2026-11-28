@@ -432,7 +432,7 @@ pub(super) const DETAIL_FIELDS: &[DetailField] = &[
         stored: false,
         descriptive: false,
         section: Some(DetailSection::CameraSettings),
-        maker_sources: Some(&[]),
+        maker_sources: Some(&[("MakerNotes", "Olympus", "FilmGrainEffect")]),
     },
     DetailField {
         key: "colorChromeEffect",
@@ -561,6 +561,62 @@ pub(super) const DETAIL_FIELDS: &[DetailField] = &[
         section: Some(DetailSection::CameraSettings),
         maker_sources: Some(&[("MakerNotes", "Panasonic", "IntelligentD-Range")]),
     },
+    // --- Olympus / OM System ---
+    DetailField {
+        key: "pictureMode",
+        backend_names: &[],
+        xmp: None,
+        stored: false,
+        descriptive: false,
+        section: Some(DetailSection::CameraSettings),
+        maker_sources: Some(&[("MakerNotes", "Olympus", "PictureMode")]),
+    },
+    DetailField {
+        key: "artFilter",
+        backend_names: &[],
+        xmp: None,
+        stored: false,
+        descriptive: false,
+        section: Some(DetailSection::CameraSettings),
+        maker_sources: Some(&[("MakerNotes", "Olympus", "ArtFilter")]),
+    },
+    DetailField {
+        key: "gradation",
+        backend_names: &[],
+        xmp: None,
+        stored: false,
+        descriptive: false,
+        section: Some(DetailSection::CameraSettings),
+        maker_sources: Some(&[("MakerNotes", "Olympus", "Gradation")]),
+    },
+    // --- Ricoh / Pentax ---
+    DetailField {
+        key: "imageTone",
+        backend_names: &[],
+        xmp: None,
+        stored: false,
+        descriptive: false,
+        section: Some(DetailSection::CameraSettings),
+        maker_sources: Some(&[("MakerNotes", "Pentax", "ImageTone")]),
+    },
+    DetailField {
+        key: "dynamicRangeExpansion",
+        backend_names: &[],
+        xmp: None,
+        stored: false,
+        descriptive: false,
+        section: Some(DetailSection::CameraSettings),
+        maker_sources: Some(&[("MakerNotes", "Pentax", "DynamicRangeExpansion")]),
+    },
+    DetailField {
+        key: "shadowCorrection",
+        backend_names: &[],
+        xmp: None,
+        stored: false,
+        descriptive: false,
+        section: Some(DetailSection::CameraSettings),
+        maker_sources: Some(&[("MakerNotes", "Pentax", "ShadowCorrection")]),
+    },
     // --- Shared cross-brand Camera Settings ---
     DetailField {
         key: "contrast",
@@ -576,6 +632,9 @@ pub(super) const DETAIL_FIELDS: &[DetailField] = &[
             ("MakerNotes", "Sony", "Contrast"),
             ("MakerNotes", "Panasonic", "Contrast"),
             ("MakerNotes", "Leica", "Contrast"),
+            ("MakerNotes", "Olympus", "PictureModeContrast"),
+            ("MakerNotes", "Olympus", "ContrastSetting"),
+            ("MakerNotes", "Pentax", "Contrast"),
         ]),
     },
     DetailField {
@@ -592,6 +651,9 @@ pub(super) const DETAIL_FIELDS: &[DetailField] = &[
             ("MakerNotes", "Sony", "Saturation"),
             ("MakerNotes", "Panasonic", "Saturation"),
             ("MakerNotes", "Leica", "Saturation"),
+            ("MakerNotes", "Olympus", "PictureModeSaturation"),
+            ("MakerNotes", "Olympus", "CustomSaturation"),
+            ("MakerNotes", "Pentax", "Saturation"),
         ]),
     },
     DetailField {
@@ -607,6 +669,9 @@ pub(super) const DETAIL_FIELDS: &[DetailField] = &[
             ("MakerNotes", "Nikon", "Sharpness"),
             ("MakerNotes", "Sony", "Sharpness"),
             ("MakerNotes", "Panasonic", "Sharpness"),
+            ("MakerNotes", "Olympus", "PictureModeSharpness"),
+            ("MakerNotes", "Olympus", "SharpnessSetting"),
+            ("MakerNotes", "Pentax", "Sharpness"),
         ]),
     },
     DetailField {
@@ -623,6 +688,11 @@ pub(super) const DETAIL_FIELDS: &[DetailField] = &[
             ("MakerNotes", "Nikon", "HighISONoiseReduction"),
             ("MakerNotes", "Sony", "HighISONoiseReduction"),
             ("MakerNotes", "Panasonic", "NoiseReduction"),
+            ("MakerNotes", "Olympus", "NoiseFilter"),
+            ("MakerNotes", "Olympus", "NoiseReduction"),
+            ("MakerNotes", "Pentax", "HighISONoiseReduction"),
+            ("MakerNotes", "Pentax", "NoiseReduction"),
+            ("MakerNotes", "Ricoh", "NoiseReduction"),
         ]),
     },
     DetailField {
@@ -635,6 +705,7 @@ pub(super) const DETAIL_FIELDS: &[DetailField] = &[
         maker_sources: Some(&[
             ("MakerNotes", "FujiFilm", "Clarity"),
             ("MakerNotes", "Nikon", "Clarity"),
+            ("MakerNotes", "Pentax", "ClarityControl"),
         ]),
     },
     DetailField {
@@ -648,6 +719,7 @@ pub(super) const DETAIL_FIELDS: &[DetailField] = &[
             ("MakerNotes", "FujiFilm", "WhiteBalanceFineTune"),
             ("MakerNotes", "Nikon", "WhiteBalanceFineTune"),
             ("MakerNotes", "Sony", "WBShiftAB_GM"),
+            ("MakerNotes", "Olympus", "WhiteBalanceFineTune"),
         ]),
     },
     DetailField {
@@ -663,6 +735,8 @@ pub(super) const DETAIL_FIELDS: &[DetailField] = &[
             ("MakerNotes", "Nikon", "FocusMode"),
             ("MakerNotes", "Sony", "FocusMode"),
             ("MakerNotes", "Panasonic", "FocusMode"),
+            ("MakerNotes", "Olympus", "FocusMode"),
+            ("MakerNotes", "Pentax", "FocusMode"),
         ]),
     },
     DetailField {
@@ -678,6 +752,8 @@ pub(super) const DETAIL_FIELDS: &[DetailField] = &[
             ("MakerNotes", "Nikon", "ReleaseMode"),
             ("MakerNotes", "Nikon", "ShootingMode"),
             ("MakerNotes", "Sony", "ReleaseMode"),
+            ("MakerNotes", "Olympus", "DriveMode"),
+            ("MakerNotes", "Pentax", "DriveMode"),
         ]),
     },
     DetailField {
@@ -694,6 +770,8 @@ pub(super) const DETAIL_FIELDS: &[DetailField] = &[
             ("MakerNotes", "Nikon", "ImageStabilization"),
             ("MakerNotes", "Sony", "ImageStabilization"),
             ("MakerNotes", "Panasonic", "ImageStabilization"),
+            ("MakerNotes", "Olympus", "ImageStabilization"),
+            ("MakerNotes", "Pentax", "ShakeReduction"),
         ]),
     },
     DetailField {
@@ -706,6 +784,7 @@ pub(super) const DETAIL_FIELDS: &[DetailField] = &[
         maker_sources: Some(&[
             ("MakerNotes", "Nikon", "ShutterCount"),
             ("MakerNotes", "Sony", "ShutterCount"),
+            ("MakerNotes", "Pentax", "ShutterCount"),
         ]),
     },
     DetailField {

@@ -1198,6 +1198,12 @@
       "activeDLighting": "Активний D-Lighting",
       "dynamicRangeOptimizer": "Оптимізатор динамічного діапазону",
       "intelligentDRange": "Інтелектуальний динамічний діапазон",
+      "pictureMode": "Режим зображення",
+      "artFilter": "Художній фільтр",
+      "gradation": "Градація",
+      "imageTone": "Тон зображення",
+      "dynamicRangeExpansion": "Корекція світлих ділянок",
+      "shadowCorrection": "Корекція тіней",
       "contrast": "Контрастність",
       "shutterCount": "Лічильник затвора"
     },

@@ -1198,6 +1198,12 @@
       "activeDLighting": "Actieve D-Lighting",
       "dynamicRangeOptimizer": "D-Range Optimizer",
       "intelligentDRange": "Intelligente D-Range",
+      "pictureMode": "Beeldmodus",
+      "artFilter": "Kunstfilter",
+      "gradation": "Gradatie",
+      "imageTone": "Beeldtoon",
+      "dynamicRangeExpansion": "Hooglichtcorrectie",
+      "shadowCorrection": "Schaduwcorrectie",
       "contrast": "Contrast",
       "shutterCount": "Aantal sluitercycli"
     },

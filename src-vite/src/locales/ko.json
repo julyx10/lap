@@ -1198,6 +1198,12 @@
       "activeDLighting": "액티브 D-Lighting",
       "dynamicRangeOptimizer": "D-레인지 최적화",
       "intelligentDRange": "인텔리전트 D-레인지",
+      "pictureMode": "픽처 모드",
+      "artFilter": "아트 필터",
+      "gradation": "계조",
+      "imageTone": "이미지 톤",
+      "dynamicRangeExpansion": "하이라이트 보정",
+      "shadowCorrection": "그림자 보정",
       "contrast": "대비",
       "shutterCount": "셔터 횟수"
     },

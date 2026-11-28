@@ -1198,6 +1198,12 @@
       "activeDLighting": "Aktív D-Lighting",
       "dynamicRangeOptimizer": "D-tartomány optimalizáló",
       "intelligentDRange": "Intelligens D-tartomány",
+      "pictureMode": "Képmód",
+      "artFilter": "Művészi szűrő",
+      "gradation": "Gradáció",
+      "imageTone": "Képtónus",
+      "dynamicRangeExpansion": "Csúcsfény-korrekció",
+      "shadowCorrection": "Árnyékkorrekció",
       "contrast": "Kontraszt",
       "shutterCount": "Expozíciók száma"
     },

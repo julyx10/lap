@@ -539,6 +539,20 @@ test('camera settings fields are excluded from defaults and filter cleanly by br
   assert.ok(panasonicKeys.includes('cameraSettings.photoStyle'));
   assert.ok(panasonicKeys.includes('cameraSettings.whiteBalanceShift'));
   assert.equal(panasonicKeys.includes('cameraSettings.driveMode'), false);
+
+  const olympusKeys = filterCameraSettingsFields('olympus').map(f => f.key);
+  assert.ok(olympusKeys.includes('cameraSettings.pictureMode'));
+  assert.ok(olympusKeys.includes('cameraSettings.artFilter'));
+  assert.ok(olympusKeys.includes('cameraSettings.gradation'));
+  assert.ok(olympusKeys.includes('cameraSettings.grainEffect'));
+  assert.equal(olympusKeys.includes('cameraSettings.shutterCount'), false);
+
+  const pentaxKeys = filterCameraSettingsFields('pentax').map(f => f.key);
+  assert.ok(pentaxKeys.includes('cameraSettings.imageTone'));
+  assert.ok(pentaxKeys.includes('cameraSettings.dynamicRangeExpansion'));
+  assert.ok(pentaxKeys.includes('cameraSettings.shadowCorrection'));
+  assert.ok(pentaxKeys.includes('cameraSettings.shutterCount'));
+  assert.equal(pentaxKeys.includes('cameraSettings.pictureMode'), false);
 });
 
 test('camera settings section is collapsed by default and renders rows when expanded', async () => {
