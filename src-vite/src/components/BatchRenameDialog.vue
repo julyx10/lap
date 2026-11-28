@@ -4,15 +4,15 @@
       <section class="rounded-box border border-base-content/10 bg-base-300/20 p-3">
         <div class="grid grid-cols-[minmax(0,1fr)_7rem_7rem] gap-2">
           <label class="min-w-0 space-y-1">
-            <span class="block text-sm uppercase tracking-widest font-bold text-base-content/30">{{ $t('msgbox.batch_rename.name') }}</span>
+            <span class="block text-sm text-base-content/30">{{ $t('msgbox.batch_rename.name') }}</span>
             <input ref="nameInput" v-model="name" :disabled="saving" :placeholder="$t('msgbox.batch_rename.placeholder')" class="input input-sm text-sm w-full" />
           </label>
           <label class="min-w-0 space-y-1">
-            <span class="block text-sm uppercase tracking-widest font-bold text-base-content/30">{{ $t('msgbox.batch_rename.start') }}</span>
+            <span class="block text-sm text-base-content/30">{{ $t('msgbox.batch_rename.start') }}</span>
             <input v-model.number="start" :disabled="saving" type="number" min="1" max="4294967295" step="1" class="input input-sm text-sm w-full" />
           </label>
           <label class="min-w-0 space-y-1">
-            <span class="block text-sm uppercase tracking-widest font-bold text-base-content/30">{{ $t('msgbox.batch_rename.digits') }}</span>
+            <span class="block text-sm text-base-content/30">{{ $t('msgbox.batch_rename.digits') }}</span>
             <select v-model.number="digits" :disabled="saving" class="select select-sm text-sm w-full">
               <option :value="0">{{ $t('msgbox.batch_rename.no_padding') }}</option>
               <option v-for="n in 6" :key="n" :value="n">{{ n }}</option>
@@ -23,11 +23,11 @@
       <section class="rounded-box border border-base-content/10 bg-base-300/20 p-3 space-y-2">
         <div class="flex items-center justify-between min-h-4">
           <span class="text-xs uppercase tracking-widest font-bold text-base-content/30">{{ $t('msgbox.batch_rename.preview') }}</span>
-          <span v-if="preview && !pending" class="text-xs text-base-content/40">{{ $t('msgbox.batch_rename.count', { count: preview.items.length }) }}</span>
+          <span v-if="preview && !pending" class="text-sm text-base-content/40">{{ $t('msgbox.batch_rename.count', { count: preview.items.length }) }}</span>
           <span v-if="pending" class="loading loading-spinner loading-xs"></span>
         </div>
         <div class="max-h-64 overflow-auto rounded-box border border-base-content/10">
-          <table class="table table-xs text-sm text-base-content/70 w-full table-fixed">
+          <table class="table table-sm text-sm text-base-content/70 w-full table-fixed">
             <thead class="sticky top-0 z-10 bg-base-200 text-xs uppercase tracking-widest font-bold text-base-content/30"><tr><th>{{ $t('msgbox.batch_rename.before') }}</th><th>{{ $t('msgbox.batch_rename.after') }}</th></tr></thead>
             <tbody>
               <tr v-for="item in visibleItems" :key="item.id">

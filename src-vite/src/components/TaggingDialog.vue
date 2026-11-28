@@ -26,7 +26,7 @@
         />
         <button
           v-if="tagSearch"
-          class="p-1 text-base-content/40"
+          class="cursor-pointer p-1 text-base-content/40"
           @click="tagSearch = ''"
         >
           <IconClose class="size-4" />

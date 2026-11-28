@@ -1,8 +1,10 @@
 <template>
   <ModalDialog class="w-130" :title="$t('import_organize.title')" position-key="import-organize" @cancel="close">
     <div class="space-y-2 select-none">
-      <section class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
-        <div class="font-bold uppercase text-xs tracking-widest text-base-content/30">{{ $t('import_organize.section_folders') }}</div>
+      <section class="ui-section">
+        <div class="ui-section-header">
+          <h2 class="ui-section-title">{{ $t('import_organize.section_folders') }}</h2>
+        </div>
         <div class="grid grid-cols-[7rem_minmax(0,1fr)] gap-x-4 gap-y-2 items-start px-1 text-sm">
           <div class="min-h-6 flex items-center text-sm text-base-content/30">{{ $t('import_organize.source') }}</div>
           <div class="min-w-0 min-h-6 flex items-center justify-between gap-2">
@@ -33,8 +35,10 @@
         </div>
       </section>
 
-      <section class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
-        <div class="font-bold uppercase text-xs tracking-widest text-base-content/30">{{ $t('import_organize.section_status') }}</div>
+      <section class="ui-section">
+        <div class="ui-section-header">
+          <h2 class="ui-section-title">{{ $t('import_organize.section_status') }}</h2>
+        </div>
         <div v-if="!running && !completed" class="grid grid-cols-[7rem_minmax(0,1fr)] gap-x-4 gap-y-1.5 items-center px-1 text-sm">
           <div class="min-h-6 flex items-center text-sm text-base-content/30">{{ $t('import_organize.to_import') }}</div>
           <div class="min-h-6 flex items-center text-sm text-base-content/70" :class="{ 'animate-pulse': counting }">

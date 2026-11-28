@@ -6,6 +6,11 @@
   logs: false;
 }
 
+@theme {
+  --text-2xs: 0.5625rem;
+  --text-2xs--line-height: 0.875rem;
+}
+
 html, body {
   overscroll-behavior: none;
 }
@@ -78,9 +83,6 @@ select option {
 .t-icon-size {
   @apply w-6 h-6;
 }
-.t-icon-size-lg {
-  @apply w-8 h-8;
-}
 
 /* transition */
 .fade-enter-active,
@@ -93,14 +95,29 @@ select option {
   opacity: 0;
 }
 
+@utility ui-section {
+  @apply rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5;
+}
+
+@utility ui-section-header {
+  @apply flex items-center gap-2 text-base-content/30;
+}
+
+@utility ui-section-title {
+  @apply text-xs font-bold uppercase tracking-widest;
+}
+
+@utility ui-section-hint {
+  @apply text-xs text-base-content/30;
+}
+
+@utility ui-section-row {
+  @apply flex items-center justify-between px-2 rounded-box hover:bg-base-100/10 transition-colors duration-200;
+}
+
 /* sidebar layout */
 @utility sidebar-panel {
   @apply w-full h-full flex flex-col select-none;
-}
-
-/* sidebar section header */
-@utility sidebar-section-label {
-  @apply px-2 h-10 flex items-center text-sm text-base-content/30 cursor-default whitespace-nowrap;
 }
 
 /* sidebar panel header */
@@ -112,16 +129,12 @@ select option {
   @apply font-bold mr-auto uppercase text-xs tracking-wide leading-none;
 }
 
-@utility sidebar-panel-action {
-  @apply shrink-0 text-base-content/30 hover:text-base-content/70 transition-colors;
-}
-
 @utility sidebar-header-tabs {
   @apply tabs tabs-sm flex-1 flex-nowrap items-center gap-3;
 }
 
 @utility sidebar-header-tab {
-  @apply tab h-10 px-0 min-w-0 whitespace-nowrap font-bold uppercase text-xs tracking-wide leading-none;
+  @apply tab h-10 px-0 min-w-0 whitespace-nowrap font-bold uppercase text-xs tracking-wide leading-none cursor-pointer disabled:cursor-default;
 }
 
 .sidebar-header-tab.tab-active {
@@ -177,7 +190,7 @@ select option {
 
 /* Thumbnail and viewer badges share the per-file More button surface. */
 @utility thumb-badge {
-  @apply inline-flex h-5 min-w-5 items-center justify-center gap-1 rounded-box border-0 bg-base-300/70 px-1.5 text-[10px] font-semibold tracking-[0.02em] text-base-content/70 shadow-none;
+  @apply inline-flex h-5 min-w-5 items-center justify-center gap-1 rounded-box border-0 bg-base-300/70 px-1 text-xs font-semibold tracking-[0.02em] text-base-content/70 shadow-none;
 }
 
 .map-photo-marker-wrapper {
@@ -236,9 +249,8 @@ select option {
   border-radius: 999px;
   background: var(--color-primary);
   color: var(--color-primary-content);
-  font-size: 10px;
+  @apply text-xs;
   font-weight: 700;
-  line-height: 14px;
   text-align: center;
 }
 
@@ -274,24 +286,20 @@ select option {
 .splitter-indicator {
   opacity: 0;
   transition: opacity 150ms ease;
+  background-image: linear-gradient(
+    var(--splitter-gradient-direction, to bottom),
+    color-mix(in oklab, var(--color-primary) 0%, transparent),
+    var(--color-primary),
+    color-mix(in oklab, var(--color-primary) 0%, transparent)
+  );
 }
 
 .splitter-vertical {
-  background-image: linear-gradient(
-    to bottom,
-    color-mix(in oklab, var(--color-primary) 0%, transparent),
-    var(--color-primary),
-    color-mix(in oklab, var(--color-primary) 0%, transparent)
-  );
+  --splitter-gradient-direction: to bottom;
 }
 
 .splitter-horizontal {
-  background-image: linear-gradient(
-    to right,
-    color-mix(in oklab, var(--color-primary) 0%, transparent),
-    var(--color-primary),
-    color-mix(in oklab, var(--color-primary) 0%, transparent)
-  );
+  --splitter-gradient-direction: to right;
 }
 
 /* Hover reveals the bar after a 200ms delay, so a cursor merely passing over

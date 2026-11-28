@@ -42,7 +42,7 @@
       <span class="sidebar-panel-header-title flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
         {{ titlebar }}<template v-if="allPersonCount > 0"> ({{ allPersonCount.toLocaleString() }})</template>
       </span>
-      <span class="px-1.5 h-5 inline-flex items-center rounded-box text-[10px] font-semibold tracking-[0.08em] text-warning border border-warning/30 bg-warning/10 cursor-default">
+      <span class="px-1.5 h-5 inline-flex items-center rounded-box text-xs font-semibold tracking-[0.08em] text-warning border border-warning/30 bg-warning/10 cursor-default">
         BETA
       </span>
 
@@ -72,7 +72,7 @@
           v-if="personSearch"
           type="button"
           :disabled="personSearchDisabled"
-          class="mr-1 p-1 rounded-box text-base-content/30 hover:text-base-content/70 disabled:opacity-30"
+          class="cursor-pointer disabled:cursor-default mr-1 p-1 rounded-box text-base-content/30 hover:text-base-content/70 disabled:opacity-30"
           @click="personSearch = ''"
         >
           <IconClose class="w-4 h-4" />

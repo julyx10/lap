@@ -1,49 +1,132 @@
 <template>
   <ModalDialog class="w-140" :title="isNew ? $t('album.smart_edit.title_add') : $t('album.smart_edit.title_edit')" position-key="smart-album-edit" @cancel="clickCancel">
     <section
-      class="min-h-0 overflow-y-auto pr-1"
+      class="@container min-h-0 overflow-y-auto pr-1"
       @dragenter.stop
       @dragover.stop
       @dragleave.stop
       @drop.stop
     >
-      <div class="w-full grid grid-cols-[7rem_minmax(0,1fr)] gap-x-4 gap-y-3 items-start text-sm select-none">
-        <div class="min-h-8 flex items-center text-sm uppercase tracking-widest font-bold text-base-content/30">{{ $t('album.smart_edit.name') }}</div>
-        <input ref="inputNameRef" v-model="name" type="text" maxlength="255" class="w-full input input-sm text-sm font-semibold" :placeholder="$t('album.smart_edit.validation_name')" />
+      <div class="space-y-2 text-sm select-none">
+        <section class="ui-section">
+          <div class="ui-section-header">
+            <h2 class="ui-section-title">{{ $t('album.edit.section_general') }}</h2>
+          </div>
+          <div class="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-4 gap-y-2 px-2">
+            <label for="smart-album-name" class="min-h-8 flex items-center text-base-content/70">{{ $t('album.smart_edit.name') }}</label>
+            <input id="smart-album-name" ref="inputNameRef" v-model="name" type="text" maxlength="255" class="w-full input input-sm text-sm" :placeholder="$t('album.smart_edit.validation_name')" />
 
-        <div class="min-h-8 flex items-start pt-2 text-sm uppercase tracking-widest font-bold text-base-content/30">{{ $t('album.smart_edit.description') }}</div>
-        <textarea
-          v-if="showDescription"
-          ref="descriptionRef"
-          v-model="description"
-          rows="2"
-          maxlength="1024"
-          class="w-full textarea textarea-sm min-h-14 max-h-30 text-sm font-semibold"
-        ></textarea>
-        <TButton
-          v-else
-          :icon="IconEdit"
-          :buttonSize="'small'"
-          :tooltip="$t('album.smart_edit.description')"
-          @click="showDescriptionInput"
-        />
+            <label :for="showDescription ? 'smart-album-description' : undefined" class="min-h-8 flex items-start pt-1.5 text-base-content/70">{{ $t('album.smart_edit.description') }}</label>
+            <textarea
+              v-if="showDescription"
+              id="smart-album-description"
+              ref="descriptionRef"
+              v-model="description"
+              rows="2"
+              maxlength="1024"
+              class="w-full textarea textarea-sm min-h-14 max-h-30 text-sm"
+            ></textarea>
+            <TButton
+              v-else
+              :icon="IconEdit"
+              :buttonSize="'small'"
+              :tooltip="$t('album.smart_edit.description')"
+              @click="showDescriptionInput"
+            />
+          </div>
+        </section>
 
-        <section class="col-span-2 rounded-box border border-base-content/5 bg-base-300/20 p-3">
-          <div class="grid grid-cols-3 gap-2">
+        <section class="ui-section">
+          <div class="ui-section-header">
+            <h2 class="ui-section-title">{{ $t('album.smart_edit.match') }}</h2>
+          </div>
+          <div class="space-y-2">
+            <div ref="rulesListRef" :class="['pr-1', rules.length > 4 ? 'max-h-59 overflow-y-auto' : '']">
+              <template v-for="(rule, index) in rules" :key="rule.id">
+                <div class="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_1.75rem] @[28rem]:grid-cols-[minmax(0,1fr)_6rem_minmax(0,1.4fr)_1.75rem] items-center gap-x-2 gap-y-1 rounded-box px-2 py-1 transition-colors hover:bg-base-100/30">
+                  <select v-model="rule.field" class="select select-sm text-sm w-full" @change="resetRule(rule)">
+                    <option v-for="field in fieldOptions" :key="field.value" :value="field.value">{{ field.label }}</option>
+                  </select>
+                  <select v-model="rule.operator" class="select select-sm text-sm w-full!" @change="resetRuleValue(rule)">
+                    <option v-for="operator in getOperatorOptions(rule.field)" :key="operator.value" :value="operator.value">{{ operator.label }}</option>
+                  </select>
+                  <div class="col-span-2 col-start-1 row-start-2 min-w-0 @[28rem]:col-span-1 @[28rem]:col-start-3 @[28rem]:row-start-1">
+                    <RuleValueControl
+                      :rule="rule"
+                      :tag-options="tagOptions"
+                      :person-options="personOptions"
+                      :album-options="albumOptions"
+                      :collection-options="collectionOptions"
+                      :camera-options="cameraOptions"
+                      :lens-options="lensOptions"
+                      :location-options="locationOptions"
+                      :file-type-options="fileTypeOptions"
+                      :culling-options="cullingOptions"
+                      :media-subtype-options="mediaSubtypeOptions"
+                      :extension-options="extensionOptions"
+                    />
+                  </div>
+                  <div class="col-start-3 row-start-2 justify-self-end @[28rem]:col-start-4 @[28rem]:row-start-1">
+                    <TButton
+                      :icon="IconRemove"
+                      :buttonSize="'small'"
+                      :tooltip="$t('album.smart_edit.remove_rule')"
+                      :disabled="rules.length <= 1"
+                      @click="removeRule(index)"
+                    />
+                  </div>
+                </div>
+                <div v-if="index < rules.length - 1" class="ui-section-header h-4 px-2">
+                  <span class="h-px flex-1 bg-base-content/5" aria-hidden="true"></span>
+                  <span class="shrink-0 text-xs text-base-content/30 font-semibold uppercase">{{ matchMode === 'all' ? $t('album.smart_edit.match_and') : $t('album.smart_edit.match_or') }}</span>
+                  <span class="h-px flex-1 bg-base-content/5" aria-hidden="true"></span>
+                </div>
+              </template>
+            </div>
+            <div class="border-t border-base-content/5 pt-2 flex flex-wrap items-center gap-2">
+              <button class="btn btn-sm rounded-box" :disabled="rules.length >= maxRules" @click="addRule">
+                <IconAdd class="w-4 h-4" />
+                {{ $t('album.smart_edit.add_rule') }}
+              </button>
+              <div role="group" :aria-label="$t('album.smart_edit.match')" class="tabs tabs-box tabs-xs bg-base-100/5 shadow-inner">
+                <button
+                  type="button"
+                  :aria-pressed="matchMode === 'all'"
+                  :class="['tab', matchMode === 'all' ? 'tab-active text-primary' : '']"
+                  @click="matchMode = 'all'"
+                >
+                  {{ $t('album.smart_edit.match_all') }}
+                </button>
+                <button
+                  type="button"
+                  :aria-pressed="matchMode === 'any'"
+                  :class="['tab', matchMode === 'any' ? 'tab-active text-primary' : '']"
+                  @click="matchMode = 'any'"
+                >
+                  {{ $t('album.smart_edit.match_any') }}
+                </button>
+              </div>
+              <!-- <span class="ml-auto text-xs text-base-content/30 tabular-nums">{{ $t('album.smart_edit.rules_count', { count: rules.length, max: maxRules }) }}</span> -->
+            </div>
+          </div>
+        </section>
+
+        <section class="ui-section">
+          <div class="grid grid-cols-1 gap-2 px-2 @[24rem]:grid-cols-3">
             <label class="min-w-0 space-y-1">
-              <span class="block text-sm uppercase tracking-widest font-bold text-base-content/30">{{ $t('album.smart_edit.sort') }}</span>
+              <span class="block text-base-content/70">{{ $t('album.smart_edit.sort') }}</span>
               <select v-model.number="sortType" class="select select-sm text-sm w-full">
                 <option v-for="option in sortOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
               </select>
             </label>
             <label class="min-w-0 space-y-1">
-              <span class="block text-sm uppercase tracking-widest font-bold text-base-content/30">{{ $t('album.smart_edit.order') }}</span>
+              <span class="block text-base-content/70">{{ $t('album.smart_edit.order') }}</span>
               <select v-model.number="sortOrder" class="select select-sm text-sm w-full" :disabled="isRandomSort">
                 <option v-for="option in sortOrderOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
               </select>
             </label>
             <label class="min-w-0 space-y-1">
-              <span class="block text-sm uppercase tracking-widest font-bold text-base-content/30">{{ $t('album.smart_edit.group') }}</span>
+              <span class="block text-base-content/70">{{ $t('album.smart_edit.group') }}</span>
               <select v-model.number="displayedGroupType" class="select select-sm text-sm w-full" :disabled="isRandomSort">
                 <option v-for="option in groupOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
               </select>
@@ -51,87 +134,6 @@
           </div>
         </section>
 
-        <section class="col-span-2 rounded-box border border-base-content/5 bg-base-300/20 p-3">
-          <div class="mb-2 flex min-h-8 items-center justify-between gap-3">
-            <span class="text-sm uppercase tracking-widest font-bold text-base-content/30">{{ $t('album.smart_edit.match') }}</span>
-            <div role="tablist" class="tabs tabs-box tabs-xs shrink-0 bg-base-100/5 shadow-inner">
-              <button
-                role="tab"
-                :class="['tab', matchMode === 'all' ? 'tab-active text-primary' : '']"
-                @click="matchMode = 'all'"
-              >
-                {{ $t('album.smart_edit.match_all') }}
-              </button>
-              <button
-                role="tab"
-                :class="['tab', matchMode === 'any' ? 'tab-active text-primary' : '']"
-                @click="matchMode = 'any'"
-              >
-                {{ $t('album.smart_edit.match_any') }}
-              </button>
-            </div>
-          </div>
-
-          <div class="space-y-2">
-            <div
-              ref="rulesListRef"
-              :class="[
-                'pr-1',
-                rules.length > 4 ? 'max-h-59 overflow-y-auto' : ''
-              ]"
-            >
-              <template
-              v-for="(rule, index) in rules"
-              :key="rule.id"
-              >
-                <div class="grid grid-cols-[minmax(0,1fr)_5.5rem_minmax(0,1.45fr)_1.75rem] gap-2 items-center rounded-box border border-transparent px-1 py-1 transition-colors hover:border-base-content/5 hover:bg-base-100/40">
-                  <select v-model="rule.field" class="select select-sm text-sm w-full" @change="resetRule(rule)">
-                    <option v-for="field in fieldOptions" :key="field.value" :value="field.value">{{ field.label }}</option>
-                  </select>
-                  <select v-model="rule.operator" class="select select-sm text-sm w-full!" @change="resetRuleValue(rule)">
-                    <option v-for="operator in getOperatorOptions(rule.field)" :key="operator.value" :value="operator.value">{{ operator.label }}</option>
-                  </select>
-                  <RuleValueControl
-                    :rule="rule"
-                    :tag-options="tagOptions"
-                    :person-options="personOptions"
-                    :album-options="albumOptions"
-                    :collection-options="collectionOptions"
-                    :camera-options="cameraOptions"
-                    :lens-options="lensOptions"
-                    :location-options="locationOptions"
-                    :file-type-options="fileTypeOptions"
-                    :culling-options="cullingOptions"
-                    :media-subtype-options="mediaSubtypeOptions"
-                    :extension-options="extensionOptions"
-                  />
-                  <TButton
-                    :icon="IconRemove"
-                    :buttonSize="'small'"
-                    :tooltip="$t('album.smart_edit.remove_rule')"
-                    :disabled="rules.length <= 1"
-                    @click="removeRule(index)"
-                  />
-                </div>
-                <div
-                  v-if="index < rules.length - 1"
-                  class="flex h-5 items-center gap-2 px-2 text-xs font-bold uppercase tracking-widest text-base-content/30"
-                >
-                  <span class="h-px flex-1 bg-base-content/5"></span>
-                  <span>{{ matchMode === 'all' ? $t('album.smart_edit.match_and') : $t('album.smart_edit.match_or') }}</span>
-                  <span class="h-px flex-1 bg-base-content/5"></span>
-                </div>
-              </template>
-            </div>
-            <div class="border-t border-base-content/5 pt-2 flex items-center justify-between">
-              <button class="btn btn-sm rounded-box" :disabled="rules.length >= maxRules" @click="addRule">
-                <IconAdd class="w-4 h-4" />
-                {{ $t('album.smart_edit.add_rule') }}
-              </button>
-              <span class="text-base-content/30 tabular-nums">{{ $t('album.smart_edit.rules_count', { count: rules.length, max: maxRules }) }}</span>
-            </div>
-          </div>
-        </section>
       </div>
     </section>
 

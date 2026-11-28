@@ -5,7 +5,11 @@
     :class="expanded || modelValue ? 'w-57' : 'w-8'"
     @transitionend.self="locateHistory"
   >
-    <TButton v-if="disabled || (!expanded && !modelValue)" :tooltip="$t('search.title')">
+    <TButton
+      v-if="disabled || (!expanded && !modelValue)"
+      :tooltip="$t('search.title')"
+      :shortcut="getShortcutLabel('app.search')"
+    >
       <button
         class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-box border border-transparent text-sm outline-none"
         :class="
@@ -23,9 +27,17 @@
     <div
       v-else
       ref="inputBox"
-      class="flex items-center shrink-0 h-8 w-56 rounded-box border border-base-content/20 bg-base-100/40 px-2 gap-2"
+      class="flex items-center shrink-0 h-8 w-56 rounded-box transition-colors bg-base-100/40 px-2 gap-2"
+      :class="
+        isSearchFocused || draft || modelValue
+          ? 'border-2 border-primary'
+          : 'border border-base-content/10 hover:border-base-content/30'
+      "
     >
-      <IconSearch class="w-5 h-5 shrink-0" />
+      <IconSearch
+        class="w-5 h-5 shrink-0"
+        :class="isSearchFocused || draft || modelValue ? 'text-primary/70' : 'text-base-content/30'"
+      />
       <input
         id="toolbar-search-input"
         ref="input"
@@ -37,16 +49,18 @@
         class="min-w-0 w-full text-sm bg-transparent outline-none"
         :placeholder="$t('search.image_search_placeholder')"
         maxlength="255"
-        @focus="showHistory"
+        @focus="isSearchFocused = true; showHistory()"
+        @blur="isSearchFocused = false"
         @keydown.enter.prevent="submit(draft)"
         @keydown.esc.stop.prevent="hide"
       />
       <button
         v-if="draft || modelValue"
+        class="cursor-pointer"
         :aria-label="$t('menu.tag.clear_search')"
         @click="clear"
       >
-        <IconClose class="w-4 h-4" />
+        <IconClose class="w-4 h-4 cursor-pointer" />
       </button>
     </div>
     <Teleport to="body">
@@ -81,7 +95,7 @@
           <button
             v-for="text in history"
             :key="text"
-            class="w-full text-left px-2 py-1 rounded-box hover:bg-base-content/5 truncate"
+            class="w-full text-left px-2 py-1 rounded-box hover:bg-base-content/5 cursor-pointer truncate"
             role="option"
             aria-selected="false"
             @mousedown.prevent
@@ -100,6 +114,9 @@ import TButton from "@/components/TButton.vue";
 import { config, libConfig } from "@/common/config";
 import { IconSearch, IconClose, IconTrash } from "@/common/icons";
 import { useUIStore } from "@/stores/uiStore";
+import { getShortcutLabel } from "@/common/shortcuts";
+
+const isSearchFocused = ref(false);
 const props = defineProps<{
   modelValue: string;
   scope: string;

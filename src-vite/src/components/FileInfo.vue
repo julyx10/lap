@@ -172,7 +172,7 @@
 
             <!-- Tags -->
             <div class="pl-4 flex items-center min-h-8 gap-1">
-              <div class="text-[12px] text-base-content/70 flex flex-wrap gap-1 flex-1 min-w-0">
+              <div class="text-xs text-base-content/70 flex flex-wrap gap-1 flex-1 min-w-0">
                 <button v-for="tag in displayTags" :key="tag.id" type="button"
                   class="badge badge-sm badge-outline max-w-full min-w-0 border-base-content/5 bg-base-content/5 font-medium text-base-content/70 hover:text-base-content cursor-pointer"
                   :title="tag.path || tag.name" @click.stop="emit('navigateMetadata', { type: 'tag', tagId: tag.id, name: tag.path || tag.name })"><span class="min-w-0 truncate">{{ tag.name }}</span></button>
@@ -189,14 +189,14 @@
           <div class="pl-4 grid grid-cols-[84px_minmax(0,1fr)] gap-y-1.5 gap-x-4 text-xs">
             <!-- Collections -->
             <template v-if="fileCollections.length">
-              <div class="flex items-center text-[11px] text-base-content/30 min-h-6 py-1.5">{{ $t('collection.title') }}</div>
+              <div class="flex items-center text-xs text-base-content/30 min-h-6 py-1.5">{{ $t('collection.title') }}</div>
               <div class="group/field flex items-center min-h-6 gap-1">
                 <div class="flex items-center min-h-6 gap-x-3 gap-y-1 flex-wrap flex-1 min-w-0">
                   <button
                     v-for="collection in fileCollections"
                     :key="collection.id"
                     type="button"
-                    class="inline-flex items-center gap-1 text-[12px] font-medium text-base-content/70 transition-colors hover:text-base-content cursor-pointer"
+                    class="inline-flex items-center gap-1 text-xs text-base-content/70 transition-colors hover:text-base-content cursor-pointer"
                     @click.stop="emit('quickEditCollection')"
                   >
                     <IconCollection class="h-4 w-4 shrink-0" />
@@ -208,13 +208,13 @@
 
             <!-- People -->
             <template v-if="config.settings.face.enabled && filePersons.length">
-              <div class="flex items-center text-[11px] text-base-content/30 min-h-6 py-1.5">{{ $t('sidebar.people') }}</div>
+              <div class="flex items-center text-xs text-base-content/30 min-h-6 py-1.5">{{ $t('sidebar.people') }}</div>
               <div class="flex items-center min-h-6 gap-x-3 gap-y-1 flex-wrap">
                 <button
                   v-for="person in filePersons"
                   :key="person.id"
                   type="button"
-                  class="inline-flex items-center gap-1.5 text-[12px] font-medium text-base-content/70 transition-colors hover:text-base-content cursor-pointer"
+                  class="inline-flex items-center gap-1.5 text-xs text-base-content/70 transition-colors hover:text-base-content cursor-pointer"
                   @click.stop="navigatePerson(person)"
                 >
                   <span class="w-5 h-5 rounded-full overflow-hidden bg-base-300/70 ring-1 ring-base-content/5 shrink-0 flex items-center justify-center">
@@ -233,13 +233,13 @@
 
             <!-- Metadata -->
             <template v-for="field in organizationMetadata" :key="field.key">
-              <div class="text-[11px] text-base-content/30 min-h-6 py-1">{{ $t(field.label) }}</div>
+              <div class="text-xs text-base-content/30 min-h-6 py-1">{{ $t(field.label) }}</div>
               <component v-if="metadataEdit?.key === field.key" :is="['comments', 'e_artist'].includes(field.key) ? 'textarea' : 'input'"
                 :ref="setMetadataInput" :value="metadataDraft" :placeholder="$t('file_info.add_metadata', { field: $t(field.label) })" @input="metadataDraft = $event.target.value"
-                class="text-[12px] text-base-content input input-xs input-bordered p-1 leading-6 w-full min-w-0 resize-none"
+                class="text-xs text-base-content input input-xs input-bordered p-1 leading-6 w-full min-w-0 resize-none"
                 :class="['comments', 'e_artist'].includes(field.key) ? 'h-12' : 'h-6'"
                 @blur="saveInlineMetadata" @keydown.stop="handleInlineMetadataKeydown" @click.stop />
-              <button v-else type="button" class="min-h-6 py-1 text-left text-[12px] text-base-content/70 whitespace-pre-wrap wrap-break-word cursor-pointer hover:text-base-content"
+              <button v-else type="button" class="min-h-6 py-1 text-left text-xs text-base-content/70 whitespace-pre-wrap wrap-break-word cursor-pointer hover:text-base-content"
                 :disabled="savingMetadata || fileInfoBusy" @click.stop="startInlineMetadata(field.key)"><span :class="{ 'text-base-content/30': !field.value }">{{ field.value || $t('file_info.add_metadata', { field: $t(field.label) }) }}</span></button>
             </template>
 
@@ -280,7 +280,7 @@
             <div class="pl-4 grid grid-cols-[84px_minmax(0,1fr)] gap-y-1.5 gap-x-4 text-xs">
             <template v-if="displayField('file.name', generalFileInfo?.name)">
             <!-- Name -->
-            <div class="flex items-center text-[11px] text-base-content/30 h-6">{{ $t('file_info.name') }}</div>
+            <div class="flex items-center text-xs text-base-content/30 h-6">{{ $t('file_info.name') }}</div>
             <div class="group/field flex items-center gap-1">
               <div
                 v-if="canRenameGeneralFile && isRenaming"
@@ -289,7 +289,7 @@
                 <input
                   ref="renameInputRef"
                   v-model="renamingName"
-                  class="text-[12px] text-base-content input input-xs input-bordered p-1 h-6 leading-6 w-full min-w-0"
+                  class="text-xs text-base-content input input-xs input-bordered p-1 h-6 leading-6 w-full min-w-0"
                   @blur="finishRename"
                   @keydown.enter.stop.prevent="finishRename"
                   @keydown.esc.stop.prevent="cancelRename"
@@ -297,12 +297,12 @@
                 />
                 <span
                   v-if="renamingExt"
-                  class="ml-1 text-[12px] text-base-content/70 whitespace-nowrap"
+                  class="ml-1 text-xs text-base-content/70 whitespace-nowrap"
                 >.{{ renamingExt }}</span>
               </div>
               <template v-else>
                 <span
-                  class="flex flex-1 min-w-0 items-center gap-1 text-[12px] font-medium text-base-content/70"
+                  class="flex flex-1 min-w-0 items-center gap-1 text-xs text-base-content/70"
                   :class="{ 'cursor-text hover:text-base-content': canRenameGeneralFile }"
                   @click.stop="startRename"
                 >
@@ -325,7 +325,7 @@
                   >
                     <IconExclamation class="size-3.5" aria-hidden="true" />
                   </span>
-                  <span v-if="videoDurationBadge" class="shrink-0 whitespace-nowrap rounded bg-base-content/10 px-1 text-[10px] font-medium">
+                  <span v-if="videoDurationBadge" class="shrink-0 whitespace-nowrap rounded bg-base-content/10 px-1 text-xs font-medium">
                     {{ videoDurationBadge }}
                   </span>
                 </span>
@@ -344,7 +344,7 @@
 
             <template v-if="displayField('file.folder', generalFolderBreadcrumbs.length ? 'folder' : '')">
             <!-- Path -->
-            <div class="flex items-center text-[11px] text-base-content/30 h-6">{{ $t('file_info.folder') }}</div>
+            <div class="flex items-center text-xs text-base-content/30 h-6">{{ $t('file_info.folder') }}</div>
             <Breadcrumb
               :icon="IconFolder"
               :items="generalFolderBreadcrumbs"
@@ -354,25 +354,25 @@
 
             <template v-if="displayField('file.album_name', generalFileInfo?.album_name)">
             <!-- Album -->
-            <div class="flex items-center text-[11px] text-base-content/30 h-6">{{ $t('file_info.album_name') }}</div>
-            <div class="flex items-center min-w-0 text-[12px] text-base-content/70 break-all">{{ generalFileInfo?.album_name }}</div>
+            <div class="flex items-center text-xs text-base-content/30 h-6">{{ $t('file_info.album_name') }}</div>
+            <div class="flex items-center min-w-0 text-xs text-base-content/70 break-all">{{ generalFileInfo?.album_name }}</div>
             </template>
 
             <template v-if="displayField('file.size', generalFileInfo?.size)">
             <!-- Size -->
-            <div class="flex items-center text-[11px] text-base-content/30 h-6">{{ $t('file_info.size') }}</div>
-            <div class="flex items-center text-[12px] text-base-content/70">{{ generalFileInfo?.size != null ? formatFileSize(generalFileInfo.size) : '' }}</div>
+            <div class="flex items-center text-xs text-base-content/30 h-6">{{ $t('file_info.size') }}</div>
+            <div class="flex items-center text-xs text-base-content/70">{{ generalFileInfo?.size != null ? formatFileSize(generalFileInfo.size) : '' }}</div>
             </template>
 
             <template v-if="displayField('file.dimension', generalFileInfo?.width && generalFileInfo?.height ? 'dimension' : '')">
             <!-- Dimension -->
-            <div class="flex items-center text-[11px] text-base-content/30 h-6">{{ $t('file_info.dimension') }}</div>
-            <div class="flex items-center text-[12px] text-base-content/70">{{ generalFileInfo?.width && generalFileInfo?.height ? formatDimensionText(generalFileInfo.width, generalFileInfo.height, true) : '' }}<span v-if="generalFileInfo?.width && generalFileInfo?.height && normalizedRotate" class="ml-1">· {{ normalizedRotate }}°</span></div>
+            <div class="flex items-center text-xs text-base-content/30 h-6">{{ $t('file_info.dimension') }}</div>
+            <div class="flex items-center text-xs text-base-content/70">{{ generalFileInfo?.width && generalFileInfo?.height ? formatDimensionText(generalFileInfo.width, generalFileInfo.height, true) : '' }}<span v-if="generalFileInfo?.width && generalFileInfo?.height && normalizedRotate" class="ml-1">· {{ normalizedRotate }}°</span></div>
             </template>
 
             <template v-for="row in imageDetailRows" :key="row.key">
-              <div class="text-[11px] text-base-content/30 min-h-6 py-1">{{ row.label }}</div>
-              <div class="min-h-6 text-[12px] text-base-content/70 wrap-break-word py-1">{{ row.value }}</div>
+              <div class="text-xs text-base-content/30 min-h-6 py-1">{{ row.label }}</div>
+              <div class="min-h-6 text-xs text-base-content/70 wrap-break-word py-1">{{ row.value }}</div>
             </template>
 
 
@@ -380,22 +380,22 @@
               <div class="grid grid-cols-[84px_1fr] gap-y-1.5 gap-x-4">
                 <template v-if="displayField('file.created_at', generalFileInfo?.created_at)">
                 <!-- Created At -->
-                <div class="flex items-center text-[11px] text-base-content/30 h-6">{{ $t('file_info.created_at') }}</div>
-                <div class="flex items-center text-[12px] text-base-content/70">{{ generalFileInfo?.created_at != null ? formatTimestamp(generalFileInfo.created_at, 'date_time') : '' }}</div>
+                <div class="flex items-center text-xs text-base-content/30 h-6">{{ $t('file_info.created_at') }}</div>
+                <div class="flex items-center text-xs text-base-content/70">{{ generalFileInfo?.created_at != null ? formatTimestamp(generalFileInfo.created_at, 'date_time') : '' }}</div>
                 </template>
 
                 <template v-if="displayField('file.modified_at', generalFileInfo?.modified_at)">
                 <!-- Modified At -->
-                <div class="flex items-center text-[11px] text-base-content/30 h-6">{{ $t('file_info.modified_at') }}</div>
-                <div class="flex items-center text-[12px] text-base-content/70">{{ generalFileInfo?.modified_at != null ? formatTimestamp(generalFileInfo.modified_at, 'date_time') : '' }}</div>
+                <div class="flex items-center text-xs text-base-content/30 h-6">{{ $t('file_info.modified_at') }}</div>
+                <div class="flex items-center text-xs text-base-content/70">{{ generalFileInfo?.modified_at != null ? formatTimestamp(generalFileInfo.modified_at, 'date_time') : '' }}</div>
                 </template>
 
                 <!-- Last Scan -->
                 <template v-if="displayField('file.last_scan_time', generalFileInfo?.last_scan_time > 0 ? generalFileInfo.last_scan_time : '')">
-                  <div class="flex items-center text-[11px] text-base-content/30 h-6">{{ $t('file_info.last_scan_time') }}</div>
+                  <div class="flex items-center text-xs text-base-content/30 h-6">{{ $t('file_info.last_scan_time') }}</div>
                   <div class="flex min-h-6 items-center gap-2">
-                    <!-- <span class="text-[12px] text-base-content/70">{{ formatTimestamp(fileInfo.last_scan_time / 1000, 'date_time') }}</span> -->
-                    <span class="text-[11px] text-base-content/30">{{ generalFileInfo?.last_scan_time > 0 ? formatRelativeTime(generalFileInfo.last_scan_time / 1000, $t) : '' }}</span>
+                    <!-- <span class="text-xs text-base-content/70">{{ formatTimestamp(fileInfo.last_scan_time / 1000, 'date_time') }}</span> -->
+                    <span class="text-xs text-base-content/30">{{ generalFileInfo?.last_scan_time > 0 ? formatRelativeTime(generalFileInfo.last_scan_time / 1000, $t) : '' }}</span>
                   </div>
                 </template>
               </div>
@@ -423,39 +423,39 @@
           <div v-if="showMetadataPanel" class="pt-3 pl-4 grid grid-cols-[84px_1fr] gap-y-1.5 gap-x-4 text-xs overflow-hidden">
             <template v-if="displayField('capture.taken_at', captureTimeText)">
               <!-- Taken At -->
-            <div class="flex items-center text-[11px] text-base-content/30 h-6">{{ $t('file_info.taken_at') }}</div>
-            <div class="flex items-center text-[12px] text-base-content/70">{{ captureTimeText }}</div>
+            <div class="flex items-center text-xs text-base-content/30 h-6">{{ $t('file_info.taken_at') }}</div>
+            <div class="flex items-center text-xs text-base-content/70">{{ captureTimeText }}</div>
             </template>
 
             <template v-if="displayField('capture.camera', cameraText)">
             <!-- Camera -->
-            <div class="flex items-center text-[11px] text-base-content/30 h-6">{{ $t('file_info.camera') }}</div>
+            <div class="flex items-center text-xs text-base-content/30 h-6">{{ $t('file_info.camera') }}</div>
             <div
-              :class="['flex items-center text-[12px] text-base-content/70', hasCamera ? 'cursor-pointer hover:text-base-content' : '']"
+              :class="['flex items-center text-xs text-base-content/70', hasCamera ? 'cursor-pointer hover:text-base-content' : '']"
               @click.stop="navigateCamera"
             >{{ cameraText }}</div>
             </template>
 
             <template v-if="displayField('capture.lens', fileInfo?.e_lens_model)">
             <!-- Lens -->
-            <div class="flex items-center text-[11px] text-base-content/30 h-6">{{ $t('file_info.lens') }}</div>
+            <div class="flex items-center text-xs text-base-content/30 h-6">{{ $t('file_info.lens') }}</div>
             <div
-              :class="['flex items-center text-[12px] text-base-content/70', hasLens ? 'cursor-pointer hover:text-base-content' : '']"
+              :class="['flex items-center text-xs text-base-content/70', hasLens ? 'cursor-pointer hover:text-base-content' : '']"
               @click.stop="navigateLens"
             >{{ fileInfo?.e_lens_model }}</div>
             </template>
 
             <template v-if="displayField('capture.capture_settings', exposureText)">
             <!-- Capture Settings -->
-            <div class="flex items-center text-[11px] text-base-content/30 h-6">{{ $t('file_info.capture_settings') }}</div>
-            <div class="flex items-center text-[12px] text-base-content/70">{{ exposureText }}</div>
+            <div class="flex items-center text-xs text-base-content/30 h-6">{{ $t('file_info.capture_settings') }}</div>
+            <div class="flex items-center text-xs text-base-content/70">{{ exposureText }}</div>
             </template>
 
 
 
             <template v-for="row in captureDetailRows" :key="row.key">
-              <div class="text-[11px] text-base-content/30 min-h-6 py-1">{{ row.label }}</div>
-              <div class="text-[12px] text-base-content/70 wrap-break-word py-1">{{ row.value }}</div>
+              <div class="text-xs text-base-content/30 min-h-6 py-1">{{ row.label }}</div>
+              <div class="text-xs text-base-content/70 wrap-break-word py-1">{{ row.value }}</div>
             </template>
 
         </div>
@@ -471,8 +471,8 @@
         </button>
         <div v-if="showCameraSettingsPanel" class="pt-3 pl-4 grid grid-cols-[84px_minmax(0,1fr)] gap-y-1.5 gap-x-4 text-xs">
             <template v-for="row in cameraSettingsDetailRows" :key="row.key">
-              <div class="text-[11px] text-base-content/30 min-h-6 py-1">{{ row.label }}</div>
-              <div class="text-[12px] text-base-content/70 wrap-break-word py-1">{{ row.value }}</div>
+              <div class="text-xs text-base-content/30 min-h-6 py-1">{{ row.label }}</div>
+              <div class="text-xs text-base-content/70 wrap-break-word py-1">{{ row.value }}</div>
             </template>
         </div>
       </div>
@@ -487,24 +487,24 @@
         <div v-if="showMapPanel" class="pt-3 pl-4 grid grid-cols-[84px_minmax(0,1fr)] gap-y-1.5 gap-x-4 text-xs">
             <template v-if="displayField('location.geo_location', formatGeoLocation())">
             <!-- Geo Location -->
-            <div class="flex items-center text-[11px] text-base-content/30 h-6">{{ $t('file_info.geo_location') }}</div>
+            <div class="flex items-center text-xs text-base-content/30 h-6">{{ $t('file_info.geo_location') }}</div>
             <div
-              :class="['flex items-center text-[12px] text-base-content/70', hasLocation ? 'cursor-pointer hover:text-base-content' : '']"
+              :class="['flex items-center text-xs text-base-content/70', hasLocation ? 'cursor-pointer hover:text-base-content' : '']"
               @click.stop="navigateLocation"
             >{{ formatGeoLocation() }}</div>
             </template>
 
             <template v-if="displayField('location.gps', hasCoordinates || hasAltitude ? 'gps' : '')">
-              <div class="flex items-center text-[11px] text-base-content/30 h-6">GPS</div>
-              <div class="text-[12px] text-base-content/70 wrap-break-word">
+              <div class="flex items-center text-xs text-base-content/30 h-6">GPS</div>
+              <div class="text-xs text-base-content/70 wrap-break-word">
                 <span v-if="hasCoordinates">{{ formatGpsCoordinates(fileInfo.gps_latitude, fileInfo.gps_longitude) }}</span>
                 <span v-if="hasCoordinates && hasAltitude"> · </span>
                 <span v-if="hasAltitude">{{ Number(Number(fileInfo.gps_altitude).toFixed(2)) }} m</span>
               </div>
             </template>
             <template v-for="row in locationDetailRows" :key="row.key">
-              <div class="text-[11px] text-base-content/30 min-h-6 py-1">{{ row.label }}</div>
-              <div class="text-[12px] text-base-content/70 wrap-break-word py-1">{{ row.value }}</div>
+              <div class="text-xs text-base-content/30 min-h-6 py-1">{{ row.label }}</div>
+              <div class="text-xs text-base-content/70 wrap-break-word py-1">{{ row.value }}</div>
             </template>
             <template v-if="fieldVisible('location.map') && hasCoordinates">
               <div class="col-span-2 h-75 rounded-box overflow-hidden relative z-0 border border-base-content/5">
@@ -512,7 +512,7 @@
               </div>
             </template>
             <template v-else-if="displayField('location.map', '')">
-              <div class="flex items-center text-[11px] text-base-content/30 h-6">{{ $t('file_info.map') }}</div>
+              <div class="flex items-center text-xs text-base-content/30 h-6">{{ $t('file_info.map') }}</div>
               <div></div>
             </template>
         </div>
@@ -527,15 +527,15 @@
         </button>
         <div v-if="showSourceMetadataPanel" class="pt-3 pl-4 grid grid-cols-[84px_minmax(0,1fr)] gap-y-1.5 gap-x-4 text-xs">
             <template v-for="row in sourceDetailRows" :key="row.key">
-              <div class="text-[11px] text-base-content/30 min-h-6 py-1">{{ row.label }}</div>
-              <div class="text-[12px] text-base-content/70 whitespace-pre-wrap wrap-break-word py-1">{{ row.value }}</div>
+              <div class="text-xs text-base-content/30 min-h-6 py-1">{{ row.label }}</div>
+              <div class="text-xs text-base-content/70 whitespace-pre-wrap wrap-break-word py-1">{{ row.value }}</div>
             </template>
 
         </div>
       </div>
       </div>
 
-      <button v-if="detailsError" type="button" class="px-1 text-left text-xs text-warning" @click="loadMetadataDetails(true)">{{ $t('file_info.metadata_details_retry') }}</button>
+      <button v-if="detailsError" type="button" class="px-1 text-left text-xs text-warning cursor-pointer" @click="loadMetadataDetails(true)">{{ $t('file_info.metadata_details_retry') }}</button>
       </div>
     </div>
 

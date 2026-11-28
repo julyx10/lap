@@ -53,7 +53,7 @@
               <div
                 v-for="file in visibleSelectedFiles"
                 :key="file.id"
-                class="group/thumb relative h-20 min-w-0 overflow-hidden rounded-box border border-base-content/5"
+                class="group/thumb relative h-20 min-w-0 cursor-pointer overflow-hidden rounded-box border border-base-content/5"
                 :title="file.name || file.file_path"
                 @click="$emit('focusFile', file.id)"
               >
@@ -94,7 +94,7 @@
 
       <!-- Organize -->
       <div class="border-t border-base-content/5 px-1 py-4 space-y-3">
-        <div class="text-[10px] uppercase tracking-widest font-bold text-base-content/30">
+        <div class="text-xs uppercase tracking-widest font-bold text-base-content/30">
           {{ $t('info_panel.organize') }}
         </div>
         <FavoriteRatingControl
@@ -130,7 +130,7 @@
 
       <!-- file actions -->
       <div class="border-t border-base-content/5 px-1 py-4 space-y-3">
-        <div class="text-[10px] uppercase tracking-widest font-bold text-base-content/30">
+        <div class="text-xs uppercase tracking-widest font-bold text-base-content/30">
           {{ $t('info_panel.file_actions') }}
         </div>
         <div class="flex flex-wrap items-center gap-1">
@@ -181,7 +181,7 @@
 
       <!-- more actions mirrored from the multi-select context menu -->
       <div v-if="visibleMoreActions.length > 0 || querySource === 'collection'" class="border-t border-base-content/5 px-1 py-4 space-y-3">
-        <div class="text-[10px] uppercase tracking-widest font-bold text-base-content/30">
+        <div class="text-xs uppercase tracking-widest font-bold text-base-content/30">
           {{ $t('info_panel.more_actions') }}
         </div>
         <div class="flex flex-wrap items-center gap-1">

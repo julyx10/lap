@@ -160,7 +160,7 @@
               <TButton buttonSize="small" :icon="IconCropPortrait" :selected="!landscape" :tooltip="$t('msgbox.montage.portrait')" @click="landscape = false" />
             </div>
           </div>
-          <div class="text-[11px] text-base-content/30">{{ $t('msgbox.montage.export', { size: exportLabel }) }}</div>
+          <div class="text-xs text-base-content/30">{{ $t('msgbox.montage.export', { size: exportLabel }) }}</div>
         </section>
 
         <section class="rounded-box p-3 space-y-3 border border-base-content/5 bg-base-300/30">

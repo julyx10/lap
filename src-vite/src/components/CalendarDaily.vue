@@ -13,7 +13,7 @@
       {{ monthTitle }}
     </div>
 
-    <div class="px-2 pt-2 grid grid-cols-7 gap-2 text-center text-[11px] font-semibold text-base-content/30">
+    <div class="px-2 pt-2 grid grid-cols-7 gap-2 text-center text-xs font-semibold text-base-content/30">
       <div
         v-for="(weekday, index) in weekdayLabels"
         :key="index"
@@ -37,7 +37,7 @@
           'bg-base-content/30': heatLevel(d.count) === 1,
           'bg-base-content/40': heatLevel(d.count) === 2,
           'bg-base-content/50': heatLevel(d.count) === 3,
-          'bg-base-content/60 text-[10px]': heatLevel(d.count) === 4 && !isSelected(year, month, d.date),
+          'bg-base-content/60': heatLevel(d.count) === 4 && !isSelected(year, month, d.date),
           'text-base-100! bg-primary hover:bg-primary scale-110': isSelected(year, month, d.date),
           'border border-base-content/20': isTodayFn(d.date),
         }"

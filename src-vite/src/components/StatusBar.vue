@@ -15,7 +15,7 @@
         >
           <component :is="field.icon" class="t-icon-size-xs shrink-0" aria-hidden="true" />
           <span class="truncate" :title="field.value">{{ field.value }}</span>
-          <span v-if="field.key === 'name' && (isLivePhoto || rawPairBadge)" class="inline-flex shrink-0 items-center gap-0.5 rounded bg-base-content/10 px-1 text-[10px] font-medium">
+          <span v-if="field.key === 'name' && (isLivePhoto || rawPairBadge)" class="inline-flex shrink-0 items-center gap-0.5 rounded bg-base-content/10 px-1 text-xs font-medium">
             <IconLivePhoto v-if="isLivePhoto" class="size-3" aria-hidden="true" />
             {{ isLivePhoto ? $t('image_viewer.live') : rawPairBadge }}
           </span>
@@ -26,7 +26,7 @@
         <div v-for="field in visibleFields" :key="`measure-${field.key}`" class="flex h-full items-center gap-1 whitespace-nowrap">
           <component :is="field.icon" class="t-icon-size-xs shrink-0" aria-hidden="true" />
           <span>{{ field.value }}</span>
-          <span v-if="field.key === 'name' && (isLivePhoto || rawPairBadge)" class="inline-flex shrink-0 items-center gap-0.5 rounded bg-base-content/10 px-1 text-[10px] font-medium">
+          <span v-if="field.key === 'name' && (isLivePhoto || rawPairBadge)" class="inline-flex shrink-0 items-center gap-0.5 rounded bg-base-content/10 px-1 text-xs font-medium">
             <IconLivePhoto v-if="isLivePhoto" class="size-3" aria-hidden="true" />
             {{ isLivePhoto ? $t('image_viewer.live') : rawPairBadge }}
           </span>
@@ -38,7 +38,7 @@
     <StatusBarFieldsDialog v-if="showFieldsDialog" @cancel="showFieldsDialog = false" />
     <div
       v-if="showUpdateIcon"
-      class="ml-2 max-w-[40%] shrink-0 px-1 py-1 flex items-center gap-1 rounded-full bg-base-300 text-primary text-[11px] font-mono"
+      class="ml-2 max-w-[40%] shrink-0 px-1 py-1 flex items-center gap-1 rounded-full bg-base-300 text-primary text-xs font-mono"
     >
       <component :is="updateIconComponent" class="t-icon-size-xs shrink-0" :class="{ 'animate-spin': isUpdateAnimating }" />
       <span v-if="scanText" class="truncate text-right">{{ scanText }}</span>

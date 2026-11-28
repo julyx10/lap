@@ -27,15 +27,6 @@
         :disabled="collections.length >= maxCollectionCount"
         @click.stop="addCollection"
       />
-      <ContextMenu
-        v-if="expanded"
-        data-collection-reorder-area
-        :menuItems="collectionPanelMenuItems"
-        :iconMenu="IconMore"
-        :smallIcon="true"
-        @click.stop
-        @open-change="collectionPanelMenuOpen = $event"
-      />
     </div>
 
     <transition
@@ -67,7 +58,7 @@
               <button
                 v-if="searchQuery"
                 type="button"
-                class="mr-1 p-1 rounded-box text-base-content/30 hover:text-base-content/70"
+                class="cursor-pointer mr-1 p-1 rounded-box text-base-content/30 hover:text-base-content/70"
                 @click="searchQuery = ''"
               >
                 <IconClose class="w-4 h-4" />
@@ -85,7 +76,7 @@
             ghost-class="sidebar-reorder-placeholder"
             :revertOnSpill="true"
             :bubble-scroll="false"
-            :disabled="!isReorderingCollections || !canReorderCollections"
+            :disabled="reorderingCollectionId === null || !canReorderCollections"
             @start="onReorderStart"
             @end="onReorderEnd"
             @drop.stop
@@ -93,18 +84,19 @@
             <div
               v-for="collection in filteredCollections"
               :key="collection.id"
-              data-collection-reorder-area
+              :data-collection-reorder-area="reorderingCollectionId === collection.id ? 'true' : undefined"
               :data-collection-drop-id="renamingId === collection.id ? undefined : collection.id"
               :class="[
                 'sidebar-item group border-2 border-transparent transition-colors',
                 selectedId === collection.id ? 'sidebar-item-selected' : 'sidebar-item-hover',
               ]"
               @click="selectCollection(collection)"
+              @contextmenu.prevent.stop="openCollectionMenu(collection, $event)"
             >
             <IconDragHandle
-              v-if="isReorderingCollections && canReorderCollections"
+              v-if="reorderingCollectionId === collection.id && canReorderCollections"
               class="collection-drag-handle p-1 w-6 h-6 shrink-0 cursor-grab text-base-content/30"
-              :title="$t('collection.reorder')"
+              :title="$t('menu.album.reorder')"
               @click.stop
             />
             <IconCollection class="pr-1 w-6 h-6 shrink-0" />
@@ -135,6 +127,7 @@
                 ]"
               >
                 <ContextMenu
+                  :ref="(menu: any) => { if (menu) collectionMenus[collection.id] = menu; else delete collectionMenus[collection.id]; }"
                   :iconMenu="IconMore"
                   :menuItems="collectionMenuItems(collection)"
                   :smallIcon="true"
@@ -230,8 +223,9 @@ watch(() => libConfig.activePane, () => {
 });
 const selectedId = ref<number | null>(Number(libConfig.collection.selectedId || 0) || null);
 const getCollectionDisplayCount = (collection: Collection) => Number(libConfig.collection.counts?.[String(collection.id)] || 0);
-const isReorderingCollections = ref(false);
-const collectionPanelMenuOpen = ref(false);
+const reorderingCollectionId = ref<number | null>(null);
+const isReorderingDrag = ref(false);
+const collectionMenus = ref<Record<number, { open: (x: number, y: number) => void }>>({});
 const renamingId = ref<number | null>(null);
 const renameValue = ref('');
 const renameInputRef = ref<HTMLInputElement | HTMLInputElement[] | null>(null);
@@ -239,20 +233,14 @@ const isItemDragging = ref(false);
 const canReorderCollections = computed(() =>
   collections.value.length > 1 && !searchQuery.value.trim() && renamingId.value === null && !isItemDragging.value
 );
-const collectionPanelMenuItems = computed(() => [{
-  label: t('collection.reorder'),
-  icon: IconOrder,
-  disabled: !canReorderCollections.value,
-  action: () => { isReorderingCollections.value = !isReorderingCollections.value; },
-}]);
 watch(canReorderCollections, (canReorder) => {
-  if (!canReorder) isReorderingCollections.value = false;
+  if (!canReorder) reorderingCollectionId.value = null;
 });
 watch(() => props.expanded, (expanded) => {
   if (expanded) return;
-  isReorderingCollections.value = false;
-  collectionPanelMenuOpen.value = false;
+  reorderingCollectionId.value = null;
 });
+watch(() => libConfig._libraryId, () => { reorderingCollectionId.value = null; });
 const deleteTarget = ref<Collection | null>(null);
 const clearTarget = ref<Collection | null>(null);
 let unlistenCollectionFilesDropped: (() => void) | null = null;
@@ -291,7 +279,7 @@ onMounted(async () => {
   });
   unlistenLibrarySwitched = await listen('library-switched', async () => {
     selectedId.value = Number(libConfig.collection.selectedId || 0) || null;
-    isReorderingCollections.value = false;
+    reorderingCollectionId.value = null;
     renamingId.value = null;
     renameValue.value = '';
     deleteTarget.value = null;
@@ -422,6 +410,10 @@ async function confirmClear() {
   await tauriEmit('refresh-content');
 }
 
+function openCollectionMenu(collection: Collection, event: MouseEvent) {
+  collectionMenus.value[collection.id]?.open(event.clientX, event.clientY);
+}
+
 function collectionMenuItems(collection: Collection) {
   return [
     {
@@ -429,9 +421,12 @@ function collectionMenuItems(collection: Collection) {
       icon: IconRename,
       action: () => startRename(collection),
     },
+    { label: "-", action: null },
     {
-      label: t('collection.clear'),
-      action: () => { clearTarget.value = collection; },
+      label: t('menu.album.reorder'),
+      icon: IconOrder,
+      disabled: !canReorderCollections.value,
+      action: () => { reorderingCollectionId.value = collection.id; },
     },
     { label: "-", action: null },
     {
@@ -439,21 +434,27 @@ function collectionMenuItems(collection: Collection) {
       icon: IconTrash,
       action: () => deleteCollection(collection),
     },
+    {
+      label: t('collection.clear'),
+      action: () => { clearTarget.value = collection; },
+    },
   ];
 }
 
 function handleReorderOutsidePointerDown(event: PointerEvent) {
-  if (event.button !== 0 || !isReorderingCollections.value || collectionPanelMenuOpen.value) return;
+  if (event.button !== 0 || reorderingCollectionId.value === null || isReorderingDrag.value) return;
   if (event.target instanceof Element && event.target.closest('[data-collection-reorder-area]')) return;
-  isReorderingCollections.value = false;
+  reorderingCollectionId.value = null;
 }
 
 function onReorderStart() {
+  isReorderingDrag.value = true;
   uiStore.removeInputHandler('CollectionTrayDrag');
   uiStore.pushInputHandler('CollectionTrayDrag');
 }
 
 async function onReorderEnd({ oldIndex, newIndex }: DraggableEvent) {
+  isReorderingDrag.value = false;
   setTimeout(() => uiStore.removeInputHandler('CollectionTrayDrag'), 0);
   if (oldIndex === newIndex) return;
   try {

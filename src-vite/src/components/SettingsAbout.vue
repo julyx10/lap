@@ -79,11 +79,11 @@
     </div>
 
     <!-- updates -->
-    <div class="w-full rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
-      <div class="flex items-center gap-2 text-base-content/30">
-        <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.about.section_updates') }}</span>
+    <div class="w-full ui-section">
+      <div class="ui-section-header">
+        <span class="ui-section-title">{{ $t('settings.about.section_updates') }}</span>
       </div>
-      <div class="flex items-center justify-between gap-4 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+      <div class="ui-section-row gap-4">
         <div class="min-w-0 flex-1 flex flex-col gap-0.5 text-sm leading-5">
           <div>{{ updateStatusText }}</div>
           <progress
@@ -102,7 +102,7 @@
           <span v-else>{{ updateButtonText }}</span>
         </button>
       </div>
-      <div class="flex items-center justify-between gap-4 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+      <div class="ui-section-row gap-4">
         <div class="flex flex-col gap-0.5 text-sm leading-5">
           <div>{{ $t('settings.general.auto_check_updates') }}</div>
         </div>

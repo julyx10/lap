@@ -10,13 +10,6 @@
         :tooltip="$t('album.add_smart_album')"
         @click="clickAddSmartAlbum"
       />
-      <ContextMenu
-        data-smart-album-reorder-area
-        :menuItems="smartAlbumPanelMenuItems"
-        :iconMenu="IconMore"
-        :smallIcon="true"
-        @open-change="smartAlbumPanelMenuOpen = $event"
-      />
     </div>
 
     <div class="mx-1 mb-2 px-1 shrink-0">
@@ -41,7 +34,7 @@
           v-if="smartAlbumSearch"
           type="button"
           :disabled="customSmartAlbums.length === 0"
-          class="mr-1 p-1 rounded-box text-base-content/30 hover:text-base-content/70 disabled:opacity-30"
+          class="cursor-pointer disabled:cursor-default mr-1 p-1 rounded-box text-base-content/30 hover:text-base-content/70 disabled:opacity-30"
           @click="smartAlbumSearch = ''"
         >
           <IconClose class="w-4 h-4" />
@@ -53,7 +46,7 @@
       <VueDraggable
         v-model="customSmartAlbums"
         tag="ul"
-        :disabled="!isReorderingSmartAlbums || !canReorderSmartAlbums"
+        :disabled="reorderingSmartAlbumId === null || !canReorderSmartAlbums"
         handle=".smart-album-drag-handle"
         direction="vertical"
         :group="{ name: 'smart-album-list', pull: false, put: false }"
@@ -69,7 +62,7 @@
       >
         <li v-for="smartAlbum in filteredSmartAlbums" :key="smartAlbum.id">
           <div
-            data-smart-album-reorder-area
+            :data-smart-album-reorder-area="reorderingSmartAlbumId === smartAlbum.id ? 'true' : undefined"
             :class="[
               'sidebar-item sidebar-item-media group transition-colors',
               libConfig.smartAlbum.type === 'custom' && libConfig.smartAlbum.id === smartAlbum.id ? 'sidebar-item-selected' : 'sidebar-item-hover',
@@ -78,9 +71,9 @@
             @contextmenu.prevent.stop="(event: MouseEvent) => handleSmartAlbumContextMenu(smartAlbum, event)"
           >
             <IconDragHandle
-              v-if="isReorderingSmartAlbums && canReorderSmartAlbums"
+              v-if="reorderingSmartAlbumId === smartAlbum.id && canReorderSmartAlbums"
               class="smart-album-drag-handle p-1 w-6 h-6 shrink-0 cursor-grab text-base-content/30"
-              :title="$t('album.smart_edit.reorder')"
+              :title="$t('menu.album.reorder')"
               @click.stop
             />
             <div class="w-10 h-10 mr-2 rounded-box shrink-0 overflow-hidden border border-base-content/5 bg-base-content/5">
@@ -165,16 +158,10 @@ const deletingSmartAlbum = ref<any | null>(null);
 const smartAlbumContextMenus = ref<Record<string, any>>({});
 const smartAlbumCoverErrors = ref<Record<string, number>>({});
 const smartAlbumCoverUrls = ref<Record<string, string>>({});
-const isReorderingSmartAlbums = ref(false);
-const smartAlbumPanelMenuOpen = ref(false);
+const reorderingSmartAlbumId = ref<string | null>(null);
+const isDraggingSmartAlbum = ref(false);
 const smartAlbumSearch = ref('');
 const canReorderSmartAlbums = computed(() => customSmartAlbums.value.length > 1 && !smartAlbumSearch.value.trim());
-const smartAlbumPanelMenuItems = computed(() => [{
-  label: t('album.smart_edit.reorder'),
-  icon: IconOrder,
-  disabled: !canReorderSmartAlbums.value,
-  action: () => { isReorderingSmartAlbums.value = !isReorderingSmartAlbums.value; },
-}]);
 const isSmartAlbumSearchFocused = ref(false);
 let smartAlbumCoverLoadToken = 0;
 let smartCountRequest = 0;
@@ -244,11 +231,11 @@ watch(
 );
 
 watch(canReorderSmartAlbums, (canReorder) => {
-  if (!canReorder) isReorderingSmartAlbums.value = false;
+  if (!canReorder) reorderingSmartAlbumId.value = null;
 });
 
 watch(() => libConfig._libraryId, () => {
-  isReorderingSmartAlbums.value = false;
+  reorderingSmartAlbumId.value = null;
 });
 
 const getSmartAlbumCoverSrc = (smartAlbum: any) => {
@@ -317,6 +304,16 @@ const getMoreMenuItems = (smartAlbum: any) => [
     action: null
   },
   {
+    label: t('menu.album.reorder'),
+    icon: IconOrder,
+    disabled: !canReorderSmartAlbums.value,
+    action: () => { reorderingSmartAlbumId.value = smartAlbum.id; },
+  },
+  {
+    label: "-",
+    action: null
+  },
+  {
     label: t('album.smart_edit.delete'),
     icon: IconTrash,
     action: () => clickDeleteSmartAlbum(smartAlbum),
@@ -324,9 +321,9 @@ const getMoreMenuItems = (smartAlbum: any) => [
 ];
 
 function handleReorderOutsidePointerDown(event: PointerEvent) {
-  if (event.button !== 0 || !isReorderingSmartAlbums.value || smartAlbumPanelMenuOpen.value) return;
+  if (event.button !== 0 || reorderingSmartAlbumId.value === null || isDraggingSmartAlbum.value) return;
   if (event.target instanceof Element && event.target.closest('[data-smart-album-reorder-area]')) return;
-  isReorderingSmartAlbums.value = false;
+  reorderingSmartAlbumId.value = null;
 }
 
 onMounted(async () => {
@@ -350,11 +347,13 @@ onBeforeUnmount(() => {
 });
 
 function onDragStart() {
+  isDraggingSmartAlbum.value = true;
   uiStore.removeInputHandler('SmartAlbumListDrag');
   uiStore.pushInputHandler('SmartAlbumListDrag');
 }
 
 function onDragEnd({ oldIndex, newIndex }: DraggableEvent) {
+  isDraggingSmartAlbum.value = false;
   setTimeout(() => uiStore.removeInputHandler('SmartAlbumListDrag'), 0);
   if (oldIndex === newIndex) return;
   libConfig.smartAlbums = [...customSmartAlbums.value];

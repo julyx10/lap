@@ -61,7 +61,7 @@
         {{ $t("tag.load_failed") }}
         <button
           type="button"
-          class="ml-2 underline"
+          class="ml-2 underline cursor-pointer disabled:cursor-default"
           :disabled="busy"
           @click="load()"
         >

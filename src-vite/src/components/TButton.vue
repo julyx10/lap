@@ -21,6 +21,7 @@
           }
         ]"
         role="button"
+        :aria-label="text ? undefined : tooltip || undefined"
         :aria-disabled="disabled"
         :tabindex="disabled ? -1 : 0"
         @click="handleClick"

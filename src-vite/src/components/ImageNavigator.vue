@@ -1,5 +1,6 @@
 <template>
   <div ref="container" data-image-navigator class="relative overflow-hidden select-none"
+    :class="viewport?.pannable ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-pointer'"
     :style="{ touchAction: viewport?.pannable ? 'none' : 'auto' }"
     @pointerdown.stop="startDrag" @pointermove.stop="moveDrag"
     @pointerup.stop="endDrag" @pointercancel.stop="cancelDrag" @lostpointercapture="cancelDrag"
@@ -27,6 +28,7 @@ const emit = defineEmits<{
   dragging: [value: boolean];
 }>();
 const container = ref<HTMLElement | null>(null);
+const isDragging = ref(false);
 const size = ref({ width: 0, height: 0 });
 const rotation = computed(() => props.viewport?.rotate || 0);
 const layout = computed(() => navigatorLayout(props.viewport, size.value));
@@ -62,6 +64,7 @@ function startDrag(event: PointerEvent) {
     normX: props.viewport.normX, normY: props.viewport.normY, moved: false,
     inBox: x >= box.left && x <= box.left + box.width && y >= box.top && y <= box.top + box.height };
   container.value.setPointerCapture(event.pointerId);
+  isDragging.value = true;
   emit('dragging', true);
 }
 function moveDrag(event: PointerEvent) {
@@ -86,6 +89,7 @@ function endDrag(event: PointerEvent) {
 function cancelDrag() {
   const id = drag?.id;
   drag = null;
+  isDragging.value = false;
   if (id !== undefined && container.value?.hasPointerCapture(id)) container.value.releasePointerCapture(id);
   emit('dragging', false);
 }

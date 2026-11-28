@@ -34,7 +34,7 @@
         <button
           v-if="search"
           type="button"
-          class="mr-1 p-1 rounded-box text-base-content/30 hover:text-base-content/70"
+          class="cursor-pointer mr-1 p-1 rounded-box text-base-content/30 hover:text-base-content/70"
           @click.stop="search = ''; searchInputRef?.focus()"
         >
           <IconClose class="w-4 h-4" />

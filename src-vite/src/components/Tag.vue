@@ -13,24 +13,27 @@
       :tooltip="$t('msgbox.new_tag.title')"
       @click="clickAddTag()"
       />
-      <div class="inline-flex shrink-0 items-center gap-0 overflow-hidden rounded-box"
-        :class="{ 'border border-base-content/5': libConfig.tag.multi }">
-        <TButton :icon="IconMultiSelect" buttonSize="small" :selected="libConfig.tag.multi"
-          :buttonClasses="libConfig.tag.multi ? 'h-6! w-6! min-h-0!' : ''"
-          :disabled="!tags.length" :tooltip="$t(libConfig.tag.multi ? 'tag.exit_multi_filter' : 'tag.multi_filter')"
-          @click="libConfig.tag.multi ? exitMultiFilter() : enterTagFilter(libConfig.tag)" />
-        <Transition name="tag-filter-modes">
-          <div v-if="libConfig.tag.multi" class="tag-filter-modes-slot shrink-0 overflow-hidden">
-            <div class="flex w-16 items-center">
-              <button v-for="any in [false, true]" :key="String(any)"
-                class="h-6 w-8 shrink-0 rounded-box text-[10px] cursor-pointer hover:bg-base-100/30"
-                :class="libConfig.tag.matchAny === any ? 'text-primary bg-primary/15' : 'text-base-content/50'"
-                :aria-pressed="libConfig.tag.matchAny === any"
-                @click="libConfig.tag.matchAny = any">{{ any ? 'OR' : 'AND' }}</button>
-            </div>
-          </div>
-        </Transition>
+      <div v-if="libConfig.tag.multi" class="inline-flex shrink-0 items-center rounded-box border border-base-content/5">
+        <button v-for="any in [false, true]" :key="String(any)"
+          type="button"
+          class="h-6 w-8 shrink-0 rounded-box text-xs cursor-pointer hover:bg-base-100/30"
+          :class="libConfig.tag.matchAny === any ? 'text-primary bg-primary/15' : 'text-base-content/50'"
+          :aria-pressed="libConfig.tag.matchAny === any"
+          @click="libConfig.tag.matchAny = any">{{ any ? 'OR' : 'AND' }}</button>
+        <TButton
+          :icon="IconClose"
+          buttonSize="small"
+          :tooltip="$t('tag.exit_multi_filter')"
+          @click="exitMultiFilter()"
+        />
       </div>
+      <TButton v-else
+        :icon="IconMultiSelect"
+        buttonSize="small"
+        :disabled="!tags.length"
+        :tooltip="$t('tag.multi_filter')"
+        @click="enterTagFilter(libConfig.tag)"
+      />
       <SortMenuButton v-model="config.settings.tagSort" kind="category" />
     </div>
     <div v-if="tags.length > 0" class="mx-1 mb-2 px-1 shrink-0">
@@ -61,7 +64,7 @@
           v-if="search"
           type="button"
           :title="$t('menu.tag.clear_search')"
-          class="mr-1 p-1 rounded-box text-base-content/30 hover:text-base-content/70"
+          class="cursor-pointer mr-1 p-1 rounded-box text-base-content/30 hover:text-base-content/70"
           @click.stop="
             search = '';
             searchInputRef?.focus();
@@ -105,7 +108,7 @@
           >
             <button
               v-if="tag.hasChildren"
-              class="size-6 shrink-0 flex items-center justify-center"
+              class="cursor-pointer size-6 shrink-0 flex items-center justify-center"
               :aria-label="tag.name"
               @click.stop="toggle(tag.id)"
             >
@@ -622,15 +625,3 @@ watch(
 );
 defineExpose({ clickAddTag });
 </script>
-
-<style scoped>
-.tag-filter-modes-slot { width: 64px; }
-.tag-filter-modes-enter-active,
-.tag-filter-modes-leave-active { transition: width 200ms ease, opacity 200ms ease; }
-.tag-filter-modes-enter-from,
-.tag-filter-modes-leave-to { width: 0; opacity: 0; }
-@media (prefers-reduced-motion: reduce) {
-  .tag-filter-modes-enter-active,
-  .tag-filter-modes-leave-active { transition: none; }
-}
-</style>

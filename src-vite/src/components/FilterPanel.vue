@@ -30,12 +30,12 @@
       ref="panel"
       role="dialog"
       :aria-label="tr('title')"
-      class="fixed z-700 w-100 max-w-[calc(100vw-16px)] rounded-box border border-base-content/30 bg-base-200/80 backdrop-blur-md shadow-lg text-base-content overflow-y-auto px-4 py-2 select-none"
+      class="fixed z-700 w-90 max-w-[calc(100vw-16px)] rounded-box border border-base-content/30 bg-base-200/80 backdrop-blur-md shadow-lg text-base-content overflow-y-auto px-3 py-2 select-none"
       :style="position"
       @keydown.esc.stop.prevent="close"
     >
       <div class="flex items-center gap-2 mb-2">
-        <span class="flex-1 text-sm text-base-content/70">{{ tr("title") }}</span>
+        <span class="flex-1 text-xs text-base-content/70">{{ tr("title") }}</span>
         <span
           v-if="resultPending"
           class="loading loading-spinner loading-xs text-base-content/40"
@@ -43,20 +43,20 @@
         ></span>
         <span v-else class="whitespace-nowrap text-xs text-base-content/60">{{ resultSummary }}</span>
         <button
-          class="btn btn-ghost btn-xs btn-square shrink-0"
+          class="btn btn-ghost btn-xs text-xs btn-square shrink-0"
           :disabled="!count"
           :title="tr('reset')"
           :aria-label="tr('reset')"
           @click="reset"
         >
-          <IconRestore class="w-4 h-4" aria-hidden="true" />
+          <IconRestore class="size-3.5" aria-hidden="true" />
         </button>
       </div>
-      <div v-if="count > 0" class="mb-3 flex flex-wrap gap-2">
+      <div v-if="count > 0" class="mb-2 flex flex-wrap gap-1.5">
         <button
           v-for="chip in chips"
           :key="chip.key"
-          class="badge badge-outline h-7 max-w-full min-w-0 px-2 text-xs border-primary/30 bg-primary/15 font-medium text-primary hover:bg-primary/25 cursor-pointer gap-1"
+          class="badge badge-outline h-6 max-w-full min-w-0 px-2 text-xs border-primary/30 bg-primary/15 font-medium text-primary hover:bg-primary/25 cursor-pointer gap-1"
           @click="chip.clear()"
         >
           <span class="min-w-0 truncate">{{ chip.label }}</span
@@ -64,9 +64,9 @@
           ><span class="sr-only">{{ tr("remove") }}</span>
         </button>
       </div>
-      <div class="border-t border-base-content/10 py-3 space-y-3">
+      <div class="border-t border-base-content/10 py-2 space-y-2">
       <section>
-        <div class="text-sm text-base-content/60 mb-2">
+        <div class="text-xs text-base-content/60 mb-2">
           {{ tr("file_type") }}
         </div>
         <div
@@ -75,7 +75,7 @@
           <button
             v-for="option in types"
             :key="option.value"
-            class="join-item btn btn-ghost btn-sm flex-1 border-transparent text-base-content/70 hover:text-base-content hover:bg-base-100/30"
+            class="join-item btn btn-ghost btn-xs text-xs flex-1 border-transparent text-base-content/70 hover:text-base-content hover:bg-base-100/30"
             :class="{ 'bg-base-100 hover:bg-base-100 text-primary!': type === option.value }"
             @click="$emit('type', option.value)"
           >
@@ -84,7 +84,7 @@
         </div>
       </section>
       <section>
-        <div class="text-sm text-base-content/60 mb-2">{{ tr("rating") }}</div>
+        <div class="text-xs text-base-content/60 mb-2">{{ tr("rating") }}</div>
         <div
           class="join flex border border-base-content/15 rounded-box overflow-hidden"
         >
@@ -95,7 +95,7 @@
               { value: 0, label: 'unrated' },
             ]"
             :key="mode.value"
-            class="join-item btn btn-ghost btn-sm flex-1 border-transparent text-base-content/70 hover:text-base-content hover:bg-base-100/30"
+            class="join-item btn btn-ghost btn-xs text-xs flex-1 border-transparent text-base-content/70 hover:text-base-content hover:bg-base-100/30"
             :class="{
               'bg-base-100 hover:bg-base-100 text-primary!': filters.rating === mode.value,
             }"
@@ -104,7 +104,7 @@
             <component
               v-if="mode.value !== -1"
               :is="mode.value === -2 ? IconStarFilled : IconStar"
-              class="w-4 h-4 shrink-0"
+              class="size-3.5 shrink-0"
               aria-hidden="true"
             />{{ tr(mode.label) }}
           </button>
@@ -114,14 +114,14 @@
             <button
               v-for="star in 5"
               :key="star"
-              class="btn btn-ghost btn-sm btn-square"
+              class="btn btn-ghost btn-xs text-xs btn-square"
               :aria-label="String(star)"
               :class="
                 star <= filters.rating ? 'text-warning' : 'text-base-content/30'
               "
               @click="filters.rating = filters.rating === star ? -1 : star"
             >
-              <IconStarFilled class="w-5 h-5" />
+              <IconStarFilled class="size-4" />
             </button>
           </div>
           <div class="join shrink-0">
@@ -129,7 +129,7 @@
               v-for="op in operators"
               :key="op.value"
               :disabled="filters.rating < 1 || filters.rating > 5"
-              class="join-item btn btn-ghost btn-xs"
+              class="join-item btn btn-ghost btn-xs text-xs"
               :class="{
                 'bg-primary/15 text-primary':
                   filters.rating > 0 && filters.ratingOp === op.value,
@@ -138,7 +138,7 @@
               :aria-label="op.label"
               @click="filters.ratingOp = op.value"
             >
-              <component :is="op.icon" class="w-3.5 h-3.5" aria-hidden="true" />
+              <component :is="op.icon" class="size-3" aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -147,14 +147,14 @@
         v-for="field in segments"
         :key="field.key"
       >
-        <div class="text-sm text-base-content/60">{{ tr(field.key) }}</div>
+        <div class="text-xs text-base-content/60 mb-2">{{ tr(field.key) }}</div>
         <div
           class="join flex border border-base-content/15 rounded-box overflow-hidden"
         >
           <button
             v-for="option in field.options"
             :key="option.value"
-            class="join-item btn btn-ghost btn-sm flex-1 border-transparent px-2 text-base-content/70 hover:text-base-content hover:bg-base-100/30"
+            class="join-item btn btn-ghost btn-xs text-xs flex-1 border-transparent px-2 text-base-content/70 hover:text-base-content hover:bg-base-100/30"
             :class="{
               'bg-base-100 hover:bg-base-100 text-primary!': filters[field.key] === option.value,
             }"
@@ -175,7 +175,7 @@
                         ? IconFlagOff
                         : IconFlag
               "
-              class="w-4 h-4 shrink-0"
+              class="size-3.5 shrink-0"
               aria-hidden="true"
             />{{ tr(option.label) }}
           </button>

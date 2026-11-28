@@ -2,7 +2,7 @@
   <button
     ref="trigger"
     type="button"
-    class="inline-flex size-5 shrink-0 items-center justify-center rounded text-base-content/40 hover:text-base-content focus-visible:text-base-content focus-visible:outline-2 focus-visible:outline-primary"
+    class="cursor-pointer inline-flex size-5 shrink-0 items-center justify-center rounded text-base-content/40 hover:text-base-content focus-visible:text-base-content focus-visible:outline-2 focus-visible:outline-primary"
     :aria-label="label"
     :aria-describedby="open ? tooltipId : undefined"
     @mouseenter="enter"

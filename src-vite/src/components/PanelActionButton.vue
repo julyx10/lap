@@ -40,7 +40,7 @@ const emit = defineEmits<{
 }>();
 
 const sizeClass = computed(() => props.size === 'small'
-  ? 'h-6 px-1.5 text-[10px]'
+  ? 'h-6 px-1.5 text-xs'
   : 'h-8 px-2 text-xs');
 
 const iconClass = computed(() => props.size === 'small' ? 'h-3 w-3 shrink-0' : 'h-3.5 w-3.5 shrink-0');

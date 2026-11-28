@@ -29,9 +29,9 @@
       >
         <!-- Markers (Years and Months) -->
         <div v-for="(marker, index) in displayMarkers" :key="index"
-          class="absolute w-full right-0 tabular-nums pointer-events-none select-none flex items-center justify-end z-10"
+          class="absolute w-full right-0 tabular-nums text-xs pointer-events-none select-none flex items-center justify-end z-10"
           :class="[
-            marker.isYear ? 'text-[10px] text-base-content/70' : 'text-[9px] text-base-content/30'
+            marker.isYear ? 'text-base-content/70' : 'text-base-content/30'
           ]"
           :style="{ top: marker.top + '%', transform: 'translateY(-50%)' }"
         >
@@ -170,7 +170,7 @@ const displayMarkers = computed(() => {
   const hasLabelMarkers = props.markers.some(marker => marker.label);
   
   const height = trackHeight.value; 
-  const minLabelDistance = 12;
+  const minLabelDistance = 16;
   const minTickDistance = 5;
 
   // 1. Generate Candidates

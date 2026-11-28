@@ -7,12 +7,12 @@
     >
       <div
         v-if="hoverBin !== null"
-        class="absolute right-1 top-1 z-10 rounded-md border border-base-content/5 bg-base-100/95 px-2 py-1 text-[9px] font-semibold leading-tight shadow-sm backdrop-blur-sm"
+        class="absolute top-1 z-10 rounded-md border border-base-content/5 bg-base-100/95 px-2 py-1 text-xs shadow-sm backdrop-blur-sm"
+        :class="hoverBin > 128 ? 'left-1' : 'right-1'"
       >
         <button
           type="button"
-          class="mb-1 cursor-pointer text-[8px] uppercase tracking-[0.18em] transition-colors hover:text-base-content/80"
-          :class="allChannelsVisible ? 'text-base-content/80' : 'text-base-content/30'"
+          class="mb-1 cursor-pointer font-mono text-xs uppercase transition-colors text-base-content/70 hover:text-base-content"
           :aria-pressed="allChannelsVisible"
           @click.stop="showAllChannels"
         >
@@ -22,13 +22,13 @@
           v-for="item in legendItems"
           :key="item.key"
           type="button"
-          class="flex w-full cursor-pointer items-center gap-1.5 rounded-sm transition-colors hover:bg-base-content/5"
+          class="flex w-full cursor-pointer items-center rounded-box transition-colors"
           :aria-pressed="visibleChannels[item.key]"
           @click.stop="toggleChannel(item.key)"
         >
           <span :class="visibleChannels[item.key] ? item.activeClass : item.inactiveClass">{{ item.label }}</span>
           <span
-            class="w-10 text-right tabular-nums transition-colors"
+            class="w-full text-right tabular-nums transition-colors"
             :class="visibleChannels[item.key] ? 'text-base-content/70' : 'text-base-content/30'"
           >{{ formatLegendValue(item.value) }}</span>
         </button>
@@ -70,7 +70,7 @@
       </svg>
     </div>
 
-    <div class="flex justify-between px-0.5 text-[8px] uppercase tracking-tighter font-black text-base-content/30">
+    <div class="flex justify-between px-0.5 text-2xs uppercase tracking-tighter font-bold text-base-content/30">
       <span>{{ $t('msgbox.image_editor.shadows') }}</span>
       <span>{{ $t('msgbox.image_editor.midtones') }}</span>
       <span>{{ $t('msgbox.image_editor.highlights') }}</span>

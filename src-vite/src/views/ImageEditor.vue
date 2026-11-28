@@ -65,19 +65,19 @@
 
               <div
                 v-if="showDiffPreview && canShowDiffPreview"
-                class="pointer-events-none absolute z-50 rounded-box bg-base-100/80 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-base-content/70 left-3 top-3"
+                class="pointer-events-none absolute z-50 rounded-box bg-base-100/80 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-base-content/70 left-3 top-3"
               >
                 {{ $t('msgbox.image_editor.original') }}
               </div>
               <div
                 v-if="showDiffPreview && canShowDiffPreview"
-                class="pointer-events-none absolute z-50 rounded-box bg-base-100/80 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-base-content/70 right-3 top-3"
+                class="pointer-events-none absolute z-50 rounded-box bg-base-100/80 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-base-content/70 right-3 top-3"
               >
                 {{ currentPresetLabel || $t('msgbox.image_editor.adjusted') }}
               </div>
               <div
                 v-if="imageReady && !(showDiffPreview && canShowDiffPreview) && currentPresetLabel"
-                class="pointer-events-none absolute z-50 rounded-box bg-base-100/80 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-base-content/70 right-3 top-3"
+                class="pointer-events-none absolute z-50 rounded-box bg-base-100/80 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-base-content/70 right-3 top-3"
               >
                 {{ currentPresetLabel }}
               </div>
@@ -113,7 +113,7 @@
               @dblclick="clickDoCrop"
             >
               <template v-if="cropStatus===1 && (isDragging || isRotating)">
-                <div v-if="isDragging" class="crop-dimensions-display">
+                <div v-if="isDragging" class="crop-dimensions-display text-xs">
                   {{ crop.width }} x {{ crop.height }}
                 </div>
                 <div class="grid-lines">
@@ -206,9 +206,9 @@
         </div>
 
         <template v-if="activeEditorTab === 'edit'">
-        <section class="rounded-box p-3 space-y-2 bg-base-300/30 border border-base-content/5">
-          <div class="flex items-center justify-between gap-2">
-            <div class="text-[11px] font-bold uppercase tracking-[0.22em] text-base-content/30">{{ $t('msgbox.image_editor.transform') }}</div>
+        <section class="ui-section">
+          <div class="ui-section-header justify-between">
+            <div class="ui-section-title">{{ $t('msgbox.image_editor.transform') }}</div>
             <TButton
               buttonSize="small"
               :icon="IconRestore"
@@ -246,9 +246,9 @@
           </div>
         </section>
 
-        <section class="rounded-box p-3 space-y-2 bg-base-300/30 border border-base-content/5">
-          <div class="flex items-center justify-between gap-2">
-            <div class="text-[11px] font-bold uppercase tracking-[0.22em] text-base-content/30">{{ $t('msgbox.image_editor.crop') }}</div>
+        <section class="ui-section">
+          <div class="ui-section-header justify-between">
+            <div class="ui-section-title">{{ $t('msgbox.image_editor.crop') }}</div>
             <TButton
               buttonSize="small"
               :icon="IconRestore"
@@ -295,9 +295,9 @@
           </div>
         </section>
 
-        <section class="rounded-box p-3 space-y-2 bg-base-300/30 border border-base-content/5">
-          <div class="flex items-center justify-between gap-2">
-            <div class="text-[11px] font-bold uppercase tracking-[0.22em] text-base-content/30">{{ $t('msgbox.image_editor.resize') }}</div>
+        <section class="ui-section">
+          <div class="ui-section-header justify-between">
+            <div class="ui-section-title">{{ $t('msgbox.image_editor.resize') }}</div>
             <TButton
               buttonSize="small"
               :icon="IconRestore"
@@ -376,9 +376,9 @@
         </template>
 
         <template v-else>
-        <section class="rounded-box p-3 space-y-2 bg-base-300/30 border border-base-content/5">
-          <div class="flex items-center justify-between gap-2">
-            <div class="text-[11px] font-bold uppercase tracking-[0.22em] text-base-content/30">{{ $t('msgbox.image_editor.histogram') }}</div>
+        <section class="ui-section">
+          <div class="ui-section-header justify-between">
+            <div class="ui-section-title">{{ $t('msgbox.image_editor.histogram') }}</div>
           </div>
 
           <ImageHistogram
@@ -393,9 +393,9 @@
           />
         </section>
 
-        <section class="rounded-box p-3 space-y-2 border border-base-content/5 bg-base-300/30">
-          <div class="flex items-center justify-between gap-2">
-            <span class="text-[11px] font-bold uppercase tracking-[0.22em] text-base-content/30">{{ $t('msgbox.image_editor.presets.title') }}</span>
+        <section class="ui-section">
+          <div class="ui-section-header justify-between">
+            <span class="ui-section-title">{{ $t('msgbox.image_editor.presets.title') }}</span>
             <div class="flex items-center gap-1">
               <TButton
                 buttonSize="small"
@@ -439,7 +439,7 @@
                 </div>
               </div>
               <div
-                class="mt-1 text-[9px] text-center truncate font-medium transition-colors uppercase tracking-tight"
+                class="mt-1 text-xs text-center truncate font-medium transition-colors uppercase tracking-tight"
                 :class="selectedPreset === option.value ? 'text-primary' : 'text-base-content/70 group-hover:text-base-content'"
               >
                 {{ option.label }}
@@ -448,9 +448,9 @@
           </div>
         </section>
 
-        <section class="rounded-box p-3 space-y-2 border border-base-content/5 bg-base-300/30">
-          <div class="flex items-center justify-between gap-2">
-            <span class="text-[11px] font-bold uppercase tracking-[0.22em] text-base-content/30">{{ $t('msgbox.image_editor.adjustments') }}</span>
+        <section class="ui-section">
+          <div class="ui-section-header justify-between">
+            <span class="ui-section-title">{{ $t('msgbox.image_editor.adjustments') }}</span>
             <TButton
               buttonSize="small"
               :icon="IconRestore"
@@ -466,7 +466,7 @@
                 <div class="font-medium text-base-content/70 tracking-wide text-xs">{{ adj.label }}</div>
                 <div class="flex items-center gap-2 pr-2 min-w-0">
                   <SliderInput v-model="adj.model.value" :min="adj.min" :max="adj.max" :step="adj.step" class="flex-1 min-w-0 w-full" />
-                  <span class="text-[10px] font-mono text-base-content/70 w-8 text-right shrink-0">{{ adj.valueDisplay }}</span>
+                  <span class="text-xs font-mono text-base-content/70 w-8 text-right shrink-0">{{ adj.valueDisplay }}</span>
                 </div>
               </div>
             </div>
@@ -478,7 +478,7 @@
                 <div class="font-medium text-base-content/70 tracking-wide text-xs">{{ adj.label }}</div>
                 <div class="flex items-center gap-2 pr-2 min-w-0">
                   <SliderInput v-model="adj.model.value" :min="adj.min" :max="adj.max" :step="adj.step" class="flex-1 min-w-0 w-full" />
-                  <span class="text-[10px] font-mono text-base-content/70 w-8 text-right shrink-0">{{ adj.valueDisplay }}</span>
+                  <span class="text-xs font-mono text-base-content/70 w-8 text-right shrink-0">{{ adj.valueDisplay }}</span>
                 </div>
               </div>
             </div>
@@ -2396,7 +2396,6 @@ const clickSave = async () => {
   color: #aaa;
   padding: 2px 8px;
   border-radius: 14px;
-  font-size: 12px;
   white-space: nowrap;
 }
 </style>

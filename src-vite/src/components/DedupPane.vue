@@ -98,7 +98,7 @@
           </p>
           <section class="mb-2 flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 rounded-box border border-base-content/10 bg-base-100/40 px-3 py-2" :aria-label="$t('info_panel.dedup.tabs.similar')">
             <div class="min-w-0">
-              <div class="text-[10px] font-bold uppercase tracking-widest text-base-content/30">
+              <div class="text-xs font-bold uppercase tracking-widest text-base-content/30">
                 {{ $t('info_panel.dedup.similar.results') }}
               </div>
               <div class="text-xs text-base-content/60">
@@ -115,7 +115,7 @@
             :style="{ height: `${config.dedup.duplicateSetsHeight}%` }"
           >
               <div class="flex items-center gap-2">
-                <span class="text-[10px] uppercase tracking-widest font-bold text-base-content/30">
+                <span class="text-xs uppercase tracking-widest font-bold text-base-content/30">
                   {{ $t('info_panel.dedup.similar.groups_title') }}
                 </span>
                 <span class="ml-auto sidebar-item-count">
@@ -150,7 +150,7 @@
           </div>
           <div v-if="activeSimilarGroup" class="min-h-0 flex-1 overflow-y-auto px-1 py-3 space-y-3">
             <div class="flex items-center gap-2">
-              <span class="text-[10px] uppercase tracking-widest font-bold text-base-content/30">
+              <span class="text-xs uppercase tracking-widest font-bold text-base-content/30">
                 {{ $t('info_panel.dedup.actions_title') }}
               </span>
               <span v-if="selectedSimilarCount > 0" class="ml-auto text-xs text-base-content/70">
@@ -213,7 +213,7 @@
                       <span class="truncate">{{ item.file?.name }}</span>
                       <span
                         v-if="dedupPairBadge(item)"
-                        class="inline-flex shrink-0 items-center gap-0.5 rounded bg-base-content/10 px-1 text-[9px] font-medium text-base-content/60"
+                        class="inline-flex shrink-0 items-center gap-0.5 rounded bg-base-content/10 px-1 text-xs font-medium text-base-content/60"
                       >
                         <IconLivePhoto v-if="isDedupLivePhoto(item)" class="h-3 w-3 shrink-0" aria-hidden="true" />
                         {{ dedupPairBadge(item) }}
@@ -221,19 +221,19 @@
                       <IconExclamation v-if="isOriginalUnavailable(item.file)" class="w-3.5 h-3.5 shrink-0 text-warning" />
                     </div>
                     <div
-                      class="text-[11px] text-base-content/30 truncate"
+                      class="text-xs text-base-content/30 truncate"
                       :title="formatDedupFolderPath(item.file)"
                     >
                       {{ formatDedupFolderPath(item.file) }}
                     </div>
-                    <div v-if="keepRules.preferredSize !== 'ignore'" class="text-[11px] text-base-content/30 truncate">
+                    <div v-if="keepRules.preferredSize !== 'ignore'" class="text-xs text-base-content/30 truncate">
                       <template v-if="item.file?.width && item.file?.height">
                         {{ item.file.width }} × {{ item.file.height }}
                       </template>
                       <template v-else>—</template>
                       · {{ formatFileSize(getMediaItemSize(item.file)) }}
                     </div>
-                    <div v-else-if="item.file?.[preferredDateField] > 0" class="text-[11px] text-base-content/30">
+                    <div v-else-if="item.file?.[preferredDateField] > 0" class="text-xs text-base-content/30">
                       {{ $t(`file_info.${preferredDateField}`) }}: {{ formatTimestamp(item.file[preferredDateField], 'date_time') }}
                     </div>
                   </div>
@@ -320,7 +320,7 @@
       <div v-else class="flex min-h-0 flex-1 flex-col">
         <section class="mb-2 flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 rounded-box border border-base-content/10 bg-base-100/40 px-3 py-2" aria-label="Bulk duplicate actions">
           <div class="min-w-0">
-            <div class="text-[10px] font-bold uppercase tracking-widest text-base-content/30">
+            <div class="text-xs font-bold uppercase tracking-widest text-base-content/30">
               {{ $t('info_panel.dedup.reclaimable_size') }}
             </div>
             <div class="text-xs text-base-content/60">
@@ -346,7 +346,7 @@
           :style="{ height: `${config.dedup.duplicateSetsHeight}%` }"
         >
           <div class="flex items-center gap-2">
-            <span class="text-[10px] uppercase tracking-widest font-bold text-base-content/30">
+            <span class="text-xs uppercase tracking-widest font-bold text-base-content/30">
               {{ $t('info_panel.dedup.groups_title') }}
             </span>
             <span class="ml-auto sidebar-item-count">
@@ -387,7 +387,7 @@
                   {{ dedupPairBadge(group.keepItem) }}
                 </div>
                 <div
-                  class="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 to-transparent px-1.5 pb-1 pt-4 text-left text-[10px] leading-tight text-white/90 opacity-0 transition-opacity group-hover/thumb:opacity-100"
+                  class="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 to-transparent px-1.5 pb-1 pt-4 text-left text-xs leading-tight text-white/90 opacity-0 transition-opacity group-hover/thumb:opacity-100"
                   :class="{ 'opacity-100': selectedGroupId === group.id }"
                 >
                   <div>{{ formatFileSize(group.keepItem ? getMediaItemSize(group.keepItem.file) : group.file_size) }}</div>
@@ -408,7 +408,7 @@
         </div>
         <div v-if="activeGroup" class="min-h-0 flex-1 overflow-y-auto px-1 py-3 space-y-3">
           <div class="flex items-center gap-2">
-            <span class="text-[10px] uppercase tracking-widest font-bold text-base-content/30">
+            <span class="text-xs uppercase tracking-widest font-bold text-base-content/30">
               {{ $t('info_panel.dedup.actions_title') }}
             </span>
             <span v-if="selectedDeleteCount > 0" class="ml-auto text-xs text-base-content/70">
@@ -474,7 +474,7 @@
                     <span class="truncate">{{ item.file?.name }}</span>
                     <span
                       v-if="dedupPairBadge(item)"
-                      class="inline-flex shrink-0 items-center gap-0.5 rounded bg-base-content/10 px-1 text-[9px] font-medium text-base-content/60"
+                      class="inline-flex shrink-0 items-center gap-0.5 rounded bg-base-content/10 px-1 text-xs font-medium text-base-content/60"
                     >
                       <IconLivePhoto v-if="isDedupLivePhoto(item)" class="h-3 w-3 shrink-0" aria-hidden="true" />
                       {{ dedupPairBadge(item) }}
@@ -482,12 +482,12 @@
                     <IconExclamation v-if="isOriginalUnavailable(item.file)" class="w-3.5 h-3.5 shrink-0 text-warning" />
                   </div>
                   <div
-                    class="text-[11px] text-base-content/30 truncate"
+                    class="text-xs text-base-content/30 truncate"
                     :title="formatDedupFolderPath(item.file)"
                   >
                     {{ formatDedupFolderPath(item.file) }}
                   </div>
-                  <div v-if="item.file?.[preferredDateField] > 0" class="text-[11px] text-base-content/30">
+                  <div v-if="item.file?.[preferredDateField] > 0" class="text-xs text-base-content/30">
                     {{ $t(`file_info.${preferredDateField}`) }}: {{ formatTimestamp(item.file[preferredDateField], 'date_time') }}
                   </div>
                 </div>

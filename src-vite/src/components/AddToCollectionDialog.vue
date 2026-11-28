@@ -16,7 +16,7 @@
         <div class="grow h-8 flex items-center rounded-box overflow-hidden bg-base-100 border border-neutral-content/30 focus-within:border-primary">
           <IconSearch class="ml-2 w-4 h-4 text-base-content/70" />
           <input ref="searchInput" v-model="query" :placeholder="$t('collection.search')" class="w-full bg-transparent border-none focus:ring-0 px-2 text-sm placeholder-base-content/30 focus:outline-none" />
-          <button v-if="query" class="mr-1 p-1 text-base-content/30 hover:text-base-content/70" @click="query = ''">
+          <button v-if="query" class="cursor-pointer mr-1 p-1 text-base-content/30 hover:text-base-content/70" @click="query = ''">
             <IconClose class="w-4 h-4" />
           </button>
         </div>

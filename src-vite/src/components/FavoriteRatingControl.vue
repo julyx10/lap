@@ -33,7 +33,7 @@
       />
     </button>
     <span v-if="rating === null && !disabled"
-      class="ml-1 shrink-0 rounded bg-base-content/5 px-1 text-[10px] text-base-content/60"
+      class="ml-1 shrink-0 rounded bg-base-content/5 px-1 text-xs text-base-content/60"
       :title="$t('rating.title')">
       {{ $t('rating.mixed') }}
     </span>
@@ -66,7 +66,7 @@
       <component :is="IconFlag" class="w-3.5 h-3.5" :class="getCullingIconClass(0)" />
     </button>
     <span v-if="culling === null && !disabled"
-      class="ml-1 shrink-0 rounded bg-base-content/5 px-1 text-[10px] text-base-content/60"
+      class="ml-1 shrink-0 rounded bg-base-content/5 px-1 text-xs text-base-content/60"
       :title="$t('culling.title')">
       {{ $t('rating.mixed') }}
     </span>
