@@ -11,12 +11,15 @@ export function thumbnailSpacing(mode: unknown, scale = 1) {
   return { ...preset, pixels: preset.units * 4 * scale };
 }
 
-export function cardItemMetrics(scale = 1, primary = true, secondary = true) {
+export function cardItemMetrics(scale = 1, primary = true, secondary = true, spacing: unknown = 0) {
   // p-1 on both sides, a 2px border on both sides, and .5rem between cards.
   const paddingAndBorder = 8 * scale + 4;
+  const extra = spacing === 2 ? 8 : spacing === 1 ? 4 : 0;
   return {
+    primaryLineHeight: 20 + extra,
+    secondaryLineHeight: 16 + extra,
     frame: paddingAndBorder + 8 * scale,
     paddingAndBorder,
-    labelHeight: ((primary ? 20 : 0) + (secondary ? 16 : 0)) * scale,
+    labelHeight: ((primary ? 20 + extra : 0) + (secondary ? 16 + extra : 0)) * scale,
   };
 }

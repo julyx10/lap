@@ -485,7 +485,7 @@ const isVerticalFilmstrip = computed(() => isFilmstripView.value && config.setti
 const spacingX = computed(() => isVerticalFilmstrip.value ? 0 : spacing.value.pixels);
 const spacingY = computed(() => isFilmstripView.value && !isVerticalFilmstrip.value ? 0 : spacing.value.pixels);
 const cardMetrics = computed(() => cardItemMetrics(config.settings.scale,
-  config.settings.grid.labelPrimary > 0, config.settings.grid.labelSecondary > 0));
+  config.settings.grid.labelPrimary > 0, config.settings.grid.labelSecondary > 0, config.settings.grid.spacing));
 
 // item width and height(including gap)
 const itemWidth = computed(() => {

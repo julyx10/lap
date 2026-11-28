@@ -95,43 +95,30 @@
       <!-- status badges -->
       <div
         v-if="statusBadges.length > 0"
-        class="pointer-events-none absolute inset-x-0 top-0 h-16"
-      ></div>
-      <div
-        v-if="statusBadges.length > 0"
-        class="pointer-events-none absolute left-0.5 top-0.5 z-10 flex max-w-[calc(100%-2.5rem)] flex-wrap gap-0.5"
+        class="thumb-badge pointer-events-none invisible absolute"
+        aria-hidden="true"
       >
-        <div
-          v-for="badge in statusBadges"
+        <span ref="statusBadgeMeasureRef" class="block size-[1.166667em]"></span>
+      </div>
+      <div
+        v-if="visibleStatusBadges.length > 0"
+        class="thumb-badge pointer-events-none absolute left-0.5 top-0.5 z-10 max-w-[calc(100%-40px)] flex-nowrap gap-0 overflow-hidden"
+        :style="{ paddingInline: statusBadgePadding + 'px', height: 'calc(1.166667em + 6px)' }"
+      >
+        <span
+          v-for="badge in visibleStatusBadges"
           :key="badge.key"
-          class="thumb-badge"
+          class="inline-flex shrink-0 items-center whitespace-nowrap"
+          :style="{ width: statusBadgeWidth(badge) + 'px' }"
         >
-          <template v-if="badge.icons?.length">
-            <div class="flex items-center gap-0.5">
-              <component
-                :is="entry.icon"
-                v-for="(entry, index) in badge.icons"
-                :key="`${badge.key}-${index}`"
-                class="h-3.5 w-3.5 shrink-0"
-              />
-            </div>
-          </template>
           <component
-            v-else-if="badge.icon"
             :is="badge.icon"
-            :class="['h-3.5 w-3.5 shrink-0', badge.iconClass]"
-            :style="badge.iconStyle"
+            :class="['size-[1.166667em] shrink-0', badge.iconClass]"
           />
-          <span v-if="badge.label" class="leading-none">
-            {{ badge.label }}
-          </span>
-          <component
-            v-if="badge.trailingIcon"
-            :is="badge.trailingIcon"
-            :class="['h-3.5 w-3.5 shrink-0', badge.trailingIconClass]"
-            :style="badge.trailingIconStyle"
-          />
-        </div>
+          <svg v-if="badge.label" class="size-[1.166667em] shrink-0 tracking-normal tabular-nums" viewBox="0 0 14 14">
+            <text x="7" y="7" font-size="12" text-anchor="middle" dominant-baseline="central" fill="currentColor">{{ badge.label }}</text>
+          </svg>
+        </span>
       </div>
 
       <!-- bottom badges -->
@@ -218,12 +205,14 @@
     >
       <span 
         class="w-full text-sm leading-5 text-center whitespace-pre text-nowrap text-ellipsis overflow-hidden"
+        :style="{ lineHeight: `${labelMetrics.primaryLineHeight / 16}rem` }"
         :title="getGridLabelTooltip(file, config.settings.grid.labelPrimary)"
       >
         {{ getGridLabelText(file, config.settings.grid.labelPrimary) }}
       </span>
       <span 
         class="w-full text-xs leading-4 text-center whitespace-pre text-nowrap text-ellipsis overflow-hidden"
+        :style="{ lineHeight: `${labelMetrics.secondaryLineHeight / 16}rem` }"
         :title="getGridLabelTooltip(file, config.settings.grid.labelSecondary)"
       >
         {{ getGridLabelText(file, config.settings.grid.labelSecondary) }}
@@ -238,6 +227,9 @@ import { computed, nextTick, ref, watch, toRef, onBeforeUnmount, type CSSPropert
 import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
 import { config } from '@/common/config';
+import { cardItemMetrics } from '@/common/thumbnailSpacing';
+
+const labelMetrics = computed(() => cardItemMetrics(1, true, true, config.settings.grid.spacing));
 import { THUMBNAIL_BADGE } from '@/common/constants';
 import { isMac, shortenFilename, formatFileSize, getMediaItemSize, formatDimensionText, formatVideoDurationBadge, formatTimestamp, formatCaptureSettings, formatCaptureSettingValue, formatCameraInfo, getAssetSrc, getThumbUrl, getFileExtension, formatRawPairBadge } from '@/common/utils';
 import { isWebViewVideoPlaybackDisabled, getGStreamerAvailability } from '@/common/video';
@@ -648,16 +640,9 @@ const getGridLabelTooltip = (file: any, option: number) => {
 
 type ThumbnailBadge = {
   key: string;
-  icon?: Component;
-  icons?: Array<{
-    icon: Component;
-  }>;
+  icon: Component;
   label?: string;
   iconClass?: string;
-  iconStyle?: CSSProperties;
-  trailingIcon?: Component;
-  trailingIconClass?: string;
-  trailingIconStyle?: CSSProperties;
 };
 
 const normalizedRotate = computed(() => {
@@ -702,7 +687,6 @@ const hasBottomMediaBadges = computed(() => (
 
 const statusBadges = computed<ThumbnailBadge[]>(() => {
   const badges: ThumbnailBadge[] = [];
-  const metaIcons: ThumbnailBadge['icons'] = [];
   const rating = Number(props.file.rating || 0);
   const cullingFlag = Number(props.file.culling_flag ?? props.file.cullingFlag ?? 0);
   const cullingIcon = cullingFlag === 1
@@ -721,9 +705,7 @@ const statusBadges = computed<ThumbnailBadge[]>(() => {
       key: 'favorite',
       icon: IconHeartFilled,
       iconClass: 'text-error',
-      label: rating > 0 ? `${rating}` : undefined,
-      trailingIcon: cullingIcon,
-      trailingIconClass: cullingIconClass,
+      label: rating > 0 ? String(rating) : undefined,
     });
   } else if (rating > 0) {
     badges.push({
@@ -731,26 +713,47 @@ const statusBadges = computed<ThumbnailBadge[]>(() => {
       icon: IconStarFilled,
       iconClass: 'text-warning',
       label: `${rating}`,
-      trailingIcon: cullingIcon,
-      trailingIconClass: cullingIconClass,
     });
-  } else if (cullingIcon) {
+  }
+  if (cullingIcon) {
     badges.push({
       key: cullingFlag === 1 ? 'culling-pick' : 'culling-reject',
       icon: cullingIcon,
       iconClass: cullingIconClass,
     });
   }
-  
-  if (props.file.has_tags) metaIcons.push({ icon: IconTag });
-  if (props.file.has_collections) metaIcons.push({ icon: IconCollection });
-  if (metaIcons.length > 0) {
-    badges.push({
-      key: 'meta',
-      icons: metaIcons,
-    });
-  }
+  if (props.file.has_tags) badges.push({ key: 'tag', icon: IconTag });
+  if (props.file.has_collections) badges.push({ key: 'collection', icon: IconCollection });
 
   return badges;
+});
+
+const statusBadgePadding = 3;
+const statusBadgeMeasureRef = ref<HTMLElement | null>(null);
+const statusBadgeCellWidth = ref(0);
+watch(statusBadgeMeasureRef, (el, _previous, onCleanup) => {
+  if (!el) return;
+  const observer = new ResizeObserver(([entry]) => {
+    statusBadgeCellWidth.value = entry.contentRect.width;
+  });
+  observer.observe(el);
+  onCleanup(() => observer.disconnect());
+});
+const statusBadgeWidth = (badge: ThumbnailBadge) => statusBadgeCellWidth.value * (badge.label ? 2 : 1);
+const overflowStatusBadge: ThumbnailBadge = { key: 'overflow', icon: IconMore };
+
+const visibleStatusBadges = computed(() => {
+  const badges = statusBadges.value;
+  if (!statusBadgeCellWidth.value) return [];
+  const availableWidth = containerWidth.value - 40 - 2 * statusBadgePadding;
+  const widthOf = (items: ThumbnailBadge[]) =>
+    items.reduce((width, badge) => width + statusBadgeWidth(badge), 0);
+
+  if (widthOf(badges) <= availableWidth) return badges;
+  for (let count = badges.length - 1; count >= 0; count--) {
+    const visible = [...badges.slice(0, count), overflowStatusBadge];
+    if (widthOf(visible) <= availableWidth) return visible;
+  }
+  return [];
 });
 </script>
