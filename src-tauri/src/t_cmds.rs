@@ -340,10 +340,7 @@ fn ensure_db_storage_change_allowed(
         return Err("Database storage migration is already in progress.".to_string());
     }
 
-    let is_library_indexing = t_config::get_current_library_state()
-        .map(|state| state.index.status == 1)
-        .unwrap_or(false);
-    if is_library_indexing {
+    if t_utils::has_active_album_scans() {
         return Err(
             "Cannot change database storage while library indexing is running.".to_string(),
         );
@@ -477,6 +474,13 @@ pub async fn switch_library(app_handle: tauri::AppHandle, id: String) -> Result<
     .map_err(|e| format!("Failed to join album accessibility check: {}", e))??;
     t_utils::start_folder_mtime_sync(app_handle);
     Ok(())
+}
+
+#[tauri::command]
+pub async fn get_thumbnail_cache_size() -> Result<u64, String> {
+    tauri::async_runtime::spawn_blocking(t_config::get_thumbnail_cache_size)
+        .await
+        .map_err(|error| format!("Failed to join thumbnail cache size task: {error}"))?
 }
 
 /// get library statistics
@@ -726,19 +730,25 @@ pub fn index_album(
 /// cancel indexing
 #[tauri::command]
 pub fn cancel_indexing(state: State<IndexCancellation>, album_id: i64) -> Result<(), String> {
-    state.0.lock().unwrap().insert(album_id, true);
+    let library_id = t_config::current_library_id()?;
+    let mut flags = state.0.lock().unwrap();
+    flags.insert(album_id, true);
+    match std::fs::remove_file(t_utils::index_marker_path(&library_id, album_id)?) {
+        Ok(()) => {}
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+        Err(error) => return Err(error.to_string()),
+    }
     Ok(())
 }
 
 #[tauri::command]
-pub fn get_index_recovery_info() -> Option<crate::t_utils::IndexRecoveryInfo> {
-    crate::t_utils::read_index_trace()
-}
-
-#[tauri::command]
-pub fn clear_index_recovery_info() -> Result<(), String> {
-    t_utils::clear_index_trace();
-    Ok(())
+pub fn get_index_recovery_info(album_id: i64) -> Result<Option<String>, String> {
+    let library_id = t_config::current_library_id()?;
+    match std::fs::read_to_string(t_utils::index_marker_path(&library_id, album_id)?) {
+        Ok(path) => Ok(Some(path)),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
+        Err(error) => Err(error.to_string()),
+    }
 }
 
 // folder

@@ -97,6 +97,10 @@ export async function resetDbStorageDir() {
   }
 }
 
+export function getThumbnailCacheSize() {
+  return invoke('get_thumbnail_cache_size');
+}
+
 export function getThumbnailCacheLocation() {
   return invoke('get_thumbnail_cache_location');
 }
@@ -1986,23 +1990,13 @@ export async function cancelIndexing(albumId) {
   }
 }
 
-export async function getIndexRecoveryInfo() {
+export async function getIndexRecoveryInfo(albumId) {
   try {
-    return await invoke('get_index_recovery_info');
+    return await invoke('get_index_recovery_info', { albumId });
   } catch (error) {
     console.error('getIndexRecoveryInfo error:', error);
   }
   return null;
-}
-
-export async function clearIndexRecoveryInfo() {
-  try {
-    await invoke('clear_index_recovery_info');
-    return true;
-  } catch (error) {
-    console.error('Failed to clear index recovery info:', error);
-  }
-  return false;
 }
 
 // listen index progress

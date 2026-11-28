@@ -16,7 +16,6 @@ import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useConfigStore } from '@/stores/configStore';
 import { useLibraryStore } from '@/stores/libraryStore';
 import { useUIStore } from '@/stores/uiStore';
-import { clearIndexRecoveryInfo } from '@/common/api';
 import { isMac, SCALE_VALUES } from '@/common/utils';
 import { useAppTheme } from '@/composables/useAppearance';
 import { matchesShortcut } from '@/common/shortcuts';
@@ -83,12 +82,6 @@ onMounted(async () => {
 
           try {
             if (libConfig._initialized) {
-              // Mark scanning as paused so it won't auto-resume on restart
-              if (libConfig.index.status === 1) {
-                libConfig.index.status = 2;
-              }
-              // Normal close → clear recovery trace (crash leaves it intact)
-              await clearIndexRecoveryInfo();
               await libConfig.save();
             }
           } finally {
@@ -103,11 +96,6 @@ onMounted(async () => {
         if (isMac) {
           await win.hide();
         } else if (libConfig._initialized) {
-          // Mark scanning as paused so it won't auto-resume on restart
-          if (libConfig.index.status === 1) {
-            libConfig.index.status = 2;
-          }
-          await clearIndexRecoveryInfo();
           await libConfig.save();
         }
       });

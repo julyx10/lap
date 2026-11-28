@@ -18,7 +18,23 @@
         :tooltip="$t('menu.album.add')"
         @click="clickNewAlbum"
       />
-      <ContextMenu :menuItems="albumPanelMenuItems" :iconMenu="IconMore" :smallIcon="true" />
+      <TButton
+        v-if="albums.length > 0"
+        :icon="IconFolders"
+        :buttonSize="'small'"
+        :tooltip="$t('settings.browse.show_subfolder_files')"
+        :disabled="selection.selected.value"
+        :selected="!selection.selected.value && config.settings.showSubfolderFiles"
+        @click="toggleShowSubfolderFiles"
+      />
+      <SortMenuButton
+        v-if="albums.length > 0"
+        kind="folder"
+        :title="$t('settings.browse.folder_sort')"
+        :disabled="!selectedFolder"
+        :model-value="config.settings.folderSort"
+        @update:model-value="setFolderSort"
+      />
     </div>
 
     <div v-if="isMainPane" class="mx-1 mb-2 px-1 shrink-0">
@@ -45,6 +61,7 @@
           type="button"
           :title="$t('album.favorite_folders_only')"
           :aria-pressed="favoriteFoldersOnly"
+          class="cursor-pointer disabled:cursor-default"
           :class="[
             'p-1 rounded-box disabled:opacity-30',
             favoriteFoldersOnly ? 'text-primary!' : 'text-base-content/30 hover:text-base-content/70',
@@ -58,7 +75,7 @@
           v-if="folderSearch"
           type="button"
           :disabled="!isLoading && albums.length === 0"
-          class="mr-1 p-1 rounded-box text-base-content/30 hover:text-base-content/70 disabled:opacity-30"
+          class="cursor-pointer disabled:cursor-default mr-1 p-1 rounded-box text-base-content/30 hover:text-base-content/70 disabled:opacity-30"
           @click="folderSearch = ''"
         >
           <IconClose class="w-4 h-4" />
@@ -80,7 +97,7 @@
         <VueDraggable
           v-if="visibleAlbums.length > 0"
           v-model="albums"
-          :disabled="!isMainPane || isFolderFiltering || !isReorderingAlbums"
+          :disabled="!isMainPane || isFolderFiltering || reorderingAlbumId === null"
           handle=".album-drag-handle"
           direction="vertical"
           :group="{ name: 'album-folder', pull: false, put: false }"
@@ -101,7 +118,7 @@
             "
           >
             <div
-              :data-reordering-album="isReorderingAlbums && !isFolderFiltering ? 'true' : undefined"
+              :data-reordering-album="reorderingAlbumId === album.id && !isFolderFiltering ? 'true' : undefined"
               :data-file-drop-path="selectionSource === 'local' || album.is_accessible === false ? undefined : album.path"
               :data-file-drop-album-id="selectionSource === 'local' || album.is_accessible === false ? undefined : album.id"
               :class="[
@@ -115,7 +132,7 @@
               @contextmenu.prevent.stop="(e: MouseEvent) => handleAlbumContextMenu(album, e)"
             >
               <IconDragHandle
-                v-if="isReorderingAlbums && !isFolderFiltering"
+                v-if="reorderingAlbumId === album.id && !isFolderFiltering"
                 class="album-drag-handle p-1 w-6 h-6 shrink-0 cursor-grab text-base-content/30"
                 :title="$t('menu.album.reorder')"
                 @click.stop
@@ -159,28 +176,18 @@
                     v-if="album.is_accessible === false"
                     class="shrink-0 rounded-box bg-warning/10 px-1.5 py-0.5 text-xs leading-none text-warning/80"
                   >{{ t('offline.badge') }}</span>
-                  <button
+                  <span
                     v-if="getAlbumBadgeState(album) === 'scanning'"
-                    type="button"
-                    class="badge badge-sm badge-outline max-w-full min-w-0 shrink-0 border-primary/20 bg-primary/10 font-medium text-primary/80 hover:text-primary cursor-pointer"
-                    :title="t('toolbar.tooltip.scanning')"
-                    @click.stop="toggleIndexAlbum(album.id)"
-                  >{{ t('toolbar.tooltip.scanning') }}</button>
-                  <button
-                    v-else-if="getAlbumBadgeState(album) === 'paused'"
-                    type="button"
-                    class="badge badge-sm badge-outline max-w-full min-w-0 shrink-0 border-warning/20 bg-warning/10 font-medium text-warning/80 hover:text-warning cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
-                    :title="t('toolbar.tooltip.scan_paused')"
-                    :disabled="album.is_accessible === false"
-                    @click.stop="toggleIndexAlbum(album.id)"
-                  >{{ t('toolbar.tooltip.scan_paused') }}</button>
-                  <button
+                    class="badge badge-sm badge-outline max-w-full min-w-0 shrink-0 cursor-default border-primary/20 bg-primary/10 font-medium text-primary/80"
+                    @click.stop
+                    @dblclick.stop
+                  >{{ t('toolbar.tooltip.scanning') }}</span>
+                  <span
                     v-else-if="getAlbumBadgeState(album) === 'queued'"
-                    type="button"
-                    class="badge badge-sm badge-outline max-w-full min-w-0 shrink-0 border-base-content/5 bg-base-content/5 font-medium text-base-content/70 hover:text-base-content cursor-pointer"
-                    :title="t('toolbar.tooltip.scan_queued')"
-                    @click.stop="toggleIndexAlbum(album.id)"
-                  >{{ t('toolbar.tooltip.scan_queued') }}</button>
+                    class="badge badge-sm badge-outline max-w-full min-w-0 shrink-0 cursor-default border-base-content/5 bg-base-content/5 font-medium text-base-content/70"
+                    @click.stop
+                    @dblclick.stop
+                  >{{ t('toolbar.tooltip.scan_queued') }}</span>
                 </div>
                 <div
                   v-if="album.description"
@@ -277,6 +284,18 @@
       @cancel="importAlbum = null"
     />
 
+    <IndexRecoveryDialog
+      v-if="interruptedScan"
+      :title="$t('search.index.recovery.title')"
+      :message="$t('search.index.recovery.message')"
+      :fileLabel="$t('search.index.recovery.file_label')"
+      :filePath="interruptedScan.filePath"
+      :skipLabel="$t('search.index.recovery.skip_once')"
+      :continueText="$t('search.index.recovery.continue')"
+      :cancelText="$t('msgbox.cancel')"
+      @continue="confirmInterruptedScan"
+      @cancel="interruptedScan = null"
+    />
     <!-- Remove album dialog -->
     <MessageBox
       v-if="showRemoveAlbumMsgbox"
@@ -319,7 +338,7 @@ import {
 import { getAlbumQueueIndex, getAlbumScanState } from '@/common/scanStatus';
 import { getAllAlbums, getAlbumVisibleCounts, getAllAlbumFolders, reorderAlbums, addAlbum, editAlbum, removeAlbum, getDragPayload, isDirectoryAccessible,
          fetchFolder, expandFinalFolder, getFileThumbById,
-         getAlbum, checkAlbumAccessibility, cancelIndexing as cancelIndexingApi, listenIndexProgress, listenIndexFinished, recountAlbum } from '@/common/api';
+         getAlbum, checkAlbumAccessibility, cancelIndexing as cancelIndexingApi, getIndexRecoveryInfo, listenIndexFinished, recountAlbum } from '@/common/api';
 import { Album, Folder } from '@/common/types';
 import { useAlbumSelectionProvider, SelectionSource } from '@/composables/useAlbumSelection';
 import { useLibraryChangeRefresh } from '@/composables/useLibraryChangeRefresh';
@@ -329,14 +348,14 @@ import AlbumEdit from '@/components/AlbumEdit.vue';
 import ImportOrganizeDialog from '@/components/ImportOrganizeDialog.vue';
 import ContextMenu from '@/components/ContextMenu.vue';
 import MessageBox from '@/components/MessageBox.vue';
+import IndexRecoveryDialog from '@/components/IndexRecoveryDialog.vue';
+import SortMenuButton from '@/components/SortMenuButton.vue';
 import TButton from '@/components/TButton.vue';
 
 import {
   IconAdd,
   IconDownload,
   IconMore,
-  IconOk,
-  IconDot,
   IconEdit,
   IconRemove,
   IconUpdate,
@@ -363,39 +382,17 @@ const props = withDefaults(defineProps<{
 /// i18n
 const { t, locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value] as any);
-const albumPanelMenuItems = computed(() => {
-  const browse = localeMsg.value.settings.browse;
-  return [
-    {
-      label: browse.show_subfolder_files,
-      icon: config.settings.showSubfolderFiles ? IconOk : undefined,
-      iconClass: 'w-4 h-4',
-      action: () => {
-        const value = !config.settings.showSubfolderFiles;
-        config.setShowSubfolderFiles(value);
-        void tauriEmit('settings-showSubfolderFiles-changed', value);
-      },
-    },
-    {
-      label: browse.folder_sort,
-      children: (browse.folder_sort_options as string[]).map((label, value) => ({
-        label,
-        icon: Number(config.settings.folderSort) === value ? IconDot : undefined,
-        action: () => {
-          config.setFolderSort(value);
-          void tauriEmit('settings-folderSort-changed', value);
-        },
-      })),
-    },
-    { label: "-", action: null },
-    {
-      label: localeMsg.value.menu.album.reorder,
-      icon: IconOrder,
-      disabled: albums.value.length < 2 || isFolderFiltering.value,
-      action: () => { isReorderingAlbums.value = !isReorderingAlbums.value; },
-    },
-  ];
-});
+function toggleShowSubfolderFiles() {
+  const value = !config.settings.showSubfolderFiles;
+  config.setShowSubfolderFiles(value);
+  void tauriEmit('settings-showSubfolderFiles-changed', value);
+}
+
+function setFolderSort(value: number) {
+  if (!selectedFolder.value) return;
+  config.setFolderSort(value);
+  void tauriEmit('settings-folderSort-changed', value);
+}
 
 const uiStore = useUIStore();
 
@@ -601,7 +598,7 @@ watch([externalDragKind, canAcceptAlbumDrop], ([kind, enabled]) => {
 });
 
 const isDragging = ref(false);  // dragging albums
-const isReorderingAlbums = ref(false);
+const reorderingAlbumId = ref<number | null>(null);
 const albumCoverErrors = ref<Record<number, boolean>>({});
 
 interface FilteredAlbumResult {
@@ -698,22 +695,25 @@ function buildFilteredFolderTree(folders: AlbumFolderRecord[], visible: Readonly
     if (parent) parent.children?.push(folder);
     else roots.push(folder);
   }
+  sortFolderTree(roots, Number(config.settings.folderSort));
+  return roots;
+}
+
+function sortFolderTree(folders: Folder[], sort: number) {
   const compareFolders = (a: Folder, b: Folder) => {
-    const aTime = a.modified_at || a.created_at || 0;
-    const bTime = b.modified_at || b.created_at || 0;
-    switch (Number(config.settings.folderSort)) {
+    const aTime = a.modified_at ?? a.created_at ?? 0;
+    const bTime = b.modified_at ?? b.created_at ?? 0;
+    switch (sort) {
       case 1: return folderSearchCollator.compare(b.name, a.name);
       case 2: return aTime - bTime;
       case 3: return bTime - aTime;
       default: return folderSearchCollator.compare(a.name, b.name);
     }
   };
-  const sortTree = (children: Folder[]) => {
-    children.sort(compareFolders);
-    for (const child of children) sortTree(child.children || []);
-  };
-  sortTree(roots);
-  return roots;
+  folders.sort(compareFolders);
+  for (const folder of folders) {
+    if (folder.children?.length) sortFolderTree(folder.children, sort);
+  }
 }
 
 async function loadCachedAlbumTree(album: Album) {
@@ -852,10 +852,6 @@ const removePausedAlbum = (albumId: number | null | undefined) => {
     id => Number(id) !== Number(albumId || 0)
   );
 };
-const addPausedAlbum = (albumId: number | null | undefined) => {
-  if (Number(albumId || 0) <= 0 || isAlbumPaused(albumId)) return;
-  (libConfig.index.pausedAlbumIds as any[]).push(Number(albumId));
-};
 const getAlbumStatus = (album: any) =>
   getAlbumScanState({
     albumId: album?.id,
@@ -870,11 +866,9 @@ const isAlbumScanning = (albumId: number) =>
     pausedAlbumIds: libConfig.index.pausedAlbumIds as any[],
     status: Number(libConfig.index.status || 0),
   }) === 'scanning';
-const getAlbumBadgeState = (album: any): 'scanning' | 'paused' | 'queued' | 'none' => {
+const getAlbumBadgeState = (album: any): 'scanning' | 'queued' | 'none' => {
   const state = getAlbumStatus(album);
-  if (state === 'scanning' || state === 'paused' || state === 'queued') return state;
-  // A non-queued album with a partial index is effectively resumable/paused.
-  if (Number(album?.indexed) > 0 && Number(album?.indexed) < Number(album?.total)) return 'paused';
+  if (state === 'scanning' || state === 'queued') return state;
   return 'none';
 };
 const refreshAlbumAccess = async (album: Album) => {
@@ -910,6 +904,7 @@ const handleImportComplete = async () => {
 // Get menu items for a specific album (function for lazy evaluation)
 const getMoreMenuItems = async (album: any) => {
   const isAccessible = await refreshAlbumAccess(album);
+  const canCancelScan = isAlbumQueued(album.id) || isAlbumPaused(album.id);
   return [
     {
       label: localeMsg.value.menu.album.edit,
@@ -917,8 +912,10 @@ const getMoreMenuItems = async (album: any) => {
       action: () => openAlbumEdit(album.id)
     },
     {
-      label: "-",   // separator
-      action: () => {}
+      label: canCancelScan ? t('search.index.cancel') : t('menu.album.scan'),
+      icon: canCancelScan ? IconUpdateOff : IconUpdate,
+      disabled: !isAccessible && !canCancelScan,
+      action: () => canCancelScan ? clickCancelIndexAlbum(album.id) : startAccessibleAlbumScan(album.id)
     },
     {
       label: t('menu.album.import_folder'),
@@ -927,13 +924,15 @@ const getMoreMenuItems = async (album: any) => {
       action: () => { importAlbum.value = album; }
     },
     {
-      label: isAlbumQueued(album.id)
-        ? localeMsg.value.menu.album.pause_scan
-        : localeMsg.value.menu.album.scan,
-      icon: isAlbumQueued(album.id) ? IconUpdateOff : IconUpdate,
-      disabled: !isAccessible && !isAlbumQueued(album.id),
-      action: () => toggleIndexAlbum(album.id)
+      label: "-",   // separator
+      action: () => {}
     },
+    ...(isMainPane.value ? [{
+      label: t('menu.album.reorder'),
+      icon: IconOrder,
+      disabled: albums.value.length < 2 || isFolderFiltering.value,
+      action: () => { reorderingAlbumId.value = album.id; },
+    }] : []),
     {
       label: "-",   // separator
       action: () => {}
@@ -1060,19 +1059,11 @@ onMounted( async () => {
     refreshFolderSearchFolders();
   }));
 
-  // listen for index progress
-  await registerAlbumListener(() => listenIndexProgress(async (event: any) => {
-    const { album_id, current, total } = event.payload;
-    const album = getAlbumById(album_id);
-    if (album) {
-      album.indexed = current;
-      album.total = total;
-    }
-  }));
-
   // listen for index finished
   await registerAlbumListener(() => listenIndexFinished(async (event: any) => {
-    const { album_id } = event.payload;
+    const { album_id, library_id } = event.payload;
+    if (library_id && library_id !== libConfig._libraryId) return;
+    void refreshAlbumVisibleCounts();
     const album = getAlbumById(album_id);
     if (album) {
       const updatedAlbum = await getAlbum(album_id);
@@ -1165,19 +1156,9 @@ onMounted( async () => {
 
 });
 
-watch(() => config.settings.folderSort, async () => {
-  const selectedAlbumId = selection.albumId.value;
-  const selectedFolderPath = selection.folderPath.value;
-  const shouldRestoreFolderSelection = !selection.selected.value && !!selectedFolderPath;
-
+watch(() => config.settings.folderSort, (sort) => {
   for (const album of albums.value) {
-    if (album.is_expanded) {
-      await expandAlbum(album, true);
-    }
-  }
-
-  if (shouldRestoreFolderSelection && selectedAlbumId > 0) {
-    await clickFinalSubFolder(selectedAlbumId, selectedFolderPath);
+    if (album.children?.length) sortFolderTree(album.children, Number(sort));
   }
 });
 
@@ -1193,7 +1174,7 @@ watch(isFolderFiltering, (filtering) => {
     refreshFolderSearchFolders();
     return;
   }
-  isReorderingAlbums.value = false;
+  reorderingAlbumId.value = null;
   void loadFolderSearchFolders();
 });
 
@@ -1330,40 +1311,44 @@ const clickIndexAlbum = async (albumId: number) => {
   libConfig.index.status = 1;
 }
 
-const toggleIndexAlbum = async (albumId: number) => {
-  const state = getAlbumStatus({ id: albumId });
-  if (state === 'scanning' || state === 'queued') {
-    await clickCancelIndexAlbum(albumId);
-  } else {
-    const album = getAlbumById(albumId);
-    if (!album || !(await refreshAlbumAccess(album))) return;
-    await clickIndexAlbum(albumId);
+const interruptedScan = ref<{ albumId: number; libraryId: string; filePath: string } | null>(null);
+
+async function startAccessibleAlbumScan(albumId: number) {
+  const libraryId = libConfig._libraryId;
+  const album = getAlbumById(albumId);
+  if (!album || !(await refreshAlbumAccess(album))) return;
+  if (libraryId !== libConfig._libraryId || isAlbumQueued(albumId)) return;
+  const filePath = await getIndexRecoveryInfo(albumId);
+  if (libraryId !== libConfig._libraryId || isAlbumQueued(albumId)) return;
+  if (typeof filePath === 'string') {
+    interruptedScan.value = { albumId, libraryId, filePath };
+    return;
+  }
+  await clickIndexAlbum(albumId);
+}
+
+async function confirmInterruptedScan(skipFile: boolean) {
+  const scan = interruptedScan.value;
+  interruptedScan.value = null;
+  if (scan && scan.libraryId === libConfig._libraryId && getAlbumById(scan.albumId) && !isAlbumQueued(scan.albumId)) {
+    if (skipFile && scan.filePath) libConfig.index.skipFiles[scan.albumId] = scan.filePath;
+    await clickIndexAlbum(scan.albumId);
   }
 }
 
-/// Cancel indexing for an album
-const clickCancelIndexAlbum = async (albumId: number) => {
+async function clickCancelIndexAlbum(albumId: number) {
   const index = getAlbumQueueIndex(albumId, libConfig.index.albumQueue as any[]);
-  if (index === -1) return;
+  if (index === -1 && !isAlbumPaused(albumId)) return;
 
-  // Keep queue handling aligned with Content.vue cancel behavior.
-  if (index === 0) {
-    libConfig.index.albumQueue.shift();
-    await cancelIndexingApi(albumId);
-    addPausedAlbum(albumId);
-    if (libConfig.index.albumQueue.length > 0) {
-      // Resume queue on next waiting album.
-      syncIndexStatus();
-      setTimeout(() => {
-        tauriEmit('trigger-next-album');
-      }, 1000);
-    } else {
-      syncIndexStatus();
-    }
-  } else {
-    libConfig.index.albumQueue.splice(index, 1);
-    addPausedAlbum(albumId);
-    syncIndexStatus();
+  removePausedAlbum(albumId);
+  if (index >= 0) libConfig.index.albumQueue.splice(index, 1);
+  delete libConfig.index.skipFiles[albumId];
+  await cancelIndexingApi(albumId);
+  syncIndexStatus();
+  if (index === 0 && libConfig.index.albumQueue.length > 0) {
+    setTimeout(() => {
+      tauriEmit('trigger-next-album');
+    }, 1000);
   }
 }
 
@@ -1400,7 +1385,7 @@ const clickRemoveAlbum = async () => {
     // remove the album from the list
     albums.value = albums.value.filter(album => album.id !== albumId);
     if (albums.value.length < 2) {
-      isReorderingAlbums.value = false;
+      reorderingAlbumId.value = null;
     }
     showAlbumEdit.value = false; // Close the edit dialog if it's open
 
@@ -1641,9 +1626,9 @@ const onDragEnd = async ({ oldIndex, newIndex }: DraggableEvent) => {
 }
 
 function handleReorderOutsidePointerDown(event: PointerEvent) {
-  if (event.button !== 0 || !isReorderingAlbums.value || isDragging.value) return;
+  if (event.button !== 0 || reorderingAlbumId.value === null || isDragging.value) return;
   if (event.target instanceof Element && event.target.closest('[data-reordering-album="true"]')) return;
-  isReorderingAlbums.value = false;
+  reorderingAlbumId.value = null;
 }
 
 // Expose methods

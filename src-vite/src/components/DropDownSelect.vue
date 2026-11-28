@@ -2,6 +2,7 @@
   <div ref="dropdown" class="relative inline-block text-left">
 
     <!-- Dropdown Trigger -->
+    <slot name="trigger" :toggle="toggleDropdown">
     <button tabindex="-1"
       :title="title"
       class="flex items-center outline-none rounded-box transition-colors duration-300 whitespace-nowrap"
@@ -24,6 +25,7 @@
       <slot name="trigger-suffix" />
       <IconArrowDown v-if="!iconOnly" class="w-3 h-3 shrink-0 opacity-50" />
     </button>
+    </slot>
 
     <!-- Dropdown Menu -->
     <teleport to="body">
@@ -180,6 +182,10 @@ watch(() => props.defaultIndex, (value) => {
 
 watch(() => props.defaultExtendIndex, (value) => {
   extendIndex.value = value;
+});
+
+watch(() => props.disabled, (disabled) => {
+  if (disabled) isDropDown.value = false;
 });
 
 onMounted(() => {

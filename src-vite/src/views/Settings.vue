@@ -28,11 +28,11 @@
         <div v-if="config.settings.tabIndex === SETTINGS_TAB.GENERAL" class="flex flex-col space-y-2">
           
           <!-- languange -->
-          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
-            <div class="flex items-center gap-2 text-base-content/30">
-              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.general.section_language') }}</span>
+          <div class="ui-section">
+            <div class="ui-section-header">
+              <span class="ui-section-title">{{ $t('settings.general.section_language') }}</span>
             </div>
-            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+            <div class="ui-section-row">
               <div class="flex flex-col gap-0.5 text-sm leading-5">
                 <div>{{ $t('settings.general.select_language') }}</div>
                 <div v-if="config.settings.language !== 'en'" class="text-xs text-base-content/30">Select language</div>
@@ -41,7 +41,7 @@
                 <option v-for="(lang, index) in languages" :key="index" :value="lang.value">{{ lang.label }}</option>
               </select>
             </div>
-            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+            <div class="ui-section-row">
               <div class="flex flex-col gap-0.5 text-sm leading-5">
                 <div>{{ $t('settings.general.date_time_format') }}</div>
               </div>
@@ -52,11 +52,11 @@
           </div>
 
           <!-- appearance -->
-          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
-            <div class="flex items-center gap-2 text-base-content/30">
-              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.general.section_appearance') }}</span>
+          <div class="ui-section">
+            <div class="ui-section-header">
+              <span class="ui-section-title">{{ $t('settings.general.section_appearance') }}</span>
             </div>
-            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+            <div class="ui-section-row">
               <div class="flex flex-col gap-0.5 text-sm leading-5">
                 <div>{{ $t('settings.general.appearance') }}</div>
               </div>
@@ -64,7 +64,7 @@
                 <option v-for="(item, index) in appearanceOptions" :key="index" :value="item.value">{{ item.label }}</option>
               </select>
             </div>
-            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+            <div class="ui-section-row">
               <div class="flex flex-col gap-0.5 text-sm leading-5">
                 <div>{{ $t('settings.general.theme') }}</div>
               </div>
@@ -87,7 +87,7 @@
                 />
               </div>
             </div>
-            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+            <div class="ui-section-row">
               <div class="flex flex-col gap-0.5 text-sm leading-5">
                 <div>{{ $t('settings.general.font_size') }}</div>
               </div>
@@ -98,17 +98,17 @@
           </div>
 
           <!-- display -->
-          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
-            <div class="flex items-center gap-2 text-base-content/30">
-              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.general.section_interface') }}</span>
+          <div class="ui-section">
+            <div class="ui-section-header">
+              <span class="ui-section-title">{{ $t('settings.general.section_interface') }}</span>
             </div>
-            <div class="flex items-center justify-between p-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+            <div class="ui-section-row py-1">
               <div class="flex flex-col gap-0.5 text-sm leading-5">
                 <div>{{ $t('settings.general.show_tool_tip') }}</div>
               </div>
               <input type="checkbox" class="toggle toggle-primary toggle-sm" v-model="config.settings.showToolTip" />
             </div>
-            <div class="flex items-center justify-between p-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+            <div class="ui-section-row py-1">
               <div class="flex flex-col gap-0.5 text-sm leading-5">
                 <div>{{ $t('settings.general.show_status_bar') }}</div>
               </div>
@@ -136,11 +136,11 @@
         <div v-else-if="config.settings.tabIndex === SETTINGS_TAB.GRID" class="flex flex-col space-y-2">
 
           <!-- grid view -->
-          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
-            <div class="flex items-center gap-2 text-base-content/30">
-              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.grid.section_grid') }}</span>
+          <div class="ui-section">
+            <div class="ui-section-header">
+              <span class="ui-section-title">{{ $t('settings.grid.section_grid') }}</span>
             </div>
-            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+            <div class="ui-section-row">
               <div class="flex flex-col gap-0.5 text-sm leading-5">
                 <div>{{ $t('settings.grid.style') }}</div>
               </div>
@@ -148,7 +148,7 @@
                 <option v-for="(option, index) in gridStyleOptions" :key="index" :value="option.value">{{ option.label }}</option>
               </select>
             </div>
-            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+            <div class="ui-section-row">
               <div class="flex flex-col gap-0.5 text-sm leading-5">
                 <div>{{ $t('settings.grid.scaling') }}</div>
               </div>
@@ -156,7 +156,7 @@
                 <option v-for="(option, index) in gridScalingOptions" :key="index" :value="option.value">{{ option.label }}</option>
               </select>
             </div>
-            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+            <div class="ui-section-row">
               <div class="flex flex-col gap-0.5 text-sm leading-5">
                 <div>{{ $t('settings.grid.spacing') }}</div>
               </div>
@@ -164,7 +164,7 @@
                 <option v-for="(label, value) in localeMsg.settings.grid.spacing_options" :key="value" :value="value">{{ label }}</option>
               </select>
             </div>
-            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+            <div class="ui-section-row">
               <div class="flex flex-col gap-0.5 text-sm leading-5">
                 <div>{{ $t('settings.grid.thumbnail_corners') }}</div>
               </div>
@@ -172,7 +172,7 @@
                 <option v-for="option in thumbnailCornerOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
               </select>
             </div>
-            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+            <div class="ui-section-row">
               <div class="flex flex-col gap-0.5 text-sm leading-5">
                 <div>{{ $t('settings.grid.show_thumbnail_badges') }}</div>
               </div>
@@ -180,7 +180,7 @@
                 <option v-for="option in thumbnailBadgeOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
               </select>
             </div>
-            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+            <div class="ui-section-row">
               <div class="flex flex-col gap-0.5 text-sm leading-5">
                 <div>{{ $t('settings.grid.label_primary') }}</div>
               </div>
@@ -188,7 +188,7 @@
                   <option v-for="(option, index) in gridLabelOptions" :key="index" :value="option.value">{{ option.label }}</option>
               </select>
             </div>
-            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+            <div class="ui-section-row">
               <div class="flex flex-col gap-0.5 text-sm leading-5">
                 <div>{{ $t('settings.grid.label_secondary') }}</div>
               </div>
@@ -199,11 +199,11 @@
           </div>
 
           <!-- filmstrip -->
-          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
-            <div class="flex items-center gap-2 text-base-content/30">
-              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.grid.filmstrip_view.title') }}</span>
+          <div class="ui-section">
+            <div class="ui-section-header">
+              <span class="ui-section-title">{{ $t('settings.grid.filmstrip_view.title') }}</span>
             </div>
-            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+            <div class="ui-section-row">
               <div class="flex flex-col gap-0.5 text-sm leading-5">
                 <div>{{ $t('settings.grid.filmstrip_view.preview_position') }}</div>
               </div>
@@ -214,11 +214,11 @@
           </div>
 
           <!-- map -->
-          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
-            <div class="flex items-center gap-2 text-base-content/30">
-              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.grid.section_map') }}</span>
+          <div class="ui-section">
+            <div class="ui-section-header">
+              <span class="ui-section-title">{{ $t('settings.grid.section_map') }}</span>
             </div>
-            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+            <div class="ui-section-row">
               <div class="flex flex-col gap-0.5 text-sm leading-5">
                 <div>{{ $t('settings.grid.map_marker_size') }}</div>
               </div>
@@ -234,11 +234,11 @@
         <div v-else-if="config.settings.tabIndex === SETTINGS_TAB.IMAGE_VIEW" class="flex flex-col space-y-2">
 
           <!-- navigation -->
-          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
-            <div class="flex items-center gap-2 text-base-content/30">
-              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.image_view.section_navigation') }}</span>
+          <div class="ui-section">
+            <div class="ui-section-header">
+              <span class="ui-section-title">{{ $t('settings.image_view.section_navigation') }}</span>
             </div>
-            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+            <div class="ui-section-row">
               <div class="flex flex-col gap-0.5 text-sm leading-5">
                 <div>{{ $t('settings.image_view.mouse_wheel') }}</div>
               </div>
@@ -248,7 +248,7 @@
                 </option>
               </select>
             </div>
-            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+            <div class="ui-section-row">
               <div class="flex flex-col gap-0.5 text-sm leading-5">
                 <div>{{ $t('settings.image_view.navigator_view') }}</div>
               </div>
@@ -256,7 +256,7 @@
                   <option v-for="(option, index) in navigatorViewModeOptions" :key="index" :value="option.value">{{ option.label }}</option>
               </select>
             </div>
-            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+            <div class="ui-section-row">
               <div class="flex flex-col gap-0.5 text-sm leading-5">
                 <div>{{ $t('settings.image_view.navigator_view__size') }}</div>
               </div>
@@ -264,7 +264,7 @@
                   <option v-for="(option, index) in navigatorViewSizeOptions" :key="index" :value="option.value">{{ option.label }}</option>
               </select>
             </div>
-            <label class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+            <label class="ui-section-row">
               <span class="flex flex-col gap-0.5 text-sm leading-5">
                 <span>{{ $t('image_viewer.sharpness_grid') }}</span>
                 <span class="text-xs text-base-content/30">{{ $t('image_viewer.sharpness_grid_hint') }}</span>
@@ -274,11 +274,11 @@
           </div>
 
           <!-- view -->
-          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
-            <div class="flex items-center gap-2 text-base-content/30">
-              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.image_view.section_view') }}</span>
+          <div class="ui-section">
+            <div class="ui-section-header">
+              <span class="ui-section-title">{{ $t('settings.image_view.section_view') }}</span>
             </div>
-            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+            <div class="ui-section-row">
               <div class="flex flex-col gap-0.5 text-sm leading-5">
                 <div>{{ $t('settings.image_view.view_background') }}</div>
                 <div class="text-xs text-base-content/30">
@@ -289,7 +289,7 @@
                 <option v-for="option in viewBackgroundOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
               </select>
             </div>
-            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+            <div class="ui-section-row">
               <div class="flex flex-col gap-0.5 text-sm leading-5">
                 <div>{{ $t('settings.image_view.slide_show_transition') }}</div>
               </div>
@@ -300,17 +300,17 @@
           </div>
 
           <!-- video -->
-          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
-            <div class="flex items-center gap-2 text-base-content/30">
-              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.image_view.section_video') }}</span>
+          <div class="ui-section">
+            <div class="ui-section-header">
+              <span class="ui-section-title">{{ $t('settings.image_view.section_video') }}</span>
             </div>
-            <div class="flex items-center justify-between px-1 h-8 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+            <div class="ui-section-row h-8">
               <div class="flex flex-col gap-0.5 text-sm leading-5">
                 <div>{{ $t('settings.image_view.auto_play_video') }}</div>
               </div>
               <input type="checkbox" class="toggle toggle-primary toggle-sm" v-model="config.settings.autoPlayVideo" />
             </div>
-            <div class="flex items-center justify-between px-1 h-8 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+            <div class="ui-section-row h-8">
               <div class="flex flex-col gap-0.5 text-sm leading-5">
                 <div>{{ $t('settings.image_view.loop_video') }}</div>
               </div>
@@ -322,18 +322,18 @@
 
         <!-- RAW Tab -->
         <div v-else-if="config.settings.tabIndex === SETTINGS_TAB.RAW" class="flex flex-col space-y-2">
-          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
-            <div class="flex items-center gap-2 text-base-content/30">
-              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.raw.section_pairs') }}</span>
+          <div class="ui-section">
+            <div class="ui-section-header">
+              <span class="ui-section-title">{{ $t('settings.raw.section_pairs') }}</span>
             </div>
-            <div class="flex items-center justify-between gap-3 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+            <div class="ui-section-row gap-3">
               <label for="raw-group-pairs" class="min-w-0 flex flex-col gap-0.5 text-sm leading-5">
                 <span>{{ $t('settings.browse.group_raw_jpeg_pairs') }}</span>
                 <span class="text-xs text-base-content/30">{{ $t('settings.browse.group_raw_jpeg_pairs_hint') }}</span>
               </label>
               <input id="raw-group-pairs" type="checkbox" class="toggle toggle-primary toggle-sm shrink-0" v-model="config.settings.groupRawJpegPairs" />
             </div>
-            <div v-if="config.settings.groupRawJpegPairs" class="flex items-center justify-between gap-3 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+            <div v-if="config.settings.groupRawJpegPairs" class="ui-section-row gap-3">
               <label for="raw-pair-source" class="min-w-0 flex flex-col gap-0.5 text-sm leading-5">
                 <span>{{ $t('settings.raw.pair_source') }}</span>
                 <span class="text-xs text-base-content/30">{{ $t('settings.raw.pair_source_hint') }}</span>
@@ -344,11 +344,11 @@
               </select>
             </div>
           </div>
-          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
-            <div class="flex items-center gap-2 text-base-content/30">
-              <span id="raw-preview-heading" class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.raw.preview_mode') }}</span>
+          <div class="ui-section">
+            <div class="ui-section-header">
+              <span id="raw-preview-heading" class="ui-section-title">{{ $t('settings.raw.preview_mode') }}</span>
             </div>
-            <div v-for="field in rawPreviewFields" :key="field.key" class="flex items-center justify-between gap-3 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+            <div v-for="field in rawPreviewFields" :key="field.key" class="ui-section-row gap-3">
               <label :for="field.key" class="min-w-0 flex flex-col gap-0.5 text-sm leading-5">
                 <span>{{ $t('settings.raw.' + field.key) }}</span>
                 <span v-if="field.hint" class="text-xs text-base-content/30">{{ $t('settings.raw.' + field.hint) }}</span>
@@ -362,10 +362,12 @@
 
         <!-- Metadata Tab -->
         <div v-else-if="config.settings.tabIndex === SETTINGS_TAB.METADATA" class="flex flex-col space-y-2">
-          <section aria-labelledby="metadata-import-heading" class="rounded-box p-3 space-y-3 bg-base-300/30 border border-base-content/5">
-            <h2 id="metadata-import-heading" class="font-bold uppercase text-[10px] tracking-widest text-base-content/50">{{ $t('settings.metadata.section_import') }}</h2>
-            <div class="flex items-center justify-between gap-4">
-              <label for="metadata-import" class="min-w-0 flex flex-col gap-1 text-sm leading-5">
+          <section aria-labelledby="metadata-import-heading" class="ui-section">
+            <div class="ui-section-header">
+              <span id="metadata-import-heading" role="heading" aria-level="2" class="ui-section-title">{{ $t('settings.metadata.section_import') }}</span>
+            </div>
+            <div class="ui-section-row gap-4">
+              <label for="metadata-import" class="min-w-0 flex flex-col gap-0.5 text-sm leading-5">
                 <span>{{ $t('settings.metadata.import') }}</span>
                 <span id="metadata-import-hint" class="text-xs text-base-content/30">{{ $t('settings.metadata.import_hint') }}</span>
               </label>
@@ -378,11 +380,11 @@
         <div v-else-if="config.settings.tabIndex === SETTINGS_TAB.IMAGE_SEARCH" class="flex flex-col overflow-hidden space-y-2">
 
           <!-- image search -->
-          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
-            <div class="flex items-center gap-2 text-base-content/30">
-              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.image_search.search_image') }}</span>
+          <div class="ui-section">
+            <div class="ui-section-header">
+              <span class="ui-section-title">{{ $t('settings.image_search.search_image') }}</span>
             </div>
-            <div class="flex items-start justify-between gap-4 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+            <div class="ui-section-row gap-4">
               <div class="min-w-0 flex flex-col gap-0.5 text-sm leading-5">
                 <div>{{ $t('settings.image_search.search_model') }}</div>
                 <div class="text-xs text-base-content/30">
@@ -404,7 +406,7 @@
                 </option>
               </select>
             </div>
-            <div v-if="isDownloadingMultilingualModel" class="px-1 pt-1 space-y-1">
+            <div v-if="isDownloadingMultilingualModel" class="px-2 pt-1 space-y-1">
               <div class="flex items-center justify-between text-xs text-base-content/30">
                 <span>{{ $t('settings.image_search.downloading_multilingual_model') }}</span>
                 <span>{{ multilingualModelDownloadSizeText }}</span>
@@ -425,7 +427,7 @@
                 </button>
               </div>
             </div>
-            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+            <div class="ui-section-row">
               <div class="flex flex-col gap-0.5 text-sm leading-5">
                 <div>{{ $t('settings.image_search.similarity') }}</div>
                 <div class="text-xs text-base-content/30">{{ $t('settings.image_search.similarity_hint') }}</div>
@@ -437,11 +439,11 @@
           </div>
 
           <!-- similar photos -->
-          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
-            <div class="flex items-center gap-2 text-base-content/30">
-              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.similar_photos.title') }}</span>
+          <div class="ui-section">
+            <div class="ui-section-header">
+              <span class="ui-section-title">{{ $t('settings.similar_photos.title') }}</span>
             </div>
-            <div class="flex items-center justify-between gap-4 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+            <div class="ui-section-row gap-4">
               <div class="min-w-0 flex flex-col gap-0.5 text-sm leading-5">
                 <div>{{ $t('settings.similar_photos.grouping_strictness') }}</div>
                 <div class="text-xs text-base-content/30">{{ $t('settings.similar_photos.grouping_strictness_hint') }}</div>
@@ -453,15 +455,15 @@
           </div>
 
           <!-- face recognition -->
-          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
-            <div class="flex items-center gap-2 text-base-content/30">
-              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.face_recognition.title') }}</span>
+          <div class="ui-section">
+            <div class="ui-section-header">
+              <span class="ui-section-title">{{ $t('settings.face_recognition.title') }}</span>
             </div>
-            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+            <div class="ui-section-row">
               <div class="flex flex-col gap-0.5 text-sm leading-5">
                 <div class="flex items-center">
                   <div>{{ $t('settings.face_recognition.enable') }}</div>
-                  <span class="ml-2 px-1.5 h-5 inline-flex items-center rounded-box text-[10px] font-semibold tracking-[0.08em] text-warning border border-warning/30 bg-warning/10 cursor-default">
+                  <span class="ml-2 px-1.5 h-5 inline-flex items-center rounded-box text-xs font-semibold tracking-[0.08em] text-warning border border-warning/30 bg-warning/10 cursor-default">
                     BETA
                   </span>
                 </div>
@@ -469,11 +471,11 @@
               </div>
               <input type="checkbox" class="toggle toggle-primary toggle-sm" v-model="config.settings.face.enabled" />
             </div>
-            <div v-if="config.settings.face.enabled" class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+            <div v-if="config.settings.face.enabled" class="ui-section-row">
               <div class="flex flex-col gap-0.5 text-sm leading-5">
                 <div class="flex items-center">
                   <div>{{ $t('settings.face_recognition.similarity') }}</div>
-                  <span class="ml-2 px-1.5 h-5 inline-flex items-center rounded-box text-[10px] font-semibold tracking-[0.08em] text-warning border border-warning/30 bg-warning/10 cursor-default">
+                  <span class="ml-2 px-1.5 h-5 inline-flex items-center rounded-box text-xs font-semibold tracking-[0.08em] text-warning border border-warning/30 bg-warning/10 cursor-default">
                     BETA
                   </span>
                 </div>
@@ -488,9 +490,11 @@
 
         <!-- Advanced Tab -->
         <div v-else-if="config.settings.tabIndex === SETTINGS_TAB.ADVANCED" class="flex flex-col space-y-2">
-          <section class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5" aria-labelledby="file-delete-settings">
-            <h2 id="file-delete-settings" class="font-bold uppercase text-[10px] tracking-widest text-base-content/30">{{ $t('settings.advanced.file_delete_section') }}</h2>
-            <label class="flex items-start justify-between gap-4 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+          <section class="ui-section" aria-labelledby="file-delete-settings">
+            <div class="ui-section-header">
+              <h2 id="file-delete-settings" class="ui-section-title">{{ $t('settings.advanced.file_delete_section') }}</h2>
+            </div>
+            <label class="ui-section-row gap-4">
               <span class="min-w-0 flex flex-col gap-0.5 text-sm leading-5">
                 <span>{{ $t('settings.advanced.file_delete_behavior') }}</span>
                 <span class="text-xs text-base-content/30">{{ $t(config.settings.fileDeleteBehavior === 'permanent' ? 'settings.advanced.file_delete_permanent_hint' : 'settings.advanced.file_delete_trash_hint') }}</span>
@@ -504,13 +508,13 @@
 
 
           <!-- thumbnail cache -->
-          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
-            <div class="flex items-center gap-2 text-base-content/30">
-              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.advanced.thumbnail_cache.section_thumbnail_cache') }}</span>
+          <div class="ui-section">
+            <div class="ui-section-header">
+              <span class="ui-section-title">{{ $t('settings.advanced.thumbnail_cache.section_thumbnail_cache') }}</span>
             </div>
 
             <!-- cache location -->
-            <div class="flex items-center justify-between gap-4 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+            <div class="ui-section-row gap-4">
               <div class="min-w-0 flex flex-col gap-0.5 text-sm leading-5">
                 <div>{{ $t('settings.advanced.thumbnail_cache.current_location') }}</div>
                 <div class="text-xs text-base-content/30 truncate" :title="thumbnailCacheDir">
@@ -540,7 +544,7 @@
             </div>
 
             <!-- cache quality -->
-            <div class="flex items-center justify-between gap-4 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+            <div class="ui-section-row gap-4">
               <div class="min-w-0 flex flex-col gap-0.5 text-sm leading-5">
                 <div>{{ $t('settings.advanced.thumbnail_cache.thumbnail_quality') }}</div>
                 <div class="text-xs text-base-content/30">{{ $t('settings.advanced.thumbnail_cache.thumbnail_quality_hint') }}</div>
@@ -549,9 +553,11 @@
                 <option v-for="option in thumbnailQualityOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
               </select>
             </div>
-            <div class="flex items-center justify-between gap-4 px-1 rounded-box hover:bg-base-100/10">
-              <div class="min-w-0 text-sm leading-5">
-                <div>{{ $t(cleanupKey + '.title') }}</div>
+            <div class="ui-section-row gap-4">
+              <div class="min-w-0 flex flex-col gap-0.5 text-sm leading-5">
+                <div>
+                  {{ $t(cleanupKey + '.title') }}<span role="status">（{{ thumbnailCacheSizeText }}）</span>
+                </div>
                 <div class="text-xs text-base-content/30">{{ $t(cleanupKey + '.hint') }}</div>
               </div>
               <button
@@ -565,12 +571,12 @@
           </div>
 
           <!-- data -->
-          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
-            <div class="flex items-center gap-2 text-base-content/30">
-              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.database.section_storage') }}</span>
+          <div class="ui-section">
+            <div class="ui-section-header">
+              <span class="ui-section-title">{{ $t('settings.database.section_storage') }}</span>
             </div>
 
-            <div class="flex items-center justify-between gap-4 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+            <div class="ui-section-row gap-4">
               <div class="min-w-0 flex flex-col gap-0.5 text-sm leading-5">
                 <div>{{ $t('settings.database.current_location') }}</div>
                 <div class="text-xs text-base-content/30 truncate" :title="dbStorageDir || ''">
@@ -596,7 +602,7 @@
               </div>
             </div>
 
-            <div class="flex items-center justify-between gap-4 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+            <div class="ui-section-row gap-4">
               <div class="flex flex-col gap-0.5 text-sm leading-5">
                 <div>{{ $t('settings.database.backup_title') }}</div>
                 <div class="text-xs text-base-content/30">{{ $t('settings.database.backup_hint') }}</div>
@@ -609,7 +615,7 @@
               </button>
             </div>
 
-            <div class="flex items-center justify-between gap-4 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+            <div class="ui-section-row gap-4">
               <div class="flex flex-col gap-0.5 text-sm leading-5">
                 <div>{{ $t('settings.database.restore_title') }}</div>
                 <div class="text-xs text-base-content/30">{{ $t('settings.database.restore_hint') }}</div>
@@ -624,11 +630,11 @@
           </div>
 
           <!-- map -->
-          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
-            <div class="flex items-center gap-2 text-base-content/30">
-              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.advanced.map.section_map') }}</span>
+          <div class="ui-section">
+            <div class="ui-section-header">
+              <span class="ui-section-title">{{ $t('settings.advanced.map.section_map') }}</span>
             </div>
-            <div class="flex items-center justify-between gap-4 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+            <div class="ui-section-row gap-4">
               <div class="min-w-0 flex flex-col gap-0.5 text-sm leading-5">
                 <div>{{ $t('settings.advanced.map.map_provider') }}</div>
                 <div class="text-xs text-base-content/30">{{ $t('settings.advanced.map.map_provider_hint') }}</div>
@@ -637,7 +643,7 @@
                 <option v-for="option in mapProviderOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
               </select>
             </div>
-            <div v-if="config.settings.mapProvider === 'tianditu'" class="flex items-center justify-between gap-4 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+            <div v-if="config.settings.mapProvider === 'tianditu'" class="ui-section-row gap-4">
               <div class="min-w-0 flex flex-col gap-0.5 text-sm leading-5">
                 <div>{{ $t('settings.advanced.map.tianditu_token') }}</div>
                 <div class="text-xs text-base-content/30">{{ $t('settings.advanced.map.tianditu_token_hint') }}</div>
@@ -668,11 +674,11 @@
           </div>
 
           <!-- diagnostics -->
-          <!-- <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
-            <div class="flex items-center gap-2 text-base-content/30">
-              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.advanced.section_diagnostics') }}</span>
+          <!-- <div class="ui-section">
+            <div class="ui-section-header">
+              <span class="ui-section-title">{{ $t('settings.advanced.section_diagnostics') }}</span>
             </div>
-            <div class="flex items-center justify-between p-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+            <div class="ui-section-row py-1">
               <div class="flex flex-col gap-0.5 text-sm leading-5">
                 <div>{{ $t('settings.advanced.debug_mode') }}</div>
               </div>
@@ -686,10 +692,10 @@
           <div
             v-for="section in shortcutSections"
             :key="section.key"
-            class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5"
+            class="ui-section"
           >
-            <div class="flex items-center gap-2 text-base-content/30">
-              <span class="font-bold uppercase text-[10px] tracking-widest">{{ section.title }}</span>
+            <div class="ui-section-header">
+              <span class="ui-section-title">{{ section.title }}</span>
             </div>
             <div class="sr-only" role="list">
               <div v-for="item in section.items" :key="item.actionId" role="listitem">
@@ -713,7 +719,7 @@
                   <div
                     v-for="(row, rowIndex) in item.rows"
                     :key="rowIndex"
-                    class="min-h-9 flex items-center justify-between gap-4 px-1 py-1 rounded-box hover:bg-base-100/10 transition-colors duration-200"
+                    class="ui-section-row min-h-9 gap-4 py-1"
                   >
                     <div class="min-w-0 text-sm leading-5">{{ row.label }}</div>
                     <div class="shrink-0 flex items-center gap-1">
@@ -781,8 +787,8 @@
       <div class="space-y-3">
         <p class="text-xs text-base-content/60">{{ $t('settings.advanced.thumbnail_cache.migration_hint') }}</p>
         <div class="text-xs text-base-content/75 break-all">{{ $t('settings.advanced.thumbnail_cache.new_location', { path: pendingThumbnailCacheDir === null ? $t('settings.database.system_default') : `${pendingThumbnailCacheDir}/lap-thumbnail-cache` }) }}</div>
-        <section class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5">
-          <div class="font-bold uppercase text-[10px] tracking-widest text-base-content/30">{{ $t('settings.advanced.thumbnail_cache.migration_progress') }}</div>
+        <section class="ui-section">
+          <div class="ui-section-title text-base-content/30">{{ $t('settings.advanced.thumbnail_cache.migration_progress') }}</div>
           <div class="space-y-2 px-1 text-xs" role="status" aria-live="polite">
             <div class="flex items-center justify-between gap-2 text-base-content/75">
               <span>{{ thumbnailMigrationStatusText }}</span>
@@ -848,6 +854,7 @@ import {
   getAppConfig,
   cleanUnusedThumbnailCache,
   getThumbnailCacheLocation,
+  getThumbnailCacheSize,
   getThumbnailCacheMigrationCount,
   changeThumbnailCacheLocation,
   cancelThumbnailCacheMigration,
@@ -913,7 +920,37 @@ const cleanupBytes = ref(0);
 const cleanupFiles = ref(0);
 const cleanupListError = ref(false);
 const cleanupFailures = ref<{ id: string; name: string; error: string }[]>([]);
+const thumbnailCacheBytes = ref<number | null>(null);
+const thumbnailCacheSizeFailed = ref(false);
+let thumbnailCacheSizeRequest = 0;
+const thumbnailCacheSizeText = computed(() =>
+  thumbnailCacheSizeFailed.value
+    ? t('msgbox.manage_libraries.unable_to_load')
+    : thumbnailCacheBytes.value === null
+      ? t('tooltip.loading')
+      : formatFileSize(thumbnailCacheBytes.value),
+);
 
+async function refreshThumbnailCacheSize(force = false) {
+  if (!force && thumbnailCacheBytes.value !== null && !thumbnailCacheSizeFailed.value) return;
+  const request = ++thumbnailCacheSizeRequest;
+  thumbnailCacheBytes.value = null;
+  thumbnailCacheSizeFailed.value = false;
+  try {
+    const size = await getThumbnailCacheSize();
+    if (request === thumbnailCacheSizeRequest) thumbnailCacheBytes.value = Number(size);
+  } catch {
+    if (request === thumbnailCacheSizeRequest) thumbnailCacheSizeFailed.value = true;
+  }
+}
+
+watch(
+  () => config.settings.tabIndex,
+  (tab) => {
+    if (tab === SETTINGS_TAB.ADVANCED) void refreshThumbnailCacheSize();
+  },
+  { immediate: true },
+);
 async function cleanThumbnailCache() {
   if (cleanupOpen.value || !cleanupLibraryCount.value) return;
   cleanupOpen.value = true;
@@ -946,6 +983,7 @@ async function cleanThumbnailCache() {
     }
   } finally {
     cleanupRunning.value = false;
+    void refreshThumbnailCacheSize(true);
   }
 }
 
@@ -2017,6 +2055,7 @@ async function moveThumbnailCache(newDir: string | null) {
     isChangingThumbnailCache.value = false;
     thumbnailMigrationCancelling.value = false;
     thumbnailMigrationOperationId = '';
+    void refreshThumbnailCacheSize(true);
   }
 }
 

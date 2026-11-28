@@ -16,9 +16,6 @@
       </button>
     </template>
     <div class="flex flex-col flex-1 min-h-0 border border-base-content/5 bg-base-300/30 rounded-box overflow-hidden relative">
-      <div class="flex items-center px-2 py-2 shrink-0 select-none">
-        <span class="flex-1 sidebar-panel-header-title text-base-content/30">{{ $t('msgbox.manage_libraries.libraries') }} ({{ libraries.length }})</span>
-      </div>
 
       <!-- Anchor the fallback drag preview to the viewport, independently of the scroll offset. -->
       <div class="flex flex-1 min-h-0 transform-gpu overflow-hidden">
@@ -46,7 +43,7 @@
             :class="[
               selectedLibraryId === lib.id
                 ? 'text-base-content bg-base-100 hover:bg-base-100 selected-item'
-                : 'text-base-content/70 hover:bg-base-100/30',
+                : 'text-base-content/70 hover:bg-base-100/30 hover:text-base-content',
               showAddInput || (isRenaming && editingId !== lib.id) ? 'opacity-50' : 'cursor-pointer',
             ]"
             @click="selectLibrary(lib)"
@@ -55,7 +52,9 @@
               <IconDragHandle
                 v-if="!showAddInput && !isRenaming"
                 class="drag-handle size-4 cursor-grab text-base-content/30"
-                :class="selectedLibraryId !== lib.id && 'opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto'"
+                :class="selectedLibraryId === lib.id
+                  ? 'w-6 shrink-0 opacity-100'
+                  : 'w-6 shrink-0 opacity-0 transition-all duration-200 delay-200 group-hover:opacity-100'"
                 aria-hidden="true"
               />
             </div>
@@ -80,7 +79,7 @@
                     class="w-4 h-4 mr-2 shrink-0"
                     :class="lib.id === currentLibraryId ? 'text-primary' : lib.hidden ? 'text-base-content/30' : 'text-base-content/70'"
                   />
-                  <span class="truncate"
+                  <span class="truncate text-base font-normal"
                     :class="{
                       'text-primary': lib.id === currentLibraryId,
                       'text-base-content/30': lib.hidden,
@@ -88,7 +87,7 @@
                   >
                     {{ lib.name }}
                   </span>
-                  <span v-if="lib.id === 'default'" class="ml-2 shrink-0 rounded-box border border-base-content/5 px-1.5 text-xs font-bold uppercase tracking-wide text-base-content/30">{{ $t('msgbox.manage_libraries.default') }}</span>
+                  <span v-if="lib.id === 'default'" class="ml-2 shrink-0 rounded-box border border-base-content/5 px-1.5 text-xs font-bold tracking-wide text-base-content/30">{{ $t('msgbox.manage_libraries.default') }}</span>
                   <span v-if="lib.hidden" class="ml-2 shrink-0 rounded-box border border-base-content/5 px-1.5 text-xs font-bold uppercase tracking-wide text-base-content/30">{{ $t('msgbox.manage_libraries.hidden') }}</span>
                 </div>
               </div>
@@ -96,13 +95,13 @@
 
             <!-- Right side: stats (always visible) + context menu (on hover/select) -->
             <div class="ml-auto flex flex-row items-center gap-1 shrink-0 text-base-content/30">
-              <div class="text-right text-xs flex flex-col justify-center gap-0.5 max-w-48">
+              <div class="text-right text-xs max-w-64">
                 <template v-if="libraryStats[lib.id]">
-                  <span class="truncate leading-4">
-                    {{ $t('statusbar.files_summary', { count: libraryStats[lib.id].fileCount.toLocaleString(), size: formatFileSize(libraryStats[lib.id].totalSize) }) }}
-                  </span>
-                  <span v-if="libraryStats[lib.id].thumbCacheSize > 0" class="truncate leading-4">
-                    {{ $t('msgbox.manage_libraries.cache_size', { size: formatFileSize(libraryStats[lib.id].thumbCacheSize) }) }}
+                  <span class="block truncate leading-4">
+                    {{ $t('statusbar.items_summary', {
+                      count: libraryStats[lib.id].fileCount.toLocaleString(),
+                      size: formatFileSize(libraryStats[lib.id].totalSize),
+                    }) }}
                   </span>
                 </template>
                 <span v-else-if="libraryStatsLoading[lib.id]" class="truncate leading-4">
@@ -115,7 +114,7 @@
               <div
                 :class="selectedLibraryId === lib.id
                   ? 'w-6 shrink-0 opacity-100'
-                  : 'w-6 shrink-0 opacity-0 translate-x-2 transition-all duration-200 delay-200 group-hover:opacity-100 group-hover:translate-x-0'"
+                  : 'w-6 shrink-0 opacity-0 transition-all duration-200 delay-200 group-hover:opacity-100'"
                 @click.stop
               >
                 <ContextMenu
@@ -153,15 +152,17 @@
     </div>
 
     <div class="flex justify-end items-center gap-2 shrink-0 pt-2 min-h-14 select-none">
+      <span class="pl-1 mr-auto min-w-0 flex-1 text-sm text-base-content/30" role="status">
+        {{ librarySummary }}
+      </span>
       <button
-        type="button"
-        class="t-button-default"
+        class="t-button-default shrink-0"
         @click="clickCancel"
       >
         {{ $t('msgbox.close') }}
       </button>
       <button
-        class="t-button-primary"
+        class="t-button-primary shrink-0"
         :disabled="showAddInput || isRenaming"
         @click="clickOk"
       >
@@ -235,6 +236,32 @@ const inputErrorMessage = ref('');
 const libraryStats = ref<Record<string, any>>({});
 const libraryStatsLoading = ref<Record<string, boolean>>({});
 const libraryStatsError = ref<Record<string, boolean>>({});
+const librariesLoaded = ref(false);
+const librarySummary = computed(() => {
+  const failed = libraries.value.some((lib) => libraryStatsError.value[lib.id]);
+  const pending =
+    !librariesLoaded.value || libraries.value.some((lib) => !libraryStats.value[lib.id]);
+  if (failed || pending) {
+    const status = t(`msgbox.manage_libraries.${failed ? 'unable_to_load' : 'calculating_stats'}`);
+    return librariesLoaded.value
+      ? `${libraries.value.length.toLocaleString()} ${t('msgbox.manage_libraries.libraries')} · ${status}`
+      : status;
+  }
+  const totals = libraries.value.reduce(
+    (sum, lib) => {
+      const stats = libraryStats.value[lib.id];
+      sum.items += Number(stats.fileCount || 0);
+      sum.size += Number(stats.totalSize || 0);
+      return sum;
+    },
+    { items: 0, size: 0 },
+  );
+  return t('msgbox.manage_libraries.summary', {
+    libraries: libraries.value.length.toLocaleString(),
+    items: totals.items.toLocaleString(),
+    size: formatFileSize(totals.size),
+  });
+});
 const isAddingLibrary = ref(false);
 const selectedLibraryId = ref('');
 let statsLoadToken = 0;
@@ -328,6 +355,7 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
+  statsLoadToken++;
   uiStore.removeInputHandler('ManageLibraries');
   window.removeEventListener('keydown', onKeyDown);
 });
@@ -337,6 +365,7 @@ const loadLibraries = async () => {
   if (!appConfig) return;
 
   libraries.value = appConfig.libraries || [];
+  librariesLoaded.value = true;
   currentLibraryId.value = appConfig.current_library_id;
   if (!selectedLibraryId.value || !libraries.value.some(lib => lib.id === selectedLibraryId.value)) {
     selectedLibraryId.value = currentLibraryId.value;
@@ -366,7 +395,7 @@ const loadLibraryStats = async (libs: any[]) => {
   const loadToken = ++statsLoadToken;
 
   libs.forEach((lib) => {
-    if (libraryStats.value[lib.id] || libraryStatsLoading.value[lib.id]) return;
+    if (libraryStats.value[lib.id]) return;
 
     libraryStatsLoading.value = {
       ...libraryStatsLoading.value,

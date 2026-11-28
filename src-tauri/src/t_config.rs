@@ -348,20 +348,6 @@ pub struct DestFolderState {
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
-pub struct IndexState {
-    pub status: i32,
-    #[serde(alias = "album_queue")]
-    pub album_queue: Vec<i64>,
-    #[serde(alias = "paused_album_ids", default)]
-    pub paused_album_ids: Vec<i64>,
-    #[serde(alias = "album_name")]
-    pub album_name: String,
-    pub indexed: i64,
-    pub total: i64,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
-#[serde(rename_all = "camelCase")]
 pub struct PersonState {
     pub id: Option<i64>,
     pub name: Option<String>,
@@ -395,7 +381,6 @@ pub struct LibraryState {
     pub search: SearchState,
     #[serde(alias = "dest_folder")]
     pub dest_folder: DestFolderState,
-    pub index: IndexState,
 }
 
 // ============================================================================
@@ -884,7 +869,6 @@ pub struct LibraryInfo {
     pub db_file_path: String,
     pub file_count: i64,
     pub total_size: i64,
-    pub thumb_cache_size: i64,
 }
 
 pub fn get_library_info(id: &str) -> Result<LibraryInfo, String> {
@@ -913,29 +897,28 @@ pub fn get_library_info(id: &str) -> Result<LibraryInfo, String> {
     drop(conn);
     drop(_lease);
 
-    // Sum thumbnail cache size (jpg/png files under cache_dir/{id}/).
-    // Best-effort: any IO error just contributes 0 rather than failing the call.
-    let thumb_cache_size = get_thumb_cache_size(id);
-
     Ok(LibraryInfo {
         db_file_size,
         db_file_path: db_path,
         file_count,
         total_size,
-        thumb_cache_size,
     })
 }
 
-fn get_thumb_cache_size(library_id: &str) -> i64 {
-    let Ok(_cache_access) = crate::t_cache_storage::access() else { return 0; };
-    let Ok(cache_root) = crate::t_cache_storage::root().map(|p| p.join(library_id)) else {
-        return 0;
-    };
+pub fn get_thumbnail_cache_size() -> Result<u64, String> {
+    let _cache_access = crate::t_cache_storage::access()?;
+    let cache_root = crate::t_cache_storage::root()?;
     if !cache_root.is_dir() {
-        return 0;
+        return Err(format!(
+            "Thumbnail cache directory is unavailable: {}",
+            cache_root.display()
+        ));
     }
-    let mut total: i64 = 0;
-    for entry in walkdir::WalkDir::new(&cache_root).into_iter().filter_map(|e| e.ok()) {
+    let mut total: u64 = 0;
+    for entry in walkdir::WalkDir::new(&cache_root) {
+        // Cache cleanup is best-effort: permission errors or files disappearing
+        // mid-walk should not prevent reporting the size of the readable cache.
+        let Ok(entry) = entry else { continue };
         if !entry.file_type().is_file() {
             continue;
         }
@@ -946,11 +929,10 @@ fn get_thumb_cache_size(library_id: &str) -> i64 {
         if !is_thumb {
             continue;
         }
-        if let Ok(md) = entry.metadata() {
-            total = total.saturating_add(md.len() as i64);
-        }
+        let Ok(metadata) = entry.metadata() else { continue };
+        total = total.saturating_add(metadata.len());
     }
-    total
+    Ok(total)
 }
 
 /// Save library state

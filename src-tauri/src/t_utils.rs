@@ -2401,6 +2401,10 @@ struct AlbumScanGuard {
     album_id: i64,
 }
 
+pub(crate) fn has_active_album_scans() -> bool {
+    !ACTIVE_ALBUM_SCANS.lock().unwrap().is_empty()
+}
+
 impl AlbumScanGuard {
     fn acquire(album_id: i64) -> Result<Self, String> {
         let sync_lock = album_sync_lock(album_id);
@@ -4016,56 +4020,48 @@ pub fn clear_album_accessibility() {
     INACCESSIBLE_ALBUM_IDS.lock().unwrap().clear();
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
-pub struct IndexRecoveryInfo {
-    pub album_id: i64,
-    pub file_name: String,
-    pub file_path: String,
-    pub time: String,
-}
-
-fn get_index_trace_path() -> Result<PathBuf, String> {
+pub(crate) fn index_marker_path(library_id: &str, album_id: i64) -> Result<PathBuf, String> {
     let app_dir = crate::t_config::get_app_data_dir()?;
-    fs::create_dir_all(&app_dir).map_err(|e| {
-        format!(
-            "Failed to create AppData directory for index recovery: {}",
-            e
-        )
-    })?;
-
-    // Make trace library-specific so switching libraries doesn't overwrite it
-    let config = crate::t_config::load_app_config().map_err(|e| e.to_string())?;
-    let prefix = if config.current_library_id.is_empty() {
-        "default".to_string()
-    } else {
-        config.current_library_id
-    };
-
-    Ok(app_dir.join(format!("index-recovery-{}.json", prefix)))
+    Ok(app_dir.join(format!("index-recovery-v2-{library_id}-{album_id}")))
 }
 
-fn write_index_trace(album_id: i64, file_path: &str) {
-    let payload = IndexRecoveryInfo {
-        album_id,
-        file_name: get_file_name(file_path),
-        file_path: file_path.to_string(),
-        time: Local::now().format("%Y-%m-%d %H:%M:%S%.3f").to_string(),
-    };
-    if let (Ok(path), Ok(content)) = (get_index_trace_path(), serde_json::to_string(&payload)) {
-        let _ = fs::write(path, content);
+struct IndexMarker(PathBuf);
+
+static ACTIVE_INDEX_MARKERS: Lazy<Mutex<Option<HashSet<PathBuf>>>> =
+    Lazy::new(|| Mutex::new(Some(HashSet::new())));
+
+impl IndexMarker {
+    fn start(path: PathBuf) -> std::io::Result<Option<Self>> {
+        let mut active = ACTIVE_INDEX_MARKERS.lock().unwrap();
+        let Some(paths) = active.as_mut() else { return Ok(None) };
+        fs::write(&path, [])?;
+        paths.insert(path.clone());
+        Ok(Some(Self(path)))
+    }
+
+    fn record_file(&self, path: &str) {
+        // Opening without create prevents recreating a marker removed by cancel or quit.
+        if let Ok(mut file) = fs::OpenOptions::new().write(true).truncate(true).open(&self.0) {
+            let _ = std::io::Write::write_all(&mut file, path.as_bytes());
+        }
     }
 }
 
-pub fn read_index_trace() -> Option<IndexRecoveryInfo> {
-    let path = get_index_trace_path().ok()?;
-    fs::read_to_string(path)
-        .ok()
-        .and_then(|content| serde_json::from_str::<IndexRecoveryInfo>(&content).ok())
+impl Drop for IndexMarker {
+    fn drop(&mut self) {
+        let mut active = ACTIVE_INDEX_MARKERS.lock().unwrap();
+        let _ = fs::remove_file(&self.0);
+        if let Some(paths) = active.as_mut() {
+            paths.remove(&self.0);
+        }
+    }
 }
 
-pub fn clear_index_trace() {
-    if let Ok(path) = get_index_trace_path() {
-        let _ = fs::remove_file(path);
+pub(crate) fn clear_active_index_markers_on_exit() {
+    if let Some(paths) = ACTIVE_INDEX_MARKERS.lock().unwrap().take() {
+        for path in paths {
+            let _ = fs::remove_file(path);
+        }
     }
 }
 
@@ -4500,6 +4496,18 @@ pub async fn index_album_worker(
         let conn = crate::t_sqlite::open_conn()?;
         Ok((album, crate::metadata::import_count::ScanFailures::start(&conn, album_id)))
     })?;
+    let index_marker = {
+        let flags = cancellation_token.lock().unwrap();
+        if flags.get(&album_id) == Some(&true) {
+            None
+        } else {
+            let path = index_marker_path(&scan_library_id, album_id)?;
+            IndexMarker::start(path).unwrap_or_else(|error| {
+                eprintln!("Failed to record active album scan: {error}");
+                None
+            })
+        }
+    };
     let scan_start = std::time::Instant::now();
     // Generate a unique scan time for this session (current timestamp)
     let current_scan_time = Utc::now().timestamp_millis();
@@ -4558,36 +4566,21 @@ pub async fn index_album_worker(
     let total_files = image_count + video_count;
     let search_total = image_count;
 
-    // Resume only when totals match and previous indexed is a valid in-progress value.
-    // This avoids breaking normal re-scan behavior after a completed run.
-    let resume_from = if previous_total == total_files
-        && previous_indexed > 0
-        && previous_indexed < total_files
-    {
-        previous_indexed
-    } else {
-        0
-    };
-
     // 3. Emit start progress
     let tracker = Arc::new(Mutex::new(ProgressTracker::new(
         app_handle,
         album_id,
         total_files,
         search_total,
-        resume_from,
+        0,
         scan_total,
         scan_total_size,
     )));
     with_progress_tracker(&tracker, |tracker| tracker.emit_now());
 
-    // update progress to db
-    let _ = Album::update_progress(album_id, 0, total_files);
-
     // 4. Traverse and index
     let mut is_cancelled = false;
     let mut traversal_failed = false;
-    let mut traversed_count = 0u64;
     // WalkDir already visits every directory during indexing.  Record the
     // direct-parent relationship here so the sidebar never needs to rescan an
     // unchanged directory just to decide whether to show its expand arrow.
@@ -4658,20 +4651,15 @@ pub async fn index_album_worker(
             let path_str = entry.path().to_string_lossy().to_string();
             if let Some(ftype) = get_file_type(&path_str) {
                 if !album.allows_file_type(ftype) || skip_excluded_image(&album, &path_str, ftype)?.is_some() { continue; }
-                // Resume mode: skip already-indexed prefix files.
-                if traversed_count < resume_from {
-                    traversed_count += 1;
-                    continue;
-                }
-
-                // Persist current file pointer for post-crash diagnosis.
-                write_index_trace(album_id, &path_str);
-
                 if skip_file_path.as_deref() == Some(path_str.as_str()) {
                     eprintln!(
                         "Skipping suspected problematic file during recovered indexing: {}",
                         path_str
                     );
+                    if let Err(error) = AFile::retain_skipped_scan_file(album_id, entry.path(), current_scan_time) {
+                        eprintln!("Failed to retain skipped file in index: {error}");
+                        traversal_failed = true;
+                    }
                     let file_size = std::fs::metadata(&path_str).map(|m| m.len()).unwrap_or(0);
                     with_progress_tracker(&tracker, |tracker| {
                         tracker.modify(|snapshot| {
@@ -4682,10 +4670,12 @@ pub async fn index_album_worker(
                         });
                         tracker.maybe_emit();
                     });
-                    traversed_count += 1;
                     continue;
                 }
 
+                if let Some(marker) = &index_marker {
+                    marker.record_file(&path_str);
+                }
                 if let Some(outcome) = index_single_file(
                     &album.path,
                     album_id,
@@ -4715,7 +4705,6 @@ pub async fn index_album_worker(
                             });
                             tracker.maybe_emit();
                         });
-                        traversed_count += 1;
                         continue;
                     }
                     if let Some(task) = outcome.task {
@@ -4739,14 +4728,6 @@ pub async fn index_album_worker(
                         });
                         tracker.maybe_emit();
                     });
-                    let processed_now =
-                        with_progress_tracker(&tracker, |tracker| tracker.snapshot.processed);
-                    let discovered_now =
-                        with_progress_tracker(&tracker, |tracker| tracker.snapshot.discovered);
-                    if discovered_now % 50 == 0 || processed_now % 50 == 0 {
-                        let current_total = with_progress_tracker(&tracker, |tracker| tracker.snapshot.total);
-                        let _ = Album::update_progress(album_id, processed_now, current_total);
-                    }
                 } else {
                     let file_size = std::fs::metadata(&path_str).map(|m| m.len()).unwrap_or(0);
                     with_progress_tracker(&tracker, |tracker| {
@@ -4760,7 +4741,6 @@ pub async fn index_album_worker(
                     });
                 }
 
-                traversed_count += 1;
             } else if !is_ignored_scan_sidecar(entry.path()) {
                 let file_size = entry.metadata().map(|metadata| metadata.len()).unwrap_or(0);
                 with_progress_tracker(&tracker, |tracker| {
@@ -4792,6 +4772,11 @@ pub async fn index_album_worker(
     with_progress_tracker(&tracker, |tracker| tracker.emit_now());
     let mut final_snapshot = with_progress_tracker(&tracker, |tracker| tracker.snapshot());
     let scan_failed = traversal_failed || !directory_accessible(&album.path);
+    // Cancellation can arrive after traversal while the last tasks are draining.
+    is_cancelled |= cancellation_token
+        .lock()
+        .map(|flags| flags.get(&album_id) == Some(&true))
+        .unwrap_or(true);
     let scan_complete = !is_cancelled && !scan_failed;
     if scan_complete {
         let _ = Album::update_progress(album_id, final_snapshot.processed, final_snapshot.total);
@@ -4799,8 +4784,6 @@ pub async fn index_album_worker(
         final_snapshot.failed += 1;
         let _ = Album::update_progress(album_id, previous_indexed, previous_total);
     }
-
-    clear_index_trace();
 
     // Delete files that are in DB but not in file system (Mark-and-Sweep)
     if scan_complete {
@@ -4864,10 +4847,7 @@ pub async fn index_album_worker(
         let _ = Album::recount_album(album_id);
     }
 
-    // After a clean completed scan, align indexed with total so the next
-    // scan does not incorrectly resume from a progress-milestone value
-    // (update_progress writes indexed every 50 files during the scan,
-    // and recount_album clamps without distinguishing complete vs partial).
+    // Record the final indexed count after recounting the visible files.
     if scan_complete {
         if let Ok(album) = Album::get_album_by_id(album_id) {
             let total = album.total.unwrap_or(0) as u64;

@@ -235,6 +235,7 @@ async fn main() {
             t_cmds::switch_library,
             t_cmds::is_database_corrupted,
             t_cmds::get_library_info,
+            t_cmds::get_thumbnail_cache_size,
             t_cmds::save_library_state,
             t_cmds::get_library_state,
             t_cmds::get_current_library_state,
@@ -254,7 +255,6 @@ async fn main() {
             t_cmds::index_album,
             t_cmds::cancel_indexing,
             t_cmds::get_index_recovery_info,
-            t_cmds::clear_index_recovery_info,
             // folder
             t_cmds::select_folder,
             t_cmds::fetch_folder,
@@ -468,6 +468,7 @@ async fn main() {
                     }
                 }
                 tauri::RunEvent::Exit { .. } => {
+                    t_utils::clear_active_index_markers_on_exit();
                     if aptabase_enabled {
                         let _ = app_handle.track_event("app_exited", None);
                         app_handle.flush_events_blocking();

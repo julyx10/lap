@@ -5,7 +5,7 @@
         {{ message }}
       </div>
 
-      <div class="text-sm text-base-content/30">{{ fileLabel }}</div>
+      <div v-if="filePath && fileLabel" class="text-sm text-base-content/30">{{ fileLabel }}</div>
       <div v-if="filePath" class="flex items-start gap-2 rounded-box border border-base-content/5 px-3 py-2">
         <div class="min-w-0 flex-1 flex flex-col gap-1">
           <div class="text-sm text-base-content/70 font-medium break-all">{{ fileName }}</div>
@@ -19,7 +19,7 @@
         />
       </div>
 
-      <label class="mt-1 flex items-center gap-2 text-sm cursor-pointer">
+      <label v-if="filePath" class="mt-1 flex items-center gap-2 text-sm cursor-pointer">
         <input v-model="skipThisFile" type="checkbox" class="checkbox checkbox-primary checkbox-sm" />
         <span>{{ skipLabel }}</span>
       </label>
@@ -108,7 +108,7 @@ function handleKeyDown(event: KeyboardEvent) {
 }
 
 function clickContinue() {
-  emit('continue', skipThisFile.value);
+  emit('continue', Boolean(props.filePath) && skipThisFile.value);
 }
 
 function clickCancel() {
