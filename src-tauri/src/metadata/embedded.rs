@@ -1516,6 +1516,76 @@ mod camera_settings_tests {
     }
 
     #[test]
+    fn olympus_picture_mode_values_take_priority_over_legacy_settings() {
+        let tags = vec![
+            make_tag(
+                "MakerNotes",
+                "Olympus",
+                "ContrastSetting",
+                "0 (min -5, max 5)",
+            ),
+            make_tag(
+                "MakerNotes",
+                "Olympus",
+                "PictureModeContrast",
+                "2 (min -2, max 2)",
+            ),
+            make_tag(
+                "MakerNotes",
+                "Olympus",
+                "CustomSaturation",
+                "0 (min -5, max 5)",
+            ),
+            make_tag(
+                "MakerNotes",
+                "Olympus",
+                "PictureModeSaturation",
+                "1 (min -2, max 2)",
+            ),
+            make_tag(
+                "MakerNotes",
+                "Olympus",
+                "SharpnessSetting",
+                "0 (min -5, max 5)",
+            ),
+            make_tag(
+                "MakerNotes",
+                "Olympus",
+                "PictureModeSharpness",
+                "-1 (min -2, max 2)",
+            ),
+        ];
+        let details = detail_values(&tags);
+        assert_eq!(details["contrast"].values, vec!["2 (min -2, max 2)"]);
+        assert_eq!(details["saturation"].values, vec!["1 (min -2, max 2)"]);
+        assert_eq!(details["sharpness"].values, vec!["-1 (min -2, max 2)"]);
+    }
+
+    #[test]
+    fn olympus_legacy_settings_remain_fallbacks_for_missing_or_empty_picture_mode_values() {
+        for (key, picture_mode_tag, legacy_tag) in [
+            ("contrast", "PictureModeContrast", "ContrastSetting"),
+            ("saturation", "PictureModeSaturation", "CustomSaturation"),
+            ("sharpness", "PictureModeSharpness", "SharpnessSetting"),
+        ] {
+            for picture_mode_value in [None, Some(""), Some("N/A")] {
+                let mut tags = vec![make_tag(
+                    "MakerNotes",
+                    "Olympus",
+                    legacy_tag,
+                    "0 (min -5, max 5)",
+                )];
+                if let Some(value) = picture_mode_value {
+                    tags.push(make_tag("MakerNotes", "Olympus", picture_mode_tag, value));
+                }
+                let details = detail_values(&tags);
+                assert_eq!(details[key].values, vec!["0 (min -5, max 5)"]);
+                assert_eq!(details[key].source, format!("MakerNotes:{legacy_tag}"));
+            }
+        }
+    }
+
+    #[test]
     fn makernotes_never_shadow_standard_exif_capture_fields() {
         let tags = vec![
             make_tag("EXIF", "ExifIFD", "WhiteBalance", "Auto"),
