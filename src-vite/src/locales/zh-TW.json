@@ -41,6 +41,7 @@
   "library": {
     "all_files": "所有檔案",
     "on_this_day": "當年今日",
+    "recently_added": "最近加入",
     "database_corrupted": "此媒體庫的資料庫已損毀",
     "database_corrupted_hint": "請嘗試切換到其他媒體庫。"
   },
@@ -293,12 +294,12 @@
       "paused": "掃描已暫停",
       "cancel": "取消掃描",
       "recovery": {
-        "title": "掃描已中斷",
-        "continue": "繼續",
+        "title": "上次掃描意外結束",
+        "continue": "掃描",
         "skip": "跳過",
-        "skip_once": "跳過此檔案並繼續",
+        "skip_once": "略過此檔案",
         "file_label": "上次掃描的檔案",
-        "message": "上次掃描未正常結束。"
+        "message": "Lap 在掃描此相簿時意外結束。"
       }
     }
   },
@@ -316,7 +317,7 @@
     "resume": "繼續建立索引"
   },
   "favorite": {
-    "files": "我的最愛檔案"
+    "files": "我的最愛"
   },
   "rating": {
     "mixed": "混合",
@@ -604,7 +605,6 @@
       "image_search_language_unsupported": "預設搜尋模型僅支援英文",
       "image_search_language_unsupported_hint": "請在設定中選擇多語言模型，以用此語言搜尋。",
       "folder_files": "此資料夾沒有檔案",
-      "folder_files_hint": "試著瀏覽子資料夾，或在設定中開啟「顯示子資料夾的檔案」。",
       "folders": "找不到資料夾",
       "favorite_folders": "找不到我的最愛資料夾",
       "favorite_folders_hint": "在相簿中將資料夾加入我的最愛，即可查看其檔案（含子資料夾）",
@@ -808,7 +808,7 @@
     "manage_libraries": {
       "title": "管理媒體庫",
       "libraries": "媒體庫",
-      "default": "預設媒體庫",
+      "default": "預設",
       "current": "目前媒體庫",
       "show": "顯示",
       "hide": "隱藏",
@@ -821,11 +821,12 @@
       "placeholder": "輸入媒體庫名稱",
       "calculating_stats": "正在計算媒體庫大小...",
       "unable_to_load": "無法載入",
-      "cache_size": "縮圖快取 {size}"
+      "cache_size": "縮圖快取 {size}",
+      "summary": "{libraries} 個資料庫 · {items} 個項目（{size}）"
     },
     "remove_library": {
       "title": "移除媒體庫",
-      "content": "確定要移除「{library}」嗎？這將永久刪除資料庫檔案。",
+      "content": "移除「{library}」？原始檔案不會被刪除，但資料庫將被永久刪除。",
       "ok": "移除"
     },
     "remove_album": {
@@ -1379,10 +1380,10 @@
       "import_hint": "掃描和重新整理時匯入收藏、評分、選片標記、標籤和描述，保留本機編輯。"
     },
     "browse": {
-      "show_subfolder_files": "顯示子資料夾的檔案",
+      "show_subfolder_files": "顯示子資料夾",
       "group_raw_jpeg_pairs": "合併 RAW 配對",
       "group_raw_jpeg_pairs_hint": "將相符的 RAW 與 JPEG/HEIC 檔案合併顯示為單一項目",
-      "folder_sort": "資料夾排序",
+      "folder_sort": "子資料夾排序",
       "folder_sort_options": [
         "名稱（A 到 Z）",
         "名稱（Z 到 A）",

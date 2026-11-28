@@ -18,6 +18,7 @@ export const LIB_ITEM = {
   ALL: 'all-files',
   FAV: 'favorites',
   TODAY: 'on-this-day',
+  RECENT: 'recently-added',
   RATINGS: 'ratings',
   CULLING: 'culling',
   SUBJECTS: 'subjects',
@@ -82,7 +83,6 @@ export const SORT_MENU_MORE = [
   SORT_TYPE.DIMENSION,
   SORT_TYPE.DURATION,
   SORT_TYPE.RANDOM,
-  SORT_TYPE.ADDED,
 ] as const;
 
 // group by enum

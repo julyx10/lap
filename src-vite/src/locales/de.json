@@ -41,6 +41,7 @@
   "library": {
     "all_files": "Alle Dateien",
     "on_this_day": "An diesem Tag",
+    "recently_added": "Zuletzt hinzugefügt",
     "database_corrupted": "Die Datenbank dieser Bibliothek ist beschädigt",
     "database_corrupted_hint": "Bitte versuchen Sie, zu einer anderen Bibliothek zu wechseln."
   },
@@ -293,12 +294,12 @@
       "paused": "Scan pausiert",
       "cancel": "Scan abbrechen",
       "recovery": {
-        "title": "Scan unterbrochen",
-        "continue": "Weiter",
+        "title": "Vorheriger Scan wurde unerwartet beendet",
+        "continue": "Scannen",
         "skip": "Überspringen",
-        "skip_once": "Diese Datei überspringen und fortfahren",
+        "skip_once": "Diese Datei überspringen",
         "file_label": "Zuletzt gescannte Datei",
-        "message": "Der letzte Scan wurde nicht normal beendet."
+        "message": "Lap wurde beim Scannen dieses Albums unerwartet beendet."
       }
     }
   },
@@ -316,7 +317,7 @@
     "resume": "Fortsetzen"
   },
   "favorite": {
-    "files": "Favorisierte Dateien"
+    "files": "Favoriten"
   },
   "rating": {
     "mixed": "Unterschiedlich",
@@ -604,7 +605,6 @@
       "image_search_language_unsupported": "Das Standard-Suchmodell unterstützt nur Englisch",
       "image_search_language_unsupported_hint": "Wählen Sie in den Einstellungen das mehrsprachige Modell, um in dieser Sprache zu suchen.",
       "folder_files": "Dieser Ordner enthält keine Dateien",
-      "folder_files_hint": "Durchsuchen Sie Unterordner oder aktivieren Sie 'Dateien aus Unterordnern anzeigen' in den Einstellungen.",
       "folders": "Keine Ordner gefunden",
       "favorite_folders": "Keine Favoritenordner gefunden",
       "favorite_folders_hint": "Favorisieren Sie einen Ordner in Alben, um hier seine Dateien und Unterordner zu sehen",
@@ -821,11 +821,12 @@
       "placeholder": "Bibliotheksname",
       "calculating_stats": "Bibliotheksgroesse wird berechnet...",
       "unable_to_load": "Laden nicht möglich",
-      "cache_size": "Thumbnail-Cache {size}"
+      "cache_size": "Thumbnail-Cache {size}",
+      "summary": "{libraries} Bibliotheken · {items} Elemente ({size})"
     },
     "remove_library": {
       "title": "Bibliothek entfernen",
-      "content": "'{library}' entfernen? Datenbankdatei wird gelöscht.",
+      "content": "„{library}“ entfernen? Ihre Originaldateien werden nicht gelöscht. Die Bibliotheksdatenbank wird dauerhaft gelöscht.",
       "ok": "Entfernen"
     },
     "remove_album": {
@@ -1379,10 +1380,10 @@
       "import_hint": "Beim Scannen und Aktualisieren Favoriten, Bewertungen, Auswahlmarkierungen, Tags und Beschreibungen importieren. Lokale Änderungen bleiben erhalten."
     },
     "browse": {
-      "show_subfolder_files": "Dateien aus Unterordnern anzeigen",
+      "show_subfolder_files": "Unterordner anzeigen",
       "group_raw_jpeg_pairs": "RAW-Paare gruppieren",
       "group_raw_jpeg_pairs_hint": "Passende RAW- und JPEG/HEIC-Dateien als ein Element anzeigen",
-      "folder_sort": "Ordnersortierung",
+      "folder_sort": "Unterordner sortieren",
       "folder_sort_options": [
         "Name (A bis Z)",
         "Name (Z bis A)",
@@ -1626,10 +1627,10 @@
       }
     },
     "advanced": {
+      "file_delete_section": "Dateien löschen",
       "file_delete_behavior": "Verhalten beim Löschen",
       "file_delete_trash_hint": "Einzelne Dateien ohne Rückfrage in den Papierkorb verschieben",
       "file_delete_permanent_hint": "Dauerhaftes Löschen immer bestätigen",
-      "file_delete_section": "Dateien löschen",
       "title": "Erweitert",
       "external_app": {
         "manage_external_apps": "Externe Apps verwalten",
@@ -1657,6 +1658,16 @@
         "tianditu_token_status_empty": "Nicht konfiguriert"
       },
       "thumbnail_cache": {
+        "cleanup": {
+          "title": "Unbenutzten Cache bereinigen",
+          "hint": "Unbenutzte Miniaturansichten aus den aufgeführten Bibliotheken bereinigen",
+          "button": "Bereinigen",
+          "progress": "Verarbeite {current} / {total} · {name}",
+          "freed": "{size} freigegeben.",
+          "empty": "Kein unbenutzter Miniatur-Cache zum Bereinigen.",
+          "failed": "Diese Bibliotheken konnten nicht bereinigt werden:",
+          "list_error": "Die Bibliotheksliste konnte nicht geladen werden."
+        },
         "rolling_back": "Änderungen werden zurückgenommen…",
         "cancelled": "Abgebrochen. Der ursprüngliche Cache bleibt erhalten.",
         "new_location": "Neuer Speicherort: {path}",
@@ -1682,17 +1693,7 @@
         "finishing": "Cache-Umzug wird abgeschlossen…",
         "success": "Speicherort des Vorschaubild-Caches geändert",
         "cleanup_warning": "Der Cache wurde verschoben, aber einige alte Dateien konnten nicht gelöscht werden:",
-        "busy": "Bitte warten Sie, bis der Vorschaubild-Cache verschoben wurde.",
-        "cleanup": {
-          "title": "Unbenutzten Cache bereinigen",
-          "hint": "Unbenutzte Miniaturansichten aus den aufgeführten Bibliotheken bereinigen",
-          "button": "Bereinigen",
-          "progress": "Verarbeite {current} / {total} · {name}",
-          "freed": "{size} freigegeben.",
-          "empty": "Kein unbenutzter Miniatur-Cache zum Bereinigen.",
-          "failed": "Diese Bibliotheken konnten nicht bereinigt werden:",
-          "list_error": "Die Bibliotheksliste konnte nicht geladen werden."
-        }
+        "busy": "Bitte warten Sie, bis der Vorschaubild-Cache verschoben wurde."
       }
     },
     "database": {

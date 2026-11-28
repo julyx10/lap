@@ -41,6 +41,7 @@
   "library": {
     "all_files": "Todos os arquivos",
     "on_this_day": "Neste dia",
+    "recently_added": "Adicionados recentemente",
     "database_corrupted": "O banco de dados desta biblioteca está corrompido",
     "database_corrupted_hint": "Tente mudar para outra biblioteca."
   },
@@ -293,12 +294,12 @@
       "paused": "Varredura em pausa",
       "cancel": "Cancelar escaneamento",
       "recovery": {
-        "title": "Varredura interrompida",
-        "continue": "Continuar",
+        "title": "A verificação anterior terminou inesperadamente",
+        "continue": "Verificar",
         "skip": "Ignorar",
-        "skip_once": "Pular este arquivo e continuar",
+        "skip_once": "Ignorar este arquivo",
         "file_label": "Último arquivo verificado",
-        "message": "A verificação anterior não foi encerrada normalmente."
+        "message": "O Lap foi encerrado inesperadamente durante a verificação deste álbum."
       }
     }
   },
@@ -316,7 +317,7 @@
     "resume": "Retomar"
   },
   "favorite": {
-    "files": "Arquivos favoritos"
+    "files": "Favoritos"
   },
   "rating": {
     "mixed": "Variado",
@@ -604,7 +605,6 @@
       "image_search_language_unsupported": "O modelo de pesquisa padrão só oferece suporte ao inglês",
       "image_search_language_unsupported_hint": "Escolha o modelo multilíngue nas Configurações para pesquisar neste idioma.",
       "folder_files": "Esta pasta não contém arquivos",
-      "folder_files_hint": "Navegue pelas subpastas ou ative 'Mostrar arquivos de subpastas' nas Configurações.",
       "folders": "Nenhuma pasta encontrada",
       "favorite_folders": "Nenhuma pasta favorita encontrada",
       "favorite_folders_hint": "Favorite uma pasta em Álbuns para ver aqui seus arquivos e subpastas",
@@ -821,11 +821,12 @@
       "placeholder": "Nome da biblioteca",
       "calculating_stats": "Calculando o tamanho da biblioteca...",
       "unable_to_load": "Não foi possível carregar",
-      "cache_size": "cache de miniaturas {size}"
+      "cache_size": "cache de miniaturas {size}",
+      "summary": "{libraries} bibliotecas · {items} itens ({size})"
     },
     "remove_library": {
       "title": "Remover biblioteca",
-      "content": "Remover '{library}'? O arquivo do banco de dados será excluído.",
+      "content": "Remover «{library}»? Seus arquivos originais não serão excluídos. O banco de dados da biblioteca será excluído permanentemente.",
       "ok": "Remover"
     },
     "remove_album": {
@@ -1379,10 +1380,10 @@
       "import_hint": "Importar favoritos, avaliações, marcações de seleção, etiquetas e descrições durante verificações e atualizações, preservando as edições locais."
     },
     "browse": {
-      "show_subfolder_files": "Mostrar arquivos de subpastas",
+      "show_subfolder_files": "Mostrar subpastas",
       "group_raw_jpeg_pairs": "Agrupar pares RAW",
       "group_raw_jpeg_pairs_hint": "Mostrar arquivos RAW e JPEG/HEIC correspondentes como um único item",
-      "folder_sort": "Ordenação de pastas",
+      "folder_sort": "Ordenar subpastas",
       "folder_sort_options": [
         "Nome (A a Z)",
         "Nome (Z a A)",
@@ -1626,10 +1627,10 @@
       }
     },
     "advanced": {
+      "file_delete_section": "Exclusão de arquivos",
       "file_delete_behavior": "Ao excluir arquivos",
       "file_delete_trash_hint": "Move um único arquivo para a lixeira sem confirmação",
       "file_delete_permanent_hint": "A exclusão permanente sempre exige confirmação",
-      "file_delete_section": "Exclusão de arquivos",
       "title": "Avançado",
       "external_app": {
         "manage_external_apps": "Gerenciar apps externos",
@@ -1657,6 +1658,16 @@
         "tianditu_token_status_empty": "Não configurado"
       },
       "thumbnail_cache": {
+        "cleanup": {
+          "title": "Limpar cache não utilizado",
+          "hint": "Limpar miniaturas não utilizadas das bibliotecas listadas",
+          "button": "Limpar",
+          "progress": "Processando {current} / {total} · {name}",
+          "freed": "{size} liberados.",
+          "empty": "Não há cache de miniaturas não utilizado para limpar.",
+          "failed": "Não foi possível limpar estas bibliotecas:",
+          "list_error": "Não foi possível carregar a lista de bibliotecas."
+        },
         "rolling_back": "Revertendo…",
         "cancelled": "Cancelado. O cache original foi mantido.",
         "new_location": "Novo local: {path}",
@@ -1682,17 +1693,7 @@
         "finishing": "Finalizando a migração do cache…",
         "success": "Local do cache de miniaturas alterado",
         "cleanup_warning": "O cache foi movido, mas alguns arquivos antigos não puderam ser removidos:",
-        "busy": "Aguarde a conclusão da migração do cache de miniaturas.",
-        "cleanup": {
-          "title": "Limpar cache não utilizado",
-          "hint": "Limpar miniaturas não utilizadas das bibliotecas listadas",
-          "button": "Limpar",
-          "progress": "Processando {current} / {total} · {name}",
-          "freed": "{size} liberados.",
-          "empty": "Não há cache de miniaturas não utilizado para limpar.",
-          "failed": "Não foi possível limpar estas bibliotecas:",
-          "list_error": "Não foi possível carregar a lista de bibliotecas."
-        }
+        "busy": "Aguarde a conclusão da migração do cache de miniaturas."
       }
     },
     "database": {

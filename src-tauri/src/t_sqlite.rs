@@ -2151,6 +2151,8 @@ pub struct QueryParams {
     pub search_folder: String,
     pub start_date: i64,
     pub end_date: i64,
+    #[serde(default)]
+    pub added_since: i64,
     pub calendar_sort: i64, // 0=taken asc … 5=modified desc (sort / 2 → column)
     #[serde(default)]
     pub folder_sort: i64, // 0=name asc, 1=name desc, 2=date asc, 3=date desc
@@ -2321,9 +2323,20 @@ pub struct ImageSearchParams {
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LibraryVisibleCounts {
-    pub all: i64, pub favorite: i64, pub today: i64, pub rated: i64, pub unrated: i64,
-    pub rating_1: i64, pub rating_2: i64, pub rating_3: i64, pub rating_4: i64, pub rating_5: i64,
-    pub pick: i64, pub reject: i64, pub unreviewed: i64,
+    pub all: i64,
+    pub favorite: i64,
+    pub today: i64,
+    pub rated: i64,
+    pub unrated: i64,
+    pub recently_added: i64,
+    pub rating_1: i64,
+    pub rating_2: i64,
+    pub rating_3: i64,
+    pub rating_4: i64,
+    pub rating_5: i64,
+    pub pick: i64,
+    pub reject: i64,
+    pub unreviewed: i64,
 }
 
 /// What a scan may do with a file without downloading it.
@@ -2375,8 +2388,50 @@ impl AFile {
 
     fn get_library_visible_counts_on(conn: &Connection) -> Result<LibraryVisibleCounts, String> {
         let today = chrono::Local::now().format("%m-%d").to_string();
-        let query = format!("SELECT COUNT(*), COALESCE(SUM(a.is_favorite=1),0), COALESCE(SUM(strftime('%m-%d',a.taken_date,'unixepoch','localtime')=?1),0), COALESCE(SUM(a.rating>0),0), COALESCE(SUM(a.rating=0),0), COALESCE(SUM(a.rating=1),0), COALESCE(SUM(a.rating=2),0), COALESCE(SUM(a.rating=3),0), COALESCE(SUM(a.rating=4),0), COALESCE(SUM(a.rating=5),0), COALESCE(SUM(a.culling_flag=1),0), COALESCE(SUM(a.culling_flag=2),0), COALESCE(SUM(a.culling_flag=0),0) FROM afiles a JOIN afolders b ON b.id=a.folder_id WHERE {} AND {}{}", Self::search_exclusion_condition("b"), Self::live_photo_companion_exclusion_condition(), Self::album_filter_sql("a"));
-        conn.query_row(&query, params![today], |r| Ok(LibraryVisibleCounts { all:r.get(0)?, favorite:r.get(1)?, today:r.get(2)?, rated:r.get(3)?, unrated:r.get(4)?, rating_1:r.get(5)?, rating_2:r.get(6)?, rating_3:r.get(7)?, rating_4:r.get(8)?, rating_5:r.get(9)?, pick:r.get(10)?, reject:r.get(11)?, unreviewed:r.get(12)? })).map_err(|e| e.to_string())
+        let query = format!(
+            "SELECT COUNT(*),
+                COALESCE(SUM(a.is_favorite=1),0),
+                COALESCE(SUM(strftime('%m-%d',a.taken_date,'unixepoch','localtime')=?1),0),
+                COALESCE(SUM(a.rating>0),0),
+                COALESCE(SUM(a.rating=0),0),
+                COALESCE(SUM(a.rating=1),0),
+                COALESCE(SUM(a.rating=2),0),
+                COALESCE(SUM(a.rating=3),0),
+                COALESCE(SUM(a.rating=4),0),
+                COALESCE(SUM(a.rating=5),0),
+                COALESCE(SUM(a.culling_flag=1),0),
+                COALESCE(SUM(a.culling_flag=2),0),
+                COALESCE(SUM(a.culling_flag=0),0),
+                COALESCE(SUM(a.added_at >= ?2),0)
+             FROM afiles a JOIN afolders b ON b.id=a.folder_id
+             WHERE {} AND {}{}",
+            Self::search_exclusion_condition("b"),
+            Self::live_photo_companion_exclusion_condition(),
+            Self::album_filter_sql("a")
+        );
+        conn.query_row(
+            &query,
+            params![today, chrono::Utc::now().timestamp() - 30 * 24 * 60 * 60],
+            |r| {
+                Ok(LibraryVisibleCounts {
+                    all: r.get(0)?,
+                    favorite: r.get(1)?,
+                    today: r.get(2)?,
+                    rated: r.get(3)?,
+                    unrated: r.get(4)?,
+                    rating_1: r.get(5)?,
+                    rating_2: r.get(6)?,
+                    rating_3: r.get(7)?,
+                    rating_4: r.get(8)?,
+                    rating_5: r.get(9)?,
+                    pick: r.get(10)?,
+                    reject: r.get(11)?,
+                    unreviewed: r.get(12)?,
+                    recently_added: r.get(13)?,
+                })
+            },
+        )
+        .map_err(|e| e.to_string())
     }
 
     /// Exclude files whose folder path is the excluded folder itself or one of its children.
@@ -5415,6 +5470,21 @@ impl AFile {
             params![width, height, name.as_ref(), album_id, parent.as_ref()]).map_err(|e| e.to_string())
     }
 
+    pub(crate) fn retain_skipped_scan_file(
+        album_id: i64,
+        path: &Path,
+        scan_time: i64,
+    ) -> Result<(), String> {
+        let parent = path.parent().ok_or("File has no parent folder")?.to_string_lossy();
+        let name = path.file_name().ok_or("File has no filename")?.to_string_lossy();
+        open_conn()?.execute(
+            "UPDATE afiles SET last_scan_time = ?1 WHERE name = ?2
+             AND folder_id IN (SELECT id FROM afolders WHERE album_id = ?3 AND path = ?4)",
+            params![scan_time, name.as_ref(), album_id, parent.as_ref()],
+        ).map_err(|error| error.to_string())?;
+        Ok(())
+    }
+
     /// delete unseen files in an album (database only)
     pub fn delete_unseen_in_album(album_id: i64, current_scan_time: i64) -> Result<usize, String> {
         let mut conn = open_conn()?;
@@ -5537,6 +5607,11 @@ impl AFile {
         if !params.search_folder.is_empty() {
             conditions.push("(b.path = ?)".to_string());
             sql_params.push(Box::new(params.search_folder.clone()));
+        }
+
+        if params.added_since > 0 {
+            conditions.push("a.added_at >= ?".to_string());
+            sql_params.push(Box::new(params.added_since));
         }
 
         if params.start_date > 0 && params.end_date > 0 {
@@ -11286,6 +11361,42 @@ mod album_filter_tests {
     }
 
     #[test]
+    fn recently_added_query_uses_insertion_time_and_keeps_other_scope_filters() {
+        let conn = fixture();
+        conn.execute_batch(
+            "ALTER TABLE afolders ADD COLUMN is_excluded_from_search INTEGER DEFAULT 0;
+            ALTER TABLE afiles ADD COLUMN added_at INTEGER DEFAULT 0;
+            UPDATE afiles SET added_at=100 WHERE id=2;
+            UPDATE afiles SET added_at=99 WHERE id=3;
+            UPDATE afiles SET added_at=101 WHERE id IN (6,7);",
+        )
+        .unwrap();
+        let mut params: QueryParams = serde_json::from_value(serde_json::json!({
+            "searchFileName":"","searchFileType":0,"sortType":0,"sortOrder":0,
+            "searchAllSubfolders":"","searchFolder":"","startDate":0,"endDate":0,
+            "calendarSort":0,"make":"","model":"","lensMake":"","lensModel":"",
+            "locationAdmin1":"","locationName":"","isFavorite":false,"rating":-1,
+            "tagId":0,"addedSince":100
+        }))
+        .unwrap();
+        let query = |params: &QueryParams| {
+            let (joins, conditions, values) = AFile::build_search_query_parts(params);
+            let sql = format!(
+                "SELECT a.id FROM afiles a JOIN afolders b ON b.id=a.folder_id {joins}{conditions} ORDER BY a.id"
+            );
+            conn.prepare(&sql)
+                .unwrap()
+                .query_map(params_from_iter(values.iter()), |row| row.get::<_, i64>(0))
+                .unwrap()
+                .collect::<Result<Vec<_>, _>>()
+                .unwrap()
+        };
+        assert_eq!(query(&params), vec![2, 7]); // Excluded subfolders stay excluded.
+        params.search_folder = "/photos".into();
+        assert_eq!(query(&params), vec![2]);
+    }
+
+    #[test]
     fn text_search_matches_creator_copyright_and_software() {
         let conn = fixture();
         conn.execute_batch(
@@ -11335,7 +11446,8 @@ mod album_filter_tests {
             "ALTER TABLE afolders ADD COLUMN is_excluded_from_search INTEGER DEFAULT 0;
             ALTER TABLE afiles ADD COLUMN is_favorite INTEGER DEFAULT 1;
             ALTER TABLE afiles ADD COLUMN taken_date INTEGER DEFAULT 0;
-            ALTER TABLE afiles ADD COLUMN culling_flag INTEGER DEFAULT 0;",
+            ALTER TABLE afiles ADD COLUMN culling_flag INTEGER DEFAULT 0;
+            ALTER TABLE afiles ADD COLUMN added_at INTEGER DEFAULT 0;",
         )
         .unwrap();
         let before = AFile::get_library_visible_counts_on(&conn).unwrap().all;

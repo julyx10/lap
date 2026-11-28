@@ -41,6 +41,7 @@
   "library": {
     "all_files": "Všechny soubory",
     "on_this_day": "V tento den",
+    "recently_added": "Nedávno přidané",
     "database_corrupted": "Databáze této knihovny je poškozená",
     "database_corrupted_hint": "Zkuste přepnout na jinou knihovnu."
   },
@@ -293,12 +294,12 @@
       "paused": "Skenování pozastaveno",
       "cancel": "Zrušit skenování",
       "recovery": {
-        "title": "Skenování přerušeno",
-        "continue": "Pokračovat",
+        "title": "Předchozí skenování neočekávaně skončilo",
+        "continue": "Skenovat",
         "skip": "Přeskočit",
-        "skip_once": "Přeskočit tento soubor a pokračovat",
+        "skip_once": "Přeskočit tento soubor",
         "file_label": "Poslední skenovaný soubor",
-        "message": "Předchozí skenování nebylo řádně ukončeno."
+        "message": "Lap se během skenování tohoto alba neočekávaně ukončil."
       }
     }
   },
@@ -316,7 +317,7 @@
     "resume": "Pokračovat v indexování"
   },
   "favorite": {
-    "files": "Oblíbené soubory"
+    "files": "Oblíbené"
   },
   "rating": {
     "mixed": "Smíšené",
@@ -604,7 +605,6 @@
       "image_search_language_unsupported": "Výchozí model vyhledávání podporuje pouze angličtinu",
       "image_search_language_unsupported_hint": "Chcete-li hledat v tomto jazyce, vyberte v Nastavení vícejazyčný model.",
       "folder_files": "Tato složka neobsahuje žádné soubory",
-      "folder_files_hint": "Zkuste procházet podsložky nebo v Nastavení zapněte možnost „Zobrazovat soubory z podsložek“.",
       "folders": "Nebyly nalezeny žádné složky",
       "favorite_folders": "Nebyly nalezeny žádné oblíbené složky",
       "favorite_folders_hint": "Označte složku v Albech jako oblíbenou, aby se zde zobrazily její soubory včetně podsložek",
@@ -808,7 +808,7 @@
     "manage_libraries": {
       "title": "Správa knihoven",
       "libraries": "Knihovny",
-      "default": "Výchozí knihovna",
+      "default": "Výchozí",
       "current": "Aktuální knihovna",
       "show": "Zobrazit",
       "hide": "Skrýt",
@@ -821,11 +821,12 @@
       "placeholder": "Zadejte název knihovny",
       "calculating_stats": "Počítá se velikost knihovny…",
       "unable_to_load": "Nelze načíst",
-      "cache_size": "mezipaměť miniatur {size}"
+      "cache_size": "mezipaměť miniatur {size}",
+      "summary": "{libraries} knihoven · {items} položek ({size})"
     },
     "remove_library": {
       "title": "Odebrat knihovnu",
-      "content": "Opravdu chcete odebrat knihovnu „{library}“? Databázový soubor bude trvale odstraněn.",
+      "content": "Odstranit „{library}“? Původní soubory nebudou smazány. Databáze knihovny bude trvale odstraněna.",
       "ok": "Odebrat"
     },
     "remove_album": {
@@ -1379,10 +1380,10 @@
       "import_hint": "Při skenování a obnovení importovat oblíbené, hodnocení, značky výběru, štítky a popisy. Místní úpravy zůstanou zachovány."
     },
     "browse": {
-      "show_subfolder_files": "Zobrazovat soubory z podsložek",
+      "show_subfolder_files": "Zobrazit podsložky",
       "group_raw_jpeg_pairs": "Seskupovat dvojice RAW",
       "group_raw_jpeg_pairs_hint": "Zobrazovat odpovídající soubory RAW a JPEG/HEIC jako jednu položku",
-      "folder_sort": "Řazení složek",
+      "folder_sort": "Seřadit podsložky",
       "folder_sort_options": [
         "Název (A až Z)",
         "Název (Z až A)",
@@ -1626,10 +1627,10 @@
       }
     },
     "advanced": {
+      "file_delete_section": "Odstraňování souborů",
       "file_delete_behavior": "Chování při odstraňování",
       "file_delete_trash_hint": "Jeden soubor se přesune do koše bez potvrzení",
       "file_delete_permanent_hint": "Trvalé odstranění vždy vyžaduje potvrzení",
-      "file_delete_section": "Odstraňování souborů",
       "title": "Pokročilé",
       "external_app": {
         "manage_external_apps": "Spravovat externí aplikace",
@@ -1657,6 +1658,16 @@
         "tianditu_token_status_empty": "Není nastaveno"
       },
       "thumbnail_cache": {
+        "cleanup": {
+          "title": "Vyčistit nepoužívanou mezipaměť",
+          "hint": "Vyčistit nepoužívané miniatury z uvedených knihoven",
+          "button": "Vyčistit",
+          "progress": "Zpracování {current} / {total} · {name}",
+          "freed": "Uvolněno {size}.",
+          "empty": "Není co vyčistit v mezipaměti miniatur.",
+          "failed": "Tyto knihovny nebylo možné vyčistit:",
+          "list_error": "Seznam knihoven se nepodařilo načíst."
+        },
         "rolling_back": "Vrací se zpět…",
         "cancelled": "Zrušeno. Původní mezipaměť zůstala zachována.",
         "new_location": "Nové umístění: {path}",
@@ -1682,17 +1693,7 @@
         "finishing": "Dokončuje se migrace mezipaměti…",
         "success": "Umístění mezipaměti miniatur bylo úspěšně změněno",
         "cleanup_warning": "Mezipaměť byla přesunuta, ale některé staré soubory se nepodařilo odstranit:",
-        "busy": "Počkejte, až bude dokončena migrace mezipaměti miniatur.",
-        "cleanup": {
-          "title": "Vyčistit nepoužívanou mezipaměť",
-          "hint": "Vyčistit nepoužívané miniatury z uvedených knihoven",
-          "button": "Vyčistit",
-          "progress": "Zpracování {current} / {total} · {name}",
-          "freed": "Uvolněno {size}.",
-          "empty": "Není co vyčistit v mezipaměti miniatur.",
-          "failed": "Tyto knihovny nebylo možné vyčistit:",
-          "list_error": "Seznam knihoven se nepodařilo načíst."
-        }
+        "busy": "Počkejte, až bude dokončena migrace mezipaměti miniatur."
       }
     },
     "database": {

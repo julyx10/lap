@@ -3,6 +3,11 @@
   <div class="sidebar-panel">
     <div class="sidebar-panel-header">
       <span class="sidebar-panel-header-title flex-1">{{ titlebar }}</span>
+      <ContextMenu
+        :iconMenu="IconMore"
+        :smallIcon="true"
+        :menuItems="visibilityMenuItems"
+      />
     </div>
 
     <div class="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
@@ -26,7 +31,7 @@
       </div>
       </template>
 
-      <div class="sidebar-item sidebar-item-hover" @click="toggleRatings">
+      <div v-if="isSectionVisible('ratings')" class="sidebar-item sidebar-item-hover" @click="toggleRatings">
         <IconRight
           :class="[
             'p-1 w-6 h-6 shrink-0 transition-transform',
@@ -45,7 +50,7 @@
         @after-enter="onAfterEnter"
         @leave="onLeave"
       >
-        <div v-if="libConfig.library.ratingsExpanded" class="overflow-hidden">
+        <div v-if="isSectionVisible('ratings') && libConfig.library.ratingsExpanded" class="overflow-hidden">
           <ul class="mb-2">
             <li class="pl-4">
               <div
@@ -57,7 +62,7 @@
               >
                 <IconStarFilled class="mx-1 w-4 h-4 shrink-0" />
                 <span class="sidebar-item-label">{{ localeMsg.rating.rated }}</span>
-                <span v-if="ratedCount" class="text-[10px] tabular-nums text-base-content/30 mr-2">{{ ratedCount.toLocaleString() }}</span>
+                <span v-if="ratedCount" class="text-xs tabular-nums text-base-content/30 mr-2">{{ ratedCount.toLocaleString() }}</span>
               </div>
             </li>
             <li v-for="rating in [5, 4, 3, 2, 1]" :key="rating" class="pl-4">
@@ -75,7 +80,7 @@
                     class="w-4 h-4 shrink-0"
                   />
                 </div>
-                <span v-if="ratingCounts[rating]" class="ml-auto text-[10px] tabular-nums text-base-content/30 mr-2">{{ ratingCounts[rating].toLocaleString() }}</span>
+                <span v-if="ratingCounts[rating]" class="ml-auto text-xs tabular-nums text-base-content/30 mr-2">{{ ratingCounts[rating].toLocaleString() }}</span>
               </div>
             </li>
             <li class="pl-4">
@@ -88,14 +93,14 @@
               >
                 <IconStar class="mx-1 w-4 h-4 shrink-0" />
                 <span class="sidebar-item-label">{{ localeMsg.rating.unrated }}</span>
-                <span v-if="unratedCount" class="text-[10px] tabular-nums text-base-content/30 mr-2">{{ unratedCount.toLocaleString() }}</span>
+                <span v-if="unratedCount" class="text-xs tabular-nums text-base-content/30 mr-2">{{ unratedCount.toLocaleString() }}</span>
               </div>
             </li>
           </ul>
         </div>
       </Transition>
 
-      <div class="sidebar-item sidebar-item-hover" @click="toggleCulling">
+      <div v-if="isSectionVisible('culling')" class="sidebar-item sidebar-item-hover" @click="toggleCulling">
         <IconRight
           :class="[
             'p-1 w-6 h-6 shrink-0 transition-transform',
@@ -112,7 +117,7 @@
         @after-enter="onAfterEnter"
         @leave="onLeave"
       >
-        <div v-if="libConfig.library.cullingExpanded" class="overflow-hidden">
+        <div v-if="isSectionVisible('culling') && libConfig.library.cullingExpanded" class="overflow-hidden">
           <ul class="mb-2">
             <li v-for="item in cullingItems" :key="item.id" class="pl-4">
               <div
@@ -124,14 +129,14 @@
               >
                 <component :is="item.icon" class="mx-1 w-4 h-4 shrink-0" />
                 <span class="sidebar-item-label">{{ item.label }}</span>
-                <span v-if="item.count" class="ml-auto text-[10px] tabular-nums text-base-content/30 mr-2">{{ item.count.toLocaleString() }}</span>
+                <span v-if="item.count" class="ml-auto text-xs tabular-nums text-base-content/30 mr-2">{{ item.count.toLocaleString() }}</span>
               </div>
             </li>
           </ul>
         </div>
       </Transition>
 
-      <div class="sidebar-item sidebar-item-hover" @click="toggleSubjects">
+      <div v-if="isSectionVisible('subjects')" class="sidebar-item sidebar-item-hover" @click="toggleSubjects">
         <IconRight
           :class="[
             'p-1 w-6 h-6 shrink-0 transition-transform',
@@ -150,7 +155,7 @@
         @after-enter="onAfterEnter"
         @leave="onLeave"
       >
-        <div v-if="libConfig.library.subjectsExpanded" class="overflow-hidden">
+        <div v-if="isSectionVisible('subjects') && libConfig.library.subjectsExpanded" class="overflow-hidden">
           <ul class="mb-2">
             <li v-for="item in smartTagItems" :key="item.id" class="pl-4">
               <div
@@ -162,7 +167,7 @@
               >
                 <IconBolt class="mx-1 w-4 h-4 shrink-0" />
                 <span class="sidebar-item-label">{{ item.label }}</span>
-                <span v-if="item.count" class="text-[10px] tabular-nums text-base-content/30 mr-2">{{ formatSearchResultCount(item.count) }}</span>
+                <span v-if="item.count" class="text-xs tabular-nums text-base-content/30 mr-2">{{ formatSearchResultCount(item.count) }}</span>
               </div>
             </li>
           </ul>
@@ -175,14 +180,29 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, watch } from 'vue';
+import { computed, markRaw, onMounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { config, libConfig } from '@/common/config';
 import { useUIStore } from '@/stores/uiStore';
 import { createEmptyLibraryCounts } from '@/stores/libraryStore';
 import { CULLING, LIB_ITEM, RATE, SIDEBAR, type LibItem } from '@/common/constants';
 
-import { IconFiles, IconHeartFilled, IconRight, IconBolt, IconFlag, IconFlagFilled, IconFlagOff, IconStar, IconStarFilled, IconHistory } from '@/common/icons';
+import {
+  IconFiles,
+  IconHeartFilled,
+  IconRight,
+  IconBolt,
+  IconFlag,
+  IconFlagFilled,
+  IconFlagOff,
+  IconStar,
+  IconStarFilled,
+  IconHistory,
+  IconCalendarDay,
+  IconMore,
+  IconOk,
+} from '@/common/icons';
+import ContextMenu from '@/components/ContextMenu.vue';
 import { SMART_TAG_CATEGORIES } from '@/common/smartTags';
 import { getLibraryVisibleCounts } from '@/common/api';
 import { useLibraryChangeRefresh } from '@/composables/useLibraryChangeRefresh';
@@ -197,6 +217,43 @@ const props = defineProps({
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value] as any);
 const uiStore = useUIStore();
+type SectionKey =
+  | 'recent'
+  | 'today'
+  | 'favorites'
+  | 'ratings'
+  | 'culling'
+  | 'subjects'
+  | 'collections';
+const isSectionVisible = (key: SectionKey) => config.libraryPanel[key] !== false;
+const visibilityMenuItems = computed(() =>
+  [
+    { key: 'today', label: localeMsg.value.library.on_this_day, item: LIB_ITEM.TODAY },
+    { key: 'recent', label: localeMsg.value.library.recently_added, item: LIB_ITEM.RECENT },
+    { key: 'favorites', label: localeMsg.value.favorite.files, item: LIB_ITEM.FAV },
+    { key: 'ratings', label: localeMsg.value.rating.title, item: LIB_ITEM.RATINGS },
+    { key: 'culling', label: localeMsg.value.culling.title, item: LIB_ITEM.CULLING },
+    { key: 'subjects', label: localeMsg.value.subject.title, item: LIB_ITEM.SUBJECTS },
+    { key: 'collections', label: localeMsg.value.collection.title, item: undefined },
+  ].map(({ key, label, item }) => ({
+    label,
+    icon: isSectionVisible(key as SectionKey) ? markRaw(IconOk) : undefined,
+    iconClass: 'w-4 h-4',
+    action: () => {
+      const visible = !isSectionVisible(key as SectionKey);
+      config.libraryPanel[key] = visible;
+      if (visible) return;
+      if (key === 'collections' && libConfig.activePane === 'collection') {
+        libConfig.activePane = 'main';
+        config.main.sidebarIndex = SIDEBAR.LIBRARY;
+        selectItem(LIB_ITEM.ALL);
+      } else if (item && libConfig.library.item === item) {
+        if (isActiveLibraryView()) selectItem(LIB_ITEM.ALL);
+        else libConfig.library.item = LIB_ITEM.ALL;
+      }
+    },
+  })),
+);
 const libraryCounts = computed(() => libConfig.library.counts || createEmptyLibraryCounts());
 const subjectCounts = computed(() => libConfig.library.subjectCounts || {});
 const totalCount = computed(() => Number(libraryCounts.value.all || 0));
@@ -217,7 +274,10 @@ async function refreshLibraryCounts() {
     || libraryId !== libConfig._libraryId
   ) return;
   libConfig.library.counts = {
-    all: counts.all, favorite: counts.favorite, today: counts.today,
+    all: counts.all,
+    favorite: counts.favorite,
+    today: counts.today,
+    recentlyAdded: counts.recentlyAdded,
     rated: counts.rated, unrated: counts.unrated,
     ratings: { 1: counts.rating1, 2: counts.rating2, 3: counts.rating3, 4: counts.rating4, 5: counts.rating5 },
     culling: { [CULLING.PICK]: counts.pick, [CULLING.REJECT]: counts.reject, [CULLING.UNREVIEWED]: counts.unreviewed },
@@ -229,27 +289,37 @@ const isActiveLibraryView = () => libConfig.activePane === 'main' && config.main
 watch(() => [config.main.sidebarIndex, libConfig.activePane], () => {
   if (isActiveLibraryView()) void refreshLibraryCounts();
 });
-const libraryItems = computed(() => [
-  {
-    id: LIB_ITEM.ALL,
-    label: localeMsg.value.library.all_files,
-    icon: IconFiles,
-    count: totalCount.value,
-  },
-  {
-    id: LIB_ITEM.TODAY,
-    label: localeMsg.value.library.on_this_day,
-    icon: IconHistory,
-    count: todayCount.value,
-  },
-  {
-    id: LIB_ITEM.FAV,
-    label: localeMsg.value.favorite.files,
-    icon: IconHeartFilled,
-    count: favoriteCount.value,
-  },
-]);
-
+const libraryItems = computed(() =>
+  [
+    {
+      id: LIB_ITEM.ALL,
+      label: localeMsg.value.library.all_files,
+      icon: IconFiles,
+      count: totalCount.value,
+    },
+    {
+      id: LIB_ITEM.TODAY,
+      section: 'today',
+      label: localeMsg.value.library.on_this_day,
+      icon: IconCalendarDay,
+      count: todayCount.value,
+    },
+    {
+      id: LIB_ITEM.RECENT,
+      section: 'recent',
+      label: localeMsg.value.library.recently_added,
+      icon: IconHistory,
+      count: Number(libraryCounts.value.recentlyAdded || 0),
+    },
+    {
+      id: LIB_ITEM.FAV,
+      section: 'favorites',
+      label: localeMsg.value.favorite.files,
+      icon: IconHeartFilled,
+      count: favoriteCount.value,
+    },
+  ].filter((item) => !item.section || isSectionVisible(item.section as SectionKey)),
+);
 const smartTagItems = computed(() =>
   SMART_TAG_CATEGORIES.map(category => {
     const item = category.items[0];

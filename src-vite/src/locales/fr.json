@@ -41,6 +41,7 @@
   "library": {
     "all_files": "Tous les fichiers",
     "on_this_day": "Ce jour-là",
+    "recently_added": "Ajouts récents",
     "database_corrupted": "La base de données de cette bibliothèque est corrompue",
     "database_corrupted_hint": "Veuillez essayer de passer à une autre bibliothèque."
   },
@@ -293,12 +294,12 @@
       "paused": "Scan en pause",
       "cancel": "Annuler le scan",
       "recovery": {
-        "title": "Analyse interrompue",
-        "continue": "Continuer",
+        "title": "L’analyse précédente s’est terminée de façon inattendue",
+        "continue": "Analyser",
         "skip": "Ignorer",
-        "skip_once": "Ignorer ce fichier et continuer",
+        "skip_once": "Ignorer ce fichier",
         "file_label": "Dernier fichier analysé",
-        "message": "La précédente analyse ne s'est pas terminée normalement."
+        "message": "Lap s’est fermé de façon inattendue pendant l’analyse de cet album."
       }
     }
   },
@@ -316,7 +317,7 @@
     "resume": "Reprendre"
   },
   "favorite": {
-    "files": "Fichiers favoris"
+    "files": "Favoris"
   },
   "rating": {
     "mixed": "Mixte",
@@ -604,7 +605,6 @@
       "image_search_language_unsupported": "Le modèle de recherche par défaut ne prend en charge que l’anglais",
       "image_search_language_unsupported_hint": "Choisissez le modèle multilingue dans les paramètres pour rechercher dans cette langue.",
       "folder_files": "Ce dossier ne contient aucun fichier",
-      "folder_files_hint": "Parcourez les sous-dossiers ou activez « Afficher les fichiers des sous-dossiers » dans les paramètres.",
       "folders": "Aucun dossier trouvé",
       "favorite_folders": "Aucun dossier favori trouvé",
       "favorite_folders_hint": "Mettez un dossier en favori dans Albums pour voir ici ses fichiers et sous-dossiers",
@@ -821,11 +821,12 @@
       "placeholder": "Nom bibliothèque",
       "calculating_stats": "Calcul de la taille de la bibliothèque...",
       "unable_to_load": "Impossible de charger",
-      "cache_size": "cache des vignettes {size}"
+      "cache_size": "cache des vignettes {size}",
+      "summary": "{libraries} bibliothèques · {items} éléments ({size})"
     },
     "remove_library": {
       "title": "Supprimer bibliothèque",
-      "content": "Supprimer '{library}' ? Le fichier sera effacé.",
+      "content": "Supprimer « {library} » ? Vos fichiers d’origine ne seront pas supprimés. La base de données de la bibliothèque sera supprimée définitivement.",
       "ok": "Supprimer"
     },
     "remove_album": {
@@ -1379,10 +1380,10 @@
       "import_hint": "Importer les favoris, notes, marqueurs de sélection, étiquettes et descriptions lors des analyses et actualisations, en conservant les modifications locales."
     },
     "browse": {
-      "show_subfolder_files": "Afficher les fichiers des sous-dossiers",
+      "show_subfolder_files": "Afficher les sous-dossiers",
       "group_raw_jpeg_pairs": "Regrouper les paires RAW",
       "group_raw_jpeg_pairs_hint": "Afficher les fichiers RAW et JPEG/HEIC correspondants comme un seul élément",
-      "folder_sort": "Tri des dossiers",
+      "folder_sort": "Trier les sous-dossiers",
       "folder_sort_options": [
         "Nom (A à Z)",
         "Nom (Z à A)",
@@ -1626,10 +1627,10 @@
       }
     },
     "advanced": {
+      "file_delete_section": "Suppression de fichiers",
       "file_delete_behavior": "Lors de la suppression",
       "file_delete_trash_hint": "Place un seul fichier dans la corbeille sans confirmation",
       "file_delete_permanent_hint": "La suppression définitive exige toujours une confirmation",
-      "file_delete_section": "Suppression de fichiers",
       "title": "Avancé",
       "external_app": {
         "manage_external_apps": "Gérer les applications externes",
@@ -1657,6 +1658,16 @@
         "tianditu_token_status_empty": "Non configuré"
       },
       "thumbnail_cache": {
+        "cleanup": {
+          "title": "Nettoyer le cache inutilisé",
+          "hint": "Supprimer les miniatures inutilisées des bibliothèques listées",
+          "button": "Nettoyer",
+          "progress": "Traitement {current} / {total} · {name}",
+          "freed": "{size} libérés.",
+          "empty": "Aucun cache de miniatures inutilisé à nettoyer.",
+          "failed": "Impossible de nettoyer ces bibliothèques :",
+          "list_error": "Impossible de charger la liste des bibliothèques."
+        },
         "rolling_back": "Restauration en cours…",
         "cancelled": "Annulé. Le cache d’origine est conservé.",
         "new_location": "Nouvel emplacement : {path}",
@@ -1682,17 +1693,7 @@
         "finishing": "Finalisation du déplacement…",
         "success": "L’emplacement du cache des miniatures a été modifié",
         "cleanup_warning": "Le cache a été déplacé, mais certains anciens fichiers n’ont pas pu être supprimés :",
-        "busy": "Veuillez attendre la fin du déplacement du cache des miniatures.",
-        "cleanup": {
-          "title": "Nettoyer le cache inutilisé",
-          "hint": "Supprimer les miniatures inutilisées des bibliothèques listées",
-          "button": "Nettoyer",
-          "progress": "Traitement {current} / {total} · {name}",
-          "freed": "{size} libérés.",
-          "empty": "Aucun cache de miniatures inutilisé à nettoyer.",
-          "failed": "Impossible de nettoyer ces bibliothèques :",
-          "list_error": "Impossible de charger la liste des bibliothèques."
-        }
+        "busy": "Veuillez attendre la fin du déplacement du cache des miniatures."
       }
     },
     "database": {

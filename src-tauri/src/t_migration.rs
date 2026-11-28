@@ -189,6 +189,11 @@ fn get_migrations() -> Vec<Migration> {
             sql: "CREATE INDEX IF NOT EXISTS idx_afolders_excluded_album
                   ON afolders(album_id) WHERE is_excluded_from_search = 1;",
         },
+        Migration {
+            version: 25,
+            description: "Track first library insertion time",
+            sql: "",
+        },
     ]
 }
 
@@ -559,6 +564,26 @@ pub fn check_and_migrate(conn: &Connection) -> Result<(), String> {
                 }
                 tx.pragma_update(None, "user_version", migration.version).map_err(|e| e.to_string())?;
                 tx.commit().map_err(|e| e.to_string())?;
+            } else if migration.version == 25 {
+                let tx = conn.unchecked_transaction().map_err(|e| e.to_string())?;
+                if !table_has_column(&tx, "afiles", "added_at")? {
+                    tx.execute(
+                        "ALTER TABLE afiles ADD COLUMN added_at INTEGER NOT NULL DEFAULT 0",
+                        [],
+                    )
+                    .map_err(|e| e.to_string())?;
+                }
+                // Existing insertion dates are unknown; only new rows receive a timestamp.
+                tx.execute_batch("CREATE INDEX IF NOT EXISTS idx_afiles_added_at ON afiles(added_at);
+                    CREATE TRIGGER IF NOT EXISTS afiles_set_added_at AFTER INSERT ON afiles
+                    WHEN NEW.added_at = 0
+                    BEGIN
+                        UPDATE afiles SET added_at = CAST(strftime('%s','now') AS INTEGER) WHERE id = NEW.id;
+                    END;")
+                    .map_err(|e| e.to_string())?;
+                tx.pragma_update(None, "user_version", migration.version)
+                    .map_err(|e| e.to_string())?;
+                tx.commit().map_err(|e| e.to_string())?;
             } else if migration.version == 21 {
                 migrate_tag_tree(conn)?;
             } else if !migration.sql.trim().is_empty() {
@@ -619,6 +644,42 @@ pub(crate) fn migrate_tag_groups(conn: &Connection) -> Result<(), String> {
 }
 
 #[cfg(test)]
+mod added_at_migration_tests {
+    use super::*;
+
+    #[test]
+    fn recently_added_migration_preserves_unknown_history_and_stamps_only_new_rows() {
+        let conn = Connection::open_in_memory().unwrap();
+        conn.execute_batch(
+            "CREATE TABLE afiles(id INTEGER PRIMARY KEY, last_scan_time INTEGER);
+            INSERT INTO afiles VALUES(1,100); PRAGMA user_version=24;",
+        )
+        .unwrap();
+        check_and_migrate(&conn).unwrap();
+        let stamp = |id| {
+            conn.query_row("SELECT added_at FROM afiles WHERE id=?", [id], |row| {
+                row.get::<_, i64>(0)
+            })
+            .unwrap()
+        };
+        assert_eq!(stamp(1), 0);
+        conn.execute("INSERT INTO afiles(id,last_scan_time) VALUES(2,0)", [])
+            .unwrap();
+        let added = stamp(2);
+        assert!(added > 0);
+        conn.execute("UPDATE afiles SET last_scan_time=999 WHERE id=2", [])
+            .unwrap();
+        assert_eq!(stamp(2), added);
+        conn.execute("INSERT INTO afiles(id,added_at) VALUES(3,123)", [])
+            .unwrap();
+        assert_eq!(stamp(3), 123);
+        check_and_migrate(&conn).unwrap();
+        assert_eq!(stamp(1), 0);
+        assert_eq!(stamp(2), added);
+    }
+}
+
+#[cfg(test)]
 mod album_filter_migration_tests {
     use super::*;
 
@@ -638,6 +699,7 @@ mod album_filter_migration_tests {
              CREATE INDEX idx_afolders_album_inode ON afolders(album_id, inode);
              CREATE INDEX idx_afolders_is_excluded_from_search ON afolders(is_excluded_from_search);
              {rows}
+             CREATE TABLE afiles(id INTEGER PRIMARY KEY);
              PRAGMA user_version=23;"
         ))
         .unwrap();
@@ -662,11 +724,11 @@ mod album_filter_migration_tests {
         assert!(!has_exclusion_index(&conn));
         check_and_migrate(&conn).unwrap();
         assert!(has_exclusion_index(&conn));
-        assert_eq!(conn.query_row("PRAGMA user_version", [], |r| r.get::<_, i64>(0)).unwrap(), 24);
+        assert_eq!(conn.query_row("PRAGMA user_version", [], |r| r.get::<_, i64>(0)).unwrap(), 25);
         // Running again changes nothing.
         check_and_migrate(&conn).unwrap();
         assert!(has_exclusion_index(&conn));
-        assert_eq!(conn.query_row("PRAGMA user_version", [], |r| r.get::<_, i64>(0)).unwrap(), 24);
+        assert_eq!(conn.query_row("PRAGMA user_version", [], |r| r.get::<_, i64>(0)).unwrap(), 25);
     }
 
     #[test]
@@ -728,7 +790,7 @@ mod album_filter_migration_tests {
         // Simulate migration completing before the version was persisted.
         conn.execute_batch("PRAGMA user_version=17;").unwrap();
         check_and_migrate(&conn).unwrap();
-        assert_eq!(conn.query_row("PRAGMA user_version", [], |row| row.get::<_, i64>(0)).unwrap(),24);
+        assert_eq!(conn.query_row("PRAGMA user_version", [], |row| row.get::<_, i64>(0)).unwrap(),25);
     }
 
     #[test]
@@ -743,7 +805,7 @@ mod album_filter_migration_tests {
         // Simulate migration completing before the version was persisted.
         conn.execute_batch("PRAGMA user_version=18;").unwrap();
         check_and_migrate(&conn).unwrap();
-        assert_eq!(conn.query_row("PRAGMA user_version", [], |row| row.get::<_, i64>(0)).unwrap(), 24);
+        assert_eq!(conn.query_row("PRAGMA user_version", [], |row| row.get::<_, i64>(0)).unwrap(), 25);
     }
 
     #[test]
@@ -758,7 +820,7 @@ mod album_filter_migration_tests {
         conn.execute_batch("UPDATE afiles SET e_title='Existing'; PRAGMA user_version=21;").unwrap();
         check_and_migrate(&conn).unwrap();
         assert_eq!(conn.query_row("SELECT e_title FROM afiles", [], |r| r.get::<_,String>(0)).unwrap(), "Existing");
-        assert_eq!(conn.query_row("PRAGMA user_version", [], |r| r.get::<_,i32>(0)).unwrap(), 24);
+        assert_eq!(conn.query_row("PRAGMA user_version", [], |r| r.get::<_,i32>(0)).unwrap(), 25);
     }
 }
 

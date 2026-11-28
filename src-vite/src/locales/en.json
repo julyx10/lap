@@ -41,6 +41,7 @@
   "library": {
     "all_files": "All items",
     "on_this_day": "On this day",
+    "recently_added": "Recently added",
     "database_corrupted": "This library's database is corrupted",
     "database_corrupted_hint": "Please try switching to another library."
   },
@@ -293,12 +294,12 @@
       "paused": "Scanning paused",
       "cancel": "Cancel scan",
       "recovery": {
-        "title": "Scanning interrupted",
-        "continue": "Continue",
+        "title": "Previous scan ended unexpectedly",
+        "continue": "Scan",
         "skip": "Skip",
-        "skip_once": "Skip this file and continue",
+        "skip_once": "Skip this file",
         "file_label": "Last scanned file",
-        "message": "The previous scan did not close normally."
+        "message": "Lap exited unexpectedly while scanning this album."
       }
     }
   },
@@ -316,7 +317,7 @@
     "resume": "Resume indexing"
   },
   "favorite": {
-    "files": "Favorite items"
+    "files": "Favorites"
   },
   "rating": {
     "mixed": "Mixed",
@@ -604,7 +605,6 @@
       "image_search_language_unsupported": "The default search model supports English only",
       "image_search_language_unsupported_hint": "Choose the Multilingual model in Settings to search in this language.",
       "folder_files": "This folder has no items",
-      "folder_files_hint": "Try browsing subfolders, or enable 'Show items from subfolders' in Settings.",
       "folders": "No folders found",
       "favorite_folders": "No favorite folders found",
       "favorite_folders_hint": "Favorite a folder in Albums to see its items, including subfolders",
@@ -808,7 +808,7 @@
     "manage_libraries": {
       "title": "Manage libraries",
       "libraries": "Libraries",
-      "default": "Default library",
+      "default": "Default",
       "current": "Current library",
       "show": "Show",
       "hide": "Hide",
@@ -821,11 +821,12 @@
       "placeholder": "Enter library name",
       "calculating_stats": "Calculating library size...",
       "unable_to_load": "Unable to load",
-      "cache_size": "thumbnail cache {size}"
+      "cache_size": "thumbnail cache {size}",
+      "summary": "{libraries} libraries · {items} items ({size})"
     },
     "remove_library": {
       "title": "Remove library",
-      "content": "Are you sure you want to remove '{library}'? This will permanently delete the database file.",
+      "content": "Remove '{library}'? Your original files won’t be deleted. The library database will be permanently deleted.",
       "ok": "Remove"
     },
     "remove_album": {
@@ -1379,10 +1380,10 @@
       "import_hint": "Import favorites, ratings, culling flags, tags and descriptions during scans and refreshes, preserving local edits."
     },
     "browse": {
-      "show_subfolder_files": "Show subfolders items",
+      "show_subfolder_files": "Show subfolders",
       "group_raw_jpeg_pairs": "Group RAW Pairs",
       "group_raw_jpeg_pairs_hint": "Show matching RAW and JPEG/HEIC files as a single item",
-      "folder_sort": "Folder sorting",
+      "folder_sort": "Sort subfolders",
       "folder_sort_options": [
         "Name (A to Z)",
         "Name (Z to A)",

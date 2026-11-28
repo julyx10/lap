@@ -18,6 +18,9 @@ try {
   const saved = JSON.parse(localStorage.getItem(KEY));
   if (saved?.photos?.length) db = saved;
 } catch {}
+for (const file of db.photos) {
+  file.added_at ??= Math.floor(Date.now() / 1000) - (file.id - 1) * 4 * 86400;
+}
 db.tagNames ||= [...new Set(db.photos.flatMap((p) => p.tags))];
 db.tagParents ||= {};
 if (!db.tagNames.includes("Outdoors") && !db.tagNames.includes(null)) {
@@ -179,6 +182,9 @@ function query(params = {}, collectionId) {
     list = list.filter((f) =>
       folderPath(f.folder).startsWith(p.search_all_subfolders),
     );
+  if (p.added_since > 0) {
+    list = list.filter((file) => file.added_at >= p.added_since);
+  }
   if (p.is_favorite) list = list.filter((f) => f.favorite);
   if (Number(p.rating) >= 0)
     list = list.filter((f) => f.rating === Number(p.rating));
@@ -757,6 +763,9 @@ export async function invoke(command, args = {}) {
         (p) =>
           p.date.slice(5) ===
           `${String(new Date().getMonth() + 1).padStart(2, "0")}-${String(new Date().getDate()).padStart(2, "0")}`,
+      ),
+      recentlyAdded: count(
+        (file) => file.added_at >= Math.floor(Date.now() / 1000) - 30 * 86400,
       ),
       rated: count((p) => p.rating > 0),
       unrated: count((p) => !p.rating),
@@ -1353,6 +1362,18 @@ export async function invoke(command, args = {}) {
   )
     return { activeModel: args.model || 0, multilingualAvailable: true };
   if (command === "get_thumbnail_cache_location") return { ...thumbnailCacheLocation };
+  if (command === "get_thumbnail_cache_size") {
+    return live().length * 128 * 1024;
+  }
+  if (command === "get_library_info") {
+    const files = query({});
+    return {
+      fileCount: files.length,
+      totalSize: files.reduce((total, file) => total + file.size, 0),
+      dbFileSize: 0,
+      dbFilePath: '/demo/library.db',
+    };
+  }
   if (command === "get_thumbnail_cache_migration_count") return 20;
   if (command === "cancel_thumbnail_cache_migration") {
     const migration = thumbnailCacheMigrations.get(args.operationId);

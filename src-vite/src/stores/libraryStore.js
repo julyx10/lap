@@ -16,6 +16,7 @@ export const createEmptyLibraryCounts = () => ({
   all: 0,
   favorite: 0,
   today: 0,
+  recentlyAdded: 0,
   rated: 0,
   unrated: 0,
   ratings: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
@@ -33,7 +34,7 @@ export const useLibraryStore = defineStore('libraryStore', {
     /** @type {'main' | 'collection'} */
     activePane: 'main',
 
-    /** @type {{ item: 'all-files' | 'favorites' | 'ratings' | 'culling' | 'subjects' | 'on-this-day', smartId: string | null, ratingsExpanded: boolean, cullingExpanded: boolean, subjectsExpanded: boolean, subjectCounts: Record<string, number>, counts: { all: number, favorite: number, today: number, rated: number, unrated: number, ratings: Record<number, number>, culling: Record<string, number> } }} */
+    /** @type {{ item: 'all-files' | 'favorites' | 'ratings' | 'culling' | 'subjects' | 'on-this-day' | 'recently-added', smartId: string | null, ratingsExpanded: boolean, cullingExpanded: boolean, subjectsExpanded: boolean, subjectCounts: Record<string, number>, counts: { all: number, favorite: number, today: number, recentlyAdded: number, rated: number, unrated: number, ratings: Record<number, number>, culling: Record<string, number> } }} */
     library: {
       item: LIB_ITEM.ALL,
       smartId: null,
@@ -141,6 +142,8 @@ export const useLibraryStore = defineStore('libraryStore', {
       status: 0,              // 0: idle, 1: indexing, 2: paused
       /** @type {number[]} */
       albumQueue: [],         // indexing album queue
+      /** @type {Record<number, string>} */
+      skipFiles: {},          // optional file to skip on the next scan, by album ID
       /** @type {number[]} */
       pausedAlbumIds: [],     // paused albums
       albumName: '',          // current album name
@@ -158,6 +161,24 @@ export const useLibraryStore = defineStore('libraryStore', {
   actions: {
     async init() {
       try {
+        // Index progress is runtime-only now. Never carry a previous library's
+        // queue or status across a switch/reload.
+        Object.assign(this.index, {
+          status: 0,
+          albumQueue: [],
+          pausedAlbumIds: [],
+          albumName: '',
+          phase: 'discovering',
+          discovered: 0,
+          processed: 0,
+          searchReady: 0,
+          indexed: 0,
+          total: 0,
+          searchTotal: 0,
+          failed: 0,
+          skipFiles: {},
+        });
+
         // Get current library ID
         const appConfig = await getAppConfig();
         if (appConfig) {
@@ -169,29 +190,17 @@ export const useLibraryStore = defineStore('libraryStore', {
         const backendState = await getCurrentLibraryState();
         if (backendState) {
           Object.keys(backendState).forEach(key => {
-            if (this[key] !== undefined) {
+            if (key !== 'index' && this[key] !== undefined) {
               // Deep merge for objects (like album, search, etc) to preserve structure
               Object.assign(this[key], backendState[key]);
             }
           });
         }
-        this.index.status = Number(this.index.status || 0);
-        this.index.phase = this.index.phase || 'discovering';
-        this.index.pausedAlbumIds = Array.isArray(this.index.pausedAlbumIds)
-          ? Array.from(new Set(this.index.pausedAlbumIds.map(id => Number(id)).filter(id => id > 0)))
-          : [];
         this.collection.selectedId = Number(this.collection.selectedId || 0) > 0
           ? Number(this.collection.selectedId)
           : null;
 
         this._initialized = true;
-
-
-        // Always pause on restart — never auto-resume scanning
-        if (this.index.status === 1) {
-          this.index.status = 2;
-          await this.save();
-        }
       } catch (error) {
         console.error('Failed to initialize library state:', error);
         this._initialized = true;
@@ -274,20 +283,6 @@ export const useLibraryStore = defineStore('libraryStore', {
             location: this.location,
             search: this.search,
             destFolder: this.destFolder,
-            index: {
-              status: this.index.status,
-              albumQueue: this.index.albumQueue,
-              pausedAlbumIds: this.index.pausedAlbumIds,
-              albumName: this.index.albumName,
-              phase: this.index.phase,
-              discovered: this.index.discovered,
-              processed: this.index.processed,
-              searchReady: this.index.searchReady,
-              indexed: this.index.indexed,
-              total: this.index.total,
-              searchTotal: this.index.searchTotal,
-              failed: this.index.failed,
-            },
               person: this.person,
             };
 

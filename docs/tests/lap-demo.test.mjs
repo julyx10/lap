@@ -55,6 +55,29 @@ test('actual adapter exposes twenty records and two duplicate groups', async () 
   assert.equal(a.demoBackend.query().length, 20);
   assert.deepEqual(Array.from(a.demoBackend.groups(), g => Array.from(g.items, i => i.file_id)), [[8, 20], [11, 19]]);
 });
+test('recently added uses the last 30 days of insertion time and combines with other filters', async () => {
+  const a = await adapter();
+  const addedSince = Math.floor(Date.now() / 1000) - 30 * 86400;
+  const recent = a.demoBackend.query({ addedSince });
+  assert.deepEqual(ids(recent), [1, 2, 3, 4, 5, 6, 7, 8]);
+  const counts = await a.invoke('get_library_visible_counts');
+  assert.equal(counts.recentlyAdded, recent.length);
+  assert.deepEqual(
+    ids(a.demoBackend.query({ addedSince, isFavorite: true })),
+    ids(recent.filter((file) => file.is_favorite)),
+  );
+});
+test('library statistics separate original item sizes from thumbnail cache size', async () => {
+  const a = await adapter();
+  const info = await a.invoke('get_library_info', { id: 1 });
+  assert.equal(info.fileCount, 20);
+  assert.equal(
+    info.totalSize,
+    a.demoBackend.query().reduce((total, file) => total + file.size, 0),
+  );
+  assert.equal(info.thumbCacheSize, undefined);
+  assert.equal(await a.invoke('get_thumbnail_cache_size'), 20 * 128 * 1024);
+});
 test('actual batch metadata changes are visible to queries and survive reload', async () => {
   const storage = new Map(), a = await adapter(storage);
   await a.invoke('batch_update_file_metadata', { params: { fileIds: [2, 3], rating: 4, isFavorite: true, cullingFlag: 2 } });

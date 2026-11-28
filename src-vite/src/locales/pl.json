@@ -41,6 +41,7 @@
   "library": {
     "all_files": "Wszystkie pliki",
     "on_this_day": "Tego dnia",
+    "recently_added": "Ostatnio dodane",
     "database_corrupted": "Baza danych tej biblioteki jest uszkodzona",
     "database_corrupted_hint": "Spróbuj przełączyć się na inną bibliotekę."
   },
@@ -293,12 +294,12 @@
       "paused": "Skanowanie wstrzymane",
       "cancel": "Anuluj skanowanie",
       "recovery": {
-        "title": "Skanowanie przerwane",
-        "continue": "Kontynuuj",
+        "title": "Poprzednie skanowanie zakończyło się nieoczekiwanie",
+        "continue": "Skanuj",
         "skip": "Pomiń",
-        "skip_once": "Pomiń ten plik i kontynuuj",
+        "skip_once": "Pomiń ten plik",
         "file_label": "Ostatnio skanowany plik",
-        "message": "Poprzednie skanowanie nie zostało zakończone normalnie."
+        "message": "Lap zamknął się nieoczekiwanie podczas skanowania tego albumu."
       }
     }
   },
@@ -316,7 +317,7 @@
     "resume": "Wznów indeksowanie"
   },
   "favorite": {
-    "files": "Ulubione pliki"
+    "files": "Ulubione"
   },
   "rating": {
     "mixed": "Różne",
@@ -604,7 +605,6 @@
       "image_search_language_unsupported": "Domyślny model wyszukiwania obsługuje tylko angielski",
       "image_search_language_unsupported_hint": "Wybierz model wielojęzyczny w Ustawieniach, aby szukać w tym języku.",
       "folder_files": "Ten folder nie zawiera plików",
-      "folder_files_hint": "Spróbuj przeglądać podfoldery lub włącz „Pokazuj pliki z podfolderów” w Ustawieniach.",
       "folders": "Nie znaleziono folderów",
       "favorite_folders": "Nie znaleziono ulubionych folderów",
       "favorite_folders_hint": "Dodaj folder do ulubionych w Albumach, aby zobaczyć jego pliki, w tym podfoldery",
@@ -808,7 +808,7 @@
     "manage_libraries": {
       "title": "Zarządzaj bibliotekami",
       "libraries": "Biblioteki",
-      "default": "Domyślna biblioteka",
+      "default": "Domyślna",
       "current": "Bieżąca biblioteka",
       "show": "Pokaż",
       "hide": "Ukryj",
@@ -821,11 +821,12 @@
       "placeholder": "Wprowadź nazwę biblioteki",
       "calculating_stats": "Obliczanie rozmiaru biblioteki...",
       "unable_to_load": "Nie można wczytać",
-      "cache_size": "cache miniatur {size}"
+      "cache_size": "cache miniatur {size}",
+      "summary": "{libraries} bibliotek · {items} elementów ({size})"
     },
     "remove_library": {
       "title": "Usuń bibliotekę",
-      "content": "Czy na pewno chcesz usunąć „{library}”? Spowoduje to trwałe usunięcie pliku bazy danych.",
+      "content": "Usunąć „{library}”? Oryginalne pliki nie zostaną usunięte. Baza danych biblioteki zostanie trwale usunięta.",
       "ok": "Usuń"
     },
     "remove_album": {
@@ -1379,10 +1380,10 @@
       "import_hint": "Importuj ulubione, oceny, oznaczenia selekcji, tagi i opisy podczas skanowania i odświeżania, zachowując lokalne zmiany."
     },
     "browse": {
-      "show_subfolder_files": "Pokazuj pliki z podfolderów",
+      "show_subfolder_files": "Pokaż podfoldery",
       "group_raw_jpeg_pairs": "Grupuj pary RAW",
       "group_raw_jpeg_pairs_hint": "Pokazuj dopasowane pliki RAW i JPEG/HEIC jako jeden element",
-      "folder_sort": "Sortowanie folderów",
+      "folder_sort": "Sortuj podfoldery",
       "folder_sort_options": [
         "Nazwa (A do Z)",
         "Nazwa (Z do A)",
@@ -1626,10 +1627,10 @@
       }
     },
     "advanced": {
+      "file_delete_section": "Usuwanie plików",
       "file_delete_behavior": "Podczas usuwania plików",
       "file_delete_trash_hint": "Przenosi pojedynczy plik do kosza bez potwierdzenia",
       "file_delete_permanent_hint": "Trwałe usunięcie zawsze wymaga potwierdzenia",
-      "file_delete_section": "Usuwanie plików",
       "title": "Zaawansowane",
       "external_app": {
         "manage_external_apps": "Zarządzaj aplikacjami zewnętrznymi",
@@ -1657,6 +1658,16 @@
         "tianditu_token_status_empty": "Nieskonfigurowany"
       },
       "thumbnail_cache": {
+        "cleanup": {
+          "title": "Wyczyść nieużywany cache",
+          "hint": "Usuń nieużywane miniatury z wymienionych bibliotek",
+          "button": "Wyczyść",
+          "progress": "Przetwarzanie {current} / {total} · {name}",
+          "freed": "Zwolniono {size}.",
+          "empty": "Brak nieużywanego cache miniatur do wyczyszczenia.",
+          "failed": "Nie udało się wyczyścić tych bibliotek:",
+          "list_error": "Nie udało się wczytać listy bibliotek."
+        },
         "rolling_back": "Wycofywanie zmian…",
         "cancelled": "Anulowano. Oryginalna pamięć podręczna została zachowana.",
         "new_location": "Nowa lokalizacja: {path}",
@@ -1682,17 +1693,7 @@
         "finishing": "Kończenie przenoszenia…",
         "success": "Zmieniono lokalizację pamięci podręcznej miniatur",
         "cleanup_warning": "Pliki przeniesiono, ale nie udało się usunąć niektórych starych plików:",
-        "busy": "Poczekaj na zakończenie przenoszenia pamięci podręcznej miniatur.",
-        "cleanup": {
-          "title": "Wyczyść nieużywany cache",
-          "hint": "Usuń nieużywane miniatury z wymienionych bibliotek",
-          "button": "Wyczyść",
-          "progress": "Przetwarzanie {current} / {total} · {name}",
-          "freed": "Zwolniono {size}.",
-          "empty": "Brak nieużywanego cache miniatur do wyczyszczenia.",
-          "failed": "Nie udało się wyczyścić tych bibliotek:",
-          "list_error": "Nie udało się wczytać listy bibliotek."
-        }
+        "busy": "Poczekaj na zakończenie przenoszenia pamięci podręcznej miniatur."
       }
     },
     "database": {

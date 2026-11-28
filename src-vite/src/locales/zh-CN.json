@@ -41,6 +41,7 @@
   "library": {
     "all_files": "所有文件",
     "on_this_day": "历史上的今天",
+    "recently_added": "最近添加",
     "database_corrupted": "当前图库的数据库已损坏",
     "database_corrupted_hint": "请尝试切换到其他库。"
   },
@@ -293,12 +294,12 @@
       "paused": "扫描已暂停",
       "cancel": "取消扫描",
       "recovery": {
-        "title": "扫描异常中断",
-        "continue": "继续",
+        "title": "上次扫描意外结束",
+        "continue": "扫描",
         "skip": "跳过",
-        "skip_once": "跳过这个文件并继续",
+        "skip_once": "跳过此文件",
         "file_label": "最后扫描的文件",
-        "message": "上一次扫描没有正常退出。"
+        "message": "Lap 在扫描此相册时意外退出。"
       }
     }
   },
@@ -316,7 +317,7 @@
     "resume": "继续索引"
   },
   "favorite": {
-    "files": "收藏的文件"
+    "files": "收藏"
   },
   "rating": {
     "mixed": "混合",
@@ -604,7 +605,6 @@
       "image_search_language_unsupported": "默认搜索模型仅支持英文",
       "image_search_language_unsupported_hint": "请在设置中选择多语言模型以搜索此语言。",
       "folder_files": "此文件夹中没有文件",
-      "folder_files_hint": "尝试浏览子文件夹，或在设置中开启'显示子文件夹中的文件'以查看所有文件。",
       "folders": "未找到文件夹",
       "favorite_folders": "未找到收藏的文件夹",
       "favorite_folders_hint": "在相册中收藏一个文件夹，即可在这里查看其文件和子文件夹内容",
@@ -808,7 +808,7 @@
     "manage_libraries": {
       "title": "管理库",
       "libraries": "媒体库",
-      "default": "默认库",
+      "default": "默认",
       "current": "当前库",
       "show": "显示",
       "hide": "隐藏",
@@ -821,11 +821,12 @@
       "placeholder": "输入库的名称",
       "calculating_stats": "正在计算库大小...",
       "unable_to_load": "无法加载",
-      "cache_size": "缩略图缓存 {size}"
+      "cache_size": "缩略图缓存 {size}",
+      "summary": "{libraries} 个库 · {items} 项 ({size})"
     },
     "remove_library": {
       "title": "移除库",
-      "content": "确定要移除 '{library}' 吗？这将永久删除数据库文件。",
+      "content": "移除“{library}”？原始文件不会被删除，但库数据库将被永久删除。",
       "ok": "移除"
     },
     "remove_album": {
@@ -1379,10 +1380,10 @@
       "import_hint": "扫描和刷新时导入收藏、评分、选片标记、标签和描述，保留本地编辑。"
     },
     "browse": {
-      "show_subfolder_files": "显示子文件夹中的文件",
+      "show_subfolder_files": "显示子文件夹",
       "group_raw_jpeg_pairs": "合并显示 RAW 配对",
       "group_raw_jpeg_pairs_hint": "将同名的 RAW 与 JPEG/HEIC 文件合并显示为一个条目",
-      "folder_sort": "文件夹排序",
+      "folder_sort": "子文件夹排序",
       "folder_sort_options": [
         "名称（A 到 Z）",
         "名称（Z 到 A）",

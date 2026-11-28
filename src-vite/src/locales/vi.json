@@ -41,6 +41,7 @@
   "library": {
     "all_files": "Tất cả tệp",
     "on_this_day": "Ngày này năm xưa",
+    "recently_added": "Đã thêm gần đây",
     "database_corrupted": "Cơ sở dữ liệu của thư viện này bị hỏng",
     "database_corrupted_hint": "Hãy thử chuyển sang thư viện khác."
   },
@@ -293,12 +294,12 @@
       "paused": "Đã tạm dừng quét",
       "cancel": "Hủy quét",
       "recovery": {
-        "title": "Quá trình quét bị gián đoạn",
-        "continue": "Tiếp tục",
+        "title": "Lần quét trước kết thúc ngoài dự kiến",
+        "continue": "Quét",
         "skip": "Bỏ qua",
-        "skip_once": "Bỏ qua tệp này và tiếp tục",
+        "skip_once": "Bỏ qua tệp này",
         "file_label": "Tệp được quét cuối cùng",
-        "message": "Lần quét trước không kết thúc bình thường."
+        "message": "Lap đã thoát ngoài dự kiến khi quét album này."
       }
     }
   },
@@ -316,7 +317,7 @@
     "resume": "Tiếp tục lập chỉ mục"
   },
   "favorite": {
-    "files": "Tệp yêu thích"
+    "files": "Yêu thích"
   },
   "rating": {
     "mixed": "Hỗn hợp",
@@ -604,7 +605,6 @@
       "image_search_language_unsupported": "Mô hình tìm kiếm mặc định chỉ hỗ trợ tiếng Anh",
       "image_search_language_unsupported_hint": "Chọn mô hình Đa ngôn ngữ trong Cài đặt để tìm kiếm bằng ngôn ngữ này.",
       "folder_files": "Thư mục này không có tệp nào",
-      "folder_files_hint": "Hãy thử duyệt các thư mục con, hoặc bật “Hiện tệp từ thư mục con” trong Cài đặt.",
       "folders": "Không tìm thấy thư mục nào",
       "favorite_folders": "Không tìm thấy thư mục yêu thích nào",
       "favorite_folders_hint": "Đánh dấu yêu thích một thư mục trong Album để xem các tệp của nó, kể cả thư mục con",
@@ -808,7 +808,7 @@
     "manage_libraries": {
       "title": "Quản lý thư viện",
       "libraries": "Thư viện",
-      "default": "Thư viện mặc định",
+      "default": "Mặc định",
       "current": "Thư viện hiện tại",
       "show": "Hiện",
       "hide": "Ẩn",
@@ -821,11 +821,12 @@
       "placeholder": "Nhập tên thư viện",
       "calculating_stats": "Đang tính dung lượng thư viện...",
       "unable_to_load": "Không thể tải",
-      "cache_size": "bộ nhớ đệm ảnh thu nhỏ {size}"
+      "cache_size": "bộ nhớ đệm ảnh thu nhỏ {size}",
+      "summary": "{libraries} thư viện · {items} mục ({size})"
     },
     "remove_library": {
       "title": "Gỡ bỏ thư viện",
-      "content": "Bạn có chắc muốn gỡ bỏ “{library}”? Thao tác này sẽ xóa vĩnh viễn tệp cơ sở dữ liệu.",
+      "content": "Xóa “{library}”? Các tệp gốc sẽ không bị xóa. Cơ sở dữ liệu thư viện sẽ bị xóa vĩnh viễn.",
       "ok": "Gỡ bỏ"
     },
     "remove_album": {
@@ -1379,10 +1380,10 @@
       "import_hint": "Nhập mục yêu thích, đánh giá, cờ sàng lọc, thẻ và mô tả khi quét và làm mới, đồng thời giữ nguyên các chỉnh sửa cục bộ."
     },
     "browse": {
-      "show_subfolder_files": "Hiện tệp từ thư mục con",
+      "show_subfolder_files": "Hiện thư mục con",
       "group_raw_jpeg_pairs": "Nhóm cặp RAW",
       "group_raw_jpeg_pairs_hint": "Hiển thị các tệp RAW và JPEG/HEIC tương ứng thành một mục duy nhất",
-      "folder_sort": "Sắp xếp thư mục",
+      "folder_sort": "Sắp xếp thư mục con",
       "folder_sort_options": [
         "Tên (A đến Z)",
         "Tên (Z đến A)",

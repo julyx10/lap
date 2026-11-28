@@ -26,6 +26,16 @@ export const useConfigStore = defineStore('configStore', {
       width: 320,                 // left pane width
     },
 
+    libraryPanel: {
+      today: true,
+      recent: true,
+      favorites: true,
+      ratings: true,
+      culling: true,
+      subjects: true,
+      collections: true,
+    },
+
     collectionTray: {
       expanded: false,            // show collection tray in left pane
       height: 220,                // expanded tray height (px)

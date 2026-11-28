@@ -41,6 +41,7 @@
   "library": {
     "all_files": "Alle bestanden",
     "on_this_day": "Op deze dag",
+    "recently_added": "Onlangs toegevoegd",
     "database_corrupted": "De database van deze bibliotheek is beschadigd",
     "database_corrupted_hint": "Probeer over te schakelen naar een andere bibliotheek."
   },
@@ -293,12 +294,12 @@
       "paused": "Scannen gepauzeerd",
       "cancel": "Scan annuleren",
       "recovery": {
-        "title": "Scannen onderbroken",
-        "continue": "Doorgaan",
+        "title": "Vorige scan is onverwacht beëindigd",
+        "continue": "Scannen",
         "skip": "Overslaan",
-        "skip_once": "Dit bestand overslaan en doorgaan",
+        "skip_once": "Dit bestand overslaan",
         "file_label": "Laatst gescande bestand",
-        "message": "De vorige scan is niet normaal afgesloten."
+        "message": "Lap is onverwacht afgesloten tijdens het scannen van dit album."
       }
     }
   },
@@ -316,7 +317,7 @@
     "resume": "Indexeren hervatten"
   },
   "favorite": {
-    "files": "Favoriete bestanden"
+    "files": "Favorieten"
   },
   "rating": {
     "mixed": "Gemengd",
@@ -604,7 +605,6 @@
       "image_search_language_unsupported": "Het standaard zoekmodel ondersteunt alleen Engels",
       "image_search_language_unsupported_hint": "Kies het meertalige model in Instellingen om in deze taal te zoeken.",
       "folder_files": "Deze map bevat geen bestanden",
-      "folder_files_hint": "Blader door submappen of zet 'Bestanden uit submappen tonen' aan in Instellingen.",
       "folders": "Geen mappen gevonden",
       "favorite_folders": "Geen favoriete mappen gevonden",
       "favorite_folders_hint": "Markeer een map in Albums als favoriet om de bestanden te zien, inclusief submappen",
@@ -808,7 +808,7 @@
     "manage_libraries": {
       "title": "Bibliotheken beheren",
       "libraries": "Bibliotheken",
-      "default": "Standaardbibliotheek",
+      "default": "Standaard",
       "current": "Huidige bibliotheek",
       "show": "Tonen",
       "hide": "Verbergen",
@@ -821,11 +821,12 @@
       "placeholder": "Voer een bibliotheeknaam in",
       "calculating_stats": "Bibliotheekgrootte berekenen...",
       "unable_to_load": "Kan niet laden",
-      "cache_size": "miniaturencache {size}"
+      "cache_size": "miniaturencache {size}",
+      "summary": "{libraries} bibliotheken · {items} items ({size})"
     },
     "remove_library": {
       "title": "Bibliotheek verwijderen",
-      "content": "Weet je zeker dat je '{library}' wilt verwijderen? Het databasebestand wordt definitief verwijderd.",
+      "content": "'{library}' verwijderen? Je originele bestanden worden niet verwijderd. De bibliotheekdatabase wordt permanent verwijderd.",
       "ok": "Verwijderen"
     },
     "remove_album": {
@@ -1379,10 +1380,10 @@
       "import_hint": "Importeer favorieten, beoordelingen, schiftmarkeringen, tags en beschrijvingen bij scans en vernieuwingen, met behoud van lokale wijzigingen."
     },
     "browse": {
-      "show_subfolder_files": "Bestanden uit submappen tonen",
+      "show_subfolder_files": "Submappen tonen",
       "group_raw_jpeg_pairs": "RAW-paren groeperen",
       "group_raw_jpeg_pairs_hint": "Toon bij elkaar horende RAW- en JPEG/HEIC-bestanden als één item",
-      "folder_sort": "Mapvolgorde",
+      "folder_sort": "Submappen sorteren",
       "folder_sort_options": [
         "Naam (A tot Z)",
         "Naam (Z tot A)",
@@ -1626,10 +1627,10 @@
       }
     },
     "advanced": {
+      "file_delete_section": "Bestanden verwijderen",
       "file_delete_behavior": "Bij het verwijderen van bestanden",
       "file_delete_trash_hint": "Verplaats één bestand zonder bevestiging naar de prullenmand",
       "file_delete_permanent_hint": "Permanent verwijderen vereist altijd bevestiging",
-      "file_delete_section": "Bestanden verwijderen",
       "title": "Geavanceerd",
       "external_app": {
         "manage_external_apps": "Externe apps beheren",
@@ -1657,6 +1658,16 @@
         "tianditu_token_status_empty": "Niet ingesteld"
       },
       "thumbnail_cache": {
+        "cleanup": {
+          "title": "Ongebruikte cache opschonen",
+          "hint": "Ongebruikte miniaturen uit de genoemde bibliotheken verwijderen",
+          "button": "Opschonen",
+          "progress": "{current} / {total} verwerken · {name}",
+          "freed": "{size} vrijgemaakt.",
+          "empty": "Geen ongebruikte miniatuurcache om op te schonen.",
+          "failed": "Deze bibliotheken konden niet worden opgeschoond:",
+          "list_error": "De bibliotheeklijst kon niet worden geladen."
+        },
         "rolling_back": "Terugdraaien…",
         "cancelled": "Geannuleerd. De oorspronkelijke cache is behouden.",
         "new_location": "Nieuwe locatie: {path}",
@@ -1682,17 +1693,7 @@
         "finishing": "Verplaatsing afronden…",
         "success": "Cachelocatie voor miniaturen gewijzigd",
         "cleanup_warning": "De cache is verplaatst, maar sommige oude bestanden konden niet worden verwijderd:",
-        "busy": "Wacht tot de miniaturencache is verplaatst.",
-        "cleanup": {
-          "title": "Ongebruikte cache opschonen",
-          "hint": "Ongebruikte miniaturen uit de genoemde bibliotheken verwijderen",
-          "button": "Opschonen",
-          "progress": "{current} / {total} verwerken · {name}",
-          "freed": "{size} vrijgemaakt.",
-          "empty": "Geen ongebruikte miniatuurcache om op te schonen.",
-          "failed": "Deze bibliotheken konden niet worden opgeschoond:",
-          "list_error": "De bibliotheeklijst kon niet worden geladen."
-        }
+        "busy": "Wacht tot de miniaturencache is verplaatst."
       }
     },
     "database": {

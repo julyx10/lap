@@ -41,6 +41,7 @@
   "library": {
     "all_files": "모든 파일",
     "on_this_day": "과거의 오늘",
+    "recently_added": "최근 추가됨",
     "database_corrupted": "이 라이브러리의 데이터베이스가 손상되었습니다",
     "database_corrupted_hint": "다른 라이브러리로 전환해 보세요."
   },
@@ -293,12 +294,12 @@
       "paused": "스캔 일시중지됨",
       "cancel": "스캔 취소",
       "recovery": {
-        "title": "스캔이 중단되었습니다",
-        "continue": "계속",
+        "title": "이전 스캔이 예기치 않게 종료되었습니다",
+        "continue": "스캔",
         "skip": "건너뛰기",
-        "skip_once": "이 파일을 건너뛰고 계속",
+        "skip_once": "이 파일 건너뛰기",
         "file_label": "마지막으로 스캔한 파일",
-        "message": "이전 스캔이 정상적으로 종료되지 않았습니다."
+        "message": "이 앨범을 스캔하는 동안 Lap이 예기치 않게 종료되었습니다."
       }
     }
   },
@@ -316,7 +317,7 @@
     "resume": "인덱싱 재개"
   },
   "favorite": {
-    "files": "즐겨찾는 파일"
+    "files": "즐겨찾기"
   },
   "rating": {
     "mixed": "혼합",
@@ -604,7 +605,6 @@
       "image_search_language_unsupported": "기본 검색 모델은 영어만 지원합니다",
       "image_search_language_unsupported_hint": "이 언어로 검색하려면 설정에서 다국어 모델을 선택하세요.",
       "folder_files": "이 폴더에는 파일이 없습니다",
-      "folder_files_hint": "하위 폴더를 찾아보거나 설정에서 '하위 폴더의 파일 표시'를 활성화하세요.",
       "folders": "폴더를 찾을 수 없습니다",
       "favorite_folders": "즐겨찾기한 폴더를 찾을 수 없습니다",
       "favorite_folders_hint": "앨범에서 폴더를 즐겨찾기에 추가하면 여기에서 파일과 하위 폴더를 볼 수 있습니다",
@@ -821,11 +821,12 @@
       "placeholder": "라이브러리 이름",
       "calculating_stats": "라이브러리 크기 계산 중...",
       "unable_to_load": "불러올 수 없습니다",
-      "cache_size": "축소판 캐시 {size}"
+      "cache_size": "축소판 캐시 {size}",
+      "summary": "라이브러리 {libraries}개 · {items}개 항목 ({size})"
     },
     "remove_library": {
       "title": "라이브러리 제거",
-      "content": "'{library}'을(를) 제거하시겠습니까? 데이터베이스 파일이 삭제됩니다.",
+      "content": "'{library}'을(를) 제거할까요? 원본 파일은 삭제되지 않습니다. 라이브러리 데이터베이스는 영구적으로 삭제됩니다.",
       "ok": "제거"
     },
     "remove_album": {
@@ -1379,10 +1380,10 @@
       "import_hint": "스캔 및 새로 고침 시 즐겨찾기, 별점, 선별 표시, 태그와 설명을 가져오며 로컬 편집은 유지합니다."
     },
     "browse": {
-      "show_subfolder_files": "하위 폴더의 파일 표시",
+      "show_subfolder_files": "하위 폴더 표시",
       "group_raw_jpeg_pairs": "RAW 쌍을 하나로 표시",
       "group_raw_jpeg_pairs_hint": "일치하는 RAW 및 JPEG/HEIC 파일을 하나의 항목으로 표시합니다",
-      "folder_sort": "폴더 정렬",
+      "folder_sort": "하위 폴더 정렬",
       "folder_sort_options": [
         "이름 (A-Z)",
         "이름 (Z-A)",
@@ -1626,10 +1627,10 @@
       }
     },
     "advanced": {
+      "file_delete_section": "파일 삭제",
       "file_delete_behavior": "파일 삭제 시 동작",
       "file_delete_trash_hint": "파일 1개는 확인 없이 휴지통으로 이동합니다",
       "file_delete_permanent_hint": "영구 삭제는 항상 확인이 필요합니다",
-      "file_delete_section": "파일 삭제",
       "title": "고급",
       "external_app": {
         "manage_external_apps": "외부 앱 관리",
@@ -1657,6 +1658,16 @@
         "tianditu_token_status_empty": "설정되지 않음"
       },
       "thumbnail_cache": {
+        "cleanup": {
+          "title": "사용하지 않는 캐시 정리",
+          "hint": "나열된 라이브러리에서 사용하지 않는 썸네일 정리",
+          "button": "정리",
+          "progress": "{current} / {total} 처리 중 · {name}",
+          "freed": "{size} 해제됨.",
+          "empty": "정리할 사용하지 않는 썸네일 캐시가 없습니다.",
+          "failed": "다음 라이브러리를 정리하지 못했습니다:",
+          "list_error": "라이브러리 목록을 불러오지 못했습니다."
+        },
         "rolling_back": "되돌리는 중…",
         "cancelled": "취소되었습니다. 기존 캐시가 유지됩니다.",
         "new_location": "새 위치: {path}",
@@ -1682,17 +1693,7 @@
         "finishing": "캐시 이동 마무리 중…",
         "success": "썸네일 캐시 위치가 변경되었습니다",
         "cleanup_warning": "캐시를 이동했지만 일부 이전 파일을 삭제하지 못했습니다:",
-        "busy": "썸네일 캐시 이동이 완료될 때까지 기다려 주세요.",
-        "cleanup": {
-          "title": "사용하지 않는 캐시 정리",
-          "hint": "나열된 라이브러리에서 사용하지 않는 썸네일 정리",
-          "button": "정리",
-          "progress": "{current} / {total} 처리 중 · {name}",
-          "freed": "{size} 해제됨.",
-          "empty": "정리할 사용하지 않는 썸네일 캐시가 없습니다.",
-          "failed": "다음 라이브러리를 정리하지 못했습니다:",
-          "list_error": "라이브러리 목록을 불러오지 못했습니다."
-        }
+        "busy": "썸네일 캐시 이동이 완료될 때까지 기다려 주세요."
       }
     },
     "database": {

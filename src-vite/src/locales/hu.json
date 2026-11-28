@@ -41,6 +41,7 @@
   "library": {
     "all_files": "Minden fájl",
     "on_this_day": "Ezen a napon",
+    "recently_added": "Nemrég hozzáadva",
     "database_corrupted": "A könyvtár adatbázisa sérült",
     "database_corrupted_hint": "Váltson másik könyvtárra."
   },
@@ -293,12 +294,12 @@
       "paused": "Beolvasás szünetel",
       "cancel": "Beolvasás megszakítása",
       "recovery": {
-        "title": "Beolvasás megszakadt",
-        "continue": "Folytatás",
+        "title": "Az előző vizsgálat váratlanul megszakadt",
+        "continue": "Vizsgálat",
         "skip": "Kihagyás",
-        "skip_once": "Fájl kihagyása és folytatás",
+        "skip_once": "Fájl kihagyása",
         "file_label": "Utolsó beolvasott fájl",
-        "message": "Az előző beolvasás nem állt le megfelelően."
+        "message": "A Lap váratlanul bezárult a képalbum vizsgálata közben."
       }
     }
   },
@@ -316,7 +317,7 @@
     "resume": "Indexelés folytatása"
   },
   "favorite": {
-    "files": "Kedvenc fájlok"
+    "files": "Kedvencek"
   },
   "rating": {
     "mixed": "Vegyes",
@@ -604,7 +605,6 @@
       "image_search_language_unsupported": "Az alapértelmezett keresési modell csak angolul működik",
       "image_search_language_unsupported_hint": "Az ezen a nyelven való kereséshez válassza a Többnyelvű modellt a Beállításokban.",
       "folder_files": "A mappa üres",
-      "folder_files_hint": "Tallózzon az almappákban, vagy kapcsolja be az „Almappák fájljainak megjelenítése” beállítást.",
       "folders": "Nincs mappa",
       "favorite_folders": "Nincs kedvenc mappa",
       "favorite_folders_hint": "Jelöljön kedvencnek egy mappát az Albumokban, hogy az almappáival együtt lássa a fájljait",
@@ -808,7 +808,7 @@
     "manage_libraries": {
       "title": "Könyvtárak kezelése",
       "libraries": "Könyvtárak",
-      "default": "Alapértelmezett könyvtár",
+      "default": "Alapértelmezett",
       "current": "Aktuális könyvtár",
       "show": "Megjelenítés",
       "hide": "Elrejtés",
@@ -821,11 +821,12 @@
       "placeholder": "Könyvtárnév megadása",
       "calculating_stats": "Könyvtárméret számítása...",
       "unable_to_load": "Nem tölthető be",
-      "cache_size": "bélyegkép-gyorsítótár: {size}"
+      "cache_size": "bélyegkép-gyorsítótár: {size}",
+      "summary": "{libraries} könyvtár · {items} elem ({size})"
     },
     "remove_library": {
       "title": "Könyvtár eltávolítása",
-      "content": "Biztosan eltávolítja a következőt: \"{library}\"? Ezzel véglegesen törli az adatbázisfájlt.",
+      "content": "Eltávolítja a(z) „{library}” könyvtárat? Az eredeti fájlok nem törlődnek. A könyvtár adatbázisa véglegesen törlődik.",
       "ok": "Eltávolítás"
     },
     "remove_album": {
@@ -1379,10 +1380,10 @@
       "import_hint": "Kedvencek, értékelések, válogatási jelölők, címkék és leírások importálása vizsgálat és frissítés során, a helyi módosítások megőrzésével."
     },
     "browse": {
-      "show_subfolder_files": "Almappák fájljainak megjelenítése",
+      "show_subfolder_files": "Almappák megjelenítése",
       "group_raw_jpeg_pairs": "RAW-párok csoportosítása",
       "group_raw_jpeg_pairs_hint": "Az egyező RAW- és JPEG/HEIC-fájlok egy elemként jelennek meg",
-      "folder_sort": "Mapparendezés",
+      "folder_sort": "Almappák rendezése",
       "folder_sort_options": [
         "Név (A–Z)",
         "Név (Z–A)",
@@ -1626,10 +1627,10 @@
       }
     },
     "advanced": {
+      "file_delete_section": "Fájlok törlése",
       "file_delete_behavior": "Fájlok törlésekor",
       "file_delete_trash_hint": "Egyetlen fájl megerősítés nélkül a kukába kerül",
       "file_delete_permanent_hint": "A végleges törléshez mindig megerősítés szükséges",
-      "file_delete_section": "Fájlok törlése",
       "title": "Speciális",
       "external_app": {
         "manage_external_apps": "Külső alkalmazások kezelése",
@@ -1657,6 +1658,16 @@
         "tianditu_token_status_empty": "Nincs beállítva"
       },
       "thumbnail_cache": {
+        "cleanup": {
+          "title": "Nem használt gyorsítótár tisztítása",
+          "hint": "Nem használt bélyegképek törlése a felsorolt könyvtárakból",
+          "button": "Tisztítás",
+          "progress": "Feldolgozás: {current} / {total} · {name}",
+          "freed": "{size} felszabadítva.",
+          "empty": "Nincs tisztítandó nem használt bélyegkép-gyorsítótár.",
+          "failed": "Ezeket a könyvtárakat nem sikerült tisztítani:",
+          "list_error": "A könyvtárlista nem tölthető be."
+        },
         "rolling_back": "Visszaállítás…",
         "cancelled": "Megszakítva. Az eredeti gyorsítótár megmaradt.",
         "new_location": "Új hely: {path}",
@@ -1682,17 +1693,7 @@
         "finishing": "Áthelyezés befejezése…",
         "success": "A bélyegkép-gyorsítótár helye megváltozott",
         "cleanup_warning": "A gyorsítótár áthelyezése sikerült, de néhány régi fájl nem törölhető:",
-        "busy": "Várja meg a bélyegkép-gyorsítótár áthelyezésének befejezését.",
-        "cleanup": {
-          "title": "Nem használt gyorsítótár tisztítása",
-          "hint": "Nem használt bélyegképek törlése a felsorolt könyvtárakból",
-          "button": "Tisztítás",
-          "progress": "Feldolgozás: {current} / {total} · {name}",
-          "freed": "{size} felszabadítva.",
-          "empty": "Nincs tisztítandó nem használt bélyegkép-gyorsítótár.",
-          "failed": "Ezeket a könyvtárakat nem sikerült tisztítani:",
-          "list_error": "A könyvtárlista nem tölthető be."
-        }
+        "busy": "Várja meg a bélyegkép-gyorsítótár áthelyezésének befejezését."
       }
     },
     "database": {

@@ -69,10 +69,12 @@
           
           <!-- grid size slider -->
           <div class="flex flex-row items-center gap-2 px-2 shrink-0 group">
-            <SliderInput v-model="gridSizePosition"
-              :min="0" :max="100" :step="1" label="" :slider_width="80"
-              :disabled="isMapView"
-            />
+            <TButton :tooltip="$t('settings.grid.size')">
+              <SliderInput v-model="gridSizePosition"
+                :min="0" :max="100" :step="1" label="" :slider_width="80"
+                :disabled="isMapView"
+              />
+            </TButton>
           </div>
 
           <!-- grid styles cycle -->
@@ -662,19 +664,6 @@
     @third="confirmDiscard"
   />
 
-  <IndexRecoveryDialog
-    v-if="showIndexRecoveryMsgbox"
-    :title="indexRecoveryTitle"
-    :message="indexRecoveryMessage"
-    :fileLabel="indexRecoveryFileLabel"
-    :filePath="recoverySkipFilePath"
-    :continueText="indexRecoveryOkText"
-    :skipLabel="indexRecoverySkipLabel"
-    :cancelText="$t('msgbox.cancel')"
-    @continue="confirmIndexRecoveryContinue"
-    @cancel="cancelIndexRecovery"
-  />
-
   <!-- Drag-drop warning -->
   <MessageBox
     v-if="showDropWarning"
@@ -748,8 +737,8 @@ import { getAlbum, getAllAlbums, recountAlbum, getQueryCountAndSum as apiGetQuer
          moveFile, moveFileOutsideLibrary, copyFile, withFileTransferBatch, batchDeleteFiles, getFileThumb, getFileThumbById, getFileThumbs, getFileInfo,
          setFileRotate, setFileFavorite, setFileRating, setFileCullingFlag, batchUpdateFileMetadata, getTagsForFile, searchSimilarImages, generateEmbedding,
          getTagName, indexAlbum, listenIndexProgress, listenIndexFinished, setAlbumCover, setDesktopWallpaper,
-         updateFileInfo, refreshFileInfo, changeVideoThumbnail, getSupportedFormatExtensions, importFiles, importUrl, importFileBytes, getDragPayload, importClipboard, addFileToDb, checkFileExists, checkFileAccessibility, isCloudOnlyFile, cancelIndexing as cancelIndexingApi, selectFolder, getFacesForFile, listenFaceIndexProgress,
-         openFilesWithApp, getAppConfig, getIndexRecoveryInfo, clearIndexRecoveryInfo, setLastSelectedItemIndex,
+         updateFileInfo, refreshFileInfo, changeVideoThumbnail, getSupportedFormatExtensions, importFiles, importUrl, importFileBytes, getDragPayload, importClipboard, addFileToDb, checkFileExists, checkFileAccessibility, isCloudOnlyFile, selectFolder, getFacesForFile, listenFaceIndexProgress,
+         openFilesWithApp, getAppConfig, setLastSelectedItemIndex,
          dedupDelete, getQueryFilePosition as apiGetQueryFilePosition, getFolderSearchExcluded,
          listCollections, createCollection, addFilesToCollection, removeFilesFromCollection, getFileCollections, getCollectionCountAndSum as apiGetCollectionCountAndSum, getCollectionFiles as apiGetCollectionFiles, getCollectionGroupedQueryRows as apiGetCollectionGroupedQueryRows, getCollectionGroupFileIds as apiGetCollectionGroupFileIds, getCollectionQueryFileIds as apiGetCollectionQueryFileIds, fetchFolder, isDirectoryAccessible, checkAlbumAccessibility, addTagToFile, saveXmpMetadata } from '@/common/api';
 import { config, libConfig } from '@/common/config';
@@ -827,7 +816,6 @@ import MessageBox from '@/components/MessageBox.vue';
 import ModalDialog from '@/components/ModalDialog.vue';
 import RefreshFileInfoDialog from '@/components/RefreshFileInfoDialog.vue';
 import { fileInfoRevision } from '@/common/fileInfoRefresh';
-import IndexRecoveryDialog from '@/components/IndexRecoveryDialog.vue';
 import MoveTo from '@/components/MoveTo.vue';
 import TButton from '@/components/TButton.vue';
 import TaggingDialog from '@/components/TaggingDialog.vue';
@@ -2765,7 +2753,7 @@ const gridSpacingPixels = computed(() => isFilmstripView.value ? 0
   : thumbnailSpacing(config.settings.grid.spacing, config.settings.scale).pixels);
 const filmstripPadding = computed(() => thumbnailSpacing(config.settings.grid.spacing, config.settings.scale).pixels);
 const cardMetrics = computed(() => cardItemMetrics(config.settings.scale,
-  config.settings.grid.labelPrimary > 0, config.settings.grid.labelSecondary > 0));
+  config.settings.grid.labelPrimary > 0, config.settings.grid.labelSecondary > 0, config.settings.grid.spacing));
 const gridSizeProfile = computed(() => thumbnailProfile(config.settings.thumbnailSize));
 const gridSize = computed(() =>
   gridSizeFromPosition(config.settings.grid.sizePosition, config.settings.thumbnailSize),
@@ -3987,6 +3975,7 @@ function commitRequestedSidebarCount(count: number, request = uiStore.countUpdat
         if (request.item === LIB_ITEM.ALL) values.all = count;
         else if (request.item === LIB_ITEM.FAV) values.favorite = count;
         else if (request.item === LIB_ITEM.TODAY) values.today = count;
+        else if (request.item === LIB_ITEM.RECENT) values.recentlyAdded = count;
         else if (request.item === LIB_ITEM.RATINGS) {
           if (Number(request.rating) === RATE.ALL) values.rated = count;
           else if (Number(request.rating) === RATE.UNRATED) values.unrated = count;
@@ -4149,7 +4138,8 @@ const currentTitleIcon = computed(() => {
                     ? IconFlagOff
                     : IconFlag;
               case LIB_ITEM.SUBJECTS: return IconBolt;
-              case LIB_ITEM.TODAY: return IconHistory;
+              case LIB_ITEM.TODAY: return IconCalendarDay;
+              case LIB_ITEM.RECENT: return IconHistory;
               default: return IconFiles;
             }
           case SIDEBAR.ALBUM:
@@ -5565,34 +5555,16 @@ let unlistenTriggerNextAlbum: (() => void) | undefined;
 let unlistenRefreshContent: (() => void) | undefined;
 let unlistenFilesDeleted: (() => void) | undefined;
 let unlistenAlbumUpdated: (() => void) | undefined;
-const showIndexRecoveryMsgbox = ref(false);
-const recoverySkipFilePath = ref('');  // local: file path from crash trace
-const indexRecoveryTitle = computed(() => localeMsg.value.search.index.recovery.title);
-const indexRecoveryOkText = computed(() => localeMsg.value.search.index.recovery.continue);
-const indexRecoverySkipLabel = computed(() => localeMsg.value.search.index.recovery.skip_once);
-const indexRecoveryFileLabel = computed(() => localeMsg.value.search.index.recovery.file_label);
-const indexRecoveryMessage = computed(() => {
-  return localeMsg.value.search.index.recovery.message;
-});
-
-async function processNextAlbum(skipFilePath: string | null = null, skipRecoveryCheck = false) {
+async function processNextAlbum() {
   if (libConfig.index.albumQueue.length > 0) {
     const albumId = libConfig.index.albumQueue[0];
+    const libraryId = libConfig._libraryId;
     // Hide the previous scan's completed progress before awaiting album lookup.
     scanProgressSession.value++;
     libConfig.index.phase = 'complete';
     const album = await getAlbum(albumId);
+    if (libraryId !== libConfig._libraryId || libConfig.index.albumQueue[0] !== albumId) return;
     if (album) {
-      // Check for crash recovery: if trace file exists and matches this album
-      if (!skipFilePath && !skipRecoveryCheck) {
-        const recoveryInfo = await getIndexRecoveryInfo();
-        if (recoveryInfo && Number(recoveryInfo.album_id) === Number(albumId)) {
-          recoverySkipFilePath.value = String(recoveryInfo.file_path || '');
-          libConfig.index.status = 2;
-          showIndexRecoveryMsgbox.value = true;
-          return;
-        }
-      }
       libConfig.index.status = 1;
       libConfig.index.pausedAlbumIds = (libConfig.index.pausedAlbumIds as any[]).filter(
         id => Number(id) !== Number(albumId)
@@ -5606,7 +5578,9 @@ async function processNextAlbum(skipFilePath: string | null = null, skipRecovery
       libConfig.index.total = 0;
       libConfig.index.searchTotal = 0;
       libConfig.index.failed = 0;
-      await indexAlbum(albumId, skipFilePath || null);
+      const skipFilePath = libConfig.index.skipFiles[albumId] || null;
+      delete libConfig.index.skipFiles[albumId];
+      await indexAlbum(albumId, skipFilePath);
     } else {
       // album not found (maybe deleted), remove from queue and process next
       libConfig.index.albumQueue.shift();
@@ -5663,8 +5637,6 @@ watch(isScanStreamingMode, (streaming, wasStreaming) => {
   }
 });
 
-const isAlbumPaused = (albumId: number | null | undefined) =>
-  (libConfig.index.pausedAlbumIds as any[]).some(id => Number(id) === Number(albumId || 0));
 const syncIndexStatus = () => {
   if ((libConfig.index.albumQueue as any[]).length > 0) {
     libConfig.index.status = 1;
@@ -5675,22 +5647,6 @@ const syncIndexStatus = () => {
   }
 };
 
-const isRecoveryInProgress = ref(false);
-
-const confirmIndexRecoveryContinue = async (shouldSkip = false) => {
-  showIndexRecoveryMsgbox.value = false;
-  const skipFilePath = shouldSkip ? recoverySkipFilePath.value : null;
-  recoverySkipFilePath.value = '';
-  await clearIndexRecoveryInfo();  // delete trace file first to prevent re-detection
-  isRecoveryInProgress.value = true;
-  await processNextAlbum(skipFilePath, true);
-  isRecoveryInProgress.value = false;
-};
-
-const cancelIndexRecovery = () => {
-  showIndexRecoveryMsgbox.value = false;
-  libConfig.index.status = 2;
-};
 const activeScanningAlbumId = computed(() => Number(libConfig.index.albumQueue[0] || 0));
 const suppressNextIndexingIdleRefresh = ref(false);
 const selectedAlbumIdForStatusBar = computed(() => Number(libConfig.album.id || 0));
@@ -6036,37 +5992,6 @@ watch(
   },
   { immediate: true }
 );
-
-// Cancel indexing for current album
-async function cancelIndexing() {
-  const albumId = libConfig.album.id;
-  const index = normalizedAlbumQueue.value.findIndex(id => id === Number(albumId || 0));
-  if (index === -1) return;
-
-  showIndexRecoveryMsgbox.value = false;
-
-  if (index === 0) {
-      libConfig.index.albumQueue.shift();
-      await cancelIndexingApi(albumId);
-      if (!isAlbumPaused(albumId)) {
-        (libConfig.index.pausedAlbumIds as any[]).push(Number(albumId || 0));
-      }
-      if (libConfig.index.albumQueue.length > 0) {
-        syncIndexStatus();
-        setTimeout(() => {
-          processNextAlbum();
-        }, 1000);
-      } else {
-        syncIndexStatus();
-      }
-  } else {
-    libConfig.index.albumQueue.splice(index, 1);
-    if (!isAlbumPaused(albumId)) {
-      (libConfig.index.pausedAlbumIds as any[]).push(Number(albumId || 0));
-    }
-    syncIndexStatus();
-  }
-}
 
 onMounted( async() => {
   const appConfig = await getAppConfig();
@@ -6934,7 +6859,7 @@ watch(() => isInfoPanelOpen.value, async (newShow) => {
 });
 
 watch(() => libConfig.index.status, (newStatus) => {
-  if (newStatus === 1 && libConfig.index.albumQueue.length > 0 && !isRecoveryInProgress.value) {
+  if (newStatus === 1 && libConfig.index.albumQueue.length > 0) {
     processNextAlbum();
   }
 });
@@ -6947,8 +6872,13 @@ watch(() => libConfig.index.albumQueue.length, (newLength) => {
 
 watch(
   () => [config.settings.showSubfolderFiles, libConfig._libraryId],
-  () => {
+  ([showSubfolders, libraryId], [previousShowSubfolders, previousLibraryId]) => {
     clearFolderFileCounts();
+    const path = libConfig.album.folderPath;
+    if (showSubfolders !== previousShowSubfolders && libraryId === previousLibraryId
+      && path && matchesRequestedSidebarCount({ source: 'album-folder', path })) {
+      void refreshFolderSidebarCount(path);
+    }
   },
 );
 
@@ -7971,6 +7901,7 @@ async function getFileList(
     searchFileName = '', 
     searchAllSubfolders = '',
     searchFolder = '', 
+    addedSince = 0,
     startDate = 0,
     endDate = 0,
     calendarSort = config.settings.calendarSort,
@@ -8015,6 +7946,7 @@ async function getFileList(
     searchFileName,
     searchAllSubfolders,
     searchFolder,
+    addedSince,
     startDate,
     endDate,
     calendarSort,
@@ -8768,6 +8700,10 @@ async function updateContent(force = false, preserveMultiSelection = selectMode.
       case LIB_ITEM.TODAY:
         contentTitle.value = localeMsg.value.library.on_this_day;
         getFileList({ startDate: -1, endDate: -1, calendarSort: DATE_SORT.TAKEN_DESC }, requestId);
+        break;
+      case LIB_ITEM.RECENT:
+        contentTitle.value = localeMsg.value.library.recently_added;
+        getFileList({ addedSince: Math.floor(Date.now() / 1000) - 30 * 24 * 60 * 60 }, requestId);
         break;
       case LIB_ITEM.RATINGS:
         if (libConfig.rating.item === RATE.ALL) {
@@ -11028,7 +10964,6 @@ const emptyFilesHint = computed(() => {
   if (!showFolderFiles.value) return '';
   const notFound = localeMsg.value.tooltip.not_found;
   if (isCurrentFolderExcluded.value) return notFound.folder_excluded_hint || '';
-  if (!config.settings.showSubfolderFiles) return notFound.folder_files_hint || '';
   return '';
 });
 

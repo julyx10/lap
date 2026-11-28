@@ -70,7 +70,7 @@
           <!-- library title -->
           <div
             v-if="leftPanelMounted || databaseCorrupted"
-            class="absolute top-0 left-[68px] right-0 z-10 h-10 flex items-center"
+            class="absolute top-0 left-17 right-0 z-10 h-10 flex items-center"
             data-tauri-drag-region
           >
             <ContextMenu :menuItems="getLibraryMenuItems">
@@ -166,9 +166,9 @@
     </div>
 
     <!-- logo -->
-    <div class="fixed bottom-2 left-6 text-[12px] text-base-content/30">
+    <!-- <div class="fixed bottom-2 left-6 text-xs text-base-content/30">
       <span>{{ appName }}</span>
-    </div>
+    </div> -->
 
     <!-- Manage Libraries Dialog -->
     <ManageLibraries
@@ -225,7 +225,7 @@ import {
   IconDot,
   IconPhotoAll,
   IconArrowDown,
-  IconCalendarDay,
+  IconCalendar,
   IconFolders,
   IconFolderCog
 } from '@/common/icons';
@@ -380,7 +380,7 @@ const buttons = computed(() =>  [
   { index: SIDEBAR.LIBRARY, icon: IconPhotoAll, component: Library, text: localeMsg.value.sidebar.library },
   { index: SIDEBAR.ALBUM, icon: IconFolders, component: AlbumList, text: localeMsg.value.sidebar.album, props: { selectionSource: 'album' } },
   { index: SIDEBAR.SMART_ALBUM, icon: IconFolderCog, component: SmartAlbumList, text: localeMsg.value.album.smart_album_list },
-  { index: SIDEBAR.CALENDAR, icon: IconCalendarDay, component: Calendar, text: localeMsg.value.sidebar.calendar },
+  { index: SIDEBAR.CALENDAR, icon: IconCalendar, component: Calendar, text: localeMsg.value.sidebar.calendar },
   { index: SIDEBAR.TAG, icon: IconTag, component: Tag, text: localeMsg.value.sidebar.tag },
   { index: SIDEBAR.PERSON, icon: IconPerson, component: Person, text: localeMsg.value.sidebar.people, hidden: !config.settings.face.enabled },
   { index: SIDEBAR.LOCATION, icon: IconLocation, component: Location, text: localeMsg.value.sidebar.location },
@@ -603,7 +603,7 @@ const doSwitchLibrary = async (libraryId: string) => {
     isSwitchingLibrary.value = true;
     databaseCorrupted.value = null;
 
-    // Save current library state before switching (preserves the indexing queue)
+    // Save current library state before switching. Index progress is runtime-only.
     await libConfig.save();
 
     // Prevent auto-save during shutdown of the current library's background work.
@@ -716,6 +716,7 @@ const collectionTrayStyle = computed(() => {
 
 const showBottomCollectionTray = computed(() =>
   showPanel.value &&
+  config.libraryPanel.collections !== false &&
   !libraryEmpty.value
 );
 

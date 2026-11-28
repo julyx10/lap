@@ -41,6 +41,7 @@
   "library": {
     "all_files": "Tutti i file",
     "on_this_day": "In questo giorno",
+    "recently_added": "Aggiunti di recente",
     "database_corrupted": "Il database di questa libreria è danneggiato",
     "database_corrupted_hint": "Prova a passare a un'altra libreria."
   },
@@ -293,12 +294,12 @@
       "paused": "Scansione in pausa",
       "cancel": "Annulla scansione",
       "recovery": {
-        "title": "Scansione interrotta",
-        "continue": "Continua",
+        "title": "La scansione precedente è terminata in modo imprevisto",
+        "continue": "Scansiona",
         "skip": "Ignora",
-        "skip_once": "Ignora questo file e continua",
+        "skip_once": "Ignora questo file",
         "file_label": "Ultimo file scansionato",
-        "message": "La scansione precedente non si è chiusa normalmente."
+        "message": "Lap è stato chiuso in modo imprevisto durante la scansione di questo album."
       }
     }
   },
@@ -316,7 +317,7 @@
     "resume": "Riprendi indicizzazione"
   },
   "favorite": {
-    "files": "File preferiti"
+    "files": "Preferiti"
   },
   "rating": {
     "mixed": "Misto",
@@ -604,7 +605,6 @@
       "image_search_language_unsupported": "Il modello di ricerca predefinito supporta solo l'inglese",
       "image_search_language_unsupported_hint": "Scegli il modello multilingue nelle Impostazioni per cercare in questa lingua.",
       "folder_files": "Questa cartella non contiene file",
-      "folder_files_hint": "Prova a sfogliare le sottocartelle o attiva 'Mostra file dalle sottocartelle' nelle Impostazioni.",
       "folders": "Nessuna cartella trovata",
       "favorite_folders": "Nessuna cartella preferita trovata",
       "favorite_folders_hint": "Aggiungi una cartella ai preferiti negli Album per vedere i suoi file, incluse le sottocartelle",
@@ -808,7 +808,7 @@
     "manage_libraries": {
       "title": "Gestisci librerie",
       "libraries": "Librerie",
-      "default": "Libreria predefinita",
+      "default": "Predefinita",
       "current": "Libreria corrente",
       "show": "Mostra",
       "hide": "Nascondi",
@@ -821,11 +821,12 @@
       "placeholder": "Inserisci il nome della libreria",
       "calculating_stats": "Calcolo delle dimensioni della libreria...",
       "unable_to_load": "Impossibile caricare",
-      "cache_size": "cache miniature {size}"
+      "cache_size": "cache miniature {size}",
+      "summary": "{libraries} librerie · {items} elementi ({size})"
     },
     "remove_library": {
       "title": "Rimuovi libreria",
-      "content": "Vuoi davvero rimuovere '{library}'? Il file del database verrà eliminato definitivamente.",
+      "content": "Rimuovere «{library}»? I file originali non verranno eliminati. Il database della libreria verrà eliminato definitivamente.",
       "ok": "Rimuovi"
     },
     "remove_album": {
@@ -1379,10 +1380,10 @@
       "import_hint": "Importa preferiti, valutazioni, contrassegni di selezione, tag e descrizioni durante scansioni e aggiornamenti, mantenendo le modifiche locali."
     },
     "browse": {
-      "show_subfolder_files": "Mostra file dalle sottocartelle",
+      "show_subfolder_files": "Mostra sottocartelle",
       "group_raw_jpeg_pairs": "Raggruppa coppie RAW",
       "group_raw_jpeg_pairs_hint": "Mostra i file RAW e JPEG/HEIC corrispondenti come un unico elemento",
-      "folder_sort": "Ordinamento cartelle",
+      "folder_sort": "Ordina sottocartelle",
       "folder_sort_options": [
         "Nome (da A a Z)",
         "Nome (da Z ad A)",
@@ -1626,10 +1627,10 @@
       }
     },
     "advanced": {
+      "file_delete_section": "Eliminazione dei file",
       "file_delete_behavior": "Quando elimini i file",
       "file_delete_trash_hint": "Sposta un singolo file nel cestino senza conferma",
       "file_delete_permanent_hint": "L’eliminazione definitiva richiede sempre conferma",
-      "file_delete_section": "Eliminazione dei file",
       "title": "Avanzate",
       "external_app": {
         "manage_external_apps": "Gestisci app esterne",
@@ -1657,6 +1658,16 @@
         "tianditu_token_status_empty": "Non configurato"
       },
       "thumbnail_cache": {
+        "cleanup": {
+          "title": "Pulisci cache inutilizzata",
+          "hint": "Rimuovi le miniature inutilizzate dalle librerie elencate",
+          "button": "Pulisci",
+          "progress": "Elaborazione {current} / {total} · {name}",
+          "freed": "Liberati {size}.",
+          "empty": "Nessuna cache di miniature inutilizzata da pulire.",
+          "failed": "Impossibile pulire queste librerie:",
+          "list_error": "Impossibile caricare l'elenco delle librerie."
+        },
         "rolling_back": "Ripristino…",
         "cancelled": "Annullato. La cache originale è stata mantenuta.",
         "new_location": "Nuova posizione: {path}",
@@ -1682,17 +1693,7 @@
         "finishing": "Completamento dello spostamento…",
         "success": "Posizione della cache delle miniature modificata",
         "cleanup_warning": "La cache è stata spostata, ma alcuni vecchi file non sono stati eliminati:",
-        "busy": "Attendi il completamento dello spostamento della cache delle miniature.",
-        "cleanup": {
-          "title": "Pulisci cache inutilizzata",
-          "hint": "Rimuovi le miniature inutilizzate dalle librerie elencate",
-          "button": "Pulisci",
-          "progress": "Elaborazione {current} / {total} · {name}",
-          "freed": "Liberati {size}.",
-          "empty": "Nessuna cache di miniature inutilizzata da pulire.",
-          "failed": "Impossibile pulire queste librerie:",
-          "list_error": "Impossibile caricare l'elenco delle librerie."
-        }
+        "busy": "Attendi il completamento dello spostamento della cache delle miniature."
       }
     },
     "database": {

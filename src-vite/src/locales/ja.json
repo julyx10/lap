@@ -41,6 +41,7 @@
   "library": {
     "all_files": "すべてのファイル",
     "on_this_day": "この日",
+    "recently_added": "最近追加した項目",
     "database_corrupted": "このライブラリのデータベースが破損しています",
     "database_corrupted_hint": "他のライブラリに切り替えてみてください。"
   },
@@ -293,12 +294,12 @@
       "paused": "スキャンを一時停止中",
       "cancel": "スキャンをキャンセル",
       "recovery": {
-        "title": "スキャンが中断されました",
-        "continue": "続行",
+        "title": "前回のスキャンは予期せず終了しました",
+        "continue": "スキャン",
         "skip": "スキップ",
-        "skip_once": "このファイルをスキップして続行",
+        "skip_once": "このファイルをスキップ",
         "file_label": "最後にスキャンしたファイル",
-        "message": "前回のスキャンは正常に終了しませんでした。"
+        "message": "このアルバムのスキャン中に Lap が予期せず終了しました。"
       }
     }
   },
@@ -316,7 +317,7 @@
     "resume": "インデックスを再開"
   },
   "favorite": {
-    "files": "お気に入りファイル"
+    "files": "お気に入り"
   },
   "rating": {
     "mixed": "混在",
@@ -604,7 +605,6 @@
       "image_search_language_unsupported": "デフォルトの検索モデルは英語のみ対応しています",
       "image_search_language_unsupported_hint": "この言語で検索するには、設定で多言語モデルを選択してください。",
       "folder_files": "このフォルダーにはファイルがありません",
-      "folder_files_hint": "サブフォルダを閲覧するか、設定で「サブフォルダー内のファイルを表示」を有効にしてください。",
       "folders": "フォルダーが見つかりません",
       "favorite_folders": "お気に入りのフォルダーが見つかりません",
       "favorite_folders_hint": "アルバムでフォルダーをお気に入りに追加すると、ここにそのファイルやサブフォルダーが表示されます",
@@ -821,11 +821,12 @@
       "placeholder": "ライブラリ名",
       "calculating_stats": "ライブラリサイズを計算中...",
       "unable_to_load": "読み込めません",
-      "cache_size": "サムネイルキャッシュ {size}"
+      "cache_size": "サムネイルキャッシュ {size}",
+      "summary": "{libraries} ライブラリ · {items} 項目 ({size})"
     },
     "remove_library": {
       "title": "ライブラリを削除",
-      "content": "'{library}' を削除しますか？データベースファイルも削除されます。",
+      "content": "「{library}」を削除しますか？元のファイルは削除されません。ライブラリのデータベースは完全に削除されます。",
       "ok": "削除"
     },
     "remove_album": {
@@ -1379,10 +1380,10 @@
       "import_hint": "スキャンと情報更新時にお気に入り、評価、選別フラグ、タグ、説明を取り込み、ローカルの編集は保持します。"
     },
     "browse": {
-      "show_subfolder_files": "サブフォルダー内のファイルを表示",
+      "show_subfolder_files": "サブフォルダーを表示",
       "group_raw_jpeg_pairs": "RAWペアをまとめて表示",
       "group_raw_jpeg_pairs_hint": "一致する RAW と JPEG/HEIC ファイルを 1 つの項目として表示します",
-      "folder_sort": "フォルダの並び順",
+      "folder_sort": "サブフォルダーを並べ替え",
       "folder_sort_options": [
         "名前 (A から Z)",
         "名前 (Z から A)",
@@ -1626,10 +1627,10 @@
       }
     },
     "advanced": {
+      "file_delete_section": "ファイルの削除",
       "file_delete_behavior": "ファイル削除時の動作",
       "file_delete_trash_hint": "ファイル 1 個は確認なしでゴミ箱に移動します",
       "file_delete_permanent_hint": "完全に削除する前に毎回確認します",
-      "file_delete_section": "ファイルの削除",
       "title": "詳細",
       "external_app": {
         "manage_external_apps": "外部アプリを管理",
@@ -1657,6 +1658,16 @@
         "tianditu_token_status_empty": "未設定"
       },
       "thumbnail_cache": {
+        "cleanup": {
+          "title": "未使用のキャッシュを整理",
+          "hint": "一覧のライブラリから未使用のサムネイルを削除",
+          "button": "整理",
+          "progress": "{current} / {total} を処理中 · {name}",
+          "freed": "{size} を解放しました。",
+          "empty": "整理する未使用のサムネイルキャッシュはありません。",
+          "failed": "次のライブラリを整理できませんでした:",
+          "list_error": "ライブラリ一覧を読み込めませんでした。"
+        },
         "rolling_back": "元に戻しています…",
         "cancelled": "キャンセルしました。元のキャッシュは保持されています。",
         "new_location": "新しい保存先：{path}",
@@ -1682,17 +1693,7 @@
         "finishing": "キャッシュの移動を完了しています…",
         "success": "サムネイルキャッシュの保存先を変更しました",
         "cleanup_warning": "キャッシュを移動しましたが、一部の古いファイルを削除できませんでした：",
-        "busy": "サムネイルキャッシュの移動が完了するまでお待ちください。",
-        "cleanup": {
-          "title": "未使用のキャッシュを整理",
-          "hint": "一覧のライブラリから未使用のサムネイルを削除",
-          "button": "整理",
-          "progress": "{current} / {total} を処理中 · {name}",
-          "freed": "{size} を解放しました。",
-          "empty": "整理する未使用のサムネイルキャッシュはありません。",
-          "failed": "次のライブラリを整理できませんでした:",
-          "list_error": "ライブラリ一覧を読み込めませんでした。"
-        }
+        "busy": "サムネイルキャッシュの移動が完了するまでお待ちください。"
       }
     },
     "database": {
